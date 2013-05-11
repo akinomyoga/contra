@@ -1,0 +1,1372 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="ja" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <title>mwg.Term :: Escape Sequences</title>
+  <meta name="agh-fly-type" content="color" />
+  <link rel="stylesheet" type="text/css" href="http://myoga.web.fc2.com/agh/mwg.std.css" />
+  <link rel="stylesheet" type="text/css" href="http://myoga.web.fc2.com/agh/prog.std.css" />
+  <script type="text/javascript" charset="utf-8" src="http://myoga.web.fc2.com/~murase/agh/agh.fly.jgz"></script>
+  <style type="text/css">
+  table.normal>*>tr>th{background-color:#eee;}
+  table.normal>*>tr>th.markB{background-color:#fee;}
+  dfn.tfunc{color:blue;}
+  </style>
+</head>
+<body class="tex:math_bqd">
+<div id="pagetopholder">
+  <div class="linkbar2" id="pagetop">
+    <span class="left">-- ≪</span>
+    <span class="right">≫ --</span>
+    <span class="center">
+    mwg.Term :: Escape Sequences
+    </span>
+  </div>
+  <div>
+  <p></p>
+  </div>
+</div>
+<hr style="height:1px;"/>
+<h1>mwg.Term :: Escape Sequences</h1>
+<!--===================================================================================-->
+<h2>termcap/terminfo</h2>
+<p>色々な端末の差異を吸収する為に作られたデータベース・ライブラリ。ncurses もこれを利用する。</p>
+<ul>
+<li><a href="http://linuxpakistan.net/man.php?query=terminfo&amp;type=2&amp;section=5">terminfo man page</a></li>
+<li><a href="http://h50146.www5.hp.com/products/software/oe/tru64unix/manual/v51a_ref/HTML/MAN/MAN4/0087____.HTM">terminfo(4)</a> 日本語 man</li>
+<li><a href="http://invisible-island.net/ncurses/man/terminfo.5.html">terminfo.5</a></li>
+</ul>
+<p>特定の TERM に対する terminfo のエスケープシーケンスの定義などは、</p>
+<pre class="agh-prog-bash">infcmp cygwin</pre>
+<p class="resume">等として見る事ができる。</p>
+
+<!--===================================================================================-->
+<h2>制御シーケンス 一般論</h2>
+
+<p>制御コード・制御シーケンス (エスケープシーケンス) とは、
+端末などでの文字列の交換(やりとり)に於いて、
+通常の文字列の中に埋め込まれる「特別な情報を符号化したバイト列」の事である。
+制御シーケンスは、</p>
+<ul>
+<li>"スペース・タブ・改行・改頁・カーソル移動" など文字列の配置に関する制御</li>
+<li>"通信の開始・終了" や "文字コードの切替" などの通信自体に関する制御</li>
+<li>"文字の色・字体・背景色・下線・記号" などの文字列の修飾に関する制御</li>
+<li>"カーソルキー・Functionキー・テンキー・マウス操作" などの特別な入力に関する制御</li>
+<li>"文字の表示領域のサイズ・ウィンドウのタイトルの通知・変更" などの制御</li>
+<li>その他、様々な特別な機能の制御</li>
+</ul>
+<p class="resume">等に用いられる。
+また、これらの制御コード・制御シーケンスは入力 (端末から送られるバイト列) の中で使われる場合と、
+出力 (プログラムから吐き出されるバイト列) の中で使われる場合で意味が異なる場合がある事に注意する必要がある。
+また、同じシーケンスであっても端末によって対応していなかったり、異なる機能が割り当てられていたりする事にも注意する。
+</p>
+
+<p>制御コード・制御シーケンスは以下に挙げるバイト(制御文字)で始まる。
+</p>
+
+<table class="normal center">
+<tr><th colspan="12">C0</th><th colspan="12">C1</th></tr>
+<tr>
+  <th>名称</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
+  <th>名称</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
+  <th>名称</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
+  <th>名称</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
+</tr>
+<tr>
+  <th>NUL</th><td>\x00</td><td>\000</td><td>0/0</td><td>^@</td><td></td>
+  <th>DLE</th><td>\x10</td><td>\020</td><td>1/0</td><td>^P</td><td></td>
+  <th>PAD</th><td>\x80</td><td>\200</td><td>8/0</td><td>&#x2325;^@</td><td></td>
+  <th class="markB">DCS</th><td>\x90</td><td>\220</td><td>9/0</td><td>&#x2325;^P</td><td></td>
+</tr>
+<tr>
+  <th>SOH</th><td>\x01</td><td>\000</td><td>0/1</td><td>^A</td><td></td>
+  <th>DC1</th><td>\x11</td><td>\020</td><td>1/1</td><td>^Q</td><td></td>
+  <th>HOP</th><td>\x81</td><td>\200</td><td>8/1</td><td>&#x2325;^A</td><td></td>
+  <th>PU1</th><td>\x91</td><td>\220</td><td>9/1</td><td>&#x2325;^Q</td><td></td>
+</tr>
+<tr>
+  <th>STX</th><td>\x02</td><td>\000</td><td>0/2</td><td>^B</td><td></td>
+  <th>DC2</th><td>\x12</td><td>\020</td><td>1/2</td><td>^R</td><td></td>
+  <th>BPH</th><td>\x82</td><td>\200</td><td>8/2</td><td>&#x2325;^B</td><td></td>
+  <th>PU2</th><td>\x92</td><td>\220</td><td>9/2</td><td>&#x2325;^R</td><td></td>
+</tr>
+<tr>
+  <th>ETX</th><td>\x03</td><td>\000</td><td>0/3</td><td>^C</td><td></td>
+  <th>DC3</th><td>\x13</td><td>\020</td><td>1/3</td><td>^S</td><td></td>
+  <th>NBH</th><td>\x83</td><td>\200</td><td>8/3</td><td>&#x2325;^C</td><td></td>
+  <th>STS</th><td>\x93</td><td>\220</td><td>9/3</td><td>&#x2325;^S</td><td></td>
+</tr>
+<tr>
+  <th>EOT</th><td>\x04</td><td>\000</td><td>0/4</td><td>^D</td><td></td>
+  <th>DC4</th><td>\x14</td><td>\020</td><td>1/4</td><td>^T</td><td></td>
+  <th>IND</th><td>\x84</td><td>\200</td><td>8/4</td><td>&#x2325;^D</td><td></td>
+  <th>CCH</th><td>\x94</td><td>\220</td><td>9/4</td><td>&#x2325;^T</td><td></td>
+</tr>
+<tr>
+  <th>ENQ</th><td>\x05</td><td>\000</td><td>0/5</td><td>^E</td><td></td>
+  <th>NAK</th><td>\x15</td><td>\020</td><td>1/5</td><td>^U</td><td></td>
+  <th>NEL</th><td>\x85</td><td>\200</td><td>8/5</td><td>&#x2325;^E</td><td></td>
+  <th>MW</th> <td>\x95</td><td>\220</td><td>9/5</td><td>&#x2325;^U</td><td></td>
+</tr>
+<tr>  
+  <th>ACK</th><td>\x06</td><td>\000</td><td>0/6</td><td>^F</td><td></td>
+  <th>SYN</th><td>\x16</td><td>\020</td><td>1/6</td><td>^V</td><td></td>
+  <th>SSA</th><td>\x86</td><td>\200</td><td>8/6</td><td>&#x2325;^F</td><td></td>
+  <th>SPA</th><td>\x96</td><td>\220</td><td>9/6</td><td>&#x2325;^V</td><td></td>
+</tr>
+<tr>
+  <th>BEL</th><td>\x07</td><td>\000</td><td>0/7</td><td>^G</td><td>\a</td>
+  <th>ETB</th><td>\x17</td><td>\020</td><td>1/7</td><td>^W</td><td></td>
+  <th>ESA</th><td>\x87</td><td>\200</td><td>8/7</td><td>&#x2325;^G</td><td></td>
+  <th>EPA</th><td>\x97</td><td>\220</td><td>9/7</td><td>&#x2325;^W</td><td></td>
+</tr>
+
+<tr>
+  <th>BS</th> <td>\x08</td><td>\010</td><td>0/8</td><td>^H</td><td>\b</td>
+  <th>CAN</th><td>\x18</td><td>\030</td><td>1/8</td><td>^X</td><td></td>
+  <th>HTS</th><td>\x88</td><td>\210</td><td>8/8</td><td>&#x2325;^H</td><td></td>
+  <th>SOS</th><td>\x98</td><td>\230</td><td>9/8</td><td>&#x2325;^X</td><td></td>
+</tr>
+<tr>
+  <th>HT</th> <td>\x09</td><td>\011</td><td>0/9</td><td>^I</td><td>\t</td>
+  <th>EM</th> <td>\x19</td><td>\031</td><td>1/9</td><td>^Y</td><td></td>
+  <th>HTJ</th><td>\x89</td><td>\211</td><td>8/9</td><td>&#x2325;^I</td><td></td>
+  <th>SGCI</th><td>\x99</td><td>\231</td><td>9/9</td><td>&#x2325;^Y</td><td></td>
+</tr>
+<tr>
+  <th>LF</th> <td>\x0A</td><td>\012</td><td>0/10</td><td>^J</td><td>\n</td>
+  <th>SUB</th><td>\x1A</td><td>\032</td><td>1/10</td><td>^Z</td><td></td>
+  <th>VTS</th><td>\x8A</td><td>\212</td><td>8/10</td><td>&#x2325;^J</td><td></td>
+  <th>SCI<br/>DECID</th><td>\x9A</td><td>\232</td><td>9/10</td><td>&#x2325;^Z</td><td></td>
+</tr>
+<tr>
+  <th>VT</th> <td>\x0B</td><td>\013</td><td>0/11</td><td>^K</td><td>\v</td>
+  <th class="markB">ESC</th><td>\x1B</td><td>\033</td><td>1/11</td><td>^[</td><td>\e</td>
+  <th>PLD</th><td>\x8B</td><td>\213</td><td>8/11</td><td>&#x2325;^K</td><td></td>
+  <th class="markB">CSI</th><td>\x9B</td><td>\233</td><td>9/11</td><td>&#x2325;^[</td><td></td>
+</tr>
+<tr>
+  <th>FF</th> <td>\x0C</td><td>\014</td><td>0/12</td><td>^L</td><td>\f</td>
+  <th>FS</th> <td>\x1C</td><td>\034</td><td>1/12</td><td>^\</td><td></td>
+  <th>PLU</th><td>\x8C</td><td>\214</td><td>8/12</td><td>&#x2325;^L</td><td></td>
+  <th>ST</th><td>\x9C</td><td>\234</td><td>9/12</td><td>&#x2325;^\</td><td></td>
+</tr>
+<tr>
+  <th>CR</th> <td>\x0D</td><td>\015</td><td>0/13</td><td>^M</td><td>\r</td>
+  <th>GS</th> <td>\x1D</td><td>\035</td><td>1/13</td><td>^]</td><td></td>
+  <th>RI</th><td>\x8D</td><td>\215</td><td>8/13</td><td>&#x2325;^M</td><td></td>
+  <th class="markB">OSC</th><td>\x9D</td><td>\235</td><td>9/13</td><td>&#x2325;^]</td><td></td>
+</tr>
+<tr>
+  <th>SO</th> <td>\x0E</td><td>\016</td><td>0/14</td><td>^N</td><td></td>
+  <th>RS</th> <td>\x1E</td><td>\036</td><td>1/14</td><td>^^</td><td></td>
+  <th>SS2</th><td>\x8E</td><td>\216</td><td>8/14</td><td>&#x2325;^N</td><td></td>
+  <th class="markB">PM</th><td>\x9E</td><td>\236</td><td>9/14</td><td>&#x2325;^^</td><td></td>
+</tr>
+<tr>
+  <th>SI</th> <td>\x0F</td><td>\017</td><td>0/15</td><td>^O</td><td></td>
+  <th>US</th><td>\x1F</td><td>\037</td><td>1/15</td><td>^_</td><td></td>
+  <th>SS3</th><td>\x8F</td><td>\217</td><td>8/15</td><td>&#x2325;^O</td><td></td>
+  <th class="markB">APC</th><td>\x9F</td><td>\237</td><td>9/15</td><td>&#x2325;^_</td><td></td>
+</tr>
+
+<tr><th colspan="12">GL</th></tr>
+<tr>
+  <th>SP</th><td>\x20</td><td>\040</td><td>2/0</td><td>&#x2423;</td><td></td>
+  <th>DEL</th><td>\x7F</td><td>\177</td><td>7/15</td><td>^?</td><td></td>
+</tr>
+</table>
+
+<ul>
+<li>C0, C1, GL 等とした物は、バイト値のグループ分けの事で、
+  [0x00, 0x20) の範囲の文字の集合を <dfn>C0</dfn> (ASCII control characters) と呼び、
+  [0x80, 0xA0) の範囲の文字の集合を <dfn>C1</dfn> (8-bit control characters) と呼ぶ。
+  この C0 C1 の二つの文字の集合を総称して<dfn>制御文字</dfn> (control character, 制御キャラクタ, 制御機能文字) と呼ぶ。
+  一方で、[0x20,0x80) の範囲のバイトの集合を <dfn>GL</dfn> と呼び、
+  [0xA0,0xFF] の範囲のバイトの集合を <dfn>GR</dfn> (8-bit graphic code) と呼ぶ。
+  GL のバイトには通常、キーボードの表面に印刷されている様な普通の文字 (ASCII文字) が割り当てられている。
+  GR のバイトには文字集合 (character set) に応じて様々な文字が割り当てられる。
+  GL GR に割り当てられる文字を総称して<dfn>図形文字</dfn> (graphic character) と呼ぶ。
+  但し、特に GL に属する SP 及び DEL については、
+  制御文字的な性格が多少あるので上の表の隅に載せた。
+</li>
+<li>制御文字の中でも、或る物は単独で一つの意味を持ち、
+  或る物は後続するバイト列と一連の系列を為して一つ意味を持つ。
+  特に、単独で意味を為す制御文字を<dfn>制御コード</dfn> (control code) と呼び、
+  複数バイトで一つの意味を為す系列を<dfn>制御シーケンス</dfn> (control sequence, 制御系列)
+  または <dfn>エスケープシーケンス</dfn> (escape sequence) と呼ぶ。
+  表中で赤色で示した物が、制御シーケンスの先頭になる制御文字である。
+</li>
+<li>列の項目について
+  <ul>
+  <li>名称: ASCII 等で規定されている名称</li>
+  <li>16進, 8進, R/C: それぞれ、16進表記, 8進表記, IEO/IEC 2022 の行/列表記 で示している。</li>
+  <li>CN: Caret Notation. (但しここだけの表現として、C1 については &#x2325; を先頭に冠して表す。)</li>
+  <li>ES: 様々の言語の文字リテラルで用いられるエスケープ表現 (8進, 16進 以外の特別な物)</li>
+  <li></li>
+  </ul>
+</li>
+<li>References
+  <ul>
+  <li><a href="http://en.wikipedia.org/wiki/Control_code">Control character - Wikipedia, the free encyclopedia</a></li>
+  <li><a href="http://en.wikipedia.org/wiki/C0_and_C1_control_codes">C0 and C1 control codes - Wikipedia, the free encyclopedia</a></li>
+  <li><a href="http://ja.wikipedia.org/wiki/%E5%88%B6%E5%BE%A1%E6%96%87%E5%AD%97">制御文字 - Wikipedia</a></li>
+  <li></li>
+  <li><a href="http://www.wdic.org/w/WDIC/ISO/IEC%202022">ISO/IEC 2022 ‐ 通信用語の基礎知識</a></li>
+  <li><a href="http://ja.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia</a></li>
+  <li><a href="http://en.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia, the free encyclopedia</a></li>
+  <li><a href="http://isoreg.com/">::: ISO REG Quality Registrars Inc. :::: - HOME</a></li>
+  <li><a href="http://www.itscj.ipsj.or.jp/ISO-IR/">International Register of Coded Character Sets</a></li>
+  <li></li>
+  </ul>
+</li>
+</ul>
+
+<h3 id="acro.ESC"><dfn class="tfunc">ESC</dfn>: Escape</h3>
+<p>特に ESC で始まるシーケンスを(狭義)<dfn>エスケープシーケンス</dfn>と呼ぶ。
+以下に 2バイト目 (ESC の次のバイト) で分類した表を載せる。
+例によって赤色で示したのが、続きのバイト列を持つシーケンスである。
+</p>
+
+<table class="normal center">
+<tr><th>名称</th><th>Sequence</th>                 <th>Hex; 行/列</th>         <th>名称</th><th>Sequence</th>  <th>Hex; 行/列</th>         <th>名称</th><th>Sequence</th><th>Hex; 行/列</th>         </tr>
+<tr><th class="markB">ACS</th><td>ESC SP</td><td>\x1B\x20; 1/11 2/0</td> <th>---</th><td>ESC @</td>      <td>\x1B\x40; 1/11 4/0</td> <th>DMI</th><td>ESC `</td>    <td>\x1B\x60; 1/11 6/0</td> </tr>
+<tr><th class="markB">CZD</th>       <td>ESC !</td><td>\x1B\x21; 1/11 2/1</td> <th>---</th><td>ESC A</td>      <td>\x1B\x41; 1/11 4/1</td> <th>INT</th><td>ESC a</td>    <td>\x1B\x61; 1/11 6/1</td> </tr>
+<tr><th class="markB">C1D</th>       <td>ESC "</td><td>\x1B\x22; 1/11 2/2</td> <th>---</th><td>ESC B</td>      <td>\x1B\x42; 1/11 4/2</td> <th>EMI</th><td>ESC b</td>    <td>\x1B\x62; 1/11 6/2</td> </tr>
+<tr><th class="markB">(1B23+)</th>   <td>ESC #</td><td>\x1B\x23; 1/11 2/3</td> <th>---</th><td>ESC C</td>      <td>\x1B\x43; 1/11 4/3</td> <th>RIS</th><td>ESC c</td>    <td>\x1B\x63; 1/11 6/3</td> </tr>
+<tr><th class="markB">GnDMm</th>     <td>ESC $</td><td>\x1B\x24; 1/11 2/4</td> <th>IND</th><td>ESC D</td>      <td>\x1B\x44; 1/11 4/4</td> <th>CMD</th><td>ESC d</td>    <td>\x1B\x64; 1/11 6/4</td> </tr>
+<tr><th class="markB">DOCS</th>      <td>ESC %</td><td>\x1B\x25; 1/11 2/5</td> <th>NEL</th><td>ESC E</td>      <td>\x1B\x45; 1/11 4/5</td> <th>-R-</th><td>ESC e</td>    <td>\x1B\x65; 1/11 6/5</td> </tr>
+<tr><th class="markB">IRR</th>   <td>ESC &amp;</td><td>\x1B\x26; 1/11 2/6</td> <th>hpLowLeft</th><td>ESC F</td><td>\x1B\x46; 1/11 4/6</td> <th>-R-</th><td>ESC f</td>    <td>\x1B\x66; 1/11 6/6</td> </tr>
+<tr><th>-R-</th>                     <td>ESC '</td><td>\x1B\x27; 1/11 2/7</td> <th>---</th><td>ESC G</td>      <td>\x1B\x47; 1/11 4/7</td> <th>-R-</th><td>ESC g</td>    <td>\x1B\x67; 1/11 6/7</td> </tr>
+<tr><th class="markB">GZD4</th>      <td>ESC (</td><td>\x1B\x28; 1/11 2/8</td> <th>HTS</th><td>ESC H</td>      <td>\x1B\x48; 1/11 4/8</td> <th>-R-</th><td>ESC h</td>    <td>\x1B\x68; 1/11 6/8</td> </tr>
+<tr><th class="markB">G1D4</th>      <td>ESC )</td><td>\x1B\x29; 1/11 2/9</td> <th>---</th><td>ESC I</td>      <td>\x1B\x49; 1/11 4/9</td> <th>-R-</th><td>ESC i</td>    <td>\x1B\x69; 1/11 6/9</td> </tr>
+<tr><th class="markB">G2D4</th>      <td>ESC *</td><td>\x1B\x2A; 1/11 2/10</td><th>---</th><td>ESC J</td>      <td>\x1B\x4A; 1/11 4/10</td><th>-R-</th><td>ESC j</td>    <td>\x1B\x6A; 1/11 6/10</td></tr>
+<tr><th class="markB">G3D4</th>      <td>ESC +</td><td>\x1B\x2B; 1/11 2/11</td><th>---</th><td>ESC K</td>      <td>\x1B\x4B; 1/11 4/11</td><th>LS1R</th><td>ESC k</td>   <td>\x1B\x6B; 1/11 6/11</td></tr>
+<tr>
+  <th>-R-</th>                  <td>ESC ,</td><td>\x1B\x2C; 1/11 2/12</td>
+  <th>---</th>                  <td>ESC L</td><td>\x1B\x4C; 1/11 4/12</td>
+  <th>hpMemUnlk<br/>LS2R</th>   <td>ESC l</td><td>\x1B\x6C; 1/11 6/12</td>
+</tr>
+<tr>
+  <th class="markB">G1D6</th>   <td>ESC -</td><td>\x1B\x2D; 1/11 2/13</td>
+  <th>RI</th>                   <td>ESC M</td><td>\x1B\x4D; 1/11 4/13</td>
+  <th>hpMemLk<br/>LS3R</th>     <td>ESC m</td><td>\x1B\x6D; 1/11 6/13</td>
+</tr>
+<tr><th class="markB">G2D6</th>      <td>ESC .</td><td>\x1B\x2E; 1/11 2/14</td><th>SS2</th><td>ESC N</td>     <td>\x1B\x4E; 1/11 4/14</td><th>LS2</th><td>ESC n</td>    <td>\x1B\x6E; 1/11 6/14</td></tr>
+<tr><th class="markB">G3D6</th>      <td>ESC /</td><td>\x1B\x2F; 1/11 2/15</td><th>SS3</th><td>ESC O</td>     <td>\x1B\x4F; 1/11 4/15</td><th>LS3</th><td>ESC o</td>    <td>\x1B\x6F; 1/11 6/15</td></tr>
+
+<tr><th>名称</th><th>Sequence</th>   <th>Hex; 行/列</th>         <th>名称</th><th>Sequence</th><th>Hex; 行/列</th>                   <th>名称</th><th>Sequence</th> <th>Hex; 行/列</th>         </tr>
+<tr><th>---</th><td>ESC 0</td>       <td>\x1B\x30; 1/11 3/0</td> <th class="markB">DSC</th><td>ESC P</td><td>\x1B\x50; 1/11 5/0</td> <th>PCD</th><td>ESC p</td>     <td>\x1B\x70; 1/11 7/0</td> </tr>
+<tr><th>---</th><td>ESC 1</td>       <td>\x1B\x31; 1/11 3/1</td> <th>---</th>              <td>ESC Q</td><td>\x1B\x51; 1/11 5/1</td> <th>-R-</th><td>ESC q</td>     <td>\x1B\x71; 1/11 7/1</td> </tr>
+<tr><th>---</th><td>ESC 2</td>       <td>\x1B\x32; 1/11 3/2</td> <th>---</th>              <td>ESC R</td><td>\x1B\x52; 1/11 5/2</td> <th>-R-</th><td>ESC r</td>     <td>\x1B\x72; 1/11 7/2</td> </tr>
+<tr><th>---</th><td>ESC 3</td>       <td>\x1B\x33; 1/11 3/3</td> <th>---</th>              <td>ESC S</td><td>\x1B\x53; 1/11 5/3</td> <th>-R-</th><td>ESC s</td>     <td>\x1B\x73; 1/11 7/3</td> </tr>
+<tr><th>---</th><td>ESC 4</td>       <td>\x1B\x34; 1/11 3/4</td> <th>---</th>              <td>ESC T</td><td>\x1B\x54; 1/11 5/4</td> <th>-R-</th><td>ESC t</td>     <td>\x1B\x74; 1/11 7/4</td> </tr>
+<tr><th>---</th><td>ESC 5</td>       <td>\x1B\x35; 1/11 3/5</td> <th>---</th>              <td>ESC U</td><td>\x1B\x55; 1/11 5/5</td> <th>-R-</th><td>ESC u</td>     <td>\x1B\x75; 1/11 7/5</td> </tr>
+<tr><th>---</th><td>ESC 6</td>       <td>\x1B\x36; 1/11 3/6</td> <th>SPA</th>              <td>ESC V</td><td>\x1B\x56; 1/11 5/6</td> <th>-R-</th><td>ESC v</td>     <td>\x1B\x76; 1/11 7/6</td> </tr>
+<tr><th>DECSC</th><td>ESC 7</td>       <td>\x1B\x37; 1/11 3/7</td> <th>EPA</th>            <td>ESC W</td><td>\x1B\x57; 1/11 5/7</td> <th>-R-</th><td>ESC w</td>     <td>\x1B\x77; 1/11 7/7</td> </tr>
+<tr><th>DECRC</th><td>ESC 8</td>       <td>\x1B\x38; 1/11 3/8</td> <th>SOS</th>            <td>ESC X</td><td>\x1B\x58; 1/11 5/8</td> <th>-R-</th><td>ESC x</td>     <td>\x1B\x78; 1/11 7/8</td> </tr>
+<tr><th>---</th><td>ESC 9</td>       <td>\x1B\x39; 1/11 3/9</td> <th>---</th>              <td>ESC Y</td><td>\x1B\x59; 1/11 5/9</td> <th>-R-</th><td>ESC y</td>     <td>\x1B\x79; 1/11 7/9</td> </tr>
+<tr><th>---</th><td>ESC :</td>       <td>\x1B\x3A; 1/11 3/10</td><th>DECID</th>            <td>ESC Z</td><td>\x1B\x5A; 1/11 5/10</td><th>-R-</th><td>ESC z</td>     <td>\x1B\x7A; 1/11 7/10</td></tr>
+<tr><th>---</th><td>ESC ;</td>       <td>\x1B\x3B; 1/11 3/11</td><th class="markB">CSI</th><td>ESC [</td><td>\x1B\x5B; 1/11 5/11</td><th>-R-</th><td>ESC {</td>     <td>\x1B\x7B; 1/11 7/11</td></tr>
+<tr><th>---</th><td>ESC &lt;</td>    <td>\x1B\x3C; 1/11 3/12</td><th>ST</th>               <td>ESC \</td><td>\x1B\x5C; 1/11 5/12</td><th>LS3R</th><td>ESC |</td>    <td>\x1B\x7C; 1/11 7/12</td></tr>
+<tr><th>DECKPAM</th><td>ESC =</td>   <td>\x1B\x3D; 1/11 3/13</td><th class="markB">OSC</th><td>ESC ]</td><td>\x1B\x5D; 1/11 5/13</td><th>LS2R</th><td>ESC }</td>    <td>\x1B\x7D; 1/11 7/13</td></tr>
+<tr><th>DECKPNM</th><td>ESC &gt;</td><td>\x1B\x3E; 1/11 3/14</td><th class="markB">PM</th> <td>ESC ^</td><td>\x1B\x5E; 1/11 5/14</td><th>LS1R</th><td>ESC ~</td>    <td>\x1B\x7E; 1/11 7/14</td></tr>
+<tr><th>---</th><td>ESC ?</td>       <td>\x1B\x3F; 1/11 3/15</td><th class="markB">APC</th><td>ESC _</td><td>\x1B\x5F; 1/11 5/15</td><th>-R-</th><td>ESC DEL</td>   <td>\x1B\x7F; 1/11 7/15</td></tr>
+</table>
+
+<ul>
+<li>ISO/IEC 2022 に従うと、
+  <ul>
+  <li>2バイト目が範囲 [\x30, \x40) にあるシーケンスは私用の為に保留されている。</li>
+  <li>2バイト目が範囲 [\x20, \x30) にあるシーケンスは、
+    主に ISO/IEC 2022 に基づく文字集合設定の為のエスケープシーケンスである。
+    但し、この組合せで始まるシーケンスの内でも、
+    [\x30, \x40) の文字で終端する物は私用の為に保留されている。
+  </li>
+  <li>2バイト目が範囲 [\x40, \x60) にあるシーケンスは、C1 の文字を 7bit で符号化するのに用いられる。
+    しかし、全ての C1 領域の符号が現代に於いて使われているとは限らず、
+    実際の端末・端末エミュレータにおいては、
+    歴史的な背景から、この領域の特定の文字に別の機能を割り当てている事がある。
+  </li>
+  <li>2バイト目が範囲 [\x60, \x80) にあるシーケンス及び SS2, SS3 は、
+    主に ISO/IEC 2022 に基づく文字集合設定の為の制御である。
+  </li>
+  <li>-R- とした物は現在は規定されていないが、将来の規格変更・文字集合登録の為に予約されている。
+  </li>
+  <li>ESC k, ESC l, ESC m には昔は LS1R, LS2R, LS3R が与えられていたが、
+    現在は LS1R, LS2R, LS3R はそれぞれ ESC ~, ESC }, ESC | を用いる。
+    ただし、互換性の為に ESC k, ESC l, ESC m を認識する事もある。
+  </li>
+  </ul>
+</li>
+</ul>
+
+<h3><dfn class="tfunc" id="tfunc.1B23">(1B23+)</dfn>: (prefix)</h3>
+<p>ISO/IEC 2022 では ESC # に続くシーケンスは、登録単独制御機能 (registered single control function) とされている。
+一方で、歴史的には VT100 端末で、ESC # で始まるシーケンスが使われてきた。
+それらを以下に纏める。
+</p>
+<table class="normal center">
+<tr><th>名称</th>   <th>Sequence</th><th>Hex; 行/列</th></tr>
+<tr><th>RSCF</th>
+  <td>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></td>
+  <td>\x1B\x23<i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i>;
+    1/11 2/3 <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i>
+  </td>
+</tr>
+<tr><th>DECDHL</th> <td>ESC # 3</td> <td>\x1B\x23\x33; 1/11 2/3 3/3</td></tr>
+<tr><th>DECDHL</th> <td>ESC # 4</td> <td>\x1B\x23\x34; 1/11 2/3 3/4</td></tr>
+<tr><th>DECSWL</th> <td>ESC # 5</td> <td>\x1B\x23\x34; 1/11 2/3 3/4</td></tr>
+<tr><th>DECDWL</th> <td>ESC # 6</td> <td>\x1B\x23\x36; 1/11 2/3 3/6</td></tr>
+<tr><th>DECALN</th> <td>ESC # 8</td> <td>\x1B\x23\x38; 1/11 2/3 3/8</td></tr>
+</table>
+<p>但し、<i>&lt;I&gt;</i> は [0x20, 0x30) の範囲の文字であり、
+<i>&lt;Ft&gt;</i> は [0x40, 0x7F) の範囲の文字である。
+</p>
+
+<h3>その他のシーケンスの形式</h3>
+
+<table class="normal center">
+<tr><th>先頭</th><th>Sequence</th><th>名前</th></tr>
+<tr><th>CSI</th>
+  <td><code>CSI <i>&lt;Pi&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></code></td>
+  <td><dfn>制御シーケンス</dfn> (control sequence)</td>
+</tr>
+<tr><th>OSC</th>
+  <td><code>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> BEL</code><br/>
+  <code>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> ST</code>
+  </td>
+  <td>Operating System Command</td>
+</tr>
+<tr><th>DCS</th><td><code>DCS <strong>.*</strong> ST</code></td><td>Device Control String</td></tr>
+<tr><th>PM</th> <td><code>PM <strong>.*</strong> ST</code></td> <td>Private Message</td></tr>
+<tr><th>APC</th><td><code>APC <strong>.*</strong> ST</code></td><td>Application Program Command</td>
+</tr>
+</table>
+
+<ul>
+<li><dfn class="tfunc">CSI</dfn>: Constrol Sequence Introducer
+  <p>CSI (constrol sequence introducer) で始まるシーケンスを特に
+  <dfn>CSI シーケンス</dfn> (CSI sequence)
+  または (狭義)<dfn>制御シーケンス</dfn> (constrol sequence) と呼ぶ。
+  プログラムに端末の特別な操作・状態・情報を送ったり (入力)、
+  プログラムから端末の状態を制御する命令を送ったり (出力) するのに用いられる。
+  </p>
+  <p>CSI は "ESC [" &lt;x1B x5B&gt; (または &lt;x9B&gt;) で表現される。
+  CSI は本来は C1 集合の &lt;x9B&gt; であるが、
+  UTF-8 を例として、文字コードによっては &lt;0x9B&gt; は通常の文字を表現するバイトである為(?)、
+  現在では &lt;x9B&gt; が用いられる事は少なく、専ら &lt;x1B x5B&gt; が用いられる。
+  今や &lt;x9B&gt; は CSI として解釈されない事も多い。
+  <i>&lt;Ft&gt;</i> は [\x40, \x7F) の範囲の文字を指定し、
+  この文字によって、その制御シーケンスが特にどの様な機能を持った物かを指定する。
+  それぞれの文字に対応する制御シーケンスの機能は、端末に依存する所が大きい。
+  これについては、後でまとめる事にする。
+  <i>&lt;Pi&gt;</i> は [\x20, \x40) の範囲の文字を表す。
+  <i>&lt;Pi&gt;</i><strong>*</strong> の部分は、
+  主に、文字 <i>&lt;Ft&gt;</i> で指定された機能に対する引数として働く。
+  多くの場合、<code>/|([0-9]+;)*[0-9]+/</code> の形式を持つ。
+  場合によっては、更に異なる機能を指定するのに用いられる。
+  詳しくは後述する。
+  </p>
+</li>
+<li><dfn class="tfunc">OSC</dfn>: Operating System Command
+  <p>OSC (operating system command) で始まるシーケンスは、
+  <dfn>DSC シーケンス</dfn> (DSC sequence) または <dfn>OS コマンド</dfn> (operating system command) と呼ばれる。
+  DSC シーケンスは、主に端末エミュレータのウィンドウの制御 (出力)・状態報告 (入力) などに用いられる。
+  </p>
+  <p>OSC は "ESC ]" &lt;x1B x5D&gt; (または &lt;x9D&gt;) で表現される。
+  CSI と同様の事情で現在は &lt;x1B x5D&gt; が用いられる。
+  <i>&lt;N&gt;</i> は [0-9] の文字を表す。
+  <i>N</i><strong>*</strong> はコマンドの種類を指定する番号である。
+  後に続く <strong>.*</strong> の部分は、コマンドの引数として与える文字列である。
+  BEL &lt;x07&gt; または ST &lt;x1b x5c&gt; (または &lt;x9c&gt;) はコマンドの終端を表す。
+  (従って、当然ながら文字列 <strong>.*</strong> には BEL 及び ST を含ませる事はできない。)
+  </p>
+</li>
+<li><dfn class="tfunc">DCS</dfn>: Device Control String
+  <p>DCS で始まるシーケンスは <dfn>DCS シーケンス</dfn> (DCS sequence)
+  または Device Control String と呼ばれる。
+  DCS は "ESC P" &lt;x1b x50&gt; (または &lt;x90&gt;) で表現される。
+  CSI と同様に現在は &lt;x1B x50&gt; を用いる。
+  <strong>.*</strong> に内容を記述する。
+  ST &lt;x1B x5C&gt; (または &lt;x9C&gt;) はシーケンスの終端を表す。
+  </p>
+</li>
+<li><dfn class="tfunc">PM</dfn>: Private Message
+  <p>PM で始まるシーケンスは <dfn>PM シーケンス</dfn> (PM sequence)
+  または Private Message と呼ばれる。
+  PM は "ESC ^" &lt;x1B x5E&gt; (または &lt;x9E&gt;) で表現される。
+  CSI と同様に現在は &lt;x1B x5E&gt; を用いる。
+  <strong>.*</strong> に内容を記述する。
+  ST &lt;x1B x5C&gt; (または &lt;x9C&gt;) はシーケンスの終端を表す。
+  </p>
+</li>
+<li><dfn class="tfunc">APC</dfn>: Application Program Command
+  <p>APC で始まるシーケンスは <dfn>APC シーケンス</dfn> (APC sequence)
+  または Private Message と呼ばれる。
+  APC は "ESC _" &lt;x1B x5F&gt; (または &lt;x9F&gt;) で表現される。
+  CSI と同様に現在は &lt;x1B x5F&gt; を用いる。
+  <strong>.*</strong> に内容を記述する。
+  ST &lt;x1B x5C&gt; (または &lt;x9C&gt;) はコマンドの終端を表す。
+  </p>
+</li>
+</ul>
+
+<!--===================================================================================-->
+<h2>エスケープシーケンス表</h2>
+<table class="normal center">
+<tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
+<tr><td><code>\e[<strong>#</strong>A</code></td><td>指定した数だけ上へ移動。0 は 1 と解釈</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#</strong>B</code></td><td>指定した数だけ下へ移動。0 は 1 と解釈</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#</strong>C</code></td><td>指定した数だけ右へ移動。0 は 1 と解釈</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#</strong>D</code></td><td>指定した数だけ左へ移動。0 は 1 と解釈</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#</strong>L</code></td><td>指定した行数だけ空白行を挿入。0 は 1 と解釈</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#</strong>M</code></td><td>指定した行数だけ行を削除して抜き去る。0 は 1 と解釈</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#;#</strong>H</code></td><td>指定した行・列へ移動する。行番号・列番号は 1 から始まる。0 は 1 と解釈</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#;#</strong>f</code></td><td>指定した行・列へ移動する。行番号・列番号は 1 から始まる。0 は 1 と解釈</td><td>O</td></tr>
+<tr><td><code>\e[s</code></td><td>現在位置を記録</td><td>O</td></tr>
+<tr><td><code>\e[u</code></td><td>\e[s で設定した位置に戻る</td><td>O</td></tr>
+<tr><td><code>\e7</code></td><td>現在位置と描画属性を記録</td><td>O</td></tr>
+<tr><td><code>\e8</code></td><td>\e7 で設定した位置・属性に戻る</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#</strong>J</code></td>
+  <td>行の消去 (カーソルの位置は不変)
+    <ul>
+    <li>引数 0: 現在行より下にある行を全て空白で埋める。</li>
+    <li>引数 1: 現在行、及びそれより上にある行を全て空白で埋める。</li>
+    <li>引数 2: バッファ内の文字を全て空白で埋める。</li>
+    </ul>
+  </td><td>O</td>
+</tr>
+<tr><td><code>\e[<strong>#</strong>K</code></td>
+  <td>文字の消去 (カーソルの位置は不変)
+    <ul>
+    <li>引数 0: 現在の文字、及びそれより右にある文字を全て空白で埋める。</li>
+    <li>引数 1: 現在の文字、及びそれより左にある文字を全て空白で埋める。</li>
+    <li>引数 2: 行の内容を消去。</li>
+    </ul>
+  </td><td>O</td>
+</tr>
+<tr><td><code>\e*</code></td><td>全て消去</td><td>O</td></tr>
+</table>
+<p>何れも引数として 0 (省略) を指定した場合には、指定量は 1 と解釈する。</p>
+<!--
+m.コンソール入力, ESC[6n
+
+e.面クリ, ESC*
+f.面クリ, CLS 　このコマンドはバッチファイルのみに利用できる。
+g.右消す, ESC[0K
+h.右消す, ESC[K
+i.左消す, ESC[1K
+j.行消す, ESC[2K 
+
+-->
+
+<table class="normal center">
+<tr><th>Control</th><th>ESC Sequence</th><th>環境</th><th>名称</th><th>説明</th></tr>
+<tr><td>\x84</td><td><code>\eD</code></td><td></td><td>IND</td><td>Index: Move/scroll window up one line. カーソルを下へ移動。もし一番下にいるならば新しい行を先頭に挿入。</td></tr>
+<tr><td>\x8d</td><td><code>\eM</code></td><td></td><td>RI</td> <td>Reverse Index: Move/scroll window down one line. カーソルを上へ移動。もし一番上にいるならば新しい行を先頭に挿入。</td></tr>
+<tr><td>\x85</td><td><code>\eE</code></td><td></td><td>NEL</td><td>Next Line: Move to next line. 次の行の先頭へ移動</td></tr>
+<tr><td>\x88</td><td><code>\eH</code></td><td></td><td>HTS</td><td>Horizontal Tab Set: Tab set</td></tr>
+<tr><td>\x8E</td><td><code>\eN</code></td><td></td><td>SS2</td><td>Single Shift 2: 後述</td></tr>
+<tr><td>\x8F</td><td><code>\eO</code></td><td></td><td>SS3</td><td>Single Shift 3: 後述</td></tr>
+<tr><td>\x90</td><td><code>\eP</code></td><td></td><td>DCS</td><td></td></tr>
+<tr><td>\x96</td><td><code>\eV</code></td><td></td><td>SPA</td><td></td></tr>
+<tr><td>\x97</td><td><code>\eW</code></td><td></td><td>EPA</td><td></td></tr>
+<tr><td>\x98</td><td><code>\eX</code></td><td></td><td>SOS</td><td></td></tr>
+<tr><td>\x9A</td><td><code>\eZ</code></td><td></td><td>DECID</td><td></td></tr>
+<tr><td>\x9B</td><td><code>\e[</code></td><td></td><td>CSI</td><td></td></tr>
+<tr><td>\x9C</td><td><code>\e\\</code></td><td></td><td>ST</td><td></td></tr>
+<tr><td>\x9D</td><td><code>\e]</code></td><td></td><td>OSC</td><td></td></tr>
+<tr><td>\x9E</td><td><code>\e^</code></td><td></td><td>PM</td><td></td></tr>
+<tr><td>\x9F</td><td><code>\e_</code></td><td></td><td>APC</td><td></td></tr>
+</table>
+
+<!--...................................................................................-->
+<h3>SGR (Select Graphic Rendition)</h3>
+<table class="normal center">
+<tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
+<tr><td><code>\e[<strong>#;...;#</strong>m</code></td><td>描画モードを設定</td><td>O</td></tr>
+</table>
+<p>引数には、以下の物を零個以上指定する事ができる。
+何も指定しない場合、0 を指定した事になる。</p>
+<table class="normal center">
+<tr>
+  <th colspan="3"> 0 番台</th>
+  <th colspan="3">10 番台</th>
+  <th colspan="3">20 番台</th>
+</tr>
+<tr>
+  <th>番号</th><th>説明</th><th>実装</th>
+  <th>番号</th><th>説明</th><th>実装</th>
+  <th>番号</th><th>説明</th><th>実装</th>
+</tr>
+<tr>
+  <td> 0</td><td>既定</td><td>O</td>
+  <td>10</td><td>(既定フォント) / (ASCII Charset [SCO])</td><td>無視</td>
+  <td>20</td><td>(Fraktur) / (前景色 G)</td><td></td>
+</tr>
+<tr>
+  <td> 1</td><td>前景色 明 / 太字有効</td><td>前景色 明</td>
+  <td>11</td><td>(フォント1) / (Map 00-7F [SCO])</td><td>無視</td>
+  <td>21</td><td>(前景色 暗) / (二重下線) / (前景色 Y)</td><td>二重下線</td>
+</tr>
+<tr>
+  <td> 2</td><td>前景色 暗 / 縦線</td><td>前景色 暗</td>
+  <td>12</td><td>(フォント2) / (Map 80-FF [SCO])</td><td>無視</td>
+  <td>22</td><td>既定色 / 太字無効 / (前景色 C)</td><td>既定色</td>
+</tr>
+<tr>
+  <td> 3</td><td>(イタリック) / (反転)</td><td>X</td>
+  <td>13</td><td>(フォント3)</td><td></td>
+  <td>23</td><td>(イタリック/Fraktur 無効) / (前景色 白)</td><td></td>
+</tr>
+<tr>
+  <td> 4</td><td>下線有効</td><td>O</td>
+  <td>14</td><td>(フォント4)</td><td></td>
+  <td>24</td><td>下線無効</td><td>下線・二重線無効</td>
+</tr>
+<tr>
+  <td> 5</td><td>点滅有効 / 背景色 明</td><td>背景色 明</td>
+  <td>15</td><td>(フォント5)</td><td></td>
+  <td>25</td><td>点滅無効 / 背景色 暗</td><td>背景色 暗</td>
+</tr>
+<tr>
+  <td> 6</td><td>(速い点滅)</td><td>太字有効</td>
+  <td>16</td><td>(フォント6) / (不可視)</td><td></td>
+  <td>26</td><td></td><td>太字無効</td>
+</tr>
+<tr>
+  <td> 7</td><td>反転有効</td><td>O</td>
+  <td>17</td><td>(フォント7) / (前景色 R)</td><td></td>
+  <td>27</td><td>反転無効</td><td>O</td>
+</tr>
+<tr>
+  <td> 8</td><td>(不可視有効)</td><td></td>
+  <td>18</td><td>(フォント8) / (前景色 B)</td><td></td>
+  <td>28</td><td>不可視無効</td><td></td>
+</tr>
+<tr>
+  <td> 9</td><td>(打消線有効)</td><td>O</td>
+  <td>19</td><td>(フォント9) / (前景色 M)</td><td></td>
+  <td>29</td><td>(打消線無効)</td><td>O</td>
+</tr>
+<tr>
+  <th colspan="3">30 番台</th>
+  <th colspan="3">40 番台</th>
+  <th colspan="3">50 番台</th>
+</tr>
+<tr>
+  <th>番号</th><th>説明</th><th>実装</th>
+  <th>番号</th><th>説明</th><th>実装</th>
+  <th>番号</th><th>説明</th><th>実装</th>
+</tr>
+<tr>
+  <td>30</td><td>前景色 黒</td><td>O</td>
+  <td>40</td><td>背景色 黒</td><td>O</td>
+  <td>50</td><td></td><td></td>
+</tr>
+<tr>
+  <td>31</td><td>前景色 R</td><td>O</td>
+  <td>41</td><td>背景色 R</td><td>O</td>
+  <td>51</td><td>枠線 四角</td><td>X</td>
+</tr>
+<tr>
+  <td>32</td><td>前景色 G</td><td>O</td>
+  <td>42</td><td>背景色 G</td><td>O</td>
+  <td>52</td><td>枠線 丸</td><td>X</td>
+</tr>
+<tr>
+  <td>33</td><td>前景色 Y</td><td>O</td>
+  <td>43</td><td>背景色 Y</td><td>O</td>
+  <td>53</td><td>上線有効</td><td>O</td>
+</tr>
+<tr>
+  <td>34</td><td>前景色 B</td><td>O</td>
+  <td>44</td><td>背景色 B</td><td>O</td>
+  <td>54</td><td>枠線 無し</td><td>X</td>
+</tr>
+<tr>
+  <td>35</td><td>前景色 M</td><td>O</td>
+  <td>45</td><td>背景色 M</td><td>O</td>
+  <td>55</td><td>上線無効</td><td>O</td>
+</tr>
+<tr>
+  <td>36</td><td>前景色 C</td><td>O</td>
+  <td>46</td><td>背景色 C</td><td>O</td>
+  <td>56</td><td></td><td></td>
+</tr>
+<tr>
+  <td>37</td><td>前景色 白</td><td>O</td>
+  <td>47</td><td>背景色 白</td><td>O</td>
+  <td>57</td><td></td><td></td>
+</tr>
+<tr>
+  <td>38</td><td>前景色 ※</td><td>O</td>
+  <td>48</td><td>背景色 ※</td><td>O</td>
+  <td>58</td><td></td><td></td>
+</tr>
+<tr>
+  <td>39</td><td>前景色 既定</td><td>O</td>
+  <td>49</td><td>背景色 既定</td><td>O</td>
+  <td>59</td><td></td><td></td>
+</tr>
+</table>
+<p>他</p>
+<ul>
+<li>90-97 明前景色; 100-107 明背景色; 100 (rxvt) 既定色</li>
+<li>60 ideogram underline or right side line (傍線)</li>
+<li>61 ideogram double underline or double line on the right side (二重傍線)</li>
+<li>62 ideogram overline or left side line (左傍線)</li>
+<li>63 ideogram double overline or double line on the left side (左二重傍線)</li>
+<li>64 ideogram stress marking (傍点)</li>
+</ul>
+<p>38 と 48 は特殊である。後に続く二つの引数を使用して、前景色/背景色を指定する。</p>
+<table class="normal center">
+<tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
+<tr><td><code>\e[38;5;<strong>#</strong>m</code></td><td>前景色 xterm 256 色見本から選択</td><td>O</td></tr>
+<tr><td><code>\e[48;5;<strong>#</strong>m</code></td><td>背景色 xterm 256 色見本から選択</td><td>O</td></tr>
+</table>
+<!--
+OSC#\a
+<li>110 Reset VT100 text foreground color.</li>
+<li>111 Reset VT100 text background color.</li>
+<li>112 Reset text cursor color.</li>
+<li>113 Reset mouse foreground color.</li>
+<li>114 Reset mouse background color.</li>
+<li>115 Reset Tektronix foreground color.</li>
+<li>116 Reset Tektronix background color.</li>
+<li>117 Reset highlight color.</li>
+<li>118 Reset Tektronix cursor color.</li>
+-->
+<!--...................................................................................-->
+<h3>Set/Reset Mode</h3>
+<table class="normal center">
+<tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
+<tr><td><code>\e[<strong>*</strong>h</code></td><td>有効にする</td><td>O</td></tr>
+<tr><td><code>\e[<strong>*</strong>l</code></td><td>無効にする</td><td>O</td></tr>
+</table>
+<p>引数には、以下の物の中から一つ指定する。</p>
+<table class="normal center">
+<colgroup>
+  <col span="3" />
+  <col style="width:40%;" />
+  <col style="width:40%;" />
+</colgroup>
+<tr><th>引数</th><th>環境</th><th>名称</th><th>有効</th><th>無効</th><th>実装</th></tr>
+<!--
+<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
+<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
+<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
+<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
+<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
+<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
+<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
+
+
+-->
+<tr><td>1</td>     <td class="markA">-</td><td>GATM</td> <td>Guarded area transfer</td><td></td><td></td></tr>
+<tr><td>2</td>     <td>x</td><td>AM/KAM</td>             <td>Keyboard Action Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>3</td>     <td>v</td><td>CRM</td>                <td>Show Control Character Mode</td><td class="markB">Hide Control Characters.</td><td></td></tr>
+<tr><td>4</td>     <td>x</td><td>IRM</td>                <td>Insert Mode</td><td class="markB"></td><td>@</td></tr>
+<tr><td>5</td>     <td class="markA">-</td><td>SRTM</td> <td>Status reporting transfer</td><td></td><td></td></tr>
+<tr><td>7</td>     <td>?</td><td></td>                   <td>行折返し有効</td><td>行折返し無効</td><td>X</td></tr>
+<tr><td>7</td>     <td class="markA">-</td><td>VEM</td>  <td>Vertical editing</td><td></td><td>X</td></tr>
+<tr><td>10</td>    <td class="markA">-</td><td>HEM</td>  <td>Horiz editing</td><td></td><td>X</td></tr>
+<tr><td>11</td>    <td class="markA">-</td><td>PUM</td>  <td>Positioning unit</td><td></td><td>X</td></tr>
+<tr><td>12</td>    <td>vx</td><td>SRM</td>               <td class="markB">Send/receive Mode</td><td>Local Echo on</td><td></td></tr>
+<tr><td>13</td>    <td class="markA">-</td><td>FEAM</td> <td>Format effector action</td><td></td><td>X</td></tr>
+<tr><td>14</td>    <td class="markA">-</td><td>FETM</td> <td>Format effector transfer</td><td></td><td>X</td></tr>
+<tr><td>15</td>    <td class="markA">-</td><td>MATM</td> <td>Multiple area transfer</td><td></td><td>X</td></tr>
+<tr><td>16</td>    <td class="markA">-</td><td>TTM</td>  <td>Transfer termination</td><td></td><td>X</td></tr>
+<tr><td>17</td>    <td class="markA">-</td><td>SATM</td> <td>Selected area transfer</td><td></td><td>X</td></tr>
+<tr><td>18</td>    <td class="markA">-</td><td>TSM</td>  <td>Tabulation stop</td><td></td><td>X</td></tr>
+<tr><td>19</td>    <td class="markA">-</td><td>EBM</td>  <td>Editing boundary</td><td></td><td>X</td></tr>
+<tr><td>20</td>    <td>vx</td><td>LMN</td>       <td>Set new line mode (Automatic Newline)</td><td class="markB">Set line feed mode (Normal Linefeed)</td><td>X</td></tr>
+<tr><td>34</td>    <td>/putty</td><td></td>      <td>MakeCursorBig</td><td></td><td></td></tr>
+<tr><td>?1</td>    <td>vxr</td><td>DECCKM</td>   <td>Set cursor key to application (Application cursor key)</td><td>Set cursor key to cursor (Normal cursor key)</td><td>X</td></tr>
+<tr><td>?2</td>    <td>vx</td><td>DECANM</td>    <td>Set ANSI (versus VT52)</td><td>Set VT52 (versus ANSI)</td><td>X</td></tr>
+<tr><td>?3</td>    <td>vxr</td><td>DECCOLM</td>  <td>Set number of columns to 132</td><td class="markB">Set number of columns to 80</td><td>X</td></tr>
+<tr><td>?4</td>    <td>vx</td><td>DECSCLM</td>   <td class="markB">Set smooth scrolling</td><td>Set jump scrolling</td><td>X</td></tr>
+<tr><td>?5</td>    <td>vxr</td><td>DECSCNM</td>  <td>Set reverse video on screen</td><td class="markB">Set normal video on screen</td><td>X</td></tr>
+<tr><td>?6</td>    <td>vxr</td><td>DECOM</td>    <td>Set origin to relative</td><td class="markB">Set origin to absolute</td><td>@</td></tr>
+<tr><td>?7</td>    <td>vxr</td><td>DECAWM</td>   <td>Set auto-wrap mode</td><td class="markB">Reset auto-wrap mode</td><td>@</td></tr>
+<tr><td>?8</td>    <td>vx</td><td>DECARM</td>    <td class="markB">Set auto-repeat mode</td><td>Reset auto-repeat mode</td><td>X</td></tr>
+<tr><td>?9</td>    <td>vxr</td><td>DECINLM</td>  <td>Set interlacing mode</td><td>Reset interlacing mode</td><td>X</td></tr>
+<tr><td>?10</td>   <td>rx</td><td></td>          <td>Show toolbar.</td><td>Hide toolbar.</td><td></td></tr>
+<tr><td>?12</td>   <td>x/att610</td><td></td>    <td>Start Blinking Cursor.</td><td>Stop Blinking Cursor.</td><td></td></tr>
+<tr><td>?18</td>   <td>vx</td><td>DECPFF</td>    <td>Print form feed.</td><td class="markB">Don’t print form feed.</td><td></td></tr>
+<tr><td>?19</td>   <td>vx</td><td>DECPEX</td>    <td>Set print extent to full screen.</td><td class="markB">Limit print to scrolling region.</td><td></td></tr>
+<tr><td>?25</td>   <td>4xr</td><td>DECTCEM</td>  <td class="markB">Show Cursor.</td><td>Hide Cursor.</td><td>@</td></tr>
+<tr><td>?30</td>   <td>rx</td><td></td>          <td>Show scrollbar.</td><td>Don’t show scrollbar.</td><td></td></tr>
+<tr><td>?34</td>   <td>5</td><td>DECRLM</td>     <td>Right-to-left Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?35</td>   <td>rx</td><td></td>          <td>Enable font-shifting functions.</td><td>Disable font-shifting functions.</td><td></td></tr>
+<tr><td>?35</td>   <td>4</td><td>DECHEBM</td>    <td>Hebrew Keyboard Map Mode (Hebrew Keyboard)</td><td class="markB">North American</td><td></td></tr>
+<tr><td>?36</td>   <td>4</td><td>DEMHEM</td>     <td class="markB">Hebrew Encoding Mode 8-bit char</td><td>Hebrew Encoding Mode 7-bit char</td><td></td></tr>
+<tr><td>?38</td>   <td>x</td><td>DECTEK</td>     <td>Enter Tektronix Mode.</td><td>-</td><td></td></tr>
+<tr><td>?40</td>   <td>xr</td><td></td>          <td>Allow 80 → 132 Mode.</td><td>Disallow 80 → 132 Mode.</td><td></td></tr>
+<tr><td>?41</td>   <td>x</td><td></td>           <td>more(1) fix (see curses resource).</td><td>No more(1) fix (see curses resource)</td><td></td></tr>
+<tr><td>?42</td>   <td>vx</td><td>DECNRCM</td>   <td>Enable National Replacement Character Set Mode.</td><td class="markB">Disable (Multinational)</td><td></td></tr>
+<tr><td>?44</td>   <td>x</td><td></td>           <td>Turn On Margin Bell.</td><td>Turn Off Margin Bell.</td><td></td></tr>
+<tr><td>?45</td>   <td>x</td><td></td>           <td>Reverse-wraparound Mode.</td><td>No Reverse-wraparound Mode.</td><td></td></tr>
+<tr><td>?46</td>   <td>x</td><td></td>           <td>Start Logging. This is normally disabled by a compile-time option.</td><td>Stop Logging. (This is normally disabled by a compile-time option).</td><td></td></tr>
+<tr><td>?47</td>   <td>xr</td><td></td>          <td>Use Alternate Screen Buffer. <br />(This may be disabled by the titeInhibit resource).</td><td>Use Normal Screen Buffer.</td><td></td></tr>
+<tr><td>?57</td>   <td>4</td><td>DECNAKB</td>    <td class="markB">North American/Greek Selection (North American)</td><td>Greek keyboard</td><td></td></tr>
+<tr><td>?58</td>   <td>5</td><td>DECIPEM</td>    <td>Enter/Return from IBM ProPrinter Emulation Mode</td><td></td><td></td></tr>
+<tr><td>?60</td>   <td class="markA">-</td><td>DECHCCM</td><td>Horiz cursor coupling</td><td></td><td>X</td></tr>
+<tr><td>?61</td>   <td>4</td><td>DECVCCM</td>    <td class="markB">Vertical Cursor Coupling</td><td></td><td></td></tr>
+<tr><td>?64</td>   <td>4</td><td>DECPCCM</td>    <td class="markB">Page Cursor Coupling</td><td></td><td></td></tr>
+<tr><td>?66</td>   <td>4xr</td><td>DECNKM</td>   <td>Application keypad.</td><td class="markB">Numeric keypad.</td><td></td></tr>
+<tr><td>?67</td>   <td>vxr</td><td>DECBKM</td>   <td>Backarrow key sends backspace.</td><td class="markB">Backarrow key sends delete.</td><td></td></tr>
+<tr><td>?68</td>   <td>4</td><td>DECKBUM</td>    <td>Keyboard Usage Mode (data processing)</td><td class="markB">typewriter</td><td></td></tr>
+<tr><td>?69</td>   <td>4</td><td>DECVSSM</td>    <td>Vertical Split Screen</td><td class="markB"></td><td></td></tr>
+<tr><td>?73</td>   <td>4</td><td>DECXRLM</td>    <td>Transmit Rate Limiting Mode (limited)</td><td class="markB">unlimited</td><td></td></tr>
+<tr><td>?81</td>   <td>4</td><td>DECKPM</td>     <td>Key Position Mode (key position)</td><td class="markB">char codes</td><td></td></tr>
+<tr><td>?95</td>   <td>5</td><td>DECNCSM</td>    <td>No clear screen on column change</td><td class="markB"></td><td></td></tr>
+<tr><td>?96</td>   <td>5</td><td>DECRLCM</td>    <td>Right-to-Left Copy</td><td class="markB"></td><td></td></tr>
+<tr><td>?97</td>   <td>5</td><td>DECRTSM</td>    <td class="markB">CRT Save Mode (Enable CRT Saver)</td><td>Disable CRT Saver</td><td></td></tr>
+<tr><td>?98</td>   <td>5</td><td>DECARSM</td>    <td>Auto Resize Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?99</td>   <td>5</td><td>DECMCM</td>     <td>Modem Control Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?100</td>  <td>v</td><td>DECAAM</td>     <td>Auto Answerback Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?101</td>  <td>5</td><td>DECCANSM</td>   <td>Conceal Answerback Message Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?102</td>  <td>5</td><td>DECNULM</td>    <td class="markB">Null Mode(ignore NUL)</td><td>accept NUL</td><td></td></tr>
+<tr><td>?103</td>  <td>5</td><td>DECHDPXM</td>   <td>Half-Duplex Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?104</td>  <td>4</td><td>DECESKM</td>    <td>Enable Secondary Keyboard Language Mode (secondary)</td><td class="markB">primary</td><td></td></tr>
+<tr><td>?106</td>  <td>5</td><td>DECOSCNM</td>   <td>Overscan Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?108</td>  <td>v</td><td>DECNUMLK</td>   <td>Num Lock Mode</td><td></td><td></td></tr>
+<tr><td>?109</td>  <td>v</td><td>DECCAPSLK</td>  <td>Caps Lock Mode</td><td></td><td></td></tr>
+<tr><td>?110</td>  <td>v</td><td>DECKLHIM</td>   <td>Keyboard LEDs Host Indicator Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?1000</td> <td>xr</td><td></td>          <td>Send Mouse X & Y on button press and release.</td><td>Don’t send Mouse X & Y on button press and release.</td><td></td></tr>
+<tr><td>?1001</td> <td>x</td><td></td>           <td>Use Hilite Mouse Tracking.</td><td>Don’t use Hilite Mouse Tracking.</td><td></td></tr>
+<tr><td>?1002</td> <td>x</td><td></td>           <td>Use Cell Motion Mouse Tracking.</td><td>Don’t use Cell Motion Mouse Tracking.</td><td></td></tr>
+<tr><td>?1003</td> <td>x</td><td></td>           <td>Use All Motion Mouse Tracking.</td><td>Don’t use All Motion Mouse Tracking.</td><td></td></tr>
+<tr><td>?1004</td> <td>x</td><td></td>           <td>Send FocusIn/FocusOut events.</td><td>Don’t send FocusIn/FocusOut events.</td><td></td></tr>
+<tr><td>?1005</td> <td>x</td><td></td>           <td>Enable Extended Mouse Mode.</td><td>Disable Extended Mouse Mode.</td><td></td></tr>
+<tr><td>?1010</td> <td>rx</td><td></td>          <td>Scroll to bottom on tty output.</td><td>Don’t scroll to bottom on tty output.</td><td></td></tr>
+<tr><td>?1011</td> <td>rx</td><td></td>          <td>Scroll to bottom on key press.</td><td>Don’t scroll to bottom on key press.</td><td></td></tr>
+<tr><td>?1034</td> <td>x</td><td></td>           <td>Interpret "meta" key, sets eighth bit. <br />(enables the eightBitInput resource).</td><td>Don’t interpret "meta" key. (This disables the eightBitInput resource).</td><td></td></tr>
+<tr><td>?1035</td> <td>x</td><td></td>           <td>Enable special modifiers for Alt and NumLock keys. <br />(This enables the numLock resource).</td><td>Disable special modifiers for Alt and NumLock keys. (This disables the numLock resource).</td><td></td></tr>
+<tr><td>?1036</td> <td>x</td><td></td>           <td>Send ESC when Meta modifies a key. <br />(This enables the metaSendsEscape resource).</td><td>Don’t send ESC when Meta modifies a key. (This disables the metaSendsEscape resource).</td><td></td></tr>
+<tr><td>?1037</td> <td>x</td><td></td>           <td>Send DEL from the editing-keypad Delete key.</td><td>Send VT220 Remove from the editing-keypad Delete key.</td><td></td></tr>
+<tr><td>?1039</td> <td>x</td><td></td>           <td>Send ESC when Alt modifies a key. <br />(This enables the altSendsEscape resource).</td><td>Don’t send ESC when Alt modifies a key. (This disables the altSendsEscape resource).</td><td></td></tr>
+<tr><td>?1040</td> <td>x</td><td></td>           <td>Keep selection even if not highlighted. <br />(This enables the keepSelection resource).</td><td>Do not keep selection when not highlighted. (This disables the keepSelection resource).</td><td></td></tr>
+<tr><td>?1041</td> <td>x</td><td></td>           <td>Use the CLIPBOARD selection. <br />(This enables the selectToClipboard resource).</td><td>Use the PRIMARY selection. (This disables the selectToClipboard resource).</td><td></td></tr>
+<tr><td>?1042</td> <td>x</td><td></td>           <td>Enable Urgency window manager hint when Control-G is received. <br />(This enables the bellIsUrgent resource).</td><td>Disable Urgency window manager hint when Control-G is received. (This disables the bellIsUrgent resource).</td><td></td></tr>
+<tr><td>?1043</td> <td>x</td><td></td>           <td>Enable raising of the window when Control-G is received. <br />(enables the popOnBell resource).</td><td>Disable raising of the window when Control-G is received. (This disables the popOnBell resource).</td><td></td></tr>
+<tr><td>?1047</td> <td>x</td><td></td>           <td>Use Alternate Screen Buffer. <br />(This may be disabled by the titeInhibit resource).</td><td>Use Normal Screen Buffer, clearing screen first if in the Alternate Screen. (This may be disabled by the titeInhibit resource).</td><td></td></tr>
+<tr><td>?1048</td> <td>x</td><td></td>           <td>Save cursor as in DECSC. <br />(This may be disabled by the titeInhibit resource).</td><td>Restore cursor as in DECRC. (This may be disabled by the titeInhibit resource).</td><td></td></tr>
+<tr><td>?1049</td> <td>x</td><td></td>
+  <td>Save cursor as in DECSC and use Alternate Screen Buffer, clearing it first. <br />(This may be disabled by the titeInhibit resource). This combines the effects of the 1047 and 1048 modes. Use this with terminfo-based applications rather than the 47 mode.</td>
+  <td>Use Normal Screen Buffer and restore cursor as in DECRC. (This may be disabled by the titeInhibit resource). This combines the effects of the 1 0 4 7 and 1 0 4 8 modes. Use this with terminfo-based applications rather than the 4 7 mode.</td><td></td></tr>
+<tr><td>?1050</td> <td>x</td><td></td>       <td>Set terminfo/termcap function-key mode.</td><td>Reset terminfo/termcap function-key mode.</td><td></td></tr>
+<tr><td>?1051</td> <td>x</td><td></td>       <td>Set Sun function-key mode.</td><td>Reset Sun function-key mode.</td><td></td></tr>
+<tr><td>?1052</td> <td>x</td><td></td>       <td>Set HP function-key mode.</td><td>Reset HP function-key mode.</td><td></td></tr>
+<tr><td>?1053</td> <td>x</td><td></td>       <td>Set SCO function-key mode.</td><td>Reset SCO function-key mode.</td><td></td></tr>
+<tr><td>?1060</td> <td>x</td><td></td>       <td>Set legacy keyboard emulation (X11R6).</td><td>Reset legacy keyboard emulation (X11R6).</td><td></td></tr>
+<tr><td>?1061</td> <td>x</td><td></td>       <td>Set VT220 keyboard emulation.</td><td>Reset keyboard emulation to Sun/PC style.</td><td></td></tr>
+<tr><td>?2004</td> <td>x</td><td></td>       <td>Set bracketed paste mode.</td><td>Reset bracketed paste mode.</td><td></td></tr>
+<tr><td>=0</td>    <td></td> <td></td>       <td>40 x 25 monochrome (text)</td><td></td><td>X</td></tr>
+<tr><td>=1</td>    <td></td> <td></td>       <td>40 x 25 color (text)</td><td></td><td>X</td></tr>
+<tr><td>=2</td>    <td></td> <td></td>       <td>80 x 25 monochrome (text)</td><td></td><td>X</td></tr>
+<tr><td>=3</td>    <td></td> <td></td>       <td>80 x 25 color (text)</td><td></td><td>X</td></tr>
+<tr><td>=4</td>    <td></td> <td></td>       <td>320 x 200 4-color (graphics)</td><td></td><td>X</td></tr>
+<tr><td>=5</td>    <td></td> <td></td>       <td>320 x 200 monochrome (graphics)</td><td></td><td>X</td></tr>
+<tr><td>=6</td>    <td></td> <td></td>       <td>640 x 200 monochrome (graphics)</td><td></td><td>X</td></tr>
+<tr><td>=7</td>    <td></td> <td></td>       <td>行折返し有効</td><td>行折返し無効</td><td>X</td></tr>
+<tr><td>=13</td>   <td></td> <td></td>       <td>320 x 200 color (graphics)</td><td></td><td>X</td></tr>
+<tr><td>=14</td>   <td></td> <td></td>       <td>640 x 200 color (16-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=15</td>   <td></td> <td></td>       <td>640 x 350 monochrome (2-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=16</td>   <td></td> <td></td>       <td>640 x 350 color (16-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=17</td>   <td></td> <td></td>       <td>640 x 480 monochrome (2-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=18</td>   <td></td> <td></td>       <td>640 x 480 color (16-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=19</td>   <td></td> <td></td>       <td>320 x 200 color (256-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>&gt;1</td><td></td><td></td>         <td>ファンクション有り</td><td>ファンクション無し</td><td>X</td></tr>
+<tr><td>&gt;5</td><td></td><td></td>         <td>カーソル有り</td><td>カーソル無し</td><td>X</td></tr>
+</table>
+<ul>
+<li>v: vt100</li>
+<li>4: vt420</li>
+<li>5: vt510</li>
+<li>x: xterm</li>
+<li>r: rxvt</li>
+</ul>
+<!--...................................................................................-->
+<h3>参考文献 Reference</h3>
+<ul>
+<li><a href="http://hp.vector.co.jp/authors/VA016670/escape_code.html">エスケープシーケンスについて</a></li>
+<li><a href="http://www.xfree86.org/current/ctlseqs.html">Xterm Control Sequences</a>
+  <a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.html">html</a>
+  <a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.pdf">pdf</a>
+</li>
+<li>
+  <a href="http://www.ccs.neu.edu/research/gpc/VonaUtils/vona/terminal/VT100_Escape_Codes.html">VT100 escape codes</a>
+  [<a href="http://www.mit.edu/~vona/VonaUtils/vona/terminal/VT100_Escape_Codes.html">old2</a>
+  <a href="http://www.mit.edu/~vona/MSim/vona/terminal/VT100_Escape_Codes.html">old1</a>
+  <a href="http://web.archive.org/web/20100206175957/http://www.mit.edu/~vona/VonaUtils/vona/terminal/VT100_Escape_Codes.html">archive:20100206</a>
+  <a href="http://web.archive.org/web/20081018174018/http://www.mit.edu/~vona/MSim/vona/terminal/VT100_Escape_Codes.html">archive:20081018</a>
+  <a href="http://hackipedia.org/Protocols/Terminal,%20DEC%20VT100/html/VT100%20Escape%20Codes.html">mirror2</a>]
+  <p>[2011/11/07] ページを書いていた <a href="http://www.ccs.neu.edu/research/gpc/vona.html">Marsette Vona さん</a>が異動したみたい。
+    20111016 に移動先でページが作られたみたいだからそちらへリンク。
+  </p>
+</li>
+<li><a href="http://ascii-table.com/ansi-escape-sequences-vt-100.php">ASCII Table &#45; ANSI Escape sequences &#40;ANSI Escape codes&#41; &#45; VT100 / VT52</a></li>
+<li><a href="http://ascii-table.com/ansi-escape-sequences.php">ASCII Table &#45; ANSI Escape sequences</a></li>
+<li><a href="http://www.termsys.demon.co.uk/vtansi.htm">ANSI/VT100 Terminal Control</a></li>
+<li><a href="http://www.usf.uos.de/infoservice/doc/localhtml/rxvt/refer.html">Rxvt Technical Reference</a></li>
+<li><a href="http://en.wikipedia.org/wiki/C0_and_C1_control_codes">C0 and C1 control codes - Wikipedia, the free encyclopedia</a></li>
+<li><a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code - Wikipedia, the free encyclopedia</a></li>
+<li><a href="http://www.vt100.net/docs/vt100-ug/chapter3.html">VT100.net: Digital VT100 User Guide</a></li>
+<li><a href="http://vt100.net/docs/vt510-rm/contents">VT510 Video Terminal Programmer Information</a></li>
+<li><a href="http://bjh21.me.uk/all-escapes/all-escapes.txt">all-escapes.txt</a></li>
+<li><a href="http://ttssh2.sourceforge.jp/manual/ja/about/ctrlseq.html">対応制御シーケンス - Tera Term</a></li>
+<li><a href=""></a></li>
+<li><a href=""></a></li>
+</ul>
+<!--===================================================================================-->
+<h2>ISO/IEC 2022 文字集合制御</h2>
+<!--...................................................................................-->
+<table class="normal center">
+<tr><td><code>\e!<strong>I Ft</strong></code></td><td>C0 への呼出</td></tr>
+<tr><td><code>\e"<strong>I Ft</strong></code></td><td>C1 への呼出</td></tr>
+<tr><td><code>\e&amp;<strong>F</strong></code></td><td>改訂番号識別</td></tr>
+<tr><td><code>\17</code></td><td>G0 から GL へとシフト</td></tr>
+<tr><td><code>\16</code></td><td>G1 から GL へとシフト</td></tr>
+<tr><td><code>\en</code></td><td>G2 から GL へとシフト</td></tr>
+<tr><td><code>\eo</code></td><td>G3 から GL へとシフト</td></tr>
+<tr><td><code>\e~</code></td><td>G1 から GR へとシフト</td></tr>
+<tr><td><code>\e}</code></td><td>G2 から GR へとシフト</td></tr>
+<tr><td><code>\e|</code></td><td>G3 から GR へとシフト</td></tr>
+<tr><td><code>\eN</code></td><td rowspan="2">G2 から GR に次の一文字だけシフト</td></tr>
+<tr><td><code>\216</code></td></tr>
+<tr><td><code>\eO</code></td><td rowspan="2">G3 から GR に次の一文字だけシフト</td></tr>
+<tr><td><code>\217</code></td></tr>
+</table>
+<table class="normal center">
+<tr><th>シーケンス</th><th>環境</th><th>文字集合</th></tr>
+<tr><td><code>\e$B</code></td><td></td><td>KI 新JIS JIS X 0208-1983</td></tr>
+<tr><td><code>\e$@</code></td><td></td><td>KI 旧JIS JIS X 0208-1978</td></tr>
+<tr><td><code>\e$B</code></td><td></td><td>KI UJIS (EUC-JP, (JIS X 0208-1983)</td></tr>
+<tr><td><code>\e$K</code></td><td></td><td>KI 区点</td></tr>
+<tr><td><code>\e(J</code></td><td></td><td>KI JIS ローマ字 JIS X 0201</td></tr>
+<tr><td><code>\e(B</code></td><td></td><td>KO ASCII</td></tr>
+<tr><td><code>\e</code></td><td></td><td></td></tr>
+</table>
+<!--...................................................................................-->
+<h3>94 文字集合</h3>
+<h4>操作</h4>
+<table class="normal center">
+<tr><th>シーケンス</th><th>操作</th></tr>
+<tr><td><code>\e(<strong>*</strong></code></td><td>G0 への読込</td></tr>
+<tr><td><code>\e)<strong>*</strong></code></td><td>G1 への読込</td></tr>
+<tr><td><code>\e*<strong>*</strong></code></td><td>G2 への読込</td></tr>
+<tr><td><code>\e+<strong>*</strong></code></td><td>G3 への読込</td></tr>
+</table>
+<h4>文字集合一覧</h4>
+<table class="normal center">
+<tr><th><strong>*</strong></th><th>名称</th></tr>
+<tr><td><code>@</code></td><td>IRV of ISO 646 : 1983</td></tr>
+<tr><td><code>A</code></td><td>ISO 646, British Version BSI 4730</td></tr>
+<tr><td><code>B</code></td><td>ISO 646, USA Version X3.4 - 1968</td></tr>
+<tr><td><code>C</code></td><td>NATS, Primary Set for Finland and Sweden</td></tr>
+<tr><td><code>D</code></td><td>NATS, Secondary Set for Finland and Sweden</td></tr>
+<tr><td><code>E</code></td><td>NATS, Primary Set for Denmark and Norway</td></tr>
+<tr><td><code>F</code></td><td>NATS, Secondary Set for Denmark and Norway</td></tr>
+<tr><td><code>G</code></td><td>ISO 646, Swedish Version SEN 850200 (Ann. B)</td></tr>
+<tr><td><code>H</code></td><td>ISO 646, Swedish Version for Names, (SEN 850200 Ann.C)</td></tr>
+<tr><td><code>I</code></td><td>Katakana Character Set JIS C6220-1969</td></tr>
+<tr><td><code>J</code></td><td>ISO 646, Japanese Version for Roman Characters JIS C6220-1969</td></tr>
+<tr><td><code>Y</code></td><td>ISO 646, Version for Italian, ECMA (Olivetti)</td></tr>
+<tr><td><code>L</code></td><td>ISO 646, Version for Portuguese, ECMA (Olivetti)</td></tr>
+<tr><td><code>Z</code></td><td>ISO 646, Version for Spanish, ECMA (Olivetti)</td></tr>
+<tr><td><code>[</code></td><td>Character Set for Greek, ECMA (Olivetti)</td></tr>
+<tr><td><code>\\</code></td><td>Latin-Greek Character Set, ECMA (Olivetti)</td></tr>
+<tr><td><code>K</code></td><td>ISO 646, German Version DIN 66083</td></tr>
+<tr><td><code>R</code></td><td>ISO 646, French Version, NF Z 62010-1973 (Withdrawn in April 1985)</td></tr>
+<tr><td><code>U</code></td><td>Latin-Greek Character Set, ECMA (Honeywell-Bull)</td></tr>
+<tr><td><code>X</code></td><td>Greek Character Set for Bibliography, ISO 5428</td></tr>
+<tr><td><code>N</code></td><td>Basic Cyrillic Character Set, ECMA (Cii Honeywell-Bull) and ISO 5427</td></tr>
+<tr><td><code>O</code></td><td>Extended Graphic Character Set for Bibliography, DIN 31624</td></tr>
+<tr><td><code>M</code></td><td>Character Set for African Languages, DIN 31625 and ISO 6438</td></tr>
+<tr><td><code>V</code></td><td>Character Set for Viewdata and Teletext (UK)</td></tr>
+<tr><td><code>W</code></td><td>INIS, Sub-set of the IRV</td></tr>
+<tr><td><code>]</code></td><td>INIS, Non-standard Extension of Reg. 49</td></tr>
+<tr><td><code>^</code></td><td>INIS, Cyrillic Extension of Reg. 49</td></tr>
+<tr><td><code>P</code></td><td>Extended Graphic Character Set for Bibliography ISO 5426-1980</td></tr>
+<tr><td><code>Q</code></td><td>Extension of the Cyrillic Character Set of Reg. 37, ISO 5427-1981</td></tr>
+<tr><td><code>S</code></td><td>Greek Character Set for Bibliography, ISO 5428-1980</td></tr>
+<tr><td><code>T</code></td><td>Coded Character Set for Information Interchange, Standard Chinese GB 1988-80</td></tr>
+<tr><td><code>_</code></td><td>Arabic Character Set CODAR-U IERA (Morocco)</td></tr>
+<tr><td><code>`</code></td><td>ISO 646, Norwegian Version NS 4551</td></tr>
+<tr><td><code>a</code></td><td>Norwegian Character Set, Version 2, NS 4551 (Withdrawn in June 1987)</td></tr>
+<tr><td><code>e</code></td><td>APL Character Set, Canadian APL Working Group</td></tr>
+<tr><td><code>f</code></td><td>ISO 646, French Version NF Z 62010-1982</td></tr>
+<tr><td><code>b</code></td><td>Supplementary Set for Videotex, CCITT</td></tr>
+<tr><td><code>c</code></td><td>Second Supplementary Set for Videotex (Mosaic), CCITT</td></tr>
+<tr><td><code>d</code></td><td>
+  Third Supplementary Set for Videotex, (Mosaic), CCITT (superseded by Reg. 173)<br />
+  Third supplementary set of Mosaic Characters/ Videotex and Facsimile
+</td></tr>
+<tr><td><code>g</code></td><td>ISO 646, Version for Portuguese, ECMA (IBM)</td></tr>
+<tr><td><code>h</code></td><td>ISO 646, Version for the Spanish languages, ECMA (IBM)</td></tr>
+<tr><td><code>i</code></td><td>ISO 646, Hungarian Version Hungarian standard 7795/3</td></tr>
+<tr><td><code>j</code></td><td>Greek Character Set ELOT, Hellenic Organization for Standardization (Withdrawn in November 1986)</td></tr>
+<tr><td><code>k</code></td><td>7-bit Arabic Code for Information Interchange, Arab standard ASMO-449, ISO 9036</td></tr>
+<tr><td><code>l</code></td><td>Supplementary Set for Use with Registration No.2</td></tr>
+<tr><td><code>m</code></td><td>Japanese OCR-A graphic set JIS C6229-1984</td></tr>
+<tr><td><code>n</code></td><td>Japanese OCR-B Graphic Set JIS C6229-1984</td></tr>
+<tr><td><code>o</code></td><td>Japanese OCR-B, Additional Graphic Set, JIS C6229-1984</td></tr>
+<tr><td><code>p</code></td><td>Japanese Basic Hand-printed Graphic Set for OCR JIS C6229-1984</td></tr>
+<tr><td><code>q</code></td><td>Japanese Additional Handprinted Graphic Character Set for OCR JIS C6229- 1984</td></tr>
+<tr><td><code>r</code></td><td>Katakana hand-printed Graphic Character Set for OCR JIS C6229-1984</td></tr>
+<tr><td><code>s</code></td><td>E13B Graphic Character Set Japanese National Committee for ISO/TC97/SC2</td></tr>
+<tr><td><code>t</code></td><td>Supplementary Set of Graphic Characters for Videotex and Teletext ANSI and Teletext ANSI and CSA (Withdrawn in November 1986)</td></tr>
+<tr><td><code>u</code></td><td>Teletex Primary Set of Graphic Characters CCITT Rec. T.61</td></tr>
+<tr><td><code>v</code></td><td>Teletex Supplementary Set of Graphic characters CCITT Rec. T.61</td></tr>
+<tr><td><code>w</code></td><td>Alternate Primary Graphic Set No. 1 CSA Standard Z 243.4-1985</td></tr>
+<tr><td><code>x</code></td><td>Alternate Primary Graphic Set No.2 CSA Standard Z 243.4-1985</td></tr>
+<tr><td><code>|</code></td><td>Supplementary Set of graphic Characters for CCITT Rec. T.101, Data Syntax III</td></tr>
+<tr><td><code>y</code></td><td>Mosaic-1 Set of Data Syntax I of CCITT Rec. T.101</td></tr>
+<tr><td><code>z</code></td><td>Serbocroatian and Slovenian Latin Alphabet</td></tr>
+<tr><td><code>{</code></td><td>Serbocroatian Cyrillic Alphabet</td></tr>
+<tr><td><code>}</code></td><td>Macedonian Cyrillic Alphabet</td></tr>
+<tr><td><code>!@</code></td><td>Greek Primary Set of CCITT</td></tr>
+<tr><td><code>!A</code></td><td>Character Set of Cuba</td></tr>
+<tr><td><code>!B</code></td><td>Invariant characters (82) of ISO/IEC 646</td></tr>
+<tr><td><code>!C</code></td><td>Variant of the ISO 7-bit coded character set for the Irish Gaelic language</td></tr>
+<tr><td><code>!D</code></td><td>Turkmen Alphabet</td></tr>
+<tr><td><code>!E</code></td><td>American National Standard Extended Latin Alphabet Coded Character Set for Bibliographic Use (ANSEL)</td></tr>
+<tr><td><code>!F</code></td><td>Turkmen character set for 8-bit codes</td></tr>
+</table>
+<!--...................................................................................-->
+<h3>96 文字集合</h3>
+<h4>操作</h4>
+<table class="normal center">
+<tr><th>シーケンス</th><th>操作</th></tr>
+<tr><td><code>\e-<strong>*</strong></code></td><td>G1 への読込</td></tr>
+<tr><td><code>\e.<strong>*</strong></code></td><td>G2 への読込</td></tr>
+<tr><td><code>\e/<strong>*</strong></code></td><td>G3 への読込</td></tr>
+</table>
+<h4>文字集合一覧</h4>
+<table class="normal center">
+<tr><th><strong>*</strong></th><th>名称</th></tr>
+<tr><td><code>A</code></td><td>Right-hand Part of Latin Alphabet No.1 ISO 8859/1, ECMA-94</td></tr>
+<tr><td><code>B</code></td><td>Right-hand Part of Latin Alphabet No.2 ISO 8859/2, ECMA-94</td></tr>
+<tr><td><code>C</code></td><td>Right-hand Part of Latin Alphabet No.3 ISO DIS 8859/3, ECMA-94</td></tr>
+<tr><td><code>D</code></td><td>Right-hand Part of Latin Alphabet No.4 ISO DIS 8859/4, ECMA-94</td></tr>
+<tr><td><code>@</code></td><td>Right-hand Part of the Latin/Cyrillic Alphabet ECMA-113 (Version of June 1986)</td></tr>
+<tr><td><code>E</code></td><td>General Purpose Supplementary Graphic Set CSA Standard Z 243.4-1985</td></tr>
+<tr><td><code>F</code></td><td>Right-hand Part of the Latin/Greek Alphabet Standard ELOT 928, ECMA-118, ISO DIS 8859/7</td></tr>
+<tr><td><code>G</code></td><td>Right-hand Part of the Latin/Arabic Alphabet ECMA-114, ISO 8859/6</td></tr>
+<tr><td><code>}</code></td><td>Supplementary Set of Mosaic Characters for CCITT Rec. 101, Data Syntax III</td></tr>
+<tr><td><code>H</code></td><td>Latin/Hebrew Alphabet Standard ECMA-121</td></tr>
+<tr><td><code>I</code></td><td>Right-hand Part for Czechoslovak Standard CSN 369103</td></tr>
+<tr><td><code>J</code></td><td>Supplementary Set of Latin Alphabetic and non-Alphabetic Graphic Characters</td></tr>
+<tr><td><code>K</code></td><td>Technical Set</td></tr>
+<tr><td><code>L</code></td><td>Cyrillic part of the Latin/Cyrillic Alphabet</td></tr>
+<tr><td><code>M</code></td><td>Right-hand part of Latin Alphabet No.5</td></tr>
+<tr><td><code>N</code></td><td>Residual Characters from ISO 6937-2 : 1983</td></tr>
+<tr><td><code>O</code></td><td>Basic Cyrillic Character Set for 8-bit Codes</td></tr>
+<tr><td><code>P</code></td><td>Supplementary set for Latin Alphabets No.1, No.2 and No.5</td></tr>
+<tr><td><code>Q</code></td><td>Basic Box Drawings Set</td></tr>
+<tr><td><code>R</code></td><td>Supplementary Set ISO/IEC 6937 : 1992</td></tr>
+<tr><td><code>V</code></td><td>Supplementary Set for Latin Alphabet No. 6</td></tr>
+<tr><td><code>X</code></td><td>Sami (Lappish) Supplementary Set</td></tr>
+<tr><td><code>S</code></td><td>CCITT Hebrew Supplementary Set</td></tr>
+<tr><td><code>T</code></td><td>Thai Set</td></tr>
+<tr><td><code>U</code></td><td>Arabic/French/German Set</td></tr>
+<tr><td><code>Y</code></td><td>Baltic Rim Supplementary Set</td></tr>
+<tr><td><code>Z</code></td><td>Vietnamese Standard Code for Information Interchange</td></tr>
+<tr><td><code>[</code></td><td>Technical Character Set No.1: IEC Publication 1289</td></tr>
+<tr><td><code>\\</code></td><td>Welsh variant of Latin Alphabet No. 1</td></tr>
+<tr><td><code>]</code></td><td>Sami supplementary Latin set</td></tr>
+<tr><td><code>^</code></td><td>Latin/Hebrew Alphabet</td></tr>
+<tr><td><code>_</code></td><td>Celtic Supplementary Latin Set</td></tr>
+<tr><td><code>`</code></td><td>Uralic Supplementary Cyrllic Set</td></tr>
+<tr><td><code>a</code></td><td>Volgaic Supplementary Cyrllic Set</td></tr>
+<tr><td><code>b</code></td><td>European Supplementary Latin Set ("Latin 9")</td></tr>
+<tr><td><code>c</code></td><td>Supplementary set for Latin-1 alternative with EURO SIGN</td></tr>
+<tr><td><code>d</code></td><td>Supplementary set for Latin-4 alternative with EURO SIGN</td></tr>
+<tr><td><code>e</code></td><td>Supplementary set for Latin-7 alternative with EURO SIGN</td></tr>
+<tr><td><code>g</code></td><td>Ogham coded character set for information interchange</td></tr>
+<tr><td><code>h</code></td><td>Sami supplementary Latin set no 2</td></tr>
+<tr><td><code>f</code></td><td>Romanian Character Set for Information Interchange</td></tr>
+<tr><td><code>i</code></td><td>Right-hand part of Latin/Greek alphabet</td></tr>
+<tr><td><code>j</code></td><td>Latin/Hebrew character set for 8-bit codes</td></tr>
+</table>
+<!--...................................................................................-->
+<h3>94<sup>n</sup> 文字集合</h3>
+<h4>操作</h4>
+<table class="normal center">
+<tr><th>シーケンス</th><th>操作</th></tr>
+<tr><td><code>\e$(<strong>*</strong></code></td><td>G0 への読込</td></tr>
+<tr><td><code>\e$)<strong>*</strong></code></td><td>G1 への読込</td></tr>
+<tr><td><code>\e$*<strong>*</strong></code></td><td>G2 への読込</td></tr>
+<tr><td><code>\e$+<strong>*</strong></code></td><td>G3 への読込</td></tr>
+</table>
+<h4>文字集合一覧</h4>
+<table class="normal center">
+<tr><th><strong>*</strong></th><th>名称</th></tr>
+<tr><td><code>@</code></td><td>
+  Japanese Character Set JISC C 6226-1978
+  ※ <code>\e$(@</code> の代わりに <code>\e$@</code> と記す。
+</td></tr>
+<tr><td><code>A</code></td><td>
+  Chinese Character Set Chinese Standard GB 2312-80<br />
+  ※ <code>\e$(A</code> の代わりに <code>\e$A</code> と記す。
+</td></tr>
+<tr><td><code>B</code></td><td>
+  Japanese Character Set JIS C 6226-1983<br />
+  Update Registration 87 Japanese Graphic Character Set for Information Interchange<br />
+  ※ <code>\e$(B</code> の代わりに <code>\e$B</code> と記す。
+</td></tr>
+<tr><td><code>C</code></td><td>Korean Graphic Character Set, Korean Standard KSC 5601-1987</td></tr>
+<tr><td><code>D</code></td><td>Supplementary Japanese Graphic Character Set for Information Interchange</td></tr>
+<tr><td><code>E</code></td><td>CCITT Chinese Set</td></tr>
+<tr><td><code>F</code></td><td>Blissymbol Graphic Character Set</td></tr>
+<tr><td><code>G</code></td><td>Chinese Standard Interchange Code - Set 1, CNS 11643-1992</td></tr>
+<tr><td><code>H</code></td><td>Chinese Standard Interchange Code - Set 2, CNS 11643-1992</td></tr>
+<tr><td><code>I</code></td><td>Chinese Standard Interchange Code - Set 3, CNS 11643-1992</td></tr>
+<tr><td><code>J</code></td><td>Chinese Standard Interchange Code - Set 4, CNS 11643-1992</td></tr>
+<tr><td><code>K</code></td><td>Chinese Standard Interchange Code - Set 5, CNS 11643-1992</td></tr>
+<tr><td><code>L</code></td><td>Chinese Standard Interchange Code - Set 6, CNS 11643-1992</td></tr>
+<tr><td><code>M</code></td><td>Chinese Standard Interchange Code - Set 7, CNS 11643-1992</td></tr>
+<tr><td><code>N</code></td><td>DPRK Standard Korean Graphic Character Set for Information Interchange</td></tr>
+<tr><td><code>O</code></td><td>Japanese Graphic Character Set for Information Interchange --- Plane 1</td></tr>
+<tr><td><code>P</code></td><td>Japanese Graphic Character Set for Information Interchange --- Plane 2</td></tr>
+<tr><td><code>Q</code></td><td>Japanese Graphic Character Set for Information Interchange, Plane 1 (Update of ISO-IR 228)</td></tr>
+</table>
+<!--...................................................................................-->
+<h3>96<sup>n</sup> 文字集合</h3>
+<h4>操作</h4>
+<table class="normal center">
+<tr><th>シーケンス</th><th>操作</th></tr>
+<tr><td><code>\e$-<strong>*</strong></code></td><td>G1 への読込</td></tr>
+<tr><td><code>\e$.<strong>*</strong></code></td><td>G2 への読込</td></tr>
+<tr><td><code>\e$/<strong>*</strong></code></td><td>G3 への読込</td></tr>
+</table>
+<!--...................................................................................-->
+<h3>その他</h3>
+<h4>操作</h4>
+<table class="normal center">
+<tr><th>シーケンス</th><th>操作</th></tr>
+<tr><td><code>\e%<strong>*</strong></code></td><td>文字コードの切替</td></tr>
+</table>
+<h4>文字集合一覧</h4>
+<table class="normal center">
+<tr><th><strong>*</strong></th><th>名称</th></tr>
+<tr><td><code>A </code></td><td>Syntax of the North American Videotex/Teletex Presentation Level Protocol (NAPLPS), CSA T 500-1983</td></tr>
+<tr><td><code>/B</code></td><td>Virtual Terminal service Transparent Set</td></tr>
+<tr><td><code>C </code></td><td>Data Syntax I of CCITT Rec.T.101</td></tr>
+<tr><td><code>D </code></td><td>Data Syntax II of CCITT Rec. T.101</td></tr>
+<tr><td><code>E </code></td><td>Photo-Videotex Data Syntax of CCITT Rec. T.101</td></tr>
+<tr><td><code>F </code></td><td>Audio Data Syntax of CCITT Rec. T.101</td></tr>
+<tr><td><code>/@</code></td><td>ISO/IEC 10646:1993, UCS-2, Level 1</td></tr>
+<tr><td><code>/A</code></td><td>ISO/IEC 10646:1993, UCS-4, Level 1</td></tr>
+<tr><td><code>/C</code></td><td>ISO/IEC 10646:1993, UCS-2, Level 2</td></tr>
+<tr><td><code>/D</code></td><td>ISO/IEC 10646:1993, UCS-4, Level 2</td></tr>
+<tr><td><code>/E</code></td><td>ISO/IEC 10646:1993, UCS-2, Level 3</td></tr>
+<tr><td><code>/F</code></td><td>ISO/IEC 10646:1993, UCS-4, Level 3</td></tr>
+<tr><td><code>B </code></td><td>UCS Transformation Format One (UTF-1)</td></tr>
+<tr><td><code>H </code></td><td>Videotex Enhanced Man Machine Interface (VEMMI) Data Syntax of ITU-T Rec. T.107</td></tr>
+<tr><td><code>/G</code></td><td>UTF-8 Level 1</td></tr>
+<tr><td><code>/H</code></td><td>UTF-8 Level 2</td></tr>
+<tr><td><code>/I</code></td><td>UTF-8 Level 3</td></tr>
+<tr><td><code>/J</code></td><td>UTF-16 Level 1</td></tr>
+<tr><td><code>/K</code></td><td>UTF-16 Level 2</td></tr>
+<tr><td><code>/L</code></td><td>UTF-16 Level 3</td></tr>
+<tr><td><code>G </code></td><td>UTF-8 without implementation level</td></tr>
+<!--
+-->
+</table>
+<!--...................................................................................-->
+<h3>参考</h3>
+<ul>
+<li><a href="http://ja.wikipedia.org/wiki/ISO/IEC_2022#.E5.88.B6.E5.BE.A1.E6.A9.9F.E8.83.BD">ISO/IEC 2022 - Wikipedia</a></li>
+<li><a href="http://www.itscj.ipsj.or.jp/ISO-IR/overview.htm">overview</a></li>
+</ul>
+<!--===================================================================================-->
+<h2>エスケープキーシーケンス</h2>
+<p>ターミナルからプログラムへ送られるデータ</p>
+<h3>Function Key 修飾</h3>
+<p>キーシーケンスが <code>\e[<strong>#c</strong></code> の形をしている時、
+それに Ctrl, Alt, Shift 等を添えた場合の修飾を指定することができる。</p>
+<table class="normal center">
+<tr><th>シーケンス</th><th>説明</th><th>実装</th></tr>
+<tr><td><code>\e[<strong>#c</strong></code></td><td>キー</td><td>-</td></tr>
+<tr><td><code>\e[<strong>c</strong></code></td><td>キー <strong>#</strong>=1</td><td>-</td></tr>
+<tr><td><code>\eO<strong>c</strong></code></td><td>キー <strong>#</strong>=1</td><td>-</td></tr>
+<tr><th>シーケンス</th><th>説明</th><th>実装</th></tr>
+<tr><td><code>\e[<strong>#</strong>;2<strong>c</strong></code></td><td>Shift+キー</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#</strong>;3<strong>c</strong></code></td><td>Alt+キー</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#</strong>;4<strong>c</strong></code></td><td>Alt+Shift+キー</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#</strong>;5<strong>c</strong></code></td><td>Control+キー</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#</strong>;6<strong>c</strong></code></td><td>Control+Shift+キー</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#</strong>;7<strong>c</strong></code></td><td>Alt+Control+キー</td><td>O</td></tr>
+<tr><td><code>\e[<strong>#</strong>;8<strong>c</strong></code></td><td>Alt+Control+Shift+キー</td><td>O</td></tr>
+<tr><td><code>\e\e[<strong>#c</strong></code></td><td>Meta+キー</td><td>O</td></tr>
+<tr><td><code>\e\e[<strong>#</strong>;2<strong>c</strong></code></td><td>Meta+Shift+キー</td><td>O</td></tr>
+<tr><td><code>\e\e[<strong>#</strong>;3<strong>c</strong></code></td><td>Meta+Alt+キー</td><td>O</td></tr>
+<tr><td><code>\e\e[<strong>#</strong>;4<strong>c</strong></code></td><td>Meta+Alt+Shift+キー</td><td>O</td></tr>
+<tr><td><code>\e\e[<strong>#</strong>;5<strong>c</strong></code></td><td>Meta+Control+キー</td><td>O</td></tr>
+<tr><td><code>\e\e[<strong>#</strong>;6<strong>c</strong></code></td><td>Meta+Control+Shift+キー</td><td>O</td></tr>
+<tr><td><code>\e\e[<strong>#</strong>;7<strong>c</strong></code></td><td>Meta+Alt+Control+キー</td><td>O</td></tr>
+<tr><td><code>\e\e[<strong>#</strong>;8<strong>c</strong></code></td><td>Meta+Alt+Control+Shift+キー</td><td>O</td></tr>
+</table>
+<!--.........................................................................-->
+<h3>Function キー</h3>
+<table class="normal center">
+<tr><th>修飾</th><th>rxvt</th>  <th>rxvt#1</th><th>vt100</th><th>xterm-pc</th><th>xterm-vt220</th><th>cygwin</th><th>rosaterm</th></tr>
+<tr><td>S-</td>  <td>+10</td>   <td>+10</td>   <td>-</td>    <td>+12#2</td>   <td>-</td>          <td>+10</td>   <td>+12</td>     </tr>
+<tr><td>C-</td>  <td>#3</td>    <td>+22#3</td> <td>-</td>    <td>+24#2</td>   <td>-</td>          <td>#3</td>    <td>+24#2</td>   </tr>
+<tr><td>A-</td>  <td>-</td>     <td>-</td>     <td>-</td>    <td>+48#2</td>   <td>-</td>          <td>-</td>     <td>+48#2</td>   </tr>
+<tr><th>キー</th><th>rxvt</th>  <th>rxvt#1</th><th>vt100</th><th>xterm-pc</th><th>xterm-vt220</th><th>cygwin</th><th>rosaterm</th></tr>
+<tr><td>F1</td>  <td>\e[11~</td><td>\e[11~</td><td>\eOP</td> <td>\eOP</td>    <td>\eOP</td>       <td>\e[[A</td> <td>\e[11~</td>  </tr>
+<tr><td>F2</td>  <td>\e[12~</td><td>\e[12~</td><td>\eOQ</td> <td>\eOQ</td>    <td>\eOQ</td>       <td>\e[[B</td> <td>\e[12~</td>  </tr>
+<tr><td>F3</td>  <td>\e[13~</td><td>\e[13~</td><td>\eOR</td> <td>\eOR</td>    <td>\eOR</td>       <td>\e[[C</td> <td>\e[13~</td>  </tr>
+<tr><td>F4</td>  <td>\e[14~</td><td>\e[14~</td><td>\eOS</td> <td>\eOS</td>    <td>\eOS</td>       <td>\e[[D</td> <td>\e[14~</td>  </tr>
+<tr><td>F5</td>  <td>\e[15~</td><td>\e[15~</td><td>\eOt</td> <td>\e[15~</td>  <td>\e[15~</td>     <td>\e[[E</td> <td>\e[15~</td>  </tr>
+<tr><td>F6</td>  <td>\e[17~</td><td>\e[17~</td><td>\eOu</td> <td>\e[17~</td>  <td>\e[17~</td>     <td>\e[17~</td><td>\e[17~</td>  </tr>
+<tr><td>F7</td>  <td>\e[18~</td><td>\e[18~</td><td>\eOv</td> <td>\e[18~</td>  <td>\e[18~</td>     <td>\e[18~</td><td>\e[18~</td>  </tr>
+<tr><td>F8</td>  <td>\e[19~</td><td>\e[19~</td><td>\eOl</td> <td>\e[19~</td>  <td>\e[19~</td>     <td>\e[19~</td><td>\e[19~</td>  </tr>
+<tr><td>F9</td>  <td>\e[20~</td><td>\e[20~</td><td>\eOw</td> <td>\e[20~</td>  <td>\e[20~</td>     <td>\e[20~</td><td>\e[20~</td>  </tr>
+<tr><td>F10</td> <td>\e[21~</td><td>\e[21~</td><td>\eOx</td> <td>\e[21~</td>  <td>\e[21~</td>     <td>\e[21~</td><td>\e[21~</td>  </tr>
+<tr><td>F11</td> <td>\e[23~</td><td>\e[23~</td><td></td>     <td>\e[23~</td>  <td>\e[23~</td>     <td>\e[23~</td><td>\e[23~</td>  </tr>
+<tr><td>F12</td> <td>\e[24~</td><td>\e[24~</td><td></td>     <td>\e[24~</td>  <td>\e[24~</td>     <td>\e[24~</td><td>\e[24~</td>  </tr>
+<tr><td>F13</td> <td>\e[25~</td><td>\e[25~</td><td></td>     <td>S-F1</td>    <td>\e[25~</td>     <td>\e[25~</td><td>\e[25~</td>  </tr>
+<tr><td>F14</td> <td>\e[26~</td><td>\e[26~</td><td></td>     <td>S-F2</td>    <td>\e[26~</td>     <td>\e[26~</td><td>\e[26~</td>  </tr>
+<tr><td>F15</td> <td>\e[28~</td><td>\e[28~</td><td></td>     <td>S-F3</td>    <td>\e[28~</td>     <td>\e[28~</td><td>\e[28~</td>  </tr>
+<tr><td>F16</td> <td>\e[29~</td><td>\e[29~</td><td></td>     <td>S-F4</td>    <td>\e[29~</td>     <td>\e[29~</td><td>\e[29~</td>  </tr>
+<tr><td>F17</td> <td>\e[31~</td><td>\e[31~</td><td></td>     <td>S-F5</td>    <td>\e[31~</td>     <td>\e[31~</td><td>\e[31~</td>  </tr>
+<tr><td>F18</td> <td>\e[32~</td><td>\e[32~</td><td></td>     <td>S-F6</td>    <td>\e[32~</td>     <td>\e[32~</td><td>\e[32~</td>  </tr>
+<tr><td>F19</td> <td>\e[33~</td><td>\e[33~</td><td></td>     <td>S-F7</td>    <td>\e[33~</td>     <td>\e[33~</td><td>\e[33~</td>  </tr>
+<tr><td>F20</td> <td>\e[34~</td><td>\e[34~</td><td></td>     <td>S-F8</td>    <td>\e[34~</td>     <td>\e[34~</td><td>\e[34~</td>  </tr>
+<tr><td>F21</td> <td>\e[23$</td><td>\e[23$</td><td></td>     <td>S-F9</td>    <td></td>           <td>\e[23$</td><td>\e[23$</td>  </tr>
+<tr><td>F22</td> <td>\e[24$</td><td>\e[24$</td><td></td>     <td>S-F10</td>   <td></td>           <td>\e[24$</td><td>\e[24$</td>  </tr>
+<tr><td>F23</td> <td>\e[25$</td><td>C-F1  </td><td></td>     <td>S-F11</td>   <td></td>           <td></td>      <td>\e[25$</td>  </tr>
+<tr><td>F24</td> <td>\e[26$</td><td>C-F2  </td><td></td>     <td>S-F12</td>   <td></td>           <td></td>      <td>\e[26$</td>  </tr>
+<tr><td>F25</td> <td>\e[28$</td><td>C-F3  </td><td></td>     <td>C-F1</td>    <td></td>           <td></td>      <td>C-F1</td>    </tr>
+<tr><td>F26</td> <td>\e[29$</td><td>C-F4  </td><td></td>     <td>C-F2</td>    <td></td>           <td></td>      <td>C-F2</td>    </tr>
+<tr><td>F27</td> <td>\e[31$</td><td>C-F5  </td><td></td>     <td>C-F3</td>    <td></td>           <td></td>      <td>C-F3</td>    </tr>
+<tr><td>F28</td> <td>\e[32$</td><td>C-F6  </td><td></td>     <td>C-F4</td>    <td></td>           <td></td>      <td>C-F4</td>    </tr>
+<tr><td>F29</td> <td>\e[33$</td><td>C-F7  </td><td></td>     <td>C-F5</td>    <td></td>           <td></td>      <td>C-F5</td>    </tr>
+<tr><td>F30</td> <td>\e[34$</td><td>C-F8  </td><td></td>     <td>C-F6</td>    <td></td>           <td></td>      <td>C-F6</td>    </tr>
+</table>
+<ul>
+<li>#1 : terminfo より</li>
+<li>#2 : Function Key 修飾(上述)で修飾される。</li>
+<li>#3 : Control キーが押されている時、~ が ^ に、$ が @ に変わる。\e[[A - \e[[E は \e[11^ - \e[15^ に変わる。</li>
+</ul>
+<!--.........................................................................-->
+<h3>矢印キー (Cursor keys)</h3>
+<p>矢印キーのキー入力は、モードによって送信されるシーケンスが異なる。</p>
+<ul>
+<li>DECCKM が設定されていない時: Normal</li>
+<li>DECCKM が設定されている時: Application</li>
+</ul>
+<table class="normal center">
+<tr><th>キー</th><th>Normal</th><th>Application</th></tr>
+<tr><td>Up</td>     <td><code>\e[A</code></td><td><code>\eOA</code></td></tr>
+<tr><td>Down</td>   <td><code>\e[B</code></td><td><code>\eOB</code></td></tr>
+<tr><td>Right</td>  <td><code>\e[C</code></td><td><code>\eOC</code></td></tr>
+<tr><td>Left</td>   <td><code>\e[D</code></td><td><code>\eOD</code></td></tr>
+<tr><td>Home</td>   <td><code>\e[H</code></td><td><code>\eOH</code></td></tr>
+<tr><td>End</td>    <td><code>\e[F</code></td><td><code>\eOF</code></td></tr>
+</table>
+<p>Function Key 修飾は、<code>\e[1A</code> 等に対して修飾した結果になる。</p>
+<!--.........................................................................-->
+<h3>他の操作キー</h3>
+<table class="normal center">
+<tr><th>キー</th>         <th>普通</th>              <th>vt100</th>             <th>vt52?/rxvt</th>        <th>xterm</th></tr>
+<tr><td>Home</td>         <td><code>\e[1~</code></td><td><code>\e[2~</code></td><td><code>\e[7~</code></td><td><code>\e[H</code></td></tr>
+<tr><td>Insert</td>       <td><code>\e[2~</code></td><td><code>\e[1~</code></td><td><code>\e[2~</code></td><td><code>\e[2~</code></td></tr>
+<tr><td>Delete</td>       <td><code>\e[3~</code></td><td><code>\e[4~</code></td><td><code>\e[3~</code></td><td><code>\e[3~</code></td></tr>
+<tr><td>End</td>          <td><code>\e[4~</code></td><td><code>\e[5~</code></td><td><code>\e[8~</code></td><td><code>\e[F</code></td></tr>
+<tr><td>PageUp/Prior</td> <td><code>\e[5~</code></td><td><code>\e[3~</code></td><td><code>\e[5~</code></td><td><code>\e[5~</code></td></tr>
+<tr><td>PageDown/Next</td><td><code>\e[6~</code></td><td><code>\e[6~</code></td><td><code>\e[6~</code></td><td><code>\e[6~</code></td></tr>
+<tr><td>Find</td>         <td></td>                  <td></td>                  <td><code>\e[1~</code></td><td></td></tr>
+<tr><td>Select</td>       <td></td>                  <td></td>                  <td><code>\e[4~</code></td><td><code>\e[4</code></td></tr>
+<tr><td>Execute</td>      <td></td>                  <td></td>                  <td><code>\e[3~</code></td><td></td></tr>
+</table>
+<p>Function Key 修飾可能。</p>
+<!--.........................................................................-->
+<h3>テンキー (Keypad)</h3>
+<p>テンキーのキー入力は、モードによって送信されるシーケンスが異なる。</p>
+<ul>
+<li>DECPNM が設定されている時: Normal</li>
+<li>DECPAM が設定されている時: Application</li>
+</ul>
+<table class="normal center">
+<tr><th>キー</th><th>Normal</th><th>App (PC)</th><th>App (VT220/rxvt)</th><th>App (VT52)</th></tr>
+<tr><td>KP Space</td>  <td><code><em>&nbsp;</em></code></td><td><code><em>\eO&nbsp;</em></code></td><td><code><em>\eO&nbsp;</em></code></td><td><code><em>\e?&nbsp;</em></code></td></tr>
+<tr><td>KP Tab</td>    <td><code>\t</code></td>   <td><code>\eOI</code></td>  <td><code>\eOI</code></td>  <td><code>\e?I</code></td> </tr>
+<tr><td>KP Enter</td>  <td><code>\r</code></td>   <td><code>\eOM</code></td>  <td><code>\eOM</code></td>  <td><code>\e?M</code></td> </tr>
+<tr><td>KP *</td>      <td><code>*</code></td>    <td><code>\eOj</code></td>  <td><code>\eOj</code></td>  <td><code>\e?j</code></td> </tr>
+<tr><td>KP +</td>      <td><code>+</code></td>    <td><code>\eOk</code></td>  <td><code>\eOk</code></td>  <td><code>\e?k</code></td> </tr>
+<tr><td>KP ,</td>      <td><code>,</code></td>    <td><code>\eOl</code></td>  <td><code>\eOl</code></td>  <td><code>\e?l</code></td> </tr>
+<tr><td>KP -</td>      <td><code>-</code></td>    <td><code>\eOm</code></td>  <td><code>\eOm</code></td>  <td><code>\e?m</code></td> </tr>
+<tr><td>KP ./Del</td>  <td><code>.</code></td>    <td><code>\e[3~</code></td> <td><code>\eOn</code></td>  <td><code>\e?n</code></td> </tr>
+<tr><td>KP /</td>      <td><code>/</code></td>    <td><code>\eOo</code></td>  <td><code>\eOo</code></td>  <td><code>\e?o</code></td> </tr>
+<tr><td>KP 0/Ins</td>  <td><code>0</code></td>    <td><code>\e[2~</code></td> <td><code>\eOp</code></td>  <td><code>\e?p</code></td> </tr>
+<tr><td>KP 1/End</td>  <td><code>1</code></td>    <td><code>\eOF</code></td>  <td><code>\eOq</code></td>  <td><code>\e?q</code></td> </tr>
+<tr><td>KP 2/Down</td> <td><code>2</code></td>    <td><code>\e[B</code></td>  <td><code>\eOr</code></td>  <td><code>\e?r</code></td> </tr>
+<tr><td>KP 3/PgDn</td> <td><code>3</code></td>    <td><code>\e[6~</code></td> <td><code>\eOs</code></td>  <td><code>\e?s</code></td> </tr>
+<tr><td>KP 4/Left</td> <td><code>4</code></td>    <td><code>\e[D</code></td>  <td><code>\eOt</code></td>  <td><code>\e?t</code></td> </tr>
+<tr><td>KP 5/Begin</td><td><code>5</code></td>    <td><code>\e[E</code></td>  <td><code>\eOu</code></td>  <td><code>\e?u</code></td> </tr>
+<tr><td>KP 6/Right</td><td><code>6</code></td>    <td><code>\e[C</code></td>  <td><code>\eOv</code></td>  <td><code>\e?v</code></td> </tr>
+<tr><td>KP 7/Home</td> <td><code>7</code></td>    <td><code>\eOH</code></td>  <td><code>\eOw</code></td>  <td><code>\e?w</code></td> </tr>
+<tr><td>KP 8/Up</td>   <td><code>8</code></td>    <td><code>\e[A</code></td>  <td><code>\eOx</code></td>  <td><code>\e?x</code></td> </tr>
+<tr><td>KP 9/PgUp</td> <td><code>9</code></td>    <td><code>\e[5~</code></td> <td><code>\eOy</code></td>  <td><code>\e?y</code></td> </tr>
+<tr><td>KP =</td>      <td><code>=</code></td>    <td><code>\eOX</code></td>  <td><code>\eOX</code></td>  <td><code>\e?X</code></td> </tr>
+</table>
+<p>但し、テンキーの Function キーは Normal/Application で共通である。(然し、環境によって異なる)</p>
+<table class="normal center">
+<tr><th>キー</th><th>PC/VT220/rxvt</th><th>VT52</th></tr>
+<tr><td>KP F1</td>     <td><code>\eOP</code></td>  <td><code>\eP</code></td> </tr>
+<tr><td>KP F2</td>     <td><code>\eOQ</code></td>  <td><code>\eQ</code></td> </tr>
+<tr><td>KP F3</td>     <td><code>\eOR</code></td>  <td><code>\eR</code></td> </tr>
+<tr><td>KP F4</td>     <td><code>\eOS</code></td>  <td><code>\eS</code></td> </tr>
+</table>
+<!--.........................................................................-->
+<h3>その他</h3>
+<p>xterm で定義されているその他の修飾されたキーボード入力</p>
+<table class="normal center">
+<tr>
+  <th>key</th><th>C-</th><th>C-M- (1)</th><th>C-M- (2)</th>
+  <th>S-</th><th>S-C-</th><th>S-C-M- (1)</th><th>S-C-M- (2)</th>
+</tr>
+<tr><td><code>\t</code></td>         <td><code>\e[27;5;9~</code></td> <td><code>\e[27;13;9~</code></td> <td><code>\e[27;7;9~</code></td> 
+    <td><code>\e[27;2;9~</code></td> <td><code>\e[27;6;9~</code></td><td>--</td><td>--</td></tr>
+<tr><td><code>\r</code></td>         <td><code>\e[27;5;13~</code></td><td><code>\e[27;13;13~</code></td><td><code>\e[27;7;13~</code></td>
+    <td><code>\e[27;2;13~</code></td><td><code>\e[27;6;13~</code></td><td>--</td><td>--</td></tr>
+<tr><td><code>,</code></td>          <td><code>\e[27;5;44~</code></td><td><code>\e[27;13;44~</code></td><td><code>\e[27;7;44~</code></td>
+    <td><code>&lt;</code></td>       <td><code>\e[27;6;60~</code></td><td><code>\e[27;14;60~</code></td><td><code>\e[27;8;60~</code></td></tr>
+<tr><td><code>-</code></td>          <td><code>\e[27;5;45~</code></td><td><code>\e[27;13;45~</code></td><td><code>\e[27;7;45~</code></td>
+    <td><code>=</code></td>          <td><code>\e[27;5;61~</code></td><td><code>\e[27;13;61~</code></td><td><code>\e[27;7;61~</code></td></tr>
+<tr><td><code>.</code></td>          <td><code>\e[27;5;46~</code></td><td><code>\e[27;13;46~</code></td><td><code>\e[27;7;46~</code></td>
+    <td><code>&gt;</code></td>       <td><code>\e[27;6;62~</code></td><td><code>\e[27;14;62~</code></td><td><code>\e[27;8;62~</code></td></tr>
+<tr><td><code>/</code></td>          <td><code>\e[27;5;47~</code></td><td><code>\e[27;13;47~</code></td><td><code>\e[27;7;47~</code></td>
+    <td><code>?</code></td>          <td><code>\e[27;6;63~</code></td><td><code>\e[27;14;63~</code></td><td><code>\e[27;8;63~</code></td></tr>
+<tr><td><code>0</code></td>          <td><code>\e[27;5;48~</code></td><td><code>\e[27;13;48~</code></td><td><code>\e[27;7;48~</code></td>
+    <td>--</td><td>--</td><td>--</td><td>--</td></tr>
+<tr><td><code>1</code></td>          <td><code>\e[27;5;49~</code></td><td><code>\e[27;13;49~</code></td><td><code>\e[27;7;49~</code></td>
+    <td><code>!</code></td>          <td><code>\e[27;6;33~</code></td><td><code>\e[27;14;33~</code></td><td><code>\e[27;8;33~</code></td></tr>
+<tr><td><code>2</code></td>          <td>--</td>                      <td><code>\e[27;13;50~</code></td><td><code>\e[27;7;50~</code></td>
+    <td><code>"</code></td>          <td><code>\e[27;6;34~</code></td><td><code>\e[27;14;34~</code></td><td><code>\e[27;8;34~</code></td></tr>
+<tr><td><code>3</code></td>          <td>--</td>                      <td><code>\e[27;13;51~</code></td><td><code>\e[27;7;51~</code></td>
+    <td><code>#</code></td>          <td><code>\e[27;6;35~</code></td><td><code>\e[27;14;35~</code></td><td><code>\e[27;8;35~</code></td></tr>
+<tr><td><code>4</code></td>          <td>--</td>                      <td><code>\e[27;13;52~</code></td><td><code>\e[27;7;52~</code></td>
+    <td><code>$</code></td>          <td><code>\e[27;6;36~</code></td><td><code>\e[27;14;36~</code></td><td><code>\e[27;8;36~</code></td></tr>
+<tr><td><code>5</code></td>          <td>--</td>                      <td><code>\e[27;13;53~</code></td><td><code>\e[27;7;53~</code></td>
+    <td><code>%</code></td>          <td><code>\e[27;6;37~</code></td><td><code>\e[27;14;37~</code></td><td><code>\e[27;8;37~</code></td></tr>
+<tr><td><code>6</code></td>          <td>--</td>                      <td><code>\e[27;13;54~</code></td><td><code>\e[27;7;54~</code></td>
+    <td><code>&amp;</code></td>      <td><code>\e[27;6;38~</code></td><td><code>\e[27;14;38~</code></td><td><code>\e[27;8;38~</code></td></tr>
+<tr><td><code>7</code></td>          <td>--</td>                      <td><code>\e[27;13;55~</code></td><td><code>\e[27;7;55~</code></td>
+    <td><code>'</code></td>          <td><code>\e[27;5;39~</code></td><td><code>\e[27;13;39~</code></td><td><code>\e[27;7;39~</code></td></tr>
+<tr><td><code>8</code></td>          <td>--</td>                      <td><code>\e[27;13;56~</code></td><td><code>\e[27;7;56~</code></td>
+    <td><code>(</code></td>          <td><code>\e[27;6;40~</code></td><td><code>\e[27;14;40~</code></td><td><code>\e[27;8;40~</code></td></tr>
+<tr><td><code>9</code></td>          <td><code>\e[27;5;57~</code></td><td><code>\e[27;13;57~</code></td><td><code>\e[27;7;57~</code></td>
+    <td><code>)</code></td>          <td><code>\e[27;6;41~</code></td><td><code>\e[27;14;41~</code></td><td><code>\e[27;8;41~</code></td></tr>
+<tr><td><code>:</code></td>          <td><code>\e[27;6;58~</code></td><td><code>\e[27;14;58~</code></td><td><code>\e[27;8;58~</code></td>
+    <td><code>*</code></td>          <td><code>\e[27;6;42~</code></td><td><code>\e[27;14;42~</code></td><td><code>\e[27;8;42~</code></td></tr>
+<tr><td><code>;</code></td>          <td><code>\e[27;5;59~</code></td><td><code>\e[27;13;59~</code></td><td><code>\e[27;7;59~</code></td>
+    <td><code>+</code></td>          <td><code>\e[27;6;43~</code></td><td><code>\e[27;14;43~</code></td><td><code>\e[27;8;43~</code></td></tr>
+<tr><td><code>\\</code></td>         <td><code>\e[27;5;92~</code></td><td><code>\e[27;13;92~</code></td><td><code>\e[27;7;92~</code></td>
+    <td><code>_</code></td>          <td>--</td><td>--</td><td>--</td></tr>
+</table>
+
+<p>rosaterm の現状</p>
+<ul>
+<li>rosaterm の場合、M- は常に単に \e を先頭に付けるだけである</li>
+<li>「S- で文字が変わるキー」は shift で抑もの文字が変わる為、
+  Shift 修飾が実質意味を為さない物である。
+  以下の表では日本語のキーボードを想定して、
+  異なる文字について横に並べた。
+</li>
+<li>灰色で示しているのが、他のキー入力とシーケンスが同じだが、
+  その事が周知の事実であり屡々代用される物である。
+</li>
+<li>赤色で示しているのは、
+  他のキー入力とシーケンスが同じだが、
+  その事は余り知られていない・代用される事はない物である。
+  これについては異なるシーケンスを今後割り当てても問題ないと考える。
+</li>
+</ul>
+
+<table class="normal center">
+<tr><th colspan="5">S- で文字が変わるキー</th></tr>
+<tr><th>Key</th><th>k</th><th>C-k</th><th>S-k</th><th>C-S-k</th></tr>
+<tr><td>:</td>  <td><code>:</code></td> <td><code>\e[58;5^</code> <!--<code>\C-z</code>--></td><td><code>*</code></td>   <td><code>\e[42;5^</code> <!--<code>\C-j</code> --></td></tr>
+<tr><td>;</td>  <td><code>;</code></td> <td><code>\e[59;5^</code> <!--<code>\C-[</code>--></td><td><code>+</code></td>   <td><code>\e[43;5^</code> <!--<code>\C-k</code> --></td></tr>
+<tr><td>,</td>  <td><code>,</code></td> <td><code>\e[44;5^</code> <!--<code>\C-l</code>--></td><td><code>&lt;</code></td><td><code>\e[60;5^</code> <!--<code>\C-\\</code>--></td></tr>
+<tr><td>-</td>  <td><code>-</code></td> <td><code>\e[45;5^</code> <!--<code>\C-m</code>--></td><td><code>=</code></td>   <td><code>\e[61;5^</code> <!--<code>\C-]</code> --></td></tr>
+<tr><td>.</td>  <td><code>.</code></td> <td><code>\e[46;5^</code> <!--<code>\C-n</code>--></td><td><code>&gt;</code></td><td><code>\e[62;5^</code> <!--<code>\C-^</code> --></td></tr>
+<tr><td>/</td>  <td><code>/</code></td> <td><code>\e[47;5^</code> <!--<code>\C-o</code>--></td><td><code>?</code></td>   <td><code>\e[63;5^</code> <!--<code>\C-_</code> --></td></tr>
+<tr><td>@</td>  <td><code>@</code></td> <td><code>\C-@</code></td>   <td><code>`</code></td><td><code>\e[96;5^</code> <!--<code>\C-@</code>--></td>  </tr>
+<tr><td>0</td>  <td><code>0</code></td> <td><code>\e[0;5^</code></td><td>--</td>            <td>--</td>                               </tr>
+<tr><td>1</td>  <td><code>1</code></td> <td><code>\e[1;5^</code></td><td><code>!</code></td><td><code>\e[33;5^</code></td>  </tr>
+<tr><td>2</td>  <td><code>2</code></td> <td><code>\e[2;5^</code></td><td><code>"</code></td><td><code>\e[34;5^</code></td>  </tr>
+<tr><td>3</td>  <td><code>3</code></td> <td><code>\e[3;5^</code></td><td><code>#</code></td><td><code>\e[35;5^</code></td>  </tr>
+<tr><td>4</td>  <td><code>4</code></td> <td><code>\e[4;5^</code></td><td><code>$</code></td><td><code>\e[36;5^</code></td>  </tr>
+<tr><td>5</td>  <td><code>5</code></td> <td><code>\e[5;5^</code></td><td><code>%</code></td><td><code>\e[37;5^</code></td>  </tr>
+<tr><td>6</td>  <td><code>6</code></td> <td><code>\e[6;5^</code></td><td><code>&</code></td><td><code>\e[38;5^</code></td>  </tr>
+<tr><td>7</td>  <td><code>7</code></td> <td><code>\e[7;5^</code></td><td><code>'</code></td><td><code>\e[39;5^</code></td>  </tr>
+<tr><td>8</td>  <td><code>8</code></td> <td><code>\e[8;5^</code></td><td><code>(</code></td><td><code>\e[40;5^</code></td>  </tr>
+<tr><td>9</td>  <td><code>9</code></td> <td><code>\e[9;5^</code></td><td><code>)</code></td><td><code>\e[41;5^</code></td>  </tr>
+<tr><td>A-Z</td><td><code>a</code></td> <td><code>\C-a</code></td>   <td><code>A</code></td><td><code>\e[97;6^</code></td></tr>
+<tr><td>[</td>  <td><code>[</code></td> <td><code>\C-[</code></td>   <td><code>{</code></td><td><code>\e[123;5^</code> <!--<code>\C-[</code>--></td></tr>
+<tr><td>\\1</td><td><code>\\</code></td><td><code>\C-\\</code></td>  <td><code>|</code></td><td><code>\e[124;5^</code> <!--<code>\C-\\</code>--></td></tr>
+<tr><td>\\2</td><td><code>\\</code></td><td><code>\C-\\</code></td>  <td><code>_</code></td><td><code>\C-_</code></td></tr>
+<tr><td>]</td>  <td><code>]</code></td> <td><code>\C-]</code></td>   <td><code>}</code></td><td><code>\e[125;5^</code> <!--<code>\C-]</code>--></td></tr>
+<tr><td>^</td>  <td><code>^</code></td> <td><code>\C-^</code></td>   <td><code>~</code></td><td><code>\e[126;5^</code> <!--<code>\C-^</code>--></td></tr>
+<tr><th colspan="5">特別なキー</th></tr>
+<tr><th>Key</th><th>k</th><th>C-k</th><th>S-k</th><th>C-S-k</th></tr>
+<tr><td>backspace</td><td><code>\C-?</code></td>              <td class="markA"><code>\C-_</code></td> <td><code>\e[8;2^</code> <!--<code>\C-h</code>--></td><td><code>\e[8;6^ </code></td></tr>
+<tr><td>return</td>   <td class="markA"><code>\C-m</code></td><td><code>\e[13;5^<!--\C-m--></code></td><td><code>\e[13;2^</code><!--<code>\C-m</code>--></td><td><code>\e[13;6^</code></td></tr>
+<tr><td>tab</td>      <td class="markA"><code>\C-i</code></td><td><code>\e[9;5^<!--\C-i--></code></td> <td><code>\e[9;2^</code> <!--<code>\C-i</code>--></td><td><code>\e[9;6^</code> </td></tr>
+<tr><td>space</td>    <td><code>' '</code></td>               <td class="markA"><code>\C-@</code></td> <td><code>\e[32;2^</code><!--<code>' '</code> --></td><td><code>\e[32;6^</code></td></tr>
+<tr><td>escape</td>   <td class="markA"><code>\C-[</code></td><td>(win)</td>                           <td><code>\e[27;2^</code><!--<code>\C-[</code>--></td><td>(win)</td></tr>
+</table>
+
+<p>他に Function Key がある。これらの修飾は、既に述べた通りで他のキー入力との重複もない。
+  但し、Windows によって F1-F12 の shift は F11-22 として解釈される。
+</p>
+<table class="normal center">
+<tr><th>Key</th><th>Normal</th><th>Application</th></tr>
+<tr><td>up</td>      <td><code>\e[A</code></td><td><code>\eOA</code></td></tr>
+<tr><td>down</td>    <td><code>\e[B</code></td><td><code>\eOB</code></td></tr>
+<tr><td>right</td>   <td><code>\e[C</code></td><td><code>\eOC</code></td></tr>
+<tr><td>left</td>    <td><code>\e[D</code></td><td><code>\eOD</code></td></tr>
+<tr><td>home</td>    <td colspan="2"><code>\e[1~</code></td></tr>
+<tr><td>insert</td>  <td colspan="2"><code>\e[2~</code></td></tr>
+<tr><td>delete</td>  <td colspan="2"><code>\e[3~</code></td></tr>
+<tr><td>end</td>     <td colspan="2"><code>\e[4~</code></td></tr>
+<tr><td>pageup</td>  <td colspan="2"><code>\e[5~</code></td></tr>
+<tr><td>pagedown</td><td colspan="2"><code>\e[6~</code></td></tr>
+<tr><td>F1-F5</td>   <td colspan="2"><code>\e[11~</code></td></tr>
+<tr><td>F6-F10</td>  <td colspan="2"><code>\e[17~</code></td></tr>
+<tr><td>F11-F14</td> <td colspan="2"><code>\e[23~</code></td></tr>
+<tr><td>F15-F16</td> <td colspan="2"><code>\e[28~</code></td></tr>
+<tr><td>F17-F20</td> <td colspan="2"><code>\e[31~</code></td></tr>
+<tr><td>F21-F24</td> <td colspan="2"><code>\e[23$</code></td></tr>
+</table>
+
+<!--===================================================================================-->
+<!--===================================================================================-->
+<!--===================================================================================-->
+<!--↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑-->
+<hr style="height:1px;"/>
+<div class="linkbar2">
+  <span class="left">-- ≪</span>
+  <span class="right">≫ --</span>
+  <span class="center">
+  mwg.Term :: Escape Sequences
+  </span>
+</div>
+<div class="address2">
+  <span class="left">起稿 2010-11-08</span>
+  <address class="right">&copy; 2010, K. Murase <a href="mailto:myoga.murase@gmail.com">myoga.murase@gmail.com</a></address>
+</div>
+</body>
+</html>
