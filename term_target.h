@@ -32,7 +32,7 @@ private:
   bool osc_push(mwg::byte c);
 };
 
-enum ControlFunctions{
+enum ControlCodes{
   BEL=0x07,
   ESC=0x1b,
 
@@ -44,10 +44,14 @@ enum ControlFunctions{
   PM =0x9e,
   APC=0x9f,
 
-  CUU=0x100,CUD,CUF,CUB,
+  TCC_NUL=0x100,
+  // terminal control functions
+  TCC_CUU, // CSI, cursor up
+  TCC_CUD, // CSI, cursor down
+  TCC_CUF, // CSI, cursor forward
+  TCC_CUB, // CSI, cursor backward
 
-
-  SGR,
+  TCC_SGR, // CSI, select graphic rendition
 
   // CNL,CPL,
   // CHA,CUP,
@@ -88,7 +92,7 @@ enum ControlFunctions{
 
 class ITarget{
 public:
-  virtual bool process_function(ControlFunctions func,SequenceArgument const& arg)=0;
+  virtual bool process_function(ControlCodes func,SequenceArgument const& arg)=0;
   virtual void putc(mwg::byte data)=0;
   virtual void flush()=0;
 };

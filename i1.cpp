@@ -242,15 +242,15 @@ private:
     // this->target->single_escape(c);
   }
   bool ProcessCSISequence(){
-    ControlFunctions fun=(ControlFunctions)0;
+    ControlCodes fun=(ControlCodes)0;
     switch(this->arg.type){
-    case 'm':fun=SGR;break;
+    case 'm':fun=TCC_SGR;break;
     // case 'h':fun=SM;break;
     // case 'l':fun=RM;break;
-    case 'A':fun=CUU;break;
-    case 'B':fun=CUD;break;
-    case 'C':fun=CUF;break;
-    case 'D':fun=CUB;break;
+    case 'A':fun=TCC_CUU;break;
+    case 'B':fun=TCC_CUD;break;
+    case 'C':fun=TCC_CUF;break;
+    case 'D':fun=TCC_CUB;break;
     }
     if(fun){
       this->target->process_function(fun,this->arg);
@@ -282,7 +282,7 @@ private:
 
 class DebugTarget:public ITarget{
 public:
-  virtual bool process_function(ControlFunctions func,SequenceArgument const& arg){
+  virtual bool process_function(ControlCodes func,SequenceArgument const& arg){
     std::printf("[escseq: %d]",(int)func);
   }
   virtual void putc(mwg::byte data){
