@@ -13,7 +13,8 @@
   <style type="text/css">
   table.normal>*>tr>th{background-color:#eee;}
   table.normal>*>tr>th.markB{background-color:#fee;}
-  dfn.tfunc{color:blue;}
+  dfn.cfunc{color:blue;}
+  dfn.cmode{color:blue;}
   </style>
 </head>
 <body class="tex:math_bqd">
@@ -40,13 +41,13 @@
 <li><a href="http://invisible-island.net/ncurses/man/terminfo.5.html">terminfo.5</a></li>
 </ul>
 <p>特定の TERM に対する terminfo のエスケープシーケンスの定義などは、</p>
-<pre class="agh-prog-bash">infcmp cygwin</pre>
+<pre class="agh-prog-bash">infocmp cygwin</pre>
 <p class="resume">等として見る事ができる。</p>
 
 <!--===================================================================================-->
 <h2>制御シーケンス 一般論</h2>
 
-<p>制御コード・制御シーケンス (エスケープシーケンス) とは、
+<p>制御シーケンス (エスケープシーケンス) とは、
 端末などでの文字列の交換(やりとり)に於いて、
 通常の文字列の中に埋め込まれる「特別な情報を符号化したバイト列」の事である。
 制御シーケンスは、</p>
@@ -59,16 +60,18 @@
 <li>その他、様々な特別な機能の制御</li>
 </ul>
 <p class="resume">等に用いられる。
-また、これらの制御コード・制御シーケンスは入力 (端末から送られるバイト列) の中で使われる場合と、
+また、これらの制御シーケンスは入力 (端末から送られるバイト列) の中で使われる場合と、
 出力 (プログラムから吐き出されるバイト列) の中で使われる場合で意味が異なる場合がある事に注意する必要がある。
 また、同じシーケンスであっても端末によって対応していなかったり、異なる機能が割り当てられていたりする事にも注意する。
 </p>
 
-<p>制御コード・制御シーケンスは以下に挙げるバイト(制御文字)で始まる。
+<p>制御シーケンスは以下に挙げる制御文字で始まる。
+制御文字のコード(バイト値)は文字コードに依存するが、
+ここでは一般的に用いられている物を挙げる。
 </p>
 
 <table class="normal center">
-<tr><th colspan="12">C0</th><th colspan="12">C1</th></tr>
+<tr><th colspan="12">C0 (ISO/IEC-646)</th><th colspan="12">C1 (ISO/IEC-6429)</th></tr>
 <tr>
   <th>名称</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
   <th>名称</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
@@ -83,7 +86,7 @@
 </tr>
 <tr>
   <th>SOH</th><td>\x01</td><td>\000</td><td>0/1</td><td>^A</td><td></td>
-  <th>DC1</th><td>\x11</td><td>\020</td><td>1/1</td><td>^Q</td><td></td>
+  <th>DC1<br/>XON</th><td>\x11</td><td>\020</td><td>1/1</td><td>^Q</td><td></td>
   <th>HOP</th><td>\x81</td><td>\200</td><td>8/1</td><td>&#x2325;^A</td><td></td>
   <th>PU1</th><td>\x91</td><td>\220</td><td>9/1</td><td>&#x2325;^Q</td><td></td>
 </tr>
@@ -95,7 +98,7 @@
 </tr>
 <tr>
   <th>ETX</th><td>\x03</td><td>\000</td><td>0/3</td><td>^C</td><td></td>
-  <th>DC3</th><td>\x13</td><td>\020</td><td>1/3</td><td>^S</td><td></td>
+  <th>DC3<br/>XOFF</th><td>\x13</td><td>\020</td><td>1/3</td><td>^S</td><td></td>
   <th>NBH</th><td>\x83</td><td>\200</td><td>8/3</td><td>&#x2325;^C</td><td></td>
   <th>STS</th><td>\x93</td><td>\220</td><td>9/3</td><td>&#x2325;^S</td><td></td>
 </tr>
@@ -128,7 +131,7 @@
   <th>BS</th> <td>\x08</td><td>\010</td><td>0/8</td><td>^H</td><td>\b</td>
   <th>CAN</th><td>\x18</td><td>\030</td><td>1/8</td><td>^X</td><td></td>
   <th>HTS</th><td>\x88</td><td>\210</td><td>8/8</td><td>&#x2325;^H</td><td></td>
-  <th>SOS</th><td>\x98</td><td>\230</td><td>9/8</td><td>&#x2325;^X</td><td></td>
+  <th class="markB">SOS</th><td>\x98</td><td>\230</td><td>9/8</td><td>&#x2325;^X</td><td></td>
 </tr>
 <tr>
   <th>HT</th> <td>\x09</td><td>\011</td><td>0/9</td><td>^I</td><td>\t</td>
@@ -138,7 +141,7 @@
 </tr>
 <tr>
   <th>LF</th> <td>\x0A</td><td>\012</td><td>0/10</td><td>^J</td><td>\n</td>
-  <th>SUB</th><td>\x1A</td><td>\032</td><td>1/10</td><td>^Z</td><td></td>
+  <th>SUB</th><td>\x1A</td><td>\032</td><td>1/10</td><td>^Z</td><td>\z</td>
   <th>VTS</th><td>\x8A</td><td>\212</td><td>8/10</td><td>&#x2325;^J</td><td></td>
   <th>SCI<br/>DECID</th><td>\x9A</td><td>\232</td><td>9/10</td><td>&#x2325;^Z</td><td></td>
 </tr>
@@ -201,13 +204,16 @@
   表中で赤色で示した物が、制御シーケンスの先頭になる制御文字である。
 </li>
 <li>列の項目について
-  <ul>
-  <li>名称: ASCII 等で規定されている名称</li>
-  <li>16進, 8進, R/C: それぞれ、16進表記, 8進表記, IEO/IEC 2022 の行/列表記 で示している。</li>
-  <li>CN: Caret Notation. (但しここだけの表現として、C1 については &#x2325; を先頭に冠して表す。)</li>
-  <li>ES: 様々の言語の文字リテラルで用いられるエスケープ表現 (8進, 16進 以外の特別な物)</li>
-  <li></li>
-  </ul>
+  <p>"名称" の列には ASCII や、各端末に於いて定義された機能の短縮名を示してある。
+  "16進"　の列は 16 進数による C リテラル表現、
+  "8進" の列は 8 進数による C リテラル表現でバイト値を示す。
+  "R/C" の列は ISO/IEC 2022 で使用される様な、行と列によるバイト表記である。
+  "CN" の列は caret notation によるバイトの表現である。
+  キーボード上で Control+A の入力は <code class="agh-prog-cpp">0x1F&amp;'A'</code> の様に、
+  但し、C1 の文字に対応する caret notation はないので、
+  ここだけの表現として、バイトの Meta 修飾 (c|=0x80) を &#x2325; を先頭に冠して表現する事にした。
+  "ES" の列には、様々の言語の文字リテラル中で用いられる特別な表現があれば、それを記した。
+  </p>
 </li>
 <li>References
   <ul>
@@ -225,7 +231,7 @@
 </li>
 </ul>
 
-<h3 id="acro.ESC"><dfn class="tfunc">ESC</dfn>: Escape</h3>
+<h3 id="acro.ESC"><dfn class="cfunc">ESC</dfn>: Escape</h3>
 <p>特に ESC で始まるシーケンスを(狭義)<dfn>エスケープシーケンス</dfn>と呼ぶ。
 以下に 2バイト目 (ESC の次のバイト) で分類した表を載せる。
 例によって赤色で示したのが、続きのバイト列を持つシーケンスである。
@@ -259,7 +265,7 @@
 <tr><th class="markB">G3D6</th>      <td>ESC /</td><td>\x1B\x2F; 1/11 2/15</td><th>SS3</th><td>ESC O</td>     <td>\x1B\x4F; 1/11 4/15</td><th>LS3</th><td>ESC o</td>    <td>\x1B\x6F; 1/11 6/15</td></tr>
 
 <tr><th>名称</th><th>Sequence</th>   <th>Hex; 行/列</th>         <th>名称</th><th>Sequence</th><th>Hex; 行/列</th>                   <th>名称</th><th>Sequence</th> <th>Hex; 行/列</th>         </tr>
-<tr><th>---</th><td>ESC 0</td>       <td>\x1B\x30; 1/11 3/0</td> <th class="markB">DSC</th><td>ESC P</td><td>\x1B\x50; 1/11 5/0</td> <th>PCD</th><td>ESC p</td>     <td>\x1B\x70; 1/11 7/0</td> </tr>
+<tr><th>---</th><td>ESC 0</td>       <td>\x1B\x30; 1/11 3/0</td> <th class="markB">DCS</th><td>ESC P</td><td>\x1B\x50; 1/11 5/0</td> <th>PCD</th><td>ESC p</td>     <td>\x1B\x70; 1/11 7/0</td> </tr>
 <tr><th>---</th><td>ESC 1</td>       <td>\x1B\x31; 1/11 3/1</td> <th>---</th>              <td>ESC Q</td><td>\x1B\x51; 1/11 5/1</td> <th>-R-</th><td>ESC q</td>     <td>\x1B\x71; 1/11 7/1</td> </tr>
 <tr><th>---</th><td>ESC 2</td>       <td>\x1B\x32; 1/11 3/2</td> <th>---</th>              <td>ESC R</td><td>\x1B\x52; 1/11 5/2</td> <th>-R-</th><td>ESC r</td>     <td>\x1B\x72; 1/11 7/2</td> </tr>
 <tr><th>---</th><td>ESC 3</td>       <td>\x1B\x33; 1/11 3/3</td> <th>---</th>              <td>ESC S</td><td>\x1B\x53; 1/11 5/3</td> <th>-R-</th><td>ESC s</td>     <td>\x1B\x73; 1/11 7/3</td> </tr>
@@ -304,7 +310,7 @@
 </li>
 </ul>
 
-<h3><dfn class="tfunc" id="tfunc.1B23">(1B23+)</dfn>: (prefix)</h3>
+<h3><dfn class="cfunc" id="tfunc.1B23">(1B23+)</dfn>: (prefix)</h3>
 <p>ISO/IEC 2022 では ESC # に続くシーケンスは、登録単独制御機能 (registered single control function) とされている。
 一方で、歴史的には VT100 端末で、ESC # で始まるシーケンスが使われてきた。
 それらを以下に纏める。
@@ -332,23 +338,24 @@
 <table class="normal center">
 <tr><th>先頭</th><th>Sequence</th><th>名前</th></tr>
 <tr><th>CSI</th>
-  <td><code>CSI <i>&lt;Pi&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></code></td>
+  <td>CSI <i>&lt;Fp&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></td>
   <td><dfn>制御シーケンス</dfn> (control sequence)</td>
 </tr>
 <tr><th>OSC</th>
-  <td><code>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> BEL</code><br/>
-  <code>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> ST</code>
+  <td>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> BEL<br/>
+  OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> ST
   </td>
   <td>Operating System Command</td>
 </tr>
-<tr><th>DCS</th><td><code>DCS <strong>.*</strong> ST</code></td><td>Device Control String</td></tr>
-<tr><th>PM</th> <td><code>PM <strong>.*</strong> ST</code></td> <td>Private Message</td></tr>
-<tr><th>APC</th><td><code>APC <strong>.*</strong> ST</code></td><td>Application Program Command</td>
+<tr><th>DCS</th><td>DCS <strong>.*</strong> ST</td><td>Device Control String</td></tr>
+<tr><th>SOS</th> <td>SOS <strong>.*</strong> ST</td> <td>Start of String</td></tr>
+<tr><th>PM</th> <td>PM <strong>.*</strong> ST</td> <td>Privacy Message</td></tr>
+<tr><th>APC</th><td>APC <strong>.*</strong> ST</td><td>Application Program Command</td>
 </tr>
 </table>
 
 <ul>
-<li><dfn class="tfunc">CSI</dfn>: Constrol Sequence Introducer
+<li><dfn class="cfunc">CSI</dfn>: Constrol Sequence Introducer
   <p>CSI (constrol sequence introducer) で始まるシーケンスを特に
   <dfn>CSI シーケンス</dfn> (CSI sequence)
   または (狭義)<dfn>制御シーケンス</dfn> (constrol sequence) と呼ぶ。
@@ -360,33 +367,35 @@
   UTF-8 を例として、文字コードによっては &lt;0x9B&gt; は通常の文字を表現するバイトである為(?)、
   現在では &lt;x9B&gt; が用いられる事は少なく、専ら &lt;x1B x5B&gt; が用いられる。
   今や &lt;x9B&gt; は CSI として解釈されない事も多い。
-  <i>&lt;Ft&gt;</i> は [\x40, \x7F) の範囲の文字を指定し、
-  この文字によって、その制御シーケンスが特にどの様な機能を持った物かを指定する。
-  それぞれの文字に対応する制御シーケンスの機能は、端末に依存する所が大きい。
+  <i>&lt;I&gt;</i> は [\x20, \x30) の範囲の文字を指定し、
+  <i>&lt;Ft&gt;</i> は [\x40, \x7F) の範囲の文字を指定する。
+  <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i>  
+  の組合せによって、その制御シーケンスが特にどの様な機能を持った物かを指定する。
+  それぞれの組合せに対応する制御シーケンスの機能は、端末に依存する所が大きい。
   これについては、後でまとめる事にする。
-  <i>&lt;Pi&gt;</i> は [\x20, \x40) の範囲の文字を表す。
-  <i>&lt;Pi&gt;</i><strong>*</strong> の部分は、
+  <i>&lt;Fp&gt;</i> は [\x20, \x40) の範囲の文字を表す。
+  <i>&lt;Fp&gt;</i><strong>*</strong> の部分は、
   主に、文字 <i>&lt;Ft&gt;</i> で指定された機能に対する引数として働く。
   多くの場合、<code>/|([0-9]+;)*[0-9]+/</code> の形式を持つ。
   場合によっては、更に異なる機能を指定するのに用いられる。
   詳しくは後述する。
   </p>
 </li>
-<li><dfn class="tfunc">OSC</dfn>: Operating System Command
+<li><dfn class="cfunc">OSC</dfn>: Operating System Command
   <p>OSC (operating system command) で始まるシーケンスは、
-  <dfn>DSC シーケンス</dfn> (DSC sequence) または <dfn>OS コマンド</dfn> (operating system command) と呼ばれる。
-  DSC シーケンスは、主に端末エミュレータのウィンドウの制御 (出力)・状態報告 (入力) などに用いられる。
+  <dfn>OSC シーケンス</dfn> (OSC sequence) または <dfn>OS コマンド</dfn> (operating system command) と呼ばれる。
+  OSC シーケンスは、主に端末エミュレータのウィンドウの制御 (出力)・状態報告 (入力) などに用いられる。
   </p>
   <p>OSC は "ESC ]" &lt;x1B x5D&gt; (または &lt;x9D&gt;) で表現される。
   CSI と同様の事情で現在は &lt;x1B x5D&gt; が用いられる。
   <i>&lt;N&gt;</i> は [0-9] の文字を表す。
-  <i>N</i><strong>*</strong> はコマンドの種類を指定する番号である。
+  <i>&lt;N&gt;</i><strong>*</strong> はコマンドの種類を指定する番号である。
   後に続く <strong>.*</strong> の部分は、コマンドの引数として与える文字列である。
   BEL &lt;x07&gt; または ST &lt;x1b x5c&gt; (または &lt;x9c&gt;) はコマンドの終端を表す。
   (従って、当然ながら文字列 <strong>.*</strong> には BEL 及び ST を含ませる事はできない。)
   </p>
 </li>
-<li><dfn class="tfunc">DCS</dfn>: Device Control String
+<li><dfn class="cfunc">DCS</dfn>: Device Control String
   <p>DCS で始まるシーケンスは <dfn>DCS シーケンス</dfn> (DCS sequence)
   または Device Control String と呼ばれる。
   DCS は "ESC P" &lt;x1b x50&gt; (または &lt;x90&gt;) で表現される。
@@ -395,18 +404,26 @@
   ST &lt;x1B x5C&gt; (または &lt;x9C&gt;) はシーケンスの終端を表す。
   </p>
 </li>
-<li><dfn class="tfunc">PM</dfn>: Private Message
+<li><dfn class="cfunc">SOS</dfn>: Start of String
+  <p>SOS で始まるシーケンスは <dfn>SOS シーケンス</dfn> (SOS sequence) と呼ばれる。
+  SOS は "ESC X" &lt;x1B x58&gt; (または &lt;x98&gt;) で表現される。
+  CSI と同様に現在は &lt;x1B x58&gt; を用いる。
+  <strong>.*</strong> に内容を記述する。内容には SOS または ST を含まない。
+  ST &lt;x1B x5C&gt; (または &lt;x9C&gt;) はシーケンスの終端を表す。
+  </p>
+</li>
+<li><dfn class="cfunc">PM</dfn>: Privacy Message
   <p>PM で始まるシーケンスは <dfn>PM シーケンス</dfn> (PM sequence)
-  または Private Message と呼ばれる。
+  または Privacy Message と呼ばれる。
   PM は "ESC ^" &lt;x1B x5E&gt; (または &lt;x9E&gt;) で表現される。
   CSI と同様に現在は &lt;x1B x5E&gt; を用いる。
   <strong>.*</strong> に内容を記述する。
   ST &lt;x1B x5C&gt; (または &lt;x9C&gt;) はシーケンスの終端を表す。
   </p>
 </li>
-<li><dfn class="tfunc">APC</dfn>: Application Program Command
+<li><dfn class="cfunc">APC</dfn>: Application Program Command
   <p>APC で始まるシーケンスは <dfn>APC シーケンス</dfn> (APC sequence)
-  または Private Message と呼ばれる。
+  または Application Program Command と呼ばれる。
   APC は "ESC _" &lt;x1B x5F&gt; (または &lt;x9F&gt;) で表現される。
   CSI と同様に現在は &lt;x1B x5F&gt; を用いる。
   <strong>.*</strong> に内容を記述する。
@@ -415,20 +432,1015 @@
 </li>
 </ul>
 
+<h3>記号</h3>
+<p>以降では説明の為に以下の記号を用いる</p>
+<ul>
+<li><i>&lt;I&gt;</i>: [\x20-\x2F] の範囲にある文字</li>
+<li><i>&lt;Fp&gt;</i>: [\x30-\x3F] の範囲にある文字</li>
+<li><i>&lt;Ft&gt;</i>: [\x40-\x7E] の範囲にある文字</li>
+<li><i>&lt;Ps&gt;</i>: [0-9] の文字の並びを表す。整数。</li>
+<li><i>&lt;Pm&gt;</i>: 複数の整数を ";" &lt;x3B&gt; で区切った物。</li>
+<li></li>
+</ul>
+
+
+<!--===================================================================================-->
+<h2>制御シーケンス (出力)</h2>
+
+<h4>TODO</h4>
+<ul>
+<li>xterm: osc sequence, dsc sequence を列挙</li>
+<li>vt100 の頁でまだ列挙していない ASCII Control Functions を列挙、分類、version 確認</li>
+<li>
+ DECAAM, DECALN, DECANM, DECARM, DECARSM, DECAUPSS, DECAWM, DECBI, DECBKM, DECCANSM,
+ DECCAPSLK, DECCARA, DECCIR, DECCKD, DECCKM, DECCKSR, DECCOLM, DECCRA, DECCRTSM, DECDC,
+ DECDHL, DECDLD, DECDMAC, DECDWL, DECEKBD, DECELF, DECERA, DECESKM, DECFI, DECFNK, DECFRA,
+ DECHDPXM, DECHEBM, DECHEM, DECIC, DECINVM, DECIPEM, DECKBD, DECKBUM, DECKLHIM, DECKPAM,
+ DECKPM, DECKPNM, DECLANS, DECLBAN, DECLFKC, DECLL, DECLRMM, DECLTOD, DECMCM, DECMSR,
+ DECNAKB, DECNCSM, DECNKM, DECNRCM, DECNULM, DECNUMLK, DECOM, DECPAK, DECPCCM, DECPCTERM,
+ DECPEX, DECPFF, DECPFK, DECPKA, DECPKFMR, DECRARA, DECRC, DECRLCM, DECRLM, DECRPAK,
+ DECRPDE, DECRPFK, DECRPKT, DECRPM, DECRPSS, DECRPTUI, DECRQCRA, DECRQDE, DECRQKD,
+ DECRQKT, DECRQPKFM, DECRQPSR, DECRQSS, DECRQUPSS, DECRSPS, DECRSTS, DECSACE, DECSASD,
+ DECSC, DECSCA, DECSCL, DECSCLM, DECSCNM, DECSCP, DECSCPP, DECSCS, DECSDDT, DECSDPT,
+ DECSED, DECSEL, DECSERA, DECSFC, DECSKCV, DECSLCK, DECSLPP, DECSLRM, DECSMBV, DECSMKR,
+ DECSNLS, DECSPP, DECSPPCS, DECSPRTT, DECSR, DECSRC, DECSRFR, DECSSCLS, DECSSDT, DECSSL,
+ DECST8C, DECSTBM, DECSTR, DECSTRL, DECSWBV, DECSWL, DECTABSR, DECTID, DECTME, DECTSR,
+ DECTST, DECUDK, DECVCCM, DECXCPR, DECXRLM, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR,
+ HPA, HPR, HTS, HVP, IND, IRM, KAM, LNM, LS, MC, NEL, NP, PP, PPA, PPB, PPR, RIS, SCODFK,
+ SCS, SD, SRM, SS, SU, TBC, VPA, VPR
+</li>
+<li>VT520
+  <ul>
+  <li>+ DECAC, DECANM Exit, DECARR, DECATC, DECATCBM, DECATCUM, DECBBSM, DECCRTST, DECCTR, DECDLDA, DECECM, DECES,
+  DECFWM, DECHWUM, DECID, DECOSCNM, DECPS, DECRPL, DECRSTS, DECSEST, DECSIN, DECSPMA, DECSTGLT, DECSTUI, DECSWT,
+  DECSZS, DECTSR, DECUS, HT
+  </li>
+  <li>- DECFNK, DECSRFR, SCODFK, SCORC, SCOSC</li>
+  </ul>
+</li>
+</ul>
+
+<p>■ 以下 xterm の CSI Sequence (未だ纏めていない物)</p>
+<table class="normal center">
+<tr><th>名称</th><th>Sequence</th></tr>
+<tr><th>DECSED</th><td>CSI ? <i>&lt;Ps&gt;</i> J</td></tr>
+<tr><th>DECSEL</th><td>CSI ? <i>&lt;Ps&gt;</i> K</td></tr>
+<tr><th>SU</th>     <td>CSI <i>&lt;Ps&gt;</i> S</td></tr>
+<tr><th>SD</th>     <td>CSI <i>&lt;Ps&gt;</i> T</td></tr>
+<tr><th>(IHMT)</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> T</td></tr>
+<tr><th>HPA</th>    <td>CSI <i>&lt;Ps&gt;</i> `</td></tr>
+<tr><th>REP</th>    <td>CSI <i>&lt;Pm&gt;</i> b</td></tr>
+<tr><th>VPA</th>    <td>CSI <i>&lt;Pm&gt;</i> d</td></tr>
+<tr><th>HVP</th>    <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> f</td></tr>
+<tr><th>TBC</th>    <td>CSI <i>&lt;Ps&gt;</i> g</td></tr>
+<tr><th>MC</th>     <td>CSI <i>&lt;Pm&gt;</i> i</td></tr>
+<tr><th>DECMC</th>  <td>CSI ? <i>&lt;Pm&gt;</i> i</td></tr>
+<tr><th>SGR</th>    <td>CSI <i>&lt;Pm&gt;</i> m</td></tr>
+<tr><th>DSR</th>    <td>CSI <i>&lt;Ps&gt;</i> n</td></tr>
+<tr><th>DECDSR</th> <td>CSI ? <i>&lt;Ps&gt;</i> n</td></tr>
+<tr><th>DECSTR</th> <td>CSI ! p</td></tr>
+<tr><th>DECSCL</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> " p</td></tr>
+<tr><th>DECSCA</th> <td>CSI <i>&lt;Ps&gt;</i> q</td></tr>
+<tr><th>DECSTBM</th><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> r</td></tr>
+<tr><th>XTREST</th> <td>CSI ? <i>&lt;Pm&gt;</i> r</td></tr>
+<tr><th>DECCARA</th><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ r</td></tr>
+<tr><th>XTSAVE</th> <td>CSI ? <i>&lt;Pm&gt;</i> s</td></tr>
+<tr><th>XTWOP</th>  <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> t</td></tr>
+<tr><th>DECRARA</th><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ t</td></tr>
+<tr><th>DECCRA</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ w</td></tr>
+<tr><th>DECEFR</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ' w</td></tr>
+<tr><th>DECREQTPARM</th><td>CSI <i>&lt;Ps&gt;</i> x</td></tr>
+<tr><th>DECSACE</th>    <td>CSI <i>&lt;Ps&gt;</i> * x</td></tr>
+<tr><th>DECFRA</th>     <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ x</td></tr>
+<tr><th>DECELR</th>     <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ' z</td></tr>
+<tr><th>DECERA</th>     <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ z</td></tr>
+<tr><th>DECSLE</th>     <td>CSI <i>&lt;Pm&gt;</i> ' {</td></tr>
+<tr><th>DECSERA</th>    <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ {</td></tr>
+<tr><th>DECRQLP</th>    <td>CSI <i>&lt;Ps&gt;</i> ' |</td></tr>
+</table>
+
+<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+<h3>モード</h3>
+
+<table class="normal center">
+<tr><th>名称</th><th>Sequence</th></tr>
+<tr><th>SM</th>     <td>CSI <i>&lt;Pm&gt;</i> h</td></tr>
+<tr><th>DECSET</th> <td>CSI ? <i>&lt;Pm&gt;</i> h</td></tr>
+<tr><th>RM</th>     <td>CSI <i>&lt;Pm&gt;</i> l</td></tr>
+<tr><th>DECRST</th> <td>CSI ? <i>&lt;Pm&gt;</i> l</td></tr>
+<tr><th>DECRQM</th> <td>CSI <i>&lt;Pm&gt;</i> $ p<br/>CSI ? <i>&lt;Pm&gt;</i> $ p</td></tr>
+</table>
+<ul>
+<li><dfn class="cfunc">SM</dfn>: Set Mode
+  <ul>
+  <li>互換性: vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT: SM</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">RM</dfn>: Reset Mode
+  <ul>
+  <li>互換性: vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/RM">VT: RM</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECSET</dfn>: Set DEC Mode
+  <ul>
+  <li>互換性: vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT: SM</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECRST</dfn>: Reset DEC Mode
+  <ul>
+  <li>互換性: vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/RM">VT: RM</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECRQM</dfn>: Request Mode
+  <ul>
+  <li>互換性: vt420</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECRQM">VT: DECRQM</a></li>
+  </ul>
+</li>
+</ul>
+
+<table class="normal center">
+<tr><th>名称</th>               <th>Mode</th></tr>
+<tr><th>CRM</th>                <td>3</td></tr>
+<tr><th>DECTCEM</th>            <td>?25</td></tr>
+<tr><th>smSendMouse</th>        <td>?1000</td></tr>
+<tr><th>smMouseMotionHilite</th><td>?1001</td></tr>
+<tr><th>smMouseMotionCell</th>  <td>?1002</td></tr>
+<tr><th>smMouseMotionAll</th>   <td>?1003</td></tr>
+<tr><th>smSendFocus</th>        <td>?1004</td></tr>
+<tr><th>smExMouseUtf8</th>      <td>?1005</td></tr>
+<tr><th>smExMouseUrxvt</th>     <td>?1006</td></tr>
+<tr><th>smExMouseSgr</th>       <td>?1015</td></tr>
+</table>
+<ul>
+<li>Mode 3 <dfn class="cmode">CRM</dfn>: Show Control Character Mode [既定値 on]
+  <!--
+  on: Show Control Character Mode
+  off: Hide Control Characters
+  -->
+  <ul>
+  <li>互換性: VT100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CRM">VT: CRM</a></li>
+  </ul>
+</li>
+</ul>
+
+<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+<h3>問い合わせ</h3>
+<table class="normal center">
+<tr><th>名称</th><th>D</th><th>Sequence</th></tr>
+<tr><th>DA1</th> <td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> c</td></tr>
+<tr><th>DA1R</th><td>&lt;&lt;</td><td>CSI ? 6 4 ; <i>&lt;Pm&gt;</i> c</td></tr>
+<tr><th>DA2</th> <td>&gt;&gt;</td><td>CSI &gt; <i>&lt;Ps&gt;</i> c</td></tr>
+<tr><th>DA2R</th><td>&lt;&lt;</td><td>CSI &gt; 6 1 ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> c</td></tr>
+<tr><th>DA3</th> <td>&gt;&gt;</td><td>CSI = <i>&lt;Ps&gt;</i> c</td></tr>
+<tr><th>DA3R</th><td>&lt;&lt;</td><td>DCS ! | <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> ST</td></tr>
+<tr><th>DECRQTSR</th> <td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> $ u</td></tr>
+<tr><th>DECTSR</th><td>&lt;&lt;</td><td>DCS 1 $ s <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> ST</td></tr>
+<tr><th>DDD1</th><td>&lt;&lt;</td><td>ESC ) 1</td></tr>
+<tr><th>DDD2</th><td>&lt;&lt;</td><td>ESC ) B</td></tr>
+<tr><th>DDD3</th><td>&lt;&lt;</td><td>ESC ( 1</td></tr>
+</table>
+
+<ul>
+<li><dfn class="cfunc">DA1</dfn>: Primary Device Attributes
+  <ul>
+  <li>VT100; xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DA1">VT: DA1</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DA2</dfn>: Secondary Device Attributes
+  <ul>
+  <li>VT100; xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DA2">VT: DA2</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DA3</dfn>: Tertiary Device Attributes
+  <ul>
+  <li>VT100</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DA3">VT: DA3</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECRQTSR</dfn>: Request Terminal State Report
+  <ul>
+  <li><dfn class="cfunc">DECRQTSRR</dfn></li>
+  <li><dfn class="cfunc">DDD1</dfn></li>
+  <li><dfn class="cfunc">DDD2</dfn></li>
+  <li><dfn class="cfunc">DDD3</dfn></li>
+  <li>VT420 (DDD1, DDD2, DDD3 は Hebrew Keyboard で有効)</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECRQTSR">VT: DECRQTSR</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DD1">VT: DDD1, DDD2, DDD3</a></li>
+  </ul>
+</li>
+
+
+</ul>
+
+<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+<h3>カーソル位置</h3>
+
+<table class="normal center">
+<tr><th>名称</th><th>D</th><th>Sequence</th></tr>
+<tr><th>CUU</th><td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> A</td></tr>
+<tr><th>CUD</th><td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> B</td></tr>
+<tr><th>CUF</th><td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> C</td></tr>
+<tr><th>CUB</th><td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> D</td></tr>
+<tr><th>CUP</th><td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> H</td></tr>
+<tr><th rowspan="2">CPR</th><td>&gt;&gt;</td><td>CSI 6 n</td></tr>
+<tr>                        <td>&lt;&lt;</td><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> R</td></tr>
+<tr><th>CNL</th><td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> E</td></tr>
+<tr><th>CPL</th><td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> F</td></tr>
+<tr><th>CHA</th><td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> G</td></tr>
+<tr><th>CHT</th><td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> I</td></tr>
+<tr><th>CBT</th><td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> Z</td></tr>
+<tr><th>SCOSC</th><td>&gt;&gt;</td><td>CSI s</td></tr>
+<tr><th>SCORC</th><td>&gt;&gt;</td><td>CSI u</td></tr>
+</table>
+
+<ul>
+<li><dfn class="cfunc">CUU</dfn>: Cursor Up
+  <p><i>&lt;Ps&gt;</i> 行だけ上へ移動。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
+  <ul>
+  <li>互換性: vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CUU">VT: CUU</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">CUD</dfn>: Cursor Down
+  <p><i>&lt;Ps&gt;</i> 行だけ下へ移動。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
+  <ul>
+  <li>互換性: vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CUD">VT: CUD</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">CUF</dfn>: Cursor Forward
+  <p><i>&lt;Ps&gt;</i> 文字だけ右へ移動。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
+  <ul>
+  <li>互換性: vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CUF">VT: CUF</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">CUB</dfn>: Cursor Backward
+  <p><i>&lt;Ps&gt;</i> 文字だけ左へ移動。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
+  <ul>
+  <li>互換性: vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CUB">VT: CUB</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">CUP</dfn>: Cursor Position
+  <ul>
+  <li>互換性: vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CUP">VT: CUP</a></li>
+  </ul>
+</li>
+<li>DSR 6 <dfn class="cfunc">CPR</dfn>: Cursor Position Report
+  <ul>
+  <li>互換性: vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CPR">VT: CPR</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DSR-CPR">VT: DSR-CPR</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">CNL</dfn>: Cursor Next Line
+  <ul>
+  <li>互換性: vt510, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CNL">VT: CNL</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">CPL</dfn>: Cursor Previous Line
+  <ul>
+  <li>互換性: vt510, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CPL">VT: CPL</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">CHA</dfn>: Cursor Horizontal Absolute
+  <ul>
+  <li>互換性: vt510, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CHA">VT: CHA</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">CHT</dfn>: Cursor Horizontal Forward Tabulation
+  <ul>
+  <li>互換性: vt510, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CHT">VT: CHT</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">CBT</dfn>: Cursor Backward Tabulation
+  <ul>
+  <li>互換性: vt510, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CBT">VT: CBT</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">SCOSC</dfn>: Save Current Cursor Position
+  <p>現在のカーソル位置を記録する。</p>
+  <ul>
+  <li>互換性: vt510, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/SCOSC">SCOSC</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">SCORC</dfn>: Restore Saved Cursor Position
+  <p>SCOSC で記録した位置にカーソル位置を戻す。</p>
+  <ul>
+  <li>互換性: vt510, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/SCORC">SCORC</a></li>
+  </ul>
+</li>
+</ul>
+
+<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+<h3>挿入・削除</h3>
+
+<table class="normal center">
+<tr><th>名称</th><th>Sequence</th></tr>
+<tr><th>ED</th> <td>CSI <i>&lt;Ps&gt;</i> J</td></tr>
+<tr><th>DCH</th><td>CSI <i>&lt;Ps&gt;</i> P</td></tr>
+<tr><th>ECH</th><td>CSI <i>&lt;Ps&gt;</i> X</td></tr>
+<tr><th>ICH</th><td>CSI <i>&lt;Ps&gt;</i> @</td></tr>
+<tr><th>DL</th> <td>CSI <i>&lt;Ps&gt;</i> M</td></tr>
+<tr><th>EL</th> <td>CSI <i>&lt;Ps&gt;</i> K</td></tr>
+<tr><th>IL</th> <td>CSI <i>&lt;Ps&gt;</i> L</td></tr>
+</table>
+<ul>
+<li><dfn class="cfunc">ED</dfn>: Erase in Display
+  <ul>
+  <li>VT100; xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/ED">VT: ED</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DCH</dfn>: Delete Character
+  <ul>
+  <li>VT100; xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DCH">VT: DCH</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">ECH</dfn>: Erase Character
+  <ul>
+  <li>VT420; xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/ECH">VT: ECH</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">ICH</dfn>: Insert Character
+  <ul>
+  <li>VT420; xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/ICH">VT: ICH</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DL</dfn>: Delete Line
+  <p><i>&lt;Ps&gt;</i> 行だけ削除して抜き去る。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
+  <ul>
+  <li>VT100; xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DL">VT: DL</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">EL</dfn>: Erase in Line
+  <ul>
+  <li>VT100; xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/EL">VT: EL</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">IL</dfn>: Insert Line
+  <p><i>&lt;Ps&gt;</i> 行だけ空白行を挿入。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
+  <ul>
+  <li>VT100; xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DCH">VT: IL</a></li>
+  </ul>
+</li>
+</ul>
+
+<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+<h3>他</h3>
+<table class="normal center">
+<tr><th>名称</th>    <th>Sequence</th></tr>
+<tr><th>DECSCUSR</th><td>CSI <i>&lt;Ps&gt;</i> SP q</td></tr>
+</table>
+
+<ul>
+<li><dfn class="cfunc">DECSCUSR</dfn>: Set Cursor Style
+  <table class="normal center">
+  <tr><th>引数1</th><th>カーソルのスタイル</th></tr>
+  <tr><td>0, 1, 省略</td><td>ブロック・点滅</td></tr>
+  <tr><td>2</td>         <td>ブロック・常時表示</td></tr>
+  <tr><td>3</td>         <td>下線・点滅</td></tr>
+  <tr><td>4</td>         <td>下線・常時表示</td></tr>
+  <tr><td>5 以上</td><td>行高に対するカーソルの高さの割合を % 単位で指定する (cygwin)</td></tr>
+  </table>
+  <ul>
+  <li>互換性: VT510, cygwin-1.7.18
+    <ul>
+    <li>cygwin では点滅・常時の変更は行わず形状のみ変更する。</li>
+    </ul>
+  </li>
+  <li>
+    <a href="http://www.vt100.net/docs/vt510-rm/DECSCUSR">VT: DECSCUSR</a>
+    <a href="http://cygwin.com/ml/cygwin-announce/2013-04/msg00025.html">Cygwin 1.7.18</a>
+  </li>
+  </ul>
+</li>
+<li>Mode ?25 <dfn class="cmode">DECTCEM</dfn>: Text Cursor Enable Mode [既定値 off]
+  <!--
+  on: Show Cursor.
+  off: Hide Cursor.
+  -->
+  <p>カーソルを非表示にする。</p>
+  <ul>
+  <li>互換性: VT420, xyerm, rxvt, cygwin-1.7.18</li>
+  <li>
+    <a href="http://www.vt100.net/docs/vt510-rm/DECTCEM">VT: DECTCEM</a>
+    <a href="http://cygwin.com/ml/cygwin-announce/2013-04/msg00025.html">Cygwin 1.7.18</a>
+  </li>
+  </ul>
+</li>
+</ul>
+
+<!--************************************************************************-->
+<h2>SGR (描画属性)</h2>
+<table class="normal center">
+<tr><th>名称</th><th>Sequence</th></tr>
+<tr><th>SGR</th><td>CSI <i>&lt;Pm&gt;</i> m</td></tr>
+</table>
+
+<ul>
+<li><dfn class="cfunc">SGR</dfn>: Set Graphic Rendition (select graphic rendition)
+  <ul>
+  <li>vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/SGR">VT: SGR</a></li>
+  </ul>
+</li>
+</ul>
+
+<h4>SGR Attributes 0-29</h4>
+<table class="normal center">
+<tr><th>機能</th>           <th>番号</th>         <th>ansi</th> <th>vt</th><th>xterm</th><th>rxvt</th></tr>
+<tr><th>sgrDefault</th>     <td>0</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrBold</th>        <td>1</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrFaint</th>       <td>2</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrItalic</th>      <td>3</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrUnderline</th>   <td>4</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrBlink</th>       <td>5</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrRapidBlink</th>  <td>6</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrNega</th>        <td>7</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrInvis</th>       <td>8</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>-</td>   </tr>
+<tr><th>sgrStrike</th>      <td>9</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrAnsiFonts</th>   <td>10-19</td>        <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrCharsetASCII</th><td>10</td>           <td>-</td>    <td>*</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrCharsetL</th>    <td>11</td>           <td>-</td>    <td>*</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrCharsetR</th>    <td>12</td>           <td>-</td>    <td>*</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrFraktur</th>     <td>20</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrDoubleUnderline</th><td>21</td>        <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrBoldOff</th>     <td>22</td>           <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrItalicOff</th>   <td>23</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrUnderlineOff</th><td>24</td>           <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrBlinkOff</th>    <td>25</td>           <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrPSpacing</th>    <td>26</td>           <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrNegaOff</th>     <td>27</td>           <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrInvisOff</th>    <td>28</td>           <td>*</td>    <td>*</td> <td>*</td>    <td>-</td>   </tr>
+<tr><th>sgrStrikeOff</th>   <td>29</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+</table>
+<ul>
+<li><dfn class="sgr">sgrDefault</dfn>: All attributes off
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrBold</dfn>: bold, highlight
+  <p>太字属性もしくは高輝度。</p>
+  <ul>
+  <li>互換性: vt100 (bold), ansi (bold/highlight), xterm (bold)</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrFaint</dfn>: faint, second color, dim
+  <p>低輝度もしくは代替色。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrItalic</dfn>: Italicized
+  <p>イタリック体。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrUnderline</dfn>: underline, singly underlined
+  <p>下線。</p>
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrBlink</dfn>: blinking, slowly blinking
+  <p>点滅。ANSI に従えば 150/min 未満の速さで点滅させる。</p>
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrRapidBlink</dfn>: rapid blinking
+  <p>点滅。ANSI に従えば 150/min 以上の速さで点滅させる。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrNega</dfn>: negative image, inverse
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrInvis</dfn>: invisible image, hidden, concealed
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrStrike</dfn>: crossed-out
+  <p>打ち消し線。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrAnsiFonts</dfn>: fonts
+  <p>フォントの指定。</p>
+  <table class="normal center">
+  <tr><th>番号</th><th>機能</th></tr>
+  <tr><td>10</td><td>既定のフォント (primary font, default font)</td></tr>
+  <tr><td>11</td><td>代替フォント1 (1st alternative font)</td></tr>
+  <tr><td>12</td><td>代替フォント2 (2nd alternative font)</td></tr>
+  <tr><td>13</td><td>代替フォント3 (3rd alternative font)</td></tr>
+  <tr><td>14</td><td>代替フォント4 (4th alternative font)</td></tr>
+  <tr><td>15</td><td>代替フォント5 (5th alternative font)</td></tr>
+  <tr><td>16</td><td>代替フォント6 (6th alternative font)</td></tr>
+  <tr><td>17</td><td>代替フォント7 (7th alternative font)</td></tr>
+  <tr><td>18</td><td>代替フォント8 (8th alternative font)</td></tr>
+  <tr><td>19</td><td>代替フォント9 (9th alternative font)</td></tr>
+  </table>
+  
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrCharsetASCII</dfn>: ASCII char set
+  <p>sgrCharsetL, sgrCharsetR で設定された C0:GL に割り当てられた文字を、
+  通常の ASCII 文字集合に戻す。
+  </p>
+  <ul>
+  <li>互換性: vt100 (SCO Console のみで利用可能)</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrCharsetL</dfn>: Map 00-7F
+  <p>PC character set が設定されている時、
+  PC character set の 00-7F の文字を C0:GL にロッキングシフトする。
+  但し、C0 の ESC &lt;x1B&gt;, DC1 &lt;x11&gt;, DC3 &lt;x13&gt; はその制御機能を維持し、
+  それ以外の C0 の文字はその制御機能を失って PC Charset の文字となる。
+  </p>
+  <ul>
+  <li>互換性: vt100 (SCO Console のみで利用可能)</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrCharsetR</dfn>: Map 80-FF
+  <p>PC character set が設定されている時、
+  PC character set の 80-FF の文字を C0:GL にロッキングシフトする。
+  但し、C0 の ESC &lt;x1B&gt;, DC1 &lt;x11&gt;, DC3 &lt;x13&gt; はその制御機能を維持し、
+  それ以外の C0 の文字はその制御機能を失って PC Charset の文字となる。
+  </p>
+  <p>ISO/ASCII character set が設定されている時、
+  ISO/ASCII character の A0-FF の文字を GL にロッキングシフトする。
+  </p>
+  <ul>
+  <li>互換性: vt100 (SCO Console のみで利用可能)</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrFraktur</dfn>: Fraktur
+  <p>Fraktur フォントまたは Gothic フォント。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrDoubleUnderline</dfn>: doubly underlined
+  <p>二重下線。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrBoldOff</dfn>: bold off, normal color/intensity
+  <p>太字属性・低輝度属性を解除する。
+  ansi, xterm では sgrBold/sgrFaint の両方を解除する。
+  </p>
+  <ul>
+  <li>互換性: vt100, ansi (bold/faint off), xterm (bold/faint off)</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrItalicOff</dfn>: not italicized/fraktur
+  <p>sgrItalic, sgrFraktur を解除。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrUnderlineOff</dfn>: Underline off
+  <p>sgrUnderline, sgrDoubleUnderline (対応していれば) を解除。</p>
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrBlinkOff</dfn>: blinking off, steady, not blinking
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrPSpacing</dfn>: (reserved)
+  <p>reserved for proportional spacing as specified in CCITT Recommendation T.61</p>
+  <p>T.61 は International Teletex Services の為の仕様であるが teletex service 自体が終了した為に失効した様だ。
+    現在は最新版 (1993 年) の文書自体が手に入らない状態にあるようだが、改訂前の 1988 年版は手に入る。
+  </p>
+  <ul>
+  <li>互換性: ansi (reserved)</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrNegaOff</dfn>: negative image off, positive image
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrInvisOff</dfn>: invisible image off, visible image, revealed characters
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrStrikeOff</dfn>: not crossed out
+  <p>打ち消し線解除。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+</ul>
+
+<h4>SGR Attributes 30-59</h4>
+<table class="normal center">
+<tr><th>機能</th>              <th>番号</th>         <th>ansi</th> <th>vt</th><th>xterm</th><th>rxvt</th></tr>
+<tr><th>sgrAnsiColor</th>      <td>30-37 40-47</td>  <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrISO8613_6Colors</th><td>38, 48</td>       <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrFgDefault</th>      <td>39</td>           <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrBgDefault</th>      <td>49</td>           <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrPSpacingOff</th>    <td>50</td>           <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrFrame</th>          <td>51</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrCircle</th>         <td>52</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrOverline</th>       <td>53</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrFrameOff</th>       <td>54</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrOverlineOff</th>    <td>55</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrAnsiReserved</th>   <td>56-59</td>        <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
+</table>
+<ul>
+<li><dfn class="sgr">sgrAnsiColor</dfn>: 前景色・背景色
+  <table class="normal center">
+  <tr><th>番号</th><th>機能</th><th>番号</th><th>機能</th></tr>
+  <tr><td>30</td><td>前景黒</td><td>40</td><td>背景黒</td></tr>
+  <tr><td>31</td><td>前景茶</td><td>41</td><td>背景茶</td></tr>
+  <tr><td>32</td><td>前景緑</td><td>42</td><td>背景緑</td></tr>
+  <tr><td>33</td><td>前景土</td><td>43</td><td>背景土</td></tr>
+  <tr><td>34</td><td>前景藍</td><td>44</td><td>背景藍</td></tr>
+  <tr><td>35</td><td>前景紫</td><td>45</td><td>背景紫</td></tr>
+  <tr><td>36</td><td>前景碧</td><td>46</td><td>背景碧</td></tr>
+  <tr><td>37</td><td>前景灰</td><td>47</td><td>背景灰</td></tr>
+  </table>
+  <ul>
+  <li>互換性: ANSI, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrISO8613_6Colors</dfn>: ISO 8613-6 Colors
+  <p>より多彩な色の指定をする為の SGR 属性である。番号 38, 48 に続けて引数を取る。</p>
+  <table class="normal center">
+  <tr><th>番号</th><th>説明</th></tr>
+  <tr>
+    <td>3 8 : 0</td>
+    <td>前景色 実装依存</td></tr>
+  <tr>
+    <td>3 8 : 1</td>
+    <td>前景色 透明</td></tr>
+  <tr>
+    <td>4 8 : 1</td>
+    <td>背景色 透明</td></tr>
+  <tr>
+    <td>3 8 : 2 : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i><br/>
+        3 8 ; 2 ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i></td>
+    <td>前景色 RGB</td></tr>
+  <tr>
+    <td>4 8 : 2 : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i><br/>
+        4 8 ; 2 ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i></td>
+    <td>背景色 RGB</td></tr>
+  <tr>
+    <td>3 8 : 3 : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i></td>
+    <td>前景色 CMY</td></tr>
+  <tr>
+    <td>4 8 : 3 : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i></td>
+    <td>背景色 CMY</td></tr>
+  <tr>
+    <td>3 8 : 4 : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i></td>
+    <td>前景色 CMYK</td></tr>
+  <tr>
+    <td>4 8 : 4 : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i></td>
+    <td>背景色 CMYK</td></tr>
+  <tr>
+    <td>3 8 : 5 : <i>&lt;Ps&gt;</i><br/>
+        3 8 ; 5 ; <i>&lt;Ps&gt;</i></td>
+    <td>前景色 X11 Colors</td></tr>
+  <tr>
+    <td>4 8 : 5 : <i>&lt;Ps&gt;</i><br/>
+        4 8 ; 5 ; <i>&lt;Ps&gt;</i></td>
+    <td>背景色 X11 Colors</td></tr>
+  </table>
+
+  <p>ANSI では 38, 48 は reserved とされ、ISO 8613-6 [CCITT Recommendation T.416] に内容を委ねている。
+    ISO 8613-6 では、引数の区切はコロン ":" (3/10) とされているが、
+    実際の実装では CSI Sequence の一般的な引数区切である ";" が用いられる事が多い。
+    ISO 8613-6 では末端にある空引数は任意に省略可能だが、
+    区切にセミコロンを用いている場合、引数の終端を判断できないので省略するのは危険である。
+  </p>
+
+  <p>ISO 8613-6 によれば RGB, CMY の第6引数は無視される。
+    RGB, CMY, CMYK の第7引数と第8引数はそれぞれ error tolerance と tolerance を測る color space を指定する。
+    tolerance color space は 0 for CIELUV, 1 for CIELAB である。
+    実際の terminal で tolerance に対応している物は確認できない。
+    例えば KDE Konsole が 38;2;r;g;b の形式を実装しているが tolerance の引数には対応していない。
+    逆に KDE Konsole に対して tolerance を送信するとそれが別の意味に解釈されるので問題である。
+  </p>
+
+  <p>ISO 8613-6 では R, G, B, C, M, Y, K のそれぞれの強度の指定方法について述べられていない。
+    実際の実装では R, G, B は 0-255 の値で指定すると解釈している。
+  </p>
+
+  <ul>
+  <li>互換性: ansi (reserved), xterm (38;2, 48;2, 38;5, 48;5, tolerance なし),
+      KDE Konsole (38;5; 48;5; 38;2; 48;2, tolerance なし ),
+      RLogin (38:2:, 48:2, 38;5, 48;5, tolerance なし),
+      Tera Term (38:2, 48:2, 38;5, 48;5, tolerance なし)</li>
+  <li>互換性 (Tera Term, xterm): セミコロンとコロンの混合を認めている。
+    但し、コロン区切より後にセミコロン区切がある場合は、
+    それ以降は別の SGR 指定と見做し、そこで引数の読み取りを終わる。</li>
+  <li>Konsole <a href="https://github.com/robertknight/konsole/blob/master/user-doc/README.moreColors">konsole/user-doc/README.moreColors at master ・ robertknight/konsole ・ GitHub</a></li>
+  <li>RLogin <a href="http://nanno.dip.jp/softlib/man/rlogin/ctrlcode.html">エスケープシーケンス一覧</a></li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrFgDefault</dfn>:
+  <p>前景色を既定色に戻す</p>
+  <ul>
+  <li>互換性: ansi, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrBgDefault</dfn>
+  <p>背景色を既定色に戻す</p>
+  <ul>
+  <li>互換性: ansi, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrPSpacingOff</dfn>: (reserved)
+  <p>reserved for cancelling the effect of the rendering aspect established by parameter value 26</p>
+  <ul>
+  <li>互換性: ansi (reserved)</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrFrame</dfn>: framed
+  <p>四角形の枠線。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrCircle</dfn>: encircled
+  <p>丸囲み線。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrOverline</dfn>: overlined
+  <p>上線。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrFrameOff</dfn>: not framed/encircled
+  <p>枠線・丸囲み線解除。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrOverlineOff</dfn>: not overlined
+  <p>上線解除。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrAnsiReserved</dfn>: (reserved)
+  <p>reserved for future standardization</p>
+  <ul>
+  <li>互換性: ansi (reserved)</li>
+  </ul>
+</li>
+</ul>
+
+<h4>SGR Attributes 60-</h4>
+<table class="normal center">
+<tr><th>機能</th>              <th>番号</th>         <th>ansi</th> <th>vt</th><th>xterm</th></tr>
+<tr><th>sgrIdeoDecoration</th> <td>60-64</td>        <td>*</td>    <td>-</td> <td>-</td>    </tr>
+<tr><th>sgrIdeoDecorationOff</th><td>65</td>         <td>*</td>    <td>-</td> <td>-</td>    </tr>
+<tr><th>sgrJISX0211Deco</th>   <td>66-69</td>        <td>-</td>    <td>-</td> <td>-</td>    </tr>
+<tr><th>sgrAixColor</th>       <td>90-97 100-107</td><td>-</td>    <td>-</td> <td>*</td>    </tr>
+<tr><th>sgrDefalutColor</th>   <td>100</td>          <td>-</td>    <td>-</td> <td>-</td>    </tr>
+</table>
+<ul>
+<li><dfn class="sgr">sgrIdeoDecoration</dfn>: CJK装飾
+  <p>CJK文字に対する装飾を有効にする。</p>
+  <table class="normal center">
+  <tr><th>番号</th><th>機能</th>    <th>横書き</th>  <th>縦書き</th>  </tr>
+  <tr><td>60</td><td>傍線</td>      <td>下線</td>    <td>右線</td>    </tr>
+  <tr><td>61</td><td>二重傍線</td>  <td>下二重線</td><td>右二重線</td></tr>
+  <tr><td>62</td><td>左傍線</td>    <td>上線</td>    <td>左線</td>    </tr>
+  <tr><td>63</td><td>左二重傍線</td><td>上二重線</td><td>左二重線</td></tr>
+  <tr><td>64</td><td>傍点・強調</td><td colspan="2">ideogram stress marking</td></tr>
+  </table>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrIdeoDecorationOff</dfn>: CJK装飾解除
+  <p>漢字装飾 60-64 66-69 で設定された属性を解除する。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrIdeoDecoration</dfn>: CJK装飾
+  <p>CJK文字に対する装飾で 60-64 の時とは、縦書き・横書きの切り替わり方が異なる物である。JIS X 0211 に規定されている。</p>
+  <table class="normal center">
+  <tr><th>番号</th><th>機能</th>    <th>横書き</th>  <th>縦書き</th>  </tr>
+  <tr><td>66</td><td>左傍線</td>    <td>下線</td>    <td>左線</td>    </tr>
+  <tr><td>67</td><td>左二重傍線</td><td>下二重線</td><td>左二重線</td></tr>
+  <tr><td>68</td><td>右傍線</td>    <td>上線</td>    <td>右線</td>    </tr>
+  <tr><td>69</td><td>右二重傍線</td><td>上二重線</td><td>右二重線</td></tr>
+  </table>
+  <ul>
+  <li>互換性: JIS X 0211</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrAixColor</dfn>: 高輝度背景色・前景色
+  <p>これらの文字色・背景色の設定は aixterm に起源を持つ。</p>
+  <table class="normal center">
+  <tr><th>番号</th><th>機能</th><th>番号</th><th>機能</th></tr>
+  <tr><td>90</td><td>前景鼠</td><td>100</td><td>背景鼠</td></tr>
+  <tr><td>91</td><td>前景赤</td><td>101</td><td>背景赤</td></tr>
+  <tr><td>92</td><td>前景草</td><td>102</td><td>背景草</td></tr>
+  <tr><td>93</td><td>前景黄</td><td>103</td><td>背景黄</td></tr>
+  <tr><td>94</td><td>前景青</td><td>104</td><td>背景青</td></tr>
+  <tr><td>95</td><td>前景桃</td><td>105</td><td>背景桃</td></tr>
+  <tr><td>96</td><td>前景水</td><td>106</td><td>背景水</td></tr>
+  <tr><td>97</td><td>前景白</td><td>107</td><td>背景白</td></tr>
+  </table>
+  <ul>
+  <li>互換性: xterm (88/256 色有効時)</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrDefalutColor</dfn>: default color
+  <p>前景色及び背景色を既定色に戻す。rxvt 由来の機能 (と xterm の説明には書かれている)。</p>
+  <ul>
+  <li>互換性: xterm (16 色無効時)</li>
+  </ul>
+</li>
+<li>References
+  <ul>
+  <li>VT <a href="http://www.vt100.net/docs/vt510-rm/SGR">VT: SGR</a></li>
+  <li>xterm <a href="http://www.xfree86.org/current/ctlseqs.html">Xterm Control Sequences</a></li>
+  <li>ANSI
+    <ul>
+    <li><a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code - Wikipedia, the free encyclopedia</a></li>
+    <li><a href="http://www.ecma-international.org/publications/standards/Ecma-048.htm">Standard ECMA-48</a></li>
+    </ul>
+  </li>
+  </ul>
+</li>
+</ul>
+
+<div class="note">
+  <ul>
+  <li>cygwin
+    <ul>
+    <li>0: 既定</li>
+    <li>1: 前景色明</li>
+    <li>2: 前景色暗</li>
+    <li>4: dim</li>
+    <li>5: 背景色明</li>
+    <li>7: 反転</li>
+    <li>30-37: 前景色</li>
+    <li>40-47: 背景色</li>
+    <li>39: 前景色既定</li>
+    <li>49: 背景色既定</li>
+    <li>22: 前景色暗</li>
+    <li>24: dim 解除</li>
+    <li>25: 背景色暗</li>
+    <li>27: 反転解除</li>
+    </ul>
+  </li>
+  <li>rosaterm
+  </li>
+  <li>MS-DOS
+    <ul>
+    <li>0: 既定</li>
+    <li>1: ハイライト (モノクロモードのみ)</li>
+    <li>2*: 縦線</li>
+    <li>4: 下線</li>
+    <li>5: 点滅</li>
+    <li>7: 反転</li>
+    <li>8, 16*: 不可視</li>
+    <li>30-37: sgrAnsiColors 前景色。</li>
+    <li>17*: 前景色 R</li>
+    <li>18*: 前景色 G</li>
+    <li>19*: 前景色 Y</li>
+    <li>20*: 前景色 B</li>
+    <li>21*: 前景色 M</li>
+    <li>22*: 前景色 C</li>
+    <li>23*: 前景色 白</li>
+    <li>40-47*: sgrAnsiColors 背景色。但し、同時に前景色は白になる。</li>
+    <li><a href="http://www5c.biglobe.ne.jp/~ecb/assembler2/b_2.html">エスケープシーケンス</a></li>
+    </ul>
+  </li>
+  <li>出元不明
+    <ul>
+    <li>3: 反転</li>
+    <li>21: 前景色 暗</li>
+    <li>22: 既定色</li>
+    <li>17: 前景色 R</li>
+    <li>18: 前景色 B</li>
+    <li>19: 前景色 M</li>
+    <li>20: 前景色 G</li>
+    <li>21: 前景色 Y</li>
+    <li>22: 前景色 C</li>
+    <li>23: 前景色 白</li>
+    </ul>
+  </li>
+  </ul>
+</div>
+
+
+
+
+<!--************************************************************************-->
+<h2>ISO/IEC 2022 関連</h2>
+
+<h3><dfn class="cfunc">ACS</dfn>: Announcer Code Structure</h3>
+<table class="normal center">
+<tr><th>名称</th><th>Sequence</th><th>R/C</th></tr>
+<tr><th>ACS</th>
+  <td>ESC SP <i>&lt;Ft&gt;</i></td>
+  <td>1/11 2/0 <i>&lt;Ft&gt;</i></td>
+  </tr>
+</table>
+
+<p>ESC SP <i>&lt;Ft&gt;</i> の形式のシーケンスは ACS と呼ばれる。
+通信の初めに、文字コードで有効な G0 G1 G2 G3 から GL GR へのシフトの構造を伝達する為の符号である。
+<i>&lt;Ft&gt;</i> に指定する文字で構造を指定する。
+</p>
+
+<table class="normal center">
+<tr><th>Sequence</th><th>R/C</th><th>機能</th></tr>
+<tr><td>ESC SP A</td><td>1/11 2/0 4/1 </td><td></td></tr>
+<tr><td>ESC SP B</td><td>1/11 2/0 4/2 </td><td></td></tr>
+<tr><td>ESC SP C</td><td>1/11 2/0 4/3 </td><td></td></tr>
+<tr><td>ESC SP D</td><td>1/11 2/0 4/4 </td><td></td></tr>
+<tr><td>ESC SP E</td><td>1/11 2/0 4/5 </td><td></td></tr>
+<tr><td>ESC SP F</td><td>1/11 2/0 4/6 </td><td>S7C1T</td></tr>
+<tr><td>ESC SP G</td><td>1/11 2/0 4/7 </td><td>S8C1T</td></tr>
+<tr><td>ESC SP H</td><td>1/11 2/0 4/8 </td><td></td></tr>
+<tr><td>ESC SP I</td><td>1/11 2/0 4/9 </td><td></td></tr>
+<tr><td>ESC SP J</td><td>1/11 2/0 4/10</td><td></td></tr>
+<tr><td>ESC SP K</td><td>1/11 2/0 4/11</td><td></td></tr>
+<tr><td>ESC SP L</td><td>1/11 2/0 4/12</td><td>ANSI conformance Lv1 (dpANS X3.134.1), ECMA-43 Lv1</td></tr>
+<tr><td>ESC SP M</td><td>1/11 2/0 4/13</td><td>ANSI conformance Lv2 (dpANS X3.134.1), ECMA-43 Lv2</td></tr>
+<tr><td>ESC SP N</td><td>1/11 2/0 4/14</td><td>ANSI conformance Lv3 (dpANS X3.134.1), ECMA-43 Lv3</td></tr>
+<tr><td>ESC SP O</td><td>1/11 2/0 4/15</td><td>-</td></tr>
+<tr><td>ESC SP P</td><td>1/11 2/0 5/0 </td><td></td></tr>
+<tr><td>ESC SP Q</td><td>1/11 2/0 5/1 </td><td>-</td></tr>
+<tr><td>ESC SP R</td><td>1/11 2/0 5/2 </td><td></td></tr>
+<tr><td>ESC SP S</td><td>1/11 2/0 5/3 </td><td></td></tr>
+<tr><td>ESC SP T</td><td>1/11 2/0 5/4 </td><td></td></tr>
+<tr><td>ESC SP U</td><td>1/11 2/0 5/5 </td><td></td></tr>
+<tr><td>ESC SP V</td><td>1/11 2/0 5/6 </td><td></td></tr>
+<tr><td>ESC SP W</td><td>1/11 2/0 5/7 </td><td></td></tr>
+<tr><td>ESC SP X</td><td>1/11 2/0 5/8 </td><td>-</td></tr>
+<tr><td>ESC SP Y</td><td>1/11 2/0 5/9 </td><td>-</td></tr>
+<tr><td>ESC SP Z</td><td>1/11 2/0 5/10</td><td></td></tr>
+<tr><td>ESC SP [</td><td>1/11 2/0 5/11</td><td></td></tr>
+<tr><td>ESC SP \</td><td>1/11 2/0 5/12</td><td></td></tr>
+</table>
+
+<ul>
+<li><dfn class="cfunc">S7C1T</dfn></li>
+<li><dfn class="cfunc">S8C1T</dfn></li>
+<li>対応: xterm = F, G, L, M, N; VT510 = F, G, L, M, N</li>
+<li><a href="http://www.vt100.net/docs/vt510-rm/ANSI">VT: ANSI Conformance Level</a></li>
+<li><a href="http://www.vt100.net/docs/vt510-rm/S7C1T">VT: S7C1T</a></li>
+<li><a href="http://www.vt100.net/docs/vt510-rm/S8C1T">VT: S8C1T</a></li>
+<li><a href="http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-035.pdf">ECMA-35</a></li>
+</ul>
+
 <!--===================================================================================-->
 <h2>エスケープシーケンス表</h2>
 <table class="normal center">
 <tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
-<tr><td><code>\e[<strong>#</strong>A</code></td><td>指定した数だけ上へ移動。0 は 1 と解釈</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#</strong>B</code></td><td>指定した数だけ下へ移動。0 は 1 と解釈</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#</strong>C</code></td><td>指定した数だけ右へ移動。0 は 1 と解釈</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#</strong>D</code></td><td>指定した数だけ左へ移動。0 は 1 と解釈</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#</strong>L</code></td><td>指定した行数だけ空白行を挿入。0 は 1 と解釈</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#</strong>M</code></td><td>指定した行数だけ行を削除して抜き去る。0 は 1 と解釈</td><td>O</td></tr>
 <tr><td><code>\e[<strong>#;#</strong>H</code></td><td>指定した行・列へ移動する。行番号・列番号は 1 から始まる。0 は 1 と解釈</td><td>O</td></tr>
 <tr><td><code>\e[<strong>#;#</strong>f</code></td><td>指定した行・列へ移動する。行番号・列番号は 1 から始まる。0 は 1 と解釈</td><td>O</td></tr>
-<tr><td><code>\e[s</code></td><td>現在位置を記録</td><td>O</td></tr>
-<tr><td><code>\e[u</code></td><td>\e[s で設定した位置に戻る</td><td>O</td></tr>
 <tr><td><code>\e7</code></td><td>現在位置と描画属性を記録</td><td>O</td></tr>
 <tr><td><code>\e8</code></td><td>\e7 で設定した位置・属性に戻る</td><td>O</td></tr>
 <tr><td><code>\e[<strong>#</strong>J</code></td>
@@ -485,163 +1497,6 @@ j.行消す, ESC[2K
 </table>
 
 <!--...................................................................................-->
-<h3>SGR (Select Graphic Rendition)</h3>
-<table class="normal center">
-<tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
-<tr><td><code>\e[<strong>#;...;#</strong>m</code></td><td>描画モードを設定</td><td>O</td></tr>
-</table>
-<p>引数には、以下の物を零個以上指定する事ができる。
-何も指定しない場合、0 を指定した事になる。</p>
-<table class="normal center">
-<tr>
-  <th colspan="3"> 0 番台</th>
-  <th colspan="3">10 番台</th>
-  <th colspan="3">20 番台</th>
-</tr>
-<tr>
-  <th>番号</th><th>説明</th><th>実装</th>
-  <th>番号</th><th>説明</th><th>実装</th>
-  <th>番号</th><th>説明</th><th>実装</th>
-</tr>
-<tr>
-  <td> 0</td><td>既定</td><td>O</td>
-  <td>10</td><td>(既定フォント) / (ASCII Charset [SCO])</td><td>無視</td>
-  <td>20</td><td>(Fraktur) / (前景色 G)</td><td></td>
-</tr>
-<tr>
-  <td> 1</td><td>前景色 明 / 太字有効</td><td>前景色 明</td>
-  <td>11</td><td>(フォント1) / (Map 00-7F [SCO])</td><td>無視</td>
-  <td>21</td><td>(前景色 暗) / (二重下線) / (前景色 Y)</td><td>二重下線</td>
-</tr>
-<tr>
-  <td> 2</td><td>前景色 暗 / 縦線</td><td>前景色 暗</td>
-  <td>12</td><td>(フォント2) / (Map 80-FF [SCO])</td><td>無視</td>
-  <td>22</td><td>既定色 / 太字無効 / (前景色 C)</td><td>既定色</td>
-</tr>
-<tr>
-  <td> 3</td><td>(イタリック) / (反転)</td><td>X</td>
-  <td>13</td><td>(フォント3)</td><td></td>
-  <td>23</td><td>(イタリック/Fraktur 無効) / (前景色 白)</td><td></td>
-</tr>
-<tr>
-  <td> 4</td><td>下線有効</td><td>O</td>
-  <td>14</td><td>(フォント4)</td><td></td>
-  <td>24</td><td>下線無効</td><td>下線・二重線無効</td>
-</tr>
-<tr>
-  <td> 5</td><td>点滅有効 / 背景色 明</td><td>背景色 明</td>
-  <td>15</td><td>(フォント5)</td><td></td>
-  <td>25</td><td>点滅無効 / 背景色 暗</td><td>背景色 暗</td>
-</tr>
-<tr>
-  <td> 6</td><td>(速い点滅)</td><td>太字有効</td>
-  <td>16</td><td>(フォント6) / (不可視)</td><td></td>
-  <td>26</td><td></td><td>太字無効</td>
-</tr>
-<tr>
-  <td> 7</td><td>反転有効</td><td>O</td>
-  <td>17</td><td>(フォント7) / (前景色 R)</td><td></td>
-  <td>27</td><td>反転無効</td><td>O</td>
-</tr>
-<tr>
-  <td> 8</td><td>(不可視有効)</td><td></td>
-  <td>18</td><td>(フォント8) / (前景色 B)</td><td></td>
-  <td>28</td><td>不可視無効</td><td></td>
-</tr>
-<tr>
-  <td> 9</td><td>(打消線有効)</td><td>O</td>
-  <td>19</td><td>(フォント9) / (前景色 M)</td><td></td>
-  <td>29</td><td>(打消線無効)</td><td>O</td>
-</tr>
-<tr>
-  <th colspan="3">30 番台</th>
-  <th colspan="3">40 番台</th>
-  <th colspan="3">50 番台</th>
-</tr>
-<tr>
-  <th>番号</th><th>説明</th><th>実装</th>
-  <th>番号</th><th>説明</th><th>実装</th>
-  <th>番号</th><th>説明</th><th>実装</th>
-</tr>
-<tr>
-  <td>30</td><td>前景色 黒</td><td>O</td>
-  <td>40</td><td>背景色 黒</td><td>O</td>
-  <td>50</td><td></td><td></td>
-</tr>
-<tr>
-  <td>31</td><td>前景色 R</td><td>O</td>
-  <td>41</td><td>背景色 R</td><td>O</td>
-  <td>51</td><td>枠線 四角</td><td>X</td>
-</tr>
-<tr>
-  <td>32</td><td>前景色 G</td><td>O</td>
-  <td>42</td><td>背景色 G</td><td>O</td>
-  <td>52</td><td>枠線 丸</td><td>X</td>
-</tr>
-<tr>
-  <td>33</td><td>前景色 Y</td><td>O</td>
-  <td>43</td><td>背景色 Y</td><td>O</td>
-  <td>53</td><td>上線有効</td><td>O</td>
-</tr>
-<tr>
-  <td>34</td><td>前景色 B</td><td>O</td>
-  <td>44</td><td>背景色 B</td><td>O</td>
-  <td>54</td><td>枠線 無し</td><td>X</td>
-</tr>
-<tr>
-  <td>35</td><td>前景色 M</td><td>O</td>
-  <td>45</td><td>背景色 M</td><td>O</td>
-  <td>55</td><td>上線無効</td><td>O</td>
-</tr>
-<tr>
-  <td>36</td><td>前景色 C</td><td>O</td>
-  <td>46</td><td>背景色 C</td><td>O</td>
-  <td>56</td><td></td><td></td>
-</tr>
-<tr>
-  <td>37</td><td>前景色 白</td><td>O</td>
-  <td>47</td><td>背景色 白</td><td>O</td>
-  <td>57</td><td></td><td></td>
-</tr>
-<tr>
-  <td>38</td><td>前景色 ※</td><td>O</td>
-  <td>48</td><td>背景色 ※</td><td>O</td>
-  <td>58</td><td></td><td></td>
-</tr>
-<tr>
-  <td>39</td><td>前景色 既定</td><td>O</td>
-  <td>49</td><td>背景色 既定</td><td>O</td>
-  <td>59</td><td></td><td></td>
-</tr>
-</table>
-<p>他</p>
-<ul>
-<li>90-97 明前景色; 100-107 明背景色; 100 (rxvt) 既定色</li>
-<li>60 ideogram underline or right side line (傍線)</li>
-<li>61 ideogram double underline or double line on the right side (二重傍線)</li>
-<li>62 ideogram overline or left side line (左傍線)</li>
-<li>63 ideogram double overline or double line on the left side (左二重傍線)</li>
-<li>64 ideogram stress marking (傍点)</li>
-</ul>
-<p>38 と 48 は特殊である。後に続く二つの引数を使用して、前景色/背景色を指定する。</p>
-<table class="normal center">
-<tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
-<tr><td><code>\e[38;5;<strong>#</strong>m</code></td><td>前景色 xterm 256 色見本から選択</td><td>O</td></tr>
-<tr><td><code>\e[48;5;<strong>#</strong>m</code></td><td>背景色 xterm 256 色見本から選択</td><td>O</td></tr>
-</table>
-<!--
-OSC#\a
-<li>110 Reset VT100 text foreground color.</li>
-<li>111 Reset VT100 text background color.</li>
-<li>112 Reset text cursor color.</li>
-<li>113 Reset mouse foreground color.</li>
-<li>114 Reset mouse background color.</li>
-<li>115 Reset Tektronix foreground color.</li>
-<li>116 Reset Tektronix background color.</li>
-<li>117 Reset highlight color.</li>
-<li>118 Reset Tektronix cursor color.</li>
--->
-<!--...................................................................................-->
 <h3>Set/Reset Mode</h3>
 <table class="normal center">
 <tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
@@ -659,17 +1514,9 @@ OSC#\a
 <!--
 <tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
 <tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
-<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
-<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
-<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
-<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
-<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
-
-
 -->
 <tr><td>1</td>     <td class="markA">-</td><td>GATM</td> <td>Guarded area transfer</td><td></td><td></td></tr>
 <tr><td>2</td>     <td>x</td><td>AM/KAM</td>             <td>Keyboard Action Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>3</td>     <td>v</td><td>CRM</td>                <td>Show Control Character Mode</td><td class="markB">Hide Control Characters.</td><td></td></tr>
 <tr><td>4</td>     <td>x</td><td>IRM</td>                <td>Insert Mode</td><td class="markB"></td><td>@</td></tr>
 <tr><td>5</td>     <td class="markA">-</td><td>SRTM</td> <td>Status reporting transfer</td><td></td><td></td></tr>
 <tr><td>7</td>     <td>?</td><td></td>                   <td>行折返し有効</td><td>行折返し無効</td><td>X</td></tr>
@@ -699,7 +1546,6 @@ OSC#\a
 <tr><td>?12</td>   <td>x/att610</td><td></td>    <td>Start Blinking Cursor.</td><td>Stop Blinking Cursor.</td><td></td></tr>
 <tr><td>?18</td>   <td>vx</td><td>DECPFF</td>    <td>Print form feed.</td><td class="markB">Don’t print form feed.</td><td></td></tr>
 <tr><td>?19</td>   <td>vx</td><td>DECPEX</td>    <td>Set print extent to full screen.</td><td class="markB">Limit print to scrolling region.</td><td></td></tr>
-<tr><td>?25</td>   <td>4xr</td><td>DECTCEM</td>  <td class="markB">Show Cursor.</td><td>Hide Cursor.</td><td>@</td></tr>
 <tr><td>?30</td>   <td>rx</td><td></td>          <td>Show scrollbar.</td><td>Don’t show scrollbar.</td><td></td></tr>
 <tr><td>?34</td>   <td>5</td><td>DECRLM</td>     <td>Right-to-left Mode</td><td class="markB"></td><td></td></tr>
 <tr><td>?35</td>   <td>rx</td><td></td>          <td>Enable font-shifting functions.</td><td>Disable font-shifting functions.</td><td></td></tr>
@@ -738,12 +1584,13 @@ OSC#\a
 <tr><td>?108</td>  <td>v</td><td>DECNUMLK</td>   <td>Num Lock Mode</td><td></td><td></td></tr>
 <tr><td>?109</td>  <td>v</td><td>DECCAPSLK</td>  <td>Caps Lock Mode</td><td></td><td></td></tr>
 <tr><td>?110</td>  <td>v</td><td>DECKLHIM</td>   <td>Keyboard LEDs Host Indicator Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?1000</td> <td>xr</td><td></td>          <td>Send Mouse X & Y on button press and release.</td><td>Don’t send Mouse X & Y on button press and release.</td><td></td></tr>
-<tr><td>?1001</td> <td>x</td><td></td>           <td>Use Hilite Mouse Tracking.</td><td>Don’t use Hilite Mouse Tracking.</td><td></td></tr>
-<tr><td>?1002</td> <td>x</td><td></td>           <td>Use Cell Motion Mouse Tracking.</td><td>Don’t use Cell Motion Mouse Tracking.</td><td></td></tr>
-<tr><td>?1003</td> <td>x</td><td></td>           <td>Use All Motion Mouse Tracking.</td><td>Don’t use All Motion Mouse Tracking.</td><td></td></tr>
-<tr><td>?1004</td> <td>x</td><td></td>           <td>Send FocusIn/FocusOut events.</td><td>Don’t send FocusIn/FocusOut events.</td><td></td></tr>
-<tr><td>?1005</td> <td>x</td><td></td>           <td>Enable Extended Mouse Mode.</td><td>Disable Extended Mouse Mode.</td><td></td></tr>
+<tr><td>?111</td>  <td>/vt520</td><td>DECFWM</td>  <td>Framed windows mode           </td><td></td></tr>
+<tr><td>?112</td>  <td>/vt520</td><td>DECRPL</td>  <td>Review previous lines         </td><td></td></tr>
+<tr><td>?113</td>  <td>/vt520</td><td>DECHWUM</td> <td>Host Wake-Up                  </td><td></td></tr>
+<tr><td>?114</td>  <td>/vt520</td><td>DECATCUM</td><td>Alternate text color underline</td><td></td></tr>
+<tr><td>?115</td>  <td>/vt520</td><td>DECATCBM</td><td>Alternate text color blink    </td><td></td></tr>
+<tr><td>?116</td>  <td>/vt520</td><td>DECBBSM</td> <td>Bold and blink style mode     </td><td></td></tr>
+<tr><td>?117</td>  <td>/vt520</td><td>DECECM</td>  <td>Erase color mode              </td><td></td></tr>
 <tr><td>?1010</td> <td>rx</td><td></td>          <td>Scroll to bottom on tty output.</td><td>Don’t scroll to bottom on tty output.</td><td></td></tr>
 <tr><td>?1011</td> <td>rx</td><td></td>          <td>Scroll to bottom on key press.</td><td>Don’t scroll to bottom on key press.</td><td></td></tr>
 <tr><td>?1034</td> <td>x</td><td></td>           <td>Interpret "meta" key, sets eighth bit. <br />(enables the eightBitInput resource).</td><td>Don’t interpret "meta" key. (This disables the eightBitInput resource).</td><td></td></tr>
@@ -767,21 +1614,21 @@ OSC#\a
 <tr><td>?1060</td> <td>x</td><td></td>       <td>Set legacy keyboard emulation (X11R6).</td><td>Reset legacy keyboard emulation (X11R6).</td><td></td></tr>
 <tr><td>?1061</td> <td>x</td><td></td>       <td>Set VT220 keyboard emulation.</td><td>Reset keyboard emulation to Sun/PC style.</td><td></td></tr>
 <tr><td>?2004</td> <td>x</td><td></td>       <td>Set bracketed paste mode.</td><td>Reset bracketed paste mode.</td><td></td></tr>
-<tr><td>=0</td>    <td></td> <td></td>       <td>40 x 25 monochrome (text)</td><td></td><td>X</td></tr>
-<tr><td>=1</td>    <td></td> <td></td>       <td>40 x 25 color (text)</td><td></td><td>X</td></tr>
-<tr><td>=2</td>    <td></td> <td></td>       <td>80 x 25 monochrome (text)</td><td></td><td>X</td></tr>
-<tr><td>=3</td>    <td></td> <td></td>       <td>80 x 25 color (text)</td><td></td><td>X</td></tr>
-<tr><td>=4</td>    <td></td> <td></td>       <td>320 x 200 4-color (graphics)</td><td></td><td>X</td></tr>
-<tr><td>=5</td>    <td></td> <td></td>       <td>320 x 200 monochrome (graphics)</td><td></td><td>X</td></tr>
-<tr><td>=6</td>    <td></td> <td></td>       <td>640 x 200 monochrome (graphics)</td><td></td><td>X</td></tr>
-<tr><td>=7</td>    <td></td> <td></td>       <td>行折返し有効</td><td>行折返し無効</td><td>X</td></tr>
-<tr><td>=13</td>   <td></td> <td></td>       <td>320 x 200 color (graphics)</td><td></td><td>X</td></tr>
-<tr><td>=14</td>   <td></td> <td></td>       <td>640 x 200 color (16-color graphics)</td><td></td><td>X</td></tr>
-<tr><td>=15</td>   <td></td> <td></td>       <td>640 x 350 monochrome (2-color graphics)</td><td></td><td>X</td></tr>
-<tr><td>=16</td>   <td></td> <td></td>       <td>640 x 350 color (16-color graphics)</td><td></td><td>X</td></tr>
-<tr><td>=17</td>   <td></td> <td></td>       <td>640 x 480 monochrome (2-color graphics)</td><td></td><td>X</td></tr>
-<tr><td>=18</td>   <td></td> <td></td>       <td>640 x 480 color (16-color graphics)</td><td></td><td>X</td></tr>
-<tr><td>=19</td>   <td></td> <td></td>       <td>320 x 200 color (256-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=0</td>    <td>/ansi.sys</td> <td></td>       <td>40 x 25 monochrome (text)</td><td></td><td>X</td></tr>
+<tr><td>=1</td>    <td>/ansi.sys</td> <td></td>       <td>40 x 25 color (text)</td><td></td><td>X</td></tr>
+<tr><td>=2</td>    <td>/ansi.sys</td> <td></td>       <td>80 x 25 monochrome (text)</td><td></td><td>X</td></tr>
+<tr><td>=3</td>    <td>/ansi.sys</td> <td></td>       <td>80 x 25 color (text)</td><td></td><td>X</td></tr>
+<tr><td>=4</td>    <td>/ansi.sys</td> <td></td>       <td>320 x 200 4-color (graphics)</td><td></td><td>X</td></tr>
+<tr><td>=5</td>    <td>/ansi.sys</td> <td></td>       <td>320 x 200 monochrome (graphics)</td><td></td><td>X</td></tr>
+<tr><td>=6</td>    <td>/ansi.sys</td> <td></td>       <td>640 x 200 monochrome (graphics)</td><td></td><td>X</td></tr>
+<tr><td>=7</td>    <td>/ansi.sys</td> <td></td>       <td>行折返し有効</td><td>行折返し無効</td><td>X</td></tr>
+<tr><td>=13</td>   <td>/ansi.sys</td> <td></td>       <td>320 x 200 color (graphics)</td><td></td><td>X</td></tr>
+<tr><td>=14</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 200 color (16-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=15</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 350 monochrome (2-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=16</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 350 color (16-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=17</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 480 monochrome (2-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=18</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 480 color (16-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=19</td>   <td>/ansi.sys</td> <td></td>       <td>320 x 200 color (256-color graphics)</td><td></td><td>X</td></tr>
 <tr><td>&gt;1</td><td></td><td></td>         <td>ファンクション有り</td><td>ファンクション無し</td><td>X</td></tr>
 <tr><td>&gt;5</td><td></td><td></td>         <td>カーソル有り</td><td>カーソル無し</td><td>X</td></tr>
 </table>
@@ -792,6 +1639,130 @@ OSC#\a
 <li>x: xterm</li>
 <li>r: rxvt</li>
 </ul>
+
+<h3>マウス追跡 (Mouse Tracking)</h3>
+<ul>
+<li>Mode ?1000 <dfn class="cmode">smSendMouse</dfn> Send Mouse X &amp; Y [既定値 off]
+  <!--
+    on: Send Mouse X &amp; Y on button press and release.
+    off: Don’t send Mouse X &amp; Y on button press and release.
+  -->
+  <p>端末側で発生したマウスボタンの押下・解放のイベント情報を送る。
+  マウスイベントの情報は以下のシーケンスを用いて送信される。
+  </p>
+
+  <table class="normal center">
+  <tr><th>名称</th>                <th>形式</th> <th>Sequence</th></tr>
+  <tr><th>smSendMouseR</th>        <td>既定</td> <td>CSI M <i>&lt;C&gt;</i> <i>&lt;C&gt;</i> <i>&lt;C&gt;</i></td></tr>
+  <tr><th>smExMouseUtf8R</th>      <td>utf-8</td><td>CSI M <i>&lt;C8&gt;</i> <i>&lt;C8&gt;</i> <i>&lt;C8&gt;</i></td></tr>
+  <tr><th>smExMouseUrxvtR</th>     <td>urxvt</td><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> M</td></tr>
+  <tr><th>smExMouseSgrR</th>       <td>SGR</td>  <td>CSI &lt; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> M</td></tr>
+  <tr><th>smExMouseSgrReleaseR</th><td>SGR</td>  <td>CSI &lt; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> m</td></tr>
+  </table>
+
+  <ul>
+  <li>何れのシーケンスも同じ機能を持つ物であるが、歴史的な背景により複数の形式がある。
+    <ul>
+    <li>smExMouseSgr が有効になっている時には、smExMouseSgrR が用いられる。</li>
+    <li>smExMouseUrxvt が有効になっている時は、smExMouseUrxvtR が用いられる。</li>
+    <li>smExMouseUtf8 が有効になっている時は、smExMouseUtf8R が用いられる。</li>
+    <li>何も設定されていない時は smSendMouseR が用いられる。</li>
+    </ul>
+    何れのシーケンスも 3 つの整数の引数を取る。
+  </li>
+  <li>一つ目の引数 <var>B</var> はイベントの対象となるマウスボタン及び修飾キーの状態を示す。
+    マウスボタンを示す整数に、修飾キーに対応する整数を加算した物が引数の値になる。
+    <table class="normal center">
+    <caption>マウスボタン</caption>
+    <tr><th>名称</th>   <th>数値</th><th>動作</th></tr>
+    <tr><th>MB1</th>    <td>0</td> <td>左ボタン (button 1) が押下された時に発生</td></tr>
+    <tr><th>MB2</th>    <td>1</td> <td>右ボタン (button 2) が押下された時に発生</td></tr>
+    <tr><th>MB3</th>    <td>2</td> <td>中ボタン (button 3) が押下された時に発生</td></tr>
+    <tr><th>Release</th><td>3</td> <td>マウスボタンが全て離された時に発生</td></tr>
+    <tr><th>MB4</th>    <td>64</td><td>マウスホイールが上に回転した時に発生</td></tr>
+    <tr><th>MB5</th>    <td>65</td><td>マウスホイールが下に回転した時に発生</td></tr>
+    </table>
+    <table class="normal center">
+    <caption>修飾</caption>
+    <tr><th>名称</th>   <th>数値</th><th>修飾キー</th></tr>
+    <tr><th>Shift</th>  <td>4</td> <td>Shift</td></tr>
+    <tr><th>Meta</th>   <td>8</td> <td>Meta</td></tr>
+    <tr><th>Control</th><td>16</td><td>Control</td></tr>
+    </table>
+    <p>但し、smExMouseSgr が有効になっている時は、
+    各マウスボタンが離された時にも情報が送られる。
+    その時は smExMouseSgrR の代わりに smExMouseSgrReleaseR が用いられる。
+    </p>
+  </li>
+  <li>二つ目の引数 <var>X</var> はマウスポインタの横位置を表す列番号である。端末の最も左の列が 1 に対応する。</li>
+  <li>三つ目の引数 <var>Y</var> はマウスポインタの縦位置を表す行番号である。端末の一番上の行が 1 に対応する。</li>
+  <li><i>&lt;C&gt;</i> は引数の整数値に 0x20 を加算した値をバイト値とする文字である。引数の値は最大 223 (= 0xFF-0x20) に制限される。</li>
+  <li><i>&lt;C8&gt;</i> は引数の整数値に 0x20 を加算した値を文字コードと見て UTF-8 形式で符号化したバイト列である。</li>
+  <li><i>&lt;Ps&gt;</i> は引数の整数値を整数リテラルで表現した /[0-9]+/ の形式の文字列である。</li>
+  </ul>
+
+  <ul>
+  <li>互換性: xterm, rxvt, rosaterm
+    <ul>
+    <li>rosaterm では、smExMouseSgr, smExMouseUrxvt, smExMouseUtf8 の順に優先される。
+      より優先順位の高い形式が off になっている時に限り、その形式が実際に働く。
+      また、smExMouseSgr が設定されている時、全てのマウスボタンが離された事を示すシーケンス (<var>B</var> = 3 | 修飾) の送信は省略される。
+    </li>
+    </ul>
+  </li>
+  <li>References
+    <ul>
+    <li><a href="http://qiita.com/items/4de35de8f0abe4f35392">SGR(1006)形式の拡張マウストラッキングについて #224桁問題 #Terminal #端末エミュレーション - Qiita [キータ]</a></li>
+    </ul>
+  </li>
+  </ul>
+</li>
+<li>Mode ?1005 <dfn class="cmode">smExMouseUtf8</dfn> Enable Extended Mouse Mode [既定値 off]
+  <!--
+  on: Enable Extended Mouse Mode.
+  off: Disable Extended Mouse Mode.
+  -->
+  <p>smSendMouse で送られる情報を utf-8 形式に変更する。詳細は smSendMouse を参照</p>
+  <p>互換性: xterm, rosaterm</p>
+</li>
+<li>Mode ?1006 <dfn class="cmode">smExMouseSgr</dfn> [既定値 off]
+  <p>smSendMouse で送られる情報を SGR 形式に変更する。詳細は smSendMouse を参照</p>
+  <p>互換性: rosaterm</p>
+</li>
+<li>Mode ?1015 <dfn class="cmode">smExMouseUrxvt</dfn> [既定値 off]
+  <p>smSendMouse で送られる情報の形式をを urxvt 形式に変更する。詳細は smSendMouse を参照</p>
+  <p>互換性: rosaterm</p>
+</li>
+<li>Mode ?1001 <dfn class="cmode">smMouseMotionHilite</dfn>: Use Hilite Mouse Tracking
+  <!--
+  on: Use Hilite Mouse Tracking.
+  off Don't use Cell Motion Mouse Tracking.
+  -->
+  <p>互換性: xterm</p>
+</li>
+<li>Mode ?1002 <dfn class="cmode">smMouseMotionCell</dfn>: Use Cell Motion Mouse Tracking
+  <!--
+  on: Use Cell Motion Mouse Tracking.
+  off: Don't use Cell Motion Mouse Tracking.
+  -->
+  <p>互換性: xterm</p>
+</li>
+<li>Mode ?1003 <dfn class="cmode">smMouseMotionAll</dfn>: Use All Motion Mouse Tracking
+  <!--
+  on: Use All Motion Mouse Tracking.
+  off: Don't use All Motion Mouse Tracking.
+  -->
+  <p>互換性: xterm</p>
+</li>
+<li>Mode ?1004 <dfn class="cmode">smSendFocus</dfn>: Send FocusIn/FocusOut Events
+  <!--
+  on: Send FocusIn/FocusOut events.
+  off: Don't send FocusIn/FocusOut events.
+  -->
+  <p>互換性: xterm</p>
+</li>
+</ul>
+
 <!--...................................................................................-->
 <h3>参考文献 Reference</h3>
 <ul>
@@ -814,14 +1785,24 @@ OSC#\a
 <li><a href="http://ascii-table.com/ansi-escape-sequences-vt-100.php">ASCII Table &#45; ANSI Escape sequences &#40;ANSI Escape codes&#41; &#45; VT100 / VT52</a></li>
 <li><a href="http://ascii-table.com/ansi-escape-sequences.php">ASCII Table &#45; ANSI Escape sequences</a></li>
 <li><a href="http://www.termsys.demon.co.uk/vtansi.htm">ANSI/VT100 Terminal Control</a></li>
-<li><a href="http://www.usf.uos.de/infoservice/doc/localhtml/rxvt/refer.html">Rxvt Technical Reference</a></li>
+<li>rxvt <a href="http://doc.gnu-darwin.org/rxvt/rxvtRef.html">Rxvt Technical Reference</a> [<a href="http://www.usf.uos.de/infoservice/doc/localhtml/rxvt/refer.html">old</a>]</li>
+<li>urxvt <a href="http://manpages.ubuntu.com/manpages/lucid/man7/urxvt.7.html">Ubuntu Manpage: RXVT REFERENCE - FAQ, command sequences and other background</a></li>
 <li><a href="http://en.wikipedia.org/wiki/C0_and_C1_control_codes">C0 and C1 control codes - Wikipedia, the free encyclopedia</a></li>
 <li><a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code - Wikipedia, the free encyclopedia</a></li>
 <li><a href="http://www.vt100.net/docs/vt100-ug/chapter3.html">VT100.net: Digital VT100 User Guide</a></li>
 <li><a href="http://vt100.net/docs/vt510-rm/contents">VT510 Video Terminal Programmer Information</a></li>
 <li><a href="http://bjh21.me.uk/all-escapes/all-escapes.txt">all-escapes.txt</a></li>
-<li><a href="http://ttssh2.sourceforge.jp/manual/ja/about/ctrlseq.html">対応制御シーケンス - Tera Term</a></li>
-<li><a href=""></a></li>
+<li>ttssh2 <a href="http://ttssh2.sourceforge.jp/manual/ja/about/ctrlseq.html">対応制御シーケンス - Tera Term</a></li>
+<li>ANSI.SYS <a href="http://en.wikipedia.org/wiki/ANSI.SYS">ANSI.SYS - Wikipedia, the free encyclopedia</a></li>
+<li>RLogin
+  <ul>
+  <li><a href="http://nanno.dip.jp/softlib/man/rlogin/">rlogin/telnet/ssh(クライアント)ターミナルソフト</a></li>
+  <li><a href="http://nanno.dip.jp/softlib/man/rlogin/ctrlcode.html">エスケープシーケンス一覧</a></li>
+  </ul>
+</li>
+<li>JIS X 0211 <a href="http://kikakurui.com/x0/X0211-1994-01.html">JIS X 0211:1994 符号化文字集合用制御機能</a></li>
+<li>OpenVMS <a href="http://h50146.www5.hp.com/products/software/oe/openvms/manual/v84/html/DCPS27/TRANS/docu_009.html">日本HP - OpenVMS マニュアル - 日本語トランスレータ・リファレンス・マニュアル</a></li>
+<li> <a href="http://odl.sysworks.biz/disk$cddoc04jan11/decw$book/aa-pbwga-12_a02.decw$book">Digital ANSI-Compliant Printing Protocol Level 3 Programming Reference Manual</a></li>
 <li><a href=""></a></li>
 </ul>
 <!--===================================================================================-->
