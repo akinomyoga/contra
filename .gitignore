@@ -1,0 +1,5 @@
+# gitignore
+
+# generated files
+/out
+/impl1
