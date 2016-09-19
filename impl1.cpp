@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <vector>
 
-namespace tty1 {
+namespace contra {
 
   enum cell_character {
     unicode_mask       = 0x001FFFFF,
@@ -82,7 +82,7 @@ namespace tty1 {
 
 }
 
-using namespace tty1;
+using namespace contra;
 
 void put_char(window& w, std::uint32_t u) {
   window_cursor& cur = w.cur;
@@ -289,7 +289,7 @@ struct terminal_target {
 
 
 int main() {
-  tty1::window w;
+  contra::window w;
   w.resize(10, 10);
 
   w.cur.attribute = 196;
