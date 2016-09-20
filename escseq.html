@@ -906,66 +906,178 @@
 <tr><th>sgrNegaOff</th>     <td>27</td>           <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
 <tr><th>sgrInvisOff</th>    <td>28</td>           <td>*</td>    <td>*</td> <td>*</td>    <td>-</td>   </tr>
 <tr><th>sgrStrikeOff</th>   <td>29</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>機能</th>              <th>番号</th>         <th>ansi</th> <th>vt</th><th>xterm</th><th>rxvt</th></tr>
+<tr><th>sgrAnsiColor</th>      <td>30-37 40-47</td>  <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrISO8613_6Colors</th><td>38, 48</td>       <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrFgDefault</th>      <td>39</td>           <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrBgDefault</th>      <td>49</td>           <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrPSpacingOff</th>    <td>50</td>           <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrFrame</th>          <td>51</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrCircle</th>         <td>52</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrOverline</th>       <td>53</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrFrameOff</th>       <td>54</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrOverlineOff</th>    <td>55</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrAnsiReserved</th>   <td>56-59</td>        <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>機能</th>              <th>番号</th>         <th>ansi</th> <th>vt</th><th>xterm</th></tr>
+<tr><th>sgrIdeoDecoration</th> <td>60-64</td>        <td>*</td>    <td>-</td> <td>-</td>    </tr>
+<tr><th>sgrIdeoDecorationOff</th><td>65</td>         <td>*</td>    <td>-</td> <td>-</td>    </tr>
+<tr><th>sgrJISX0211Deco</th>   <td>66-69</td>        <td>-</td>    <td>-</td> <td>-</td>    </tr>
+<tr><th>sgrAixColor</th>       <td>90-97, 100-107</td><td>-</td>    <td>-</td> <td>*</td>    </tr>
+<tr><th>sgrDefalutColor</th>   <td>100</td>          <td>-</td>    <td>-</td> <td>-</td>    </tr>
 </table>
+
+<h4>既定に戻す</h4>
 <ul>
-<li><dfn class="sgr">sgrDefault</dfn>: All attributes off
+<li><dfn class="sgr">sgrDefault</dfn> (0): All attributes off
+  <p>設定されている全ての描画属性を無効にし、既定の状態に戻す。</p>
   <ul>
   <li>互換性: ansi, vt100, xterm</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrBold</dfn>: bold, highlight
-  <p>太字属性もしくは高輝度。</p>
+</ul>
+
+<h4>太字</h4>
+<ul>
+<li><dfn class="sgr">sgrBold</dfn> (1): bold, highlight
+  <p>太字、もしくは高輝度の文字。</p>
   <ul>
   <li>互換性: vt100 (bold), ansi (bold/highlight), xterm (bold)</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrFaint</dfn>: faint, second color, dim
-  <p>低輝度もしくは代替色。</p>
+<li><dfn class="sgr">sgrFaint</dfn> (2): faint, second color, dim
+  <p>細字、低輝度の文字、もしくは代替色の文字。</p>
   <ul>
   <li>互換性: ansi</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrItalic</dfn>: Italicized
+<li><dfn class="sgr">sgrBoldOff</dfn> (22): bold off, normal color/intensity
+  <p>太字・低輝度属性を解除する。
+  ansi, xterm では sgrBold/sgrFaint の両方を解除する。
+  </p>
+  <ul>
+  <li>互換性: vt100, ansi (bold/faint off), xterm (bold/faint off)</li>
+  </ul>
+</li>
+</ul>
+
+<h4>イタリック</h4>
+<ul>
+<li><dfn class="sgr">sgrItalic</dfn> (3): Italicized
   <p>イタリック体。</p>
   <ul>
   <li>互換性: ansi</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrUnderline</dfn>: underline, singly underlined
+<li><dfn class="sgr">sgrFraktur</dfn> (20): Fraktur
+  <p>Fraktur フォントまたは Gothic フォント。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrItalicOff</dfn> (23): not italicized/fraktur
+  <p>sgrItalic, sgrFraktur を解除。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+</ul>
+
+<h4>下線</h4>
+<ul>
+<li><dfn class="sgr">sgrUnderline</dfn> (4): underline, singly underlined
   <p>下線。</p>
   <ul>
   <li>互換性: ansi, vt100, xterm</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrBlink</dfn>: blinking, slowly blinking
-  <p>点滅。ANSI に従えば 150/min 未満の速さで点滅させる。</p>
-  <ul>
-  <li>互換性: ansi, vt100, xterm</li>
-  </ul>
-</li>
-<li><dfn class="sgr">sgrRapidBlink</dfn>: rapid blinking
-  <p>点滅。ANSI に従えば 150/min 以上の速さで点滅させる。</p>
+<li><dfn class="sgr">sgrDoubleUnderline</dfn> (21): doubly underlined
+  <p>二重下線。</p>
   <ul>
   <li>互換性: ansi</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrNega</dfn>: negative image, inverse
+<li><dfn class="sgr">sgrUnderlineOff</dfn> (24): Underline off
+  <p>sgrUnderline, sgrDoubleUnderline (対応していれば) を解除。</p>
   <ul>
   <li>互換性: ansi, vt100, xterm</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrInvis</dfn>: invisible image, hidden, concealed
+</ul>
+
+<h4>点滅</h4>
+<ul>
+<li><dfn class="sgr">sgrBlink</dfn> (5): blinking, slowly blinking
+  <p>遅い点滅。</p>
+  <p>[ECMA-48] 150/min 未満の速さで点滅させる。</p>
   <ul>
   <li>互換性: ansi, vt100, xterm</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrStrike</dfn>: crossed-out
+<li><dfn class="sgr">sgrRapidBlink</dfn> (6): rapid blinking
+  <p>速い点滅。</p>
+  <p>[ECMA-48] 150/min 以上の速さで点滅させる。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrBlinkOff</dfn> (25): blinking off, steady, not blinking
+  <p>点滅属性を解除する。</p>
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+</ul>
+
+<h4>反転</h4>
+<ul>
+<li><dfn class="sgr">sgrNega</dfn> (7): negative image, inverse
+  <p>ネガ反転、もしくは、前景色と背景色を反転させる。</p>
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrNegaOff</dfn> (27): negative image off, positive image
+  <p>反転属性を解除する。</p>
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+</ul>
+
+<h4>不可視</h4>
+<ul>
+<li><dfn class="sgr">sgrInvis</dfn> (8): invisible image, hidden, concealed
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrInvisOff</dfn> (28): invisible image off, visible image, revealed characters
+  <ul>
+  <li>互換性: ansi, vt100, xterm</li>
+  </ul>
+</li>
+</ul>
+
+<h4>打ち消し線</h4>
+<ul>
+<li><dfn class="sgr">sgrStrike</dfn> (9): crossed-out
   <p>打ち消し線。</p>
   <ul>
   <li>互換性: ansi</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrAnsiFonts</dfn>: fonts
+<li><dfn class="sgr">sgrStrikeOff</dfn> (29): not crossed out
+  <p>打ち消し線解除。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+</ul>
+
+<h4>フォント</h4>
+
+<ul>
+<li><dfn class="sgr">sgrAnsiFonts</dfn> (10-19): fonts
   <p>フォントの指定。</p>
   <table class="normal center">
   <tr><th>番号</th><th>機能</th></tr>
@@ -980,12 +1092,11 @@
   <tr><td>18</td><td>代替フォント8 (8th alternative font)</td></tr>
   <tr><td>19</td><td>代替フォント9 (9th alternative font)</td></tr>
   </table>
-  
   <ul>
   <li>互換性: ansi</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrCharsetASCII</dfn>: ASCII char set
+<li><dfn class="sgr">sgrCharsetASCII</dfn> (10): ASCII char set
   <p>sgrCharsetL, sgrCharsetR で設定された C0:GL に割り当てられた文字を、
   通常の ASCII 文字集合に戻す。
   </p>
@@ -993,7 +1104,7 @@
   <li>互換性: vt100 (SCO Console のみで利用可能)</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrCharsetL</dfn>: Map 00-7F
+<li><dfn class="sgr">sgrCharsetL</dfn> (11): Map 00-7F
   <p>PC character set が設定されている時、
   PC character set の 00-7F の文字を C0:GL にロッキングシフトする。
   但し、C0 の ESC &lt;x1B&gt;, DC1 &lt;x11&gt;, DC3 &lt;x13&gt; はその制御機能を維持し、
@@ -1003,7 +1114,7 @@
   <li>互換性: vt100 (SCO Console のみで利用可能)</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrCharsetR</dfn>: Map 80-FF
+<li><dfn class="sgr">sgrCharsetR</dfn> (12): Map 80-FF
   <p>PC character set が設定されている時、
   PC character set の 80-FF の文字を C0:GL にロッキングシフトする。
   但し、C0 の ESC &lt;x1B&gt;, DC1 &lt;x11&gt;, DC3 &lt;x13&gt; はその制御機能を維持し、
@@ -1016,45 +1127,12 @@
   <li>互換性: vt100 (SCO Console のみで利用可能)</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrFraktur</dfn>: Fraktur
-  <p>Fraktur フォントまたは Gothic フォント。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
-</li>
-<li><dfn class="sgr">sgrDoubleUnderline</dfn>: doubly underlined
-  <p>二重下線。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
-</li>
-<li><dfn class="sgr">sgrBoldOff</dfn>: bold off, normal color/intensity
-  <p>太字属性・低輝度属性を解除する。
-  ansi, xterm では sgrBold/sgrFaint の両方を解除する。
-  </p>
-  <ul>
-  <li>互換性: vt100, ansi (bold/faint off), xterm (bold/faint off)</li>
-  </ul>
-</li>
-<li><dfn class="sgr">sgrItalicOff</dfn>: not italicized/fraktur
-  <p>sgrItalic, sgrFraktur を解除。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
-</li>
-<li><dfn class="sgr">sgrUnderlineOff</dfn>: Underline off
-  <p>sgrUnderline, sgrDoubleUnderline (対応していれば) を解除。</p>
-  <ul>
-  <li>互換性: ansi, vt100, xterm</li>
-  </ul>
-</li>
-<li><dfn class="sgr">sgrBlinkOff</dfn>: blinking off, steady, not blinking
-  <ul>
-  <li>互換性: ansi, vt100, xterm</li>
-  </ul>
-</li>
-<li><dfn class="sgr">sgrPSpacing</dfn>: proportional spacing (reserved)
-  <p>ANSI では CCITT Recommendation T.61 で指定される proportional spacing の為に予約されていると記述されている。
+</ul>
+
+<h4>プロポーショナル (deprecated)</h4>
+<ul>
+<li><dfn class="sgr">sgrPSpacing</dfn> (26): proportional spacing (reserved)
+  <p>[ECMA-48] T.61 で指定される proportional spacing の為に予約されているとしている。
     T.61 は International Teletex Services の為の仕様であるが teletex service 自体が終了した為に失効した様だ。
     現在は最新版 (1993 年) の文書自体が手に入らない状態にあるようだが、改訂前の 1988 年版は手に入る。
   </p>
@@ -1063,57 +1141,53 @@
   <li>互換性: ansi (reserved)</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrNegaOff</dfn>: negative image off, positive image
+<li><dfn class="sgr">sgrPSpacingOff</dfn> (50): (reserved)
+  <p>sgrPSpacing (SGR 26) の効果を打ち消す為に使用する。</p>
+  <p>[T.416/13.18] deprecated</p>
   <ul>
-  <li>互換性: ansi, vt100, xterm</li>
-  </ul>
-</li>
-<li><dfn class="sgr">sgrInvisOff</dfn>: invisible image off, visible image, revealed characters
-  <ul>
-  <li>互換性: ansi, vt100, xterm</li>
-  </ul>
-</li>
-<li><dfn class="sgr">sgrStrikeOff</dfn>: not crossed out
-  <p>打ち消し線解除。</p>
-  <ul>
-  <li>互換性: ansi</li>
+  <li>互換性: ansi (reserved)</li>
   </ul>
 </li>
 </ul>
 
-<h4>SGR Attributes 30-59</h4>
-<table class="normal center">
-<tr><th>機能</th>              <th>番号</th>         <th>ansi</th> <th>vt</th><th>xterm</th><th>rxvt</th></tr>
-<tr><th>sgrAnsiColor</th>      <td>30-37 40-47</td>  <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrISO8613_6Colors</th><td>38, 48</td>       <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrFgDefault</th>      <td>39</td>           <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrBgDefault</th>      <td>49</td>           <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrPSpacingOff</th>    <td>50</td>           <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrFrame</th>          <td>51</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrCircle</th>         <td>52</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrOverline</th>       <td>53</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrFrameOff</th>       <td>54</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrOverlineOff</th>    <td>55</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrAnsiReserved</th>   <td>56-59</td>        <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
-</table>
+<h4>前景色・背景色</h4>
 <ul>
-<li><dfn class="sgr">sgrAnsiColor</dfn>: 前景色・背景色
+<li><dfn class="sgr">sgrAnsiColor</dfn> (30-37, 40-47): foreground, background
+  <p>前景色・背景色を設定する。</p>
   <table class="normal center">
-  <tr><th>番号</th><th>機能</th><th>番号</th><th>機能</th></tr>
-  <tr><td>30</td><td>前景黒色</td><td>40</td><td>背景黒色</td></tr>
-  <tr><td>31</td><td>前景赤色</td><td>41</td><td>背景赤色</td></tr>
-  <tr><td>32</td><td>前景緑色</td><td>42</td><td>背景緑色</td></tr>
-  <tr><td>33</td><td>前景黄色</td><td>43</td><td>背景黄色</td></tr>
-  <tr><td>34</td><td>前景青色</td><td>44</td><td>背景青色</td></tr>
-  <tr><td>35</td><td>前景紫色</td><td>45</td><td>背景紫色</td></tr>
-  <tr><td>36</td><td>前景水色</td><td>46</td><td>背景水色</td></tr>
-  <tr><td>37</td><td>前景灰色</td><td>47</td><td>背景灰色</td></tr>
+  <tr><th>番号</th><th>名称</th><th>機能</th><th>番号</th><th>名称</th><th>機能</th></tr>
+  <tr><td>30</td><td>black foreground</td>  <td>前景黒色</td><td>40</td><td>black background</td>  <td>背景黒色</td></tr>
+  <tr><td>31</td><td>red foreground</td>    <td>前景茶色</td><td>41</td><td>red background</td>    <td>背景茶色</td></tr>
+  <tr><td>32</td><td>green foreground</td>  <td>前景碧色</td><td>42</td><td>green background</td>  <td>背景碧色</td></tr>
+  <tr><td>33</td><td>yellow foreground</td> <td>前景土色</td><td>43</td><td>yellow background</td> <td>背景土色</td></tr>
+  <tr><td>34</td><td>blue foreground</td>   <td>前景藍色</td><td>44</td><td>blue background</td>   <td>背景藍色</td></tr>
+  <tr><td>35</td><td>magenta foreground</td><td>前景紫色</td><td>45</td><td>magenta background</td><td>背景紫色</td></tr>
+  <tr><td>36</td><td>cyan foreground</td>   <td>前景碧色</td><td>46</td><td>cyan background</td>   <td>背景碧色</td></tr>
+  <tr><td>37</td><td>white foreground</td>  <td>前景灰色</td><td>47</td><td>white background</td>  <td>背景灰色</td></tr>
   </table>
   <ul>
   <li>互換性: ANSI, xterm</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrISO8613_6Colors</dfn>: ISO 8613-6 Colors
+<li><dfn class="sgr">sgrAixColor</dfn> (90-97, 100-107): 高輝度背景色・前景色
+  <p>30-37, 40-47 の前景色・背景色を高輝度にした物。</p>
+  <p>[Wikipedia] これらの文字色・背景色の設定は aixterm に起源を持つ。</p>
+  <table class="normal center">
+  <tr><th>番号</th><th>機能</th><th>番号</th><th>機能</th></tr>
+  <tr><td>90</td><td>前景鼠色</td><td>100</td><td>背景鼠色</td></tr>
+  <tr><td>91</td><td>前景赤色</td><td>101</td><td>背景赤色</td></tr>
+  <tr><td>92</td><td>前景草色</td><td>102</td><td>背景草色</td></tr>
+  <tr><td>93</td><td>前景黄色</td><td>103</td><td>背景黄色</td></tr>
+  <tr><td>94</td><td>前景青色</td><td>104</td><td>背景青色</td></tr>
+  <tr><td>95</td><td>前景桃色</td><td>105</td><td>背景桃色</td></tr>
+  <tr><td>96</td><td>前景水色</td><td>106</td><td>背景水色</td></tr>
+  <tr><td>97</td><td>前景白色</td><td>107</td><td>背景白色</td></tr>
+  </table>
+  <ul>
+  <li>互換性: xterm (88/256 色有効時)</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrISO8613_6Colors</dfn> (38, 48): ISO 8613-6 Colors
   <p>より多彩な色の指定をする為の SGR 属性である。番号 38, 48 に続けて引数を取る。</p>
   <table class="normal center">
   <tr><th>番号</th><th>説明</th></tr>
@@ -1199,56 +1273,71 @@
   <li>RLogin <a href="http://nanno.dip.jp/softlib/man/rlogin/ctrlcode.html">エスケープシーケンス一覧</a></li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrFgDefault</dfn>:
-  <p>前景色を既定色に戻す</p>
+<li><dfn class="sgr">sgrFgDefault (39)</dfn>:
+  <p>前景色を既定色に戻す。</p>
   <ul>
   <li>互換性: ansi, xterm</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrBgDefault</dfn>
-  <p>背景色を既定色に戻す</p>
+<li><dfn class="sgr">sgrBgDefault (49)</dfn>
+  <p>背景色を既定色に戻す。</p>
   <ul>
   <li>互換性: ansi, xterm</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrPSpacingOff</dfn>: (reserved)
-  <p>sgrPSpacing (SGR 26) の効果を打ち消す為に使用する。</p>
-  <p>[T.416/13.18] deprecated</p>
+<li><dfn class="sgr">sgrDefalutColor</dfn> (100): default color
+  <p>前景色及び背景色を既定色に戻す。
+    rxvt 由来の機能 (と xterm の説明には書かれている)。
+    <b>sgrAixColor</b> と値が被っているので注意する。
+    xterm は <b>sgrAixColor</b> が無効の時にこれが利用可能である。
+  </p>
   <ul>
-  <li>互換性: ansi (reserved)</li>
+  <li>互換性: xterm (16 色無効時)</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrFrame</dfn>: framed
+</ul>
+
+<h4>囲み線</h4>
+<ul>
+<li><dfn class="sgr">sgrFrame</dfn> (51): framed
   <p>四角形の枠線。</p>
   <ul>
   <li>互換性: ansi</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrCircle</dfn>: encircled
+<li><dfn class="sgr">sgrCircle</dfn> (52): encircled
   <p>丸囲み線。</p>
   <ul>
   <li>互換性: ansi</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrOverline</dfn>: overlined
-  <p>上線。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
-</li>
-<li><dfn class="sgr">sgrFrameOff</dfn>: not framed/encircled
+<li><dfn class="sgr">sgrFrameOff</dfn> (54): not framed/encircled
   <p>枠線・丸囲み線解除。</p>
   <ul>
   <li>互換性: ansi</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrOverlineOff</dfn>: not overlined
+</ul>
+
+<h4>上線</h4>
+<ul>
+<li><dfn class="sgr">sgrOverline</dfn> (53): overlined
+  <p>上線。</p>
+  <ul>
+  <li>互換性: ansi</li>
+  </ul>
+</li>
+<li><dfn class="sgr">sgrOverlineOff</dfn> (55): not overlined
   <p>上線解除。</p>
   <ul>
   <li>互換性: ansi</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrAnsiReserved</dfn>: (reserved)
+</ul>
+
+<h4>(予約)</h4>
+<ul>
+<li><dfn class="sgr">sgrAnsiReserved</dfn> (56-59): (reserved)
   <p>reserved for future standardization</p>
   <ul>
   <li>互換性: ansi (reserved)</li>
@@ -1256,17 +1345,9 @@
 </li>
 </ul>
 
-<h4>SGR Attributes 60-</h4>
-<table class="normal center">
-<tr><th>機能</th>              <th>番号</th>         <th>ansi</th> <th>vt</th><th>xterm</th></tr>
-<tr><th>sgrIdeoDecoration</th> <td>60-64</td>        <td>*</td>    <td>-</td> <td>-</td>    </tr>
-<tr><th>sgrIdeoDecorationOff</th><td>65</td>         <td>*</td>    <td>-</td> <td>-</td>    </tr>
-<tr><th>sgrJISX0211Deco</th>   <td>66-69</td>        <td>-</td>    <td>-</td> <td>-</td>    </tr>
-<tr><th>sgrAixColor</th>       <td>90-97 100-107</td><td>-</td>    <td>-</td> <td>*</td>    </tr>
-<tr><th>sgrDefalutColor</th>   <td>100</td>          <td>-</td>    <td>-</td> <td>-</td>    </tr>
-</table>
+<h4>CJK装飾</h4>
 <ul>
-<li><dfn class="sgr">sgrIdeoDecoration</dfn>: CJK装飾
+<li><dfn class="sgr">sgrIdeoDecoration</dfn> (60-64): CJK装飾(ANSI)
   <p>CJK文字に対する装飾を有効にする。</p>
   <table class="normal center">
   <tr><th>番号</th><th>機能</th>    <th>横書き</th>  <th>縦書き</th>  </tr>
@@ -1280,13 +1361,7 @@
   <li>互換性: ansi</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrIdeoDecorationOff</dfn>: CJK装飾解除
-  <p>漢字装飾 60-64 66-69 で設定された属性を解除する。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
-</li>
-<li><dfn class="sgr">sgrIdeoDecoration</dfn>: CJK装飾
+<li><dfn class="sgr">sgrIdeoDecoration</dfn> (66-69): CJK装飾(JIS)
   <p>CJK文字に対する装飾で 60-64 の時とは、縦書き・横書きの切り替わり方が異なる物である。JIS X 0211 に規定されている。</p>
   <table class="normal center">
   <tr><th>番号</th><th>機能</th>    <th>横書き</th>  <th>縦書き</th>  </tr>
@@ -1299,39 +1374,22 @@
   <li>互換性: JIS X 0211</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrAixColor</dfn>: 高輝度背景色・前景色
-  <p>これらの文字色・背景色の設定は aixterm に起源を持つ。</p>
-  <table class="normal center">
-  <tr><th>番号</th><th>機能</th><th>番号</th><th>機能</th></tr>
-  <tr><td>90</td><td>前景鼠</td><td>100</td><td>背景鼠</td></tr>
-  <tr><td>91</td><td>前景赤</td><td>101</td><td>背景赤</td></tr>
-  <tr><td>92</td><td>前景草</td><td>102</td><td>背景草</td></tr>
-  <tr><td>93</td><td>前景黄</td><td>103</td><td>背景黄</td></tr>
-  <tr><td>94</td><td>前景青</td><td>104</td><td>背景青</td></tr>
-  <tr><td>95</td><td>前景桃</td><td>105</td><td>背景桃</td></tr>
-  <tr><td>96</td><td>前景水</td><td>106</td><td>背景水</td></tr>
-  <tr><td>97</td><td>前景白</td><td>107</td><td>背景白</td></tr>
-  </table>
+<li><dfn class="sgr">sgrIdeoDecorationOff</dfn>: CJK装飾解除
+  <p>CJK装飾 60-64, 66-69 で設定された属性を解除する。</p>
   <ul>
-  <li>互換性: xterm (88/256 色有効時)</li>
+  <li>互換性: ansi, JIS X 0211</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrDefalutColor</dfn>: default color
-  <p>前景色及び背景色を既定色に戻す。rxvt 由来の機能 (と xterm の説明には書かれている)。</p>
+</ul>
+
+<h4>References</h4>
+<ul>
+<li>VT <a href="http://www.vt100.net/docs/vt510-rm/SGR">VT: SGR</a></li>
+<li>xterm <a href="http://www.xfree86.org/current/ctlseqs.html">Xterm Control Sequences</a></li>
+<li>ANSI
   <ul>
-  <li>互換性: xterm (16 色無効時)</li>
-  </ul>
-</li>
-<li>References
-  <ul>
-  <li>VT <a href="http://www.vt100.net/docs/vt510-rm/SGR">VT: SGR</a></li>
-  <li>xterm <a href="http://www.xfree86.org/current/ctlseqs.html">Xterm Control Sequences</a></li>
-  <li>ANSI
-    <ul>
-    <li><a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code - Wikipedia, the free encyclopedia</a></li>
-    <li><a href="http://www.ecma-international.org/publications/standards/Ecma-048.htm">Standard ECMA-48</a></li>
-    </ul>
-  </li>
+  <li><a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code - Wikipedia, the free encyclopedia</a></li>
+  <li><a href="http://www.ecma-international.org/publications/standards/Ecma-048.htm">Standard ECMA-48</a></li>
   </ul>
 </li>
 </ul>
