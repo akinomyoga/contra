@@ -112,26 +112,34 @@ void put_char(window& w, std::uint32_t u) {
 }
 
 struct termcap_sgrcolor {
-  attribute_type const bit;
+  attribute_type bit;
   unsigned base;
   unsigned off;
+
+  // 90-97, 100-107
   unsigned aixterm_color;
+
+  // 38:5:0-255
   unsigned iso8613_indexed_color;
   char iso8613_separater;
+
+  // 1,22 で明るさを切り替える方式
+  unsigned high_intensity_on;
+  unsigned high_intensity_off;
 };
 
 struct termcap_sgrflag1 {
-  attribute_type const bit;
-  unsigned             on;
-  unsigned             off;
+  attribute_type bit;
+  unsigned       on;
+  unsigned       off;
 };
 
 struct termcap_sgrflag2 {
-  attribute_type const bit1;
-  unsigned             on1;
-  attribute_type const bit2;
-  unsigned             on2;
-  unsigned             off;
+  attribute_type bit1;
+  unsigned       on1;
+  attribute_type bit2;
+  unsigned       on2;
+  unsigned       off;
 };
 
 struct termcap_sgr_type {
@@ -146,8 +154,8 @@ struct termcap_sgr_type {
 
   // termcap_sgrflag1 pspacing    {?   , 26, 50};
 
-  termcap_sgrcolor sgrfg {is_fg_color_set, 30, 39,  90, 38, ';'};
-  termcap_sgrcolor sgrbg {is_bg_color_set, 40, 49, 100, 48, ';'};
+  termcap_sgrcolor sgrfg {is_fg_color_set, 30, 39,  90, 38, ';', 0, 0};
+  termcap_sgrcolor sgrbg {is_bg_color_set, 40, 49, 100, 48, ';', 0, 0};
 
   attribute_type attrNotResettable {0};
 
@@ -285,27 +293,45 @@ private:
     if (removed & isset) {
       sa_open_sgr();
       put_unsigned(sgrcolor.off);
-    } else if (added & isset || (this->attr ^ newAttr) & mask ) {
+      return;
+    }
+
+    if (added & isset || (this->attr ^ newAttr) & mask) {
       sa_open_sgr();
       unsigned const fg = unsigned(newAttr & mask) >> shift;
       if (fg < 8) {
-        // e.g \e[31m
-        put_unsigned(sgrcolor.base + fg);
-      } else if (fg < 16 && sgrcolor.aixterm_color) {
-        // e.g. \e[91m
-        put_unsigned(sgrcolor.aixterm_color + (fg & 7));
-      } else if (sgrcolor.iso8613_indexed_color) {
+        if (sgrcolor.base) {
+          // e.g \e[31m
+          if (sgrcolor.high_intensity_off)
+            put_unsigned(sgrcolor.high_intensity_off);
+          put_unsigned(sgrcolor.base + fg);
+          return;
+        }
+      } else if (fg < 16) {
+        if (sgrcolor.aixterm_color) {
+          // e.g. \e[91m
+          put_unsigned(sgrcolor.aixterm_color + (fg & 7));
+          return;
+        } else if (sgrcolor.base && sgrcolor.high_intensity_on) {
+          // e.g. \e[1;31m \e[2;42m
+          put_unsigned(sgrcolor.high_intensity_on);
+          put_unsigned(sgrcolor.base + (fg & 7));
+          return;
+        }
+      }
+
+      if (sgrcolor.iso8613_indexed_color) {
         // e.g. \e[38;5;17m
         put_unsigned(sgrcolor.iso8613_indexed_color);
         std::fputc(sgrcolor.iso8613_separater, file);
         put_unsigned(5);
         std::fputc(sgrcolor.iso8613_separater, file);
         put_unsigned(fg);
-      } else {
-        // todo: fallback
-        // todo: \e[1;32m で明るい色を表示する端末
-        put_unsigned(sgrcolor.base + 9);
+        return;
       }
+
+      // todo: fallback
+      put_unsigned(sgrcolor.off);
     }
   }
 
