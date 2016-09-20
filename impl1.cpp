@@ -342,19 +342,26 @@ private:
 
     if (newAttr == 0) {
       sa_open_sgr();
-    } else {
-      update_sgrflag2(newAttr, sgrcap.bold     );
-      update_sgrflag2(newAttr, sgrcap.italic   );
-      update_sgrflag2(newAttr, sgrcap.underline);
-      update_sgrflag2(newAttr, sgrcap.blink    );
-
-      update_sgrflag1(newAttr, sgrcap.inverse  );
-      update_sgrflag1(newAttr, sgrcap.invisible);
-      update_sgrflag1(newAttr, sgrcap.strike   );
-
-      update_sgrcolor(newAttr, sgrcap.sgrfg, fg_color_mask, fg_color_shift);
-      update_sgrcolor(newAttr, sgrcap.sgrbg, bg_color_mask, bg_color_shift);
+      return;
     }
+
+    attribute_type const removed = ~newAttr & this->attr;
+    if (removed & sgrcap.attrNotResettable) {
+      sa_open_sgr();
+      this->attr = 0;
+    }
+
+    update_sgrflag2(newAttr, sgrcap.bold     );
+    update_sgrflag2(newAttr, sgrcap.italic   );
+    update_sgrflag2(newAttr, sgrcap.underline);
+    update_sgrflag2(newAttr, sgrcap.blink    );
+
+    update_sgrflag1(newAttr, sgrcap.inverse  );
+    update_sgrflag1(newAttr, sgrcap.invisible);
+    update_sgrflag1(newAttr, sgrcap.strike   );
+
+    update_sgrcolor(newAttr, sgrcap.sgrfg, fg_color_mask, fg_color_shift);
+    update_sgrcolor(newAttr, sgrcap.sgrbg, bg_color_mask, bg_color_shift);
 
     if (this->sa_isSgrOpen)
       std::fputc('m', file);
