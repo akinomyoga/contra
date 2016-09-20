@@ -27,7 +27,7 @@ namespace contra {
     is_underline_set        = 0x00200000, // ANSI \e[4m
     is_blink_set            = 0x00400000, // ANSI \e[5m
     is_rapid_blink_set      = 0x00800000, // ANSI \e[6m
-    is_reverse_set          = 0x01000000, // ANSI \e[7m
+    is_inverse_set          = 0x01000000, // ANSI \e[7m
     is_invisible_set        = 0x02000000, // ANSI \e[8m
     is_strike_set           = 0x04000000, // ANSI \e[9m
     is_fraktur_set          = 0x08000000, // ANSI \e[20m
@@ -36,15 +36,17 @@ namespace contra {
     has_extended_attribute = 0x8000, // not supported yet
   };
 
+  typedef std::uint32_t attribute_type;
+
   struct window_cell {
     std::uint32_t character {0};
-    std::uint32_t attribute {0};
+    attribute_type attribute {0};
   };
 
   struct window_cursor {
     int x {0};
     int y {0};
-    std::uint32_t attribute {0};
+    attribute_type attribute {0};
   };
 
   struct window {
@@ -109,10 +111,85 @@ void put_char(window& w, std::uint32_t u) {
   cur.x += charwidth;
 }
 
-struct terminal_target {
-  std::FILE* file;
+struct termcap_sgrcolor {
+  attribute_type const bit;
+  unsigned base;
+  unsigned off;
+  unsigned aixterm_color;
+  unsigned iso8613_indexed_color;
+  char iso8613_separater;
+};
 
-  terminal_target(std::FILE* file): file(file) {}
+struct termcap_sgrflag1 {
+  attribute_type const bit;
+  unsigned             on;
+  unsigned             off;
+};
+
+struct termcap_sgrflag2 {
+  attribute_type const bit1;
+  unsigned             on1;
+  attribute_type const bit2;
+  unsigned             on2;
+  unsigned             off;
+};
+
+struct termcap_sgr_type {
+  termcap_sgrflag2 bold      {is_bold_set     , 1, is_faint_set           ,  2, 22};
+  termcap_sgrflag2 italic    {is_italic_set   , 3, is_fraktur_set         , 20, 23};
+  termcap_sgrflag2 underline {is_underline_set, 4, is_double_underline_set, 21, 24};
+  termcap_sgrflag2 blink     {is_blink_set    , 5, is_rapid_blink_set     ,  6, 25};
+
+  termcap_sgrflag1 inverse   {is_inverse_set  , 7, 27};
+  termcap_sgrflag1 invisible {is_invisible_set, 8, 28};
+  termcap_sgrflag1 strike    {is_strike_set   , 9, 29};
+
+  // termcap_sgrflag1 pspacing    {?   , 26, 50};
+
+  termcap_sgrcolor sgrfg {is_fg_color_set, 30, 39,  90, 38, ';'};
+  termcap_sgrcolor sgrbg {is_bg_color_set, 40, 49, 100, 48, ';'};
+
+  attribute_type attrNotResettable {0};
+
+private:
+  void initialize_attrNotResettable(termcap_sgrflag1 const& sgrflag) {
+    if (!sgrflag.off && sgrflag.on) attrNotResettable |= sgrflag.bit;
+  }
+
+  void initialize_attrNotResettable(termcap_sgrflag2 const& sgrflag) {
+    if (!sgrflag.off) {
+      if (sgrflag.on1) attrNotResettable |= sgrflag.bit1;
+      if (sgrflag.on2) attrNotResettable |= sgrflag.bit2;
+    }
+  }
+
+  void initialize_attrNotResettable(termcap_sgrcolor const& sgrcolor) {
+    if (!sgrcolor.off && (sgrcolor.base || sgrcolor.iso8613_indexed_color))
+      attrNotResettable = sgrcolor.bit;
+  }
+
+public:
+  void initialize() {
+    attrNotResettable = 0;
+    initialize_attrNotResettable(bold);
+    initialize_attrNotResettable(italic);
+    initialize_attrNotResettable(underline);
+    initialize_attrNotResettable(blink);
+    initialize_attrNotResettable(inverse);
+    initialize_attrNotResettable(invisible);
+    initialize_attrNotResettable(strike);
+    initialize_attrNotResettable(sgrfg);
+    initialize_attrNotResettable(sgrbg);
+  }
+};
+
+struct tty_target {
+  std::FILE* file;
+  termcap_sgr_type sgrcap;
+
+  tty_target(std::FILE* file): file(file) {
+    this->sgrcap.initialize();
+  }
 
   void put_str(const char* s) {
     while (*s) std::fputc(*s++, file);
@@ -123,6 +200,7 @@ struct terminal_target {
     std::fputc('0' + value % 10, file);
   }
 
+private:
   void sa_open_sgr() {
     if (this->sa_isSgrOpen) {
       std::fputc(';', file);
@@ -133,55 +211,55 @@ struct terminal_target {
     }
   }
 
-
-  std::uint32_t attr {0};
+  attribute_type attr {0};
   bool sa_isSgrOpen;
 
-  struct sgrcap_color_type {
-    int base;
-    int bright_base;
-    bool iso8613_indexed_color;
-    char iso8613_separater;
-  };
-
-  struct sgrcap_type {
-    sgrcap_color_type sgrfg {30,  90, true, ';'};
-    sgrcap_color_type sgrbg {40, 100, true, ';'};
-  } sgrcap;
-
   void update_sgrflag1(
-    std::uint32_t newAttr,
-    std::uint32_t bit, unsigned sgr, unsigned sgrReset
+    attribute_type newAttr,
+    termcap_sgrflag1 const& sgrflag
   ) {
-    if (((newAttr ^ this->attr) & bit) == 0) return;
+    // when the attribute is not changed
+    if (((newAttr ^ this->attr) & sgrflag.bit) == 0) return;
+
+    // when the attribute is not supported by TERM
+    if (!sgrflag.on) return;
 
     sa_open_sgr();
-    if (newAttr&is_reverse_set) {
-      put_unsigned(sgr);
+    if (newAttr&sgrflag.bit) {
+      put_unsigned(sgrflag.on);
     } else {
-      put_unsigned(sgrReset);
+      put_unsigned(sgrflag.off);
     }
   }
 
   void update_sgrflag2(
-    std::uint32_t newAttr,
-    std::uint32_t bit1, unsigned sgr1,
-    std::uint32_t bit2, unsigned sgr2,
-    unsigned sgrReset
+    attribute_type newAttr,
+    termcap_sgrflag2 const& sgrflag
   ) {
+    attribute_type bit1 = sgrflag.bit1;
+    attribute_type bit2 = sgrflag.bit2;
+
+    // when the attribute is not changed
     if (((newAttr ^ this->attr) & (bit1 | bit2)) == 0) return;
 
-    std::uint32_t const added = newAttr & ~this->attr;
-    std::uint32_t const removed = ~newAttr & this->attr;
+    // when the attribute is not supported by TERM
+    unsigned const sgr1 = sgrflag.on1;
+    unsigned const sgr2 = sgrflag.on2;
+    if (!sgr1) bit1 = 0;
+    if (!sgr2) bit2 = 0;
+    if (!(bit1 | bit2)) return;
+
+    attribute_type const added = newAttr & ~this->attr;
+    attribute_type const removed = ~newAttr & this->attr;
 
     sa_open_sgr();
     if (removed & (bit1 | bit2)) {
-      put_unsigned(sgrReset);
-      if (newAttr&bit2) {
+      put_unsigned(sgrflag.off);
+      if (newAttr & bit2) {
         std::fputc(';', file);
         put_unsigned(sgr2);
       }
-      if (newAttr&bit1) {
+      if (newAttr & bit1) {
         std::fputc(';', file);
         put_unsigned(sgr1);
       }
@@ -198,38 +276,40 @@ struct terminal_target {
     }
   }
 
-  void update_color(std::uint32_t newAttr, sgrcap_color_type const& cap, int isset, int mask, int shift) {
+  void update_sgrcolor(attribute_type newAttr, termcap_sgrcolor const& sgrcolor, attribute_type mask, int shift) {
+    attribute_type const isset = sgrcolor.bit;
     if (((this->attr ^ newAttr) & (isset | mask)) == 0) return;
 
-    std::uint32_t const added = newAttr & ~this->attr;
-    std::uint32_t const removed = ~newAttr & this->attr;
+    attribute_type const added = newAttr & ~this->attr;
+    attribute_type const removed = ~newAttr & this->attr;
     if (removed & isset) {
       sa_open_sgr();
-      put_unsigned(cap.base + 9);
+      put_unsigned(sgrcolor.off);
     } else if (added & isset || (this->attr ^ newAttr) & mask ) {
       sa_open_sgr();
-      int const fg = unsigned(newAttr & mask) >> shift;
+      unsigned const fg = unsigned(newAttr & mask) >> shift;
       if (fg < 8) {
         // e.g \e[31m
-        put_unsigned(cap.base + fg);
-      } else if (fg < 16 && cap.bright_base) {
+        put_unsigned(sgrcolor.base + fg);
+      } else if (fg < 16 && sgrcolor.aixterm_color) {
         // e.g. \e[91m
-        put_unsigned(cap.bright_base + (fg & 7));
-      } else if (cap.iso8613_indexed_color) {
+        put_unsigned(sgrcolor.aixterm_color + (fg & 7));
+      } else if (sgrcolor.iso8613_indexed_color) {
         // e.g. \e[38;5;17m
-        put_unsigned(cap.base + 8);
-        std::fputc(cap.iso8613_separater, file);
+        put_unsigned(sgrcolor.iso8613_indexed_color);
+        std::fputc(sgrcolor.iso8613_separater, file);
         put_unsigned(5);
-        std::fputc(cap.iso8613_separater, file);
+        std::fputc(sgrcolor.iso8613_separater, file);
         put_unsigned(fg);
       } else {
         // todo: fallback
         // todo: \e[1;32m で明るい色を表示する端末
-        put_unsigned(cap.base + 9);
+        put_unsigned(sgrcolor.base + 9);
       }
     }
   }
-  void set_attribute(std::uint32_t newAttr) {
+
+  void set_attribute(attribute_type newAttr) {
     if (this->attr == newAttr) return;
 
     this->sa_isSgrOpen = false;
@@ -237,17 +317,17 @@ struct terminal_target {
     if (newAttr == 0) {
       sa_open_sgr();
     } else {
-      update_sgrflag2(newAttr, is_bold_set     , 1, is_faint_set           ,  2, 22);
-      update_sgrflag2(newAttr, is_italic_set   , 3, is_fraktur_set         , 20, 23);
-      update_sgrflag2(newAttr, is_underline_set, 4, is_double_underline_set, 21, 24);
-      update_sgrflag2(newAttr, is_blink_set    , 5, is_rapid_blink_set     ,  6, 25);
+      update_sgrflag2(newAttr, sgrcap.bold     );
+      update_sgrflag2(newAttr, sgrcap.italic   );
+      update_sgrflag2(newAttr, sgrcap.underline);
+      update_sgrflag2(newAttr, sgrcap.blink    );
 
-      update_sgrflag1(newAttr, is_reverse_set  , 7, 27);
-      update_sgrflag1(newAttr, is_invisible_set, 8, 28);
-      update_sgrflag1(newAttr, is_strike_set   , 9, 29);
+      update_sgrflag1(newAttr, sgrcap.inverse  );
+      update_sgrflag1(newAttr, sgrcap.invisible);
+      update_sgrflag1(newAttr, sgrcap.strike   );
 
-      update_color(newAttr, sgrcap.sgrfg, is_fg_color_set, fg_color_mask, fg_color_shift);
-      update_color(newAttr, sgrcap.sgrbg, is_bg_color_set, bg_color_mask, bg_color_shift);
+      update_sgrcolor(newAttr, sgrcap.sgrfg, fg_color_mask, fg_color_shift);
+      update_sgrcolor(newAttr, sgrcap.sgrbg, bg_color_mask, bg_color_shift);
     }
 
     if (this->sa_isSgrOpen)
@@ -256,6 +336,7 @@ struct terminal_target {
     this->attr = newAttr;
   }
 
+public:
   // test implementation
   // ToDo: output encoding
   void output_content(window& w) {
@@ -308,7 +389,7 @@ int main() {
   for (int i = 0; i < 26; i++)
     put_char(w, 'a' + i);
 
-  terminal_target target(stdout);
+  tty_target target(stdout);
   target.output_content(w);
 
   return 0;
