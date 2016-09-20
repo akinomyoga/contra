@@ -45,6 +45,15 @@
 <p class="resume">等として見る事ができる。</p>
 
 <!--===================================================================================-->
+<h2>関連する規格と略称</h2>
+<p>この節では関連する規格と、それらをこの文書の中で参照する際に用いる略称についてまとめる。</p>
+<ul>
+<li><dfn class="standard">ECMA-48</dfn>: ANSI, ANSI Terminal などとしてよく参照される。</li>
+<li><dfn class="standard">T.416</dfn>: ISO 8613-6, CCITT Recommendation T.416</li>
+<li><dfn class="standard">T.61</dfn>: CCITT Recommendation T.61</li>
+</ul>
+
+<!--===================================================================================-->
 <h2>制御シーケンス 一般論</h2>
 
 <p>制御シーケンス (エスケープシーケンス) とは、
@@ -862,7 +871,7 @@
 </table>
 
 <ul>
-<li><dfn class="cfunc">SGR</dfn>: Set Graphic Rendition (select graphic rendition)
+<li><dfn class="cfunc">SGR</dfn>: Set Graphic Rendition (Select Graphic Rendition)
   <ul>
   <li>vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SGR">VT: SGR</a></li>
@@ -1044,11 +1053,12 @@
   <li>互換性: ansi, vt100, xterm</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrPSpacing</dfn>: (reserved)
-  <p>reserved for proportional spacing as specified in CCITT Recommendation T.61</p>
-  <p>T.61 は International Teletex Services の為の仕様であるが teletex service 自体が終了した為に失効した様だ。
+<li><dfn class="sgr">sgrPSpacing</dfn>: proportional spacing (reserved)
+  <p>ANSI では CCITT Recommendation T.61 で指定される proportional spacing の為に予約されていると記述されている。
+    T.61 は International Teletex Services の為の仕様であるが teletex service 自体が終了した為に失効した様だ。
     現在は最新版 (1993 年) の文書自体が手に入らない状態にあるようだが、改訂前の 1988 年版は手に入る。
   </p>
+  <p>[T.416/13.18] deprecated</p>
   <ul>
   <li>互換性: ansi (reserved)</li>
   </ul>
@@ -1090,14 +1100,14 @@
 <li><dfn class="sgr">sgrAnsiColor</dfn>: 前景色・背景色
   <table class="normal center">
   <tr><th>番号</th><th>機能</th><th>番号</th><th>機能</th></tr>
-  <tr><td>30</td><td>前景黒</td><td>40</td><td>背景黒</td></tr>
-  <tr><td>31</td><td>前景茶</td><td>41</td><td>背景茶</td></tr>
-  <tr><td>32</td><td>前景緑</td><td>42</td><td>背景緑</td></tr>
-  <tr><td>33</td><td>前景土</td><td>43</td><td>背景土</td></tr>
-  <tr><td>34</td><td>前景藍</td><td>44</td><td>背景藍</td></tr>
-  <tr><td>35</td><td>前景紫</td><td>45</td><td>背景紫</td></tr>
-  <tr><td>36</td><td>前景碧</td><td>46</td><td>背景碧</td></tr>
-  <tr><td>37</td><td>前景灰</td><td>47</td><td>背景灰</td></tr>
+  <tr><td>30</td><td>前景黒色</td><td>40</td><td>背景黒色</td></tr>
+  <tr><td>31</td><td>前景赤色</td><td>41</td><td>背景赤色</td></tr>
+  <tr><td>32</td><td>前景緑色</td><td>42</td><td>背景緑色</td></tr>
+  <tr><td>33</td><td>前景黄色</td><td>43</td><td>背景黄色</td></tr>
+  <tr><td>34</td><td>前景青色</td><td>44</td><td>背景青色</td></tr>
+  <tr><td>35</td><td>前景紫色</td><td>45</td><td>背景紫色</td></tr>
+  <tr><td>36</td><td>前景水色</td><td>46</td><td>背景水色</td></tr>
+  <tr><td>37</td><td>前景灰色</td><td>47</td><td>背景灰色</td></tr>
   </table>
   <ul>
   <li>互換性: ANSI, xterm</li>
@@ -1146,22 +1156,34 @@
     <td>背景色 X11 Colors</td></tr>
   </table>
 
-  <p>ANSI では 38, 48 は reserved とされ、ISO 8613-6 [CCITT Recommendation T.416] に内容を委ねている。
-    ISO 8613-6 では、引数の区切はコロン ":" (3/10) とされているが、
+  <p>ANSI では 38, 48 は reserved とされ、[T.416] に内容を委ねている。
+    [T.416] では、引数の区切はコロン ":" (3/10) とされているが、
     実際の実装では CSI Sequence の一般的な引数区切である ";" が用いられる事が多い。
-    ISO 8613-6 では末端にある空引数は任意に省略可能だが、
-    区切にセミコロンを用いている場合、引数の終端を判断できないので省略するのは危険である。
+    [T.416] では末端にある空引数は任意に省略可能だが、
+    区切にセミコロンを用いている場合、引数の終端を判断できないので省略はできない。
   </p>
 
-  <p>ISO 8613-6 によれば RGB, CMY の第6引数は無視される。
+  <p>[T.416] RGB, CMY の第6引数は無視される。
     RGB, CMY, CMYK の第7引数と第8引数はそれぞれ error tolerance と tolerance を測る color space を指定する。
     tolerance color space は 0 for CIELUV, 1 for CIELAB である。
-    実際の terminal で tolerance に対応している物は確認できない。
+    実際の端末で tolerance に対応している物は確認できない。
     例えば KDE Konsole が 38;2;r;g;b の形式を実装しているが tolerance の引数には対応していない。
     逆に KDE Konsole に対して tolerance を送信するとそれが別の意味に解釈されるので問題である。
+    (tolerance は元々 ISO 8613 形式のドキュメントの印刷などで品質評価に使うものなのだろうと思われる。
+    端末で表示する場合、品質評価をして出力方法を選択するということは行わないので考慮に入れなくても良いだろう。)
   </p>
 
-  <p>ISO 8613-6 では R, G, B, C, M, Y, K のそれぞれの強度の指定方法について述べられていない。
+  <p>[T.416/13.1.8] 38:5:index は "content colour table" の番号を示す。
+    [T.412/9.1.4.1] によれば indexed color の番号は非負の整数と定義されている。特に上限は定められていない。
+    最近の実装では xterm に倣って 256 色である場合が多い。
+  </p>
+
+  <p>[T.415/13.1.8] SGR 30-37, 40-47 で使用される色は、
+    それぞれ indexed color 1, 2, 3, 4, 5, 6, 7, 0 と対応すると定められている。
+    然しながら、実際の実装では xterm に倣って 0-7 にそのまま対応しているのが普通である。
+  </p>
+
+  <p>[T.416/13.1.8] R, G, B, C, M, Y, K のそれぞれの強度の指定方法について述べられていない。
     実際の実装では R, G, B は 0-255 の値で指定すると解釈している。
   </p>
 
@@ -1190,7 +1212,8 @@
   </ul>
 </li>
 <li><dfn class="sgr">sgrPSpacingOff</dfn>: (reserved)
-  <p>reserved for cancelling the effect of the rendering aspect established by parameter value 26</p>
+  <p>sgrPSpacing (SGR 26) の効果を打ち消す為に使用する。</p>
+  <p>[T.416/13.18] deprecated</p>
   <ul>
   <li>互換性: ansi (reserved)</li>
   </ul>
@@ -1310,6 +1333,21 @@
     </ul>
   </li>
   </ul>
+</li>
+</ul>
+
+<p>Note</p>
+<ul>
+<li>[ENMA-48/8.3.117] 可能な番号の組み合わせは処理系定義である。</li>
+<li>[T.416/13.1.8] 上付き(PUD)・下付き(PLD)の内部で下線・打ち消し線の類を設定した場合は、
+  それに合わせた位置に線を描画する様にする。
+  [T.416/13.1.5] 上付き・下付きにする前から設定されている下線・打ち消し線の類はそのままの位置で描画する。
+</li>
+<li>[T.416/13.1.8] default parameter value (0) は他の番号と一緒に用いることはできない。
+  実際の端末の実装では可能である。Mode 21 (GRCM) が無効の時、番号を指定した順番に適用されることになっているのが普通である。
+</li>
+<li>[T.416/13.1.8] sgrBold, sgrFaint, sgrItalic などはフォントが設定されていない時に有効である。
+  つまり、primary font (10) もしくはフォントが未指定の alternative font (11-19) の時のみに有効である。
 </li>
 </ul>
 
@@ -1532,6 +1570,7 @@ j.行消す, ESC[2K
 <tr><td>18</td>    <td class="markA">-</td><td>TSM</td>  <td>Tabulation stop</td><td></td><td>X</td></tr>
 <tr><td>19</td>    <td class="markA">-</td><td>EBM</td>  <td>Editing boundary</td><td></td><td>X</td></tr>
 <tr><td>20</td>    <td>vx</td><td>LMN</td>       <td>Set new line mode (Automatic Newline)</td><td class="markB">Set line feed mode (Normal Linefeed)</td><td>X</td></tr>
+<tr><td>21</td>    <td>/ansi</td><td>GRCM</td>   <td>Cumulative</td><td>Replacing</td></tr>
 <tr><td>34</td>    <td>/putty</td><td></td>      <td>MakeCursorBig</td><td></td><td></td></tr>
 <tr><td>?1</td>    <td>vxr</td><td>DECCKM</td>   <td>Set cursor key to application (Application cursor key)</td><td>Set cursor key to cursor (Normal cursor key)</td><td>X</td></tr>
 <tr><td>?2</td>    <td>vx</td><td>DECANM</td>    <td>Set ANSI (versus VT52)</td><td>Set VT52 (versus ANSI)</td><td>X</td></tr>
