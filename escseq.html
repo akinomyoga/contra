@@ -879,7 +879,7 @@
 </li>
 </ul>
 
-<h4>SGR Attributes 0-29</h4>
+<h4>一覧表</h4>
 <table class="normal center">
 <tr><th>機能</th>           <th>番号</th>         <th>ansi</th> <th>vt</th><th>xterm</th><th>rxvt</th></tr>
 <tr><th>sgrDefault</th>     <td>0</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
@@ -918,12 +918,12 @@
 <tr><th>sgrFrameOff</th>       <td>54</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
 <tr><th>sgrOverlineOff</th>    <td>55</td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
 <tr><th>sgrAnsiReserved</th>   <td>56-59</td>        <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>機能</th>              <th>番号</th>         <th>ansi</th> <th>vt</th><th>xterm</th></tr>
-<tr><th>sgrIdeoDecoration</th> <td>60-64</td>        <td>*</td>    <td>-</td> <td>-</td>    </tr>
-<tr><th>sgrIdeoDecorationOff</th><td>65</td>         <td>*</td>    <td>-</td> <td>-</td>    </tr>
-<tr><th>sgrJISX0211Deco</th>   <td>66-69</td>        <td>-</td>    <td>-</td> <td>-</td>    </tr>
-<tr><th>sgrAixColor</th>       <td>90-97, 100-107</td><td>-</td>    <td>-</td> <td>*</td>    </tr>
-<tr><th>sgrDefalutColor</th>   <td>100</td>          <td>-</td>    <td>-</td> <td>-</td>    </tr>
+<tr><th>機能</th>              <th>番号</th>         <th>ansi</th> <th>vt</th><th>xterm</th><th>rxvt</th></tr>
+<tr><th>sgrIdeoDecoration</th> <td>60-64</td>         <td>*</td>    <td>-</td> <td>-</td>   <td>-</td></tr>
+<tr><th>sgrIdeoDecorationOff</th><td>65</td>          <td>*</td>    <td>-</td> <td>-</td>   <td>-</td></tr>
+<tr><th>sgrJISX0211Deco</th>   <td>66-69</td>         <td>-</td>    <td>-</td> <td>-</td>   <td>-</td></tr>
+<tr><th>sgrAixColor</th>       <td>90-97, 100-107</td><td>-</td>    <td>-</td> <td>*</td>   <td>-</td></tr>
+<tr><th>sgrDefaultColor</th>   <td>100</td>           <td>-</td>    <td>-</td> <td>-</td>   <td>-</td></tr>
 </table>
 
 <h4>既定に戻す</h4>
@@ -1171,7 +1171,7 @@
 </li>
 <li><dfn class="sgr">sgrAixColor</dfn> (90-97, 100-107): 高輝度背景色・前景色
   <p>30-37, 40-47 の前景色・背景色を高輝度にした物。</p>
-  <p>[Wikipedia] これらの文字色・背景色の設定は aixterm に起源を持つ。</p>
+  <p>xterm の説明及び Wikipedia によると、これらの文字色・背景色の設定は aixterm に起源を持つ。</p>
   <table class="normal center">
   <tr><th>番号</th><th>機能</th><th>番号</th><th>機能</th></tr>
   <tr><td>90</td><td>前景鼠色</td><td>100</td><td>背景鼠色</td></tr>
@@ -1273,19 +1273,21 @@
   <li>RLogin <a href="http://nanno.dip.jp/softlib/man/rlogin/ctrlcode.html">エスケープシーケンス一覧</a></li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrFgDefault (39)</dfn>:
+<li><dfn class="sgr">sgrFgDefault</dfn> (39): default display/foreground color
   <p>前景色を既定色に戻す。</p>
+  <p>[ECMA-48] 処理系定義</p>
   <ul>
   <li>互換性: ansi, xterm</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrBgDefault (49)</dfn>
+<li><dfn class="sgr">sgrBgDefault</dfn> (49): default background color
   <p>背景色を既定色に戻す。</p>
+  <p>[ECMA-48] 処理系定義</p>
   <ul>
   <li>互換性: ansi, xterm</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrDefalutColor</dfn> (100): default color
+<li><dfn class="sgr">sgrDefaultColor</dfn> (100): default color
   <p>前景色及び背景色を既定色に戻す。
     rxvt 由来の機能 (と xterm の説明には書かれている)。
     <b>sgrAixColor</b> と値が被っているので注意する。
@@ -1374,7 +1376,7 @@
   <li>互換性: JIS X 0211</li>
   </ul>
 </li>
-<li><dfn class="sgr">sgrIdeoDecorationOff</dfn>: CJK装飾解除
+<li><dfn class="sgr">sgrIdeoDecorationOff</dfn> (65): CJK装飾解除
   <p>CJK装飾 60-64, 66-69 で設定された属性を解除する。</p>
   <ul>
   <li>互換性: ansi, JIS X 0211</li>
@@ -1385,7 +1387,10 @@
 <h4>References</h4>
 <ul>
 <li>VT <a href="http://www.vt100.net/docs/vt510-rm/SGR">VT: SGR</a></li>
-<li>xterm <a href="http://www.xfree86.org/current/ctlseqs.html">Xterm Control Sequences</a></li>
+<li>xterm
+  <a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.html">ctlseqs(ms)</a>
+  <del><a href="http://www.xfree86.org/current/ctlseqs.html">Xterm Control Sequences</a></del>
+</li>
 <li>ANSI
   <ul>
   <li><a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code - Wikipedia, the free encyclopedia</a></li>
@@ -1394,7 +1399,7 @@
 </li>
 </ul>
 
-<p>Note</p>
+<h4>Note</h4>
 <ul>
 <li>[ENMA-48/8.3.117] 可能な番号の組み合わせは処理系定義である。</li>
 <li>[T.416/13.1.8] 上付き(PUD)・下付き(PLD)の内部で下線・打ち消し線の類を設定した場合は、
@@ -1409,67 +1414,71 @@
 </li>
 </ul>
 
-<div class="note">
+<h4>互換性</h4>
+<ul>
+<li>[ECMA-48/8.3.117] ANSI では 0-65 の全てについて隈なく定義されている。
+  但し、26, 50 (propotional spacing) は T.61 で定義される。
+  38, 48 (前景色・背景色) は T.416 で定義される。
+  56-59 は将来のために予約されている。
+  0, 38, 48 は処理系依存。
+</li>
+<li>[T.416/13.1.8] 規定されているのは 0-50 の範囲。
+  ただし、8,28 (invisible), 20 (fraktur), 39,49 (default color) は規定されていない。
+  26, 50 (proportional spacing) は deprecated とされる。
+</li>
+<li>[JIS X 0211/8.3.118] 基本的に ECMA-48 と同様。
+  但し 66-69 が追加されている。38, 48 は JIS X 4106 で規定される。
+</li>
+<li><a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.html">xterm</a>:
+  ANSI 0-50 の内 5 (rapid blink), 10-20 (fonts, fraktur),
+  26,50 (proportional spacing), 38,48 (ISO 8613-6) 以外に対応。
+  16色対応がコンパイルされている場合は 90-97,100-107 (<b>sgrAixColors</b>) に対応し、
+  そうでない場合は 100 (sgrDefaultColor) に対応する。
+  更に、88/256色対応がコンパイルされている場合は
+  38:2, 38:5, 48:2, 48:5 (ISO-8613-6) に対応する
+  (註: xterm のドキュメントには ISO-8613-3 と書かれているがこれは ISO-8613-6 の誤りである)。
+  38:2 の RGB 強度は 0-255 で指定する。38:5 の色番号は 0-255 で指定する。
+  ISO 8613-6 の区切りとして ":" の他に ";" も使える (但し、一度 ":" を区切りに使った場合、";" は使えない)。
+</li>
+<li><a href="https://github.com/robertknight/konsole/blob/master/src/Vt102Emulation.cpp">konsole</a>:
+  ANSI 0, 1,22, 4,24, 5,25, 7,27, 30-47 及び 90-97,100-107 (<b>sgrAixColors</b>) に対応する。
+  38;2 38:5 48;2 48;5 に対応する。コロンは使えない。
+</li>
+<li><a href="http://nanno.dip.jp/softlib/man/rlogin/ctrlcode.html">RLogin</a>
+  ANSI 0-65, 及び 90-97, 100-107 (<b>sgrAixColors</b>) に対応する。
+  但し、10-20 のフォントは予め設定を行う。
+  また ISO 8613-6 は 38:2, 38;5, 48:2, 48;5 に対応する。
+  38:2 RGB の値の範囲は記述なし。38:5 色番号は 0-255 である。
+</li>
+<li>cygwin:
+  ANSI の 0; 1,2,22; 7,27; 30-37,39; 40-47,49 が実装されている。
+  但し 1 = 明るい前景色、2 = 暗い前景色 としての実装。
+  4,24 は下線の代わりに代替色になる。
+  5,25 は点滅の代わりに明るい背景色になる。
+</li>
+<li>MS-DOS?
+  <a href="http://www5c.biglobe.ne.jp/~ecb/assembler2/b_2.html">エスケープシーケンス</a>　によると
+  ANSI の 0, 1, 4, 5, 7, 8, 30-37, 40-47 が実装されている。
+  但し 1 はハイライトとして実装される (ただし <q>"モノクロモードのみ"</q> とのことである)。
+  2 は細字の代わりに縦線が付加される。
+  個別にリセットする機能については言及がない。
+  他に 16 で不可視 8 と同じで、17-23 は 31-37 と同じ。
+</li>
+<li>また、出元不明の情報として以下の様な物もあった。情報源は失念した。
   <ul>
-  <li>cygwin
-    <ul>
-    <li>0: 既定</li>
-    <li>1: 前景色明</li>
-    <li>2: 前景色暗</li>
-    <li>4: dim</li>
-    <li>5: 背景色明</li>
-    <li>7: 反転</li>
-    <li>30-37: 前景色</li>
-    <li>40-47: 背景色</li>
-    <li>39: 前景色既定</li>
-    <li>49: 背景色既定</li>
-    <li>22: 前景色暗</li>
-    <li>24: dim 解除</li>
-    <li>25: 背景色暗</li>
-    <li>27: 反転解除</li>
-    </ul>
-  </li>
-  <li>rosaterm
-  </li>
-  <li>MS-DOS
-    <ul>
-    <li>0: 既定</li>
-    <li>1: ハイライト (モノクロモードのみ)</li>
-    <li>2*: 縦線</li>
-    <li>4: 下線</li>
-    <li>5: 点滅</li>
-    <li>7: 反転</li>
-    <li>8, 16*: 不可視</li>
-    <li>30-37: sgrAnsiColors 前景色。</li>
-    <li>17*: 前景色 R</li>
-    <li>18*: 前景色 G</li>
-    <li>19*: 前景色 Y</li>
-    <li>20*: 前景色 B</li>
-    <li>21*: 前景色 M</li>
-    <li>22*: 前景色 C</li>
-    <li>23*: 前景色 白</li>
-    <li>40-47*: sgrAnsiColors 背景色。但し、同時に前景色は白になる。</li>
-    <li><a href="http://www5c.biglobe.ne.jp/~ecb/assembler2/b_2.html">エスケープシーケンス</a></li>
-    </ul>
-  </li>
-  <li>出元不明
-    <ul>
-    <li>3: 反転</li>
-    <li>21: 前景色 暗</li>
-    <li>22: 既定色</li>
-    <li>17: 前景色 R</li>
-    <li>18: 前景色 B</li>
-    <li>19: 前景色 M</li>
-    <li>20: 前景色 G</li>
-    <li>21: 前景色 Y</li>
-    <li>22: 前景色 C</li>
-    <li>23: 前景色 白</li>
-    </ul>
-  </li>
+  <li>3: 反転</li>
+  <li>21: 前景色 暗</li>
+  <li>22: 既定色</li>
+  <li>17: 前景色 R</li>
+  <li>18: 前景色 B</li>
+  <li>19: 前景色 M</li>
+  <li>20: 前景色 G</li>
+  <li>21: 前景色 Y</li>
+  <li>22: 前景色 C</li>
+  <li>23: 前景色 白</li>
   </ul>
-</div>
-
-
+</li>
+</ul>
 
 
 <!--************************************************************************-->
