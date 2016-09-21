@@ -5,7 +5,7 @@
 
 namespace contra {
 
-  enum bits {
+  enum ascii {
     ascii_esc       = 0x1b,
     ascii_zero      = 0x30,
     ascii_colon     = 0x3A,
@@ -24,7 +24,9 @@ namespace contra {
     is_embedded_object = 0x08000000,
   };
 
-  enum cell_attribute {
+  typedef std::uint32_t attribute_t;
+
+  enum attribute_flags {
     fg_color_mask = 0x00FF,
     bg_color_mask = 0xFF00,
     fg_color_shift = 0,
@@ -47,22 +49,22 @@ namespace contra {
     has_extended_attribute = 0x8000, // not supported yet
   };
 
-  typedef std::uint32_t attribute_type;
-
   struct window_cell {
     std::uint32_t character {0};
-    attribute_type attribute {0};
+    attribute_t attribute {0};
   };
 
+  typedef int curpos_t;
+
   struct window_cursor {
-    int x {0};
-    int y {0};
-    attribute_type attribute {0};
+    curpos_t    x {0};
+    curpos_t    y {0};
+    attribute_t attribute {0};
   };
 
   struct window {
-    int m_width  {0};
-    int m_height {0};
+    curpos_t m_width  {0};
+    curpos_t m_height {0};
 
     // cursor
     window_cursor cur;
@@ -123,7 +125,7 @@ void put_char(window& w, std::uint32_t u) {
 }
 
 struct termcap_sgrcolor {
-  attribute_type bit;
+  attribute_t bit;
   unsigned base;
   unsigned off;
 
@@ -140,17 +142,17 @@ struct termcap_sgrcolor {
 };
 
 struct termcap_sgrflag1 {
-  attribute_type bit;
-  unsigned       on;
-  unsigned       off;
+  attribute_t bit;
+  unsigned    on;
+  unsigned    off;
 };
 
 struct termcap_sgrflag2 {
-  attribute_type bit1;
-  unsigned       on1;
-  attribute_type bit2;
-  unsigned       on2;
-  unsigned       off;
+  attribute_t bit1;
+  unsigned    on1;
+  attribute_t bit2;
+  unsigned    on2;
+  unsigned    off;
 };
 
 struct termcap_sgr_type {
@@ -168,7 +170,7 @@ struct termcap_sgr_type {
   termcap_sgrcolor sgrfg {is_fg_color_set, 30, 39,  90, 38, ascii_semicolon, 0, 0};
   termcap_sgrcolor sgrbg {is_bg_color_set, 40, 49, 100, 48, ascii_semicolon, 0, 0};
 
-  attribute_type attrNotResettable {0};
+  attribute_t attrNotResettable {0};
 
 private:
   void initialize_attrNotResettable(termcap_sgrflag1 const& sgrflag) {
@@ -230,11 +232,11 @@ private:
     }
   }
 
-  attribute_type attr {0};
+  attribute_t attr {0};
   bool sa_isSgrOpen;
 
   void update_sgrflag1(
-    attribute_type newAttr,
+    attribute_t newAttr,
     termcap_sgrflag1 const& sgrflag
   ) {
     // when the attribute is not changed
@@ -252,11 +254,11 @@ private:
   }
 
   void update_sgrflag2(
-    attribute_type newAttr,
+    attribute_t newAttr,
     termcap_sgrflag2 const& sgrflag
   ) {
-    attribute_type bit1 = sgrflag.bit1;
-    attribute_type bit2 = sgrflag.bit2;
+    attribute_t bit1 = sgrflag.bit1;
+    attribute_t bit2 = sgrflag.bit2;
 
     // when the attribute is not changed
     if (((newAttr ^ this->attr) & (bit1 | bit2)) == 0) return;
@@ -268,8 +270,8 @@ private:
     if (!sgr2) bit2 = 0;
     if (!(bit1 | bit2)) return;
 
-    attribute_type const added = newAttr & ~this->attr;
-    attribute_type const removed = ~newAttr & this->attr;
+    attribute_t const added = newAttr & ~this->attr;
+    attribute_t const removed = ~newAttr & this->attr;
 
     sa_open_sgr();
     if (removed & (bit1 | bit2)) {
@@ -295,12 +297,12 @@ private:
     }
   }
 
-  void update_sgrcolor(attribute_type newAttr, termcap_sgrcolor const& sgrcolor, attribute_type mask, int shift) {
-    attribute_type const isset = sgrcolor.bit;
+  void update_sgrcolor(attribute_t newAttr, termcap_sgrcolor const& sgrcolor, attribute_t mask, int shift) {
+    attribute_t const isset = sgrcolor.bit;
     if (((this->attr ^ newAttr) & (isset | mask)) == 0) return;
 
-    attribute_type const added = newAttr & ~this->attr;
-    attribute_type const removed = ~newAttr & this->attr;
+    attribute_t const added = newAttr & ~this->attr;
+    attribute_t const removed = ~newAttr & this->attr;
     if (removed & isset) {
       sa_open_sgr();
       put_unsigned(sgrcolor.off);
@@ -346,7 +348,7 @@ private:
     }
   }
 
-  void set_attribute(attribute_type newAttr) {
+  void set_attribute(attribute_t newAttr) {
     if (this->attr == newAttr) return;
 
     this->sa_isSgrOpen = false;
@@ -356,7 +358,7 @@ private:
       return;
     }
 
-    attribute_type const removed = ~newAttr & this->attr;
+    attribute_t const removed = ~newAttr & this->attr;
     if (removed & sgrcap.attrNotResettable) {
       sa_open_sgr();
       this->attr = 0;
@@ -384,10 +386,10 @@ public:
   // test implementation
   // ToDo: output encoding
   void output_content(window& w) {
-    for (int y = 0; y < w.m_height; y++) {
+    for (curpos_t y = 0; y < w.m_height; y++) {
       window_cell* line = &w.cell(0, y);
-      int wskip = 0;
-      for (int x = 0; x < w.m_width; x++) {
+      curpos_t wskip = 0;
+      for (curpos_t x = 0; x < w.m_width; x++) {
         if (line[x].character&is_wide_extension) continue;
         if (line[x].character == 0) {
           wskip++;
