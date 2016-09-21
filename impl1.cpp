@@ -5,6 +5,17 @@
 
 namespace contra {
 
+  enum bits {
+    ascii_esc       = 0x1b,
+    ascii_zero      = 0x30,
+    ascii_colon     = 0x3A,
+    ascii_semicolon = 0x3B,
+    ascii_lbracket  = 0x5B,
+    ascii_C         = 0x43,
+    ascii_m         = 0x6D,
+  };
+
+
   enum cell_character {
     unicode_mask       = 0x001FFFFF,
     is_acs_character   = 0x01000000,
@@ -154,8 +165,8 @@ struct termcap_sgr_type {
 
   // termcap_sgrflag1 pspacing    {?   , 26, 50};
 
-  termcap_sgrcolor sgrfg {is_fg_color_set, 30, 39,  90, 38, ';', 0, 0};
-  termcap_sgrcolor sgrbg {is_bg_color_set, 40, 49, 100, 48, ';', 0, 0};
+  termcap_sgrcolor sgrfg {is_fg_color_set, 30, 39,  90, 38, ascii_semicolon, 0, 0};
+  termcap_sgrcolor sgrbg {is_bg_color_set, 40, 49, 100, 48, ascii_semicolon, 0, 0};
 
   attribute_type attrNotResettable {0};
 
@@ -205,17 +216,17 @@ struct tty_target {
   void put_unsigned(unsigned value) {
     if (value >= 10)
       put_unsigned(value/10);
-    std::fputc('0' + value % 10, file);
+    std::fputc(ascii_zero + value % 10, file);
   }
 
 private:
   void sa_open_sgr() {
     if (this->sa_isSgrOpen) {
-      std::fputc(';', file);
+      std::fputc(ascii_semicolon, file);
     } else {
       this->sa_isSgrOpen = true;
-      std::fputc('\033', file);
-      std::fputc('[', file);
+      std::fputc(ascii_esc, file);
+      std::fputc(ascii_lbracket, file);
     }
   }
 
@@ -264,11 +275,11 @@ private:
     if (removed & (bit1 | bit2)) {
       put_unsigned(sgrflag.off);
       if (newAttr & bit2) {
-        std::fputc(';', file);
+        std::fputc(ascii_semicolon, file);
         put_unsigned(sgr2);
       }
       if (newAttr & bit1) {
-        std::fputc(';', file);
+        std::fputc(ascii_semicolon, file);
         put_unsigned(sgr1);
       }
     } else {
@@ -278,7 +289,7 @@ private:
         isOutput = true;
       }
       if (added & bit1) {
-        if (isOutput) std::fputc(';', file);
+        if (isOutput) std::fputc(ascii_semicolon, file);
         put_unsigned(sgr1);
       }
     }
@@ -364,7 +375,7 @@ private:
     update_sgrcolor(newAttr, sgrcap.sgrbg, bg_color_mask, bg_color_shift);
 
     if (this->sa_isSgrOpen)
-      std::fputc('m', file);
+      std::fputc(ascii_m, file);
 
     this->attr = newAttr;
   }
@@ -386,8 +397,12 @@ public:
         if (wskip > 0) {
           if (this->attr == 0 && wskip <= 4) {
             while (wskip--) std::fputc(' ', file);
-          } else
-            std::fprintf(file, "\033[%dC", wskip);
+          } else {
+            std::fputc(ascii_esc, file);
+            std::fputc(ascii_lbracket, file);
+            put_unsigned(wskip);
+            std::fputc(ascii_C, file);
+          }
           wskip = 0;
         }
 
