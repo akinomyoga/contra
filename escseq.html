@@ -1349,7 +1349,10 @@
 <h4>CJK装飾</h4>
 <ul>
 <li>SGR 60-64 <dfn class="sgr">sgrIdeoDecoration</dfn>: CJK装飾(ANSI)
-  <p>CJK文字に対する装飾を有効にする。</p>
+  <p>CJK文字に対する装飾を有効にする。ECMA-48 では下線または右側に線というような曖昧な記述であるが、
+  JIS X 0211 によれば横書きの場合は下線で、縦書きの場合には右側に傍線といった意味である。
+  これらを組み合わせた場合にどの様な表示になるかについては既定されていない。
+  </p>
   <table class="normal center">
   <tr><th>番号</th><th>機能</th>    <th>横書き</th>  <th>縦書き</th>  </tr>
   <tr><td>60</td><td>傍線</td>      <td>下線</td>    <td>右線</td>    </tr>
@@ -1400,7 +1403,7 @@
 
 <h4>Note</h4>
 <ul>
-<li>[ENMA-48/8.3.117] 可能な番号の組み合わせは処理系定義である。</li>
+<li>[ECMA-48/8.3.117] 可能な番号の組み合わせは処理系定義である。</li>
 <li>[T.416/13.1.8] 上付き(PUD)・下付き(PLD)の内部で下線・打ち消し線の類を設定した場合は、
   それに合わせた位置に線を描画する様にする。
   [T.416/13.1.5] 上付き・下付きにする前から設定されている下線・打ち消し線の類はそのままの位置で描画する。
@@ -1428,8 +1431,20 @@
 <li>[JIS X 0211/8.3.118] 基本的に ECMA-48 と同様。
   但し 66-69 が追加されている。38, 48 は JIS X 4106 (T.416 の日本語版)で規定される。
 </li>
+<li><a href="http://www.vt100.net/docs/vt100-ug/chapter3.html#SGR">VT100</a>,
+  <a href="http://www.vt100.net/docs/vt102-ug/chapter5.html#S5.5.2.17">VT102</a>:
+  ECMA-48 の 0, 1, 4, 5, 7 のみ。
+</li>
+<li><a href="http://www.vt100.net/docs/vt220-rm/chapter4.html#S4.9.1">VT220</a>,
+  <a href="http://www.vt100.net/docs/vt320-uu/appendixe.html#SE.7">VT320</a>,
+  <a href="http://www.vt100.net/docs/vt420-uu/chapter9.html#S9.7">VT420</a>:
+  ECMA-48 の 0, 1,22, 4,24, 5,25, 7,27 に対応。
+</li>
+<li><a href="http://www.vt100.net/docs/vt510-rm/SGR.html">VT510</a>:
+  VT420 に加えて 8,28 (不可視) に対応。
+</li>
 <li><a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.html">xterm</a> (2016-09-20):
-  ECMA-48 0-50 の内 5 (rapid blink), 10-20 (fonts, fraktur),
+  ECMA-48 の 0-50 の内 5 (rapid blink), 10-20 (fonts, fraktur),
   26,50 (proportional spacing), 38,48 (ISO 8613-6) 以外に対応。
   16色対応がコンパイルされている場合は 90-97,100-107 (<b>sgrAixColors</b>) に対応し、
   そうでない場合は 100 (<b>sgrDefaultColor</b>) に対応する。
@@ -1440,10 +1455,10 @@
   ISO 8613-6 の区切りとして ":" の他に ";" も使える (但し、一度 ":" を区切りに使った場合、";" は使えない)。
 </li>
 <li><a href="http://doc.gnu-darwin.org/rxvt/rxvtRef.html">rxvt</a> (2016-09-22):
-  ECMA-48 0, 1,22, 4,24, 5,25, 7,27, 30-37,40-47, 39,49 が実装されている。
+  ECMA-48 の 0, 1,22, 4,24, 5,25, 7,27, 30-37,40-47, 39,49 が実装されている。
 </li>
 <li><a href="http://manpages.ubuntu.com/manpages/xenial/en/man7/urxvt.7.html">urxvt</a> (2016-09-22):
-  ECMA-48 0, 1,22, 3,23, 4,24, 5,6, 7,27, 30-49 に対応している。
+  ECMA-48 の 0, 1,22, 3,23, 4,24, 5,6, 7,27, 30-49 に対応している。
   ISO 8613-6 については 38;5 と 48;5 に対応している。
   1 については明るい前景色で実装される。
   非標準の動作として、
@@ -1453,14 +1468,18 @@
   また 90-97,100-107 に対応している。
 </li>
 <li><a href="https://github.com/robertknight/konsole/blob/master/src/Vt102Emulation.cpp">konsole</a> (2016-09-20):
-  ECMA-48 0, 1,22, 4,24, 5,25, 7,27, 30-47 及び 90-97,100-107 に対応する。
+  ECMA-48 の 0, 1,22, 4,24, 5,25, 7,27, 30-47 及び aixterm の 90-97,100-107 に対応する。
   38;2 38:5 48;2 48;5 に対応する。コロンは使えない。
 </li>
 <li><a href="http://nanno.dip.jp/softlib/man/rlogin/ctrlcode.html">RLogin</a> (2016-09-20):
-  ECMA-48 0-65, 及び 90-97,100-107 に対応する。
+  ECMA-48 の 0-65, 及び 90-97,100-107 に対応する。
   但し、10-20 のフォントは予め設定を行う。
   また ISO 8613-6 は 38:2, 38;5, 48:2, 48;5 に対応する。
   38:2 RGB の値の範囲は記述なし。38:5 色番号は 0-255 である。
+</li>
+<li><a href="https://ttssh2.osdn.jp/manual/ja/about/ctrlseq.html">Tera Term (ttssh2)</a>:
+  ECMA-48 の 0, 1,22, 4,24, 5,25, 7,27, 30-37,40-47, 39,49 および aixterm の 90-97,100-107 に対応している。
+  また 38:2, 48:2, 38:5, 48:5 に対応している。引数の区切りは ";" も可能だがひとたび ":" が出たら ";" は使えない。
 </li>
 <li>cygwin:
   ECMA-48 の 0; 1,2,22; 7,27; 30-37,39; 40-47,49 が実装されている。
