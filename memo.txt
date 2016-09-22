@@ -5,7 +5,59 @@
   ToDo
 ------------------------------------------------------------------------------
 
+2016-09-23
+
+* PLD/PLU/SGR 10-19 の出力を実装する
+
+* SGR 60-69 の実装方法について決める
+
+  同時に複数の属性を on にできるのかそうでないのか。
+  或いは出力先のターミナルに応じて処理を変えるべきか否か。
+
+* 端末の作り方については確か POSIX にサンプルコードが載っていたはず。
+
+  [[posix_openpt>http://pubs.opengroup.org/onlinepubs/9699919799//functions/posix_openpt.html#]] これ。
+
+  ポーリングは O_NONBLOCK にするのが楽?
+  [[ファイル入出力の基本 (IO モデル) を勉強する - フリーフォーム フリークアウト>http://d.hatena.ne.jp/cou929_la/20121103/1351950688]]
+
+  あと exit とか _exit とか _Exit とか色々あるけれど何だったか。
+  [[_Exit>http://pubs.opengroup.org/onlinepubs/9699919799/functions/_exit.html]]
+  [[fork - Wikipedia>https://ja.wikipedia.org/wiki/Fork]] たぶん _exit でよい。
+
+  一応何か起動した。
+  bash: cannot set terminal process group (2692): Inappropriate ioctl for device
+  と出るので子プロセスで setsid() しなければならない。
+
+  さて、次に仮想端末の設定が変だ。どうも親プロセス側の仮想端末の設定がいけない様だ。
+  (というか bash 側は bash 側でなんとかしているはずだ。)
+  と、色々試行錯誤した後で以下の親切なページを見つけた。
+
+  [[PTY を使ってシェルの入出力を好きなようにする - Hika Hibariya>http://note.hibariya.org/articles/20150628/pty.html]]
+
+  簡単にできた。色々調べたりしながら分かった setsid や dup2 のことも全て書かれていた。
+  初めから此処を見ていれば余り悩むこともなかった (然し理解が浅いままだったかもしれない)。
+  あと、終了時に念のため子プロセスを kill しておくようだ。
+  と思ったらこれらの事は詳細UNIXプログラミングという本に書かれている様だ。
+
 2016-09-22
+
+* ルビ?
+
+  ANSI や Unicode にルビの機能があるようである。面倒である。
+
+  - ANSI に PTX という物がある。これはルビのための制御機能に見える。
+    「CSI 1 \ 漢字 CSI 3 \ かんじ CSI 5 \」などの様にして使うものと思われる。
+    行内に無理やり押し込めるのではなくて、隣の行に表示することを意図している様だ。
+
+  - 更に Unicode にもそれ専用の文字がある。
+    U+FFF9 .. U+FFFB  Interlinear annotation characters
+    「<U+FFF9>漢字<U+FFFA>かんじ<U+FFFB>」などの様にして使う。
+
+    <a href="http://unicode.org/reports/tr20/tr20-1.html">UTR #20: The Use of Unicode with Markup Languages</a>
+    <a href="http://www.slideshare.net/xkawabata/2014-1109-texruby">TeXユーザの集い2014　発表資料（W3C Ruby）</a>
+    <a href="https://en.wikipedia.org/wiki/Ruby_character">Ruby character - Wikipedia</a>
+
 
 * ANSI の記述によるとエスケープシーケンスは全て "文字" ではなくて "数" で指定されている。
   つまり、文字コードとして変な文字コードを使っていたとしても、エスケープシーケンスに含まれる

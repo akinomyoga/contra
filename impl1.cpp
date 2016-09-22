@@ -80,7 +80,7 @@ namespace contra {
     attribute_reserved_bit1 = 0x20000000,
     attribute_reserved_bit2 = 0x40000000,
 
-    has_extended_attribute  = 0x80000000u, // not supported yet
+    has_extended_attribute  = 0x80000000u,
   };
 
   static inline aflags_t attribute_to_aflags(attribute_t attr, int fgColorSpace, int bgColorSpace) {
@@ -101,8 +101,15 @@ namespace contra {
     ansi_font_mask = 0x0000000F,
 
     // bit 4,5: PLD, PLU
-    is_sub_set = 0x00000010,
-    is_sup_set = 0x00000020,
+    is_sub_set  = 0x00000010,
+    is_sup_set  = 0x00000020,
+
+    // bit 6,7: DECDHL, DECDWL, DECSWL
+    decdhl_mask         = 0x000000C0,
+    decdhl_top_half     = 0x00000080,
+    decdhl_bottom_half  = 0x000000C0,
+    decdhl_double_width = 0x00000040,
+    decdhl_single_width = 0x00000000,
 
     // bit 12-15:
     is_frame_set             = 0x00001000, // -+- SGR 51,52
@@ -110,34 +117,21 @@ namespace contra {
     is_overline_set          = 0x00004000, // --- SGR 53
     is_proportional_set      = 0x00008000, // --- SGR 26 (deprecated)
 
-    // bit 16-25: ideographic decorations
-    is_ideographic_single_rb = 0x00010000, // -+- SGR 60,61
-    is_ideographic_double_rb = 0x00020000, // -'
-    is_ideographic_single_lt = 0x00040000, // -+- SGR 62,63
-    is_ideographic_double_lt = 0x00080000, // -'
-    is_ideographic_single_lb = 0x00100000, // -+- SGR 66,67
-    is_ideographic_double_lb = 0x00200000, // -'
-    is_ideographic_single_rt = 0x00400000, // -+- SGR 68,69
-    is_ideographic_double_rt = 0x00800000, // -'
-    is_ideographic_stress    = 0x01000000, // --- SGR 64
+    // bit 16-25: ideogram decorations
+    is_ideogram_single_rb_set = 0x00010000, // -+- SGR 60,61
+    is_ideogram_double_rb_set = 0x00020000, // -'
+    is_ideogram_single_lt_set = 0x00040000, // -+- SGR 62,63
+    is_ideogram_double_lt_set = 0x00080000, // -'
+    is_ideogram_single_lb_set = 0x00100000, // -+- SGR 66,67
+    is_ideogram_double_lb_set = 0x00200000, // -'
+    is_ideogram_single_rt_set = 0x00400000, // -+- SGR 68,69
+    is_ideogram_double_rt_set = 0x00800000, // -'
+    is_ideogram_stress_set    = 0x01000000, // --- SGR 64
   };
 
   struct extended_attribute {
-    /*?lwiki
-     * : @var atribute_type attribute;
-     *   `attribute&fg_color` and `attribute&bg_color`
-     *   are used to specify the color scheme of fg/bg
-     *   instead of indices of a color table.
-     *   The other flags have the same meaning as
-     *   the attribute in the `struct window_cell`.
-     */
     aflags_t aflags;
-
-    /*?lwiki
-     * : @var xflags_t xflags;
-     */
     xflags_t xflags;
-
     color_t  fg;
     color_t  bg;
 
@@ -183,8 +177,9 @@ namespace contra {
          * @var std::uint32_t ref_count;
          * @var std::uint32_t next;
          * 使用されている時には参照カウントとして使用される (`ref_count`)。
-         * 後の仕様ために free list に繋がっている時は次の項目への参照として使用される (`next`)。
-         * 次の項目は親 window の配列中の index で表現される。
+         * 後の使用ために free list に繋がっている時は、
+         * 次の使用されていない項目への参照として使用される (`next`)。
+         * 次の項目は親配列中の index で表現される。
          *
          */
         std::uint32_t ref_count;
@@ -281,12 +276,12 @@ namespace contra {
         m_line_offset[y] = y * width;
     }
 
-    const window_cell& cell(int x, int y) const{
+    const window_cell& cell(int x, int y) const {
       int const iline = this->m_line_offset[(m_rotation + y) % m_height];
       return m_data[iline + x];
     }
 
-    window_cell& cell(int x, int y){
+    window_cell& cell(int x, int y) {
       return const_cast<window_cell&>(const_cast<window const*>(this)->cell(x, y));
     }
 
@@ -299,6 +294,7 @@ namespace contra {
     }
 
     void set_attribute(window_cell* cell, attribute_t attr) {
+      if (cell->attribute == attr) return;
       if (cell->attribute & has_extended_attribute)
         this->m_xattr_data.dec(cell->attribute);
       cell->attribute = attr;
@@ -368,17 +364,30 @@ struct termcap_sgrflag2 {
 };
 
 struct termcap_sgr_type {
-  termcap_sgrflag2 bold      {is_bold_set     , 1, is_faint_set           ,  2, 22};
-  termcap_sgrflag2 italic    {is_italic_set   , 3, is_fraktur_set         , 20, 23};
-  termcap_sgrflag2 underline {is_underline_set, 4, is_double_underline_set, 21, 24};
-  termcap_sgrflag2 blink     {is_blink_set    , 5, is_rapid_blink_set     ,  6, 25};
+  // aflags
+  termcap_sgrflag2 bold         {is_bold_set     , 1, is_faint_set           ,  2, 22};
+  termcap_sgrflag2 italic       {is_italic_set   , 3, is_fraktur_set         , 20, 23};
+  termcap_sgrflag2 underline    {is_underline_set, 4, is_double_underline_set, 21, 24};
+  termcap_sgrflag2 blink        {is_blink_set    , 5, is_rapid_blink_set     ,  6, 25};
+  termcap_sgrflag1 inverse      {is_inverse_set  , 7, 27};
+  termcap_sgrflag1 invisible    {is_invisible_set, 8, 28};
+  termcap_sgrflag1 strike       {is_strike_set   , 9, 29};
 
-  termcap_sgrflag1 inverse   {is_inverse_set  , 7, 27};
-  termcap_sgrflag1 invisible {is_invisible_set, 8, 28};
-  termcap_sgrflag1 strike    {is_strike_set   , 9, 29};
+  // xflags
+  termcap_sgrflag2 framed       {is_frame_set       , 51, is_circle_set, 52, 54};
 
-  // termcap_sgrflag1 pspacing    {?   , 26, 50};
+  termcap_sgrflag1 proportional {is_proportional_set, 26, 50};
+  termcap_sgrflag1 overline     {is_overline_set    , 53, 55};
 
+  // ToDo: これらは端末に依ってはどれか一つだけ、あるいは、それぞれ全部 on/off 可能と思われる。
+  // RLogin が曲がりなりにも実装しているので具体的に RLogin の動作を調べる。
+  // termcap_sgrflag2 cjklinerb {is_ideogram_single_rb_set, 60, is_ideogram_double_rb_set, 61, 65};
+  // termcap_sgrflag2 cjklinelt {is_ideogram_single_lt_set, 62, is_ideogram_double_lt_set, 63, 65};
+  // termcap_sgrflag2 cjklinelb {is_ideogram_single_lb_set, 66, is_ideogram_double_lb_set, 67, 65};
+  // termcap_sgrflag2 cjklinert {is_ideogram_single_rt_set, 68, is_ideogram_double_rt_set, 69, 65};
+  // termcap_sgrflag1 cjkstress {is_ideogram_stress_set, 64, 65};
+
+  // colors
   termcap_sgrcolor sgrfg {is_fg_color_set, 30, 39,  90, 38, ascii_semicolon, 0, 0};
   termcap_sgrcolor sgrbg {is_bg_color_set, 40, 49, 100, 48, ascii_semicolon, 0, 0};
 
@@ -600,6 +609,12 @@ private:
       update_sgrflag1(_xattr.aflags, m_xattr.aflags, sgrcap.inverse  );
       update_sgrflag1(_xattr.aflags, m_xattr.aflags, sgrcap.invisible);
       update_sgrflag1(_xattr.aflags, m_xattr.aflags, sgrcap.strike   );
+
+      if ((newAttr | this->m_attr) & has_extended_attribute) {
+        update_sgrflag2(_xattr.xflags, m_xattr.xflags, sgrcap.framed);
+        update_sgrflag1(_xattr.xflags, m_xattr.xflags, sgrcap.proportional);
+        update_sgrflag1(_xattr.xflags, m_xattr.xflags, sgrcap.overline);
+      }
 
       update_sgrcolor(
         attribute_getfg( _xattr.aflags),  _xattr.fg,
