@@ -49,8 +49,10 @@
 <h2>関連する規格と略称</h2>
 <p>この節では関連する規格と、それらをこの文書の中で参照する際に用いる略称についてまとめる。</p>
 <ul>
-<li><dfn class="standard">ECMA-48</dfn>: ANSI, ANSI Terminal などとしてよく参照される。</li>
-<li><dfn class="standard">T.416</dfn>: ISO 8613-6, CCITT Recommendation T.416</li>
+<li><dfn class="standard">ECMA-48</dfn>: ISO/IEC 6429, JIS X 0211 (和訳)
+  <p>通称 ANSI と呼ばれ、またこれを実装する端末を ANSI Terminal などと呼ぶ。</p>
+</li>
+<li><dfn class="standard">T.416</dfn>: ISO 8613-6, CCITT Recommendation T.416, JIS X 4106 (和訳、2010年廃止)</li>
 <li><dfn class="standard">T.61</dfn>: CCITT Recommendation T.61</li>
 </ul>
 
@@ -1386,21 +1388,6 @@
 </li>
 </ul>
 
-<h4>References</h4>
-<ul>
-<li>VT <a href="http://www.vt100.net/docs/vt510-rm/SGR">VT: SGR</a></li>
-<li>xterm
-  <a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.html">ctlseqs(ms)</a>
-  <del><a href="http://www.xfree86.org/current/ctlseqs.html">Xterm Control Sequences</a></del>
-</li>
-<li>ANSI
-  <ul>
-  <li><a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code - Wikipedia, the free encyclopedia</a></li>
-  <li><a href="http://www.ecma-international.org/publications/standards/Ecma-048.htm">Standard ECMA-48</a></li>
-  </ul>
-</li>
-</ul>
-
 <h4>Note</h4>
 <ul>
 <li>[ECMA-48/8.3.117] 可能な番号の組み合わせは処理系定義である。</li>
@@ -1924,33 +1911,48 @@ j.行消す, ESC[2K
 
 <!--...................................................................................-->
 <h3>参考文献 Reference</h3>
+
 <ul>
-<li><a href="http://hp.vector.co.jp/authors/VA016670/escape_code.html">エスケープシーケンスについて</a></li>
-<li><a href="http://www.xfree86.org/current/ctlseqs.html">Xterm Control Sequences</a>
-  <a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.html">html</a>
+<li>ECMA-48
+  <ul>
+  <li><a href="http://www.ecma-international.org/publications/standards/Ecma-048.htm">Standard ECMA-48</a></li>
+  <li>JIS X 0211 <a href="http://kikakurui.com/x0/X0211-1994-01.html">JIS X 0211:1994 符号化文字集合用制御機能</a></li>
+  </ul>
+</li>
+<li>xterm
+  <a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.html">ctlseqs(ms)</a>
   <a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.pdf">pdf</a>
+  <del><a href="http://www.xfree86.org/current/ctlseqs.html">Xterm Control Sequences</a></del>
 </li>
-<li>
-  <a href="http://www.ccs.neu.edu/research/gpc/VonaUtils/vona/terminal/VT100_Escape_Codes.html">VT100 escape codes</a>
-  [<a href="http://www.mit.edu/~vona/VonaUtils/vona/terminal/VT100_Escape_Codes.html">old2</a>
-  <a href="http://www.mit.edu/~vona/MSim/vona/terminal/VT100_Escape_Codes.html">old1</a>
-  <a href="http://web.archive.org/web/20100206175957/http://www.mit.edu/~vona/VonaUtils/vona/terminal/VT100_Escape_Codes.html">archive:20100206</a>
-  <a href="http://web.archive.org/web/20081018174018/http://www.mit.edu/~vona/MSim/vona/terminal/VT100_Escape_Codes.html">archive:20081018</a>
-  <a href="http://hackipedia.org/Protocols/Terminal,%20DEC%20VT100/html/VT100%20Escape%20Codes.html">mirror2</a>]
-  <p>[2011/11/07] ページを書いていた <a href="http://www.ccs.neu.edu/research/gpc/vona.html">Marsette Vona さん</a>が異動したみたい。
-    20111016 に移動先でページが作られたみたいだからそちらへリンク。
-  </p>
+<li>VT
+  <ul>
+  <li><a href="http://www.vt100.net/docs/vt100-ug/chapter3.html">VT100.net: Digital VT100 User Guide</a></li>
+  <li><a href="http://vt100.net/docs/vt510-rm/contents">VT510 Video Terminal Programmer Information</a></li>
+  <li>
+    <a href="http://www.ccs.neu.edu/research/gpc/VonaUtils/vona/terminal/VT100_Escape_Codes.html">VT100 escape codes</a>
+    [<a href="http://www.mit.edu/~vona/VonaUtils/vona/terminal/VT100_Escape_Codes.html">old2</a>
+    <a href="http://www.mit.edu/~vona/MSim/vona/terminal/VT100_Escape_Codes.html">old1</a>
+    <a href="http://web.archive.org/web/20100206175957/http://www.mit.edu/~vona/VonaUtils/vona/terminal/VT100_Escape_Codes.html">archive:20100206</a>
+    <a href="http://web.archive.org/web/20081018174018/http://www.mit.edu/~vona/MSim/vona/terminal/VT100_Escape_Codes.html">archive:20081018</a>
+    <a href="http://hackipedia.org/Protocols/Terminal,%20DEC%20VT100/html/VT100%20Escape%20Codes.html">mirror2</a>]
+    <p>[2011/11/07] ページを書いていた <a href="http://www.ccs.neu.edu/research/gpc/vona.html">Marsette Vona さん</a>が異動したみたい。
+      20111016 に移動先でページが作られたみたいだからそちらへリンク。
+    </p>
+  </li>
+  <li><a href="http://www.termsys.demon.co.uk/vtansi.htm">ANSI/VT100 Terminal Control</a></li>
+  <li><a href="http://ascii-table.com/ansi-escape-sequences-vt-100.php">ASCII Table &#45; ANSI Escape sequences &#40;ANSI Escape codes&#41; &#45; VT100 / VT52</a></li>
+  <li><a href="http://ascii-table.com/ansi-escape-sequences.php">ASCII Table &#45; ANSI Escape sequences</a></li>
+  </ul>
 </li>
-<li><a href="http://ascii-table.com/ansi-escape-sequences-vt-100.php">ASCII Table &#45; ANSI Escape sequences &#40;ANSI Escape codes&#41; &#45; VT100 / VT52</a></li>
-<li><a href="http://ascii-table.com/ansi-escape-sequences.php">ASCII Table &#45; ANSI Escape sequences</a></li>
-<li><a href="http://www.termsys.demon.co.uk/vtansi.htm">ANSI/VT100 Terminal Control</a></li>
+<li>Wikipedia
+  <ul>
+  <li><a href="http://en.wikipedia.org/wiki/C0_and_C1_control_codes">C0 and C1 control codes - Wikipedia, the free encyclopedia</a></li>
+  <li><a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code - Wikipedia, the free encyclopedia</a></li>
+  </ul>
+</li>
+<li><a href="http://bjh21.me.uk/all-escapes/all-escapes.txt">all-escapes.txt</a></li>
 <li>rxvt <a href="http://doc.gnu-darwin.org/rxvt/rxvtRef.html">Rxvt Technical Reference</a> [<a href="http://www.usf.uos.de/infoservice/doc/localhtml/rxvt/refer.html">old</a>]</li>
 <li>urxvt <a href="http://manpages.ubuntu.com/manpages/lucid/man7/urxvt.7.html">Ubuntu Manpage: RXVT REFERENCE - FAQ, command sequences and other background</a></li>
-<li><a href="http://en.wikipedia.org/wiki/C0_and_C1_control_codes">C0 and C1 control codes - Wikipedia, the free encyclopedia</a></li>
-<li><a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code - Wikipedia, the free encyclopedia</a></li>
-<li><a href="http://www.vt100.net/docs/vt100-ug/chapter3.html">VT100.net: Digital VT100 User Guide</a></li>
-<li><a href="http://vt100.net/docs/vt510-rm/contents">VT510 Video Terminal Programmer Information</a></li>
-<li><a href="http://bjh21.me.uk/all-escapes/all-escapes.txt">all-escapes.txt</a></li>
 <li>ttssh2 <a href="http://ttssh2.sourceforge.jp/manual/ja/about/ctrlseq.html">対応制御シーケンス - Tera Term</a></li>
 <li>ANSI.SYS <a href="http://en.wikipedia.org/wiki/ANSI.SYS">ANSI.SYS - Wikipedia, the free encyclopedia</a></li>
 <li>RLogin
@@ -1959,9 +1961,13 @@ j.行消す, ESC[2K
   <li><a href="http://nanno.dip.jp/softlib/man/rlogin/ctrlcode.html">エスケープシーケンス一覧</a></li>
   </ul>
 </li>
-<li>JIS X 0211 <a href="http://kikakurui.com/x0/X0211-1994-01.html">JIS X 0211:1994 符号化文字集合用制御機能</a></li>
+<li>MS-DOS
+  <ul>
+  <li><a href="http://hp.vector.co.jp/authors/VA016670/escape_code.html">エスケープシーケンスについて</a></li>
+  </ul>
+</li>
 <li>OpenVMS <a href="http://h50146.www5.hp.com/products/software/oe/openvms/manual/v84/html/DCPS27/TRANS/docu_009.html">日本HP - OpenVMS マニュアル - 日本語トランスレータ・リファレンス・マニュアル</a></li>
-<li> <a href="http://odl.sysworks.biz/disk$cddoc04jan11/decw$book/aa-pbwga-12_a02.decw$book">Digital ANSI-Compliant Printing Protocol Level 3 Programming Reference Manual</a></li>
+<li><a href="http://odl.sysworks.biz/disk$cddoc04jan11/decw$book/aa-pbwga-12_a02.decw$book">Digital ANSI-Compliant Printing Protocol Level 3 Programming Reference Manual</a></li>
 <li><a href=""></a></li>
 </ul>
 <!--===================================================================================-->
