@@ -462,11 +462,11 @@
 <h4>TODO</h4>
 <ul>
 <li>xterm: osc sequence, dsc sequence を列挙</li>
-<li>vt100 の頁でまだ列挙していない ASCII Control Functions を列挙、分類、version 確認</li>
+<li>vt510 の頁でまだ列挙していない ASCII Control Functions を列挙、分類、version 確認</li>
 <li>
  DECAAM, DECALN, DECANM, DECARM, DECARSM, DECAUPSS, DECAWM, DECBI, DECBKM, DECCANSM,
  DECCAPSLK, DECCARA, DECCIR, DECCKD, DECCKM, DECCKSR, DECCOLM, DECCRA, DECCRTSM, DECDC,
- DECDHL, DECDLD, DECDMAC, DECDWL, DECEKBD, DECELF, DECERA, DECESKM, DECFI, DECFNK, DECFRA,
+ DECDLD, DECDMAC, DECEKBD, DECELF, DECERA, DECESKM, DECFI, DECFNK, DECFRA,
  DECHDPXM, DECHEBM, DECHEM, DECIC, DECINVM, DECIPEM, DECKBD, DECKBUM, DECKLHIM, DECKPAM,
  DECKPM, DECKPNM, DECLANS, DECLBAN, DECLFKC, DECLL, DECLRMM, DECLTOD, DECMCM, DECMSR,
  DECNAKB, DECNCSM, DECNKM, DECNRCM, DECNULM, DECNUMLK, DECOM, DECPAK, DECPCCM, DECPCTERM,
@@ -476,7 +476,7 @@
  DECSC, DECSCA, DECSCL, DECSCLM, DECSCNM, DECSCP, DECSCPP, DECSCS, DECSDDT, DECSDPT,
  DECSED, DECSEL, DECSERA, DECSFC, DECSKCV, DECSLCK, DECSLPP, DECSLRM, DECSMBV, DECSMKR,
  DECSNLS, DECSPP, DECSPPCS, DECSPRTT, DECSR, DECSRC, DECSRFR, DECSSCLS, DECSSDT, DECSSL,
- DECST8C, DECSTBM, DECSTR, DECSTRL, DECSWBV, DECSWL, DECTABSR, DECTID, DECTME, DECTSR,
+ DECST8C, DECSTBM, DECSTR, DECSTRL, DECSWBV, DECTABSR, DECTID, DECTME, DECTSR,
  DECTST, DECUDK, DECVCCM, DECXCPR, DECXRLM, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR,
  HPA, HPR, HTS, HVP, IND, IRM, KAM, LNM, LS, MC, NEL, NP, PP, PPA, PPB, PPR, RIS, SCODFK,
  SCS, SD, SRM, SS, SU, TBC, VPA, VPR
@@ -867,21 +867,60 @@
 </ul>
 
 <!--************************************************************************-->
-<h2>SGR (描画属性)</h2>
+<h2>描画属性</h2>
 <table class="normal center">
-<tr><th>名称</th><th>Sequence</th></tr>
-<tr><th>SGR</th><td>CSI <i>&lt;Pm&gt;</i> m</td></tr>
+<tr><th>名称</th>  <th>Sequence</th></tr>
+<tr><th>SGR</th>   <td>CSI <i>&lt;Pm&gt;</i> m</td></tr>
+<tr><th colspan="2">DECDHL</th><td>ESC # 3</td></tr>
+<tr>                           <td>ESC # 4</td></tr>
+<tr><th>DECSWL</th><td>ESC # 5</td></tr>
+<tr><th>DECDWL</th><td>ESC # 6</td></tr>
+<tr><th>PLD</th>   <td>PLD</td></tr>
+<tr><th>PLU</th>   <td>PLU</td></tr>
 </table>
 
 <ul>
 <li><dfn class="cfunc">SGR</dfn>: Set Graphic Rendition (Select Graphic Rendition)
+  <i>&lt;Pm&gt;</i> にはセミコロン ';' 区切りで複数の番号を指定する。
+  各番号はそれぞれ対応する描画属性を設定したり解除したりするのに用いられる。
+  番号の詳細については後述する。
   <ul>
   <li>vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SGR">VT: SGR</a></li>
   </ul>
 </li>
+<li><dfn class="cfunc">DECDHL</dfn>: Double-Width, Double-Height Line
+  <p>文字の幅・高さを2倍にして表示する。
+  実際には幅を2倍にして、上半分または下半分を表示する。
+  <kbd>ESC # 3</kbd> で上半分を、<kbd>ESC # 4</kbd> で下半分を表示する。
+  この制御機能は、連続する二つの行でそれぞれ ESC # 3 と ESC # 4 を用いて同じ内容を出力することで、
+  縦横2倍に拡大された文字を表示することを目的とする。
+  </p>
+  <ul>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECDHL.html">VT: DECDHL</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECDWL</dfn>: Double-Width, Single-Height Line
+  <p>文字の幅を2倍にして表示する。</p>
+  <ul>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECDWL.html">VT: DECDWL</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECSWL</dfn>: Single-Width, Single-Height Line
+  <p>DECDHL, DECDWL で設定された文字の幅・表示を元に戻す。</p>
+  <ul>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECSWL.html">VT: DECSWL</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">PLD</dfn>: Partial Line Down
+  <p>下付き文字にする。PLU で解除する。</p>
+</li>
+<li><dfn class="cfunc">PLU</dfn>: Partial Line Up
+  <p>上付き文字にする。PLD で解除する。</p>
+</li>
 </ul>
 
+<h3>SGR 詳細</h3>
 <h4>一覧表</h4>
 <table class="normal center">
 <tr><th>番号</th>          <th>機能</th>                       <th>ansi</th> <th>vt</th><th>xterm</th><th>rxvt</th></tr>
@@ -1290,7 +1329,8 @@
 </li>
 <li>SGR 100 <dfn class="sgr">sgrDefaultColor</dfn>: default color
   <p>前景色及び背景色を既定色に戻す。
-    rxvt 由来の機能 (と xterm の説明には書かれている)。
+    rxvt 由来の機能 (と xterm の説明には書かれているが、
+    rxvt のマニュアル (1998) にこの記述はない)。
     <b>sgrAixColor</b> と値が被っているので注意する。
     xterm は <b>sgrAixColor</b> が無効の時にこれが利用可能である。
   </p>
@@ -1429,6 +1469,7 @@
 </li>
 <li><a href="http://www.vt100.net/docs/vt510-rm/SGR.html">VT510</a>:
   VT420 に加えて 8,28 (不可視) に対応。
+  更に、10, 11, 12 に対応 (詳細な動作はリンクを参照)。
 </li>
 <li><a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.html">xterm</a> (2016-09-20):
   ECMA-48 の 0-50 の内 5 (rapid blink), 10-20 (fonts, fraktur),
@@ -1509,7 +1550,11 @@
     21 は 1 の効果を解除する。38 は下線を有効にし、また、前景色を既定に戻す (?)
   </li>
   <li>rxvt では 100 で前景色・背景色を既定に戻すと記述されているが、
-    rxvt 本体のドキュメントには記されていない (廃止されたか undocumented な機能か?)。
+    rxvt 本体のドキュメントには記されていない。
+    all-escapes.txt の情報源に rxvt が書かれていないことを見ると、
+    これは単に xterm の説明にあったものを写しただけと思われる。
+  </li>
+  <li>LQP02 (DEC private SGRs): ?1  Set secondary overprint mode, ?2  Enable shadow print.
   </li>
   </ul>
 </li>
