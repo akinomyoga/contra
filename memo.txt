@@ -1,8 +1,196 @@
 
-
-
-
 2016-09-23
 
 * DECDHL, DECDWL, DECSWL それぞれの互換性についてチェックする。
 
+* PLD, PLU の ECMA の記述を確認する。
+
+* PLD, PLU の互換性についても調べる。
+
+* ECMA-48/5.4.1 の内容を CSI シーケンスの場所に追加する。
+
+* ECMA-48 の制御関数の一覧と、ドキュメント済みの物の一覧
+
+  [ECMA-48/8.3.1] ACK: Acknowledge  33
+  [ECMA-48/8.3.2] APC: Application Program Command  33
+  [ECMA-48/8.3.3] BEL: Bell  33
+  [ECMA-48/8.3.4] BPH: Break Permitted Here  33
+  [ECMA-48/8.3.5] BS: Backspace  34
+  [ECMA-48/8.3.6] CAN: Cancel  34
+  [ECMA-48/8.3.7] CBT: Cursor Backward Tabulation  34
+  [ECMA-48/8.3.8] CCH: Cancel Character  34
+  [ECMA-48/8.3.9] CHA: Cursor Character Absolute  34
+  [ECMA-48/8.3.10] CHT: Cursor Forward Tabulation  34
+  [ECMA-48/8.3.11] CMD: Coding Method Delimiter  34
+  [ECMA-48/8.3.12] CNL: Cursor Next Line  35
+  [ECMA-48/8.3.13] CPL: Cursor Preceding Line  35
+  [ECMA-48/8.3.14] CPR: Active Position Report  35
+  [ECMA-48/8.3.15] CR: Carriage Return  35
+  [ECMA-48/8.3.16] CSI: Control Sequence Introducer  36
+  [ECMA-48/8.3.17] CTC: Cursor Tabulation Control  36
+  [ECMA-48/8.3.18] CUB: Cursor Left  36
+  [ECMA-48/8.3.19] CUD: Cursor Down  36
+  [ECMA-48/8.3.20] CUF: Cursor Right  36
+  [ECMA-48/8.3.21] CUP: Cursor Position  36
+  [ECMA-48/8.3.22] CUU: Cursor Up  37
+  [ECMA-48/8.3.23] CVT: Cursor Line Tabulation  37
+  [ECMA-48/8.3.24] DA: Device Attributes  37
+  [ECMA-48/8.3.25] DAQ: Define Area Qualification  37
+  [ECMA-48/8.3.26] DCH: Delete Character  38
+  [ECMA-48/8.3.27] DCS: Device Control String  38
+  [ECMA-48/8.3.28] DC1: Device Control One  38
+  [ECMA-48/8.3.29] DC2: Device Control Two  38
+  [ECMA-48/8.3.30] DC3: Device Control Three  39
+  [ECMA-48/8.3.31] DC4: Device Control Four  39
+  [ECMA-48/8.3.32] DL: Delete Line  39
+  [ECMA-48/8.3.33] DLE: Data Link Escape  39
+  [ECMA-48/8.3.34] DMI: Disable Manual Input  39
+  [ECMA-48/8.3.35] DSR: Device Status Report  40
+  [ECMA-48/8.3.36] DTA: Dimension Text Area  40
+  [ECMA-48/8.3.37] EA: Erase In Area  40
+  [ECMA-48/8.3.38] ECH: Erase Character  41
+  [ECMA-48/8.3.39] ED: Erase In Page  41
+  [ECMA-48/8.3.40] EF: Erase In Field  41
+  [ECMA-48/8.3.41] EL: Erase In Line  42
+  [ECMA-48/8.3.42] EM: End Of Medium  42
+  [ECMA-48/8.3.43] EMI: Enable Manual Input  42
+  [ECMA-48/8.3.44] ENQ: Enquiry  43
+  [ECMA-48/8.3.45] EOT: End Of Transmission  43
+  [ECMA-48/8.3.46] EPA: End Of Guarded Area  43
+  [ECMA-48/8.3.47] ESA: End Of Selected Area  43
+  [ECMA-48/8.3.48] ESC: Escape  43
+  [ECMA-48/8.3.49] ETB: End Of Transmission Block  43
+  [ECMA-48/8.3.50] ETX: End Of Text  43
+  [ECMA-48/8.3.51] FF: Form Feed  44
+  [ECMA-48/8.3.52] FNK: Function Key  44
+  [ECMA-48/8.3.53] FNT: Font Selection  44
+  [ECMA-48/8.3.54] GCC: Graphic Character Combination  44
+  [ECMA-48/8.3.55] GSM: Graphic Size Modification  45
+  [ECMA-48/8.3.56] GSS: Graphic Size Selection  45
+  [ECMA-48/8.3.57] HPA: Character Position Absolute  45
+  [ECMA-48/8.3.58] HPB: Character Position Backward  45
+  [ECMA-48/8.3.59] HPR: Character Position Forward  45
+  [ECMA-48/8.3.60] HT: Character Tabulation  45
+  [ECMA-48/8.3.61] HTJ: Character Tabulation With Justification  46
+  [ECMA-48/8.3.62] HTS: Character Tabulation Set  46
+  [ECMA-48/8.3.63] HVP: Character And Line Position  46
+  [ECMA-48/8.3.64] ICH: Insert Character  46
+  [ECMA-48/8.3.65] IDCS: Identify Device Control String  47
+  [ECMA-48/8.3.66] IGS: Identify Graphic Subrepertoire  47
+  [ECMA-48/8.3.67] IL: Insert Line  47
+  [ECMA-48/8.3.68] INT: Interrupt  48
+  [ECMA-48/8.3.69] IS1: Information Separator One (Us: Unit Separator)  48
+  [ECMA-48/8.3.70] IS2: Information Separator Two (Rs: Record Separator)  48
+  [ECMA-48/8.3.71] IS3: Information Separator Three (Gs: Group Separator)  48
+  [ECMA-48/8.3.72] IS4: Information Separator Four (Fs: File Separator)  48
+  [ECMA-48/8.3.73] JFY: Justify  48
+  [ECMA-48/8.3.74] LF: Line Feed  49
+  [ECMA-48/8.3.75] LS0: Locking-Shift Zero  49
+  [ECMA-48/8.3.76] LS1: Locking-Shift One  49
+  [ECMA-48/8.3.77] LS1R: Locking-Shift One Right  49
+  [ECMA-48/8.3.78] LS2: Locking-Shift Two  49
+  [ECMA-48/8.3.79] LS2R: Locking-Shift Two Right  49
+  [ECMA-48/8.3.80] LS3: Locking-Shift Three  50
+  [ECMA-48/8.3.81] LS3R: Locking-Shift Three Right  50
+  [ECMA-48/8.3.82] MC: Media Copy  50
+  [ECMA-48/8.3.83] MW: Message Waiting  50
+  [ECMA-48/8.3.84] NAK: Negative Acknowledge  50
+  [ECMA-48/8.3.85] NBH: No Break Here  50
+  [ECMA-48/8.3.86] NEL: Next Line  51
+  [ECMA-48/8.3.87] NP: Next Page  51
+  [ECMA-48/8.3.88] NUL: Null  51
+  [ECMA-48/8.3.89] OSC: Operating System Command  51
+  [ECMA-48/8.3.90] PEC: Presentation Expand Or Contract  51
+  [ECMA-48/8.3.91] PFS: Page Format Selection  52
+  [ECMA-48/8.3.92] PLD: Partial Line Forward  52
+  [ECMA-48/8.3.93] PLU: Partial Line Backward  53
+  [ECMA-48/8.3.94] PM: Privacy Message  53
+  [ECMA-48/8.3.95] PP: Preceding Page  53
+  [ECMA-48/8.3.96] PPA: Page Position Absolute  53
+  [ECMA-48/8.3.97] PPB: Page Position Backward  53
+  [ECMA-48/8.3.98] PPR: Page Position Forward  53
+  [ECMA-48/8.3.99] PTX: Parallel Texts  53
+  [ECMA-48/8.3.100] PU1: Private Use One  54
+  [ECMA-48/8.3.101] PU2: Private Use Two  54
+  [ECMA-48/8.3.102] QUAD: Quad  55
+  [ECMA-48/8.3.103] REP: Repeat  55
+  [ECMA-48/8.3.104] RI: Reverse Line Feed  55
+  [ECMA-48/8.3.105] RIS: Reset To Initial State  55
+  > [ECMA-48/8.3.106] RM: Reset Mode  56
+  [ECMA-48/8.3.107] SACS: Set Additional Character Separation  56
+  [ECMA-48/8.3.108] SAPV: Select Alternative Presentation Variants  57
+  [ECMA-48/8.3.109] SCI: Single Character Introducer  58
+  [ECMA-48/8.3.110] SCO: Select Character Orientation  58
+  [ECMA-48/8.3.111] SCP: Select Character Path  58
+  [ECMA-48/8.3.112] SCS: Set Character Spacing  59
+  [ECMA-48/8.3.113] SD: Scroll Down  59
+  [ECMA-48/8.3.114] SDS: Start Directed String  59
+  [ECMA-48/8.3.115] SEE: Select Editing Extent  60
+  [ECMA-48/8.3.116] SEF: Sheet Eject And Feed  60
+  > [ECMA-48/8.3.117] SGR: Select Graphic Rendition  61
+  [ECMA-48/8.3.118] SHS: Select Character Spacing  63
+  [ECMA-48/8.3.119] SI: Shift-In  63
+  [ECMA-48/8.3.120] SIMD: Select Implicit Movement Direction  63
+  [ECMA-48/8.3.121] SL: Scroll Left  63
+  [ECMA-48/8.3.122] SLH: Set Line Home  64
+  [ECMA-48/8.3.123] SLL: Set Line Limit  64
+  [ECMA-48/8.3.124] SLS: Set Line Spacing  64
+  > [ECMA-48/8.3.125] SM: Set Mode  65
+  [ECMA-48/8.3.126] SO: Shift-Out  65
+  [ECMA-48/8.3.127] SOH: Start Of Heading  65
+  [ECMA-48/8.3.128] SOS: Start Of String  66
+  [ECMA-48/8.3.129] SPA: Start Of Guarded Area  66
+  [ECMA-48/8.3.130] SPD: Select Presentation Directions  66
+  [ECMA-48/8.3.131] SPH: Set Page Home  67
+  [ECMA-48/8.3.132] SPI: Spacing Increment  67
+  [ECMA-48/8.3.133] SPL: Set Page Limit  68
+  [ECMA-48/8.3.134] SPQR: Select Print Quality And Rapidity  68
+  [ECMA-48/8.3.135] SR: Scroll Right  68
+  [ECMA-48/8.3.136] SRCS: Set Reduced Character Separation  68
+  [ECMA-48/8.3.137] SRS: Start Reversed String  69
+  [ECMA-48/8.3.138] SSA: Start Of Selected Area  69
+  [ECMA-48/8.3.139] SSU: Select Size Unit  69
+  [ECMA-48/8.3.140] SSW: Set Space Width  70
+  [ECMA-48/8.3.141] SS2: Single-Shift Two  70
+  [ECMA-48/8.3.142] SS3: Single-Shift Three  70
+  [ECMA-48/8.3.143] ST: String Terminator  70
+  [ECMA-48/8.3.144] STAB: Selective Tabulation  71
+  [ECMA-48/8.3.145] STS: Set Transmit State  71
+  [ECMA-48/8.3.146] STX: Start Of Text  71
+  [ECMA-48/8.3.147] SU: Scroll Up  71
+  [ECMA-48/8.3.148] SUB: Substitute  71
+  [ECMA-48/8.3.149] SVS: Select Line Spacing  71
+  [ECMA-48/8.3.150] SYN: Synchronous Idle  72
+  [ECMA-48/8.3.151] TAC: Tabulation Aligned Centred  72
+  [ECMA-48/8.3.152] TALE: Tabulation Aligned Leading Edge  72
+  [ECMA-48/8.3.153] TATE: Tabulation Aligned Trailing Edge  72
+  [ECMA-48/8.3.154] TBC: Tabulation Clear  73
+  [ECMA-48/8.3.155] TCC: Tabulation Centred On Character  73
+  [ECMA-48/8.3.156] TSR: Tabulation Stop Remove  73
+  [ECMA-48/8.3.157] TSS: Thin Space Specification  73
+  [ECMA-48/8.3.158] VPA: Line Position Absolute  74
+  [ECMA-48/8.3.159] VPB: Line Position Backward  74
+  [ECMA-48/8.3.160] VPR: Line Position Forward  74
+  [ECMA-48/8.3.161] VT: Line Tabulation  74
+  [ECMA-48/8.3.162] VTS: Line Tabulation Set  74
+
+  [ECMA-48/7.2.1]  Mode 8  BDSM: Bi-Directional Support Mode  21
+  > [ECMA-48/7.2.2]  Mode 3  CRM: Control Representation Mode  22
+  [ECMA-48/7.2.3]  Mode 9  DCSM: Device Component Select Mode  22
+  [ECMA-48/7.2.4]  Mode 6  ERM: Erasure Mode  22
+  [ECMA-48/7.2.5]  Mode 13 FEAM: Format Effector Action Mode  22
+  [ECMA-48/7.2.6]  Mode 14 FETM: Format Effector Transfer Mode  22
+  [ECMA-48/7.2.7]  Mode 21 GATM: Guarded Area Transfer Mode  23
+  [ECMA-48/7.2.8]  Mode 1  GRCM: Graphic Rendition Combination Mode  23
+  [ECMA-48/7.2.9]  Mode 10 HEM: Character Editing Mode  23
+  [ECMA-48/7.2.10] Mode 4  IRM: Insertion Replacement Mode  24
+  [ECMA-48/7.2.11] Mode 2  KAM: Keyboard Action Mode  24
+  [ECMA-48/7.2.12] Mode 15 MATM: Multiple Area Transfer Mode  24
+  [ECMA-48/7.2.13] Mode 11 PUM: Positioning Unit Mode  24
+  [ECMA-48/7.2.14] Mode 17 SATM: Selected Area Transfer Mode  24
+  [ECMA-48/7.2.15] Mode 12 SRM: Send/Receive Mode  24
+  [ECMA-48/7.2.16] Mode 5  SRTM: Status Report Transfer Mode  24
+  [ECMA-48/7.2.17] Mode 18 TSM: Tabulation Stop Mode  25
+  [ECMA-48/7.2.18] Mode 16 TTM: Transfer Termination Mode  25
+  [ECMA-48/7.2.19] Mode 7  VEM: Line Editing Mode  25
+  [ECMA-48/7.2.20] Mode 22 ZDM: Zero Default Mode

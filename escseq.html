@@ -507,7 +507,6 @@
 <tr><th>TBC</th>    <td>CSI <i>&lt;Ps&gt;</i> g</td></tr>
 <tr><th>MC</th>     <td>CSI <i>&lt;Pm&gt;</i> i</td></tr>
 <tr><th>DECMC</th>  <td>CSI ? <i>&lt;Pm&gt;</i> i</td></tr>
-<tr><th>SGR</th>    <td>CSI <i>&lt;Pm&gt;</i> m</td></tr>
 <tr><th>DSR</th>    <td>CSI <i>&lt;Ps&gt;</i> n</td></tr>
 <tr><th>DECDSR</th> <td>CSI ? <i>&lt;Ps&gt;</i> n</td></tr>
 <tr><th>DECSTR</th> <td>CSI ! p</td></tr>
@@ -544,62 +543,235 @@
 </table>
 <ul>
 <li><dfn class="cfunc">SM</dfn>: Set Mode
+  <p>番号で指定されたモードを有効にする。</p>
   <ul>
-  <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT: SM</a></li>
+  <li>互換性: [ECMA-48/8.3.1251], vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT510: SM</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">RM</dfn>: Reset Mode
+  <p>番号で指定されたモードを無効にする。</p>
   <ul>
-  <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/RM">VT: RM</a></li>
+  <li>互換性: [ECMA-48/8.3.106], vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/RM">VT510: RM</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DECSET</dfn>: Set DEC Mode
   <ul>
   <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT: SM</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT510: SM</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DECRST</dfn>: Reset DEC Mode
   <ul>
   <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/RM">VT: RM</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/RM">VT510: RM</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DECRQM</dfn>: Request Mode
   <ul>
   <li>互換性: vt420</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DECRQM">VT: DECRQM</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECRQM">VT510: DECRQM</a></li>
   </ul>
 </li>
 </ul>
 
-<table class="normal center">
-<tr><th>名称</th>               <th>Mode</th></tr>
-<tr><th>CRM</th>                <td>3</td></tr>
-<tr><th>DECTCEM</th>            <td>?25</td></tr>
-<tr><th>smSendMouse</th>        <td>?1000</td></tr>
-<tr><th>smMouseMotionHilite</th><td>?1001</td></tr>
-<tr><th>smMouseMotionCell</th>  <td>?1002</td></tr>
-<tr><th>smMouseMotionAll</th>   <td>?1003</td></tr>
-<tr><th>smSendFocus</th>        <td>?1004</td></tr>
-<tr><th>smExMouseUtf8</th>      <td>?1005</td></tr>
-<tr><th>smExMouseUrxvt</th>     <td>?1006</td></tr>
-<tr><th>smExMouseSgr</th>       <td>?1015</td></tr>
-</table>
 <ul>
-<li>Mode 3 <dfn class="cmode">CRM</dfn>: Show Control Character Mode [既定値 on]
-  <!--
-  on: Show Control Character Mode
-  off: Hide Control Characters
-  -->
+<li>[ECMA-48] SM, RM によれば
+  [ECMA-48/5.4.1] 私用引数文字列 (parameter strings for private use)
+  を用いて private モードを実装しても良い。
+  例えば DECSET, DECRST は ? で始まる引数による private モードである。
+</li>
+</ul>
+
+<table class="normal center">
+<tr><th>略号</th><th>Mode</th><th>名称</th></tr>
+<tr><th>GATM</th> <td>1</td> <td>Guarded Area Transfer Mode</td></tr>
+<tr><th>KAM</th>  <td>2</td> <td>Keyboard Action Mode</td></tr>
+<tr><th>CRM</th>  <td>3</td> <td>Control Representation Mode</td></tr>
+<tr><th>IRM</th>  <td>4</td> <td>Insertion Replacement Mode</td></tr>
+<tr><th>SRTM</th> <td>5</td> <td>Status Report Transfer Mode</td></tr>
+<tr><th>ERM</th>  <td>6</td> <td>Erasure Mode</td></tr>
+<tr><th>VEM</th>  <td>7</td> <td>Line Editing Mode</td></tr>
+<tr><th>BDSM</th> <td>8</td> <td>Bi-Directional Support Mode</td></tr>
+<tr><th>DCSM</th> <td>9</td> <td>Device Component Select Mode</td></tr>
+<tr><th>HEM</th>  <td>10</td><td>Character Editing Mode</td></tr>
+<tr><th>PUM</th>  <td>11</td><td>Positioning Unit Mode (deprecated)</td></tr>
+<tr><th>SRM</th>  <td>12</td><td>Send/Receive Mode</td></tr>
+<tr><th>FEAM</th> <td>13</td><td>Format Effector Action Mode</td></tr>
+<tr><th>FETM</th> <td>14</td><td>Format Effector Transfer Mode</td></tr>
+<tr><th>MATM</th> <td>15</td><td>Multiple Area Transfer Mode</td></tr>
+<tr><th>TTM</th>  <td>16</td><td>Transfer Termination Mode</td></tr>
+<tr><th>SATM</th> <td>17</td><td>Selected Area Transfer Mode</td></tr>
+<tr><th>TSM</th>  <td>18</td><td>Tabulation Stop Mode</td></tr>
+<tr><th><del>EBM</del></th>        <td>19</td><td><del>Editing Boundary Mode</del> (removed)</td></tr>
+<tr><th><del>LMN (LF/NL)</del></th><td>20</td><td><del>Line Feed/New Line Mode</del> (removed)</td></tr>
+<tr><th>GRCM</th> <td>21</td><td>Graphic Rendition Combination</td></tr>
+<tr><th>ZDM</th>  <td>22</td><td>Zero Default Mode (deprecated)</td></tr>
+<tr><th>DECTCEM</th>            <td>?25</td>  <td></td></tr>
+<tr><th>smSendMouse</th>        <td>?1000</td><td></td></tr>
+<tr><th>smMouseMotionHilite</th><td>?1001</td><td></td></tr>
+<tr><th>smMouseMotionCell</th>  <td>?1002</td><td></td></tr>
+<tr><th>smMouseMotionAll</th>   <td>?1003</td><td></td></tr>
+<tr><th>smSendFocus</th>        <td>?1004</td><td></td></tr>
+<tr><th>smExMouseUtf8</th>      <td>?1005</td><td></td></tr>
+<tr><th>smExMouseUrxvt</th>     <td>?1006</td><td></td></tr>
+<tr><th>smExMouseSgr</th>       <td>?1015</td><td></td></tr>
+</table>
+
+<ul>
+<li>Mode 3 <dfn class="cmode">CRM</dfn>: Show Control Character Mode [既定値 off]
+  <p><b>Control</b> (RM): 全ての制御機能を通常通りに処理する。</p>
+  <p><b>Graphic</b> (SM): RM 以外の受信した全ての制御機能を実行せずに図形文字として表示する。</p>
   <ul>
-  <li>互換性: VT100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CRM">VT: CRM</a></li>
+  <li>互換性: [ECMA-48/7.2.2], VT100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CRM">VT510: CRM</a></li>
   </ul>
 </li>
 </ul>
+
+<!--...................................................................................-->
+<div class="note">以前まとめた表:
+
+<table class="normal center">
+<tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
+<tr><td><code>\e[<strong>*</strong>h</code></td><td>有効にする</td><td>O</td></tr>
+<tr><td><code>\e[<strong>*</strong>l</code></td><td>無効にする</td><td>O</td></tr>
+</table>
+<p>引数には、以下の物の中から一つ指定する。</p>
+<table class="normal center">
+<colgroup>
+  <col span="3" />
+  <col style="width:40%;" />
+  <col style="width:40%;" />
+</colgroup>
+<tr><th>引数</th><th>環境</th><th>名称</th><th>有効</th><th>無効</th><th>実装</th></tr>
+<tr><td>1</td>     <td class="markA">-</td><td>GATM</td> <td>Guarded area transfer</td><td></td><td></td></tr>
+<tr><td>2</td>     <td>x</td><td>AM/KAM</td>             <td>Keyboard Action Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>4</td>     <td>x</td><td>IRM</td>                <td>Insert Mode</td><td class="markB"></td><td>@</td></tr>
+<tr><td>5</td>     <td class="markA">-</td><td>SRTM</td> <td>Status reporting transfer</td><td></td><td></td></tr>
+<tr><td>7</td>     <td>?</td><td></td>                   <td>行折返し有効</td><td>行折返し無効</td><td>X</td></tr>
+<tr><td>7</td>     <td class="markA">-</td><td>VEM</td>  <td>Vertical editing</td><td></td><td>X</td></tr>
+<tr><td>10</td>    <td class="markA">-</td><td>HEM</td>  <td>Horiz editing</td><td></td><td>X</td></tr>
+<tr><td>11</td>    <td class="markA">-</td><td>PUM</td>  <td>Positioning unit</td><td></td><td>X</td></tr>
+<tr><td>12</td>    <td>vx</td><td>SRM</td>               <td class="markB">Send/receive Mode</td><td>Local Echo on</td><td></td></tr>
+<tr><td>13</td>    <td class="markA">-</td><td>FEAM</td> <td>Format effector action</td><td></td><td>X</td></tr>
+<tr><td>14</td>    <td class="markA">-</td><td>FETM</td> <td>Format effector transfer</td><td></td><td>X</td></tr>
+<tr><td>15</td>    <td class="markA">-</td><td>MATM</td> <td>Multiple area transfer</td><td></td><td>X</td></tr>
+<tr><td>16</td>    <td class="markA">-</td><td>TTM</td>  <td>Transfer termination</td><td></td><td>X</td></tr>
+<tr><td>17</td>    <td class="markA">-</td><td>SATM</td> <td>Selected area transfer</td><td></td><td>X</td></tr>
+<tr><td>18</td>    <td class="markA">-</td><td>TSM</td>  <td>Tabulation stop</td><td></td><td>X</td></tr>
+<tr><td>19</td>    <td class="markA">-</td><td>EBM</td>  <td>Editing boundary</td><td></td><td>X</td></tr>
+<tr><td>20</td>    <td>vx</td><td>LMN</td>       <td>Set new line mode (Automatic Newline)</td><td class="markB">Set line feed mode (Normal Linefeed)</td><td>X</td></tr>
+<tr><td>21</td>    <td>/ansi</td><td>GRCM</td>   <td>Cumulative</td><td>Replacing</td></tr>
+<tr><td>34</td>    <td>/putty</td><td></td>      <td>MakeCursorBig</td><td></td><td></td></tr>
+<tr><td>?1</td>    <td>vxr</td><td>DECCKM</td>   <td>Set cursor key to application (Application cursor key)</td><td>Set cursor key to cursor (Normal cursor key)</td><td>X</td></tr>
+<tr><td>?2</td>    <td>vx</td><td>DECANM</td>    <td>Set ANSI (versus VT52)</td><td>Set VT52 (versus ANSI)</td><td>X</td></tr>
+<tr><td>?3</td>    <td>vxr</td><td>DECCOLM</td>  <td>Set number of columns to 132</td><td class="markB">Set number of columns to 80</td><td>X</td></tr>
+<tr><td>?4</td>    <td>vx</td><td>DECSCLM</td>   <td class="markB">Set smooth scrolling</td><td>Set jump scrolling</td><td>X</td></tr>
+<tr><td>?5</td>    <td>vxr</td><td>DECSCNM</td>  <td>Set reverse video on screen</td><td class="markB">Set normal video on screen</td><td>X</td></tr>
+<tr><td>?6</td>    <td>vxr</td><td>DECOM</td>    <td>Set origin to relative</td><td class="markB">Set origin to absolute</td><td>@</td></tr>
+<tr><td>?7</td>    <td>vxr</td><td>DECAWM</td>   <td>Set auto-wrap mode</td><td class="markB">Reset auto-wrap mode</td><td>@</td></tr>
+<tr><td>?8</td>    <td>vx</td><td>DECARM</td>    <td class="markB">Set auto-repeat mode</td><td>Reset auto-repeat mode</td><td>X</td></tr>
+<tr><td>?9</td>    <td>vxr</td><td>DECINLM</td>  <td>Set interlacing mode</td><td>Reset interlacing mode</td><td>X</td></tr>
+<tr><td>?10</td>   <td>rx</td><td></td>          <td>Show toolbar.</td><td>Hide toolbar.</td><td></td></tr>
+<tr><td>?12</td>   <td>x/att610</td><td></td>    <td>Start Blinking Cursor.</td><td>Stop Blinking Cursor.</td><td></td></tr>
+<tr><td>?18</td>   <td>vx</td><td>DECPFF</td>    <td>Print form feed.</td><td class="markB">Don’t print form feed.</td><td></td></tr>
+<tr><td>?19</td>   <td>vx</td><td>DECPEX</td>    <td>Set print extent to full screen.</td><td class="markB">Limit print to scrolling region.</td><td></td></tr>
+<tr><td>?30</td>   <td>rx</td><td></td>          <td>Show scrollbar.</td><td>Don’t show scrollbar.</td><td></td></tr>
+<tr><td>?34</td>   <td>5</td><td>DECRLM</td>     <td>Right-to-left Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?35</td>   <td>rx</td><td></td>          <td>Enable font-shifting functions.</td><td>Disable font-shifting functions.</td><td></td></tr>
+<tr><td>?35</td>   <td>4</td><td>DECHEBM</td>    <td>Hebrew Keyboard Map Mode (Hebrew Keyboard)</td><td class="markB">North American</td><td></td></tr>
+<tr><td>?36</td>   <td>4</td><td>DEMHEM</td>     <td class="markB">Hebrew Encoding Mode 8-bit char</td><td>Hebrew Encoding Mode 7-bit char</td><td></td></tr>
+<tr><td>?38</td>   <td>x</td><td>DECTEK</td>     <td>Enter Tektronix Mode.</td><td>-</td><td></td></tr>
+<tr><td>?40</td>   <td>xr</td><td></td>          <td>Allow 80 → 132 Mode.</td><td>Disallow 80 → 132 Mode.</td><td></td></tr>
+<tr><td>?41</td>   <td>x</td><td></td>           <td>more(1) fix (see curses resource).</td><td>No more(1) fix (see curses resource)</td><td></td></tr>
+<tr><td>?42</td>   <td>vx</td><td>DECNRCM</td>   <td>Enable National Replacement Character Set Mode.</td><td class="markB">Disable (Multinational)</td><td></td></tr>
+<tr><td>?44</td>   <td>x</td><td></td>           <td>Turn On Margin Bell.</td><td>Turn Off Margin Bell.</td><td></td></tr>
+<tr><td>?45</td>   <td>x</td><td></td>           <td>Reverse-wraparound Mode.</td><td>No Reverse-wraparound Mode.</td><td></td></tr>
+<tr><td>?46</td>   <td>x</td><td></td>           <td>Start Logging. This is normally disabled by a compile-time option.</td><td>Stop Logging. (This is normally disabled by a compile-time option).</td><td></td></tr>
+<tr><td>?47</td>   <td>xr</td><td></td>          <td>Use Alternate Screen Buffer. <br />(This may be disabled by the titeInhibit resource).</td><td>Use Normal Screen Buffer.</td><td></td></tr>
+<tr><td>?57</td>   <td>4</td><td>DECNAKB</td>    <td class="markB">North American/Greek Selection (North American)</td><td>Greek keyboard</td><td></td></tr>
+<tr><td>?58</td>   <td>5</td><td>DECIPEM</td>    <td>Enter/Return from IBM ProPrinter Emulation Mode</td><td></td><td></td></tr>
+<tr><td>?60</td>   <td class="markA">-</td><td>DECHCCM</td><td>Horiz cursor coupling</td><td></td><td>X</td></tr>
+<tr><td>?61</td>   <td>4</td><td>DECVCCM</td>    <td class="markB">Vertical Cursor Coupling</td><td></td><td></td></tr>
+<tr><td>?64</td>   <td>4</td><td>DECPCCM</td>    <td class="markB">Page Cursor Coupling</td><td></td><td></td></tr>
+<tr><td>?66</td>   <td>4xr</td><td>DECNKM</td>   <td>Application keypad.</td><td class="markB">Numeric keypad.</td><td></td></tr>
+<tr><td>?67</td>   <td>vxr</td><td>DECBKM</td>   <td>Backarrow key sends backspace.</td><td class="markB">Backarrow key sends delete.</td><td></td></tr>
+<tr><td>?68</td>   <td>4</td><td>DECKBUM</td>    <td>Keyboard Usage Mode (data processing)</td><td class="markB">typewriter</td><td></td></tr>
+<tr><td>?69</td>   <td>4</td><td>DECVSSM</td>    <td>Vertical Split Screen</td><td class="markB"></td><td></td></tr>
+<tr><td>?73</td>   <td>4</td><td>DECXRLM</td>    <td>Transmit Rate Limiting Mode (limited)</td><td class="markB">unlimited</td><td></td></tr>
+<tr><td>?81</td>   <td>4</td><td>DECKPM</td>     <td>Key Position Mode (key position)</td><td class="markB">char codes</td><td></td></tr>
+<tr><td>?95</td>   <td>5</td><td>DECNCSM</td>    <td>No clear screen on column change</td><td class="markB"></td><td></td></tr>
+<tr><td>?96</td>   <td>5</td><td>DECRLCM</td>    <td>Right-to-Left Copy</td><td class="markB"></td><td></td></tr>
+<tr><td>?97</td>   <td>5</td><td>DECRTSM</td>    <td class="markB">CRT Save Mode (Enable CRT Saver)</td><td>Disable CRT Saver</td><td></td></tr>
+<tr><td>?98</td>   <td>5</td><td>DECARSM</td>    <td>Auto Resize Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?99</td>   <td>5</td><td>DECMCM</td>     <td>Modem Control Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?100</td>  <td>v</td><td>DECAAM</td>     <td>Auto Answerback Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?101</td>  <td>5</td><td>DECCANSM</td>   <td>Conceal Answerback Message Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?102</td>  <td>5</td><td>DECNULM</td>    <td class="markB">Null Mode(ignore NUL)</td><td>accept NUL</td><td></td></tr>
+<tr><td>?103</td>  <td>5</td><td>DECHDPXM</td>   <td>Half-Duplex Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?104</td>  <td>4</td><td>DECESKM</td>    <td>Enable Secondary Keyboard Language Mode (secondary)</td><td class="markB">primary</td><td></td></tr>
+<tr><td>?106</td>  <td>5</td><td>DECOSCNM</td>   <td>Overscan Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?108</td>  <td>v</td><td>DECNUMLK</td>   <td>Num Lock Mode</td><td></td><td></td></tr>
+<tr><td>?109</td>  <td>v</td><td>DECCAPSLK</td>  <td>Caps Lock Mode</td><td></td><td></td></tr>
+<tr><td>?110</td>  <td>v</td><td>DECKLHIM</td>   <td>Keyboard LEDs Host Indicator Mode</td><td class="markB"></td><td></td></tr>
+<tr><td>?111</td>  <td>/vt520</td><td>DECFWM</td>  <td>Framed windows mode           </td><td></td></tr>
+<tr><td>?112</td>  <td>/vt520</td><td>DECRPL</td>  <td>Review previous lines         </td><td></td></tr>
+<tr><td>?113</td>  <td>/vt520</td><td>DECHWUM</td> <td>Host Wake-Up                  </td><td></td></tr>
+<tr><td>?114</td>  <td>/vt520</td><td>DECATCUM</td><td>Alternate text color underline</td><td></td></tr>
+<tr><td>?115</td>  <td>/vt520</td><td>DECATCBM</td><td>Alternate text color blink    </td><td></td></tr>
+<tr><td>?116</td>  <td>/vt520</td><td>DECBBSM</td> <td>Bold and blink style mode     </td><td></td></tr>
+<tr><td>?117</td>  <td>/vt520</td><td>DECECM</td>  <td>Erase color mode              </td><td></td></tr>
+<tr><td>?1010</td> <td>rx</td><td></td>          <td>Scroll to bottom on tty output.</td><td>Don’t scroll to bottom on tty output.</td><td></td></tr>
+<tr><td>?1011</td> <td>rx</td><td></td>          <td>Scroll to bottom on key press.</td><td>Don’t scroll to bottom on key press.</td><td></td></tr>
+<tr><td>?1034</td> <td>x</td><td></td>           <td>Interpret "meta" key, sets eighth bit. <br />(enables the eightBitInput resource).</td><td>Don’t interpret "meta" key. (This disables the eightBitInput resource).</td><td></td></tr>
+<tr><td>?1035</td> <td>x</td><td></td>           <td>Enable special modifiers for Alt and NumLock keys. <br />(This enables the numLock resource).</td><td>Disable special modifiers for Alt and NumLock keys. (This disables the numLock resource).</td><td></td></tr>
+<tr><td>?1036</td> <td>x</td><td></td>           <td>Send ESC when Meta modifies a key. <br />(This enables the metaSendsEscape resource).</td><td>Don’t send ESC when Meta modifies a key. (This disables the metaSendsEscape resource).</td><td></td></tr>
+<tr><td>?1037</td> <td>x</td><td></td>           <td>Send DEL from the editing-keypad Delete key.</td><td>Send VT220 Remove from the editing-keypad Delete key.</td><td></td></tr>
+<tr><td>?1039</td> <td>x</td><td></td>           <td>Send ESC when Alt modifies a key. <br />(This enables the altSendsEscape resource).</td><td>Don’t send ESC when Alt modifies a key. (This disables the altSendsEscape resource).</td><td></td></tr>
+<tr><td>?1040</td> <td>x</td><td></td>           <td>Keep selection even if not highlighted. <br />(This enables the keepSelection resource).</td><td>Do not keep selection when not highlighted. (This disables the keepSelection resource).</td><td></td></tr>
+<tr><td>?1041</td> <td>x</td><td></td>           <td>Use the CLIPBOARD selection. <br />(This enables the selectToClipboard resource).</td><td>Use the PRIMARY selection. (This disables the selectToClipboard resource).</td><td></td></tr>
+<tr><td>?1042</td> <td>x</td><td></td>           <td>Enable Urgency window manager hint when Control-G is received. <br />(This enables the bellIsUrgent resource).</td><td>Disable Urgency window manager hint when Control-G is received. (This disables the bellIsUrgent resource).</td><td></td></tr>
+<tr><td>?1043</td> <td>x</td><td></td>           <td>Enable raising of the window when Control-G is received. <br />(enables the popOnBell resource).</td><td>Disable raising of the window when Control-G is received. (This disables the popOnBell resource).</td><td></td></tr>
+<tr><td>?1047</td> <td>x</td><td></td>           <td>Use Alternate Screen Buffer. <br />(This may be disabled by the titeInhibit resource).</td><td>Use Normal Screen Buffer, clearing screen first if in the Alternate Screen. (This may be disabled by the titeInhibit resource).</td><td></td></tr>
+<tr><td>?1048</td> <td>x</td><td></td>           <td>Save cursor as in DECSC. <br />(This may be disabled by the titeInhibit resource).</td><td>Restore cursor as in DECRC. (This may be disabled by the titeInhibit resource).</td><td></td></tr>
+<tr><td>?1049</td> <td>x</td><td></td>
+  <td>Save cursor as in DECSC and use Alternate Screen Buffer, clearing it first. <br />(This may be disabled by the titeInhibit resource). This combines the effects of the 1047 and 1048 modes. Use this with terminfo-based applications rather than the 47 mode.</td>
+  <td>Use Normal Screen Buffer and restore cursor as in DECRC. (This may be disabled by the titeInhibit resource). This combines the effects of the 1 0 4 7 and 1 0 4 8 modes. Use this with terminfo-based applications rather than the 4 7 mode.</td><td></td></tr>
+<tr><td>?1050</td> <td>x</td><td></td>       <td>Set terminfo/termcap function-key mode.</td><td>Reset terminfo/termcap function-key mode.</td><td></td></tr>
+<tr><td>?1051</td> <td>x</td><td></td>       <td>Set Sun function-key mode.</td><td>Reset Sun function-key mode.</td><td></td></tr>
+<tr><td>?1052</td> <td>x</td><td></td>       <td>Set HP function-key mode.</td><td>Reset HP function-key mode.</td><td></td></tr>
+<tr><td>?1053</td> <td>x</td><td></td>       <td>Set SCO function-key mode.</td><td>Reset SCO function-key mode.</td><td></td></tr>
+<tr><td>?1060</td> <td>x</td><td></td>       <td>Set legacy keyboard emulation (X11R6).</td><td>Reset legacy keyboard emulation (X11R6).</td><td></td></tr>
+<tr><td>?1061</td> <td>x</td><td></td>       <td>Set VT220 keyboard emulation.</td><td>Reset keyboard emulation to Sun/PC style.</td><td></td></tr>
+<tr><td>?2004</td> <td>x</td><td></td>       <td>Set bracketed paste mode.</td><td>Reset bracketed paste mode.</td><td></td></tr>
+<tr><td>=0</td>    <td>/ansi.sys</td> <td></td>       <td>40 x 25 monochrome (text)</td><td></td><td>X</td></tr>
+<tr><td>=1</td>    <td>/ansi.sys</td> <td></td>       <td>40 x 25 color (text)</td><td></td><td>X</td></tr>
+<tr><td>=2</td>    <td>/ansi.sys</td> <td></td>       <td>80 x 25 monochrome (text)</td><td></td><td>X</td></tr>
+<tr><td>=3</td>    <td>/ansi.sys</td> <td></td>       <td>80 x 25 color (text)</td><td></td><td>X</td></tr>
+<tr><td>=4</td>    <td>/ansi.sys</td> <td></td>       <td>320 x 200 4-color (graphics)</td><td></td><td>X</td></tr>
+<tr><td>=5</td>    <td>/ansi.sys</td> <td></td>       <td>320 x 200 monochrome (graphics)</td><td></td><td>X</td></tr>
+<tr><td>=6</td>    <td>/ansi.sys</td> <td></td>       <td>640 x 200 monochrome (graphics)</td><td></td><td>X</td></tr>
+<tr><td>=7</td>    <td>/ansi.sys</td> <td></td>       <td>行折返し有効</td><td>行折返し無効</td><td>X</td></tr>
+<tr><td>=13</td>   <td>/ansi.sys</td> <td></td>       <td>320 x 200 color (graphics)</td><td></td><td>X</td></tr>
+<tr><td>=14</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 200 color (16-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=15</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 350 monochrome (2-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=16</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 350 color (16-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=17</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 480 monochrome (2-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=18</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 480 color (16-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>=19</td>   <td>/ansi.sys</td> <td></td>       <td>320 x 200 color (256-color graphics)</td><td></td><td>X</td></tr>
+<tr><td>&gt;1</td><td></td><td></td>         <td>ファンクション有り</td><td>ファンクション無し</td><td>X</td></tr>
+<tr><td>&gt;5</td><td></td><td></td>         <td>カーソル有り</td><td>カーソル無し</td><td>X</td></tr>
+</table>
+<ul>
+<li>v: vt100</li>
+<li>4: vt420</li>
+<li>5: vt510</li>
+<li>x: xterm</li>
+<li>r: rxvt</li>
+</ul>
+</div>
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h3>問い合わせ</h3>
@@ -622,19 +794,19 @@
 <li><dfn class="cfunc">DA1</dfn>: Primary Device Attributes
   <ul>
   <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DA1">VT: DA1</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DA1">VT510: DA1</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DA2</dfn>: Secondary Device Attributes
   <ul>
   <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DA2">VT: DA2</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DA2">VT510: DA2</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DA3</dfn>: Tertiary Device Attributes
   <ul>
   <li>VT100</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DA3">VT: DA3</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DA3">VT510: DA3</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DECRQTSR</dfn>: Request Terminal State Report
@@ -644,8 +816,8 @@
   <li><dfn class="cfunc">DDD2</dfn></li>
   <li><dfn class="cfunc">DDD3</dfn></li>
   <li>VT420 (DDD1, DDD2, DDD3 は Hebrew Keyboard で有効)</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DECRQTSR">VT: DECRQTSR</a></li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DD1">VT: DDD1, DDD2, DDD3</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECRQTSR">VT510: DECRQTSR</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DD1">VT510: DDD1, DDD2, DDD3</a></li>
   </ul>
 </li>
 
@@ -678,71 +850,71 @@
   <p><i>&lt;Ps&gt;</i> 行だけ上へ移動。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
   <ul>
   <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CUU">VT: CUU</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CUU">VT510: CUU</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">CUD</dfn>: Cursor Down
   <p><i>&lt;Ps&gt;</i> 行だけ下へ移動。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
   <ul>
   <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CUD">VT: CUD</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CUD">VT510: CUD</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">CUF</dfn>: Cursor Forward
   <p><i>&lt;Ps&gt;</i> 文字だけ右へ移動。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
   <ul>
   <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CUF">VT: CUF</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CUF">VT510: CUF</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">CUB</dfn>: Cursor Backward
   <p><i>&lt;Ps&gt;</i> 文字だけ左へ移動。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
   <ul>
   <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CUB">VT: CUB</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CUB">VT510: CUB</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">CUP</dfn>: Cursor Position
   <ul>
   <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CUP">VT: CUP</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CUP">VT510: CUP</a></li>
   </ul>
 </li>
 <li>DSR 6 <dfn class="cfunc">CPR</dfn>: Cursor Position Report
   <ul>
   <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CPR">VT: CPR</a></li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DSR-CPR">VT: DSR-CPR</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CPR">VT510: CPR</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DSR-CPR">VT510: DSR-CPR</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">CNL</dfn>: Cursor Next Line
   <ul>
   <li>互換性: vt510, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CNL">VT: CNL</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CNL">VT510: CNL</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">CPL</dfn>: Cursor Previous Line
   <ul>
   <li>互換性: vt510, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CPL">VT: CPL</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CPL">VT510: CPL</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">CHA</dfn>: Cursor Horizontal Absolute
   <ul>
   <li>互換性: vt510, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CHA">VT: CHA</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CHA">VT510: CHA</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">CHT</dfn>: Cursor Horizontal Forward Tabulation
   <ul>
   <li>互換性: vt510, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CHT">VT: CHT</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CHT">VT510: CHT</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">CBT</dfn>: Cursor Backward Tabulation
   <ul>
   <li>互換性: vt510, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CBT">VT: CBT</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CBT">VT510: CBT</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">SCOSC</dfn>: Save Current Cursor Position
@@ -778,45 +950,45 @@
 <li><dfn class="cfunc">ED</dfn>: Erase in Display
   <ul>
   <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/ED">VT: ED</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/ED">VT510: ED</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DCH</dfn>: Delete Character
   <ul>
   <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DCH">VT: DCH</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DCH">VT510: DCH</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">ECH</dfn>: Erase Character
   <ul>
   <li>VT420; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/ECH">VT: ECH</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/ECH">VT510: ECH</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">ICH</dfn>: Insert Character
   <ul>
   <li>VT420; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/ICH">VT: ICH</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/ICH">VT510: ICH</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DL</dfn>: Delete Line
   <p><i>&lt;Ps&gt;</i> 行だけ削除して抜き去る。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
   <ul>
   <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DL">VT: DL</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DL">VT510: DL</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">EL</dfn>: Erase in Line
   <ul>
   <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/EL">VT: EL</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/EL">VT510: EL</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">IL</dfn>: Insert Line
   <p><i>&lt;Ps&gt;</i> 行だけ空白行を挿入。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
   <ul>
   <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DCH">VT: IL</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DCH">VT510: IL</a></li>
   </ul>
 </li>
 </ul>
@@ -845,7 +1017,7 @@
     </ul>
   </li>
   <li>
-    <a href="http://www.vt100.net/docs/vt510-rm/DECSCUSR">VT: DECSCUSR</a>
+    <a href="http://www.vt100.net/docs/vt510-rm/DECSCUSR">VT510: DECSCUSR</a>
     <a href="http://cygwin.com/ml/cygwin-announce/2013-04/msg00025.html">Cygwin 1.7.18</a>
   </li>
   </ul>
@@ -859,7 +1031,7 @@
   <ul>
   <li>互換性: VT420, xyerm, rxvt, cygwin-1.7.18</li>
   <li>
-    <a href="http://www.vt100.net/docs/vt510-rm/DECTCEM">VT: DECTCEM</a>
+    <a href="http://www.vt100.net/docs/vt510-rm/DECTCEM">VT510: DECTCEM</a>
     <a href="http://cygwin.com/ml/cygwin-announce/2013-04/msg00025.html">Cygwin 1.7.18</a>
   </li>
   </ul>
@@ -880,13 +1052,14 @@
 </table>
 
 <ul>
-<li><dfn class="cfunc">SGR</dfn>: Set Graphic Rendition (Select Graphic Rendition)
+<li><dfn class="cfunc">SGR</dfn>: Select Graphic Rendition (Set Graphic Rendition)
   <i>&lt;Pm&gt;</i> にはセミコロン ';' 区切りで複数の番号を指定する。
   各番号はそれぞれ対応する描画属性を設定したり解除したりするのに用いられる。
+  パラメータを省略したときの既定値は 0 である。
   番号の詳細については後述する。
   <ul>
-  <li>vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/SGR">VT: SGR</a></li>
+  <li>[ECMA-48/8.3.117], vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/SGR">VT510: SGR</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DECDHL</dfn>: Double-Width, Double-Height Line
@@ -897,19 +1070,19 @@
   縦横2倍に拡大された文字を表示することを目的とする。
   </p>
   <ul>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DECDHL.html">VT: DECDHL</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECDHL.html">VT510: DECDHL</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DECDWL</dfn>: Double-Width, Single-Height Line
   <p>文字の幅を2倍にして表示する。</p>
   <ul>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DECDWL.html">VT: DECDWL</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECDWL.html">VT510: DECDWL</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DECSWL</dfn>: Single-Width, Single-Height Line
   <p>DECDHL, DECDWL で設定された文字の幅・表示を元に戻す。</p>
   <ul>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DECSWL.html">VT: DECSWL</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECSWL.html">VT510: DECSWL</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">PLD</dfn>: Partial Line Down
@@ -1619,9 +1792,9 @@
 <li><dfn class="cfunc">S7C1T</dfn></li>
 <li><dfn class="cfunc">S8C1T</dfn></li>
 <li>対応: xterm = F, G, L, M, N; VT510 = F, G, L, M, N</li>
-<li><a href="http://www.vt100.net/docs/vt510-rm/ANSI">VT: ANSI Conformance Level</a></li>
-<li><a href="http://www.vt100.net/docs/vt510-rm/S7C1T">VT: S7C1T</a></li>
-<li><a href="http://www.vt100.net/docs/vt510-rm/S8C1T">VT: S8C1T</a></li>
+<li><a href="http://www.vt100.net/docs/vt510-rm/ANSI">VT510: ANSI Conformance Level</a></li>
+<li><a href="http://www.vt100.net/docs/vt510-rm/S7C1T">VT510: S7C1T</a></li>
+<li><a href="http://www.vt100.net/docs/vt510-rm/S8C1T">VT510: S8C1T</a></li>
 <li><a href="http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-035.pdf">ECMA-35</a></li>
 </ul>
 
@@ -1686,150 +1859,6 @@ j.行消す, ESC[2K
 <tr><td>\x9F</td><td><code>\e_</code></td><td></td><td>APC</td><td></td></tr>
 </table>
 
-<!--...................................................................................-->
-<h3>Set/Reset Mode</h3>
-<table class="normal center">
-<tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
-<tr><td><code>\e[<strong>*</strong>h</code></td><td>有効にする</td><td>O</td></tr>
-<tr><td><code>\e[<strong>*</strong>l</code></td><td>無効にする</td><td>O</td></tr>
-</table>
-<p>引数には、以下の物の中から一つ指定する。</p>
-<table class="normal center">
-<colgroup>
-  <col span="3" />
-  <col style="width:40%;" />
-  <col style="width:40%;" />
-</colgroup>
-<tr><th>引数</th><th>環境</th><th>名称</th><th>有効</th><th>無効</th><th>実装</th></tr>
-<!--
-<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
-<tr><td>?</td> <td></td>        <td></td><td></td><td></td></tr>
--->
-<tr><td>1</td>     <td class="markA">-</td><td>GATM</td> <td>Guarded area transfer</td><td></td><td></td></tr>
-<tr><td>2</td>     <td>x</td><td>AM/KAM</td>             <td>Keyboard Action Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>4</td>     <td>x</td><td>IRM</td>                <td>Insert Mode</td><td class="markB"></td><td>@</td></tr>
-<tr><td>5</td>     <td class="markA">-</td><td>SRTM</td> <td>Status reporting transfer</td><td></td><td></td></tr>
-<tr><td>7</td>     <td>?</td><td></td>                   <td>行折返し有効</td><td>行折返し無効</td><td>X</td></tr>
-<tr><td>7</td>     <td class="markA">-</td><td>VEM</td>  <td>Vertical editing</td><td></td><td>X</td></tr>
-<tr><td>10</td>    <td class="markA">-</td><td>HEM</td>  <td>Horiz editing</td><td></td><td>X</td></tr>
-<tr><td>11</td>    <td class="markA">-</td><td>PUM</td>  <td>Positioning unit</td><td></td><td>X</td></tr>
-<tr><td>12</td>    <td>vx</td><td>SRM</td>               <td class="markB">Send/receive Mode</td><td>Local Echo on</td><td></td></tr>
-<tr><td>13</td>    <td class="markA">-</td><td>FEAM</td> <td>Format effector action</td><td></td><td>X</td></tr>
-<tr><td>14</td>    <td class="markA">-</td><td>FETM</td> <td>Format effector transfer</td><td></td><td>X</td></tr>
-<tr><td>15</td>    <td class="markA">-</td><td>MATM</td> <td>Multiple area transfer</td><td></td><td>X</td></tr>
-<tr><td>16</td>    <td class="markA">-</td><td>TTM</td>  <td>Transfer termination</td><td></td><td>X</td></tr>
-<tr><td>17</td>    <td class="markA">-</td><td>SATM</td> <td>Selected area transfer</td><td></td><td>X</td></tr>
-<tr><td>18</td>    <td class="markA">-</td><td>TSM</td>  <td>Tabulation stop</td><td></td><td>X</td></tr>
-<tr><td>19</td>    <td class="markA">-</td><td>EBM</td>  <td>Editing boundary</td><td></td><td>X</td></tr>
-<tr><td>20</td>    <td>vx</td><td>LMN</td>       <td>Set new line mode (Automatic Newline)</td><td class="markB">Set line feed mode (Normal Linefeed)</td><td>X</td></tr>
-<tr><td>21</td>    <td>/ansi</td><td>GRCM</td>   <td>Cumulative</td><td>Replacing</td></tr>
-<tr><td>34</td>    <td>/putty</td><td></td>      <td>MakeCursorBig</td><td></td><td></td></tr>
-<tr><td>?1</td>    <td>vxr</td><td>DECCKM</td>   <td>Set cursor key to application (Application cursor key)</td><td>Set cursor key to cursor (Normal cursor key)</td><td>X</td></tr>
-<tr><td>?2</td>    <td>vx</td><td>DECANM</td>    <td>Set ANSI (versus VT52)</td><td>Set VT52 (versus ANSI)</td><td>X</td></tr>
-<tr><td>?3</td>    <td>vxr</td><td>DECCOLM</td>  <td>Set number of columns to 132</td><td class="markB">Set number of columns to 80</td><td>X</td></tr>
-<tr><td>?4</td>    <td>vx</td><td>DECSCLM</td>   <td class="markB">Set smooth scrolling</td><td>Set jump scrolling</td><td>X</td></tr>
-<tr><td>?5</td>    <td>vxr</td><td>DECSCNM</td>  <td>Set reverse video on screen</td><td class="markB">Set normal video on screen</td><td>X</td></tr>
-<tr><td>?6</td>    <td>vxr</td><td>DECOM</td>    <td>Set origin to relative</td><td class="markB">Set origin to absolute</td><td>@</td></tr>
-<tr><td>?7</td>    <td>vxr</td><td>DECAWM</td>   <td>Set auto-wrap mode</td><td class="markB">Reset auto-wrap mode</td><td>@</td></tr>
-<tr><td>?8</td>    <td>vx</td><td>DECARM</td>    <td class="markB">Set auto-repeat mode</td><td>Reset auto-repeat mode</td><td>X</td></tr>
-<tr><td>?9</td>    <td>vxr</td><td>DECINLM</td>  <td>Set interlacing mode</td><td>Reset interlacing mode</td><td>X</td></tr>
-<tr><td>?10</td>   <td>rx</td><td></td>          <td>Show toolbar.</td><td>Hide toolbar.</td><td></td></tr>
-<tr><td>?12</td>   <td>x/att610</td><td></td>    <td>Start Blinking Cursor.</td><td>Stop Blinking Cursor.</td><td></td></tr>
-<tr><td>?18</td>   <td>vx</td><td>DECPFF</td>    <td>Print form feed.</td><td class="markB">Don’t print form feed.</td><td></td></tr>
-<tr><td>?19</td>   <td>vx</td><td>DECPEX</td>    <td>Set print extent to full screen.</td><td class="markB">Limit print to scrolling region.</td><td></td></tr>
-<tr><td>?30</td>   <td>rx</td><td></td>          <td>Show scrollbar.</td><td>Don’t show scrollbar.</td><td></td></tr>
-<tr><td>?34</td>   <td>5</td><td>DECRLM</td>     <td>Right-to-left Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?35</td>   <td>rx</td><td></td>          <td>Enable font-shifting functions.</td><td>Disable font-shifting functions.</td><td></td></tr>
-<tr><td>?35</td>   <td>4</td><td>DECHEBM</td>    <td>Hebrew Keyboard Map Mode (Hebrew Keyboard)</td><td class="markB">North American</td><td></td></tr>
-<tr><td>?36</td>   <td>4</td><td>DEMHEM</td>     <td class="markB">Hebrew Encoding Mode 8-bit char</td><td>Hebrew Encoding Mode 7-bit char</td><td></td></tr>
-<tr><td>?38</td>   <td>x</td><td>DECTEK</td>     <td>Enter Tektronix Mode.</td><td>-</td><td></td></tr>
-<tr><td>?40</td>   <td>xr</td><td></td>          <td>Allow 80 → 132 Mode.</td><td>Disallow 80 → 132 Mode.</td><td></td></tr>
-<tr><td>?41</td>   <td>x</td><td></td>           <td>more(1) fix (see curses resource).</td><td>No more(1) fix (see curses resource)</td><td></td></tr>
-<tr><td>?42</td>   <td>vx</td><td>DECNRCM</td>   <td>Enable National Replacement Character Set Mode.</td><td class="markB">Disable (Multinational)</td><td></td></tr>
-<tr><td>?44</td>   <td>x</td><td></td>           <td>Turn On Margin Bell.</td><td>Turn Off Margin Bell.</td><td></td></tr>
-<tr><td>?45</td>   <td>x</td><td></td>           <td>Reverse-wraparound Mode.</td><td>No Reverse-wraparound Mode.</td><td></td></tr>
-<tr><td>?46</td>   <td>x</td><td></td>           <td>Start Logging. This is normally disabled by a compile-time option.</td><td>Stop Logging. (This is normally disabled by a compile-time option).</td><td></td></tr>
-<tr><td>?47</td>   <td>xr</td><td></td>          <td>Use Alternate Screen Buffer. <br />(This may be disabled by the titeInhibit resource).</td><td>Use Normal Screen Buffer.</td><td></td></tr>
-<tr><td>?57</td>   <td>4</td><td>DECNAKB</td>    <td class="markB">North American/Greek Selection (North American)</td><td>Greek keyboard</td><td></td></tr>
-<tr><td>?58</td>   <td>5</td><td>DECIPEM</td>    <td>Enter/Return from IBM ProPrinter Emulation Mode</td><td></td><td></td></tr>
-<tr><td>?60</td>   <td class="markA">-</td><td>DECHCCM</td><td>Horiz cursor coupling</td><td></td><td>X</td></tr>
-<tr><td>?61</td>   <td>4</td><td>DECVCCM</td>    <td class="markB">Vertical Cursor Coupling</td><td></td><td></td></tr>
-<tr><td>?64</td>   <td>4</td><td>DECPCCM</td>    <td class="markB">Page Cursor Coupling</td><td></td><td></td></tr>
-<tr><td>?66</td>   <td>4xr</td><td>DECNKM</td>   <td>Application keypad.</td><td class="markB">Numeric keypad.</td><td></td></tr>
-<tr><td>?67</td>   <td>vxr</td><td>DECBKM</td>   <td>Backarrow key sends backspace.</td><td class="markB">Backarrow key sends delete.</td><td></td></tr>
-<tr><td>?68</td>   <td>4</td><td>DECKBUM</td>    <td>Keyboard Usage Mode (data processing)</td><td class="markB">typewriter</td><td></td></tr>
-<tr><td>?69</td>   <td>4</td><td>DECVSSM</td>    <td>Vertical Split Screen</td><td class="markB"></td><td></td></tr>
-<tr><td>?73</td>   <td>4</td><td>DECXRLM</td>    <td>Transmit Rate Limiting Mode (limited)</td><td class="markB">unlimited</td><td></td></tr>
-<tr><td>?81</td>   <td>4</td><td>DECKPM</td>     <td>Key Position Mode (key position)</td><td class="markB">char codes</td><td></td></tr>
-<tr><td>?95</td>   <td>5</td><td>DECNCSM</td>    <td>No clear screen on column change</td><td class="markB"></td><td></td></tr>
-<tr><td>?96</td>   <td>5</td><td>DECRLCM</td>    <td>Right-to-Left Copy</td><td class="markB"></td><td></td></tr>
-<tr><td>?97</td>   <td>5</td><td>DECRTSM</td>    <td class="markB">CRT Save Mode (Enable CRT Saver)</td><td>Disable CRT Saver</td><td></td></tr>
-<tr><td>?98</td>   <td>5</td><td>DECARSM</td>    <td>Auto Resize Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?99</td>   <td>5</td><td>DECMCM</td>     <td>Modem Control Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?100</td>  <td>v</td><td>DECAAM</td>     <td>Auto Answerback Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?101</td>  <td>5</td><td>DECCANSM</td>   <td>Conceal Answerback Message Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?102</td>  <td>5</td><td>DECNULM</td>    <td class="markB">Null Mode(ignore NUL)</td><td>accept NUL</td><td></td></tr>
-<tr><td>?103</td>  <td>5</td><td>DECHDPXM</td>   <td>Half-Duplex Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?104</td>  <td>4</td><td>DECESKM</td>    <td>Enable Secondary Keyboard Language Mode (secondary)</td><td class="markB">primary</td><td></td></tr>
-<tr><td>?106</td>  <td>5</td><td>DECOSCNM</td>   <td>Overscan Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?108</td>  <td>v</td><td>DECNUMLK</td>   <td>Num Lock Mode</td><td></td><td></td></tr>
-<tr><td>?109</td>  <td>v</td><td>DECCAPSLK</td>  <td>Caps Lock Mode</td><td></td><td></td></tr>
-<tr><td>?110</td>  <td>v</td><td>DECKLHIM</td>   <td>Keyboard LEDs Host Indicator Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?111</td>  <td>/vt520</td><td>DECFWM</td>  <td>Framed windows mode           </td><td></td></tr>
-<tr><td>?112</td>  <td>/vt520</td><td>DECRPL</td>  <td>Review previous lines         </td><td></td></tr>
-<tr><td>?113</td>  <td>/vt520</td><td>DECHWUM</td> <td>Host Wake-Up                  </td><td></td></tr>
-<tr><td>?114</td>  <td>/vt520</td><td>DECATCUM</td><td>Alternate text color underline</td><td></td></tr>
-<tr><td>?115</td>  <td>/vt520</td><td>DECATCBM</td><td>Alternate text color blink    </td><td></td></tr>
-<tr><td>?116</td>  <td>/vt520</td><td>DECBBSM</td> <td>Bold and blink style mode     </td><td></td></tr>
-<tr><td>?117</td>  <td>/vt520</td><td>DECECM</td>  <td>Erase color mode              </td><td></td></tr>
-<tr><td>?1010</td> <td>rx</td><td></td>          <td>Scroll to bottom on tty output.</td><td>Don’t scroll to bottom on tty output.</td><td></td></tr>
-<tr><td>?1011</td> <td>rx</td><td></td>          <td>Scroll to bottom on key press.</td><td>Don’t scroll to bottom on key press.</td><td></td></tr>
-<tr><td>?1034</td> <td>x</td><td></td>           <td>Interpret "meta" key, sets eighth bit. <br />(enables the eightBitInput resource).</td><td>Don’t interpret "meta" key. (This disables the eightBitInput resource).</td><td></td></tr>
-<tr><td>?1035</td> <td>x</td><td></td>           <td>Enable special modifiers for Alt and NumLock keys. <br />(This enables the numLock resource).</td><td>Disable special modifiers for Alt and NumLock keys. (This disables the numLock resource).</td><td></td></tr>
-<tr><td>?1036</td> <td>x</td><td></td>           <td>Send ESC when Meta modifies a key. <br />(This enables the metaSendsEscape resource).</td><td>Don’t send ESC when Meta modifies a key. (This disables the metaSendsEscape resource).</td><td></td></tr>
-<tr><td>?1037</td> <td>x</td><td></td>           <td>Send DEL from the editing-keypad Delete key.</td><td>Send VT220 Remove from the editing-keypad Delete key.</td><td></td></tr>
-<tr><td>?1039</td> <td>x</td><td></td>           <td>Send ESC when Alt modifies a key. <br />(This enables the altSendsEscape resource).</td><td>Don’t send ESC when Alt modifies a key. (This disables the altSendsEscape resource).</td><td></td></tr>
-<tr><td>?1040</td> <td>x</td><td></td>           <td>Keep selection even if not highlighted. <br />(This enables the keepSelection resource).</td><td>Do not keep selection when not highlighted. (This disables the keepSelection resource).</td><td></td></tr>
-<tr><td>?1041</td> <td>x</td><td></td>           <td>Use the CLIPBOARD selection. <br />(This enables the selectToClipboard resource).</td><td>Use the PRIMARY selection. (This disables the selectToClipboard resource).</td><td></td></tr>
-<tr><td>?1042</td> <td>x</td><td></td>           <td>Enable Urgency window manager hint when Control-G is received. <br />(This enables the bellIsUrgent resource).</td><td>Disable Urgency window manager hint when Control-G is received. (This disables the bellIsUrgent resource).</td><td></td></tr>
-<tr><td>?1043</td> <td>x</td><td></td>           <td>Enable raising of the window when Control-G is received. <br />(enables the popOnBell resource).</td><td>Disable raising of the window when Control-G is received. (This disables the popOnBell resource).</td><td></td></tr>
-<tr><td>?1047</td> <td>x</td><td></td>           <td>Use Alternate Screen Buffer. <br />(This may be disabled by the titeInhibit resource).</td><td>Use Normal Screen Buffer, clearing screen first if in the Alternate Screen. (This may be disabled by the titeInhibit resource).</td><td></td></tr>
-<tr><td>?1048</td> <td>x</td><td></td>           <td>Save cursor as in DECSC. <br />(This may be disabled by the titeInhibit resource).</td><td>Restore cursor as in DECRC. (This may be disabled by the titeInhibit resource).</td><td></td></tr>
-<tr><td>?1049</td> <td>x</td><td></td>
-  <td>Save cursor as in DECSC and use Alternate Screen Buffer, clearing it first. <br />(This may be disabled by the titeInhibit resource). This combines the effects of the 1047 and 1048 modes. Use this with terminfo-based applications rather than the 47 mode.</td>
-  <td>Use Normal Screen Buffer and restore cursor as in DECRC. (This may be disabled by the titeInhibit resource). This combines the effects of the 1 0 4 7 and 1 0 4 8 modes. Use this with terminfo-based applications rather than the 4 7 mode.</td><td></td></tr>
-<tr><td>?1050</td> <td>x</td><td></td>       <td>Set terminfo/termcap function-key mode.</td><td>Reset terminfo/termcap function-key mode.</td><td></td></tr>
-<tr><td>?1051</td> <td>x</td><td></td>       <td>Set Sun function-key mode.</td><td>Reset Sun function-key mode.</td><td></td></tr>
-<tr><td>?1052</td> <td>x</td><td></td>       <td>Set HP function-key mode.</td><td>Reset HP function-key mode.</td><td></td></tr>
-<tr><td>?1053</td> <td>x</td><td></td>       <td>Set SCO function-key mode.</td><td>Reset SCO function-key mode.</td><td></td></tr>
-<tr><td>?1060</td> <td>x</td><td></td>       <td>Set legacy keyboard emulation (X11R6).</td><td>Reset legacy keyboard emulation (X11R6).</td><td></td></tr>
-<tr><td>?1061</td> <td>x</td><td></td>       <td>Set VT220 keyboard emulation.</td><td>Reset keyboard emulation to Sun/PC style.</td><td></td></tr>
-<tr><td>?2004</td> <td>x</td><td></td>       <td>Set bracketed paste mode.</td><td>Reset bracketed paste mode.</td><td></td></tr>
-<tr><td>=0</td>    <td>/ansi.sys</td> <td></td>       <td>40 x 25 monochrome (text)</td><td></td><td>X</td></tr>
-<tr><td>=1</td>    <td>/ansi.sys</td> <td></td>       <td>40 x 25 color (text)</td><td></td><td>X</td></tr>
-<tr><td>=2</td>    <td>/ansi.sys</td> <td></td>       <td>80 x 25 monochrome (text)</td><td></td><td>X</td></tr>
-<tr><td>=3</td>    <td>/ansi.sys</td> <td></td>       <td>80 x 25 color (text)</td><td></td><td>X</td></tr>
-<tr><td>=4</td>    <td>/ansi.sys</td> <td></td>       <td>320 x 200 4-color (graphics)</td><td></td><td>X</td></tr>
-<tr><td>=5</td>    <td>/ansi.sys</td> <td></td>       <td>320 x 200 monochrome (graphics)</td><td></td><td>X</td></tr>
-<tr><td>=6</td>    <td>/ansi.sys</td> <td></td>       <td>640 x 200 monochrome (graphics)</td><td></td><td>X</td></tr>
-<tr><td>=7</td>    <td>/ansi.sys</td> <td></td>       <td>行折返し有効</td><td>行折返し無効</td><td>X</td></tr>
-<tr><td>=13</td>   <td>/ansi.sys</td> <td></td>       <td>320 x 200 color (graphics)</td><td></td><td>X</td></tr>
-<tr><td>=14</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 200 color (16-color graphics)</td><td></td><td>X</td></tr>
-<tr><td>=15</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 350 monochrome (2-color graphics)</td><td></td><td>X</td></tr>
-<tr><td>=16</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 350 color (16-color graphics)</td><td></td><td>X</td></tr>
-<tr><td>=17</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 480 monochrome (2-color graphics)</td><td></td><td>X</td></tr>
-<tr><td>=18</td>   <td>/ansi.sys</td> <td></td>       <td>640 x 480 color (16-color graphics)</td><td></td><td>X</td></tr>
-<tr><td>=19</td>   <td>/ansi.sys</td> <td></td>       <td>320 x 200 color (256-color graphics)</td><td></td><td>X</td></tr>
-<tr><td>&gt;1</td><td></td><td></td>         <td>ファンクション有り</td><td>ファンクション無し</td><td>X</td></tr>
-<tr><td>&gt;5</td><td></td><td></td>         <td>カーソル有り</td><td>カーソル無し</td><td>X</td></tr>
-</table>
-<ul>
-<li>v: vt100</li>
-<li>4: vt420</li>
-<li>5: vt510</li>
-<li>x: xterm</li>
-<li>r: rxvt</li>
-</ul>
 
 <h3>マウス追跡 (Mouse Tracking)</h3>
 <ul>
