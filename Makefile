@@ -16,5 +16,11 @@ impl1: out/impl1.o
 out/impl1.o: impl1.cpp | out
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
+all: minimal_openpt
+minimal_openpt: out/minimal_openpt.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
+out/minimal_openpt.o: minimal_openpt.cpp | out
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
 $(directories):
 	mkdir -p $@
