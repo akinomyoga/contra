@@ -1094,6 +1094,13 @@
 <li><dfn class="cfunc">PLU</dfn>: Partial Line Up
   <p>[ECMA-48/8.3.93] 上付き文字にする。PLD で解除する。</p>
 </li>
+<li>Mode 21 <dfn class="cmode">GRCM</dfn>: Graphic Rendition Combination Mode
+  <p>[ECMA-48/7.2.8] SGR でそれまでに設定されていた属性を持続するかどうかを決める。</p>
+  <ul>
+  <li><b>Replacing</b> (RM): SGR が登場する度にそれまでに設定されていた属性をすべて解除する。適用したい属性は毎回指定する必要がある。</li>
+  <li><b>Cumulative</b> (SM): SGR をそれまでに設定されていた属性に対する変更として扱う。</li>
+  </ul>
+</li>
 </ul>
 
 <h3>SGR 詳細</h3>

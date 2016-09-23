@@ -180,8 +180,8 @@
   [ECMA-48/7.2.4]  Mode 6  ERM: Erasure Mode  22
   [ECMA-48/7.2.5]  Mode 13 FEAM: Format Effector Action Mode  22
   [ECMA-48/7.2.6]  Mode 14 FETM: Format Effector Transfer Mode  22
-  [ECMA-48/7.2.7]  Mode 21 GATM: Guarded Area Transfer Mode  23
-  [ECMA-48/7.2.8]  Mode 1  GRCM: Graphic Rendition Combination Mode  23
+  [ECMA-48/7.2.7]  Mode 1  GATM: Guarded Area Transfer Mode  23
+  > [ECMA-48/7.2.8]  Mode 21 GRCM: Graphic Rendition Combination Mode  23
   [ECMA-48/7.2.9]  Mode 10 HEM: Character Editing Mode  23
   [ECMA-48/7.2.10] Mode 4  IRM: Insertion Replacement Mode  24
   [ECMA-48/7.2.11] Mode 2  KAM: Keyboard Action Mode  24
