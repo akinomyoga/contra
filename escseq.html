@@ -389,76 +389,105 @@
 <li><dfn class="cfunc">CSI</dfn>: Constrol Sequence Introducer
   <p>CSI (constrol sequence introducer) で始まるシーケンスを特に
   <dfn>CSI シーケンス</dfn> (CSI sequence)
-  または (狭義)<dfn>制御シーケンス</dfn> (constrol sequence) と呼ぶ。
+  または (本来の) <dfn>制御シーケンス</dfn> (constrol sequence) と呼ぶ。
   プログラムに端末の特別な操作・状態・情報を送ったり (入力)、
   プログラムから端末の状態を制御する命令を送ったり (出力) するのに用いられる。
   </p>
-  <p>CSI は "ESC [" &lt;x1B x5B&gt; (または &lt;x9B&gt;) で表現される。
-  CSI は本来は C1 集合の &lt;x9B&gt; であるが、
-  UTF-8 を例として、文字コードによっては &lt;0x9B&gt; は通常の文字を表現するバイトである為(?)、
-  現在では &lt;x9B&gt; が用いられる事は少なく、専ら &lt;x1B x5B&gt; が用いられる。
-  今や &lt;x9B&gt; は CSI として解釈されない事も多い。
-  <i>&lt;I&gt;</i> は [\x20, \x30) の範囲の文字を指定し、
-  <i>&lt;Ft&gt;</i> は [\x40, \x7F) の範囲の文字を指定する。
-  <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i>  
+  <p>CSI は 01/11 05/11 (<kbd>ESC [</kbd>)、または 09/11 で表現される。
+  <i>&lt;I&gt;</i> は 02/00-02/15 の範囲の文字を指定し、
+  <i>&lt;Ft&gt;</i> は 04/00-07/15 の範囲の文字を指定する。
+  <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i>
   の組合せによって、その制御シーケンスが特にどの様な機能を持った物かを指定する。
   それぞれの組合せに対応する制御シーケンスの機能は、端末に依存する所が大きい。
+  特に <i>&lt;Ft&gt;</i> = 07/00-07/14 のシーケンスは私用・実験用のシーケンスとして使って良い。
   これについては、後でまとめる事にする。
-  <i>&lt;Fp&gt;</i> は [\x20, \x40) の範囲の文字を表す。
+  <i>&lt;Fp&gt;</i> は [\x30, \x40) の範囲の文字を表す。
   <i>&lt;Fp&gt;</i><strong>*</strong> の部分は、
-  主に、文字 <i>&lt;Ft&gt;</i> で指定された機能に対する引数として働く。
+  引数文字列 (parameter bytes, parameter string) と呼ばれ、
+  <i><i>&lt;I&gt;</i><strong>*</strong> &lt;Ft&gt;</i> で指定された機能に対する引数として働く。
   多くの場合、<code>/|([0-9]+;)*[0-9]+/</code> の形式を持つ。
   場合によっては、更に異なる機能を指定するのに用いられる。
   詳しくは後述する。
   </p>
+  <p>CSI は 7 bit 表現 01/11 05/11 (<kbd>ESC [</kbd>) と 8 bit 表現 09/11 を持つが、
+  8 bit のデータを許容しない処理系などのために 09/11 が用いられる事は少なく、
+  専ら 01/11 05/11 が用いられることの方が多い。
+  また、UTF-8 を初めとして 09/11 を通常の文字を構成するバイトとして使う文字コードがあり、
+  その様な文字コードの処理系における混乱を避けるために
+  09/11 の使用を控えているという面もあると思われる。
+  今や 09/11 は既定では CSI として解釈しない端末も多い。
+  この事情は他の全ての C1 制御文字で同様である。
+  </p>
+  <p>[ECMA-48/8.3.16], [ECMA-48/5.4]</p>
+</li>
+<li>[ECMA-48/5.6]
+  或る文字で始まって ST で終わるシーケンスを総称して<dfn>制御列</dfn> (control strings)と呼ぶ。
+  <p>その形式によって指令列と文字列に分類される。
+  <dfn>コマンド列</dfn> (command strings, 指令列) は ST (01/11 05/12 または 09/12) で終わり、
+  間には 00/08-00/13 (BS, HT, LF, VT, FF, CR), 02/00-07/14 (7 bit 図形文字) の文字を任意の数含む。
+  特に OSC, DCS, PM, APC で始まるコマンド列が規格で定められている。
+  </p>
+  <p><dfn>キャラクタ列</dfn> (character strings, 文字列) は ST で終わり、
+  間には SOS および ST を表すバイト列以外の任意のバイト列を含む。
+  特に SOS で始まるシーケンスが規格で定められている。
+  </p>
 </li>
 <li><dfn class="cfunc">OSC</dfn>: Operating System Command
-  <p>OSC (operating system command) で始まるシーケンスは、
-  <dfn>OSC シーケンス</dfn> (OSC sequence) または <dfn>OS コマンド</dfn> (operating system command) と呼ばれる。
-  OSC シーケンスは、主に端末エミュレータのウィンドウの制御 (出力)・状態報告 (入力) などに用いられる。
+  <p>[ECMA-48/8.3.89]
+  OSC (operating system command) で始まるシーケンスは、
+  <dfn>OSC シーケンス</dfn> (OSC sequence)
+  または <dfn>OS コマンド</dfn> (operating system command) と呼ばれる。
+  用途は使用している OS に依存して定められる。
+  主に端末のウィンドウの制御 (出力)・状態報告 (入力) などに用いられる。
   </p>
-  <p>OSC は "ESC ]" &lt;x1B x5D&gt; (または &lt;x9D&gt;) で表現される。
-  CSI と同様の事情で現在は &lt;x1B x5D&gt; が用いられる。
+  <p>OSC シーケンスはコマンド列の形式に従う。
+  OSC は 01/11 05/13 (<kbd>ESC ]</kbd>) または 09/13 で表現される。
+  ECMA-48 ではそれ以上は定められていないが、実際の実装では一番最初に数字の引数を取ることが多い。
   <i>&lt;N&gt;</i> は [0-9] の文字を表す。
   <i>&lt;N&gt;</i><strong>*</strong> はコマンドの種類を指定する番号である。
   後に続く <strong>.*</strong> の部分は、コマンドの引数として与える文字列である。
-  BEL &lt;x07&gt; または ST &lt;x1b x5c&gt; (または &lt;x9c&gt;) はコマンドの終端を表す。
-  (従って、当然ながら文字列 <strong>.*</strong> には BEL 及び ST を含ませる事はできない。)
+  本来 ST で終端するはずだが BEL で終端することもある。
   </p>
 </li>
 <li><dfn class="cfunc">DCS</dfn>: Device Control String
-  <p>DCS で始まるシーケンスは <dfn>DCS シーケンス</dfn> (DCS sequence)
+  <p>[ECMA-48/8.3.27]
+  DCS で始まるシーケンスは <dfn>DCS シーケンス</dfn> (DCS sequence)
   または Device Control String と呼ばれる。
-  DCS は "ESC P" &lt;x1b x50&gt; (または &lt;x90&gt;) で表現される。
-  CSI と同様に現在は &lt;x1B x50&gt; を用いる。
-  <strong>.*</strong> に内容を記述する。
-  ST &lt;x1B x5C&gt; (または &lt;x9C&gt;) はシーケンスの終端を表す。
+  受信装置へのコマンド、送信装置からの返答に用いることを意図している。
+  規格では IDCS の返答に用いる形式が定められている。
+  その他の形式は受信装置・送信装置の間で取り決めて利用する。
+  </p>
+  <p>DCS シーケンスはコマンド列の形式に従う。
+  DCS は 01/11 05/00 (<kbd>ESC P</kbd>) または 09/00 で表現される。
   </p>
 </li>
 <li><dfn class="cfunc">SOS</dfn>: Start of String
-  <p>SOS で始まるシーケンスは <dfn>SOS シーケンス</dfn> (SOS sequence) と呼ばれる。
-  SOS は "ESC X" &lt;x1B x58&gt; (または &lt;x98&gt;) で表現される。
-  CSI と同様に現在は &lt;x1B x58&gt; を用いる。
-  <strong>.*</strong> に内容を記述する。内容には SOS または ST を含まない。
-  ST &lt;x1B x5C&gt; (または &lt;x9C&gt;) はシーケンスの終端を表す。
+  <p>[ECMA-48/8.3.128]
+  SOS で始まるシーケンスは <dfn>SOS シーケンス</dfn> (SOS sequence) と呼ばれる。
+  解釈はアプリケーションに依存する。
+  </p>
+  <p>SOS シーケンスはキャラクタ列の形式に従う。
+  SOS は 01/11 05/08 (<kbd>ESC X</kbd>) または 09/08 で表現される。
   </p>
 </li>
 <li><dfn class="cfunc">PM</dfn>: Privacy Message
-  <p>PM で始まるシーケンスは <dfn>PM シーケンス</dfn> (PM sequence)
-  または Privacy Message と呼ばれる。
-  PM は "ESC ^" &lt;x1B x5E&gt; (または &lt;x9E&gt;) で表現される。
-  CSI と同様に現在は &lt;x1B x5E&gt; を用いる。
-  <strong>.*</strong> に内容を記述する。
-  ST &lt;x1B x5C&gt; (または &lt;x9C&gt;) はシーケンスの終端を表す。
+  <p>[ECMA-48/8.3.94]
+  PM で始まるシーケンスは <dfn>PM シーケンス</dfn> (PM sequence)
+  または 私用メッセージ (privacy message) と呼ばれる。
+  用途は私的な取り決めに従う。
+  </p>
+  <p>PM シーケンスはコマンド列の形式に従う。
+  PM は 01/11 05/14 (<kbd>ESC ^</kbd>) または 09/14 で表現される。
   </p>
 </li>
 <li><dfn class="cfunc">APC</dfn>: Application Program Command
-  <p>APC で始まるシーケンスは <dfn>APC シーケンス</dfn> (APC sequence)
-  または Application Program Command と呼ばれる。
-  APC は "ESC _" &lt;x1B x5F&gt; (または &lt;x9F&gt;) で表現される。
-  CSI と同様に現在は &lt;x1B x5F&gt; を用いる。
-  <strong>.*</strong> に内容を記述する。
-  ST &lt;x1B x5C&gt; (または &lt;x9C&gt;) はコマンドの終端を表す。
+  <p>[ECMA-48/8.3.2]
+  APC で始まるシーケンスは <dfn>APC シーケンス</dfn> (APC sequence)
+  または アプリケーションプログラムコマンド (application program command) と呼ばれる。
+  用途は関連するアプリケーションプログラムの間で取り決める。
+  </p>
+  <p>APC シーケンスはキャラクタ列の形式に従う。
+  APC は 01/11 05/15 (<kbd>ESC _</kbd>) または 09/15 で表現される。
   </p>
 </li>
 </ul>
@@ -598,7 +627,7 @@
 <h4>Note</h4>
 <ul>
 <li>[ECMA-48] SM, RM によれば
-  [ECMA-48/5.4.1] 私用引数文字列 (parameter strings for private use)
+  [ECMA-48/5.4.1] 私用引数列 (parameter strings for private use)
   を用いて private モードを実装しても良い。
   例えば DECSET, DECRST は ? で始まる引数による private モードである。
 </li>

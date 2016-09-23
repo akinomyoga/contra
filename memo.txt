@@ -12,7 +12,7 @@
 * ECMA-48 の制御関数の一覧と、ドキュメント済みの物の一覧
 
   [ECMA-48/8.3.1] ACK: Acknowledge  33
-  [ECMA-48/8.3.2] APC: Application Program Command  33
+  > [ECMA-48/8.3.2] APC: Application Program Command  33
   [ECMA-48/8.3.3] BEL: Bell  33
   [ECMA-48/8.3.4] BPH: Break Permitted Here  33
   [ECMA-48/8.3.5] BS: Backspace  34
@@ -26,7 +26,7 @@
   [ECMA-48/8.3.13] CPL: Cursor Preceding Line  35
   [ECMA-48/8.3.14] CPR: Active Position Report  35
   [ECMA-48/8.3.15] CR: Carriage Return  35
-  [ECMA-48/8.3.16] CSI: Control Sequence Introducer  36
+  > [ECMA-48/8.3.16] CSI: Control Sequence Introducer  36
   [ECMA-48/8.3.17] CTC: Cursor Tabulation Control  36
   [ECMA-48/8.3.18] CUB: Cursor Left  36
   [ECMA-48/8.3.19] CUD: Cursor Down  36
@@ -37,7 +37,7 @@
   [ECMA-48/8.3.24] DA: Device Attributes  37
   [ECMA-48/8.3.25] DAQ: Define Area Qualification  37
   [ECMA-48/8.3.26] DCH: Delete Character  38
-  [ECMA-48/8.3.27] DCS: Device Control String  38
+  > [ECMA-48/8.3.27] DCS: Device Control String  38
   [ECMA-48/8.3.28] DC1: Device Control One  38
   [ECMA-48/8.3.29] DC2: Device Control Two  38
   [ECMA-48/8.3.30] DC3: Device Control Three  39
@@ -99,12 +99,12 @@
   [ECMA-48/8.3.86] NEL: Next Line  51
   [ECMA-48/8.3.87] NP: Next Page  51
   [ECMA-48/8.3.88] NUL: Null  51
-  [ECMA-48/8.3.89] OSC: Operating System Command  51
+  > [ECMA-48/8.3.89] OSC: Operating System Command  51
   [ECMA-48/8.3.90] PEC: Presentation Expand Or Contract  51
   [ECMA-48/8.3.91] PFS: Page Format Selection  52
   > [ECMA-48/8.3.92] PLD: Partial Line Forward  52
   > [ECMA-48/8.3.93] PLU: Partial Line Backward  53
-  [ECMA-48/8.3.94] PM: Privacy Message  53
+  > [ECMA-48/8.3.94] PM: Privacy Message  53
   [ECMA-48/8.3.95] PP: Preceding Page  53
   [ECMA-48/8.3.96] PPA: Page Position Absolute  53
   [ECMA-48/8.3.97] PPB: Page Position Backward  53
@@ -138,7 +138,7 @@
   > [ECMA-48/8.3.125] SM: Set Mode  65
   [ECMA-48/8.3.126] SO: Shift-Out  65
   [ECMA-48/8.3.127] SOH: Start Of Heading  65
-  [ECMA-48/8.3.128] SOS: Start Of String  66
+  > [ECMA-48/8.3.128] SOS: Start Of String  66
   [ECMA-48/8.3.129] SPA: Start Of Guarded Area  66
   [ECMA-48/8.3.130] SPD: Select Presentation Directions  66
   [ECMA-48/8.3.131] SPH: Set Page Home  67
