@@ -8,6 +8,8 @@ CXX := cxx
 CXXFLAGS := -Wall -Wextra
 endif
 
+CXXFLAGS += -std=c++14
+
 directories += out
 
 all: impl1

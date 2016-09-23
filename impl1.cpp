@@ -151,14 +151,6 @@ namespace contra {
     has_extended_attribute  = 0x80000000u,
   };
 
-  static inline aflags_t attribute_to_aflags(attribute_t attr, int fgColorSpace, int bgColorSpace) {
-    return (attr & ~(attribute_t)(has_extended_attribute | fg_color_mask | bg_color_mask))
-      | fgColorSpace << fg_color_shift
-      | bgColorSpace << bg_color_shift;
-  }
-  static inline color_t attribute_getfg(attribute_t attr) { return (attr & fg_color_mask) << fg_color_shift;}
-  static inline color_t attribute_getbg(attribute_t attr) { return (attr & bg_color_mask) << bg_color_shift;}
-
   struct window_cell {
     std::uint32_t character {0};
     attribute_t attribute {0};
@@ -203,6 +195,13 @@ namespace contra {
     color_t  fg;
     color_t  bg;
 
+  private:
+    static aflags_t construct_aflags(attribute_t attr, int fgColorSpace, int bgColorSpace) {
+      return (attr & ~(attribute_t)(has_extended_attribute | fg_color_mask | bg_color_mask))
+        | fgColorSpace << fg_color_shift
+        | bgColorSpace << bg_color_shift;
+    }
+
   public:
     void load(attribute_t attr) {
       this->xflags = 0;
@@ -223,7 +222,7 @@ namespace contra {
         bgColorSpace = color_space_default;
       }
 
-      this->aflags = attribute_to_aflags(attr, fgColorSpace, bgColorSpace);
+      this->aflags = construct_aflags(attr, fgColorSpace, bgColorSpace);
     }
 
     void clear() {
@@ -232,6 +231,9 @@ namespace contra {
       this->fg = 0;
       this->bg = 0;
     }
+
+    color_t fg_space() const {return (aflags & fg_color_mask) >> fg_color_shift;}
+    color_t bg_space() const {return (aflags & bg_color_mask) >> bg_color_shift;}
 
   public:
     extended_attribute() {}
@@ -418,13 +420,13 @@ struct termcap_sgrcolor {
   unsigned aixterm_color;
 
   // 38:5:0-255
-  unsigned iso8613_color;
-  unsigned iso8613_color_spaces;
-  char iso8613_separater;
-  unsigned indexed_color_number;
+  unsigned      iso8613_color       ; //!< SGR number of ISO 8613-6 color specification
+  unsigned char iso8613_color_spaces; //!< supported color spaces specified by bits
+  char          iso8613_separater   ; //!< the separator character of ISO 8613-6 SGR arguments
+  unsigned      indexed_color_number; //!< the number of colors available through 38:5:*
 
-  // 1,22 で明るさを切り替える方式
-  unsigned high_intensity_on;
+  // 1,22 / 5,25 で明るさを切り替える方式
+  unsigned high_intensity_on ;
   unsigned high_intensity_off;
 };
 
@@ -680,7 +682,7 @@ private:
     }
 
     // fallback
-    // - ToDo: 色をクリアできない場合の対策
+    // - ToDo: 色をクリアできない場合の対策。
     //   設定できる色の中で最も近い色を設定する。設定できる色が一つ
     //   もない時はそもそも何の色も設定されていない筈だから気にしな
     //   くて良い。
@@ -728,13 +730,13 @@ private:
       }
 
       update_sgrcolor(
-        attribute_getfg( _xattr.aflags),  _xattr.fg,
-        attribute_getfg(m_xattr.aflags), m_xattr.fg,
+         _xattr.fg_space(),  _xattr.fg,
+        m_xattr.fg_space(), m_xattr.fg,
         sgrcap->cap_fg);
 
       update_sgrcolor(
-        attribute_getbg( _xattr.aflags),  _xattr.bg,
-        attribute_getbg(m_xattr.aflags), m_xattr.bg,
+         _xattr.bg_space(),  _xattr.bg,
+        m_xattr.bg_space(), m_xattr.bg,
         sgrcap->cap_bg);
 
       this->m_attr = newAttr;
