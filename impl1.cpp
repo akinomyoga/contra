@@ -124,6 +124,12 @@ namespace contra {
     color_space_cmy         = 3,
     color_space_cmyk        = 4,
     color_space_indexed     = 5,
+    color_space_default_bit     = 1 << color_space_default    ,
+    color_space_transparent_bit = 1 << color_space_transparent,
+    color_space_rgb_bit         = 1 << color_space_rgb        ,
+    color_space_cmy_bit         = 1 << color_space_cmy        ,
+    color_space_cmyk_bit        = 1 << color_space_cmyk       ,
+    color_space_indexed_bit     = 1 << color_space_indexed    ,
 
     is_fg_color_set         = 0x00010000,
     is_bg_color_set         = 0x00020000,
@@ -394,6 +400,15 @@ void put_char(window& w, std::uint32_t u) {
   cur.x += charwidth;
 }
 
+//-----------------------------------------------------------------------------
+//
+// SGR capabilities
+//
+// Note:
+//   端末が SGR に対応している場合、
+//   さすがに 0 はどの端末の対応していると仮定している。
+//
+
 struct termcap_sgrcolor {
   aflags_t bit;
   unsigned base;
@@ -403,8 +418,10 @@ struct termcap_sgrcolor {
   unsigned aixterm_color;
 
   // 38:5:0-255
-  unsigned iso8613_indexed_color;
+  unsigned iso8613_color;
+  unsigned iso8613_color_spaces;
   char iso8613_separater;
+  unsigned indexed_color_number;
 
   // 1,22 で明るさを切り替える方式
   unsigned high_intensity_on;
@@ -427,31 +444,39 @@ struct termcap_sgrflag2 {
 
 struct termcap_sgr_type {
   // aflags
-  termcap_sgrflag2 bold         {is_bold_set     , 1, is_faint_set           ,  2, 22};
-  termcap_sgrflag2 italic       {is_italic_set   , 3, is_fraktur_set         , 20, 23};
-  termcap_sgrflag2 underline    {is_underline_set, 4, is_double_underline_set, 21, 24};
-  termcap_sgrflag2 blink        {is_blink_set    , 5, is_rapid_blink_set     ,  6, 25};
-  termcap_sgrflag1 inverse      {is_inverse_set  , 7, 27};
-  termcap_sgrflag1 invisible    {is_invisible_set, 8, 28};
-  termcap_sgrflag1 strike       {is_strike_set   , 9, 29};
+  termcap_sgrflag2 cap_bold         {is_bold_set     , 1, is_faint_set           ,  2, 22};
+  termcap_sgrflag2 cap_italic       {is_italic_set   , 3, is_fraktur_set         , 20, 23};
+  termcap_sgrflag2 cap_underline    {is_underline_set, 4, is_double_underline_set, 21, 24};
+  termcap_sgrflag2 cap_blink        {is_blink_set    , 5, is_rapid_blink_set     ,  6, 25};
+  termcap_sgrflag1 cap_inverse      {is_inverse_set  , 7, 27};
+  termcap_sgrflag1 cap_invisible    {is_invisible_set, 8, 28};
+  termcap_sgrflag1 cap_strike       {is_strike_set   , 9, 29};
 
   // xflags
-  termcap_sgrflag2 framed       {is_frame_set       , 51, is_circle_set, 52, 54};
+  termcap_sgrflag2 cap_framed       {is_frame_set       , 51, is_circle_set, 52, 54};
 
-  termcap_sgrflag1 proportional {is_proportional_set, 26, 50};
-  termcap_sgrflag1 overline     {is_overline_set    , 53, 55};
+  termcap_sgrflag1 cap_proportional {is_proportional_set, 26, 50};
+  termcap_sgrflag1 cap_overline     {is_overline_set    , 53, 55};
 
   // ToDo: これらは端末に依ってはどれか一つだけ、あるいは、それぞれ全部 on/off 可能と思われる。
   // RLogin が曲がりなりにも実装しているので具体的に RLogin の動作を調べる。
-  // termcap_sgrflag2 cjklinerb {is_ideogram_single_rb_set, 60, is_ideogram_double_rb_set, 61, 65};
-  // termcap_sgrflag2 cjklinelt {is_ideogram_single_lt_set, 62, is_ideogram_double_lt_set, 63, 65};
-  // termcap_sgrflag2 cjklinelb {is_ideogram_single_lb_set, 66, is_ideogram_double_lb_set, 67, 65};
-  // termcap_sgrflag2 cjklinert {is_ideogram_single_rt_set, 68, is_ideogram_double_rt_set, 69, 65};
-  // termcap_sgrflag1 cjkstress {is_ideogram_stress_set, 64, 65};
+  // termcap_sgrflag2 cap_cjklinerb {is_ideogram_single_rb_set, 60, is_ideogram_double_rb_set, 61, 65};
+  // termcap_sgrflag2 cap_cjklinelt {is_ideogram_single_lt_set, 62, is_ideogram_double_lt_set, 63, 65};
+  // termcap_sgrflag2 cap_cjklinelb {is_ideogram_single_lb_set, 66, is_ideogram_double_lb_set, 67, 65};
+  // termcap_sgrflag2 cap_cjklinert {is_ideogram_single_rt_set, 68, is_ideogram_double_rt_set, 69, 65};
+  // termcap_sgrflag1 cap_cjkstress {is_ideogram_stress_set, 64, 65};
 
   // colors
-  termcap_sgrcolor sgrfg {is_fg_color_set, 30, 39,  90, 38, ascii_semicolon, 0, 0};
-  termcap_sgrcolor sgrbg {is_bg_color_set, 40, 49, 100, 48, ascii_semicolon, 0, 0};
+  termcap_sgrcolor cap_fg {
+    is_fg_color_set, 30, 39,  90,
+    38, color_space_indexed_bit | color_space_rgb_bit, ascii_semicolon, 256,
+    0, 0
+  };
+  termcap_sgrcolor cap_bg {
+    is_bg_color_set, 40, 49, 100,
+    48, color_space_indexed_bit | color_space_rgb_bit, ascii_semicolon, 256,
+    0, 0
+  };
 
   aflags_t aflagsNotResettable {0};
 
@@ -468,50 +493,52 @@ private:
   }
 
   void initialize_aflagsNotResettable(termcap_sgrcolor const& sgrcolor) {
-    if (!sgrcolor.off && (sgrcolor.base || sgrcolor.iso8613_indexed_color))
+    if (!sgrcolor.off && (sgrcolor.base || sgrcolor.iso8613_color))
       aflagsNotResettable = sgrcolor.bit;
   }
 
 public:
   void initialize() {
     aflagsNotResettable = 0;
-    initialize_aflagsNotResettable(bold);
-    initialize_aflagsNotResettable(italic);
-    initialize_aflagsNotResettable(underline);
-    initialize_aflagsNotResettable(blink);
-    initialize_aflagsNotResettable(inverse);
-    initialize_aflagsNotResettable(invisible);
-    initialize_aflagsNotResettable(strike);
-    initialize_aflagsNotResettable(sgrfg);
-    initialize_aflagsNotResettable(sgrbg);
+    initialize_aflagsNotResettable(cap_bold);
+    initialize_aflagsNotResettable(cap_italic);
+    initialize_aflagsNotResettable(cap_underline);
+    initialize_aflagsNotResettable(cap_blink);
+    initialize_aflagsNotResettable(cap_inverse);
+    initialize_aflagsNotResettable(cap_invisible);
+    initialize_aflagsNotResettable(cap_strike);
+    initialize_aflagsNotResettable(cap_fg);
+    initialize_aflagsNotResettable(cap_bg);
   }
 };
 
+//-----------------------------------------------------------------------------
+
 struct tty_target {
   std::FILE* file;
-  termcap_sgr_type sgrcap;
+  termcap_sgr_type const* sgrcap;
 
-  tty_target(std::FILE* file): file(file) {
-    this->sgrcap.initialize();
-  }
+  tty_target(std::FILE* file, termcap_sgr_type* sgrcap):
+    file(file), sgrcap(sgrcap) {}
 
+  void put(char c) {std::fputc(c, file);}
   void put_str(const char* s) {
-    while (*s) std::fputc(*s++, file);
+    while (*s) put(*s++);
   }
   void put_unsigned(unsigned value) {
     if (value >= 10)
       put_unsigned(value/10);
-    std::fputc(ascii_0 + value % 10, file);
+    put(ascii_0 + value % 10);
   }
 
 private:
   void sa_open_sgr() {
     if (this->sa_isSgrOpen) {
-      std::fputc(ascii_semicolon, file);
+      put(ascii_semicolon);
     } else {
       this->sa_isSgrOpen = true;
-      std::fputc(ascii_esc, file);
-      std::fputc(ascii_lbracket, file);
+      put(ascii_esc);
+      put(ascii_lbracket);
     }
   }
 
@@ -560,11 +587,11 @@ private:
     if (removed & (bit1 | bit2)) {
       put_unsigned(sgrflag.off);
       if (aflagsNew & bit2) {
-        std::fputc(ascii_semicolon, file);
+        put(ascii_semicolon);
         put_unsigned(sgr2);
       }
       if (aflagsNew & bit1) {
-        std::fputc(ascii_semicolon, file);
+        put(ascii_semicolon);
         put_unsigned(sgr1);
       }
     } else {
@@ -574,7 +601,7 @@ private:
         isOutput = true;
       }
       if (added & bit1) {
-        if (isOutput) std::fputc(ascii_semicolon, file);
+        if (isOutput) put(ascii_semicolon);
         put_unsigned(sgr1);
       }
     }
@@ -587,16 +614,8 @@ private:
   ) {
     if (colorSpaceNew == colorSpaceOld && colorNew == colorOld) return;
 
-    switch (colorSpaceNew) {
-    case color_space_default:
-    case color_space_transparent: // ToDo
-    case color_space_rgb: // ToDo
-    case color_space_cmy: // ToDo
-    case color_space_cmyk: // ToDo
-    default: // fallback
-      goto default_color;
-
-    case color_space_indexed:
+    // sgrAnsiColor, sgrAixColor
+    if (colorSpaceNew == color_space_indexed) {
       if (colorNew < 8) {
         if (sgrcolor.base) {
           // e.g \e[31m
@@ -604,40 +623,70 @@ private:
           if (sgrcolor.high_intensity_off)
             put_unsigned(sgrcolor.high_intensity_off);
           put_unsigned(sgrcolor.base + colorNew);
-          break;
+          return;
         }
       } else if (colorNew < 16) {
         if (sgrcolor.aixterm_color) {
           // e.g. \e[91m
           sa_open_sgr();
           put_unsigned(sgrcolor.aixterm_color + (colorNew & 7));
-          break;
+          return;
         } else if (sgrcolor.base && sgrcolor.high_intensity_on) {
           // e.g. \e[1;31m \e[2;42m
           sa_open_sgr();
           put_unsigned(sgrcolor.high_intensity_on);
           put_unsigned(sgrcolor.base + (colorNew & 7));
-          break;
+          return;
         }
       }
+    }
 
-      if (sgrcolor.iso8613_indexed_color) {
-        // e.g. \e[38;5;17m
-        sa_open_sgr();
-        put_unsigned(sgrcolor.iso8613_indexed_color);
-        std::fputc(sgrcolor.iso8613_separater, file);
-        put_unsigned(5);
-        std::fputc(sgrcolor.iso8613_separater, file);
-        put_unsigned(colorNew);
-        break;
-      }
-
-      goto default_color; // fallback
-
-    default_color:
+    if (colorSpaceNew == color_space_default && sgrcolor.off) {
       sa_open_sgr();
       put_unsigned(sgrcolor.off);
-      break;
+    }
+
+    // sgrISO8613_6Color
+    if (sgrcolor.iso8613_color
+      && (sgrcolor.iso8613_color_spaces & 1 << colorSpaceNew)
+    ) {
+      sa_open_sgr();
+      put_unsigned(sgrcolor.iso8613_color);
+      put(sgrcolor.iso8613_separater);
+      put_unsigned(colorSpaceNew);
+
+      if (colorSpaceNew == color_space_indexed) {
+        if (colorNew < sgrcolor.indexed_color_number) {
+          put(sgrcolor.iso8613_separater);
+          put_unsigned(colorNew);
+        }
+        return;
+      } else {
+        int numberOfComponents = 0;
+        switch (colorSpaceNew) {
+        case color_space_rgb:  numberOfComponents = 3; break;
+        case color_space_cmy:  numberOfComponents = 3; break;
+        case color_space_cmyk: numberOfComponents = 4; break;
+        }
+
+        for (int icomp = 0; icomp < numberOfComponents; icomp++) {
+          unsigned const comp = colorNew << icomp * 8 & 0xFF;
+          put(sgrcolor.iso8613_separater);
+          put_unsigned(comp);
+        }
+
+        return;
+      }
+    }
+
+    // fallback
+    // - ToDo: 色をクリアできない場合の対策
+    //   設定できる色の中で最も近い色を設定する。設定できる色が一つ
+    //   もない時はそもそも何の色も設定されていない筈だから気にしな
+    //   くて良い。
+    if (sgrcolor.off) {
+      sa_open_sgr();
+      put_unsigned(sgrcolor.off);
     }
   }
 
@@ -658,42 +707,42 @@ private:
         _xattr.load(newAttr);
 
       aflags_t const removed = ~_xattr.aflags & m_xattr.aflags;
-      if (removed & sgrcap.aflagsNotResettable) {
+      if (removed & sgrcap->aflagsNotResettable) {
         sa_open_sgr();
         m_xattr.aflags = 0;
       }
 
-      update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap.bold     );
-      update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap.italic   );
-      update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap.underline);
-      update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap.blink    );
+      update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap->cap_bold     );
+      update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap->cap_italic   );
+      update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap->cap_underline);
+      update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap->cap_blink    );
 
-      update_sgrflag1(_xattr.aflags, m_xattr.aflags, sgrcap.inverse  );
-      update_sgrflag1(_xattr.aflags, m_xattr.aflags, sgrcap.invisible);
-      update_sgrflag1(_xattr.aflags, m_xattr.aflags, sgrcap.strike   );
+      update_sgrflag1(_xattr.aflags, m_xattr.aflags, sgrcap->cap_inverse  );
+      update_sgrflag1(_xattr.aflags, m_xattr.aflags, sgrcap->cap_invisible);
+      update_sgrflag1(_xattr.aflags, m_xattr.aflags, sgrcap->cap_strike   );
 
       if ((newAttr | this->m_attr) & has_extended_attribute) {
-        update_sgrflag2(_xattr.xflags, m_xattr.xflags, sgrcap.framed);
-        update_sgrflag1(_xattr.xflags, m_xattr.xflags, sgrcap.proportional);
-        update_sgrflag1(_xattr.xflags, m_xattr.xflags, sgrcap.overline);
+        update_sgrflag2(_xattr.xflags, m_xattr.xflags, sgrcap->cap_framed);
+        update_sgrflag1(_xattr.xflags, m_xattr.xflags, sgrcap->cap_proportional);
+        update_sgrflag1(_xattr.xflags, m_xattr.xflags, sgrcap->cap_overline);
       }
 
       update_sgrcolor(
         attribute_getfg( _xattr.aflags),  _xattr.fg,
         attribute_getfg(m_xattr.aflags), m_xattr.fg,
-        sgrcap.sgrfg);
+        sgrcap->cap_fg);
 
       update_sgrcolor(
         attribute_getbg( _xattr.aflags),  _xattr.bg,
         attribute_getbg(m_xattr.aflags), m_xattr.bg,
-        sgrcap.sgrbg);
+        sgrcap->cap_bg);
 
       this->m_attr = newAttr;
       this->m_xattr = _xattr;
     }
 
     if (this->sa_isSgrOpen)
-      std::fputc(ascii_m, file);
+      put(ascii_m);
   }
 
 public:
@@ -712,21 +761,21 @@ public:
 
         if (wskip > 0) {
           if (this->m_attr == 0 && wskip <= 4) {
-            while (wskip--) std::fputc(' ', file);
+            while (wskip--) put(' ');
           } else {
-            std::fputc(ascii_esc, file);
-            std::fputc(ascii_lbracket, file);
+            put(ascii_esc);
+            put(ascii_lbracket);
             put_unsigned(wskip);
-            std::fputc(ascii_C, file);
+            put(ascii_C);
           }
           wskip = 0;
         }
 
         ttysetattr(w, line[x].attribute);
-        std::fputc(line[x].character, file);
+        put(line[x].character);
       }
 
-      std::fputc('\n', file);
+      put('\n');
     }
   }
 
@@ -753,7 +802,10 @@ int main() {
   for (int i = 0; i < 26; i++)
     put_char(w, 'a' + i);
 
-  tty_target target(stdout);
+  termcap_sgr_type sgrcap;
+  sgrcap.initialize();
+
+  tty_target target(stdout, &sgrcap);
   target.output_content(w);
 
   return 0;
