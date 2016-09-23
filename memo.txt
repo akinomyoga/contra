@@ -102,8 +102,8 @@
   [ECMA-48/8.3.89] OSC: Operating System Command  51
   [ECMA-48/8.3.90] PEC: Presentation Expand Or Contract  51
   [ECMA-48/8.3.91] PFS: Page Format Selection  52
-  [ECMA-48/8.3.92] PLD: Partial Line Forward  52
-  [ECMA-48/8.3.93] PLU: Partial Line Backward  53
+  > [ECMA-48/8.3.92] PLD: Partial Line Forward  52
+  > [ECMA-48/8.3.93] PLU: Partial Line Backward  53
   [ECMA-48/8.3.94] PM: Privacy Message  53
   [ECMA-48/8.3.95] PP: Preceding Page  53
   [ECMA-48/8.3.96] PPA: Page Position Absolute  53

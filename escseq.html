@@ -1045,7 +1045,7 @@
 <table class="normal center">
 <tr><th>名称</th>  <th>Sequence</th></tr>
 <tr><th>SGR</th>   <td>CSI <i>&lt;Pm&gt;</i> m</td></tr>
-<tr><th colspan="2">DECDHL</th><td>ESC # 3</td></tr>
+<tr><th rowspan="2">DECDHL</th><td>ESC # 3</td></tr>
 <tr>                           <td>ESC # 4</td></tr>
 <tr><th>DECSWL</th><td>ESC # 5</td></tr>
 <tr><th>DECDWL</th><td>ESC # 6</td></tr>
@@ -1055,10 +1055,11 @@
 
 <ul>
 <li><dfn class="cfunc">SGR</dfn>: Select Graphic Rendition (Set Graphic Rendition)
-  <i>&lt;Pm&gt;</i> にはセミコロン ';' 区切りで複数の番号を指定する。
+  <p><i>&lt;Pm&gt;</i> にはセミコロン ';' 区切りで複数の番号を指定する。
   各番号はそれぞれ対応する描画属性を設定したり解除したりするのに用いられる。
   パラメータを省略したときの既定値は 0 である。
   番号の詳細については後述する。
+  </p>
   <ul>
   <li>[ECMA-48/8.3.117], vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SGR">VT510: SGR</a></li>
@@ -1088,10 +1089,10 @@
   </ul>
 </li>
 <li><dfn class="cfunc">PLD</dfn>: Partial Line Down
-  <p>下付き文字にする。PLU で解除する。</p>
+  <p>[ECMA-48/8.3.92] 下付き文字にする。PLU で解除する。</p>
 </li>
 <li><dfn class="cfunc">PLU</dfn>: Partial Line Up
-  <p>上付き文字にする。PLD で解除する。</p>
+  <p>[ECMA-48/8.3.93] 上付き文字にする。PLD で解除する。</p>
 </li>
 </ul>
 
