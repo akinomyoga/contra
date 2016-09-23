@@ -93,13 +93,13 @@
 <tr>
   <th>NUL</th><td>\x00</td><td>\000</td><td>0/0</td><td>^@</td><td></td>
   <th>DLE</th><td>\x10</td><td>\020</td><td>1/0</td><td>^P</td><td></td>
-  <th>PAD</th><td>\x80</td><td>\200</td><td>8/0</td><td>&#x2325;^@</td><td></td>
+  <th>(PAD)</th><td>\x80</td><td>\200</td><td>8/0</td><td>&#x2325;^@</td><td></td>
   <th class="markB">DCS</th><td>\x90</td><td>\220</td><td>9/0</td><td>&#x2325;^P</td><td></td>
 </tr>
 <tr>
   <th>SOH</th><td>\x01</td><td>\000</td><td>0/1</td><td>^A</td><td></td>
-  <th>DC1<br/>XON</th><td>\x11</td><td>\020</td><td>1/1</td><td>^Q</td><td></td>
-  <th>HOP</th><td>\x81</td><td>\200</td><td>8/1</td><td>&#x2325;^A</td><td></td>
+  <th>DC1<br/>(XON)</th><td>\x11</td><td>\020</td><td>1/1</td><td>^Q</td><td></td>
+  <th>(HOP)</th><td>\x81</td><td>\200</td><td>8/1</td><td>&#x2325;^A</td><td></td>
   <th>PU1</th><td>\x91</td><td>\220</td><td>9/1</td><td>&#x2325;^Q</td><td></td>
 </tr>
 <tr>
@@ -110,14 +110,14 @@
 </tr>
 <tr>
   <th>ETX</th><td>\x03</td><td>\000</td><td>0/3</td><td>^C</td><td></td>
-  <th>DC3<br/>XOFF</th><td>\x13</td><td>\020</td><td>1/3</td><td>^S</td><td></td>
+  <th>DC3<br/>(XOFF)</th><td>\x13</td><td>\020</td><td>1/3</td><td>^S</td><td></td>
   <th>NBH</th><td>\x83</td><td>\200</td><td>8/3</td><td>&#x2325;^C</td><td></td>
   <th>STS</th><td>\x93</td><td>\220</td><td>9/3</td><td>&#x2325;^S</td><td></td>
 </tr>
 <tr>
   <th>EOT</th><td>\x04</td><td>\000</td><td>0/4</td><td>^D</td><td></td>
   <th>DC4</th><td>\x14</td><td>\020</td><td>1/4</td><td>^T</td><td></td>
-  <th>IND</th><td>\x84</td><td>\200</td><td>8/4</td><td>&#x2325;^D</td><td></td>
+  <th>(IND)</th><td>\x84</td><td>\200</td><td>8/4</td><td>&#x2325;^D</td><td></td>
   <th>CCH</th><td>\x94</td><td>\220</td><td>9/4</td><td>&#x2325;^T</td><td></td>
 </tr>
 <tr>
@@ -149,13 +149,13 @@
   <th>HT</th> <td>\x09</td><td>\011</td><td>0/9</td><td>^I</td><td>\t</td>
   <th>EM</th> <td>\x19</td><td>\031</td><td>1/9</td><td>^Y</td><td></td>
   <th>HTJ</th><td>\x89</td><td>\211</td><td>8/9</td><td>&#x2325;^I</td><td></td>
-  <th>SGCI</th><td>\x99</td><td>\231</td><td>9/9</td><td>&#x2325;^Y</td><td></td>
+  <th>(SGCI)</th><td>\x99</td><td>\231</td><td>9/9</td><td>&#x2325;^Y</td><td></td>
 </tr>
 <tr>
   <th>LF</th> <td>\x0A</td><td>\012</td><td>0/10</td><td>^J</td><td>\n</td>
   <th>SUB</th><td>\x1A</td><td>\032</td><td>1/10</td><td>^Z</td><td>\z</td>
   <th>VTS</th><td>\x8A</td><td>\212</td><td>8/10</td><td>&#x2325;^J</td><td></td>
-  <th>SCI<br/>DECID</th><td>\x9A</td><td>\232</td><td>9/10</td><td>&#x2325;^Z</td><td></td>
+  <th>SCI<br/>(DECID)</th><td>\x9A</td><td>\232</td><td>9/10</td><td>&#x2325;^Z</td><td></td>
 </tr>
 <tr>
   <th>VT</th> <td>\x0B</td><td>\013</td><td>0/11</td><td>^K</td><td>\v</td>
@@ -176,13 +176,13 @@
   <th class="markB">OSC</th><td>\x9D</td><td>\235</td><td>9/13</td><td>&#x2325;^]</td><td></td>
 </tr>
 <tr>
-  <th>SO</th> <td>\x0E</td><td>\016</td><td>0/14</td><td>^N</td><td></td>
+  <th>SO<br/>LS1</th> <td>\x0E</td><td>\016</td><td>0/14</td><td>^N</td><td></td>
   <th>RS</th> <td>\x1E</td><td>\036</td><td>1/14</td><td>^^</td><td></td>
   <th>SS2</th><td>\x8E</td><td>\216</td><td>8/14</td><td>&#x2325;^N</td><td></td>
   <th class="markB">PM</th><td>\x9E</td><td>\236</td><td>9/14</td><td>&#x2325;^^</td><td></td>
 </tr>
 <tr>
-  <th>SI</th> <td>\x0F</td><td>\017</td><td>0/15</td><td>^O</td><td></td>
+  <th>SI<br/>LS0</th> <td>\x0F</td><td>\017</td><td>0/15</td><td>^O</td><td></td>
   <th>US</th><td>\x1F</td><td>\037</td><td>1/15</td><td>^_</td><td></td>
   <th>SS3</th><td>\x8F</td><td>\217</td><td>8/15</td><td>&#x2325;^O</td><td></td>
   <th class="markB">APC</th><td>\x9F</td><td>\237</td><td>9/15</td><td>&#x2325;^_</td><td></td>
@@ -226,6 +226,25 @@
   ここだけの表現として、バイトの Meta 修飾 (c|=0x80) を &#x2325; を先頭に冠して表現する事にした。
   "ES" の列には、様々の言語の文字リテラル中で用いられる特別な表現があれば、それを記した。
   </p>
+</li>
+<li>ISO/IEC 646 には C0 が含まれる。ISO/IEC 6429, ISO/IEC 10646 には C0/C1 の療法が含まれる。
+  表中の C0 の制御文字は ISO/IEC 646 (1967) による。また C1 の制御文字は ISO/IEC 6429 による。
+  <ul>
+  <li>[ECMA-48] ISO/IEC 6429 では FS, GS, RS, US には
+    それぞれ IS4, IS3, IS2, IS1 という名称が与えられている。</li>
+  <li><a href="https://en.wikipedia.org/wiki/ASCII">ASCII (Wikipedia)</a>:
+    ISO/IEC 646 (1965) では SUB は SS という名称だった。
+    ISO/IEC 646 (1963) では
+    NUL は NULL、SOH は SOM、STX は EOA、ETX は EOM、
+    ENQ は WRU、ACK は RU、BEL は BELL、BS は FE0、HT は HT/SK、
+    VT は VTAB、DLE は DC0、NAK は ERR、SYN は SYNC、ETB は LEM、
+    CAN-US は S0-S7 という名称だった。
+  </li>
+  <li>ISO/IEC 6429 では 08/00, 08/01, 08/04, 09/09 に名称は与えられていない。
+    Unicode (ISO/IEC 10646) では 08/04 (U+0084) に IND (Index)という名称が与えられているが、
+    他は何も割り当てられていない (XXX)。
+  </li>
+  </ul>
 </li>
 <li>References
   <ul>
