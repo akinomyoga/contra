@@ -148,6 +148,7 @@ namespace contra {
     attribute_reserved_bit1 = 0x20000000,
     attribute_reserved_bit2 = 0x40000000,
 
+    // only valid for attribute_t
     has_extended_attribute  = 0x80000000u,
   };
 
@@ -187,6 +188,14 @@ namespace contra {
     is_ideogram_single_rt_set = 0x00400000, // -+- SGR 68,69
     is_ideogram_double_rt_set = 0x00800000, // -'
     is_ideogram_stress_set    = 0x01000000, // --- SGR 64
+    is_ideogram_decoration_mask
+      = is_ideogram_single_rb_set | is_ideogram_double_rb_set
+      | is_ideogram_single_lt_set | is_ideogram_double_lt_set
+      | is_ideogram_single_lb_set | is_ideogram_double_lb_set
+      | is_ideogram_single_rt_set | is_ideogram_double_rt_set
+      | is_ideogram_stress_set,
+
+    non_sgr_xflags_mask = is_sub_set | is_sup_set | decdhl_mask,
   };
 
   struct extended_attribute {
@@ -411,6 +420,43 @@ void put_char(window& w, std::uint32_t u) {
 //   さすがに 0 はどの端末の対応していると仮定している。
 //
 
+struct termcap_sgrflag1 {
+  aflags_t bit;
+  unsigned on;
+  unsigned off;
+};
+
+struct termcap_sgrflag2 {
+  aflags_t bit1;
+  unsigned on1;
+  aflags_t bit2;
+  unsigned on2;
+  unsigned off;
+};
+
+struct termcap_sgrideogram {
+  /*?lwiki
+   * @var bool is_cjkdecoration_exclusive;
+   *   現在のところ ideogram decorations はどれか一つだけが有効になる様に実装することにする。
+   *   (但し、将来それぞれスイッチできる様に変更できる余地を残すために各項目 1bit 占有している。)
+   *   但し、実際の端末では複数を有効にすることができる実装もあるだろう。
+   *   その場合には、一貫した動作をさせる為には必ず既に設定されている装飾を解除する必要がある。
+   *   この設定項目は出力先の端末で ideogram decorations が排他的かどうかを保持する。
+   */
+  // ToDo: RLogin の動作を確認する。
+  bool is_cjkdecoration_exclusive   {true};
+  unsigned single_rb {60};
+  unsigned double_rb {61};
+  unsigned single_lt {62};
+  unsigned double_lt {63};
+  unsigned single_lb {66};
+  unsigned double_lb {67};
+  unsigned single_rt {68};
+  unsigned double_rt {69};
+  unsigned stress    {64};
+  unsigned reset     {65};
+};
+
 struct termcap_sgrcolor {
   aflags_t bit;
   unsigned base;
@@ -430,20 +476,6 @@ struct termcap_sgrcolor {
   unsigned high_intensity_off;
 };
 
-struct termcap_sgrflag1 {
-  aflags_t bit;
-  unsigned on;
-  unsigned off;
-};
-
-struct termcap_sgrflag2 {
-  aflags_t bit1;
-  unsigned on1;
-  aflags_t bit2;
-  unsigned on2;
-  unsigned off;
-};
-
 struct termcap_sgr_type {
   // aflags
   termcap_sgrflag2 cap_bold         {is_bold_set     , 1, is_faint_set           ,  2, 22};
@@ -460,13 +492,7 @@ struct termcap_sgr_type {
   termcap_sgrflag1 cap_proportional {is_proportional_set, 26, 50};
   termcap_sgrflag1 cap_overline     {is_overline_set    , 53, 55};
 
-  // ToDo: これらは端末に依ってはどれか一つだけ、あるいは、それぞれ全部 on/off 可能と思われる。
-  // RLogin が曲がりなりにも実装しているので具体的に RLogin の動作を調べる。
-  // termcap_sgrflag2 cap_cjklinerb {is_ideogram_single_rb_set, 60, is_ideogram_double_rb_set, 61, 65};
-  // termcap_sgrflag2 cap_cjklinelt {is_ideogram_single_lt_set, 62, is_ideogram_double_lt_set, 63, 65};
-  // termcap_sgrflag2 cap_cjklinelb {is_ideogram_single_lb_set, 66, is_ideogram_double_lb_set, 67, 65};
-  // termcap_sgrflag2 cap_cjklinert {is_ideogram_single_rt_set, 68, is_ideogram_double_rt_set, 69, 65};
-  // termcap_sgrflag1 cap_cjkstress {is_ideogram_stress_set, 64, 65};
+  termcap_sgrideogram cap_ideogram;
 
   // colors
   termcap_sgrcolor cap_fg {
@@ -481,36 +507,47 @@ struct termcap_sgr_type {
   };
 
   aflags_t aflagsNotResettable {0};
-
+  xflags_t xflagsNotResettable {0};
 private:
-  void initialize_aflagsNotResettable(termcap_sgrflag1 const& sgrflag) {
-    if (!sgrflag.off && sgrflag.on) aflagsNotResettable |= sgrflag.bit;
+  static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrflag1 const& sgrflag) {
+    if (!sgrflag.off && sgrflag.on) flags |= sgrflag.bit;
   }
 
-  void initialize_aflagsNotResettable(termcap_sgrflag2 const& sgrflag) {
+  static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrflag2 const& sgrflag) {
     if (!sgrflag.off) {
-      if (sgrflag.on1) aflagsNotResettable |= sgrflag.bit1;
-      if (sgrflag.on2) aflagsNotResettable |= sgrflag.bit2;
+      if (sgrflag.on1) flags |= sgrflag.bit1;
+      if (sgrflag.on2) flags |= sgrflag.bit2;
     }
   }
 
-  void initialize_aflagsNotResettable(termcap_sgrcolor const& sgrcolor) {
+  static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrcolor const& sgrcolor) {
     if (!sgrcolor.off && (sgrcolor.base || sgrcolor.iso8613_color))
-      aflagsNotResettable = sgrcolor.bit;
+      flags = sgrcolor.bit;
+  }
+
+  static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrideogram const& capIdeogram) {
+    if (!capIdeogram.reset)
+      flags |= is_ideogram_decoration_mask;
   }
 
 public:
   void initialize() {
     aflagsNotResettable = 0;
-    initialize_aflagsNotResettable(cap_bold);
-    initialize_aflagsNotResettable(cap_italic);
-    initialize_aflagsNotResettable(cap_underline);
-    initialize_aflagsNotResettable(cap_blink);
-    initialize_aflagsNotResettable(cap_inverse);
-    initialize_aflagsNotResettable(cap_invisible);
-    initialize_aflagsNotResettable(cap_strike);
-    initialize_aflagsNotResettable(cap_fg);
-    initialize_aflagsNotResettable(cap_bg);
+    initialize_unresettable_flags(aflagsNotResettable, cap_bold);
+    initialize_unresettable_flags(aflagsNotResettable, cap_italic);
+    initialize_unresettable_flags(aflagsNotResettable, cap_underline);
+    initialize_unresettable_flags(aflagsNotResettable, cap_blink);
+    initialize_unresettable_flags(aflagsNotResettable, cap_inverse);
+    initialize_unresettable_flags(aflagsNotResettable, cap_invisible);
+    initialize_unresettable_flags(aflagsNotResettable, cap_strike);
+    initialize_unresettable_flags(aflagsNotResettable, cap_fg);
+    initialize_unresettable_flags(aflagsNotResettable, cap_bg);
+
+    xflagsNotResettable = 0;
+    initialize_unresettable_flags(xflagsNotResettable, cap_framed);
+    initialize_unresettable_flags(xflagsNotResettable, cap_proportional);
+    initialize_unresettable_flags(xflagsNotResettable, cap_overline);
+    initialize_unresettable_flags(xflagsNotResettable, cap_ideogram);
   }
 };
 
@@ -523,11 +560,11 @@ struct tty_target {
   tty_target(std::FILE* file, termcap_sgr_type* sgrcap):
     file(file), sgrcap(sgrcap) {}
 
-  void put(char c) {std::fputc(c, file);}
-  void put_str(const char* s) {
+  void put(char c) const {std::fputc(c, file);}
+  void put_str(const char* s) const {
     while (*s) put(*s++);
   }
-  void put_unsigned(unsigned value) {
+  void put_unsigned(unsigned value) const {
     if (value >= 10)
       put_unsigned(value/10);
     put(ascii_0 + value % 10);
@@ -606,6 +643,37 @@ private:
         if (isOutput) put(ascii_semicolon);
         put_unsigned(sgr1);
       }
+    }
+  }
+
+  void update_ideogram_decoration(xflags_t xflagsNew, xflags_t xflagsOld, termcap_sgrideogram const& cap) {
+    if (((xflagsNew ^ xflagsOld) & is_ideogram_decoration_mask) == 0) return;
+
+    int sgr;
+    if (xflagsNew & is_ideogram_decoration_mask) {
+      if (xflagsNew & (is_ideogram_single_rb_set | is_ideogram_double_rb_set))
+        sgr = xflagsNew & is_ideogram_single_rb_set? cap.single_rb: cap.double_rb;
+      else if (xflagsNew & (is_ideogram_single_lt_set | is_ideogram_double_lt_set))
+        sgr = xflagsNew & is_ideogram_single_lt_set? cap.single_lt: cap.double_lt;
+      else if (xflagsNew & (is_ideogram_single_lb_set | is_ideogram_double_lb_set))
+        sgr = xflagsNew & is_ideogram_single_lb_set? cap.single_lb: cap.double_lb;
+      else if (xflagsNew & (is_ideogram_single_rt_set | is_ideogram_double_rt_set))
+        sgr = xflagsNew & is_ideogram_single_rt_set? cap.single_rt: cap.double_rt;
+      else if (xflagsNew & is_ideogram_stress_set)
+        sgr = cap.stress;
+      else
+        mwg_assert(0, "is_ideogram_decoration_mask is wrong");
+
+      if (sgr == 0 || xflagsOld & is_ideogram_decoration_mask) {
+        sa_open_sgr();
+        put_unsigned(cap.reset);
+      }
+    } else
+      sgr = cap.reset;
+
+    if (sgr) {
+      sa_open_sgr();
+      put_unsigned(sgr);
     }
   }
 
@@ -708,10 +776,14 @@ private:
       else
         _xattr.load(newAttr);
 
-      aflags_t const removed = ~_xattr.aflags & m_xattr.aflags;
-      if (removed & sgrcap->aflagsNotResettable) {
+      aflags_t const aremoved = ~_xattr.aflags & m_xattr.aflags;
+      xflags_t const xremoved = ~_xattr.xflags & m_xattr.xflags;
+      if (aremoved & sgrcap->aflagsNotResettable
+        || xremoved & sgrcap->xflagsNotResettable
+      ) {
         sa_open_sgr();
         m_xattr.aflags = 0;
+        m_xattr.xflags &= non_sgr_xflags_mask;
       }
 
       update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap->cap_bold     );
@@ -727,6 +799,7 @@ private:
         update_sgrflag2(_xattr.xflags, m_xattr.xflags, sgrcap->cap_framed);
         update_sgrflag1(_xattr.xflags, m_xattr.xflags, sgrcap->cap_proportional);
         update_sgrflag1(_xattr.xflags, m_xattr.xflags, sgrcap->cap_overline);
+        update_ideogram_decoration(_xattr.xflags, m_xattr.xflags, sgrcap->cap_ideogram);
       }
 
       update_sgrcolor(
