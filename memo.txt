@@ -5,6 +5,39 @@
   ToDo
 ------------------------------------------------------------------------------
 
+2016-09-24
+
+* これから本格的に端末の機能を実装していこうと考えている。
+  しかし、多少プログラムが長くなってきたので再度構造を考えてからにする。
+
+  window 自体はできるだけ plain な構造体にしたい。
+  端末自体は window とは独立に "window を書き換える者" として実装したい。
+  また window の描画先は "window の中身を写す者" として実装したい。
+  つまり受動的なオブジェクトとして描画先を定義するのではなくて、
+  能動的に window の中身を見て描画を行うのである。
+
+  window を書き換える者の名前は何にしようか。案としては
+  controller, painter, writer, layouter, application,...
+  writer や application は一般的すぎる気がする。
+  layouter は何か違う気がする。painter にすると、
+  window を実際に描画する者の方は一体何になるのかという問題がある。
+  controller も少々一般的というか余りしっくりと来ない。
+  window を碁盤か何かと考えれば player と observer がいい。
+  或いは window も board か何かに改名するか。
+  (しかし、"player" はまた別の意味にも取れるかもしれない。)
+  →取り敢えず各クラスの名前を変更する。
+
+  programs
+
+  - terminal multiplexer
+  - terminal with graphical user interface
+  - screen の様に複雑なことをする物が最終目的の一つだが、
+    一方で、cygterm の様に他のプログラムとの仲介を行う物もあった方が良い。
+    何かの折にそのようなシンプルな物が欲しくなることがあるだろうからである。
+
+todo: is_ideogram_exclusive が使われていない
+todo: 49 が無駄に出力されている? -> fixed
+
 2016-09-23
 
 * PLD/PLU/SGR 10-19 の出力を実装する
