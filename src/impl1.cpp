@@ -260,7 +260,9 @@ private:
       else
         mwg_assert(0, "is_ideogram_decoration_mask is wrong");
 
-      if (sgr == 0 || xflagsOld & is_ideogram_decoration_mask)
+      if (sgr == 0
+        || (xflagsOld & is_ideogram_decoration_mask && cap.is_decoration_exclusive)
+      )
         sgr_put(cap.reset);
     } else
       sgr = cap.reset;
@@ -321,7 +323,7 @@ private:
       } else {
         int numberOfComponents = 0;
         switch (colorSpaceNew) {
-        case color_space_rgb:  numberOfComponents = 3; break;
+        case color_space_rgb:
         case color_space_cmy:  numberOfComponents = 3; break;
         case color_space_cmyk: numberOfComponents = 4; break;
         }
