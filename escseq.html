@@ -262,6 +262,52 @@
 </li>
 </ul>
 
+<ul>
+<li>装置
+  <p>[ECMA-48/6.1] 装置 (ディスプレイやプリンターを想定する) は3つの部分で構成される。
+  <b>入力部</b> (input component)・<b>表示部</b> (presentation component)・<b>記録部</b> (data component) である。
+  特に記録部は双方向の文字列表示 (bidi) に対応する為に用意するが、単方向しか対応しなければ表示部と等価なので省略可能である。
+  表示部・記録部は共にそれぞれ<b>行</b>の集まりであり、行は<b>文字表示位置</b>の集まりである。
+  表示部は実際に表示されるときの固有の座標(行・列)を持ち、記録部は内部的な取り扱いで使用する固有の座標を持つ。
+  表示部・記録部はそれぞれカーソルを持ち、<b>表示位置</b> (active presentation position)・<b>記録位置</b> (active data position) という。
+  文字の挿入によるカーソルの移動は、記録位置を行内の次の文字表示位置に移動するものである (implicit movement)。
+  制御機能によるカーソルの移動は記録位置もしくは表示位置に作用する (explicit movement)。
+  表示位置と記録位置は連動する。つまり一方の位置に対する移動操作によって、他方が間接的に移動する (indirect movement)。
+  何れの移動も、存在しない場所に移動しようとしたときの動作は処理系依存である (例えば行折り返しをしたり、動作を停止したりする)。
+  </p>
+</li>
+<li><dfn class="cfunc">LF</dfn>: Line Feed
+  <p>[ECMA-48/8.1.74] 表示位置または記録位置 (<b>DCSM</b> に応じて変わる) を次の行に移動する。列はそのまま。</p>
+  <ul>
+  <li>一般的な実装では、最終行にいる時には一行最後に追加してからその行に移動する。</li>
+  <li>screen, Poderosa は常に列はそのままである。</li>
+  <li>xterm, RLogin, mintty では <b>LNM</b> が設定されている時は次の行の先頭に移動する。</li>
+  </ul>
+</li>
+<li><dfn class="cfunc">VT</dfn>: Line Tabulation
+  <p>[ECMA-48/8.1.161] 表示位置を次の line tabstop list のある行に移動する。列はそのまま。</p>
+  <ul>
+  <li>一般的な実装では単に次の行に移動する。
+    最終行にいる時には一行最後に追加してからその行に移動する。</li>
+  <li>xterm, RLogin は <b>LNM</b> が設定されている時には次の行の先頭に移動する。</li>
+  <li>mintty, screen, Poderosa は <b>LNM</b> の値に拘らず列は移動しない。</li>
+  <li>RLogin では最終行にいても行の追加・移動は行わない。
+    <b>LNM</b> が設定されている時に最終行にいる時は単に行頭に移動する。</li>
+  <li>xterm, screen, Poderosa では LF と全く同じ動作である。</li>
+  </ul>
+</li>
+<li><dfn class="cfunc">FF</dfn>: Form Feed
+  <p>[ECMA-48/8.1.51] 表示位置を次のページの page home position がある行に移動する。列はそのまま。</p>
+  <ul>
+  <li>一般的な実装では単に次の行に移動する。
+    最終行にいる時には一行最後に追加してからその行に移動する。</li>
+  <li>mintty, screen, Poderosa は <b>LNM</b> の値に拘らず列は移動しない。</li>
+  <li>xterm, RLogin では <b>LMN</b> が設定されている時は次の行の先頭に移動する。</li>
+  <li>xterm, RLogin, screen, Poderosa では LF と全く同じ動作である。</li>
+  </ul>
+</li>
+</ul>
+
 <h3 id="acro.ESC"><dfn class="cfunc">ESC</dfn>: Escape</h3>
 <p>特に ESC で始まるシーケンスを(狭義)<dfn>エスケープシーケンス</dfn>と呼ぶ。
 以下に 2バイト目 (ESC の次のバイト) で分類した表を載せる。
