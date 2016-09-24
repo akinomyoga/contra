@@ -373,12 +373,8 @@ namespace contra {
       this->m_rotation = (m_rotation + offset) % m_height;
     }
 
-  public:
-    extended_attribute_store m_xattr_data;
 
-    void clear_line(int y) {
-      board_cell* cell = &this->m_data[m_line_offset[(m_rotation + y) % m_height]];
-      board_cell* const cellN = cell + m_width;
+    void clear_range(board_cell* cell, board_cell* cellN) {
       for (; cell < cellN; cell++) {
         if (cell->attribute & has_extended_attribute)
           this->m_xattr_data.dec(cell->attribute);
@@ -387,6 +383,17 @@ namespace contra {
         // ToDo拡張glyph dec
         cell->character = 0;
       }
+    }
+  public:
+    extended_attribute_store m_xattr_data;
+
+    void clear_line(int y) {
+      board_cell* cell = &this->m_data[m_line_offset[(m_rotation + y) % m_height]];
+      clear_range(cell, cell + m_width);
+    }
+    void clear_screen() {
+      board_cell* cell = &this->m_data[0];
+      clear_range(cell, cell + m_width * m_height);
     }
 
     void set_character(board_cell* cell, char32_t ch) {
