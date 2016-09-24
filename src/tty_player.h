@@ -4,27 +4,26 @@
 #include "board.h"
 #include <cstdlib>
 #include <algorithm>
+#include <iterator>
 
 namespace contra {
 
   typedef std::uint32_t mode_t;
 
   enum mode_spec_layout {
-    mode_field_mask = 0xF0000000u, mode_field_shift = 28,
-    mode_index_mask = 0x0FF00000u, mode_index_shift = 20,
+    mode_index_mask = 0xFFF00000u, mode_index_shift = 20,
     mode_type_mask  = 0x000F0000u, mode_type_shift  = 16,
     mode_param_mask = 0x0000FFFFu, mode_param_shift = 0,
   };
 
-  constexpr mode_t construct_mode_spec(mode_t type, mode_t param, mode_t field, mode_t index) {
+  constexpr mode_t construct_mode_spec(mode_t type, mode_t param, mode_t index) {
     return type << mode_type_shift
       | param << mode_param_shift
-      | field << mode_field_shift
       | index << mode_index_shift;
   }
 
   enum mode_spec {
-    mode_lnm = construct_mode_spec(0, 20, 0, 0),
+    mode_lnm = construct_mode_spec(0, 20, 0),
   };
 
   struct tty_config {
@@ -43,37 +42,35 @@ namespace contra {
     bool ff_using_home_position {false};
 
   private:
-    std::uint32_t m_mode_flags0;
+    std::uint32_t m_mode_flags[1];
 
     void initialize_mode() {
-      this->m_mode_flags0 = 0;
+      std::fill(std::begin(m_mode_flags), std::end(m_mode_flags), 0);
       set_mode(mode_lnm);
     }
 
   public:
     bool get_mode(mode_t modeSpec) {
-      int const field = (modeSpec & mode_field_mask) >> mode_field_shift;
-      int const bitIndex = (modeSpec & mode_index_mask) >> mode_index_shift;
-      if (field == 0) {
-        return (m_mode_flags0 & 1 << bitIndex) != 0;
-      } else {
-        mwg_check(false, "invalid modeSpec");
-        std::exit(1);
-      }
+      int const index = (modeSpec & mode_index_mask) >> mode_index_shift;
+      unsigned const field = index >> 5;
+      std::uint32_t const bit = 1 << (index & 0x1F);
+      mwg_assert(field < sizeof(m_mode_flags)/sizeof(m_mode_flags[0]), "invalid modeSpec");;
+
+      std::uint32_t& flags = m_mode_flags[index >> 5];
+      return (flags & bit) != 0;
     }
 
     void set_mode(mode_t modeSpec, bool value = true) {
-      int const field = (modeSpec & mode_field_mask) >> mode_field_shift;
-      int const bitIndex = (modeSpec & mode_index_mask) >> mode_index_shift;
-      if (field == 0) {
-        if (value)
-          m_mode_flags0 |= 1 << bitIndex;
-        else
-          m_mode_flags0 &= ~(1 << bitIndex);
-      } else {
-        mwg_check(false, "invalid modeSpec");
-        std::exit(1);
-      }
+      int const index = (modeSpec & mode_index_mask) >> mode_index_shift;
+      unsigned const field = index >> 5;
+      std::uint32_t const bit = 1 << (index & 0x1F);
+      mwg_assert(field < sizeof(m_mode_flags)/sizeof(m_mode_flags[0]), "invalid modeSpec");;
+
+      std::uint32_t& flags = m_mode_flags[index >> 5];
+      if (value)
+        flags |= bit;
+      else
+        flags &= ~bit;
     }
 
   public:
