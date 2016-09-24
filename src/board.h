@@ -346,7 +346,7 @@ namespace contra {
 
   private:
     std::vector<board_cell> m_data;
-    int m_rotation {0};
+    curpos_t m_rotation {0};
     std::vector<int>  m_line_offset;
 
   public:
@@ -369,8 +369,25 @@ namespace contra {
       return const_cast<board_cell&>(const_cast<board const*>(this)->cell(x, y));
     }
 
+    void rotate(int offset = 1) {
+      this->m_rotation = (m_rotation + offset) % m_height;
+    }
+
   public:
     extended_attribute_store m_xattr_data;
+
+    void clear_line(int y) {
+      board_cell* cell = &this->m_data[m_line_offset[(m_rotation + y) % m_height]];
+      board_cell* const cellN = cell + m_width;
+      for (; cell < cellN; cell++) {
+        if (cell->attribute & has_extended_attribute)
+          this->m_xattr_data.dec(cell->attribute);
+        cell->attribute = 0;
+
+        // ToDo拡張glyph dec
+        cell->character = 0;
+      }
+    }
 
     void set_character(board_cell* cell, char32_t ch) {
       // ToDo 拡張glyph
