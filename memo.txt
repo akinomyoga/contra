@@ -1,4 +1,10 @@
 
+2016-09-25
+
+* カーソル位置
+  ToDo: HT CR
+  ToDo: SIMD, DCSM, LNM (VT)
+
 2016-09-23
 
 * DECDHL, DECDWL, DECSWL それぞれの互換性についてチェックする。
@@ -15,7 +21,7 @@
   > [ECMA-48/8.3.2] APC: Application Program Command  33
   [ECMA-48/8.3.3] BEL: Bell  33
   [ECMA-48/8.3.4] BPH: Break Permitted Here  33
-  [ECMA-48/8.3.5] BS: Backspace  34
+  > [ECMA-48/8.3.5] BS: Backspace  34
   [ECMA-48/8.3.6] CAN: Cancel  34
   [ECMA-48/8.3.7] CBT: Cursor Backward Tabulation  34
   [ECMA-48/8.3.8] CCH: Cancel Character  34
