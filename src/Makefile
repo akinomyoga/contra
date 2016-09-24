@@ -16,9 +16,11 @@ directories += $(objdir)
 
 -include $(objdir)/impl1.dep
 all: impl1
-impl1: $(objdir)/impl1.o
+impl1: $(objdir)/impl1.o $(objdir)/tty_observer.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 $(objdir)/impl1.o: impl1.cpp | $(objdir)
+	$(CXX) $(CXXFLAGS) -c -o $@ -MD -MF $(@:.o=.dep) $<
+$(objdir)/tty_observer.o: tty_observer.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ -MD -MF $(@:.o=.dep) $<
 
 #all: minimal_openpt
