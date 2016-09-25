@@ -82,6 +82,222 @@ namespace contra {
     }
   };
 
+  template<typename Processor>
+  class sequence_decoder {
+    typedef Processor processor_type;
+
+    enum decode_state {
+      decode_default,
+      decode_control_sequence,
+      decode_command_string,
+      decode_character_string,
+    };
+
+    processor_type* m_proc;
+    tty_config* m_config;
+
+    decode_state m_dstate {decode_default};
+    unsigned char m_seqtype {0};
+    std::vector<char32_t> m_seqstr;
+    bool m_hasPendingESC {false};
+    std::int32_t m_intermediateStart {-1};
+
+  public:
+    sequence_decoder(processor_type* proc, tty_config* config): m_proc(proc), m_config(config) {}
+
+  private:
+    void clear() {
+      this->m_seqtype = 0;
+      this->m_seqstr.clear();
+      this->m_hasPendingESC = false;
+      this->m_intermediateStart = -1;
+    }
+    void append(char32_t uchar) {
+      this->m_seqstr.push_back(uchar);
+    }
+
+    void process_invalid_sequence() {
+      m_proc->process_invalid_sequence(this);
+      clear();
+      m_dstate = decode_default;
+    }
+
+    void process_control_sequence(char32_t uchar) {
+      m_proc->process_control_sequence(this, uchar);
+      m_dstate = decode_default;
+      clear();
+    }
+
+    void process_command_string() {
+      m_proc->process_command_string(this);
+      m_dstate = decode_default;
+      clear();
+    }
+
+    void process_character_string() {
+      m_proc->process_character_string(this);
+      m_dstate = decode_default;
+      clear();
+    }
+
+    void process_char_for_control_sequence(char32_t uchar) {
+      if (0x40 <= uchar && uchar <= 0x7E) {
+        process_control_sequence(uchar);
+      } else {
+        if (m_intermediateStart >= 0) {
+          if (0x20 <= uchar && uchar <= 0x2F) {
+            append(uchar);
+          } else {
+            process_invalid_sequence();
+          }
+        } else {
+          if (0x20 <= uchar && uchar <= 0x3F) {
+            if (uchar <= 0x2F)
+              m_intermediateStart = m_seqstr.size();
+            append(uchar);
+          } else
+            process_invalid_sequence();
+        }
+      }
+    }
+
+    void process_char_for_command_string(char32_t uchar) {
+      if (m_hasPendingESC) {
+        if (uchar == ascii_backslash) {
+          process_command_string();
+        } else {
+          process_invalid_sequence();
+          process_char(ascii_esc);
+          process_char(uchar);
+        }
+
+        return;
+      }
+
+      if ((0x08 <= uchar && uchar <= 0x0D) || (0x20 <= uchar && uchar <= 0x7E)) {
+        append(uchar);
+      } else if (uchar == ascii_esc) {
+        m_hasPendingESC = true;
+      } else if ((uchar == ascii_st && m_config->c1_8bit_representation_enabled)
+        || (uchar == ascii_bel && m_seqtype == ascii_osc && m_config->osc_sequence_terminated_by_bel)
+      ) {
+        process_command_string();
+      } else {
+        process_invalid_sequence();
+        process_char(uchar);
+      }
+    }
+
+    void process_char_for_character_string(char32_t uchar) {
+      if (m_hasPendingESC) {
+        if (uchar == ascii_backslash || (uchar == ascii_st && m_config->c1_8bit_representation_enabled)) {
+          // final ST
+          if (uchar == ascii_st)
+            append(ascii_esc);
+          process_character_string();
+          return;
+        } else if (uchar == ascii_X || (uchar == ascii_sos && m_config->c1_8bit_representation_enabled)) {
+          // invalid SOS
+          process_invalid_sequence();
+          if (uchar == ascii_X)
+            process_char(ascii_esc);
+          process_char(uchar);
+          return;
+        } else if (uchar == ascii_esc) {
+          append(ascii_esc);
+          m_hasPendingESC = false;
+        }
+      }
+
+      if (uchar == ascii_esc)
+        m_hasPendingESC = true;
+      else if (uchar == ascii_st && m_config->c1_8bit_representation_enabled) {
+        process_character_string();
+      } else if (uchar == ascii_sos && m_config->c1_8bit_representation_enabled) {
+        process_invalid_sequence();
+        process_char(uchar);
+      } else
+        append(uchar);
+    }
+
+    void process_char_default_c1(char32_t c1char) {
+      switch (c1char) {
+      case ascii_csi:
+        m_seqtype = c1char;
+        m_dstate = decode_control_sequence;
+        break;
+      case ascii_sos:
+        m_seqtype = c1char;
+        m_dstate = decode_character_string;
+        break;
+      case ascii_dcs:
+      case ascii_osc:
+      case ascii_pm:
+      case ascii_apc:
+        m_seqtype = c1char;
+        m_dstate = decode_command_string;
+        break;
+      default:
+        process_invalid_sequence();
+        break;
+      }
+    }
+
+    void process_char_default(char32_t uchar) {
+      if (m_hasPendingESC) {
+        m_hasPendingESC = false;
+        if (0x40 <= uchar && uchar < 0x60) {
+          process_char_default_c1((uchar & 0x1F) | 0x80);
+        } else {
+          process_invalid_sequence();
+        }
+        return;
+      }
+
+      if (uchar < 0x20) {
+        if (uchar == ascii_esc)
+          m_hasPendingESC = true;
+        else
+          m_proc->process_control_character(uchar);
+      } else if (0x80 <= uchar && uchar < 0xA0) {
+        if (m_config->c1_8bit_representation_enabled)
+          process_char_default_c1(uchar);
+      } else {
+        m_proc->insert_char(uchar);
+      }
+    }
+
+  public:
+    void process_char(char32_t uchar) {
+      switch (m_dstate) {
+      case decode_default:
+        process_char_default(uchar);
+        break;
+      case decode_control_sequence:
+        process_char_for_control_sequence(uchar);
+        break;
+      case decode_command_string:
+        process_char_for_command_string(uchar);
+        break;
+      case decode_character_string:
+        process_char_for_character_string(uchar);
+        break;
+      }
+    }
+
+    void process_end() {
+      switch (m_dstate) {
+      case decode_control_sequence:
+      case decode_command_string:
+      case decode_character_string:
+        process_invalid_sequence();
+        break;
+      default: break;
+      }
+    }
+
+  };
+
   struct tty_state {
     int page_home_position {0};
   };
@@ -205,216 +421,41 @@ namespace contra {
     }
 
   private:
-    enum decode_state {
-      decode_default,
-      decode_control_sequence,
-      decode_command_string,
-      decode_character_string,
-    };
+    typedef sequence_decoder<tty_player> decoder_type;
+    decoder_type m_seqdecoder {this, &this->m_config};
+    friend decoder_type;
 
-    decode_state m_dstate {decode_default};
-    unsigned char m_seqtype {0};
-    std::vector<char32_t> m_seqstr;
-    bool m_seq_pending_esc {false};
-    std::int32_t m_seq_csi_intermediate {-1};
-    void seq_clear() {
-      this->m_seqtype = 0;
-      this->m_seqstr.clear();
-      this->m_seq_pending_esc = false;
-      this->m_seq_csi_intermediate = -1;
-    }
-    void seq_append(char32_t uchar) {
-      this->m_seqstr.push_back(uchar);
-    }
-
-    void process_invalid_sequence() {
+    void process_invalid_sequence(decoder_type* decoder) {
       // ToDo: 何処かにログ出力
-      seq_clear();
-      m_dstate = decode_default;
     }
-    void process_control_sequence(char32_t uchar) {
+    void process_control_sequence(decoder_type* decoder, char32_t uchar) {
       switch (uchar) {
       case ascii_m:
         break;
       }
-      m_dstate = decode_default;
-      seq_clear();
     }
-    void process_command_string() {
-      m_dstate = decode_default;
-      seq_clear();
-    }
-    void process_character_string() {
-      m_dstate = decode_default;
-      seq_clear();
-    }
+    void process_command_string(decoder_type* decoder) {}
+    void process_character_string(decoder_type* decoder) {}
 
-    void process_char_for_control_sequence(char32_t uchar) {
-      if (0x40 <= uchar && uchar <= 0x7E) {
-        process_control_sequence(uchar);
-      } else {
-        if (m_seq_csi_intermediate >= 0) {
-          if (0x20 <= uchar && uchar <= 0x2F) {
-            seq_append(uchar);
-          } else {
-            process_invalid_sequence();
-          }
-        } else {
-          if (0x20 <= uchar && uchar <= 0x3F) {
-            if (uchar <= 0x2F)
-              m_seq_csi_intermediate = m_seqstr.size();
-            seq_append(uchar);
-          } else
-            process_invalid_sequence();
-        }
-      }
-    }
-
-    void process_char_for_command_string(char32_t uchar) {
-      if (m_seq_pending_esc) {
-        if (uchar == ascii_backslash) {
-          process_command_string();
-        } else {
-          process_invalid_sequence();
-          process_char(ascii_esc);
-          process_char(uchar);
-        }
-
-        return;
-      }
-
-      if ((0x08 <= uchar && uchar <= 0x0D) || (0x20 <= uchar && uchar <= 0x7E)) {
-        seq_append(uchar);
-      } else if (uchar == ascii_esc) {
-        m_seq_pending_esc = true;
-      } else if ((uchar == ascii_st && m_config.c1_8bit_representation_enabled)
-        || (uchar == ascii_bel && m_seqtype == ascii_osc && m_config.osc_sequence_terminated_by_bel)
-      ) {
-        process_command_string();
-      } else {
-        process_invalid_sequence();
-        process_char(uchar);
-      }
-    }
-
-    void process_char_for_character_string(char32_t uchar) {
-      if (m_seq_pending_esc) {
-        if (uchar == ascii_backslash || (uchar == ascii_st && m_config.c1_8bit_representation_enabled)) {
-          // final ST
-          if (uchar == ascii_st)
-            seq_append(ascii_esc);
-          process_character_string();
-          return;
-        } else if (uchar == ascii_X || (uchar == ascii_sos && m_config.c1_8bit_representation_enabled)) {
-          // invalid SOS
-          process_invalid_sequence();
-          if (uchar == ascii_X)
-            process_char(ascii_esc);
-          process_char(uchar);
-          return;
-        } else if (uchar == ascii_esc) {
-          seq_append(ascii_esc);
-          m_seq_pending_esc = false;
-        }
-      }
-
-      if (uchar == ascii_esc)
-        m_seq_pending_esc = true;
-      else if (uchar == ascii_st && m_config.c1_8bit_representation_enabled) {
-        process_character_string();
-      } else if (uchar == ascii_sos && m_config.c1_8bit_representation_enabled) {
-        process_invalid_sequence();
-        process_char(uchar);
-      } else
-        seq_append(uchar);
-    }
-
-    void process_char_default_c1(char32_t c1char) {
-      switch (c1char) {
-      case ascii_csi:
-        m_seqtype = c1char;
-        m_dstate = decode_control_sequence;
-        break;
-      case ascii_sos:
-        m_seqtype = c1char;
-        m_dstate = decode_character_string;
-        break;
-      case ascii_dcs:
-      case ascii_osc:
-      case ascii_pm:
-      case ascii_apc:
-        m_seqtype = c1char;
-        m_dstate = decode_command_string;
-        break;
-      default:
-        process_invalid_sequence();
-        break;
-      }
-    }
-
-    void process_char_default(char32_t uchar) {
-      if (m_seq_pending_esc) {
-        m_seq_pending_esc = false;
-        if (0x40 <= uchar && uchar < 0x60) {
-          process_char_default_c1((uchar & 0x1F) | 0x80);
-        } else {
-          process_invalid_sequence();
-        }
-        return;
-      }
-
-      if (uchar < 0x20) {
-        switch (uchar) {
-        case ascii_esc: m_seq_pending_esc = true; break;
-        case ascii_bel: do_bel(); break;
-        case ascii_bs:  do_bs();  break;
-        case ascii_ht:  do_ht();  break;
-        case ascii_lf:  do_lf();  break;
-        case ascii_ff:  do_ff();  break;
-        case ascii_vt:  do_vt();  break;
-        case ascii_cr:  do_cr();  break;
-        }
-      } else if (0x80 <= uchar && uchar < 0xA0) {
-        if (m_config.c1_8bit_representation_enabled)
-          process_char_default_c1(uchar);
-      } else {
-        insert_char(uchar);
+    void process_control_character(char32_t uchar) {
+      switch (uchar) {
+      case ascii_bel: do_bel(); break;
+      case ascii_bs:  do_bs();  break;
+      case ascii_ht:  do_ht();  break;
+      case ascii_lf:  do_lf();  break;
+      case ascii_ff:  do_ff();  break;
+      case ascii_vt:  do_vt();  break;
+      case ascii_cr:  do_cr();  break;
       }
     }
 
   public:
-    void process_char(char32_t uchar) {
-      switch (m_dstate) {
-      case decode_default:
-        process_char_default(uchar);
-        break;
-      case decode_control_sequence:
-        process_char_for_control_sequence(uchar);
-        break;
-      case decode_command_string:
-        process_char_for_command_string(uchar);
-        break;
-      case decode_character_string:
-        process_char_for_character_string(uchar);
-        break;
-      }
-    }
-
-    void process_end() {
-      switch (m_dstate) {
-      case decode_control_sequence:
-      case decode_command_string:
-      case decode_character_string:
-        process_invalid_sequence();
-        break;
-      default: break;
-      }
-    }
-
     void printt(const char* text) {
-      while (*text) process_char(*text++);
+      while (*text) m_seqdecoder.process_char(*text++);
     }
-
+    void putc(char32_t uchar) {
+      m_seqdecoder.process_char(uchar);
+    }
   };
 
 }
