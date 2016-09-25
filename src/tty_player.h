@@ -305,6 +305,84 @@ namespace contra {
 
   };
 
+  struct csi_param_type {
+    std::uint32_t value;
+    bool isColon;
+  };
+
+  class csi_parameters {
+    std::vector<csi_param_type> m_data;
+    std::size_t m_index {0};
+
+  public:
+    std::size_t size() const {return m_data.size();}
+    void push_back(csi_param_type const& value) {m_data.push_back(value);}
+
+  public:
+    bool extract_parameters(char32_t const* str, std::size_t len, char32_t uchar) {
+      m_data.clear();
+      m_index = 0;
+
+      bool isSet = false;
+      csi_param_type param {0, false};
+      for (std::size_t i = 0; i < len; i++) {
+        char32_t const c = str[i];
+        if (!(ascii_0 <= c && c < ascii_semicolon)) {
+          std::fprintf(stderr, "invalid value of CSI parameter values.\n");
+          // todo print sequences
+          return false;
+        }
+
+        if (c <= ascii_9) {
+          std::uint32_t const newValue = param.value * 10 + (c - ascii_0);
+          if (newValue < param.value) {
+            // overflow
+            std::fprintf(stderr, "a CSI parameter value is too large.\n");
+            // todo print sequences
+            return false;
+          }
+
+          isSet = true;
+          param.value = newValue;
+        } else {
+          m_data.push_back(param);
+          isSet = true;
+          param.value = 0;
+          param.isColon = c == ascii_colon;
+        }
+      }
+
+      if (isSet) m_data.push_back(param);
+      return true;
+    }
+
+  public:
+    bool m_isColonAppeared;
+
+    bool read_param(std::uint32_t& result) {
+      while (m_index < m_data.size()) {
+        csi_param_type const& param = m_data[m_index++];
+        if (!param.isColon) {
+          m_isColonAppeared = false;
+          result = param.value;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    bool read_arg(std::uint32_t& result, bool toAllowSemicolon) {
+      if (m_index <m_data.size()
+        && (m_data[m_index].isColon || (toAllowSemicolon && !m_isColonAppeared))
+      ) {
+        if (m_data[m_index].isColon) m_isColonAppeared = true;
+        result = m_data[m_index++].value;
+        return true;
+      } else
+        return false;
+    }
+  };
+
   struct tty_state {
     int page_home_position {0};
   };
@@ -468,64 +546,9 @@ namespace contra {
     }
 
   private:
-    struct param_type {
-      std::uint32_t value;
-      bool isColon;
-    };
-
-    bool extract_parameters(std::vector<param_type>& params, decoder_type const* decoder, char32_t uchar) {
-      std::vector<char32_t> const& str = decoder->seqstr();
-      std::size_t const len = decoder->intermediateStart() < 0? str.size(): decoder->intermediateStart();
-
-      params.clear();
-
-      bool isSet = false;
-      param_type param {0, false};
-      for (std::size_t i = 0; i < len; i++) {
-        char32_t const c = str[i];
-        if (!(ascii_0 <= c && c < ascii_semicolon)) {
-          std::fprintf(stderr, "invalid value of CSI parameter values.\n");
-          // todo print sequences
-          return false;
-        }
-
-        if (c <= ascii_9) {
-          std::uint32_t const newValue = param.value * 10 + (c - ascii_0);
-          if (newValue < param.value) {
-            // overflow
-            std::fprintf(stderr, "a CSI parameter value is too large.\n");
-            // todo print sequences
-            return false;
-          }
-
-          isSet = true;
-          param.value = newValue;
-        } else {
-          params.push_back(param);
-          isSet = true;
-          param.value = 0;
-          param.isColon = c == ascii_colon;
-        }
-      }
-
-      if (isSet) params.push_back(param);
-      return true;
-    }
-
-    static bool read_arg(std::uint32_t& result, std::vector<param_type> const& params, std::size_t& index, bool& isColonAppeared) {
-      if (index <params.size() && (!isColonAppeared || params[index].isColon)) {
-        if (params[index].isColon) isColonAppeared = true;
-        result = params[index++].value;
-        return true;
-      } else
-        return false;
-    }
-
-    void do_sgr_iso8613_colors(std::vector<param_type>& params, std::size_t& index, bool isfg) {
-      bool isColonAppeared = false;
-
+    void do_sgr_iso8613_colors(csi_parameters& params, bool isfg) {
       std::uint32_t colorSpace = 0;
-      read_arg(colorSpace, params, index, isColonAppeared);
+      params.read_arg(colorSpace, true);
       switch (colorSpace) {
       case 0:
       default:
@@ -546,7 +569,7 @@ namespace contra {
       case 5:
         {
           std::uint32_t colorIndex;
-          if (read_arg(colorIndex, params, index, isColonAppeared)) {
+          if (params.read_arg(colorIndex, true)) {
             if (isfg)
               set_fg(colorIndex);
             else
@@ -569,23 +592,23 @@ namespace contra {
         }
       }
 
-      std::vector<param_type> params;
-      if (!extract_parameters(params, decoder, uchar)) return;
+      csi_parameters params;
+      {
+        std::vector<char32_t> const& str = decoder->seqstr();
+        std::size_t const len = decoder->intermediateStart() < 0? str.size(): decoder->intermediateStart();
+        if (!params.extract_parameters(&str[0], len, uchar)) return;
+      }
 
       if (params.size() == 0)
-        params.push_back(param_type {0, false});
+        params.push_back(csi_param_type {0, false});
 
-      std::size_t index = 0;
-      while (index < params.size()) {
-        param_type const& param = params[index++];
-        if (param.isColon) continue;
-
-        std::uint32_t const value = param.value;
+      std::uint32_t value;
+      while (params.read_param(value)) {
         if (30 <= value && value < 40) {
           if (value < 38) {
             set_fg(value - 30);
           } else if (value == 38) {
-            do_sgr_iso8613_colors(params, index, true);
+            do_sgr_iso8613_colors(params, true);
           } else {
             reset_fg();
           }
@@ -593,7 +616,7 @@ namespace contra {
           if (value < 48) {
             set_bg(value - 40);
           } else if (value == 48) {
-            do_sgr_iso8613_colors(params, index, false);
+            do_sgr_iso8613_colors(params, false);
           } else {
             reset_bg();
           }
@@ -603,7 +626,7 @@ namespace contra {
           set_bg(8 + (value - 100));
         } else {
           attribute_t& attr = m_board->cur.attribute;
-          switch (params[index].value) {
+          switch (value) {
           case 0:
             reset_attribute();
             break;
