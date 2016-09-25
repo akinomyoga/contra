@@ -31,9 +31,9 @@ namespace contra {
     ascii_so  = 0x0E, ascii_rs  = 0x1E, ascii_ss2 = 0x8E, ascii_pm   = 0x9E,
     ascii_si  = 0x0F, ascii_us  = 0x1F, ascii_ss3 = 0x8F, ascii_apc  = 0x9F,
 
-    ascii_space = 0x20,
-    ascii_del   = 0x7F,
-    ascii_nbsp  = 0xA0,
+    ascii_sp   = 0x20,
+    ascii_del  = 0x7F,
+    ascii_nbsp = 0xA0,
 
     // alnum
 
@@ -75,11 +75,30 @@ namespace contra {
     ascii_Y = 0x59, ascii_y = 0x79,
     ascii_Z = 0x5A, ascii_z = 0x7A,
 
-    // delimiters
+    // punctuations
 
-    ascii_colon     = 0x3A,
-    ascii_semicolon = 0x3B,
-    ascii_lbracket  = 0x5B,
+    ascii_exclamation   = 0x21,
+    ascii_double_quote  = 0x22,
+    ascii_number        = 0x23,
+    ascii_dollar        = 0x24,
+    ascii_percent       = 0x25,
+    ascii_ampersand     = 0x26,
+    ascii_single_quote  = 0x27,
+    ascii_left_paren    = 0x28,
+    ascii_right_paren   = 0x29,
+    ascii_asterisk      = 0x2A, ascii_colon     = 0x3A,
+    ascii_plus          = 0x2B, ascii_semicolon = 0x3B,
+    ascii_comma         = 0x2C, ascii_less      = 0x3C,
+    ascii_minus         = 0x2D, ascii_equals    = 0x3D,
+    ascii_dot           = 0x2E, ascii_greater   = 0x3E,
+    ascii_slash         = 0x2F, ascii_question  = 0x3F,
+
+    ascii_at            = 0x40, ascii_back_quote   = 0x60,
+    ascii_left_bracket  = 0x5B, ascii_left_brace   = 0x7B,
+    ascii_backslash     = 0x5C, ascii_vertical_bar = 0x7C,
+    ascii_right_bracket = 0x5D, ascii_right_brace  = 0x7D,
+    ascii_circumflex    = 0x5E, ascii_tilde        = 0x7E,
+    ascii_underscore    = 0x5F,
   };
 
   typedef std::uint32_t character_t;
@@ -372,7 +391,6 @@ namespace contra {
     void rotate(int offset = 1) {
       this->m_rotation = (m_rotation + offset) % m_height;
     }
-
 
     void clear_range(board_cell* cell, board_cell* cellN) {
       for (; cell < cellN; cell++) {

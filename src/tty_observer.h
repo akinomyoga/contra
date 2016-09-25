@@ -135,7 +135,7 @@ namespace contra {
   private:
     void sgr_clear() const {
       put(ascii_esc);
-      put(ascii_lbracket);
+      put(ascii_left_bracket);
       put(ascii_m);
     }
 
@@ -145,7 +145,7 @@ namespace contra {
       } else {
         this->sgr_isOpen = true;
         put(ascii_esc);
-        put(ascii_lbracket);
+        put(ascii_left_bracket);
       }
 
       if (value) put_unsigned(value);
@@ -193,7 +193,7 @@ namespace contra {
               while (wskip--) put(' ');
             } else {
               put(ascii_esc);
-              put(ascii_lbracket);
+              put(ascii_left_bracket);
               put_unsigned(wskip);
               put(ascii_C);
             }

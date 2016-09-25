@@ -33,6 +33,9 @@ namespace contra {
       this->initialize_mode();
     }
 
+    bool c1_8bit_representation_enabled {true};
+    bool osc_sequence_terminated_by_bel {true};
+
     bool vt_affected_by_lnm    {true};
     bool vt_appending_newline  {true};
     bool vt_using_line_tabstop {false}; // ToDo: not yet supported
@@ -201,10 +204,168 @@ namespace contra {
       m_board->cur.x = 0;
     }
 
-  public:
-    void process_char(char32_t uchar) {
+  private:
+    enum decode_state {
+      decode_default,
+      decode_control_sequence,
+      decode_command_string,
+      decode_character_string,
+    };
+
+    decode_state m_dstate {decode_default};
+    unsigned char m_seqtype {0};
+    std::vector<char32_t> m_seqstr;
+    bool m_seq_pending_esc {false};
+    std::int32_t m_seq_csi_intermediate {-1};
+    void seq_clear() {
+      this->m_seqtype = 0;
+      this->m_seqstr.clear();
+      this->m_seq_pending_esc = false;
+      this->m_seq_csi_intermediate = -1;
+    }
+    void seq_append(char32_t uchar) {
+      this->m_seqstr.push_back(uchar);
+    }
+
+    void process_invalid_sequence() {
+      // ToDo: 何処かにログ出力
+      seq_clear();
+      m_dstate = decode_default;
+    }
+    void process_control_sequence(char32_t uchar) {
+      switch (uchar) {
+      case ascii_m:
+        break;
+      }
+      m_dstate = decode_default;
+      seq_clear();
+    }
+    void process_command_string() {
+      m_dstate = decode_default;
+      seq_clear();
+    }
+    void process_character_string() {
+      m_dstate = decode_default;
+      seq_clear();
+    }
+
+    void process_char_for_control_sequence(char32_t uchar) {
+      if (0x40 <= uchar && uchar <= 0x7E) {
+        process_control_sequence(uchar);
+      } else {
+        if (m_seq_csi_intermediate >= 0) {
+          if (0x20 <= uchar && uchar <= 0x2F) {
+            seq_append(uchar);
+          } else {
+            process_invalid_sequence();
+          }
+        } else {
+          if (0x20 <= uchar && uchar <= 0x3F) {
+            if (uchar <= 0x2F)
+              m_seq_csi_intermediate = m_seqstr.size();
+            seq_append(uchar);
+          } else
+            process_invalid_sequence();
+        }
+      }
+    }
+
+    void process_char_for_command_string(char32_t uchar) {
+      if (m_seq_pending_esc) {
+        if (uchar == ascii_backslash) {
+          process_command_string();
+        } else {
+          process_invalid_sequence();
+          process_char(ascii_esc);
+          process_char(uchar);
+        }
+
+        return;
+      }
+
+      if ((0x08 <= uchar && uchar <= 0x0D) || (0x20 <= uchar && uchar <= 0x7E)) {
+        seq_append(uchar);
+      } else if (uchar == ascii_esc) {
+        m_seq_pending_esc = true;
+      } else if ((uchar == ascii_st && m_config.c1_8bit_representation_enabled)
+        || (uchar == ascii_bel && m_seqtype == ascii_osc && m_config.osc_sequence_terminated_by_bel)
+      ) {
+        process_command_string();
+      } else {
+        process_invalid_sequence();
+        process_char(uchar);
+      }
+    }
+
+    void process_char_for_character_string(char32_t uchar) {
+      if (m_seq_pending_esc) {
+        if (uchar == ascii_backslash || (uchar == ascii_st && m_config.c1_8bit_representation_enabled)) {
+          // final ST
+          if (uchar == ascii_st)
+            seq_append(ascii_esc);
+          process_character_string();
+          return;
+        } else if (uchar == ascii_X || (uchar == ascii_sos && m_config.c1_8bit_representation_enabled)) {
+          // invalid SOS
+          process_invalid_sequence();
+          if (uchar == ascii_X)
+            process_char(ascii_esc);
+          process_char(uchar);
+          return;
+        } else if (uchar == ascii_esc) {
+          seq_append(ascii_esc);
+          m_seq_pending_esc = false;
+        }
+      }
+
+      if (uchar == ascii_esc)
+        m_seq_pending_esc = true;
+      else if (uchar == ascii_st && m_config.c1_8bit_representation_enabled) {
+        process_character_string();
+      } else if (uchar == ascii_sos && m_config.c1_8bit_representation_enabled) {
+        process_invalid_sequence();
+        process_char(uchar);
+      } else
+        seq_append(uchar);
+    }
+
+    void process_char_default_c1(char32_t c1char) {
+      switch (c1char) {
+      case ascii_csi:
+        m_seqtype = c1char;
+        m_dstate = decode_control_sequence;
+        break;
+      case ascii_sos:
+        m_seqtype = c1char;
+        m_dstate = decode_character_string;
+        break;
+      case ascii_dcs:
+      case ascii_osc:
+      case ascii_pm:
+      case ascii_apc:
+        m_seqtype = c1char;
+        m_dstate = decode_command_string;
+        break;
+      default:
+        process_invalid_sequence();
+        break;
+      }
+    }
+
+    void process_char_default(char32_t uchar) {
+      if (m_seq_pending_esc) {
+        m_seq_pending_esc = false;
+        if (0x40 <= uchar && uchar < 0x60) {
+          process_char_default_c1((uchar & 0x1F) | 0x80);
+        } else {
+          process_invalid_sequence();
+        }
+        return;
+      }
+
       if (uchar < 0x20) {
         switch (uchar) {
+        case ascii_esc: m_seq_pending_esc = true; break;
         case ascii_bel: do_bel(); break;
         case ascii_bs:  do_bs();  break;
         case ascii_ht:  do_ht();  break;
@@ -214,9 +375,39 @@ namespace contra {
         case ascii_cr:  do_cr();  break;
         }
       } else if (0x80 <= uchar && uchar < 0xA0) {
-        // todo
+        if (m_config.c1_8bit_representation_enabled)
+          process_char_default_c1(uchar);
       } else {
         insert_char(uchar);
+      }
+    }
+
+  public:
+    void process_char(char32_t uchar) {
+      switch (m_dstate) {
+      case decode_default:
+        process_char_default(uchar);
+        break;
+      case decode_control_sequence:
+        process_char_for_control_sequence(uchar);
+        break;
+      case decode_command_string:
+        process_char_for_command_string(uchar);
+        break;
+      case decode_character_string:
+        process_char_for_character_string(uchar);
+        break;
+      }
+    }
+
+    void process_end() {
+      switch (m_dstate) {
+      case decode_control_sequence:
+      case decode_command_string:
+      case decode_character_string:
+        process_invalid_sequence();
+        break;
+      default: break;
       }
     }
 
