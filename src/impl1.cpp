@@ -14,22 +14,11 @@ int main() {
 
   contra::tty_player term(b);
 
-  term.set_fg(196);
-  for (int i = 0; i < 26; i++)
-    term.insert_char('a' + i);
-  term.set_fg(202);
-  for (int i = 0; i < 26; i++)
-    term.insert_char('a' + i);
-  term.set_fg(220);
-  for (int i = 0; i < 26; i++)
-    term.insert_char('a' + i);
-  term.set_fg(154);
-  for (int i = 0; i < 26; i++)
-    term.insert_char('a' + i);
-  term.set_fg(63);
-  for (int i = 0; i < 26; i++)
-    term.insert_char('a' + i);
-  term.printt("\n");
+  term.printt("\x1b[38:5:196mabcdefghijklmnopqrstuvwxyz");
+  term.printt("\x1b[38:5:202mabcdefghijklmnopqrstuvwxyz");
+  term.printt("\x1b[38:5:220mabcdefghijklmnopqrstuvwxyz");
+  term.printt("\x1b[38:5:154mabcdefghijklmnopqrstuvwxyz");
+  term.printt("\x1b[38:5:63mabcdefghijklmnopqrstuvwxyz\n");
   term.reset_fg();
   term.printt("Hello, world!\n");
   term.printt("Thank you!\n");

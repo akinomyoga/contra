@@ -103,6 +103,13 @@ namespace contra {
     std::int32_t m_intermediateStart {-1};
 
   public:
+    decode_state dstate() const {return m_dstate;}
+    unsigned char seqtype() const {return m_seqtype;}
+    std::vector<char32_t> const& seqstr() const {return m_seqstr;}
+    bool hasPendingESC() const {return m_hasPendingESC;}
+    std::int32_t intermediateStart() const {return m_intermediateStart;}
+
+  public:
     sequence_decoder(processor_type* proc, tty_config* config): m_proc(proc), m_config(config) {}
 
   private:
@@ -346,6 +353,11 @@ namespace contra {
       m_board->cur.attribute &= ~(attribute_t) (is_fg_color_set | fg_color_mask);
     }
 
+    void reset_attribute() {
+      // todo: extended attribute
+      m_board->cur.attribute = 0;
+    }
+
     void set_bg(int index) {
       if (index < 256) {
         m_board->cur.attribute
@@ -427,15 +439,21 @@ namespace contra {
 
     void process_invalid_sequence(decoder_type* decoder) {
       // ToDo: 何処かにログ出力
+      mwg_printd();
     }
     void process_control_sequence(decoder_type* decoder, char32_t uchar) {
-      switch (uchar) {
-      case ascii_m:
-        break;
+      if (decoder->intermediateStart() < 0) {
+        switch (uchar) {
+        case ascii_m: do_sgr(decoder, uchar); break;
+        }
       }
     }
-    void process_command_string(decoder_type* decoder) {}
-    void process_character_string(decoder_type* decoder) {}
+    void process_command_string(decoder_type* decoder) {
+      mwg_printd();
+    }
+    void process_character_string(decoder_type* decoder) {
+      mwg_printd();
+    }
 
     void process_control_character(char32_t uchar) {
       switch (uchar) {
@@ -446,6 +464,180 @@ namespace contra {
       case ascii_ff:  do_ff();  break;
       case ascii_vt:  do_vt();  break;
       case ascii_cr:  do_cr();  break;
+      }
+    }
+
+  private:
+    struct param_type {
+      std::uint32_t value;
+      bool isColon;
+    };
+
+    bool extract_parameters(std::vector<param_type>& params, decoder_type const* decoder, char32_t uchar) {
+      std::vector<char32_t> const& str = decoder->seqstr();
+      std::size_t const len = decoder->intermediateStart() < 0? str.size(): decoder->intermediateStart();
+
+      params.clear();
+
+      bool isSet = false;
+      param_type param {0, false};
+      for (std::size_t i = 0; i < len; i++) {
+        char32_t const c = str[i];
+        if (!(ascii_0 <= c && c < ascii_semicolon)) {
+          std::fprintf(stderr, "invalid value of CSI parameter values.\n");
+          // todo print sequences
+          return false;
+        }
+
+        if (c <= ascii_9) {
+          std::uint32_t const newValue = param.value * 10 + (c - ascii_0);
+          if (newValue < param.value) {
+            // overflow
+            std::fprintf(stderr, "a CSI parameter value is too large.\n");
+            // todo print sequences
+            return false;
+          }
+
+          isSet = true;
+          param.value = newValue;
+        } else {
+          params.push_back(param);
+          isSet = true;
+          param.value = 0;
+          param.isColon = c == ascii_colon;
+        }
+      }
+
+      if (isSet) params.push_back(param);
+      return true;
+    }
+
+    static bool read_arg(std::uint32_t& result, std::vector<param_type> const& params, std::size_t& index, bool& isColonAppeared) {
+      if (index <params.size() && (!isColonAppeared || params[index].isColon)) {
+        if (params[index].isColon) isColonAppeared = true;
+        result = params[index++].value;
+        return true;
+      } else
+        return false;
+    }
+
+    void do_sgr_iso8613_colors(std::vector<param_type>& params, std::size_t& index, bool isfg) {
+      bool isColonAppeared = false;
+
+      std::uint32_t colorSpace = 0;
+      read_arg(colorSpace, params, index, isColonAppeared);
+      switch (colorSpace) {
+      case 0:
+      default:
+        if (isfg)
+          reset_fg();
+        else
+          reset_bg();
+        break;
+
+      case 1:
+      case 2:
+      case 3:
+      case 4:
+        // ToDo
+        std::fprintf(stderr, "NYI\n");
+        break;
+
+      case 5:
+        {
+          std::uint32_t colorIndex;
+          if (read_arg(colorIndex, params, index, isColonAppeared)) {
+            if (isfg)
+              set_fg(colorIndex);
+            else
+              set_bg(colorIndex);
+          } else
+            std::fprintf(stderr, "missing argument for SGR 38:5\n");
+        }
+        break;
+      }
+    }
+
+    void do_sgr(decoder_type* decoder, char32_t uchar) {
+      if (decoder->seqstr().size() > 0) {
+        char32_t const head = decoder->seqstr()[0];
+        if (!(ascii_0 <= head && head <= ascii_semicolon)) {
+          // private form
+          std::fprintf(stderr, "private SGR not supported\n");
+          // todo print escape sequences
+          return;
+        }
+      }
+
+      std::vector<param_type> params;
+      if (!extract_parameters(params, decoder, uchar)) return;
+
+      if (params.size() == 0)
+        params.push_back(param_type {0, false});
+
+      std::size_t index = 0;
+      while (index < params.size()) {
+        param_type const& param = params[index++];
+        if (param.isColon) continue;
+
+        std::uint32_t const value = param.value;
+        if (30 <= value && value < 40) {
+          if (value < 38) {
+            set_fg(value - 30);
+          } else if (value == 38) {
+            do_sgr_iso8613_colors(params, index, true);
+          } else {
+            reset_fg();
+          }
+        } else if (40 <= value && value < 50) {
+          if (value < 48) {
+            set_bg(value - 40);
+          } else if (value == 48) {
+            do_sgr_iso8613_colors(params, index, false);
+          } else {
+            reset_bg();
+          }
+        } else if (90 <= value && value <= 97) {
+          set_fg(8 + (value - 90));
+        } else if (100 <= value && value <= 107) {
+          set_bg(8 + (value - 100));
+        } else {
+          attribute_t& attr = m_board->cur.attribute;
+          switch (params[index].value) {
+          case 0:
+            reset_attribute();
+            break;
+
+          case 1 : attr = (attr & ~(attribute_t) is_faint_set) | is_bold_set; break;
+          case 2 : attr = (attr & ~(attribute_t) is_bold_set) | is_faint_set; break;
+          case 22: attr = attr & ~(attribute_t) (is_bold_set | is_faint_set); break;
+
+          case 3 : attr = (attr & ~(attribute_t) is_fraktur_set) | is_italic_set; break;
+          case 20: attr = (attr & ~(attribute_t) is_italic_set) | is_fraktur_set; break;
+          case 23: attr = attr & ~(attribute_t) (is_italic_set | is_fraktur_set); break;
+
+          case 4 : attr = (attr & ~(attribute_t) is_double_underline_set) | is_underline_set; break;
+          case 21: attr = (attr & ~(attribute_t) is_underline_set) | is_double_underline_set; break;
+          case 24: attr = attr & ~(attribute_t) (is_underline_set | is_double_underline_set); break;
+
+          case 5 : attr = (attr & ~(attribute_t) is_rapid_blink_set) | is_blink_set; break;
+          case 6 : attr = (attr & ~(attribute_t) is_blink_set) | is_rapid_blink_set; break;
+          case 25: attr = attr & ~(attribute_t) (is_blink_set | is_rapid_blink_set); break;
+
+          case 7 : attr = attr | is_inverse_set; break;
+          case 27: attr = attr & ~(attribute_t) is_inverse_set; break;
+
+          case 8 : attr = attr | is_invisible_set; break;
+          case 28: attr = attr & ~(attribute_t) is_invisible_set; break;
+
+          case 9 : attr = attr | is_strike_set; break;
+          case 29: attr = attr & ~(attribute_t) is_strike_set; break;
+
+          default:
+            std::fprintf(stderr, "unrecognized SGR value\n");
+            break;
+          }
+        }
       }
     }
 
