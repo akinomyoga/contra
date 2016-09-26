@@ -1153,13 +1153,11 @@
 
 <!--************************************************************************-->
 <h2>描画属性</h2>
+
+<h3>文字挿入時の属性</h3>
 <table class="normal center">
 <tr><th>名称</th>  <th>Sequence</th></tr>
 <tr><th>SGR</th>   <td>CSI <i>&lt;Pm&gt;</i> m</td></tr>
-<tr><th rowspan="2">DECDHL</th><td>ESC # 3</td></tr>
-<tr>                           <td>ESC # 4</td></tr>
-<tr><th>DECSWL</th><td>ESC # 5</td></tr>
-<tr><th>DECDWL</th><td>ESC # 6</td></tr>
 <tr><th>PLD</th>   <td>PLD</td></tr>
 <tr><th>PLU</th>   <td>PLU</td></tr>
 </table>
@@ -1176,29 +1174,6 @@
   <li><a href="http://www.vt100.net/docs/vt510-rm/SGR">VT510: SGR</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECDHL</dfn>: Double-Width, Double-Height Line
-  <p>文字の幅・高さを2倍にして表示する。
-  実際には幅を2倍にして、上半分または下半分を表示する。
-  <kbd>ESC # 3</kbd> で上半分を、<kbd>ESC # 4</kbd> で下半分を表示する。
-  この制御機能は、連続する二つの行でそれぞれ ESC # 3 と ESC # 4 を用いて同じ内容を出力することで、
-  縦横2倍に拡大された文字を表示することを目的とする。
-  </p>
-  <ul>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DECDHL.html">VT510: DECDHL</a></li>
-  </ul>
-</li>
-<li><dfn class="cfunc">DECDWL</dfn>: Double-Width, Single-Height Line
-  <p>文字の幅を2倍にして表示する。</p>
-  <ul>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DECDWL.html">VT510: DECDWL</a></li>
-  </ul>
-</li>
-<li><dfn class="cfunc">DECSWL</dfn>: Single-Width, Single-Height Line
-  <p>DECDHL, DECDWL で設定された文字の幅・表示を元に戻す。</p>
-  <ul>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DECSWL.html">VT510: DECSWL</a></li>
-  </ul>
-</li>
 <li><dfn class="cfunc">PLD</dfn>: Partial Line Down
   <p>[ECMA-48/8.3.92] 下付き文字にする。PLU で解除する。</p>
 </li>
@@ -1210,6 +1185,42 @@
   <ul>
   <li><b>Replacing</b> (RM): SGR が登場する度にそれまでに設定されていた属性をすべて解除する。適用したい属性は毎回指定する必要がある。</li>
   <li><b>Cumulative</b> (SM): SGR をそれまでに設定されていた属性に対する変更として扱う。</li>
+  </ul>
+</li>
+</ul>
+
+<h3>行に対する属性</h3>
+<table>
+<tr><th rowspan="2">DECDHL</th><td>ESC # 3</td></tr>
+<tr>                           <td>ESC # 4</td></tr>
+<tr><th>DECSWL</th><td>ESC # 5</td></tr>
+<tr><th>DECDWL</th><td>ESC # 6</td></tr>
+</table>
+<ul>
+<li><dfn class="cfunc">DECDHL</dfn>: Double-Width, Double-Height Line
+  <p>現在カーソルのある行について、文字の幅・高さを2倍にして表示する。
+  実際には幅を2倍にして、上半分または下半分を表示する。
+  <kbd>ESC # 3</kbd> で上半分を、<kbd>ESC # 4</kbd> で下半分を表示する。
+  この制御機能は、連続する二つの行でそれぞれ ESC # 3 と ESC # 4 を用いて同じ内容を出力することで、
+  縦横2倍に拡大された文字を表示することを目的とする。
+  適用前に該当行の文字幅が通常だった場合、行に入り切らなくなった文字は失われる。
+  </p>
+  <ul>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECDHL.html">VT510: DECDHL</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECDWL</dfn>: Double-Width, Single-Height Line
+  <p>現在カーソルのある行について、文字の幅を2倍にして表示する。
+  適用前に該当行の文字幅が通常だった場合、行に入り切らなくなった文字は失われる。
+  </p>
+  <ul>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECDWL.html">VT510: DECDWL</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECSWL</dfn>: Single-Width, Single-Height Line
+  <p>現在カーソルのある行について、DECDHL, DECDWL で設定された文字の幅・表示を元に戻す。</p>
+  <ul>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECSWL.html">VT510: DECSWL</a></li>
   </ul>
 </li>
 </ul>
