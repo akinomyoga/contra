@@ -349,9 +349,9 @@
 <table class="normal center">
 <tr><th>名称</th>   <th>Sequence</th><th>Hex; 行/列</th></tr>
 <tr><th>RSCF</th>
-  <td>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></td>
-  <td>\x1B\x23<i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i>;
-    1/11 2/3 <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i>
+  <td>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
+  <td>\x1B\x23<i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i>;
+    1/11 2/3 <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i>
   </td>
 </tr>
 <tr><th>DECDHL</th> <td>ESC # 3</td> <td>\x1B\x23\x33; 1/11 2/3 3/3</td></tr>
@@ -361,7 +361,7 @@
 <tr><th>DECALN</th> <td>ESC # 8</td> <td>\x1B\x23\x38; 1/11 2/3 3/8</td></tr>
 </table>
 <p>但し、<i>&lt;I&gt;</i> は [0x20, 0x30) の範囲の文字であり、
-<i>&lt;Ft&gt;</i> は [0x40, 0x7F) の範囲の文字である。
+<i>&lt;F&gt;</i> は [0x40, 0x7F) の範囲の文字である。
 </p>
 
 <h3>その他のシーケンスの形式</h3>
@@ -369,7 +369,7 @@
 <table class="normal center">
 <tr><th>先頭</th><th>Sequence</th><th>名前</th></tr>
 <tr><th>CSI</th>
-  <td>CSI <i>&lt;Fp&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></td>
+  <td>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
   <td><dfn>制御シーケンス</dfn> (control sequence)</td>
 </tr>
 <tr><th>OSC</th>
@@ -387,27 +387,34 @@
 
 <ul>
 <li><dfn class="cfunc">CSI</dfn>: Constrol Sequence Introducer
-  <p>CSI (constrol sequence introducer) で始まるシーケンスを特に
+  <p>[ECMA-48/8.3.16] CSI (constrol sequence introducer) で始まるシーケンスを特に
   <dfn>CSI シーケンス</dfn> (CSI sequence)
   または (本来の) <dfn>制御シーケンス</dfn> (constrol sequence) と呼ぶ。
   プログラムに端末の特別な操作・状態・情報を送ったり (入力)、
   プログラムから端末の状態を制御する命令を送ったり (出力) するのに用いられる。
   </p>
   <p>CSI は 01/11 05/11 (<kbd>ESC [</kbd>)、または 09/11 で表現される。
-  <i>&lt;I&gt;</i> は 02/00-02/15 の範囲の文字を指定し、
-  <i>&lt;Ft&gt;</i> は 04/00-07/15 の範囲の文字を指定する。
-  <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i>
+  [ECMA-48/5.4]
+  <i>&lt;I&gt;</i> は 02/00 - 02/15 の範囲の文字を指定し、
+  <i>&lt;F&gt;</i> は 04/00 - 07/15 の範囲の文字を指定する。
+  <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i>
   の組合せによって、その制御シーケンスが特にどの様な機能を持った物かを指定する。
   それぞれの組合せに対応する制御シーケンスの機能は、端末に依存する所が大きい。
-  特に <i>&lt;Ft&gt;</i> = 07/00-07/14 のシーケンスは私用・実験用のシーケンスとして使って良い。
-  これについては、後でまとめる事にする。
-  <i>&lt;Fp&gt;</i> は [\x30, \x40) の範囲の文字を表す。
-  <i>&lt;Fp&gt;</i><strong>*</strong> の部分は、
-  引数文字列 (parameter bytes, parameter string) と呼ばれ、
-  <i><i>&lt;I&gt;</i><strong>*</strong> &lt;Ft&gt;</i> で指定された機能に対する引数として働く。
-  多くの場合、<code>/|([0-9]+;)*[0-9]+/</code> の形式を持つ。
-  場合によっては、更に異なる機能を指定するのに用いられる。
-  詳しくは後述する。
+  特に <i>&lt;F&gt;</i> = 07/00 - 07/14 のシーケンスは私用・実験用のシーケンスとして使って良い。
+  <i>&lt;P&gt;</i> は 03/00 - 03/15 の範囲の文字を表す。
+  <i>&lt;P&gt;</i><strong>*</strong> の部分は、
+  引数列 (parameter bytes, parameter string) と呼ばれ、
+  <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i> で指定された機能に対する引数として働く。
+  引数列が1文字以上あるとき、
+  [ECMA-48/5.4.1a] 一番初めの文字が 03/12 - 03/15 ("&lt;", "=", "&gt;", "?") のものは
+  私用・実験用の引数列であり形式は規定されない。
+  [ECMA-48/5.4.1a] 一番初めの文字が 03/12 - 03/11 ("0" - "9", ":", ";") の場合は、
+  [ECMA-48/5.4.2] 引数列は先ず 03/11 (";") で複数の引数に分割され、
+  更に引数は 03/10 (":") で複数の十進整数に分割される。
+  整数を省略した場合 (つまり空文字列の場合) は制御機能ごとに決まっている既定値が使用される。
+  整数の先頭についている余分な 03/00 ("0") の連続は無視される。
+  もし制御機能が一定の数の引数を要求するときに最後の引数を省略した場合、
+  その制御機能の既定値が使用される。
   </p>
   <p>CSI は 7 bit 表現 01/11 05/11 (<kbd>ESC [</kbd>) と 8 bit 表現 09/11 を持つが、
   8 bit のデータを許容しない処理系などのために 09/11 が用いられる事は少なく、
@@ -418,14 +425,16 @@
   今や 09/11 は既定では CSI として解釈しない端末も多い。
   この事情は他の全ての C1 制御文字で同様である。
   </p>
-  <p>[ECMA-48/8.3.16], [ECMA-48/5.4]</p>
+  <p></p>
+  <p>, [ECMA-48/5.4]</p>
 </li>
-<li>[ECMA-48/5.6]
+<li>制御列
+  <p>[ECMA-48/5.6]
   或る文字で始まって ST で終わるシーケンスを総称して<dfn>制御列</dfn> (control strings)と呼ぶ。
-  <p>その形式によって指令列と文字列に分類される。
-  <dfn>コマンド列</dfn> (command strings, 指令列) は ST (01/11 05/12 または 09/12) で終わり、
+  その形式によって指令列と文字列に分類される。</p>
+  <p><dfn>コマンド列</dfn> (command strings, 指令列) は ST (01/11 05/12 または 09/12) で終わり、
   間には 00/08-00/13 (BS, HT, LF, VT, FF, CR), 02/00-07/14 (7 bit 図形文字) の文字を任意の数含む。
-  特に OSC, DCS, PM, APC で始まるコマンド列が規格で定められている。
+  特に DCS, OSC, PM, APC で始まるコマンド列が規格で定められている。
   </p>
   <p><dfn>キャラクタ列</dfn> (character strings, 文字列) は ST で終わり、
   間には SOS および ST を表すバイト列以外の任意のバイト列を含む。
@@ -495,11 +504,11 @@
 <h3>記号</h3>
 <p>以降では説明の為に以下の記号を用いる</p>
 <ul>
-<li><i>&lt;I&gt;</i>: [\x20-\x2F] の範囲にある文字</li>
-<li><i>&lt;Fp&gt;</i>: [\x30-\x3F] の範囲にある文字</li>
-<li><i>&lt;Ft&gt;</i>: [\x40-\x7E] の範囲にある文字</li>
-<li><i>&lt;Ps&gt;</i>: [0-9] の文字の並びを表す。整数。</li>
-<li><i>&lt;Pm&gt;</i>: 複数の整数を ";" &lt;x3B&gt; で区切った物。</li>
+<li><i>&lt;I&gt;</i>: 02/00 - 02/15 の範囲にある文字</li>
+<li><i>&lt;P&gt;</i>: 03/00 - 03/15 の範囲にある文字</li>
+<li><i>&lt;F&gt;</i>: 04/00 - 07/14 の範囲にある文字</li>
+<li><i>&lt;Ps&gt;</i>: 03/00 - 03/09 ("0" - "9") の文字の並びを表す。整数。</li>
+<li><i>&lt;Pm&gt;</i>: 複数の整数を 03/11 (";")で区切った物。</li>
 <li></li>
 </ul>
 
@@ -1858,14 +1867,14 @@
 <table class="normal center">
 <tr><th>名称</th><th>Sequence</th><th>R/C</th></tr>
 <tr><th>ACS</th>
-  <td>ESC SP <i>&lt;Ft&gt;</i></td>
-  <td>1/11 2/0 <i>&lt;Ft&gt;</i></td>
+  <td>ESC SP <i>&lt;F&gt;</i></td>
+  <td>1/11 2/0 <i>&lt;F&gt;</i></td>
   </tr>
 </table>
 
-<p>ESC SP <i>&lt;Ft&gt;</i> の形式のシーケンスは ACS と呼ばれる。
+<p>ESC SP <i>&lt;F&gt;</i> の形式のシーケンスは ACS と呼ばれる。
 通信の初めに、文字コードで有効な G0 G1 G2 G3 から GL GR へのシフトの構造を伝達する為の符号である。
-<i>&lt;Ft&gt;</i> に指定する文字で構造を指定する。
+<i>&lt;F&gt;</i> に指定する文字で構造を指定する。
 </p>
 
 <table class="normal center">
@@ -2160,9 +2169,9 @@ j.行消す, ESC[2K
 <h2>ISO/IEC 2022 文字集合制御</h2>
 <!--...................................................................................-->
 <table class="normal center">
-<tr><td><code>\e!<strong>I Ft</strong></code></td><td>C0 への呼出</td></tr>
-<tr><td><code>\e"<strong>I Ft</strong></code></td><td>C1 への呼出</td></tr>
-<tr><td><code>\e&amp;<strong>F</strong></code></td><td>改訂番号識別</td></tr>
+<tr><td><code>\e!<i>&lt;I&gt; &lt;F&gt;</i></code></td><td>C0 への呼出</td></tr>
+<tr><td><code>\e"<i>&lt;I&gt; &lt;F&gt;</i></code></td><td>C1 への呼出</td></tr>
+<tr><td><code>\e&amp;<i>&lt;F&gt;</i></code></td><td>改訂番号識別</td></tr>
 <tr><td><code>\17</code></td><td>G0 から GL へとシフト</td></tr>
 <tr><td><code>\16</code></td><td>G1 から GL へとシフト</td></tr>
 <tr><td><code>\en</code></td><td>G2 から GL へとシフト</td></tr>
