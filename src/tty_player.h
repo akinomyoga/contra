@@ -422,12 +422,12 @@ namespace contra {
       if (!m_config.xenl && cur.x == m_board->m_width) do_crlf();
     }
 
-    void set_fg(int index) {
+    void set_fg(color_t index, aflags_t colorSpace = color_space_indexed) {
       extended_attribute& xattr = m_board->cur.xattr_edit;
       xattr.fg = index;
       xattr.aflags
         = (xattr.aflags & ~(attribute_t) fg_color_mask)
-        | (color_space_indexed << fg_color_shift & fg_color_mask)
+        | (colorSpace << fg_color_shift & fg_color_mask)
         | is_fg_color_set;
       m_board->cur.xattr_dirty = true;
     }
@@ -437,12 +437,12 @@ namespace contra {
       m_board->cur.xattr_dirty = true;
     }
 
-    void set_bg(int index) {
+    void set_bg(color_t index, aflags_t colorSpace = color_space_indexed) {
       extended_attribute& xattr = m_board->cur.xattr_edit;
       xattr.bg = index;
       xattr.aflags
         = (xattr.aflags & ~(attribute_t) bg_color_mask)
-        | (color_space_indexed << bg_color_shift & bg_color_mask)
+        | (colorSpace << bg_color_shift & bg_color_mask)
         | is_bg_color_set;
       m_board->cur.xattr_dirty = true;
     }
@@ -558,8 +558,9 @@ namespace contra {
     void do_sgr_iso8613_colors(csi_parameters& params, bool isfg) {
       std::uint32_t colorSpace = 0;
       params.read_arg(colorSpace, true);
+      color_t color;
       switch (colorSpace) {
-      case 0:
+      case color_space_default:
       default:
         if (isfg)
           reset_fg();
@@ -567,25 +568,36 @@ namespace contra {
           reset_bg();
         break;
 
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-        // ToDo
-        mwg_printd("NYI");
+      case color_space_transparent:
+        color = 0;
+        goto set_color;
+
+      case color_space_rgb:
+      case color_space_cmy:
+      case color_space_cmyk:
+        {
+          int ncomp = colorSpace == color_space_cmyk ? 4: 3;
+          for (int i = 0; i < ncomp; i++) {
+            std::uint32_t comp = 0;
+            params.read_arg(comp, true);
+            if (comp > 255) comp = 255;
+            color |= comp << i * 8;
+          }
+          goto set_color;
+        }
+
+      case color_space_indexed:
+        if (params.read_arg(color, true))
+          goto set_color;
+        else
+          std::fprintf(stderr, "missing argument for SGR 38:5\n");
         break;
 
-      case 5:
-        {
-          std::uint32_t colorIndex;
-          if (params.read_arg(colorIndex, true)) {
-            if (isfg)
-              set_fg(colorIndex);
-            else
-              set_bg(colorIndex);
-          } else
-            std::fprintf(stderr, "missing argument for SGR 38:5\n");
-        }
+      set_color:
+        if (isfg)
+          set_fg(color, colorSpace);
+        else
+          set_bg(color, colorSpace);
         break;
       }
     }
