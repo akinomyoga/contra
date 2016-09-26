@@ -1522,7 +1522,9 @@
   </ul>
 </li>
 <li>SGR 38, 48 <dfn class="sgr">sgrISO8613_6Color</dfn>: ISO 8613-6 Colors
-  <p>より多彩な色の指定をする為の SGR 属性である。番号 38, 48 に続けて引数を取る。</p>
+  <p>より多彩な色の指定をする為の SGR 属性である。番号 38, 48 に続けて引数を取る。
+  規格 ISO 8613-6 (deprecated) と実際の実装に大きな乖離があるので注意を要する。
+  </p>
   <table class="normal center">
   <tr><th>番号</th><th>説明</th></tr>
   <tr>
@@ -1535,46 +1537,52 @@
     <td>4 8 : 1</td>
     <td>背景色 透明</td></tr>
   <tr>
-    <td>3 8 : 2 : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i><br/>
-        3 8 ; 2 ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i></td>
+    <td><kbd>3 8 : 2 : <i>&lt;s&gt;</i> : <i>&lt;R&gt;</i> : <i>&lt;G&gt;</i> : <i>&lt;B&gt;</i> : <i>&lt;dummy&gt;</i> : <i>&lt;tol&gt;</i> : <i>&lt;tols&gt;</i></kbd> (ISO 8613)<br/>
+        <kbd>3 8 ; 2 ; <i>&lt;R&gt;</i> ; <i>&lt;G&gt;</i> ; <i>&lt;B&gt;</i></kbd> (xterm, etc.)</td>
     <td>前景色 RGB</td></tr>
   <tr>
-    <td>4 8 : 2 : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i><br/>
-        4 8 ; 2 ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i></td>
+    <td><kbd>4 8 : 2 : <i>&lt;s&gt;</i> : <i>&lt;R&gt;</i> : <i>&lt;G&gt;</i> : <i>&lt;B&gt;</i> : <i>&lt;dummy&gt;</i> : <i>&lt;tol&gt;</i> : <i>&lt;tols&gt;</i></kbd> (ISO 8613)<br/>
+        <kbd>4 8 ; 2 ; <i>&lt;R&gt;</i> ; <i>&lt;G&gt;</i> ; <i>&lt;B&gt;</i></kbd> (xterm, etc.)</td>
     <td>背景色 RGB</td></tr>
   <tr>
-    <td>3 8 : 3 : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i></td>
+    <td><kbd>3 8 : 3 : <i>&lt;s&gt;</i> : <i>&lt;C&gt;</i> : <i>&lt;M&gt;</i> : <i>&lt;Y&gt;</i> : <i>&lt;dummy&gt;</i> : <i>&lt;tol&gt;</i> : <i>&lt;tols&gt;</i></kbd> (ISO 8613)</td>
     <td>前景色 CMY</td></tr>
   <tr>
-    <td>4 8 : 3 : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i></td>
+    <td><kbd>4 8 : 3 : <i>&lt;s&gt;</i> : <i>&lt;C&gt;</i> : <i>&lt;M&gt;</i> : <i>&lt;Y&gt;</i> : <i>&lt;dummy&gt;</i> : <i>&lt;tol&gt;</i> : <i>&lt;tols&gt;</i></kbd> (ISO 8613)</td>
     <td>背景色 CMY</td></tr>
   <tr>
-    <td>3 8 : 4 : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i></td>
+    <td><kbd>3 8 : 4 : <i>&lt;s&gt;</i> : <i>&lt;C&gt;</i> : <i>&lt;M&gt;</i> : <i>&lt;Y&gt;</i> : <i>&lt;K&gt;</i> : <i>&lt;tol&gt;</i> : <i>&lt;tols&gt;</i></kbd> (ISO 8613)</td>
     <td>前景色 CMYK</td></tr>
   <tr>
-    <td>4 8 : 4 : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i> : <i>&lt;Ps&gt;</i></td>
+    <td><kbd>4 8 : 4 : <i>&lt;s&gt;</i> : <i>&lt;C&gt;</i> : <i>&lt;M&gt;</i> : <i>&lt;Y&gt;</i> : <i>&lt;K&gt;</i> : <i>&lt;tol&gt;</i> : <i>&lt;tols&gt;</i></kbd> (ISO 8613)</td>
     <td>背景色 CMYK</td></tr>
   <tr>
-    <td>3 8 : 5 : <i>&lt;Ps&gt;</i><br/>
-        3 8 ; 5 ; <i>&lt;Ps&gt;</i></td>
-    <td>前景色 X11 Colors</td></tr>
+    <td><kbd>3 8 : 5 : <i>&lt;index&gt;</i></kbd> (ISO 8613)<br/>
+        <kbd>3 8 ; 5 ; <i>&lt;index&gt;</i></kbd> (xterm, etc.)</td>
+    <td>前景色 indexed colors</td></tr>
   <tr>
-    <td>4 8 : 5 : <i>&lt;Ps&gt;</i><br/>
-        4 8 ; 5 ; <i>&lt;Ps&gt;</i></td>
-    <td>背景色 X11 Colors</td></tr>
+    <td><kbd>4 8 : 5 : <i>&lt;index&gt;</i></kbd> (ISO 8613)<br/>
+        <kbd>4 8 ; 5 ; <i>&lt;index&gt;</i></kbd> (xterm, etc.)</td>
+    <td>背景色 indexed colors</td></tr>
   </table>
 
   <p>ANSI では 38, 48 は reserved とされ、[T.416] に内容を委ねている。
-    [T.416] では、引数の区切はコロン ":" (3/10) とされているが、
-    実際の実装では CSI Sequence の一般的な引数区切である ";" が用いられる事が多い。
-    [T.416] では末端にある空引数は任意に省略可能だが、
+    [T.416/13.1.8] 規格では引数の区切はコロン ":" (3/10) とされているが、
+    <u>実際の実装では ";" が用いられる事が多い。</u>
+    規格では末端にある空引数は任意に省略可能だが、
     区切にセミコロンを用いている場合、引数の終端を判断できないので省略はできない。
   </p>
 
-  <p>[T.416] RGB, CMY の第6引数は無視される。
+  <p>[T.416/13.1.8] RGB, CMY, CMYK の第2引数 &lt;s&gt; は色空間を指定する id で非負の整数<sup>[T.412/9.1.4.1]</sup> である。
+    <u>実際の実装では RGB に対応しているものがあるが、
+    何れも第2引数には対応せず後続の引数の番号が 1 つずつ前にずれる</u>。
+  </p>
+
+  <p>[T.416/13.1.8]
+    RGB, CMY の第6引数は無視される。
     RGB, CMY, CMYK の第7引数と第8引数はそれぞれ error tolerance と tolerance を測る color space を指定する。
     tolerance color space は 0 for CIELUV, 1 for CIELAB である。
-    実際の端末で tolerance に対応している物は確認できない。
+    <u>実際の実装で RGB, CMY の第6引数以降および CMYK の第7引数以降にたいおうしている物は見られない。</u>
     例えば KDE Konsole が 38;2;r;g;b の形式を実装しているが tolerance の引数には対応していない。
     逆に KDE Konsole に対して tolerance を送信するとそれが別の意味に解釈されるので問題である。
     (tolerance は元々 ISO 8613 形式のドキュメントの印刷などで品質評価に使うものなのだろうと思われる。
@@ -1596,15 +1604,21 @@
   </p>
 
   <ul>
-  <li>互換性: ansi (reserved), xterm (38;2, 48;2, 38;5, 48;5, tolerance なし),
-      KDE Konsole (38;5; 48;5; 38;2; 48;2, tolerance なし ),
-      RLogin (38:2:, 48:2, 38;5, 48;5, tolerance なし),
-      Tera Term (38:2, 48:2, 38;5, 48;5, tolerance なし)</li>
+  <li>互換性: ansi (reserved), xterm (38;2;R;G;B, 48;2;R;G;B, 38;5, 48;5, tolerance なし),
+      KDE Konsole (38;5 48;5 38;2;R;G;B 48;2;R;G;B, tolerance なし ),
+      RLogin (38:2:R:G:B, 48:2:R:G:B, 38;5, 48;5, tolerance なし),
+      Tera Term (38:2:R:G:B, 48:2:R:G:B, 38;5, 48;5, tolerance なし)</li>
   <li>互換性 (Tera Term, xterm): セミコロンとコロンの混合を認めている。
     但し、コロン区切より後にセミコロン区切がある場合は、
     それ以降は別の SGR 指定と見做し、そこで引数の読み取りを終わる。</li>
   <li>Konsole <a href="https://github.com/robertknight/konsole/blob/master/user-doc/README.moreColors">konsole/user-doc/README.moreColors at master ・ robertknight/konsole ・ GitHub</a></li>
   <li>RLogin <a href="http://nanno.dip.jp/softlib/man/rlogin/ctrlcode.html">エスケープシーケンス一覧</a></li>
+  <li>contra::tty_player では RGB/CMY/CMYK において最低でも追加で 3/3/4 個の引数を取り
+    (但し一度 colon で区切られたら semicolon による区切りは受け入れない)、
+    さらに1個以上の colon で区切られた引数が続いている場合に ISO 8613-6 に従った解釈を行う。
+    それ以外の場合は読み取られた 3/3/4 個の引数をそれぞれ RGB/CMY/CMYK とみなす。
+    ISO 8613-6 に従った解釈の場合、tolerance およびその色空間は使用しない。
+  </li>
   </ul>
 </li>
 <li>SGR 39 <dfn class="sgr">sgrFgDefault</dfn>: default display/foreground color
