@@ -14,8 +14,8 @@ int main() {
 
   contra::tty_player term(b);
 
-  term.printt("\x1b[38:5:196mabcdefghijklmnopqrstuvwxyz");
-  term.printt("\x1b[38:5:202mabcdefghijklmnopqrstuvwxyz");
+  term.printt("\x1b[38:5:196;4mabcdefghijklmnopqrstuvwxyz");
+  term.printt("\x1b[38:5:202;24mabcdefghijklmnopqrstuvwxyz");
   term.printt("\x1b[38:5:220mabcdefghijklmnopqrstuvwxyz");
   term.printt("\x1b[38:5:154mabcdefghijklmnopqrstuvwxyz");
   term.printt("\x1b[38:5:63mabcdefghijklmnopqrstuvwxyz\n");

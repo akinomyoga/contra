@@ -327,8 +327,9 @@ namespace contra {
       csi_param_type param {0, false};
       for (std::size_t i = 0; i < len; i++) {
         char32_t const c = str[i];
-        if (!(ascii_0 <= c && c < ascii_semicolon)) {
+        if (!(ascii_0 <= c && c <= ascii_semicolon)) {
           std::fprintf(stderr, "invalid value of CSI parameter values.\n");
+          mwg_printd("CSI ... %c", uchar);
           // todo print sequences
           return false;
         }
@@ -338,6 +339,7 @@ namespace contra {
           if (newValue < param.value) {
             // overflow
             std::fprintf(stderr, "a CSI parameter value is too large.\n");
+            mwg_printd("CSI ... %c", uchar);
             // todo print sequences
             return false;
           }
@@ -406,6 +408,7 @@ namespace contra {
       }
 
       board_cell* c = &m_board->cell(cur.x, cur.y);
+      m_board->update_cursor_attribute();
       m_board->set_character(c, u);
       m_board->set_attribute(c, cur.attribute);
 
@@ -420,32 +423,38 @@ namespace contra {
     }
 
     void set_fg(int index) {
-      if (index < 256) {
-        m_board->cur.attribute
-          = (m_board->cur.attribute & ~(attribute_t) fg_color_mask)
-          | (index << fg_color_shift & fg_color_mask)
-          | is_fg_color_set;
-      }
+      extended_attribute& xattr = m_board->cur.xattr_edit;
+      xattr.fg = index;
+      xattr.aflags
+        = (xattr.aflags & ~(attribute_t) fg_color_mask)
+        | (color_space_indexed << fg_color_shift & fg_color_mask)
+        | is_fg_color_set;
+      m_board->cur.xattr_dirty = true;
     }
     void reset_fg() {
-      m_board->cur.attribute &= ~(attribute_t) (is_fg_color_set | fg_color_mask);
-    }
-
-    void reset_attribute() {
-      // todo: extended attribute
-      m_board->cur.attribute = 0;
+      m_board->cur.xattr_edit.fg = 0;
+      m_board->cur.xattr_edit.aflags &= ~(attribute_t) (is_fg_color_set | fg_color_mask);
+      m_board->cur.xattr_dirty = true;
     }
 
     void set_bg(int index) {
-      if (index < 256) {
-        m_board->cur.attribute
-          = (m_board->cur.attribute & ~(attribute_t) bg_color_mask)
-          | (index << bg_color_shift & bg_color_mask)
-          | is_bg_color_set;
-      }
+      extended_attribute& xattr = m_board->cur.xattr_edit;
+      xattr.bg = index;
+      xattr.aflags
+        = (xattr.aflags & ~(attribute_t) bg_color_mask)
+        | (color_space_indexed << bg_color_shift & bg_color_mask)
+        | is_bg_color_set;
+      m_board->cur.xattr_dirty = true;
     }
     void reset_bg() {
-      m_board->cur.attribute &= ~(attribute_t) (is_bg_color_set | bg_color_mask);
+      m_board->cur.xattr_edit.bg = 0;
+      m_board->cur.xattr_edit.aflags &= ~(attribute_t) (is_bg_color_set | bg_color_mask);
+      m_board->cur.xattr_dirty = true;
+    }
+
+    void reset_attribute() {
+      m_board->cur.xattr_edit.clear();
+      m_board->cur.xattr_dirty = true;
     }
 
   public:
@@ -517,7 +526,7 @@ namespace contra {
 
     void process_invalid_sequence(decoder_type* decoder) {
       // ToDo: 何処かにログ出力
-      mwg_printd();
+      mwg_printd("%p", &decoder);
     }
     void process_control_sequence(decoder_type* decoder, char32_t uchar) {
       if (decoder->intermediateStart() < 0) {
@@ -527,10 +536,10 @@ namespace contra {
       }
     }
     void process_command_string(decoder_type* decoder) {
-      mwg_printd();
+      mwg_printd("%p", &decoder);
     }
     void process_character_string(decoder_type* decoder) {
-      mwg_printd();
+      mwg_printd("%p", &decoder);
     }
 
     void process_control_character(char32_t uchar) {
@@ -563,7 +572,7 @@ namespace contra {
       case 3:
       case 4:
         // ToDo
-        std::fprintf(stderr, "NYI\n");
+        mwg_printd("NYI");
         break;
 
       case 5:
@@ -625,41 +634,69 @@ namespace contra {
         } else if (100 <= value && value <= 107) {
           set_bg(8 + (value - 100));
         } else {
-          attribute_t& attr = m_board->cur.attribute;
+          aflags_t& aflags = m_board->cur.xattr_edit.aflags;
+          xflags_t& xflags = m_board->cur.xattr_edit.xflags;
+
           switch (value) {
           case 0:
-            reset_attribute();
+            m_board->cur.xattr_edit.aflags = 0;
+            m_board->cur.xattr_edit.xflags &= non_sgr_xflags_mask;
+            m_board->cur.xattr_edit.fg = 0;
+            m_board->cur.xattr_edit.bg = 0;
             break;
 
-          case 1 : attr = (attr & ~(attribute_t) is_faint_set) | is_bold_set; break;
-          case 2 : attr = (attr & ~(attribute_t) is_bold_set) | is_faint_set; break;
-          case 22: attr = attr & ~(attribute_t) (is_bold_set | is_faint_set); break;
+          case 1 : aflags = (aflags & ~(attribute_t) is_faint_set) | is_bold_set; break;
+          case 2 : aflags = (aflags & ~(attribute_t) is_bold_set) | is_faint_set; break;
+          case 22: aflags = aflags & ~(attribute_t) (is_bold_set | is_faint_set); break;
 
-          case 3 : attr = (attr & ~(attribute_t) is_fraktur_set) | is_italic_set; break;
-          case 20: attr = (attr & ~(attribute_t) is_italic_set) | is_fraktur_set; break;
-          case 23: attr = attr & ~(attribute_t) (is_italic_set | is_fraktur_set); break;
+          case 3 : aflags = (aflags & ~(attribute_t) is_fraktur_set) | is_italic_set; break;
+          case 20: aflags = (aflags & ~(attribute_t) is_italic_set) | is_fraktur_set; break;
+          case 23: aflags = aflags & ~(attribute_t) (is_italic_set | is_fraktur_set); break;
 
-          case 4 : attr = (attr & ~(attribute_t) is_double_underline_set) | is_underline_set; break;
-          case 21: attr = (attr & ~(attribute_t) is_underline_set) | is_double_underline_set; break;
-          case 24: attr = attr & ~(attribute_t) (is_underline_set | is_double_underline_set); break;
+          case 4 : aflags = (aflags & ~(attribute_t) is_double_underline_set) | is_underline_set; break;
+          case 21: aflags = (aflags & ~(attribute_t) is_underline_set) | is_double_underline_set; break;
+          case 24: aflags = aflags & ~(attribute_t) (is_underline_set | is_double_underline_set); break;
 
-          case 5 : attr = (attr & ~(attribute_t) is_rapid_blink_set) | is_blink_set; break;
-          case 6 : attr = (attr & ~(attribute_t) is_blink_set) | is_rapid_blink_set; break;
-          case 25: attr = attr & ~(attribute_t) (is_blink_set | is_rapid_blink_set); break;
+          case 5 : aflags = (aflags & ~(attribute_t) is_rapid_blink_set) | is_blink_set; break;
+          case 6 : aflags = (aflags & ~(attribute_t) is_blink_set) | is_rapid_blink_set; break;
+          case 25: aflags = aflags & ~(attribute_t) (is_blink_set | is_rapid_blink_set); break;
 
-          case 7 : attr = attr | is_inverse_set; break;
-          case 27: attr = attr & ~(attribute_t) is_inverse_set; break;
+          case 7 : aflags = aflags | is_inverse_set; break;
+          case 27: aflags = aflags & ~(attribute_t) is_inverse_set; break;
 
-          case 8 : attr = attr | is_invisible_set; break;
-          case 28: attr = attr & ~(attribute_t) is_invisible_set; break;
+          case 8 : aflags = aflags | is_invisible_set; break;
+          case 28: aflags = aflags & ~(attribute_t) is_invisible_set; break;
 
-          case 9 : attr = attr | is_strike_set; break;
-          case 29: attr = attr & ~(attribute_t) is_strike_set; break;
+          case 9 : aflags = aflags | is_strike_set; break;
+          case 29: aflags = aflags & ~(attribute_t) is_strike_set; break;
+
+          case 26: xflags = xflags | is_proportional_set; break;
+          case 50: xflags = xflags & ~(attribute_t) is_proportional_set; break;
+
+          case 51: xflags = (xflags & ~(attribute_t) is_circle_set) | is_frame_set; break;
+          case 52: xflags = (xflags & ~(attribute_t) is_frame_set) | is_circle_set; break;
+          case 54: xflags = xflags & ~(attribute_t) (is_frame_set | is_circle_set); break;
+
+          case 53: xflags = xflags | is_overline_set; break;
+          case 55: xflags = xflags & ~(attribute_t) is_overline_set; break;
+
+          case 60: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_single_rb_set; break;
+          case 61: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_double_rb_set; break;
+          case 62: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_single_lt_set; break;
+          case 63: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_double_lt_set; break;
+          case 66: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_single_lb_set; break;
+          case 67: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_double_lb_set; break;
+          case 68: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_single_rt_set; break;
+          case 69: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_double_rt_set; break;
+          case 64: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_stress_set   ; break;
+          case 65: xflags = xflags & ~(attribute_t) is_ideogram_decoration_mask; break;
 
           default:
             std::fprintf(stderr, "unrecognized SGR value\n");
             break;
           }
+
+          m_board->cur.xattr_dirty = true;
         }
       }
     }

@@ -105,7 +105,7 @@ namespace contra {
   typedef std::uint32_t attribute_t;
   typedef attribute_t   aflags_t;
   typedef attribute_t   xflags_t;
-  typedef attribute_t   aindex_t;
+  typedef std::int32_t  aindex_t;
   typedef std::uint32_t color_t;
 
   enum character_flags {
@@ -266,6 +266,25 @@ namespace contra {
   public:
     extended_attribute() {}
     extended_attribute(attribute_t attr) {this->load(attr);}
+
+  public:
+    bool try_get_scalar_attribute(attribute_t& _attr) {
+      if (xflags) return false;
+
+      attribute_t attr = aflags & ~(attribute_t) (fg_color_mask | bg_color_mask | has_extended_attribute);
+      if (aflags & is_fg_color_set) {
+        if ((aflags & fg_color_mask) >> fg_color_shift != color_space_indexed || fg >= 256) return false;
+        attr |= fg << fg_color_shift & fg_color_mask;
+      }
+
+      if (aflags & is_bg_color_set) {
+        if ((aflags & bg_color_mask) >> bg_color_shift != color_space_indexed || bg >= 256) return false;
+        attr |= bg << bg_color_shift & bg_color_mask;
+      }
+
+      _attr = attr;
+      return true;
+    }
   };
 
   struct extended_attribute_store {
@@ -285,13 +304,21 @@ namespace contra {
         aindex_t next;
       };
 
+      holder_type(): ref_count(0) {}
       holder_type(attribute_t attr):
         extended_attribute(attr), ref_count(0) {}
     };
 
     std::vector<holder_type> m_xattrs;
-    aindex_t m_xattr_free {0};
+    aindex_t m_xattr_free {-1};
     aindex_t m_count {0};
+
+    aindex_t get_count(attribute_t attr) const{
+      if (attr & has_extended_attribute) {
+        return m_xattrs[attr & ~(attribute_t)has_extended_attribute].ref_count;
+      } else
+        return 0;
+    }
 
     extended_attribute const* get(attribute_t attr) const{
       if (attr & has_extended_attribute) {
@@ -317,10 +344,9 @@ namespace contra {
       }
     }
 
-    attribute_t alloc(attribute_t attr) {
-      mwg_assert(!(attr & has_extended_attribute));
-
-      if (m_xattr_free) {
+    // ToDo: バグがあるっぽい。
+    attribute_t alloc() {
+      if (m_xattr_free >= 0) {
         attribute_t const ret = m_xattr_free | has_extended_attribute;
         holder_type& xattr = m_xattrs[m_xattr_free];
         m_xattr_free = xattr.next;
@@ -336,15 +362,32 @@ namespace contra {
         }
 
         attribute_t const ref = index | has_extended_attribute;
-        m_xattrs.emplace_back(attr);
+        m_xattrs.emplace_back();
         m_xattrs[index].ref_count = 1;
         m_count++;
         return ref;
       }
     }
+
+    attribute_t alloc(extended_attribute const& _xattr) {
+      attribute_t const ret = alloc();
+      extended_attribute& xattr = m_xattrs[ret & ~(attribute_t) has_extended_attribute];
+      xattr = _xattr;
+      return ret;
+    }
+
+    attribute_t alloc(attribute_t attr) {
+      mwg_assert(!(attr & has_extended_attribute));
+      attribute_t const ret = alloc();
+      extended_attribute& xattr = m_xattrs[ret & ~(attribute_t) has_extended_attribute];
+      xattr = extended_attribute(attr);
+      return ret;
+    }
   };
 
   typedef int curpos_t;
+
+  struct board;
 
   struct board_cell {
     character_t character {0};
@@ -354,7 +397,20 @@ namespace contra {
   struct board_cursor {
     curpos_t    x {0};
     curpos_t    y {0};
-    attribute_t attribute {0};
+
+  public:
+    attribute_t        attribute   {0};
+    extended_attribute xattr       {attribute};
+    extended_attribute xattr_edit  {attribute};
+    bool               xattr_dirty {false};
+
+    bool is_attribute_changed() const {
+      return xattr_dirty
+        && (xattr_edit.aflags != xattr.aflags
+          || xattr_edit.xflags != xattr.xflags
+          || xattr_edit.fg != xattr.fg
+          || xattr_edit.bg != xattr.bg);
+    }
   };
 
   struct board {
@@ -362,6 +418,23 @@ namespace contra {
     curpos_t m_height {0};
 
     board_cursor cur;
+
+  public:
+    void update_cursor_attribute() {
+      if (cur.is_attribute_changed()) {
+        cur.xattr = cur.xattr_edit;
+
+        m_xattr_data.dec(cur.attribute);
+
+        attribute_t attr;
+        if (cur.xattr.try_get_scalar_attribute(attr))
+          cur.attribute = attr;
+        else
+          cur.attribute = m_xattr_data.alloc(cur.xattr);
+      }
+
+      cur.xattr_dirty = false;
+    }
 
   private:
     std::vector<board_cell> m_data;
