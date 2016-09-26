@@ -576,12 +576,31 @@ namespace contra {
       case color_space_cmy:
       case color_space_cmyk:
         {
-          int ncomp = colorSpace == color_space_cmyk ? 4: 3;
+          int const ncomp = colorSpace == color_space_cmyk ? 4: 3;
           for (int i = 0; i < ncomp; i++) {
             std::uint32_t comp = 0;
             params.read_arg(comp, true);
             if (comp > 255) comp = 255;
             color |= comp << i * 8;
+          }
+
+          std::uint32_t comp = 0;
+          if (params.read_arg(comp, false)) {
+            // If there are more than `ncomp` colon-separated arguments,
+            // switch to ISO 8613-6 compatible mode expecting sequences like
+            //
+            //     CSI 38:2:CS:R:G:B:dummy:tol:tolCS m
+            //
+            // In this mode, discard the first byte (CS = color space)
+            // and append a new byte containing the last color component.
+            color = color >> 8 | comp << (ncomp - 1) * 8;
+          } else {
+            // If there are no more than `ncomp` arguments,
+            // switch to konsole/xterm compatible mode expecting sequences like
+            //
+            //   CSI 38;2;R;G;B m
+            //
+            // In this mode, do nothing here; We have already correct `color`.
           }
           goto set_color;
         }
