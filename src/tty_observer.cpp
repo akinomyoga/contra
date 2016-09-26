@@ -14,7 +14,7 @@ static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrflag2 cons
 }
 
 static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrcolor const& sgrcolor) {
-  if (!sgrcolor.off && (sgrcolor.base || sgrcolor.iso8613_color))
+  if (!sgrcolor.off && (sgrcolor.base || sgrcolor.iso8613.sgr))
     flags = sgrcolor.bit;
 }
 
@@ -129,7 +129,7 @@ void tty_observer::update_sgrcolor(
   if (colorSpaceNew == colorSpaceOld && colorNew == colorOld) return;
 
   // sgrAnsiColor, sgrAixColor
-  if (colorSpaceNew == color_space_indexed) {
+  if (colorSpaceNew == color_spec_indexed) {
     if (colorNew < 8) {
       if (sgrcolor.base) {
         // e.g \e[31m
@@ -152,36 +152,43 @@ void tty_observer::update_sgrcolor(
     }
   }
 
-  if (colorSpaceNew == color_space_default && sgrcolor.off) {
+  if (colorSpaceNew == color_spec_default && sgrcolor.off) {
     sgr_put(sgrcolor.off);
     return;
   }
 
   // sgrISO8613_6Color
-  if (sgrcolor.iso8613_color
-    && (sgrcolor.iso8613_color_spaces & 1 << colorSpaceNew)
+  if (sgrcolor.iso8613.sgr
+    && (sgrcolor.iso8613.color_specs & 1 << colorSpaceNew)
   ) {
-    sgr_put(sgrcolor.iso8613_color);
-    put(sgrcolor.iso8613_separater);
+    sgr_put(sgrcolor.iso8613.sgr);
+    put(sgrcolor.iso8613.separater);
     put_unsigned(colorSpaceNew);
 
-    if (colorSpaceNew == color_space_indexed) {
-      if (colorNew < sgrcolor.indexed_color_number) {
-        put(sgrcolor.iso8613_separater);
+    if (colorSpaceNew == color_spec_indexed) {
+      if (colorNew <= sgrcolor.iso8613.max_index) {
+        put(sgrcolor.iso8613.separater);
         put_unsigned(colorNew);
       }
       return;
     } else {
       int numberOfComponents = 0;
       switch (colorSpaceNew) {
-      case color_space_rgb:
-      case color_space_cmy:  numberOfComponents = 3; break;
-      case color_space_cmyk: numberOfComponents = 4; break;
+      case color_spec_rgb:
+      case color_spec_cmy:  numberOfComponents = 3; break;
+      case color_spec_cmyk: numberOfComponents = 4; break;
+      }
+
+      // for ISO 8613-6 compatibility,
+      // first print color space identifier
+      if (sgrcolor.iso8613.exact) {
+        put(sgrcolor.iso8613.separater);
+        put_unsigned(0);
       }
 
       for (int icomp = 0; icomp < numberOfComponents; icomp++) {
         unsigned const comp = colorNew << icomp * 8 & 0xFF;
-        put(sgrcolor.iso8613_separater);
+        put(sgrcolor.iso8613.separater);
         put_unsigned(comp);
       }
 

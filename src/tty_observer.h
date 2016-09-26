@@ -61,10 +61,13 @@ namespace contra {
     unsigned aixterm_color;
 
     // 38:5:0-255
-    unsigned      iso8613_color       ; //!< SGR number of ISO 8613-6 color specification
-    unsigned char iso8613_color_spaces; //!< supported color spaces specified by bits
-    char          iso8613_separater   ; //!< the separator character of ISO 8613-6 SGR arguments
-    unsigned      indexed_color_number; //!< the number of colors available through 38:5:*
+    struct {
+      unsigned      sgr        ; //!< SGR number of ISO 8613-6 color specification
+      unsigned char color_specs; //!< supported color specs specified by bits
+      char          separater  ; //!< the separator character of ISO 8613-6 SGR arguments
+      bool          exact      ; //!< the separator character of ISO 8613-6 SGR arguments
+      unsigned      max_index  ; //!< the number of colors available through 38:5:*
+    } iso8613;
 
     // 1,22 / 5,25 で明るさを切り替える方式
     unsigned high_intensity_on ;
@@ -92,14 +95,14 @@ namespace contra {
     // colors
     termcap_sgrcolor cap_fg {
       is_fg_color_set, 30, 39,  90,
-        38, color_space_indexed_bit | color_space_rgb_bit, ascii_semicolon, 256,
-        0, 0
-        };
+      {38, color_spec_indexed_bit | color_spec_rgb_bit, ascii_semicolon, false, 255},
+      0, 0
+    };
     termcap_sgrcolor cap_bg {
       is_bg_color_set, 40, 49, 100,
-        48, color_space_indexed_bit | color_space_rgb_bit, ascii_semicolon, 256,
-        0, 0
-        };
+      {48, color_spec_indexed_bit | color_spec_rgb_bit, ascii_semicolon, false, 255},
+      0, 0
+    };
 
     aflags_t aflagsNotResettable {0};
     xflags_t xflagsNotResettable {0};

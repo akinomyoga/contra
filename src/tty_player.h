@@ -422,7 +422,7 @@ namespace contra {
       if (!m_config.xenl && cur.x == m_board->m_width) do_crlf();
     }
 
-    void set_fg(color_t index, aflags_t colorSpace = color_space_indexed) {
+    void set_fg(color_t index, aflags_t colorSpace = color_spec_indexed) {
       extended_attribute& xattr = m_board->cur.xattr_edit;
       xattr.fg = index;
       xattr.aflags
@@ -437,7 +437,7 @@ namespace contra {
       m_board->cur.xattr_dirty = true;
     }
 
-    void set_bg(color_t index, aflags_t colorSpace = color_space_indexed) {
+    void set_bg(color_t index, aflags_t colorSpace = color_spec_indexed) {
       extended_attribute& xattr = m_board->cur.xattr_edit;
       xattr.bg = index;
       xattr.aflags
@@ -560,7 +560,7 @@ namespace contra {
       params.read_arg(colorSpace, true);
       color_t color;
       switch (colorSpace) {
-      case color_space_default:
+      case color_spec_default:
       default:
         if (isfg)
           reset_fg();
@@ -568,15 +568,15 @@ namespace contra {
           reset_bg();
         break;
 
-      case color_space_transparent:
+      case color_spec_transparent:
         color = 0;
         goto set_color;
 
-      case color_space_rgb:
-      case color_space_cmy:
-      case color_space_cmyk:
+      case color_spec_rgb:
+      case color_spec_cmy:
+      case color_spec_cmyk:
         {
-          int const ncomp = colorSpace == color_space_cmyk ? 4: 3;
+          int const ncomp = colorSpace == color_spec_cmyk ? 4: 3;
           for (int i = 0; i < ncomp; i++) {
             std::uint32_t comp = 0;
             params.read_arg(comp, true);
@@ -605,7 +605,7 @@ namespace contra {
           goto set_color;
         }
 
-      case color_space_indexed:
+      case color_spec_indexed:
         if (params.read_arg(color, true))
           goto set_color;
         else

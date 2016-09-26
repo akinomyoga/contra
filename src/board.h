@@ -129,31 +129,31 @@ namespace contra {
      * these values hold the index of the represented color.
      *
      * When the attribute is used as `aflags_t` combined with `xflags_t`,
-     * these values hold the color space identifiers.
-     * This is the list of color space identifiers:
-     * - @const color_space_default
-     * - @const color_space_transparent
-     * - @const color_space_rgb
-     * - @const color_space_cmy
-     * - @const color_space_cmyk
-     * - @const color_space_indexed
+     * these values hold the color spec identifiers.
+     * This is the list of color spec identifiers:
+     * - @const color_spec_default
+     * - @const color_spec_transparent
+     * - @const color_spec_rgb
+     * - @const color_spec_cmy
+     * - @const color_spec_cmyk
+     * - @const color_spec_indexed
      */
     fg_color_mask           = 0x00FF,
     bg_color_mask           = 0xFF00,
     fg_color_shift          = 0,
     bg_color_shift          = 8,
-    color_space_default     = 0,
-    color_space_transparent = 1,
-    color_space_rgb         = 2,
-    color_space_cmy         = 3,
-    color_space_cmyk        = 4,
-    color_space_indexed     = 5,
-    color_space_default_bit     = 1 << color_space_default    ,
-    color_space_transparent_bit = 1 << color_space_transparent,
-    color_space_rgb_bit         = 1 << color_space_rgb        ,
-    color_space_cmy_bit         = 1 << color_space_cmy        ,
-    color_space_cmyk_bit        = 1 << color_space_cmyk       ,
-    color_space_indexed_bit     = 1 << color_space_indexed    ,
+    color_spec_default     = 0,
+    color_spec_transparent = 1,
+    color_spec_rgb         = 2,
+    color_spec_cmy         = 3,
+    color_spec_cmyk        = 4,
+    color_spec_indexed     = 5,
+    color_spec_default_bit     = 1 << color_spec_default    ,
+    color_spec_transparent_bit = 1 << color_spec_transparent,
+    color_spec_rgb_bit         = 1 << color_spec_rgb        ,
+    color_spec_cmy_bit         = 1 << color_spec_cmy        ,
+    color_spec_cmyk_bit        = 1 << color_spec_cmyk       ,
+    color_spec_indexed_bit     = 1 << color_spec_indexed    ,
 
     is_fg_color_set         = 0x00010000,
     is_bg_color_set         = 0x00020000,
@@ -237,17 +237,17 @@ namespace contra {
       int fgColorSpace, bgColorSpace;
       if (attr & is_fg_color_set) {
         this->fg = (attr & fg_color_mask) >> fg_color_shift;
-        fgColorSpace = color_space_indexed;
+        fgColorSpace = color_spec_indexed;
       } else {
         this->fg = 0;
-        fgColorSpace = color_space_default;
+        fgColorSpace = color_spec_default;
       }
       if (attr & is_bg_color_set) {
         this->bg = (attr & bg_color_mask) >> bg_color_shift;
-        bgColorSpace = color_space_indexed;
+        bgColorSpace = color_spec_indexed;
       } else {
         this->bg = 0;
-        bgColorSpace = color_space_default;
+        bgColorSpace = color_spec_default;
       }
 
       this->aflags = construct_aflags(attr, fgColorSpace, bgColorSpace);
@@ -273,12 +273,12 @@ namespace contra {
 
       attribute_t attr = aflags & ~(attribute_t) (fg_color_mask | bg_color_mask | has_extended_attribute);
       if (aflags & is_fg_color_set) {
-        if ((aflags & fg_color_mask) >> fg_color_shift != color_space_indexed || fg >= 256) return false;
+        if ((aflags & fg_color_mask) >> fg_color_shift != color_spec_indexed || fg >= 256) return false;
         attr |= fg << fg_color_shift & fg_color_mask;
       }
 
       if (aflags & is_bg_color_set) {
-        if ((aflags & bg_color_mask) >> bg_color_shift != color_space_indexed || bg >= 256) return false;
+        if ((aflags & bg_color_mask) >> bg_color_shift != color_spec_indexed || bg >= 256) return false;
         attr |= bg << bg_color_shift & bg_color_mask;
       }
 
