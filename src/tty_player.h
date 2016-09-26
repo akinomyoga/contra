@@ -308,6 +308,7 @@ namespace contra {
   struct csi_param_type {
     std::uint32_t value;
     bool isColon;
+    bool isDefault;
   };
 
   class csi_parameters {
@@ -322,9 +323,10 @@ namespace contra {
     bool extract_parameters(char32_t const* str, std::size_t len, char32_t uchar) {
       m_data.clear();
       m_index = 0;
+      m_isColonAppeared = false;
 
       bool isSet = false;
-      csi_param_type param {0, false};
+      csi_param_type param {0, false, true};
       for (std::size_t i = 0; i < len; i++) {
         char32_t const c = str[i];
         if (!(ascii_0 <= c && c <= ascii_semicolon)) {
@@ -346,11 +348,13 @@ namespace contra {
 
           isSet = true;
           param.value = newValue;
+          param.isDefault = false;
         } else {
           m_data.push_back(param);
           isSet = true;
           param.value = 0;
           param.isColon = c == ascii_colon;
+          param.isDefault = true;
         }
       }
 
@@ -361,27 +365,37 @@ namespace contra {
   public:
     bool m_isColonAppeared;
 
-    bool read_param(std::uint32_t& result) {
+    bool read_param(std::uint32_t& result, std::uint32_t defaultValue) {
       while (m_index < m_data.size()) {
         csi_param_type const& param = m_data[m_index++];
         if (!param.isColon) {
           m_isColonAppeared = false;
-          result = param.value;
+          if (param.isDefault)
+            result = param.value;
+          else
+            result = defaultValue;
           return true;
         }
       }
+      result = defaultValue;
       return false;
     }
 
-    bool read_arg(std::uint32_t& result, bool toAllowSemicolon) {
+    bool read_arg(std::uint32_t& result, bool toAllowSemicolon, std::uint32_t defaultValue) {
       if (m_index <m_data.size()
         && (m_data[m_index].isColon || (toAllowSemicolon && !m_isColonAppeared))
       ) {
-        if (m_data[m_index].isColon) m_isColonAppeared = true;
-        result = m_data[m_index++].value;
+        csi_param_type const& param = m_data[m_index++];
+        if (param.isColon) m_isColonAppeared = true;
+        if (param.isDefault)
+          result = param.value;
+        else
+          result = defaultValue;
         return true;
-      } else
-        return false;
+      }
+
+      result = defaultValue;
+      return false;
     }
   };
 
@@ -556,8 +570,8 @@ namespace contra {
 
   private:
     void do_sgr_iso8613_colors(csi_parameters& params, bool isfg) {
-      std::uint32_t colorSpace = 0;
-      params.read_arg(colorSpace, true);
+      std::uint32_t colorSpace;
+      params.read_arg(colorSpace, true, 0);
       color_t color;
       switch (colorSpace) {
       case color_spec_default:
@@ -577,15 +591,14 @@ namespace contra {
       case color_spec_cmyk:
         {
           int const ncomp = colorSpace == color_spec_cmyk ? 4: 3;
+          std::uint32_t comp;
           for (int i = 0; i < ncomp; i++) {
-            std::uint32_t comp = 0;
-            params.read_arg(comp, true);
+            params.read_arg(comp, true, 0);
             if (comp > 255) comp = 255;
             color |= comp << i * 8;
           }
 
-          std::uint32_t comp = 0;
-          if (params.read_arg(comp, false)) {
+          if (params.read_arg(comp, false, 0)) {
             // If there are more than `ncomp` colon-separated arguments,
             // switch to ISO 8613-6 compatible mode expecting sequences like
             //
@@ -606,7 +619,7 @@ namespace contra {
         }
 
       case color_spec_indexed:
-        if (params.read_arg(color, true))
+        if (params.read_arg(color, true, 0))
           goto set_color;
         else
           std::fprintf(stderr, "missing argument for SGR 38:5\n");
@@ -643,7 +656,7 @@ namespace contra {
         params.push_back(csi_param_type {0, false});
 
       std::uint32_t value;
-      while (params.read_param(value)) {
+      while (params.read_param(value, 0)) {
         if (30 <= value && value < 40) {
           if (value < 38) {
             set_fg(value - 30);
