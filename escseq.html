@@ -73,7 +73,7 @@
 
 <p>制御機能を表現するバイト列として以下の種類がある。</p>
 <table class="normal center">
-<tr><th>名称</th><th>表現</th><th>説明</th><th>関連規格</th></tr>
+<tr><th colspan="2">名称</th><th>表現</th><th>説明</th><th>関連規格</th></tr>
 <tr><th colspan="2" rowspan="2">制御文字</th>
     <td><i>&lt;C0&gt;</i></td><td>基本的な制御機能</td><td>ISO/IEC 646 (ASCII)</td></tr>
 <tr><td><i>&lt;C1&gt;</i></td><td>基本的な制御機能</td><td>ECMA-48 (ANSI, ISO/IEC 6429)</td></tr>
@@ -83,7 +83,7 @@
 <tr><th colspan="2">制御シーケンス</th>
     <td>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>+</strong> <i>&lt;F&gt;</i></td>
     <td>ANSI 端末制御</td><td rowspan="6">ECMA-48 (ANSI, ISO/IEC 6429)</td></tr>
-<tr><th rowspan="4">制御列</th><th>コマンド列</th>
+<tr><th rowspan="5">制御列</th><th rowspan="4">コマンド列</th>
     <td>DCS ... ST</td><td>装置制御</td></tr>
 <tr><td>OSC ... ST</td><td>OSの機能</td></tr>
 <tr><td>PM ... ST</td> <td>私用機能</td></tr>
@@ -93,13 +93,16 @@
 </table>
 <p>但し、</p>
 <ul>
-<li>&lt;C0&gt; は 00/00 - 01/15 のバイト、</li>
-<li>&lt;I&gt; は 02/00 - 02/15 のバイト、</li>
-<li>&lt;P&gt; は 03/00 - 03/15 のバイト、</li>
-<li>&lt;F&gt; は 04/00 - 07/14 のバイト、</li>
-<li>&lt;C1&gt; は 08/00 - 09/15 のバイト</li>
+<li><i>&lt;C0&gt;</i> は 00/00 - 01/15 のバイトである。</li>
+<li><i>&lt;I&gt;</i> は 02/00 - 02/15 のバイトである。</li>
+<li><i>&lt;P&gt;</i> は 03/00 - 03/15 のバイトである。</li>
+<li><i>&lt;F&gt;</i> は 04/00 - 07/14 のバイトである。</li>
+<li><i>&lt;C1&gt;</i> は 08/00 - 09/15 のバイトである。</li>
+<li>ESC は 01/11 であり、
+  DCS, SOS, CSI, ST, OSC, PM, APC は C1 の文字で、
+  それぞれ 09/00, 09/08, 09/11, 09/12, 09/13, 09/14, 09/15 である。
+</li>
 </ul>
-<p class="resume">である。</p>
 
 <h3>関連する規格と略称</h3>
 <p>この節では関連する規格と、それらをこの文書の中で参照する際に用いる略称についてまとめる。</p>
@@ -293,12 +296,14 @@
 </ul>
 
 <h3>エスケープシーケンス (escape sequence)</h3>
-<h3 id="acro.ESC"><dfn class="cfunc">ESC</dfn>: Escape</h3>
-<p>ESC で始まるシーケンスを<dfn>エスケープシーケンス</dfn>と呼ぶ。
-以下に 2バイト目 (ESC の次のバイト) で分類した表を載せる。
-例によって赤色で示したのが、続きのバイト列を持つシーケンスである。
-</p>
-
+<ul>
+<li id="acro.ESC"><dfn class="cfunc">ESC</dfn>: Escape
+  <p>ESC で始まるシーケンスを<dfn>エスケープシーケンス</dfn>と呼ぶ。
+  以下に 2バイト目 (ESC の次のバイト) で分類した表を載せる。
+  例によって赤色で示したのが、続きのバイト列を持つシーケンスである。
+  </p>
+</li>
+</ul>
 <table class="normal center">
 <tr><th>名称</th><th>Sequence</th>                 <th>Hex; 行/列</th>         <th>名称</th><th>Sequence</th>  <th>Hex; 行/列</th>         <th>名称</th><th>Sequence</th><th>Hex; 行/列</th>         </tr>
 <tr><th class="markB">ACS</th><td>ESC SP</td><td>\x1B\x20; 1/11 2/0</td> <th>---</th><td>ESC @</td>      <td>\x1B\x40; 1/11 4/0</td> <th>DMI</th><td>ESC `</td>    <td>\x1B\x60; 1/11 6/0</td> </tr>
