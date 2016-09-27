@@ -5,7 +5,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta http-equiv="Content-Script-Type" content="text/javascript" />
-  <title>akinomyoga/contra :: Escape Sequences</title>
+  <title>akinomyoga/contra :: Control functions</title>
   <meta name="agh-fly-type" content="color" />
   <link rel="stylesheet" type="text/css" href="/agh/mwg.slide.css" />
   <link rel="stylesheet" type="text/css" href="/agh/prog.std.css" />
@@ -24,7 +24,7 @@
     <span class="left">-- ≪</span>
     <span class="right">≫ --</span>
     <span class="center">
-    akinomyoga/contra :: Escape Sequences
+    akinomyoga/contra :: Control functions
     </span>
   </div>
   <div>
@@ -32,9 +32,11 @@
   </div>
 </div>
 <hr style="height:1px;"/>
-<h1>akinomyoga/contra :: Escape Sequences</h1>
+<h1>akinomyoga/contra :: Control functions</h1>
 <!--===================================================================================-->
-<h2>termcap/terminfo</h2>
+<div class="note">
+<b>termcap/terminfo</b>
+
 <p>色々な端末の差異を吸収する為に作られたデータベース・ライブラリ。ncurses もこれを利用する。</p>
 <ul>
 <li><a href="http://linuxpakistan.net/man.php?query=terminfo&amp;type=2&amp;section=5">terminfo man page</a></li>
@@ -44,25 +46,15 @@
 <p>特定の TERM に対する terminfo のエスケープシーケンスの定義などは、</p>
 <pre class="agh-prog-bash">infocmp cygwin</pre>
 <p class="resume">等として見る事ができる。</p>
+</div>
 
 <!--===================================================================================-->
-<h2>関連する規格と略称</h2>
-<p>この節では関連する規格と、それらをこの文書の中で参照する際に用いる略称についてまとめる。</p>
-<ul>
-<li><dfn class="standard">ECMA-48</dfn>: ISO/IEC 6429, JIS X 0211 (和訳)
-  <p>通称 ANSI と呼ばれ、またこれを実装する端末を ANSI Terminal などと呼ぶ。</p>
-</li>
-<li><dfn class="standard">T.416</dfn>: ISO 8613-6, CCITT Recommendation T.416, JIS X 4106 (和訳、2010年廃止)</li>
-<li><dfn class="standard">T.61</dfn>: CCITT Recommendation T.61</li>
-</ul>
+<h2>制御機能 一般論</h2>
 
-<!--===================================================================================-->
-<h2>制御シーケンス 一般論</h2>
-
-<p>制御シーケンス (エスケープシーケンス) とは、
-端末などでの文字列の交換(やりとり)に於いて、
-通常の文字列の中に埋め込まれる「特別な情報を符号化したバイト列」の事である。
-制御シーケンスは、</p>
+<p>制御機能 (control functions) とは端末などでの文字列の交換(やりとり)に於いて、
+通常の文字列の中に埋め込まれる特別なバイト列によって指定・実行される端末などの機能のことである。
+制御機能は
+</p>
 <ul>
 <li>"スペース・タブ・改行・改頁・カーソル移動" など文字列の配置に関する制御</li>
 <li>"通信の開始・終了" や "文字コードの切替" などの通信自体に関する制御</li>
@@ -72,16 +64,68 @@
 <li>その他、様々な特別な機能の制御</li>
 </ul>
 <p class="resume">等に用いられる。
-また、これらの制御シーケンスは入力 (端末から送られるバイト列) の中で使われる場合と、
-出力 (プログラムから吐き出されるバイト列) の中で使われる場合で意味が異なる場合がある事に注意する必要がある。
-また、同じシーケンスであっても端末によって対応していなかったり、異なる機能が割り当てられていたりする事にも注意する。
+またこれらの制御機能には、
+アプリケーションから端末に対して送られるバイト列中で指定される端末制御の為の物と、
+端末からアプリケーションに対して送られるバイト列中で指定される端末の応答・ユーザ入力がある。
+また、同じ制御機能であっても、端末によって対応していなかったり、
+そのバイト列としての表現が端末に依って異なっていたりする事に注意する。
 </p>
 
-<p>制御シーケンスは以下に挙げる制御文字で始まる。
-制御文字のコード(バイト値)は文字コードに依存するが、
-ここでは一般的に用いられている物を挙げる。
-</p>
+<p>制御機能を表現するバイト列として以下の種類がある。</p>
+<table class="normal center">
+<tr><th>名称</th><th>表現</th><th>説明</th><th>関連規格</th></tr>
+<tr><th colspan="2" rowspan="2">制御文字</th>
+    <td><i>&lt;C0&gt;</i></td><td>基本的な制御機能</td><td>ISO/IEC 646 (ASCII)</td></tr>
+<tr><td><i>&lt;C1&gt;</i></td><td>基本的な制御機能</td><td>ECMA-48 (ANSI, ISO/IEC 6429)</td></tr>
+<tr><th colspan="2" rowspan="2">エスケープシーケンス</th>
+    <td>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td><td>文字コード制御用</td><td rowspan="2">ISO 2022</td></tr>
+<tr><td>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></td><td>私用 (端末の制御)</td></tr>
+<tr><th colspan="2">制御シーケンス</th>
+    <td>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>+</strong> <i>&lt;F&gt;</i></td>
+    <td>ANSI 端末制御</td><td rowspan="6">ECMA-48 (ANSI, ISO/IEC 6429)</td></tr>
+<tr><th rowspan="4">制御列</th><th>コマンド列</th>
+    <td>DCS ... ST</td><td>装置制御</td></tr>
+<tr><td>OSC ... ST</td><td>OSの機能</td></tr>
+<tr><td>PM ... ST</td> <td>私用機能</td></tr>
+<tr><td>APC ... ST</td><td>アプリケーションの機能</td></tr>
+<tr><th>文字列</th>
+    <td>SOS ... ST</td><td>文字列</td></tr>
+</table>
+<p>但し、</p>
+<ul>
+<li>&lt;C0&gt; は 00/00 - 01/15 のバイト、</li>
+<li>&lt;I&gt; は 02/00 - 02/15 のバイト、</li>
+<li>&lt;P&gt; は 03/00 - 03/15 のバイト、</li>
+<li>&lt;F&gt; は 04/00 - 07/14 のバイト、</li>
+<li>&lt;C1&gt; は 08/00 - 09/15 のバイト</li>
+</ul>
+<p class="resume">である。</p>
 
+<h3>関連する規格と略称</h3>
+<p>この節では関連する規格と、それらをこの文書の中で参照する際に用いる略称についてまとめる。</p>
+<ul>
+<li><dfn class="standard">ECMA-48</dfn>: ISO/IEC 6429, JIS X 0211 (和訳)
+  <p>通称 ANSI と呼ばれ、またこれを実装する端末を ANSI Terminal などと呼ぶ。</p>
+</li>
+<li><dfn class="standard">T.416</dfn>: ISO 8613-6, CCITT Recommendation T.416, JIS X 4106 (和訳、2010年廃止)</li>
+<li><dfn class="standard">T.61</dfn>: CCITT Recommendation T.61</li>
+<li>References
+  <ul>
+  <li><a href="http://en.wikipedia.org/wiki/Control_code">Control character - Wikipedia, the free encyclopedia</a></li>
+  <li><a href="http://en.wikipedia.org/wiki/C0_and_C1_control_codes">C0 and C1 control codes - Wikipedia, the free encyclopedia</a></li>
+  <li><a href="http://ja.wikipedia.org/wiki/%E5%88%B6%E5%BE%A1%E6%96%87%E5%AD%97">制御文字 - Wikipedia</a></li>
+  <li></li>
+  <li><a href="http://www.wdic.org/w/WDIC/ISO/IEC%202022">ISO/IEC 2022 ‐ 通信用語の基礎知識</a></li>
+  <li><a href="http://ja.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia</a></li>
+  <li><a href="http://en.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia, the free encyclopedia</a></li>
+  <li><a href="http://isoreg.com/">::: ISO REG Quality Registrars Inc. :::: - HOME</a></li>
+  <li><a href="http://www.itscj.ipsj.or.jp/ISO-IR/">International Register of Coded Character Sets</a></li>
+  <li></li>
+  </ul>
+</li>
+</ul>
+
+<h3>制御文字 (control character)</h3>
 <table class="normal center">
 <tr><th colspan="12">C0 (ISO/IEC-646)</th><th colspan="12">C1 (ISO/IEC-6429)</th></tr>
 <tr>
@@ -246,24 +290,11 @@
   </li>
   </ul>
 </li>
-<li>References
-  <ul>
-  <li><a href="http://en.wikipedia.org/wiki/Control_code">Control character - Wikipedia, the free encyclopedia</a></li>
-  <li><a href="http://en.wikipedia.org/wiki/C0_and_C1_control_codes">C0 and C1 control codes - Wikipedia, the free encyclopedia</a></li>
-  <li><a href="http://ja.wikipedia.org/wiki/%E5%88%B6%E5%BE%A1%E6%96%87%E5%AD%97">制御文字 - Wikipedia</a></li>
-  <li></li>
-  <li><a href="http://www.wdic.org/w/WDIC/ISO/IEC%202022">ISO/IEC 2022 ‐ 通信用語の基礎知識</a></li>
-  <li><a href="http://ja.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia</a></li>
-  <li><a href="http://en.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia, the free encyclopedia</a></li>
-  <li><a href="http://isoreg.com/">::: ISO REG Quality Registrars Inc. :::: - HOME</a></li>
-  <li><a href="http://www.itscj.ipsj.or.jp/ISO-IR/">International Register of Coded Character Sets</a></li>
-  <li></li>
-  </ul>
-</li>
 </ul>
 
+<h3>エスケープシーケンス (escape sequence)</h3>
 <h3 id="acro.ESC"><dfn class="cfunc">ESC</dfn>: Escape</h3>
-<p>特に ESC で始まるシーケンスを(狭義)<dfn>エスケープシーケンス</dfn>と呼ぶ。
+<p>ESC で始まるシーケンスを<dfn>エスケープシーケンス</dfn>と呼ぶ。
 以下に 2バイト目 (ESC の次のバイト) で分類した表を載せる。
 例によって赤色で示したのが、続きのバイト列を持つシーケンスである。
 </p>
@@ -364,27 +395,14 @@
 <i>&lt;F&gt;</i> は [0x40, 0x7F) の範囲の文字である。
 </p>
 
-<h3>その他のシーケンスの形式</h3>
-
+<h3>制御シーケンス (control sequence)</h3>
 <table class="normal center">
 <tr><th>先頭</th><th>Sequence</th><th>名前</th></tr>
 <tr><th>CSI</th>
   <td>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
   <td><dfn>制御シーケンス</dfn> (control sequence)</td>
 </tr>
-<tr><th>OSC</th>
-  <td>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> BEL<br/>
-  OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> ST
-  </td>
-  <td>Operating System Command</td>
-</tr>
-<tr><th>DCS</th><td>DCS <strong>.*</strong> ST</td><td>Device Control String</td></tr>
-<tr><th>SOS</th> <td>SOS <strong>.*</strong> ST</td> <td>Start of String</td></tr>
-<tr><th>PM</th> <td>PM <strong>.*</strong> ST</td> <td>Privacy Message</td></tr>
-<tr><th>APC</th><td>APC <strong>.*</strong> ST</td><td>Application Program Command</td>
-</tr>
 </table>
-
 <ul>
 <li><dfn class="cfunc">CSI</dfn>: Constrol Sequence Introducer
   <p>[ECMA-48/8.3.16] CSI (constrol sequence introducer) で始まるシーケンスを特に
@@ -428,6 +446,25 @@
   <p></p>
   <p>, [ECMA-48/5.4]</p>
 </li>
+</ul>
+
+<h3>制御列</h3>
+<table class="normal center">
+<tr><th>先頭</th><th>Sequence</th><th>名前</th></tr>
+<tr><th>OSC</th>
+  <td>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> BEL<br/>
+  OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> ST
+  </td>
+  <td>Operating System Command</td>
+</tr>
+<tr><th>DCS</th><td>DCS <strong>.*</strong> ST</td><td>Device Control String</td></tr>
+<tr><th>SOS</th> <td>SOS <strong>.*</strong> ST</td> <td>Start of String</td></tr>
+<tr><th>PM</th> <td>PM <strong>.*</strong> ST</td> <td>Privacy Message</td></tr>
+<tr><th>APC</th><td>APC <strong>.*</strong> ST</td><td>Application Program Command</td>
+</tr>
+</table>
+
+<ul>
 <li>制御列
   <p>[ECMA-48/5.6]
   或る文字で始まって ST で終わるシーケンスを総称して<dfn>制御列</dfn> (control strings)と呼ぶ。
@@ -1190,7 +1227,7 @@
 </ul>
 
 <h3>行に対する属性</h3>
-<table>
+<table class="normal center">
 <tr><th rowspan="2">DECDHL</th><td>ESC # 3</td></tr>
 <tr>                           <td>ESC # 4</td></tr>
 <tr><th>DECSWL</th><td>ESC # 5</td></tr>
@@ -2729,7 +2766,7 @@ j.行消す, ESC[2K
   <span class="left">-- ≪</span>
   <span class="right">≫ --</span>
   <span class="center">
-  akinomyoga/contra :: Escape Sequences
+  akinomyoga/contra :: Control functions
   </span>
 </div>
 <div class="address2">
