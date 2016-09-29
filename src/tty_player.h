@@ -653,7 +653,7 @@ namespace contra {
       }
 
       if (params.size() == 0)
-        params.push_back(csi_param_type {0, false});
+        params.push_back(csi_param_type {0, false, true});
 
       std::uint32_t value;
       while (params.read_param(value, 0)) {
