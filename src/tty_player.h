@@ -370,7 +370,7 @@ namespace contra {
         csi_param_type const& param = m_data[m_index++];
         if (!param.isColon) {
           m_isColonAppeared = false;
-          if (param.isDefault)
+          if (!param.isDefault)
             result = param.value;
           else
             result = defaultValue;
@@ -387,7 +387,7 @@ namespace contra {
       ) {
         csi_param_type const& param = m_data[m_index++];
         if (param.isColon) m_isColonAppeared = true;
-        if (param.isDefault)
+        if (!param.isDefault)
           result = param.value;
         else
           result = defaultValue;
