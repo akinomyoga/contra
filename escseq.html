@@ -554,83 +554,8 @@
 <li></li>
 </ul>
 
-
-<!--===================================================================================-->
-<h2>制御機能</h2>
-
-<h4>TODO</h4>
-<ul>
-<li>xterm: osc sequence, dsc sequence を列挙</li>
-<li>vt510 の頁でまだ列挙していない ASCII Control Functions を列挙、分類、version 確認</li>
-<li>
- DECAAM, DECALN, DECANM, DECARM, DECARSM, DECAUPSS, DECAWM, DECBI, DECBKM, DECCANSM,
- DECCAPSLK, DECCARA, DECCIR, DECCKD, DECCKM, DECCKSR, DECCOLM, DECCRA, DECCRTSM, DECDC,
- DECDLD, DECDMAC, DECEKBD, DECELF, DECERA, DECESKM, DECFI, DECFNK, DECFRA,
- DECHDPXM, DECHEBM, DECHEM, DECIC, DECINVM, DECIPEM, DECKBD, DECKBUM, DECKLHIM, DECKPAM,
- DECKPM, DECKPNM, DECLANS, DECLBAN, DECLFKC, DECLL, DECLRMM, DECLTOD, DECMCM, DECMSR,
- DECNAKB, DECNCSM, DECNKM, DECNRCM, DECNULM, DECNUMLK, DECOM, DECPAK, DECPCCM, DECPCTERM,
- DECPEX, DECPFF, DECPFK, DECPKA, DECPKFMR, DECRARA, DECRC, DECRLCM, DECRLM, DECRPAK,
- DECRPDE, DECRPFK, DECRPKT, DECRPM, DECRPSS, DECRPTUI, DECRQCRA, DECRQDE, DECRQKD,
- DECRQKT, DECRQPKFM, DECRQPSR, DECRQSS, DECRQUPSS, DECRSPS, DECRSTS, DECSACE, DECSASD,
- DECSC, DECSCA, DECSCL, DECSCLM, DECSCNM, DECSCP, DECSCPP, DECSCS, DECSDDT, DECSDPT,
- DECSED, DECSEL, DECSERA, DECSFC, DECSKCV, DECSLCK, DECSLPP, DECSLRM, DECSMBV, DECSMKR,
- DECSNLS, DECSPP, DECSPPCS, DECSPRTT, DECSR, DECSRC, DECSRFR, DECSSCLS, DECSSDT, DECSSL,
- DECST8C, DECSTBM, DECSTR, DECSTRL, DECSWBV, DECTABSR, DECTID, DECTME, DECTSR,
- DECTST, DECUDK, DECVCCM, DECXCPR, DECXRLM, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR,
- HPA, HPR, HTS, HVP, IND, IRM, KAM, LNM, LS, MC, NEL, NP, PP, PPA, PPB, PPR, RIS, SCODFK,
- SCS, SD, SRM, SS, SU, TBC, VPA, VPR
-</li>
-<li>VT520
-  <ul>
-  <li>+ DECAC, DECANM Exit, DECARR, DECATC, DECATCBM, DECATCUM, DECBBSM, DECCRTST, DECCTR, DECDLDA, DECECM, DECES,
-  DECFWM, DECHWUM, DECID, DECOSCNM, DECPS, DECRPL, DECRSTS, DECSEST, DECSIN, DECSPMA, DECSTGLT, DECSTUI, DECSWT,
-  DECSZS, DECTSR, DECUS, HT
-  </li>
-  <li>- DECFNK, DECSRFR, SCODFK, SCORC, SCOSC</li>
-  </ul>
-</li>
-</ul>
-
-<p>■ 以下 xterm の CSI Sequence (未だ纏めていない物)</p>
-<table class="normal center">
-<tr><th>名称</th><th>Sequence</th></tr>
-<tr><th>DECSED</th><td>CSI ? <i>&lt;Ps&gt;</i> J</td></tr>
-<tr><th>DECSEL</th><td>CSI ? <i>&lt;Ps&gt;</i> K</td></tr>
-<tr><th>SU</th>     <td>CSI <i>&lt;Ps&gt;</i> S</td></tr>
-<tr><th>SD</th>     <td>CSI <i>&lt;Ps&gt;</i> T</td></tr>
-<tr><th>(IHMT)</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> T</td></tr>
-<tr><th>HPA</th>    <td>CSI <i>&lt;Ps&gt;</i> `</td></tr>
-<tr><th>REP</th>    <td>CSI <i>&lt;Pm&gt;</i> b</td></tr>
-<tr><th>VPA</th>    <td>CSI <i>&lt;Pm&gt;</i> d</td></tr>
-<tr><th>HVP</th>    <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> f</td></tr>
-<tr><th>TBC</th>    <td>CSI <i>&lt;Ps&gt;</i> g</td></tr>
-<tr><th>MC</th>     <td>CSI <i>&lt;Pm&gt;</i> i</td></tr>
-<tr><th>DECMC</th>  <td>CSI ? <i>&lt;Pm&gt;</i> i</td></tr>
-<tr><th>DSR</th>    <td>CSI <i>&lt;Ps&gt;</i> n</td></tr>
-<tr><th>DECDSR</th> <td>CSI ? <i>&lt;Ps&gt;</i> n</td></tr>
-<tr><th>DECSTR</th> <td>CSI ! p</td></tr>
-<tr><th>DECSCL</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> " p</td></tr>
-<tr><th>DECSCA</th> <td>CSI <i>&lt;Ps&gt;</i> q</td></tr>
-<tr><th>DECSTBM</th><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> r</td></tr>
-<tr><th>XTREST</th> <td>CSI ? <i>&lt;Pm&gt;</i> r</td></tr>
-<tr><th>DECCARA</th><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ r</td></tr>
-<tr><th>XTSAVE</th> <td>CSI ? <i>&lt;Pm&gt;</i> s</td></tr>
-<tr><th>XTWOP</th>  <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> t</td></tr>
-<tr><th>DECRARA</th><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ t</td></tr>
-<tr><th>DECCRA</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ w</td></tr>
-<tr><th>DECEFR</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ' w</td></tr>
-<tr><th>DECREQTPARM</th><td>CSI <i>&lt;Ps&gt;</i> x</td></tr>
-<tr><th>DECSACE</th>    <td>CSI <i>&lt;Ps&gt;</i> * x</td></tr>
-<tr><th>DECFRA</th>     <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ x</td></tr>
-<tr><th>DECELR</th>     <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ' z</td></tr>
-<tr><th>DECERA</th>     <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ z</td></tr>
-<tr><th>DECSLE</th>     <td>CSI <i>&lt;Pm&gt;</i> ' {</td></tr>
-<tr><th>DECSERA</th>    <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ {</td></tr>
-<tr><th>DECRQLP</th>    <td>CSI <i>&lt;Ps&gt;</i> ' |</td></tr>
-</table>
-
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-<h3>モード</h3>
+<h2>モード</h2>
 
 <table class="normal center">
 <tr><th>名称</th><th>表現</th></tr>
@@ -875,58 +800,7 @@
 </div>
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-<h3>問い合わせ</h3>
-<table class="normal center">
-<tr><th>名称</th><th>D</th><th>Sequence</th></tr>
-<tr><th>DA1</th> <td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> c</td></tr>
-<tr><th>DA1R</th><td>&lt;&lt;</td><td>CSI ? 6 4 ; <i>&lt;Pm&gt;</i> c</td></tr>
-<tr><th>DA2</th> <td>&gt;&gt;</td><td>CSI &gt; <i>&lt;Ps&gt;</i> c</td></tr>
-<tr><th>DA2R</th><td>&lt;&lt;</td><td>CSI &gt; 6 1 ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> c</td></tr>
-<tr><th>DA3</th> <td>&gt;&gt;</td><td>CSI = <i>&lt;Ps&gt;</i> c</td></tr>
-<tr><th>DA3R</th><td>&lt;&lt;</td><td>DCS ! | <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> ST</td></tr>
-<tr><th>DECRQTSR</th> <td>&gt;&gt;</td><td>CSI <i>&lt;Ps&gt;</i> $ u</td></tr>
-<tr><th>DECTSR</th><td>&lt;&lt;</td><td>DCS 1 $ s <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> ST</td></tr>
-<tr><th>DDD1</th><td>&lt;&lt;</td><td>ESC ) 1</td></tr>
-<tr><th>DDD2</th><td>&lt;&lt;</td><td>ESC ) B</td></tr>
-<tr><th>DDD3</th><td>&lt;&lt;</td><td>ESC ( 1</td></tr>
-</table>
-
-<ul>
-<li><dfn class="cfunc">DA1</dfn>: Primary Device Attributes
-  <ul>
-  <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DA1">VT510: DA1</a></li>
-  </ul>
-</li>
-<li><dfn class="cfunc">DA2</dfn>: Secondary Device Attributes
-  <ul>
-  <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DA2">VT510: DA2</a></li>
-  </ul>
-</li>
-<li><dfn class="cfunc">DA3</dfn>: Tertiary Device Attributes
-  <ul>
-  <li>VT100</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DA3">VT510: DA3</a></li>
-  </ul>
-</li>
-<li><dfn class="cfunc">DECRQTSR</dfn>: Request Terminal State Report
-  <ul>
-  <li><dfn class="cfunc">DECRQTSRR</dfn></li>
-  <li><dfn class="cfunc">DDD1</dfn></li>
-  <li><dfn class="cfunc">DDD2</dfn></li>
-  <li><dfn class="cfunc">DDD3</dfn></li>
-  <li>VT420 (DDD1, DDD2, DDD3 は Hebrew Keyboard で有効)</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DECRQTSR">VT510: DECRQTSR</a></li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DD1">VT510: DDD1, DDD2, DDD3</a></li>
-  </ul>
-</li>
-
-
-</ul>
-
-<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-<h3>カーソル位置</h3>
+<h2>カーソル位置</h2>
 
 <table class="normal center">
 <tr><th>名称</th><th>種類</th><th>表現</th></tr>
@@ -1089,7 +963,7 @@
 </ul>
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-<h3>挿入・削除</h3>
+<h2>挿入・削除</h2>
 
 <table class="normal center">
 <tr><th>名称</th><th>表現</th></tr>
@@ -1144,6 +1018,128 @@
   <ul>
   <li>VT100; xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DCH">VT510: IL</a></li>
+  </ul>
+</li>
+</ul>
+
+<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+<h2>他</h2>
+
+<h3>TODO</h3>
+<ul>
+<li>xterm: osc sequence, dsc sequence を列挙</li>
+<li>vt510 の頁でまだ列挙していない ASCII Control Functions を列挙、分類、version 確認</li>
+<li>
+ DECAAM, DECALN, DECANM, DECARM, DECARSM, DECAUPSS, DECAWM, DECBI, DECBKM, DECCANSM,
+ DECCAPSLK, DECCARA, DECCIR, DECCKD, DECCKM, DECCKSR, DECCOLM, DECCRA, DECCRTSM, DECDC,
+ DECDLD, DECDMAC, DECEKBD, DECELF, DECERA, DECESKM, DECFI, DECFNK, DECFRA,
+ DECHDPXM, DECHEBM, DECHEM, DECIC, DECINVM, DECIPEM, DECKBD, DECKBUM, DECKLHIM, DECKPAM,
+ DECKPM, DECKPNM, DECLANS, DECLBAN, DECLFKC, DECLL, DECLRMM, DECLTOD, DECMCM, DECMSR,
+ DECNAKB, DECNCSM, DECNKM, DECNRCM, DECNULM, DECNUMLK, DECOM, DECPAK, DECPCCM, DECPCTERM,
+ DECPEX, DECPFF, DECPFK, DECPKA, DECPKFMR, DECRARA, DECRC, DECRLCM, DECRLM, DECRPAK,
+ DECRPDE, DECRPFK, DECRPKT, DECRPM, DECRPSS, DECRPTUI, DECRQCRA, DECRQDE, DECRQKD,
+ DECRQKT, DECRQPKFM, DECRQPSR, DECRQSS, DECRQUPSS, DECRSPS, DECRSTS, DECSACE, DECSASD,
+ DECSC, DECSCA, DECSCL, DECSCLM, DECSCNM, DECSCP, DECSCPP, DECSCS, DECSDDT, DECSDPT,
+ DECSED, DECSEL, DECSERA, DECSFC, DECSKCV, DECSLCK, DECSLPP, DECSLRM, DECSMBV, DECSMKR,
+ DECSNLS, DECSPP, DECSPPCS, DECSPRTT, DECSR, DECSRC, DECSRFR, DECSSCLS, DECSSDT, DECSSL,
+ DECST8C, DECSTBM, DECSTR, DECSTRL, DECSWBV, DECTABSR, DECTID, DECTME, DECTSR,
+ DECTST, DECUDK, DECVCCM, DECXCPR, DECXRLM, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR,
+ HPA, HPR, HTS, HVP, IND, IRM, KAM, LNM, LS, MC, NEL, NP, PP, PPA, PPB, PPR, RIS, SCODFK,
+ SCS, SD, SRM, SS, SU, TBC, VPA, VPR
+</li>
+<li>VT520
+  <ul>
+  <li>+ DECAC, DECANM Exit, DECARR, DECATC, DECATCBM, DECATCUM, DECBBSM, DECCRTST, DECCTR, DECDLDA, DECECM, DECES,
+  DECFWM, DECHWUM, DECID, DECOSCNM, DECPS, DECRPL, DECRSTS, DECSEST, DECSIN, DECSPMA, DECSTGLT, DECSTUI, DECSWT,
+  DECSZS, DECTSR, DECUS, HT
+  </li>
+  <li>- DECFNK, DECSRFR, SCODFK, SCORC, SCOSC</li>
+  </ul>
+</li>
+</ul>
+
+<p>■ 以下 xterm の CSI Sequence (未だ纏めていない物)</p>
+<table class="normal center">
+<tr><th>名称</th><th>表現</th></tr>
+<tr><th>DECSED</th><td>CSI ? <i>&lt;Ps&gt;</i> J</td></tr>
+<tr><th>DECSEL</th><td>CSI ? <i>&lt;Ps&gt;</i> K</td></tr>
+<tr><th>SU</th>     <td>CSI <i>&lt;Ps&gt;</i> S</td></tr>
+<tr><th>SD</th>     <td>CSI <i>&lt;Ps&gt;</i> T</td></tr>
+<tr><th>(IHMT)</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> T</td></tr>
+<tr><th>HPA</th>    <td>CSI <i>&lt;Ps&gt;</i> `</td></tr>
+<tr><th>REP</th>    <td>CSI <i>&lt;Pm&gt;</i> b</td></tr>
+<tr><th>VPA</th>    <td>CSI <i>&lt;Pm&gt;</i> d</td></tr>
+<tr><th>HVP</th>    <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> f</td></tr>
+<tr><th>TBC</th>    <td>CSI <i>&lt;Ps&gt;</i> g</td></tr>
+<tr><th>MC</th>     <td>CSI <i>&lt;Pm&gt;</i> i</td></tr>
+<tr><th>DECMC</th>  <td>CSI ? <i>&lt;Pm&gt;</i> i</td></tr>
+<tr><th>DSR</th>    <td>CSI <i>&lt;Ps&gt;</i> n</td></tr>
+<tr><th>DECDSR</th> <td>CSI ? <i>&lt;Ps&gt;</i> n</td></tr>
+<tr><th>DECSTR</th> <td>CSI ! p</td></tr>
+<tr><th>DECSCL</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> " p</td></tr>
+<tr><th>DECSCA</th> <td>CSI <i>&lt;Ps&gt;</i> q</td></tr>
+<tr><th>DECSTBM</th><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> r</td></tr>
+<tr><th>XTREST</th> <td>CSI ? <i>&lt;Pm&gt;</i> r</td></tr>
+<tr><th>DECCARA</th><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ r</td></tr>
+<tr><th>XTSAVE</th> <td>CSI ? <i>&lt;Pm&gt;</i> s</td></tr>
+<tr><th>XTWOP</th>  <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> t</td></tr>
+<tr><th>DECRARA</th><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ t</td></tr>
+<tr><th>DECCRA</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ w</td></tr>
+<tr><th>DECEFR</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ' w</td></tr>
+<tr><th>DECREQTPARM</th><td>CSI <i>&lt;Ps&gt;</i> x</td></tr>
+<tr><th>DECSACE</th>    <td>CSI <i>&lt;Ps&gt;</i> * x</td></tr>
+<tr><th>DECFRA</th>     <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ x</td></tr>
+<tr><th>DECELR</th>     <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ' z</td></tr>
+<tr><th>DECERA</th>     <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ z</td></tr>
+<tr><th>DECSLE</th>     <td>CSI <i>&lt;Pm&gt;</i> ' {</td></tr>
+<tr><th>DECSERA</th>    <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ {</td></tr>
+<tr><th>DECRQLP</th>    <td>CSI <i>&lt;Ps&gt;</i> ' |</td></tr>
+</table>
+
+<h3>問い合わせ</h3>
+<table class="normal center">
+<tr><th>名称</th><th>種類</th><th>表現</th></tr>
+<tr><th>DA1</th> <td>制御</td><td>CSI <i>&lt;Ps&gt;</i> c</td></tr>
+<tr><th>DA1R</th><td>応答</td><td>CSI ? 6 4 ; <i>&lt;Pm&gt;</i> c</td></tr>
+<tr><th>DA2</th> <td>制御</td><td>CSI &gt; <i>&lt;Ps&gt;</i> c</td></tr>
+<tr><th>DA2R</th><td>応答</td><td>CSI &gt; 6 1 ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> c</td></tr>
+<tr><th>DA3</th> <td>制御</td><td>CSI = <i>&lt;Ps&gt;</i> c</td></tr>
+<tr><th>DA3R</th><td>応答</td><td>DCS ! | <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> ST</td></tr>
+<tr><th>DECRQTSR</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> $ u</td></tr>
+<tr><th>DECTSR</th><td>応答</td><td>DCS 1 $ s <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> ST</td></tr>
+<tr><th>DDD1</th><td>応答</td><td>ESC ) 1</td></tr>
+<tr><th>DDD2</th><td>応答</td><td>ESC ) B</td></tr>
+<tr><th>DDD3</th><td>応答</td><td>ESC ( 1</td></tr>
+</table>
+
+<ul>
+<li><dfn class="cfunc">DA1</dfn>: Primary Device Attributes
+  <ul>
+  <li>VT100; xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DA1">VT510: DA1</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DA2</dfn>: Secondary Device Attributes
+  <ul>
+  <li>VT100; xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DA2">VT510: DA2</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DA3</dfn>: Tertiary Device Attributes
+  <ul>
+  <li>VT100</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DA3">VT510: DA3</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECRQTSR</dfn>: Request Terminal State Report
+  <ul>
+  <li><dfn class="cfunc">DECRQTSRR</dfn></li>
+  <li><dfn class="cfunc">DDD1</dfn></li>
+  <li><dfn class="cfunc">DDD2</dfn></li>
+  <li><dfn class="cfunc">DDD3</dfn></li>
+  <li>VT420 (DDD1, DDD2, DDD3 は Hebrew Keyboard で有効)</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECRQTSR">VT510: DECRQTSR</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DD1">VT510: DDD1, DDD2, DDD3</a></li>
   </ul>
 </li>
 </ul>
