@@ -65,28 +65,28 @@
 </ul>
 <p class="resume">等に用いられる。
 またこれらの制御機能には、
-アプリケーションから端末に対して送られるバイト列中で指定される端末制御の為の物と、
-端末からアプリケーションに対して送られるバイト列中で指定される端末の応答・ユーザ入力がある。
+アプリケーションからの出力 (アプリケーションから端末に対して送られるバイト列) 中で指定される端末制御の為の物と、
+アプリケーションへの入力 (端末からアプリケーションに対して送られるバイト列) 中で指定される端末の応答・ユーザ入力がある。
 また、同じ制御機能であっても、端末によって対応していなかったり、
-そのバイト列としての表現が端末に依って異なっていたりする事に注意する。
+そのバイト列としての表現が異なっていたりする事に注意する。
 </p>
 
 <p>制御機能を表現するバイト列として以下の種類がある。</p>
 <table class="normal center">
 <tr><th colspan="2">名称</th><th>表現</th><th>説明</th><th>関連規格</th></tr>
 <tr><th colspan="2" rowspan="2">制御文字</th>
-    <td><i>&lt;C0&gt;</i></td><td>基本的な制御機能</td><td>ISO/IEC 646 (ASCII)</td></tr>
-<tr><td><i>&lt;C1&gt;</i></td><td>基本的な制御機能</td><td>ECMA-48 (ANSI, ISO/IEC 6429)</td></tr>
+    <td><i>&lt;C0&gt;</i></td><td>基本の制御</td><td>ISO/IEC 646 (ASCII)</td></tr>
+<tr><td><i>&lt;C1&gt;</i></td><td>基本の制御</td><td>ECMA-48 (ANSI, ISO/IEC 6429)</td></tr>
 <tr><th colspan="2" rowspan="2">エスケープシーケンス</th>
-    <td>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td><td>文字コード制御用</td><td rowspan="2">ISO 2022</td></tr>
-<tr><td>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></td><td>私用 (端末の制御)</td></tr>
+    <td>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td><td>文字コードの制御</td><td rowspan="2">ISO 2022</td></tr>
+<tr><td>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></td><td>私用の制御</td></tr>
 <tr><th colspan="2">制御シーケンス</th>
-    <td>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>+</strong> <i>&lt;F&gt;</i></td>
-    <td>ANSI 端末制御</td><td rowspan="6">ECMA-48 (ANSI, ISO/IEC 6429)</td></tr>
+    <td>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
+    <td>ANSI の制御</td><td rowspan="6">ECMA-48 (ANSI, ISO/IEC 6429)</td></tr>
 <tr><th rowspan="5">制御列</th><th rowspan="4">コマンド列</th>
     <td>DCS ... ST</td><td>装置制御</td></tr>
 <tr><td>OSC ... ST</td><td>OSの機能</td></tr>
-<tr><td>PM ... ST</td> <td>私用機能</td></tr>
+<tr><td>PM ... ST</td> <td>私用の機能</td></tr>
 <tr><td>APC ... ST</td><td>アプリケーションの機能</td></tr>
 <tr><th>文字列</th>
     <td>SOS ... ST</td><td>文字列</td></tr>
@@ -305,7 +305,7 @@
 </li>
 </ul>
 <table class="normal center">
-<tr><th>名称</th><th>Sequence</th>                 <th>Hex; 行/列</th>         <th>名称</th><th>Sequence</th>  <th>Hex; 行/列</th>         <th>名称</th><th>Sequence</th><th>Hex; 行/列</th>         </tr>
+<tr><th>名称</th><th>表現</th>                     <th>Hex; 行/列</th>         <th>名称</th><th>表現</th>      <th>Hex; 行/列</th>         <th>名称</th><th>表現</th>    <th>Hex; 行/列</th>         </tr>
 <tr><th class="markB">ACS</th><td>ESC SP</td><td>\x1B\x20; 1/11 2/0</td> <th>---</th><td>ESC @</td>      <td>\x1B\x40; 1/11 4/0</td> <th>DMI</th><td>ESC `</td>    <td>\x1B\x60; 1/11 6/0</td> </tr>
 <tr><th class="markB">CZD</th>       <td>ESC !</td><td>\x1B\x21; 1/11 2/1</td> <th>---</th><td>ESC A</td>      <td>\x1B\x41; 1/11 4/1</td> <th>INT</th><td>ESC a</td>    <td>\x1B\x61; 1/11 6/1</td> </tr>
 <tr><th class="markB">C1D</th>       <td>ESC "</td><td>\x1B\x22; 1/11 2/2</td> <th>---</th><td>ESC B</td>      <td>\x1B\x42; 1/11 4/2</td> <th>EMI</th><td>ESC b</td>    <td>\x1B\x62; 1/11 6/2</td> </tr>
@@ -331,7 +331,7 @@
 <tr><th class="markB">G2D6</th>      <td>ESC .</td><td>\x1B\x2E; 1/11 2/14</td><th>SS2</th><td>ESC N</td>     <td>\x1B\x4E; 1/11 4/14</td><th>LS2</th><td>ESC n</td>    <td>\x1B\x6E; 1/11 6/14</td></tr>
 <tr><th class="markB">G3D6</th>      <td>ESC /</td><td>\x1B\x2F; 1/11 2/15</td><th>SS3</th><td>ESC O</td>     <td>\x1B\x4F; 1/11 4/15</td><th>LS3</th><td>ESC o</td>    <td>\x1B\x6F; 1/11 6/15</td></tr>
 
-<tr><th>名称</th><th>Sequence</th>   <th>Hex; 行/列</th>         <th>名称</th><th>Sequence</th><th>Hex; 行/列</th>                   <th>名称</th><th>Sequence</th> <th>Hex; 行/列</th>         </tr>
+<tr><th>名称</th><th>表現</th>       <th>Hex; 行/列</th>         <th>名称</th><th>表現</th>    <th>Hex; 行/列</th>                   <th>名称</th><th>表現</th>     <th>Hex; 行/列</th>         </tr>
 <tr><th>---</th><td>ESC 0</td>       <td>\x1B\x30; 1/11 3/0</td> <th class="markB">DCS</th><td>ESC P</td><td>\x1B\x50; 1/11 5/0</td> <th>PCD</th><td>ESC p</td>     <td>\x1B\x70; 1/11 7/0</td> </tr>
 <tr><th>---</th><td>ESC 1</td>       <td>\x1B\x31; 1/11 3/1</td> <th>---</th>              <td>ESC Q</td><td>\x1B\x51; 1/11 5/1</td> <th>-R-</th><td>ESC q</td>     <td>\x1B\x71; 1/11 7/1</td> </tr>
 <tr><th>---</th><td>ESC 2</td>       <td>\x1B\x32; 1/11 3/2</td> <th>---</th>              <td>ESC R</td><td>\x1B\x52; 1/11 5/2</td> <th>-R-</th><td>ESC r</td>     <td>\x1B\x72; 1/11 7/2</td> </tr>
@@ -377,13 +377,13 @@
 </li>
 </ul>
 
-<h3><dfn class="cfunc" id="tfunc.1B23">(1B23+)</dfn>: (prefix)</h3>
+<h4><dfn class="cfunc" id="tfunc.1B23">(1B23+)</dfn>: (prefix)</h4>
 <p>ISO/IEC 2022 では ESC # に続くシーケンスは、登録単独制御機能 (registered single control function) とされている。
 一方で、歴史的には VT100 端末で、ESC # で始まるシーケンスが使われてきた。
 それらを以下に纏める。
 </p>
 <table class="normal center">
-<tr><th>名称</th>   <th>Sequence</th><th>Hex; 行/列</th></tr>
+<tr><th>名称</th>   <th>表現</th><th>Hex; 行/列</th></tr>
 <tr><th>RSCF</th>
   <td>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
   <td>\x1B\x23<i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i>;
@@ -402,7 +402,7 @@
 
 <h3>制御シーケンス (control sequence)</h3>
 <table class="normal center">
-<tr><th>先頭</th><th>Sequence</th><th>名前</th></tr>
+<tr><th>先頭</th><th>表現</th><th>名前</th></tr>
 <tr><th>CSI</th>
   <td>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
   <td><dfn>制御シーケンス</dfn> (control sequence)</td>
@@ -453,9 +453,9 @@
 </li>
 </ul>
 
-<h3>制御列</h3>
+<h3>制御列 (control string)</h3>
 <table class="normal center">
-<tr><th>先頭</th><th>Sequence</th><th>名前</th></tr>
+<tr><th>先頭</th><th>表現</th><th>名前</th></tr>
 <tr><th>OSC</th>
   <td>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> BEL<br/>
   OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> ST
@@ -633,7 +633,7 @@
 <h3>モード</h3>
 
 <table class="normal center">
-<tr><th>名称</th><th>Sequence</th></tr>
+<tr><th>名称</th><th>表現</th></tr>
 <tr><th>SM</th>     <td>CSI <i>&lt;Pm&gt;</i> h</td></tr>
 <tr><th>DECSET</th> <td>CSI ? <i>&lt;Pm&gt;</i> h</td></tr>
 <tr><th>RM</th>     <td>CSI <i>&lt;Pm&gt;</i> l</td></tr>
@@ -929,13 +929,13 @@
 <h3>カーソル位置</h3>
 
 <table class="normal center">
-<tr><th>名称</th><th>種類</th><th>Sequence</th></tr>
-<tr><th>BS</th><td>制御</td><td>00/08</td></tr>
-<tr><th>HT</th><td>制御</td><td>00/09</td></tr>
-<tr><th>LF</th><td>制御</td><td>00/10</td></tr>
-<tr><th>VT</th><td>制御</td><td>00/11</td></tr>
-<tr><th>FF</th><td>制御</td><td>00/12</td></tr>
-<tr><th>LF</th><td>制御</td><td>00/13</td></tr>
+<tr><th>名称</th><th>種類</th><th>表現</th></tr>
+<tr><th>BS</th><td>制御</td><td>BS</td></tr>
+<tr><th>HT</th><td>制御</td><td>HT</td></tr>
+<tr><th>LF</th><td>制御</td><td>LF</td></tr>
+<tr><th>VT</th><td>制御</td><td>VT</td></tr>
+<tr><th>FF</th><td>制御</td><td>FF</td></tr>
+<tr><th>LF</th><td>制御</td><td>LF</td></tr>
 <tr><th>CUU</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> A</td></tr>
 <tr><th>CUD</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> B</td></tr>
 <tr><th>CUF</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> C</td></tr>
@@ -1092,7 +1092,7 @@
 <h3>挿入・削除</h3>
 
 <table class="normal center">
-<tr><th>名称</th><th>Sequence</th></tr>
+<tr><th>名称</th><th>表現</th></tr>
 <tr><th>ED</th> <td>CSI <i>&lt;Ps&gt;</i> J</td></tr>
 <tr><th>DCH</th><td>CSI <i>&lt;Ps&gt;</i> P</td></tr>
 <tr><th>ECH</th><td>CSI <i>&lt;Ps&gt;</i> X</td></tr>
@@ -1151,7 +1151,7 @@
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h3>他</h3>
 <table class="normal center">
-<tr><th>名称</th>    <th>Sequence</th></tr>
+<tr><th>名称</th>    <th>表現</th></tr>
 <tr><th>DECSCUSR</th><td>CSI <i>&lt;Ps&gt;</i> SP q</td></tr>
 </table>
 
@@ -1198,10 +1198,10 @@
 
 <h3>文字挿入時の属性</h3>
 <table class="normal center">
-<tr><th>名称</th>  <th>Sequence</th></tr>
-<tr><th>SGR</th>   <td>CSI <i>&lt;Pm&gt;</i> m</td></tr>
-<tr><th>PLD</th>   <td>PLD</td></tr>
-<tr><th>PLU</th>   <td>PLU</td></tr>
+<tr><th>名称</th><th>表現</th></tr>
+<tr><th>SGR</th> <td>CSI <i>&lt;Pm&gt;</i> m</td></tr>
+<tr><th>PLD</th> <td>PLD</td></tr>
+<tr><th>PLU</th> <td>PLU</td></tr>
 </table>
 
 <ul>
@@ -1233,8 +1233,10 @@
 
 <h3>行に対する属性</h3>
 <table class="normal center">
-<tr><th rowspan="2">DECDHL</th><td>ESC # 3</td></tr>
-<tr>                           <td>ESC # 4</td></tr>
+<tr><th>名称</th><th>表現</th></tr>
+<tr><th rowspan="2">DECDHL</th>
+    <td>ESC # 3</td></tr>
+<tr><td>ESC # 4</td></tr>
 <tr><th>DECSWL</th><td>ESC # 5</td></tr>
 <tr><th>DECDWL</th><td>ESC # 6</td></tr>
 </table>
