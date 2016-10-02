@@ -295,6 +295,43 @@
 </li>
 </ul>
 
+<h3>図形文字 (graphic characters)</h3>
+<p>エスケープシーケンスや制御シーケンス・制御列では、
+ISO 2022 の図形文字に相当するバイト値を構成要素として含む。
+これらのバイト値は文字コードに依らずに一定のバイト値で表現される。
+しかし毎回数値で表現すると不便なので、
+この文書ではそれらのバイト値を ASCII コードに従って便宜上図形文字に割り当てて表現する。
+例えば、制御シーケンス内に含まれる "06/13" はどの文字コード・文字符号化状態であっても
+"06/13" というバイト値で表されるが、この文書では便宜上 ASCII コードで対応する文字 "m" を用いる。
+しかし、実際の実装では文字コードに依らずに 06/13 として取り扱われるべきである。
+以下にバイト値と図形文字の対応を載せる。</p>
+
+<table class="normal center">
+<tr><th>名称</th><th>R/C</th>
+    <th>名称</th><th>R/C</th>
+    <th>名称</th><th>R/C</th>
+    <th>名称</th><th>R/C</th>
+    <th>名称</th><th>R/C</th>
+    <th>名称</th><th>R/C</th>
+</tr>
+<tr><td>SP</td>   <td>02/00</td><td>0</td>   <td>03/00</td><td>@</td><td>04/00</td><td>P</td><td>05/00</td><td>`</td><td>06/00</td><td>p</td>  <td>07/00</td></tr>
+<tr><td>!</td>    <td>02/01</td><td>1</td>   <td>03/01</td><td>A</td><td>04/01</td><td>Q</td><td>05/01</td><td>a</td><td>06/01</td><td>q</td>  <td>07/01</td></tr>
+<tr><td>"</td>    <td>02/02</td><td>2</td>   <td>03/02</td><td>B</td><td>04/02</td><td>R</td><td>05/02</td><td>b</td><td>06/02</td><td>r</td>  <td>07/02</td></tr>
+<tr><td>#</td>    <td>02/03</td><td>3</td>   <td>03/03</td><td>C</td><td>04/03</td><td>S</td><td>05/03</td><td>c</td><td>06/03</td><td>s</td>  <td>07/03</td></tr>
+<tr><td>$</td>    <td>02/04</td><td>4</td>   <td>03/04</td><td>D</td><td>04/04</td><td>T</td><td>05/04</td><td>d</td><td>06/04</td><td>t</td>  <td>07/04</td></tr>
+<tr><td>%</td>    <td>02/05</td><td>5</td>   <td>03/05</td><td>E</td><td>04/05</td><td>U</td><td>05/05</td><td>e</td><td>06/05</td><td>u</td>  <td>07/05</td></tr>
+<tr><td>&amp;</td><td>02/06</td><td>6</td>   <td>03/06</td><td>F</td><td>04/06</td><td>V</td><td>05/06</td><td>f</td><td>06/06</td><td>v</td>  <td>07/06</td></tr>
+<tr><td>'</td>    <td>02/07</td><td>7</td>   <td>03/07</td><td>G</td><td>04/07</td><td>W</td><td>05/07</td><td>g</td><td>06/07</td><td>w</td>  <td>07/07</td></tr>
+<tr><td>(</td>    <td>02/08</td><td>8</td>   <td>03/08</td><td>H</td><td>04/08</td><td>X</td><td>05/08</td><td>h</td><td>06/08</td><td>x</td>  <td>07/08</td></tr>
+<tr><td>)</td>    <td>02/09</td><td>9</td>   <td>03/09</td><td>I</td><td>04/09</td><td>Y</td><td>05/09</td><td>i</td><td>06/09</td><td>y</td>  <td>07/09</td></tr>
+<tr><td>*</td>    <td>02/10</td><td>:</td>   <td>03/10</td><td>J</td><td>04/10</td><td>Z</td><td>05/10</td><td>j</td><td>06/10</td><td>z</td>  <td>07/10</td></tr>
+<tr><td>+</td>    <td>02/11</td><td>;</td>   <td>03/11</td><td>K</td><td>04/11</td><td>[</td><td>05/11</td><td>k</td><td>06/11</td><td>{</td>  <td>07/11</td></tr>
+<tr><td>,</td>    <td>02/12</td><td>&lt;</td><td>03/12</td><td>L</td><td>04/12</td><td>\</td><td>05/12</td><td>l</td><td>06/12</td><td>|</td>  <td>07/12</td></tr>
+<tr><td>-</td>    <td>02/13</td><td>=</td>   <td>03/13</td><td>M</td><td>04/13</td><td>]</td><td>05/13</td><td>m</td><td>06/13</td><td>}</td>  <td>07/13</td></tr>
+<tr><td>.</td>    <td>02/14</td><td>&gt;</td><td>03/14</td><td>N</td><td>04/14</td><td>^</td><td>05/14</td><td>n</td><td>06/14</td><td>~</td>  <td>07/14</td></tr>
+<tr><td>/</td>    <td>02/15</td><td>?</td>   <td>03/15</td><td>O</td><td>04/15</td><td>_</td><td>05/15</td><td>o</td><td>06/15</td><td>DEL</td><td>07/15</td></tr>
+</table>
+
 <h3>エスケープシーケンス (escape sequence)</h3>
 <ul>
 <li id="acro.ESC"><dfn class="cfunc">ESC</dfn>: Escape
@@ -800,6 +837,207 @@
 </div>
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+<h2>装置の構成と双方向 (bidi) 対応</h2>
+
+<h3>装置の構成</h3>
+<p>[ECMA-48/6.1] 装置 (device) (ディスプレイやプリンターを想定) は3つの部分で構成される。
+<b>入力部</b> (input component)・<b>表示部</b> (presentation component)・<b>記憶部</b> (data component) である。
+特に記憶部は双方向の文字列表示 (bidi) に対応する為に用意するが、単方向しか対応しなければ表示部と等価なので省略可能である。
+表示部・記憶部は共にそれぞれ<b>行</b>の集まりであり、行は<b>文字表示位置</b>の集まりである。
+表示部・記憶部の各行にはそれぞれ自然な方向があり、
+それぞれ文字進路 (character path)・文字進行 (character progression) という。
+表示部は実際に表示されるときの固有の座標(行・列)を持ち、
+記憶部は内部的な取り扱いで使用する固有の座標を持ち、一対一に対応がある。
+表示部・記憶部はそれぞれカーソルを持ち、<b>現在表示位置</b> (active presentation position)・<b>現在記憶位置</b> (active data position) という。
+文字の挿入によるカーソルの移動は、記憶位置を行内の次の文字表示位置に移動するものである。これを<b>暗黙的移動</b> (implicit movement) という。
+制御機能によるカーソルの移動は記憶位置もしくは表示位置に作用する。これを<b>明示的移動</b> (explicit movement) という。
+表示位置と記憶位置は連動する。つまり一方の位置に対する移動操作によって、他方が<b>間接的移動</b> (indirect movement) する。
+何れの移動も、存在しない場所に移動しようとしたときの動作は処理系依存である (例えば行折り返しをしたり、動作を停止したりする)。
+</p>
+<p>明示的には書かれていないが、ECMA-48 および ECMA-TR/53 の記述を総合するに、
+以下の様なことが言えると考えられる。</p>
+<ul>
+<li>表示部には既定の<b>文字進路</b> (character path) が存在して、<b>SPD</b> で設定される。</li>
+<li>各行には文字進路が存在して <b>SCP</b> で設定される。
+  既定の文字進路の場合には、
+  記憶部と表示部で対応する文字表示位置の番号は一致する。
+  逆の文字進路の場合には丁度反転する。
+</li>
+<li>行中で部分的に表示方向を変更するには SDS, SRS を用いる。
+  この部分的に変更された部分を<b>方向付き文字列</b> (directed string) と呼ぶ。
+  但し、方向付き文字列の内部では記憶部と表示部での位置の対応関係は規定されない。
+</li>
+</ul>
+
+<table class="normal center">
+<tr><th>名称</th><th>表現</th></tr>
+<tr><th>SPD</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> SP S</kbd></td></tr>
+<tr><th>SCP</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> SP k</kbd></td></tr>
+<tr><th>SIMD</th><td><kbd>CSI <i>&lt;Ps1&gt;</i> ^</kbd></td></tr>
+<tr><th>SLH</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP U</kbd></td></tr>
+<tr><th>SLL</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP V</kbd></td></tr>
+</table>
+<ul>
+<li>Mode 9 <dfn class="cmode">DCSM</dfn>: Device Component Select Mode
+  <p>[ECMA-48/7.2.3] 制御機能 CPR, CR, DCH, DL, EA, ECH, ED, EF, EL, ICH, IL, LF, NEL, RI, SLH,
+  SLL, SPH, SPL が作用する対象が表示部か記憶部かを設定する。
+  </p>
+  <ul>
+  <li><b>PRESENTATION</b> (RM): 上記の制御機能は、現在表示位置において表示部に対して実施される。</li>
+  <li><b>DATA</b> (SM): 上記の制御機能は、現在記憶位置において記憶部に対して実施される。</li>
+  </ul>
+</li>
+<li><dfn class="cfunc">SPD</dfn>: Select Presentation Directions
+  <p>[ECMA-48/8.3.130] 
+  一つ目の引数 <kbd><i>&lt;Ps1&gt;</i></kbd> は
+  表示部の行の向き、行の追加方向、文字進路を設定する。既定値は 0 である。
+  </p>
+  <table class="normal center">
+  <tr><th><i>&lt;Ps1&gt;</i></th><th>行の向き</th><th>行の追加</th><th>文字進路</th></tr>
+  <tr><td>0</td><td>横書き</td><td>下へ</td><td>右へ</td></tr>
+  <tr><td>1</td><td>縦書き</td><td>左へ</td><td>下へ</td></tr>
+  <tr><td>2</td><td>縦書き</td><td>右へ</td><td>下へ</td></tr>
+  <tr><td>3</td><td>横書き</td><td>下へ</td><td>左へ</td></tr>
+  <tr><td>4</td><td>縦書き</td><td>右へ</td><td>上へ</td></tr>
+  <tr><td>5</td><td>横書き</td><td>上へ</td><td>左へ</td></tr>
+  <tr><td>6</td><td>横書き</td><td>上へ</td><td>右へ</td></tr>
+  <tr><td>7</td><td>縦書き</td><td>左へ</td><td>上へ</td></tr>
+  </table>
+  <p><kbd><i>&lt;Ps2&gt;</i></kbd> は表示部・記憶部に含まれている既存の内容をどう更新するかを指定する。
+  1 を指定すると記憶部を保持して表示部を更新する。現在記憶位置を最初の行の最初の文字に移動する。
+  2 を指定すると表示部を保持して記憶部を更新する。現在表示位置を最初の行の最初の文字に移動する。
+  0 を指定した場合は処理系依存である。
+  例えば次に CR, FF などの現在位置を明示的に移動する制御機能が呼び出される時まで更新が遅延されるという実装も考えうる。
+  既定値は 0 である。
+  </p>
+</li>
+<li><dfn class="cfunc">SCP</dfn>: Select Character Path
+  <p>[ECMA-48/8.3.111] 現在表示行および以降の表示行の文字進路を変更する。</p>
+  <p><kbd><i>&lt;Ps1&gt;</i></kbd> は文字進路を指定する。
+  横書きの場合は 1 が左から右で 2 が右から左を意味する。
+  縦書きの場合は 1 が上から下で 2 が下から上を意味する。
+  既定値はない (no default value)。
+  </p>
+  <p><kbd><i>&lt;Ps2&gt;</i></kbd> は、現在行に既に含まれている内容を、
+  文字進路の変更に伴ってどう更新するか指定する。
+  1 を指定すると新しい文字進路に合わせて表示内容を更新し、現在記憶位置を先頭に移動する。
+  2 を指定すると表示内容を更新せず、対応する記憶部を辻褄があう様に更新する。現在表示位置を先頭に移動する。
+  0 を指定した場合は処理系依存である。例えば次に CR, NEL などの現在位置を明示的に移動する制御機能が呼び出される時まで更新が遅延されるという実装も考えうる。
+  </p>
+  <p>両パラメータの既定値はない。</p>
+  <p>Note: ECMA-48 では効果の範囲は the active line and subsequent lines in presentation component
+  としているが、subsequent lines が具体的に何を指すのかは曖昧である
+  (位置関係で現在行よりも下にある行なのか、今後新しく確立される行のことなのか)。
+  因みに規格中で subsequent line という語が出るのはこの一箇所のみである。
+  ただ、現在行 (the active line) の更新方法だけ記述されていることから、
+  subsequent lines は新しく確立される空の行を指すのが自然と思われる。
+  </p>
+</li>
+<li><dfn class="cfunc">SIMD</dfn>: Select Implicit Movement Direction
+  <p>[ECMA-48/8.3.120] 暗黙的移動の向きを設定する。この設定は次の <b>SIMD</b> まで有効である。
+  0 を指定すると暗黙的移動は右向きである。
+  1 を指定すると暗黙的移動は左向きである。
+  引数の既定値は 0 である。
+  </p>
+</li>
+<li><dfn class="cfunc">SLH</dfn>: Set Line Home
+  <p>[ECMA-48/8.3.122]
+  CR, DL, IL, NEL 後の現在位置 (<b>DCSM</b> に応じて現在表示位置または現在記憶位置) の列を設定する。
+  <b>DCSM</b>(<b>DATA</b>) もしくは表示部と記憶部に区別のない装置の場合、
+  設定された列は現在記憶位置が暗黙的移動によって移動できる一番左の位置となる。
+  引数 <i>&lt;Pn&gt;</i> は列番号を指定し、既定値はない。
+  </p>
+</li>
+<li><dfn class="cfunc">SLL</dfn>: Set Line Limit
+  <p>[ECMA-48/8.3.123]
+  <b>DCSM</b>(<b>PRESENTATION</b>) の場合は、<b>SIMD</b>(1) の時 <b>CR</b>, <b>NEL</b> での移動先の列を指定する。
+  <b>DCSM</b>(<b>DATA</b>) の場合は、暗黙的移動の先になりうる一番右端の列の位置を指定する。
+  表示部と記憶部に区別のない装置の場合は両方を意味する。
+  引数 <i>&lt;Pn&gt;</i> は列番号を指定し、既定値はない。
+</p>
+</li>
+</ul>
+
+<h3>文字列 (string)</h3>
+<p>[ECMA-48/6.2.1, 8.3.114, 8.3.127]
+記憶部にある文章は複数の文字を含む<dfn>文字列</dfn> (string) によって構成されているとして処理される。
+各文字列は、制御機能もしくは上位の手続きに従って決まる<dfn>方向</dfn> (direction) を持つ。
+既定の方向は現在の文字進路と同じ方向である。
+</p>
+<p>例えば、<dfn>方向付き文字列</dfn> (directed string),
+<dfn>反転文字列</dfn> (reversed string)は記憶部の中の領域で、
+それぞれ SDS, SRS によって始まりと終わりを指定される。
+これらは記憶部での文字前進 (character progression) には影響を与えず、
+文字列の内容はそのままそれまでの文章の続きとして記憶される。
+文字列は、SDS/SRS の区別なく任意の階層で入れ子にする事ができる。
+ECMA-48 では入れ子文字列内部における現在記憶位置を指定しない。
+入れ子文字列を閉じる度に、一つ外側の入れ子文字列の方向が復元される。
+SDS/SRS 文字列内部で CVT, HT, SCP, SPD, VT を呼び出した時の動作は規定されない。
+SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA を呼び出してはならない。
+</p>
+<p>[ECMA-TR/35] 文章による定義はないが、Annex A に動作例が載っている。
+動作例から以下のような規則が読み取れるが、疑問が多々残る。
+</p>
+<ul>
+<li>表示部では文字列はその方向に従って中身の文字を並べることによって表示される。
+つまり、方向が文字進路と同じ場合は記憶部と同じ順序で表示し、
+文字進路と逆の場合は記憶部と文字の位置を反転して表示する。
+入れ子文字列を含む場合はそれ自体を一つの単位として配置し、
+内部の表示方法はその入れ子文字列に任せる。</li>
+<li>疑問: 文字列が行に入らない場合にその折り返し処理はどの様にするべきか。</li>
+<li>疑問: 文字列の内部にいる状態で、改行や現在位置を明示的に移動する
+制御機能を呼び出した時にどの様に振る舞うべきか。</li>
+<li>一旦入れ子文字列を確立した後で、現在記憶位置を移動して挿入した場合、
+文字列はその入れ子階層に対して挿入される。</li>
+<li>疑問: 後で現在位置を移動して文字を挿入を行う場合、
+現在位置にある文字列の内部に文字が挿入される事になっているが、
+現在位置が丁度文字列の開始・終了位置に一致している場合に、
+その文字列の外側・内側のどちらに文字を挿入するべきだろうか。</li>
+</ul>
+
+<p>以下に関連する制御機能を挙げる。</p>
+<table class="normal center">
+<tr><th>名称</th><th>表現</th><th>名称</th></tr>
+<tr><th>SDS</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ]</kbd></td><td>Start Directed String</td></tr>
+<tr><th>SRS</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> [</kbd></td><td>Start Reversed String</td></tr>
+<tr><th>ALM</th><td><kbd>U+061C</kbd></td><td>Arabic letter mark</td></tr>
+<tr><th>LRM</th><td><kbd>U+200E</kbd></td><td>Left-to-right mark</td></tr>
+<tr><th>RLM</th><td><kbd>U+200F</kbd></td><td>Right-to-left mark</td></tr>
+<tr><th>LRE</th><td><kbd>U+202A</kbd></td><td>Left-to-right embedding</td></tr>
+<tr><th>RLE</th><td><kbd>U+202B</kbd></td><td>Right-to-left embedding</td></tr>
+<tr><th>PDF</th><td><kbd>U+202C</kbd></td><td>Pop directional formatting</td></tr>
+<tr><th>LRO</th><td><kbd>U+202D</kbd></td><td>Left-to-right override</td></tr>
+<tr><th>RLO</th><td><kbd>U+202E</kbd></td><td>Right-to-left override</td></tr>
+<tr><th>LRI</th><td><kbd>U+2066</kbd></td><td>Left-to-right isolate</td></tr>
+<tr><th>RLI</th><td><kbd>U+2067</kbd></td><td>Right-to-left isolate</td></tr>
+<tr><th>FSI</th><td><kbd>U+2068</kbd></td><td>First strong isolate</td></tr>
+<tr><th>PDI</th><td><kbd>U+2069</kbd></td><td>Pop directional isolate</td></tr>
+</table>
+<ul>
+<li><dfn class="cfunc">SDS</dfn>: Start Directed String
+  <p>[ECMA-48/8.3.114] 方向付き文字列 (directed string) の開始と終了を指定する。
+  <kbd><i>&lt;Ps&gt;</i></kbd> = 1, 2 の SDS は方向付き文字列の開始を指定する。
+  1 を指定すると方向は左から右で、2 を指定すると方向は右から左になる。
+  <kbd><i>&lt;Ps&gt;</i></kbd> = 0 の SDS は方向付き文字列の終了を指定する。
+  現在記憶位置は文字列の最後の位置の次に移動する。
+  <kbd><i>&lt;Ps&gt;</i></kbd> の既定値は 0 である。
+  </p>
+</li>
+<li><dfn class="cfunc">SRS</dfn>: Start Reversed String
+  <p>[ECMA-48/8.3.137] 反転文字列 (reversed string) の開始と終了を指定する。
+  <kbd><i>&lt;Ps&gt;</i></kbd> = 1 は反転文字列の開始を示し、
+  方向はそれまでの方向と逆の方向になる。
+  <kbd><i>&lt;Ps&gt;</i></kbd> = 0 は反転文字列の終了を示し、
+  現在記憶位置は文字列の最後の位置の次に移動する。
+  <kbd><i>&lt;Ps&gt;</i></kbd> の既定値は 0 である。
+  </p>
+</li>
+<li>その他 Unicode に方向を制御する文字がある。
+  参考: <a href="https://ja.wikipedia.org/wiki/%E5%8F%8C%E6%96%B9%E5%90%91%E3%83%86%E3%82%AD%E3%82%B9%E3%83%88">双方向テキスト</a>。
+</li>
+</ul>
+
+<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h2>カーソル位置</h2>
 
 <table class="normal center">
@@ -827,24 +1065,11 @@
 </table>
 
 <ul>
-<li>装置
-  <p>[ECMA-48/6.1] 装置 (ディスプレイやプリンターを想定) は3つの部分で構成される。
-  <b>入力部</b> (input component)・<b>表示部</b> (presentation component)・<b>記録部</b> (data component) である。
-  特に記録部は双方向の文字列表示 (bidi) に対応する為に用意するが、単方向しか対応しなければ表示部と等価なので省略可能である。
-  表示部・記録部は共にそれぞれ<b>行</b>の集まりであり、行は<b>文字表示位置</b>の集まりである。
-  表示部は実際に表示されるときの固有の座標(行・列)を持ち、記録部は内部的な取り扱いで使用する固有の座標を持つ。
-  表示部・記録部はそれぞれカーソルを持ち、<b>表示位置</b> (active presentation position)・<b>記録位置</b> (active data position) という。
-  文字の挿入によるカーソルの移動は、記録位置を行内の次の文字表示位置に移動するものである。これを<b>暗黙的移動</b> (implicit movement) という。
-  制御機能によるカーソルの移動は記録位置もしくは表示位置に作用する。これを<b>明示的移動</b> (explicit movement) という。
-  表示位置と記録位置は連動する。つまり一方の位置に対する移動操作によって、他方が<b>間接的移動</b> (indirect movement) する。
-  何れの移動も、存在しない場所に移動しようとしたときの動作は処理系依存である (例えば行折り返しをしたり、動作を停止したりする)。
-  </p>
-</li>
 <li><dfn class="cfunc">BS</dfn>: Backspace
-  <p>[ECMA-48/8.3.5] 表示位置を現在の暗黙的移動とは逆の方向に1文字動かす。暗黙的移動の方向は <b>SIMD</b> で変更できる。</p>
+  <p>[ECMA-48/8.3.5] 現在表示位置を現在の暗黙的移動とは逆の方向に1文字動かす。暗黙的移動の方向は <b>SIMD</b> で変更できる。</p>
 </li>
 <li><dfn class="cfunc">LF</dfn>: Line Feed
-  <p>[ECMA-48/8.1.74] 表示位置または記録位置 (<b>DCSM</b> に応じて変わる) を次の行に移動する。列はそのまま。</p>
+  <p>[ECMA-48/8.1.74] 現在表示位置または現在記憶位置 (<b>DCSM</b> に応じて変わる) を次の行に移動する。列はそのまま。</p>
   <ul>
   <li>一般的な実装では、最終行にいる時には一行最後に追加してからその行に移動する。</li>
   <li>xterm, RLogin, mintty では <b>LNM</b> が設定されている時は次の行の先頭に移動する。</li>
@@ -852,7 +1077,7 @@
   </ul>
 </li>
 <li><dfn class="cfunc">VT</dfn>: Line Tabulation
-  <p>[ECMA-48/8.1.161] 表示位置を次の line tabstop list のある行に移動する。列はそのまま。</p>
+  <p>[ECMA-48/8.1.161] 現在表示位置を次の line tabstop list のある行に移動する。列はそのまま。</p>
   <ul>
   <li>一般的な実装では単に次の行に移動する。
     最終行にいる時には一行最後に追加してからその行に移動する。</li>
@@ -864,7 +1089,7 @@
   </ul>
 </li>
 <li><dfn class="cfunc">FF</dfn>: Form Feed
-  <p>[ECMA-48/8.1.51] 表示位置を次のページの page home position がある行に移動する。列はそのまま。</p>
+  <p>[ECMA-48/8.1.51] 現在表示位置を次のページの page home position がある行に移動する。列はそのまま。</p>
   <ul>
   <li>一般的な実装では単に次の行に移動する。
     最終行にいる時には一行最後に追加してからその行に移動する。</li>
@@ -1221,8 +1446,8 @@
 <li>Mode 21 <dfn class="cmode">GRCM</dfn>: Graphic Rendition Combination Mode
   <p>[ECMA-48/7.2.8] SGR でそれまでに設定されていた属性を持続するかどうかを決める。</p>
   <ul>
-  <li><b>Replacing</b> (RM): SGR が登場する度にそれまでに設定されていた属性をすべて解除する。適用したい属性は毎回指定する必要がある。</li>
-  <li><b>Cumulative</b> (SM): SGR をそれまでに設定されていた属性に対する変更として扱う。</li>
+  <li><b>REPLACING</b> (RM): SGR が登場する度にそれまでに設定されていた属性をすべて解除する。適用したい属性は毎回指定する必要がある。</li>
+  <li><b>CUMULATIVE</b> (SM): SGR をそれまでに設定されていた属性に対する変更として扱う。</li>
   </ul>
 </li>
 </ul>
@@ -1674,14 +1899,14 @@
 </li>
 <li>SGR 39 <dfn class="sgr">sgrFgDefault</dfn>: default display/foreground color
   <p>前景色を既定色に戻す。</p>
-  <p>[ECMA-48] 処理系定義</p>
+  <p>[ECMA-48] 処理系依存</p>
   <ul>
   <li>互換性: ansi, xterm</li>
   </ul>
 </li>
 <li>SGR 49 <dfn class="sgr">sgrBgDefault</dfn>: default background color
   <p>背景色を既定色に戻す。</p>
-  <p>[ECMA-48] 処理系定義</p>
+  <p>[ECMA-48] 処理系依存</p>
   <ul>
   <li>互換性: ansi, xterm</li>
   </ul>
@@ -1789,7 +2014,7 @@
 
 <h4>Note</h4>
 <ul>
-<li>[ECMA-48/8.3.117] 可能な番号の組み合わせは処理系定義である。</li>
+<li>[ECMA-48/8.3.117] 可能な番号の組み合わせは処理系依存である。</li>
 <li>[T.416/13.1.8] 上付き(PUD)・下付き(PLD)の内部で下線・打ち消し線の類を設定した場合は、
   それに合わせた位置に線を描画する様にする。
   [T.416/13.1.5] 上付き・下付きにする前から設定されている下線・打ち消し線の類はそのままの位置で描画する。

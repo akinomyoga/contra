@@ -4,6 +4,10 @@
   ToDo
 ------------------------------------------------------------------------------
 
+2016-10-02
+
+* エスケープシーケンスの記述で \x30 等になっているのを直す。
+
 2016-09-28
 
 * bi-directional について幾ら読んでも分からないと思ったが、
@@ -20,11 +24,13 @@
   具体的に contra においてどの様に実装するかも含めて、
   master の memo.txt の方で考察を重ねる事にする。
 
+  > Done: SIMD, DCSM
+
 2016-09-25
 
 * カーソル位置
   ToDo: HT CR
-  ToDo: SIMD, DCSM, LNM (VT), LF/NLM (ECMA-48)
+  ToDo: LNM (VT), LF/NLM (ECMA-48)
 
 2016-09-23
 
@@ -148,33 +154,33 @@
   [ECMA-48/8.3.108] SAPV: Select Alternative Presentation Variants  57
   [ECMA-48/8.3.109] SCI: Single Character Introducer  58
   [ECMA-48/8.3.110] SCO: Select Character Orientation  58
-  [ECMA-48/8.3.111] SCP: Select Character Path  58
+  > [ECMA-48/8.3.111] SCP: Select Character Path  58
   [ECMA-48/8.3.112] SCS: Set Character Spacing  59
   [ECMA-48/8.3.113] SD: Scroll Down  59
-  [ECMA-48/8.3.114] SDS: Start Directed String  59
+  > [ECMA-48/8.3.114] SDS: Start Directed String  59
   [ECMA-48/8.3.115] SEE: Select Editing Extent  60
   [ECMA-48/8.3.116] SEF: Sheet Eject And Feed  60
   > [ECMA-48/8.3.117] SGR: Select Graphic Rendition  61
   [ECMA-48/8.3.118] SHS: Select Character Spacing  63
   [ECMA-48/8.3.119] SI: Shift-In  63
-  [ECMA-48/8.3.120] SIMD: Select Implicit Movement Direction  63
+  > [ECMA-48/8.3.120] SIMD: Select Implicit Movement Direction  63
   [ECMA-48/8.3.121] SL: Scroll Left  63
-  [ECMA-48/8.3.122] SLH: Set Line Home  64
-  [ECMA-48/8.3.123] SLL: Set Line Limit  64
+  > [ECMA-48/8.3.122] SLH: Set Line Home  64
+  > [ECMA-48/8.3.123] SLL: Set Line Limit  64
   [ECMA-48/8.3.124] SLS: Set Line Spacing  64
   > [ECMA-48/8.3.125] SM: Set Mode  65
   [ECMA-48/8.3.126] SO: Shift-Out  65
   [ECMA-48/8.3.127] SOH: Start Of Heading  65
   > [ECMA-48/8.3.128] SOS: Start Of String  66
   [ECMA-48/8.3.129] SPA: Start Of Guarded Area  66
-  [ECMA-48/8.3.130] SPD: Select Presentation Directions  66
+  > [ECMA-48/8.3.130] SPD: Select Presentation Directions  66
   [ECMA-48/8.3.131] SPH: Set Page Home  67
   [ECMA-48/8.3.132] SPI: Spacing Increment  67
   [ECMA-48/8.3.133] SPL: Set Page Limit  68
   [ECMA-48/8.3.134] SPQR: Select Print Quality And Rapidity  68
   [ECMA-48/8.3.135] SR: Scroll Right  68
   [ECMA-48/8.3.136] SRCS: Set Reduced Character Separation  68
-  [ECMA-48/8.3.137] SRS: Start Reversed String  69
+  > [ECMA-48/8.3.137] SRS: Start Reversed String  69
   [ECMA-48/8.3.138] SSA: Start Of Selected Area  69
   [ECMA-48/8.3.139] SSU: Select Size Unit  69
   [ECMA-48/8.3.140] SSW: Set Space Width  70
@@ -203,7 +209,7 @@
 
   [ECMA-48/7.2.1]  Mode 8  BDSM: Bi-Directional Support Mode  21
   > [ECMA-48/7.2.2]  Mode 3  CRM: Control Representation Mode  22
-  [ECMA-48/7.2.3]  Mode 9  DCSM: Device Component Select Mode  22
+  > [ECMA-48/7.2.3]  Mode 9  DCSM: Device Component Select Mode  22
   [ECMA-48/7.2.4]  Mode 6  ERM: Erasure Mode  22
   [ECMA-48/7.2.5]  Mode 13 FEAM: Format Effector Action Mode  22
   [ECMA-48/7.2.6]  Mode 14 FETM: Format Effector Transfer Mode  22
