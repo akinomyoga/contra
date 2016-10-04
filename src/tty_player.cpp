@@ -120,6 +120,13 @@ namespace contra {
     aflags_t& aflags = b->cur.xattr_edit.aflags;
     xflags_t& xflags = b->cur.xattr_edit.xflags;
 
+    if (10 <= param && param <= 19) {
+      xflags = (xflags & ~(xflags_t) ansi_font_mask)
+        | ((param - 10) << ansi_font_shift & ansi_font_mask);
+      b->cur.xattr_dirty = true;
+      return;
+    }
+
     switch (param) {
     case 0:
       b->cur.xattr_edit.aflags = 0;

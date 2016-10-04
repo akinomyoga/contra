@@ -182,7 +182,8 @@ namespace contra {
 
   enum extended_flags {
     // bit 0-3: SGR 10-19
-    ansi_font_mask = 0x0000000F,
+    ansi_font_mask  = 0x0000000F,
+    ansi_font_shift = 0,
 
     // bit 4,5: PLD, PLU
     is_sub_set  = 0x00000010,
