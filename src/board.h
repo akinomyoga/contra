@@ -287,56 +287,65 @@ namespace contra {
     }
   };
 
-  struct extended_attribute_store {
-    struct holder_type: extended_attribute {
+  template<typename Scal, typename Ex, Scal IsExtended = has_extended_attribute>
+  struct extension_store {
+    typedef Scal basic_type;
+    typedef Ex   extended_type;
+    static constexpr basic_type is_extended = IsExtended;
+
+    typedef Scal index_type;
+    static constexpr index_type invalid_index = is_extended;
+
+    struct holder_type {
+      extended_type value;
       union {
         /*?lwiki
-         * @var aindex_t ref_count;
-         * @var aindex_t next;
+         * @var index_type reference_count;
+         * @var index_type next;
          * この holder_type 構造体が実際に使用されている時には
-         * `ref_count` が参照カウントとして使用される。
+         * `reference_count` が参照カウントとして使用される。
          * 後の使用ために free list に繋がっている時は、
          * 次の使用されていない項目への参照として `next` が使用される。
-         * 次の項目は親配列 (`extended_attribute_store::m_xattrs`) 中の番号で表現される。
+         * 次の項目は親配列 (`extension_store::m_xattrs`) 中の番号で表現される。
          *
          */
-        aindex_t ref_count;
-        aindex_t next;
+        index_type reference_count;
+        index_type next;
       };
 
-      holder_type(): ref_count(0) {}
-      holder_type(attribute_t attr):
-        extended_attribute(attr), ref_count(0) {}
+      holder_type(): reference_count(0) {}
+      holder_type(basic_type attr):
+        value(attr), reference_count(0) {}
     };
 
     std::vector<holder_type> m_xattrs;
-    aindex_t m_xattr_free {-1};
-    aindex_t m_count {0};
+    index_type m_xattr_free {invalid_index};
+    index_type m_count {0};
 
-    aindex_t get_count(attribute_t attr) const{
-      if (attr & has_extended_attribute) {
-        return m_xattrs[attr & ~(attribute_t)has_extended_attribute].ref_count;
+    index_type get_count(basic_type attr) const{
+      if (attr & is_extended) {
+        return m_xattrs[attr & ~(basic_type)is_extended].reference_count;
       } else
         return 0;
     }
 
-    extended_attribute const* get(attribute_t attr) const{
-      if (attr & has_extended_attribute) {
-        return &m_xattrs[attr & ~(attribute_t)has_extended_attribute];
+    extended_attribute const* get(basic_type attr) const{
+      if (attr & is_extended) {
+        return &m_xattrs[attr & ~(basic_type)is_extended].value;
       } else
         return nullptr;
     }
 
-    void inc(attribute_t attr) {
-      if (attr & has_extended_attribute)
-        m_xattrs[attr & ~(attribute_t) has_extended_attribute].ref_count++;
+    void inc(basic_type attr) {
+      if (attr & is_extended)
+        m_xattrs[attr & ~(basic_type) is_extended].reference_count++;
     }
 
-    void dec(attribute_t attr) {
-      if (attr & has_extended_attribute) {
-        aindex_t const index = attr & ~(attribute_t) has_extended_attribute;
+    void dec(basic_type attr) {
+      if (attr & is_extended) {
+        index_type const index = attr & ~(basic_type) is_extended;
         holder_type& xattr = m_xattrs[index];
-        if (--xattr.ref_count <= 0) {
+        if (--xattr.reference_count <= 0) {
           xattr.next = m_xattr_free;
           m_xattr_free = index;
           m_count--;
@@ -345,42 +354,42 @@ namespace contra {
     }
 
     // ToDo: バグがあるっぽい。
-    attribute_t alloc() {
-      if (m_xattr_free >= 0) {
-        attribute_t const ret = m_xattr_free | has_extended_attribute;
+    basic_type alloc() {
+      if (m_xattr_free != invalid_index) {
+        basic_type const ret = m_xattr_free | is_extended;
         holder_type& xattr = m_xattrs[m_xattr_free];
         m_xattr_free = xattr.next;
-        xattr.ref_count = 1;
+        xattr.reference_count = 1;
         m_count++;
         return ret;
       } else {
         std::size_t const index = m_xattrs.size();
-        if (index >= has_extended_attribute) {
+        if (index >= invalid_index) {
           // 拡張属性の数が多すぎる (2Gi = 20億)。現実的には起こらないと思われる。
           std::fprintf(stderr, "reached the maximal number of xattr per board.\n");
           std::exit(EXIT_FAILURE);
         }
 
-        attribute_t const ref = index | has_extended_attribute;
+        basic_type const ref = index | is_extended;
         m_xattrs.emplace_back();
-        m_xattrs[index].ref_count = 1;
+        m_xattrs[index].reference_count = 1;
         m_count++;
         return ref;
       }
     }
 
-    attribute_t alloc(extended_attribute const& _xattr) {
-      attribute_t const ret = alloc();
-      extended_attribute& xattr = m_xattrs[ret & ~(attribute_t) has_extended_attribute];
+    basic_type alloc(extended_type const& _xattr) {
+      basic_type const ret = alloc();
+      extended_type& xattr = m_xattrs[ret & ~(basic_type) is_extended].value;
       xattr = _xattr;
       return ret;
     }
 
-    attribute_t alloc(attribute_t attr) {
-      mwg_assert(!(attr & has_extended_attribute));
-      attribute_t const ret = alloc();
-      extended_attribute& xattr = m_xattrs[ret & ~(attribute_t) has_extended_attribute];
-      xattr = extended_attribute(attr);
+    basic_type alloc(basic_type attr) {
+      mwg_assert(!(attr & is_extended));
+      basic_type const ret = alloc();
+      extended_type& xattr = m_xattrs[ret & ~(basic_type) is_extended].value;
+      xattr = extended_type(attr);
       return ret;
     }
   };
@@ -516,6 +525,7 @@ namespace contra {
       }
     }
   public:
+    typedef extension_store<attribute_t, extended_attribute, has_extended_attribute> extended_attribute_store;
     extended_attribute_store m_xattr_data;
 
     void clear_line(int y) {
