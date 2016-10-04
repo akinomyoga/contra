@@ -421,7 +421,7 @@ namespace contra {
         std::exit(1); // ToDo
       }
 
-      board_cell* c = &m_board->cell(cur.x, cur.y);
+      board_cell* const c = m_board->cell(cur.x, cur.y);
       m_board->update_cursor_attribute();
       m_board->set_character(c, u);
       m_board->set_attribute(c, cur.attribute);
@@ -489,7 +489,7 @@ namespace contra {
       if (cur.x >= xdst) return;
 
       char32_t const fillChar = U' ';
-      board_cell* cell = &m_board->cell(cur.x, cur.y);
+      board_cell* cell = m_board->cell(cur.x, cur.y);
       for (; cur.x < xdst; cur.x++) {
         m_board->set_character(cell, fillChar);
         m_board->set_attribute(cell, cur.attribute);

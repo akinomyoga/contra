@@ -394,6 +394,41 @@ namespace contra {
     attribute_t attribute {0};
   };
 
+  typedef std::uint32_t line_attr_t;
+
+  enum line_flags {
+    // bit 1
+    /*?lwiki
+     * @const is_character_path_rtol
+     * If this flag is set, the character path of the line
+     * is right-to-left in the case of a horizontal line
+     * or bottom-top-top in the case of a vertical line.
+     */
+    is_character_path_rtol = 0x0001,
+
+    // bit 6,7: DECDHL, DECDWL, DECSWL
+    // defined in extended_flags
+
+  };
+
+  enum string_direction {
+    string_direction_default  = 0,
+    string_direction_ltor     = 1,
+    string_direction_rtol     = 2,
+    string_direction_reversed = 3,
+  };
+
+  struct directed_string {
+    curpos_t begin;
+    curpos_t end;
+    int direction;
+  };
+
+  struct board_line {
+    line_attr_t lattr {0};
+    std::vector<directed_string> strings;
+  };
+
   struct board_cursor {
     curpos_t    x {0};
     curpos_t    y {0};
@@ -437,28 +472,33 @@ namespace contra {
     }
 
   private:
-    std::vector<board_cell> m_data;
+    std::vector<board_cell> m_cells;
     curpos_t m_rotation {0};
-    std::vector<int>  m_line_offset;
+    std::vector<int>  m_i2iline;
+    std::vector<board_line> m_lines;
+
+    std::size_t internal_line_index(int y) const {
+      return m_i2iline[(m_rotation + y) % m_height];
+    }
 
   public:
     void resize(int width, int height) {
       // ToDo: 以前のデータを移す
       m_width = width;
       m_height = height;
-      m_data.resize(width * height);
-      m_line_offset.resize(height);
+      m_cells.resize(width * height);
+      m_lines.resize(height);
+      m_i2iline.resize(height);
       for (int y = 0; y < height; y++)
-        m_line_offset[y] = y * width;
+        m_i2iline[y] = y;
     }
 
-    const board_cell& cell(int x, int y) const {
-      int const iline = this->m_line_offset[(m_rotation + y) % m_height];
-      return m_data[iline + x];
+    const board_cell* cell(int x, int y) const {
+      return &m_cells[internal_line_index(y) * m_width + x];
     }
 
-    board_cell& cell(int x, int y) {
-      return const_cast<board_cell&>(const_cast<board const*>(this)->cell(x, y));
+    board_cell* cell(int x, int y) {
+      return const_cast<board_cell*>(const_cast<board const*>(this)->cell(x, y));
     }
 
     void rotate(int offset = 1) {
@@ -479,11 +519,11 @@ namespace contra {
     extended_attribute_store m_xattr_data;
 
     void clear_line(int y) {
-      board_cell* cell = &this->m_data[m_line_offset[(m_rotation + y) % m_height]];
+      board_cell* const cell = &this->m_cells[internal_line_index(y) * m_width];
       clear_range(cell, cell + m_width);
     }
     void clear_screen() {
-      board_cell* cell = &this->m_data[0];
+      board_cell* const cell = &this->m_cells[0];
       clear_range(cell, cell + m_width * m_height);
     }
 

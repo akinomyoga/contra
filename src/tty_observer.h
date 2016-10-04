@@ -182,7 +182,7 @@ namespace contra {
     // ToDo: output encoding
     void print_screen(board& w) {
       for (curpos_t y = 0; y < w.m_height; y++) {
-        board_cell* line = &w.cell(0, y);
+        board_cell* const line = w.cell(0, y);
         curpos_t wskip = 0;
         for (curpos_t x = 0; x < w.m_width; x++) {
           if (line[x].character&is_wide_extension) continue;
