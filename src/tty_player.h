@@ -378,8 +378,10 @@ namespace contra {
 
   };
 
+  typedef std::uint32_t csi_single_param_t;
+
   struct csi_param_type {
-    std::uint32_t value;
+    csi_single_param_t value;
     bool isColon;
     bool isDefault;
   };
@@ -449,7 +451,7 @@ namespace contra {
   public:
     bool m_isColonAppeared;
 
-    bool read_param(std::uint32_t& result, std::uint32_t defaultValue) {
+    bool read_param(csi_single_param_t& result, std::uint32_t defaultValue) {
       while (m_index < m_data.size()) {
         csi_param_type const& param = m_data[m_index++];
         if (!param.isColon) {
@@ -465,7 +467,7 @@ namespace contra {
       return false;
     }
 
-    bool read_arg(std::uint32_t& result, bool toAllowSemicolon, std::uint32_t defaultValue) {
+    bool read_arg(csi_single_param_t& result, bool toAllowSemicolon, csi_single_param_t defaultValue) {
       if (m_index <m_data.size()
         && (m_data[m_index].isColon || (toAllowSemicolon && !m_isColonAppeared))
       ) {
@@ -487,14 +489,25 @@ namespace contra {
     int page_home_position {0};
   };
 
+  struct tty_player;
+
+  bool do_sgr(tty_player& play, sequence const& seq);
+  bool do_slh(tty_player& play, sequence const& seq);
+  bool do_sll(tty_player& play, sequence const& seq);
+
   struct tty_player {
   private:
-    board* m_board;
+    contra::board* m_board;
 
     tty_config m_config;
     tty_state  m_state;
+
   public:
-    tty_player(board& board): m_board(&board) {}
+    contra::board* board() {return this->m_board;}
+    contra::board const* board() const {return this->m_board;}
+
+  public:
+    tty_player(contra::board& board): m_board(&board) {}
 
     void insert_char(char32_t u) {
       board_cursor& cur = m_board->cur;
@@ -639,13 +652,13 @@ namespace contra {
       std::int32_t const intermediateSize = seq.intermediateSize();
       if (intermediateSize == 0) {
         switch (seq.final()) {
-        case ascii_m: do_sgr(seq); break;
+        case ascii_m: do_sgr(*this, seq); break;
         }
       } else if (intermediateSize == 1) {
         mwg_assert(seq.intermediate()[0] <= 0xFF);
         switch (pack_byte_sequence((byte) seq.intermediate()[0], seq.final())) {
-        case pack_byte_sequence(ascii_sp, ascii_U): do_slh(seq); break;
-        case pack_byte_sequence(ascii_sp, ascii_V): do_sll(seq); break;
+        case pack_byte_sequence(ascii_sp, ascii_U): do_slh(*this, seq); break;
+        case pack_byte_sequence(ascii_sp, ascii_V): do_sll(*this, seq); break;
         }
       }
     }
@@ -665,192 +678,6 @@ namespace contra {
       case ascii_ff:  do_ff();  break;
       case ascii_vt:  do_vt();  break;
       case ascii_cr:  do_cr();  break;
-      }
-    }
-
-  private:
-    void do_sgr_iso8613_colors(csi_parameters& params, bool isfg) {
-      std::uint32_t colorSpace;
-      params.read_arg(colorSpace, true, 0);
-      color_t color;
-      switch (colorSpace) {
-      case color_spec_default:
-      default:
-        if (isfg)
-          reset_fg();
-        else
-          reset_bg();
-        break;
-
-      case color_spec_transparent:
-        color = 0;
-        goto set_color;
-
-      case color_spec_rgb:
-      case color_spec_cmy:
-      case color_spec_cmyk:
-        {
-          int const ncomp = colorSpace == color_spec_cmyk ? 4: 3;
-          std::uint32_t comp;
-          for (int i = 0; i < ncomp; i++) {
-            params.read_arg(comp, true, 0);
-            if (comp > 255) comp = 255;
-            color |= comp << i * 8;
-          }
-
-          if (params.read_arg(comp, false, 0)) {
-            // If there are more than `ncomp` colon-separated arguments,
-            // switch to ISO 8613-6 compatible mode expecting sequences like
-            //
-            //     CSI 38:2:CS:R:G:B:dummy:tol:tolCS m
-            //
-            // In this mode, discard the first byte (CS = color space)
-            // and append a new byte containing the last color component.
-            color = color >> 8 | comp << (ncomp - 1) * 8;
-          } else {
-            // If there are no more than `ncomp` arguments,
-            // switch to konsole/xterm compatible mode expecting sequences like
-            //
-            //   CSI 38;2;R;G;B m
-            //
-            // In this mode, do nothing here; We have already correct `color`.
-          }
-          goto set_color;
-        }
-
-      case color_spec_indexed:
-        if (params.read_arg(color, true, 0))
-          goto set_color;
-        else
-          std::fprintf(stderr, "missing argument for SGR 38:5\n");
-        break;
-
-      set_color:
-        if (isfg)
-          set_fg(color, colorSpace);
-        else
-          set_bg(color, colorSpace);
-        break;
-      }
-    }
-
-    void do_slh(sequence const& seq) {
-      if (seq.is_private_csi()) {
-        std::fprintf(stderr, "private SLH not supported\n");
-        return;
-      }
-
-      // TODO
-    }
-    void do_sll(sequence const& seq) {
-      if (seq.is_private_csi()) {
-        std::fprintf(stderr, "private SLH not supported\n");
-        return;
-      }
-
-      // TODO
-    }
-
-    void do_sgr(sequence const& seq) {
-      if (seq.is_private_csi()) {
-        std::fprintf(stderr, "private SGR not supported\n");
-        // todo print escape sequences
-        return;
-      }
-
-      csi_parameters params(seq);
-      if (!params) return;
-
-      if (params.size() == 0)
-        params.push_back(csi_param_type {0, false, true});
-
-      std::uint32_t value;
-      while (params.read_param(value, 0)) {
-        if (30 <= value && value < 40) {
-          if (value < 38) {
-            set_fg(value - 30);
-          } else if (value == 38) {
-            do_sgr_iso8613_colors(params, true);
-          } else {
-            reset_fg();
-          }
-        } else if (40 <= value && value < 50) {
-          if (value < 48) {
-            set_bg(value - 40);
-          } else if (value == 48) {
-            do_sgr_iso8613_colors(params, false);
-          } else {
-            reset_bg();
-          }
-        } else if (90 <= value && value <= 97) {
-          set_fg(8 + (value - 90));
-        } else if (100 <= value && value <= 107) {
-          set_bg(8 + (value - 100));
-        } else {
-          aflags_t& aflags = m_board->cur.xattr_edit.aflags;
-          xflags_t& xflags = m_board->cur.xattr_edit.xflags;
-
-          switch (value) {
-          case 0:
-            m_board->cur.xattr_edit.aflags = 0;
-            m_board->cur.xattr_edit.xflags &= non_sgr_xflags_mask;
-            m_board->cur.xattr_edit.fg = 0;
-            m_board->cur.xattr_edit.bg = 0;
-            break;
-
-          case 1 : aflags = (aflags & ~(attribute_t) is_faint_set) | is_bold_set; break;
-          case 2 : aflags = (aflags & ~(attribute_t) is_bold_set) | is_faint_set; break;
-          case 22: aflags = aflags & ~(attribute_t) (is_bold_set | is_faint_set); break;
-
-          case 3 : aflags = (aflags & ~(attribute_t) is_fraktur_set) | is_italic_set; break;
-          case 20: aflags = (aflags & ~(attribute_t) is_italic_set) | is_fraktur_set; break;
-          case 23: aflags = aflags & ~(attribute_t) (is_italic_set | is_fraktur_set); break;
-
-          case 4 : aflags = (aflags & ~(attribute_t) is_double_underline_set) | is_underline_set; break;
-          case 21: aflags = (aflags & ~(attribute_t) is_underline_set) | is_double_underline_set; break;
-          case 24: aflags = aflags & ~(attribute_t) (is_underline_set | is_double_underline_set); break;
-
-          case 5 : aflags = (aflags & ~(attribute_t) is_rapid_blink_set) | is_blink_set; break;
-          case 6 : aflags = (aflags & ~(attribute_t) is_blink_set) | is_rapid_blink_set; break;
-          case 25: aflags = aflags & ~(attribute_t) (is_blink_set | is_rapid_blink_set); break;
-
-          case 7 : aflags = aflags | is_inverse_set; break;
-          case 27: aflags = aflags & ~(attribute_t) is_inverse_set; break;
-
-          case 8 : aflags = aflags | is_invisible_set; break;
-          case 28: aflags = aflags & ~(attribute_t) is_invisible_set; break;
-
-          case 9 : aflags = aflags | is_strike_set; break;
-          case 29: aflags = aflags & ~(attribute_t) is_strike_set; break;
-
-          case 26: xflags = xflags | is_proportional_set; break;
-          case 50: xflags = xflags & ~(attribute_t) is_proportional_set; break;
-
-          case 51: xflags = (xflags & ~(attribute_t) is_circle_set) | is_frame_set; break;
-          case 52: xflags = (xflags & ~(attribute_t) is_frame_set) | is_circle_set; break;
-          case 54: xflags = xflags & ~(attribute_t) (is_frame_set | is_circle_set); break;
-
-          case 53: xflags = xflags | is_overline_set; break;
-          case 55: xflags = xflags & ~(attribute_t) is_overline_set; break;
-
-          case 60: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_single_rb_set; break;
-          case 61: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_double_rb_set; break;
-          case 62: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_single_lt_set; break;
-          case 63: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_double_lt_set; break;
-          case 66: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_single_lb_set; break;
-          case 67: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_double_lb_set; break;
-          case 68: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_single_rt_set; break;
-          case 69: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_double_rt_set; break;
-          case 64: xflags = (xflags & ~(attribute_t) is_ideogram_decoration_mask) | is_ideogram_stress_set   ; break;
-          case 65: xflags = xflags & ~(attribute_t) is_ideogram_decoration_mask; break;
-
-          default:
-            std::fprintf(stderr, "unrecognized SGR value\n");
-            break;
-          }
-
-          m_board->cur.xattr_dirty = true;
-        }
       }
     }
 

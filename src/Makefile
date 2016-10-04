@@ -16,11 +16,13 @@ directories += $(objdir)
 
 -include $(objdir)/impl1.dep
 all: impl1
-impl1: $(objdir)/impl1.o $(objdir)/tty_observer.o $(objdir)/board.o
+impl1: $(objdir)/impl1.o $(objdir)/tty_observer.o $(objdir)/tty_player.o $(objdir)/board.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 $(objdir)/impl1.o: impl1.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ -MD -MF $(@:.o=.dep) $<
 $(objdir)/tty_observer.o: tty_observer.cpp | $(objdir)
+	$(CXX) $(CXXFLAGS) -c -o $@ -MD -MF $(@:.o=.dep) $<
+$(objdir)/tty_player.o: tty_player.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ -MD -MF $(@:.o=.dep) $<
 $(objdir)/board.o: board.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ -MD -MF $(@:.o=.dep) $<

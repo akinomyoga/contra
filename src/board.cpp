@@ -1,3 +1,4 @@
+#include "board.h"
 
 namespace contra {
   const char* get_ascii_name(char32_t value) {
