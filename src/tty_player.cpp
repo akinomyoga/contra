@@ -2,23 +2,26 @@
 
 namespace contra {
 
-  bool do_slh(tty_player& play, sequence const& seq) {
-    if (seq.is_private_csi()) {
-      std::fprintf(stderr, "private SLH not supported\n");
-      return false;
-    }
+  bool do_slh(tty_player& play, csi_parameters& params) {
+    csi_single_param_t value;
+    params.read_param(value, -1);
 
-    // TODO
-    return false;
+    board* const b = play.board();
+    board_line* line = b->line(b->cur.y);
+    line->home = value;
+
+    return true;
   }
-  bool do_sll(tty_player& play, sequence const& seq) {
-    if (seq.is_private_csi()) {
-      std::fprintf(stderr, "private SLH not supported\n");
-      return false;
-    }
 
-    // TODO
-    return false;
+  bool do_sll(tty_player& play, csi_parameters& params) {
+    csi_single_param_t value;
+    params.read_param(value, -1);
+
+    board* const b = play.board();
+    board_line* line = b->line(b->cur.y);
+    line->limit = value;
+
+    return true;
   }
 
   static void do_sgr_iso8613_colors(tty_player& play, csi_parameters& params, bool isfg) {
@@ -179,22 +182,14 @@ namespace contra {
     b->cur.xattr_dirty = true;
   }
 
-  bool do_sgr(tty_player& play, sequence const& seq) {
-    if (seq.is_private_csi()) {
-      std::fprintf(stderr, "private SGR not supported\n");
-      // todo print escape sequences
-      return false;
+  bool do_sgr(tty_player& play, csi_parameters& params) {
+    if (params.size() == 0) {
+      do_sgr_parameter(play, 0, params);
+    } else {
+      csi_single_param_t value;
+      while (params.read_param(value, 0))
+        do_sgr_parameter(play, value, params);
     }
-
-    csi_parameters params(seq);
-    if (!params) return false;
-
-    if (params.size() == 0)
-      params.push_back(csi_param_type {0, false, true});
-
-    csi_single_param_t value;
-    while (params.read_param(value, 0))
-      do_sgr_parameter(play, value, params);
 
     return true;
   }

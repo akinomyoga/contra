@@ -145,7 +145,7 @@ namespace contra {
     }
 
   private:
-    void debug_print_char(std::FILE* file, char32_t ch) const {
+    void print_char(std::FILE* file, char32_t ch) const {
       const char* name = get_ascii_name(ch);
       if (name)
         std::fprintf(file, "%s ", name);
@@ -154,18 +154,19 @@ namespace contra {
     }
 
   public:
-    void debug_print(std::FILE* file) const {
+    void print(std::FILE* file) const {
       switch (m_type) {
       case ascii_csi:
-        std::fprintf(file, "CSI ");
+      case ascii_esc:
+        print_char(file, m_type);
         for (char32_t ch: m_content)
-          debug_print_char(file, ch);
+          print_char(file, ch);
         std::fprintf(file, "%c", m_final & 0xFF);
         break;
       default: // command string & characater string
-        debug_print_char(file, m_type);
+        print_char(file, m_type);
         for (char32_t ch: m_content)
-          debug_print_char(file, ch);
+          print_char(file, ch);
         std::fprintf(file, "ST");
         break;
       }
@@ -393,7 +394,7 @@ namespace contra {
 
   public:
     csi_parameters(sequence const& seq) {
-      extract_parameters(seq, seq.parameter(), seq.parameterSize());
+      extract_parameters(seq.parameter(), seq.parameterSize());
     }
 
     operator bool() const {return this->m_result;}
@@ -403,7 +404,7 @@ namespace contra {
     void push_back(csi_param_type const& value) {m_data.push_back(value);}
 
   private:
-    bool extract_parameters(sequence const& seq, char32_t const* str, std::size_t len) {
+    bool extract_parameters(char32_t const* str, std::size_t len) {
       m_data.clear();
       m_index = 0;
       m_isColonAppeared = false;
@@ -415,9 +416,6 @@ namespace contra {
         char32_t const c = str[i];
         if (!(ascii_0 <= c && c <= ascii_semicolon)) {
           std::fprintf(stderr, "invalid value of CSI parameter values.\n");
-          std::fprintf(stderr, "sequence: ");
-          seq.debug_print(stderr);
-          std::fprintf(stderr, "\n");
           return false;
         }
 
@@ -426,9 +424,6 @@ namespace contra {
           if (newValue < param.value) {
             // overflow
             std::fprintf(stderr, "a CSI parameter value is too large.\n");
-            std::fprintf(stderr, "sequence: ");
-            seq.debug_print(stderr);
-            std::fprintf(stderr, "\n");
             return false;
           }
 
@@ -491,9 +486,9 @@ namespace contra {
 
   struct tty_player;
 
-  bool do_sgr(tty_player& play, sequence const& seq);
-  bool do_slh(tty_player& play, sequence const& seq);
-  bool do_sll(tty_player& play, sequence const& seq);
+  bool do_sgr(tty_player& play, csi_parameters& params);
+  bool do_slh(tty_player& play, csi_parameters& params);
+  bool do_sll(tty_player& play, csi_parameters& params);
 
   struct tty_player {
   private:
@@ -573,15 +568,13 @@ namespace contra {
       m_config.do_bel();
     }
     void do_bs () {
-      board_line const* const line = m_board->line(m_board->cur.y);
       if (m_config.get_mode(mode_simd)) {
-        int limit = line->limit >= 0? line->limit: m_board->m_width;
+        int limit = m_board->m_width;
         if (!m_config.get_mode(mode_xenl)) limit--;
         if (m_board->cur.x < limit)
           m_board->cur.x++;
       } else {
-        int home = line->home >= 0? line->home: 0;
-        if (m_board->cur.x > home)
+        if (m_board->cur.x > 0)
           m_board->cur.x--;
       }
     }
@@ -648,19 +641,35 @@ namespace contra {
       // ToDo: 何処かにログ出力
       mwg_printd("%p", &seq);
     }
+
     void process_control_sequence(sequence const& seq) {
-      std::int32_t const intermediateSize = seq.intermediateSize();
-      if (intermediateSize == 0) {
-        switch (seq.final()) {
-        case ascii_m: do_sgr(*this, seq); break;
+      {
+        if (seq.is_private_csi()) goto unrecognized;
+
+        csi_parameters params(seq);
+        if (!params) goto unrecognized;
+
+        bool result = false;
+        std::int32_t const intermediateSize = seq.intermediateSize();
+        if (intermediateSize == 0) {
+          switch (seq.final()) {
+          case ascii_m: result = do_sgr(*this, params); break;
+          }
+        } else if (intermediateSize == 1) {
+          mwg_assert(seq.intermediate()[0] <= 0xFF);
+          switch (pack_byte_sequence((byte) seq.intermediate()[0], seq.final())) {
+          case pack_byte_sequence(ascii_sp, ascii_U): result = do_slh(*this, params); break;
+          case pack_byte_sequence(ascii_sp, ascii_V): result = do_sll(*this, params); break;
+          }
         }
-      } else if (intermediateSize == 1) {
-        mwg_assert(seq.intermediate()[0] <= 0xFF);
-        switch (pack_byte_sequence((byte) seq.intermediate()[0], seq.final())) {
-        case pack_byte_sequence(ascii_sp, ascii_U): do_slh(*this, seq); break;
-        case pack_byte_sequence(ascii_sp, ascii_V): do_sll(*this, seq); break;
-        }
+
+        if (result) return;
       }
+
+    unrecognized:
+      std::fprintf(stderr, "unrecognized sequence: ");
+      seq.print(stderr);
+      std::fputc('\n', stderr);
     }
     void process_command_string(sequence const& seq) {
       mwg_printd("%p", &seq);
