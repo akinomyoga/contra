@@ -94,13 +94,15 @@ namespace contra {
   };
 
   class sequence {
-    unsigned char         m_type {0};
+    byte                  m_type  {0};
+    byte                  m_final {0};
     std::vector<char32_t> m_content;
     std::int32_t          m_intermediateStart {-1};
 
   public:
     void clear() {
       this->m_type = 0;
+      this->m_final = 0;
       this->m_content.clear();
       this->m_intermediateStart = -1;
     }
@@ -113,12 +115,16 @@ namespace contra {
     bool has_intermediate() const {
       return m_intermediateStart >= 0;
     }
-    void set_type(char32_t type) {
+    void set_type(byte type) {
       this->m_type = type;
+    }
+    void set_final(byte final) {
+      this->m_final = final;
     }
 
   public:
-    unsigned char type() const {return m_type;}
+    byte type() const {return m_type;}
+    byte final() const {return m_final;}
 
     bool is_private_csi() const {
       return !(m_content.size() == 0 || (ascii_0 <= m_content[0] && m_content[0] <= ascii_semicolon));
@@ -156,10 +162,6 @@ namespace contra {
     sequence m_seq;
 
   public:
-    // decode_state dstate() const {return m_dstate;}
-    // bool hasPendingESC() const {return m_hasPendingESC;}
-
-  public:
     sequence_decoder(Processor* proc, tty_config* config): m_proc(proc), m_config(config) {}
 
   private:
@@ -174,8 +176,8 @@ namespace contra {
       clear();
     }
 
-    void process_control_sequence(char32_t uchar) {
-      m_proc->process_control_sequence(this->m_seq, uchar);
+    void process_control_sequence() {
+      m_proc->process_control_sequence(this->m_seq);
       clear();
     }
 
@@ -191,7 +193,8 @@ namespace contra {
 
     void process_char_for_control_sequence(char32_t uchar) {
       if (0x40 <= uchar && uchar <= 0x7E) {
-        process_control_sequence(uchar);
+        m_seq.set_final((byte) uchar);
+        process_control_sequence();
       } else {
         if (m_seq.has_intermediate()) {
           if (0x20 <= uchar && uchar <= 0x2F) {
@@ -272,18 +275,18 @@ namespace contra {
     void process_char_default_c1(char32_t c1char) {
       switch (c1char) {
       case ascii_csi:
-        m_seq.set_type(c1char);
+        m_seq.set_type((byte) c1char);
         m_dstate = decode_control_sequence;
         break;
       case ascii_sos:
-        m_seq.set_type(c1char);
+        m_seq.set_type((byte) c1char);
         m_dstate = decode_character_string;
         break;
       case ascii_dcs:
       case ascii_osc:
       case ascii_pm:
       case ascii_apc:
-        m_seq.set_type(c1char);
+        m_seq.set_type((byte) c1char);
         m_dstate = decode_command_string;
         break;
       default:
@@ -359,8 +362,8 @@ namespace contra {
     bool m_result;
 
   public:
-    csi_parameters(sequence const& seq, char32_t uchar) {
-      extract_parameters(seq.parameter(), seq.parameterSize(), uchar);
+    csi_parameters(sequence const& seq) {
+      extract_parameters(seq, seq.parameter(), seq.parameterSize());
     }
 
     operator bool() const {return this->m_result;}
@@ -370,7 +373,7 @@ namespace contra {
     void push_back(csi_param_type const& value) {m_data.push_back(value);}
 
   private:
-    bool extract_parameters(char32_t const* str, std::size_t len, char32_t uchar) {
+    bool extract_parameters(sequence const& seq, char32_t const* str, std::size_t len) {
       m_data.clear();
       m_index = 0;
       m_isColonAppeared = false;
@@ -382,7 +385,7 @@ namespace contra {
         char32_t const c = str[i];
         if (!(ascii_0 <= c && c <= ascii_semicolon)) {
           std::fprintf(stderr, "invalid value of CSI parameter values.\n");
-          mwg_printd("CSI ... %c", uchar);
+          mwg_printd("CSI ... %c", seq.final());
           // todo print sequences
           return false;
         }
@@ -392,7 +395,7 @@ namespace contra {
           if (newValue < param.value) {
             // overflow
             std::fprintf(stderr, "a CSI parameter value is too large.\n");
-            mwg_printd("CSI ... %c", uchar);
+            mwg_printd("CSI ... %c", seq.final());
             // todo print sequences
             return false;
           }
@@ -602,17 +605,17 @@ namespace contra {
       // ToDo: 何処かにログ出力
       mwg_printd("%p", &seq);
     }
-    void process_control_sequence(sequence const& seq, char32_t uchar) {
+    void process_control_sequence(sequence const& seq) {
       std::int32_t const intermediateSize = seq.intermediateSize();
       if (intermediateSize == 0) {
-        switch (uchar) {
-        case ascii_m: do_sgr(seq, uchar); break;
+        switch (seq.final()) {
+        case ascii_m: do_sgr(seq); break;
         }
       } else if (intermediateSize == 1) {
-        mwg_assert(seq.intermediate()[0] <= 0xFF && uchar <= 0xFF);
-        switch (pack_byte_sequence((byte) seq.intermediate()[0], (byte) uchar)) {
-        case pack_byte_sequence(ascii_sp, ascii_U): do_slh(seq, uchar); break;
-        case pack_byte_sequence(ascii_sp, ascii_V): do_sll(seq, uchar); break;
+        mwg_assert(seq.intermediate()[0] <= 0xFF);
+        switch (pack_byte_sequence((byte) seq.intermediate()[0], seq.final())) {
+        case pack_byte_sequence(ascii_sp, ascii_U): do_slh(seq); break;
+        case pack_byte_sequence(ascii_sp, ascii_V): do_sll(seq); break;
         }
       }
     }
@@ -701,7 +704,7 @@ namespace contra {
       }
     }
 
-    void do_slh(sequence const& seq, char32_t uchar) {
+    void do_slh(sequence const& seq) {
       if (seq.is_private_csi()) {
         std::fprintf(stderr, "private SLH not supported\n");
         return;
@@ -709,7 +712,7 @@ namespace contra {
 
       // TODO
     }
-    void do_sll(sequence const& seq, char32_t uchar) {
+    void do_sll(sequence const& seq) {
       if (seq.is_private_csi()) {
         std::fprintf(stderr, "private SLH not supported\n");
         return;
@@ -718,14 +721,14 @@ namespace contra {
       // TODO
     }
 
-    void do_sgr(sequence const& seq, char32_t uchar) {
+    void do_sgr(sequence const& seq) {
       if (seq.is_private_csi()) {
         std::fprintf(stderr, "private SGR not supported\n");
         // todo print escape sequences
         return;
       }
 
-      csi_parameters params(seq, uchar);
+      csi_parameters params(seq);
       if (!params) return;
 
       if (params.size() == 0)
