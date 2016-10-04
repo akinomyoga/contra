@@ -947,12 +947,15 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <b>DCSM</b>(<b>DATA</b>) もしくは表示部と記憶部に区別のない装置の場合、
   設定された列は現在記憶位置が暗黙的移動によって移動できる一番左の位置となる。
   引数 <i>&lt;Pn&gt;</i> は列番号を指定し、既定値はない。
-  現在行と以降の行について、
   </p>
-  <p>Note: 規格には明記されていないが、CR の説明を読むに、
-  DCSM は CR/DL/IL/NEL が呼び出された時の値が使用されると思われる。
+  <p>Note: どの瞬間の DCSM が効くのか規格には明記されていないが、
+  CR の説明によると、DCSM は CR/DL/IL/NEL が呼び出された時の値が単に使用される。
   つまり、SLH/SLL で記録される状態は DCSM の影響を受けず、
-  単に CR/DL/IL/NEL の動作が DCSM の値によって変わるという事だと思われる。
+  単に CR/DL/IL/NEL の動作が DCSM の値によって変わるという事である。
+  </p>
+  <p>Note: 行毎に SLH/SLL の値を保持するのかどうか規格には明記されていない。
+  これは "以降の行" (lines of subsequent text) をどう解釈するかに依存する。
+  因みに SCP の "以降の行" (subsequent lines) とは表現が異なる。
   </p>
 </li>
 <li><dfn class="cfunc">SLL</dfn>: Set Line Limit
@@ -964,7 +967,11 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   引数 <i>&lt;Pn&gt;</i> は列番号を指定し、既定値はない。
   </p>
 </li>
-<li>contra では SLH/SLL の引数を省略した時、または 0 を指定した時、既定値(行頭/行末)に戻す。</li>
+<li>互換性
+  <ul>
+  <li>contra では SLH/SLL の引数を省略した時、または 0 を指定した時、既定値(行頭/行末)に戻す。</li>
+  </ul>
+</li>
 </ul>
 
 <h3>文字列 (string)</h3>
@@ -1114,6 +1121,14 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   CR の動作は DCSM と SIMD によって変化する。
   現在表示位置または現在記憶位置 (DCSM によって変わる) を、
   行内で SLH (SIMD(0) のとき) または SLL (SIMD(1) のとき) に移動する。
+  </p>
+</li>
+<li><dfn class="cfunc">NEL</dfn>: Next Line
+  <p>[ECMA-48/8.3.86] 次の行の行頭に移動する。
+  実質、次の行に移ってから CR を実行するのに等価である。
+  </p>
+  <p>Note: もし行毎に SLH/SLL の値を保持するのだとしたら、
+  規格の文面を見るに移った先の行の SLH/SLL を用いることになるだろう。
   </p>
 </li>
 <li><dfn class="cfunc">CUU</dfn>: Cursor Up

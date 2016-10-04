@@ -58,7 +58,7 @@
   [ECMA-48/8.3.12] CNL: Cursor Next Line  35
   [ECMA-48/8.3.13] CPL: Cursor Preceding Line  35
   [ECMA-48/8.3.14] CPR: Active Position Report  35
-  [ECMA-48/8.3.15] CR: Carriage Return  35
+  > [ECMA-48/8.3.15] CR: Carriage Return  35
   > [ECMA-48/8.3.16] CSI: Control Sequence Introducer  36
   [ECMA-48/8.3.17] CTC: Cursor Tabulation Control  36
   [ECMA-48/8.3.18] CUB: Cursor Left  36
@@ -129,7 +129,7 @@
   [ECMA-48/8.3.83] MW: Message Waiting  50
   [ECMA-48/8.3.84] NAK: Negative Acknowledge  50
   [ECMA-48/8.3.85] NBH: No Break Here  50
-  [ECMA-48/8.3.86] NEL: Next Line  51
+  > [ECMA-48/8.3.86] NEL: Next Line  51
   [ECMA-48/8.3.87] NP: Next Page  51
   [ECMA-48/8.3.88] NUL: Null  51
   > [ECMA-48/8.3.89] OSC: Operating System Command  51
