@@ -7,6 +7,10 @@
 
 2016-10-04
 
+* sequence_decoder, sequence: support ESC sequence
+
+2016-10-04
+
 * 方向付き文字列 (SRS/SDS string) の取り扱い
 
   0 文字列の定義によって記憶部上の文字の配列に影響は出ない様にする。

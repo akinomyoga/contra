@@ -2,6 +2,7 @@
 #ifndef CONTRA_TTY_PLAYER_H
 #define CONTRA_TTY_PLAYER_H
 #include "board.h"
+#include <cstdio>
 #include <cstdlib>
 #include <algorithm>
 #include <iterator>
@@ -141,6 +142,33 @@ namespace contra {
     }
     std::int32_t intermediateSize() const {
       return m_intermediateStart < 0? 0: m_content.size() - m_intermediateStart;
+    }
+
+  private:
+    void debug_print_char(std::FILE* file, char32_t ch) const {
+      const char* name = get_ascii_name(ch);
+      if (name)
+        std::fprintf(file, "%s ", name);
+      else
+        std::fprintf(file, "%c ", ch);
+    }
+
+  public:
+    void debug_print(std::FILE* file) const {
+      switch (m_type) {
+      case ascii_csi:
+        std::fprintf(file, "CSI ");
+        for (char32_t ch: m_content)
+          debug_print_char(file, ch);
+        std::fprintf(file, "%c", m_final & 0xFF);
+        break;
+      default: // command string & characater string
+        debug_print_char(file, m_type);
+        for (char32_t ch: m_content)
+          debug_print_char(file, ch);
+        std::fprintf(file, "ST");
+        break;
+      }
     }
   };
 
@@ -385,8 +413,9 @@ namespace contra {
         char32_t const c = str[i];
         if (!(ascii_0 <= c && c <= ascii_semicolon)) {
           std::fprintf(stderr, "invalid value of CSI parameter values.\n");
-          mwg_printd("CSI ... %c", seq.final());
-          // todo print sequences
+          std::fprintf(stderr, "sequence: ");
+          seq.debug_print(stderr);
+          std::fprintf(stderr, "\n");
           return false;
         }
 
@@ -395,8 +424,9 @@ namespace contra {
           if (newValue < param.value) {
             // overflow
             std::fprintf(stderr, "a CSI parameter value is too large.\n");
-            mwg_printd("CSI ... %c", seq.final());
-            // todo print sequences
+            std::fprintf(stderr, "sequence: ");
+            seq.debug_print(stderr);
+            std::fprintf(stderr, "\n");
             return false;
           }
 

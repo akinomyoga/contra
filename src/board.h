@@ -103,6 +103,8 @@ namespace contra {
     ascii_underscore    = 0x5F,
   };
 
+  const char* get_ascii_name(char32_t value);
+
   typedef std::uint32_t character_t;
   typedef std::uint32_t attribute_t;
   typedef attribute_t   aflags_t;
