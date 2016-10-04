@@ -10,6 +10,8 @@
 
 namespace contra {
 
+  typedef std::uint8_t byte;
+
   enum ascii_codes {
 
     // control characters
@@ -517,7 +519,7 @@ namespace contra {
     }
 
     board_line* line(int y) {
-      return const_cast<board_line*>(const_cast<board const*>(this)->line(x, y));
+      return const_cast<board_line*>(const_cast<board const*>(this)->line(y));
     }
 
     void rotate(int offset = 1) {
