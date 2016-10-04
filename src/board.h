@@ -439,10 +439,75 @@ namespace contra {
   };
 
   struct board_line {
-    line_attr_t lattr {0};
+    line_attr_t lflags {0};
+
+    /*?lwiki
+     * @var curpos_t home;
+     * @var curpos_t limit;
+     *   行内の文字の表示範囲を指定する。
+     *   文字は home <= x <= limit の範囲に出力される。
+     *   limit も含まれる事に注意する。
+     */
     curpos_t home     {-1};
     curpos_t limit    {-1};
+
+    // 想定: 開始点の番号の小さいものが先に来る。
+    // 想定: 二つの文字列の関係は必ず、共有部分がないか、
+    //   一方が他方を完全に包含するかのどちらかである。
+    // 想定: 子よりも親が先に来る。
     std::vector<directed_string> strings;
+
+  public:
+    /*?lwiki
+     * @param[in] rtol
+     *   既定の向きが right-to-left または bottom-to-top かどうかを指定します。
+     */
+    curpos_t to_data_position(curpos_t presentationX, bool default_rtol) const {
+      curpos_t x = presentationX;
+      bool rtol = default_rtol;
+      for (directed_string const& range: strings) {
+        if (x < range.begin)
+          break;
+        else if (x < range.end) {
+          bool const reverse = range.direction == string_direction_reversed
+            || (rtol? range.direction == string_direction_ltor:
+              range.direction == string_direction_rtol)
+            || (range.direction == string_direction_default && rtol != default_rtol);
+
+          if (reverse) {
+            x = range.end - 1 - (x - range.begin);
+            rtol = !rtol;
+          }
+        }
+      }
+
+      return x;
+    }
+
+    curpos_t to_presentation_position(curpos_t dataX, bool default_rtol) const {
+      bool rtol = default_rtol;
+
+      curpos_t shift = 0;
+      for (directed_string const& range: strings) {
+        if (dataX < range.begin)
+          break;
+        else if (dataX < range.end) {
+          bool const reverse = range.direction == string_direction_reversed
+            || (rtol? range.direction == string_direction_ltor:
+              range.direction == string_direction_rtol)
+            || (range.direction == string_direction_default && rtol != default_rtol);
+
+          if (reverse) {
+            shift = range.end - 1 - (shift - range.begin);
+            rtol = !rtol;
+          }
+        }
+      }
+
+      curpos_t x = dataX - shift;
+      if (default_rtol != rtol) x = -x;
+      return x;
+    }
   };
 
   struct board_cursor {
