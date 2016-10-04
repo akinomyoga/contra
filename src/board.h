@@ -411,17 +411,29 @@ namespace contra {
   typedef std::uint32_t line_attr_t;
 
   enum line_flags {
-    // bit 1
+    // bit 0
+    is_line_used = 0x0001,
+
+    // bit 1-2
     /*?lwiki
      * @const is_character_path_rtol
      * If this flag is set, the character path of the line
      * is right-to-left in the case of a horizontal line
      * or bottom-top-top in the case of a vertical line.
+     * @const is_character_path_ltor
+     * If this flag is set, the character path of the line
+     * is left-to-right in the case of a horizontal line
+     * or top-to-bottom in the case of a vertical line.
+     *
+     * If neither bits are set, the default character path
+     * defined by SPD is used.
      */
-    is_character_path_rtol = 0x0001,
+    is_character_path_rtol = 0x0002,
+    is_character_path_ltor = 0x0004,
 
-    // bit 6,7: DECDHL, DECDWL, DECSWL
-    // defined in extended_flags
+    // bit 6-7: DECDHL, DECDWL, DECSWL
+    // The same values are used as in `xflags_t`.
+    // The related constants are defined in `enum extended_flags`.
 
   };
 
@@ -594,27 +606,17 @@ namespace contra {
       this->m_rotation = (m_rotation + offset) % m_height;
     }
 
-    void clear_range(board_cell* cell, board_cell* cellN) {
-      for (; cell < cellN; cell++) {
-        if (cell->attribute & has_extended_attribute)
-          this->m_xattr_data.dec(cell->attribute);
-        cell->attribute = 0;
-
-        // ToDo拡張glyph dec
-        cell->character = 0;
-      }
-    }
   public:
     typedef extension_store<attribute_t, extended_attribute, has_extended_attribute> extended_attribute_store;
     extended_attribute_store m_xattr_data;
 
-    void clear_line(int y) {
-      board_cell* const cell = &this->m_cells[internal_line_index(y) * m_width];
-      clear_range(cell, cell + m_width);
-    }
-    void clear_screen() {
-      board_cell* const cell = &this->m_cells[0];
-      clear_range(cell, cell + m_width * m_height);
+    void clear_cell(board_cell* cell) {
+      if (cell->attribute & has_extended_attribute)
+        this->m_xattr_data.dec(cell->attribute);
+      cell->attribute = 0;
+
+      // ToDo拡張glyph dec
+      cell->character = 0;
     }
 
     void set_character(board_cell* cell, char32_t ch) {
@@ -630,6 +632,50 @@ namespace contra {
       if (attr & has_extended_attribute)
         this->m_xattr_data.inc(attr);
     }
+
+  public:
+    void clear_range(board_cell* cell, board_cell* cellN) {
+      for (; cell < cellN; cell++)
+        clear_cell(cell);
+    }
+    void clear_line(int y) {
+      board_cell* const cell = &this->m_cells[internal_line_index(y) * m_width];
+      clear_range(cell, cell + m_width);
+    }
+    void clear_screen() {
+      board_cell* const cell = &this->m_cells[0];
+      clear_range(cell, cell + m_width * m_height);
+    }
+    void set_cell(board_cell* cell, char32_t ch, attribute_t attr) {
+      set_character(cell, ch);
+      set_attribute(cell, attr);
+    }
+
+    void put_character(board_cell* cell, char32_t ch, attribute_t attr, int charWidth) {
+      curpos_t const x = (cell - &m_cells[0]) % m_width;
+      curpos_t const xend = x + charWidth;
+      if (xend > m_width) return;
+
+      board_cell* const cells = cell - x;
+
+      curpos_t x1;
+      if (cell->character & is_wide_extension) {
+        for (x1 = x - 1; x1 >= 0; x1--) {
+          bool const isMainChar = (cells[x1].character & is_wide_extension) != 0;
+          clear_cell(cells + x1);
+          if (isMainChar) break;
+        }
+      }
+
+      x1 = x;
+      set_cell(cells + x1++, ch, attr);
+      while (x1 < xend)
+        set_cell(cells + x1++, is_wide_extension, 0);
+
+      while (x1 < m_width && cells[x1].character & is_wide_extension)
+        clear_cell(cells + x1++);
+    }
+
   };
 }
 #endif

@@ -32,15 +32,19 @@ namespace contra {
     dec_mode    = 1, // CSI ? Ps h
     contra_mode = 2, // private mode
 
-    mode_dcsm = construct_mode_spec(2,  ansi_mode, 9),
-    mode_lnm  = construct_mode_spec(0, ansi_mode, 20),
+    mode_dcsm = construct_mode_spec( 9, ansi_mode,  9),
+    mode_lnm  = construct_mode_spec(20, ansi_mode, 20),
 
-    mode_simd = construct_mode_spec(1, contra_mode, 8501),
-    mode_xenl = construct_mode_spec(3, contra_mode, 8502),
+    mode_simd = construct_mode_spec(23, contra_mode, 9201),
+    mode_xenl = construct_mode_spec(24, contra_mode, 9202),
   };
 
-  struct tty_config {
-    tty_config() {
+  struct tty_state {
+    curpos_t page_home_position {0};
+    curpos_t line_home  {-1};
+    curpos_t line_limit {-1};
+
+    tty_state() {
       this->initialize_mode();
     }
 
@@ -185,13 +189,13 @@ namespace contra {
     };
 
     processor_type* m_proc;
-    tty_config* m_config;
+    tty_state* m_state;
     decode_state m_dstate {decode_default};
     bool m_hasPendingESC {false};
     sequence m_seq;
 
   public:
-    sequence_decoder(Processor* proc, tty_config* config): m_proc(proc), m_config(config) {}
+    sequence_decoder(Processor* proc, tty_state* config): m_proc(proc), m_state(config) {}
 
   private:
     void clear() {
@@ -259,8 +263,8 @@ namespace contra {
         m_seq.append(uchar);
       } else if (uchar == ascii_esc) {
         m_hasPendingESC = true;
-      } else if ((uchar == ascii_st && m_config->c1_8bit_representation_enabled)
-        || (uchar == ascii_bel && m_seq.type() == ascii_osc && m_config->osc_sequence_terminated_by_bel)
+      } else if ((uchar == ascii_st && m_state->c1_8bit_representation_enabled)
+        || (uchar == ascii_bel && m_seq.type() == ascii_osc && m_state->osc_sequence_terminated_by_bel)
       ) {
         process_command_string();
       } else {
@@ -271,13 +275,13 @@ namespace contra {
 
     void process_char_for_character_string(char32_t uchar) {
       if (m_hasPendingESC) {
-        if (uchar == ascii_backslash || (uchar == ascii_st && m_config->c1_8bit_representation_enabled)) {
+        if (uchar == ascii_backslash || (uchar == ascii_st && m_state->c1_8bit_representation_enabled)) {
           // final ST
           if (uchar == ascii_st)
             m_seq.append(ascii_esc);
           process_character_string();
           return;
-        } else if (uchar == ascii_X || (uchar == ascii_sos && m_config->c1_8bit_representation_enabled)) {
+        } else if (uchar == ascii_X || (uchar == ascii_sos && m_state->c1_8bit_representation_enabled)) {
           // invalid SOS
           process_invalid_sequence();
           if (uchar == ascii_X)
@@ -292,9 +296,9 @@ namespace contra {
 
       if (uchar == ascii_esc)
         m_hasPendingESC = true;
-      else if (uchar == ascii_st && m_config->c1_8bit_representation_enabled) {
+      else if (uchar == ascii_st && m_state->c1_8bit_representation_enabled) {
         process_character_string();
-      } else if (uchar == ascii_sos && m_config->c1_8bit_representation_enabled) {
+      } else if (uchar == ascii_sos && m_state->c1_8bit_representation_enabled) {
         process_invalid_sequence();
         process_char(uchar);
       } else
@@ -341,7 +345,7 @@ namespace contra {
         else
           m_proc->process_control_character(uchar);
       } else if (0x80 <= uchar && uchar < 0xA0) {
-        if (m_config->c1_8bit_representation_enabled)
+        if (m_state->c1_8bit_representation_enabled)
           process_char_default_c1(uchar);
       } else {
         m_proc->insert_char(uchar);
@@ -480,10 +484,6 @@ namespace contra {
     }
   };
 
-  struct tty_state {
-    int page_home_position {0};
-  };
-
   struct tty_player;
 
   bool do_sgr(tty_player& play, csi_parameters& params);
@@ -494,38 +494,77 @@ namespace contra {
   private:
     contra::board* m_board;
 
-    tty_config m_config;
-    tty_state  m_state;
+    tty_state m_state;
 
   public:
     contra::board* board() {return this->m_board;}
     contra::board const* board() const {return this->m_board;}
+    tty_state* state() {return &this->m_state;}
+    tty_state const* state() const {return &this->m_state;}
 
   public:
     tty_player(contra::board& board): m_board(&board) {}
 
+    void apply_line_attribute(board_line* line) const {
+      if (line->lflags & is_line_used) return;
+      line->home = m_state.line_home;
+      line->limit = m_state.line_limit;
+    }
+    // void apply_line_attribute(curpos_t y) {
+    //   apply_line_attribute(m_board->line(y));
+    // }
+    // void apply_line_attribute() {
+    //   apply_line_attribute(m_board->cur.y);
+    // }
+
     void insert_char(char32_t u) {
       board_cursor& cur = m_board->cur;
-      int const charwidth = 1; // ToDo 文字幅
-      if (cur.x + charwidth > m_board->m_width) do_crlf();
+      board_line* line = m_board->line(cur.y);
+      apply_line_attribute(line);
 
-      if (charwidth <= 0) {
-        std::exit(1); // ToDo
+      int const charWidth = 1; // ToDo 文字幅
+      if (charWidth <= 0) {
+        std::exit(1); // ToDo: control chars, etc.
       }
 
-      board_cell* const c = m_board->cell(cur.x, cur.y);
-      m_board->update_cursor_attribute();
-      m_board->set_character(c, u);
-      m_board->set_attribute(c, cur.attribute);
+      if (m_state.get_mode(mode_simd)) {
+        // 折り返し1
+        curpos_t beg = line->home < 0? 0: line->home;
+        curpos_t end = line->limit < 0? m_board->m_width: line->limit + 1;
+        if (cur.x - charWidth + 1 < beg && cur.x < end) {
+          do_nel();
+          line = m_board->line(cur.y);
+          apply_line_attribute(line);
+          beg = line->home < 0? 0: line->home;
+        }
 
-      for (int i = 1; i < charwidth; i++) {
-        m_board->set_character(c + i, is_wide_extension);
-        m_board->set_attribute(c + i, 0);
+        board_cell* const cells = m_board->cell(0, cur.y);
+        m_board->update_cursor_attribute();
+        m_board->put_character(cells + cur.x - charWidth + 1, u, cur.attribute, charWidth);
+        cur.x -= charWidth;
+
+        // 折り返し2
+        // Note: xenl かつ cur.x >= 0 ならば beg - 1 の位置にいる事を許容する。
+        if (cur.x <= beg - 1 && !(cur.x == beg - 1 && cur.x >= 0 && m_state.get_mode(mode_xenl))) do_nel();
+      } else {
+        // 折り返し1
+        curpos_t beg = line->home < 0? 0: line->home;
+        curpos_t end = line->limit < 0? m_board->m_width: line->limit + 1;
+        if (cur.x + charWidth > end && cur.x > beg) {
+          do_nel();
+          line = m_board->line(cur.y);
+          apply_line_attribute(line);
+          end = line->limit < 0? m_board->m_width: line->limit + 1;
+        }
+
+        board_cell* const cells = m_board->cell(0, cur.y);
+        m_board->update_cursor_attribute();
+        m_board->put_character(cells + cur.x, u, cur.attribute, charWidth);
+        cur.x += charWidth;
+
+        // 折り返し2
+        if (cur.x >= end && !(cur.x == end && m_state.get_mode(mode_xenl))) do_nel();
       }
-
-      cur.x += charwidth;
-
-      if (!m_config.get_mode(mode_xenl) && cur.x == m_board->m_width) do_crlf();
     }
 
     void set_fg(color_t index, aflags_t colorSpace = color_spec_indexed) {
@@ -565,12 +604,12 @@ namespace contra {
 
   public:
     void do_bel() {
-      m_config.do_bel();
+      m_state.do_bel();
     }
     void do_bs () {
-      if (m_config.get_mode(mode_simd)) {
+      if (m_state.get_mode(mode_simd)) {
         int limit = m_board->m_width;
-        if (!m_config.get_mode(mode_xenl)) limit--;
+        if (!m_state.get_mode(mode_xenl)) limit--;
         if (m_board->cur.x < limit)
           m_board->cur.x++;
       } else {
@@ -606,35 +645,56 @@ namespace contra {
         }
       }
     }
-    void do_lf () {
+    void do_lf() {
       do_plain_vt(true);
-      if (m_config.get_mode(mode_lnm)) do_cr();
+      if (m_state.get_mode(mode_lnm)) do_cr();
     }
     void do_crlf() {
       do_cr();
       do_lf();
     }
     void do_ff() {
-      if (m_config.ff_clearing_screen) {
+      if (m_state.ff_clearing_screen) {
         m_board->clear_screen();
-        if (m_config.ff_using_home_position)
+        if (m_state.ff_using_home_position)
           m_board->cur.y = m_state.page_home_position;
       } else {
         do_plain_vt(true);
       }
-      if (m_config.ff_affected_by_lnm && m_config.get_mode(mode_lnm)) do_cr();
+      if (m_state.ff_affected_by_lnm && m_state.get_mode(mode_lnm)) do_cr();
     }
     void do_vt() {
-      do_plain_vt(m_config.vt_appending_newline);
-      if (m_config.vt_affected_by_lnm && m_config.get_mode(mode_lnm)) do_cr();
+      do_plain_vt(m_state.vt_appending_newline);
+      if (m_state.vt_affected_by_lnm && m_state.get_mode(mode_lnm)) do_cr();
     }
     void do_cr() {
-      m_board->cur.x = 0;
+      board_line* const line = m_board->line(m_board->cur.y);
+      apply_line_attribute(line);
+
+      curpos_t x;
+      if (m_state.get_mode(mode_simd)) {
+        x = m_board->m_width - 1;
+        if (0 <= line->limit && line->limit < x) x = line->limit;
+      } else {
+        x = 0;
+        if (line->home >= 0) x = line->home;
+      }
+
+      if (!m_state.get_mode(mode_dcsm))
+        x = line->to_data_position(x, false); //@@
+
+      m_board->cur.x = x;
+    }
+    void do_nel() {
+      // Note: 新しい行の SLH/SLL に移動したいので、
+      // LF を実行した後に CR を実行する必要がある。
+      do_lf();
+      do_cr();
     }
 
   private:
     typedef sequence_decoder<tty_player> decoder_type;
-    decoder_type m_seqdecoder {this, &this->m_config};
+    decoder_type m_seqdecoder {this, &this->m_state};
     friend decoder_type;
 
     void process_invalid_sequence(sequence const& seq) {

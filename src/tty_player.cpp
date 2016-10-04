@@ -3,23 +3,47 @@
 namespace contra {
 
   bool do_slh(tty_player& play, csi_parameters& params) {
-    csi_single_param_t value;
-    params.read_param(value, -1);
+    tty_state * const s = play.state();
+    board     * const b = play.board();
+    board_line* const line = b->line(b->cur.y);
 
-    board* const b = play.board();
-    board_line* line = b->line(b->cur.y);
-    line->home = value;
+    csi_single_param_t param;
+    if (params.read_param(param, 0) && param) {
+      curpos_t const x = (curpos_t) param - 1;
+      line->home = x;
+      if (line->limit >= 0 && line->limit < x)
+        line->limit = x;
+
+      s->line_home = x;
+      if (s->line_limit >= 0 && s->line_limit < x)
+        s->line_limit = x;
+    } else {
+      line->home = -1;
+      s->line_home = -1;
+    }
 
     return true;
   }
 
   bool do_sll(tty_player& play, csi_parameters& params) {
-    csi_single_param_t value;
-    params.read_param(value, -1);
+    tty_state * const s = play.state();
+    board     * const b = play.board();
+    board_line* const line = b->line(b->cur.y);
 
-    board* const b = play.board();
-    board_line* line = b->line(b->cur.y);
-    line->limit = value;
+    csi_single_param_t param;
+    if (params.read_param(param, 0) && param) {
+      curpos_t const x = (curpos_t) param - 1;
+      line->limit = x;
+      if (line->home >= 0 && line->home > x)
+        line->home = x;
+
+      s->line_limit = x;
+      if (s->line_home >= 0 && s->line_home > x)
+        s->line_home = x;
+    } else {
+      line->limit = -1;
+      s->line_limit = -1;
+    }
 
     return true;
   }
