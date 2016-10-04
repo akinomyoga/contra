@@ -1,6 +1,107 @@
 #include "tty_player.h"
+#include <algorithm>
+#include <cstdio>
+
 
 namespace contra {
+
+  static void reverse_line_content(board* b, curpos_t y) {
+    board_cell* const cells = b->cell(0, y);
+    board_cell* const cellN = cells + b->m_width;
+    std::reverse(cells, cells + b->m_width);
+
+    // correct wide characters
+    for (board_cell* cell = cells; cell < cellN - 1; cell++) {
+      board_cell* beg = cell;
+      while (cell + 1 < cellN && cell->character & is_wide_extension) cell++;
+      if (cell != beg) std::swap(*beg, *cell);
+    }
+  }
+
+  bool do_spd(tty_player& play, csi_parameters& params) {
+    csi_single_param_t direction;
+    params.read_param(direction, 0);
+    csi_single_param_t update;
+    params.read_param(update, 0);
+    if (direction > 7 || update > 2) return false;
+
+    tty_state* const s = play.state();
+    board* const b = play.board();
+
+    /* update content
+     *
+     * Note: update == 2 の場合、見た目が変わらない様にデータを更新する。
+     *   但し、縦書き・横書きの変更の場合には、
+     *   横書きの各行が縦書きの各行になる様にする。
+     *   また、line progression の変更も適用しない。
+     *   単に、character path ltor/ttob <-> rtol/btot の間の変換だけ行う。
+     *   今後この動作は変更する可能性がある。
+     *
+     */
+    bool const oldRToL = is_charpath_rtol(s->presentation_direction);
+    bool const newRToL = is_charpath_rtol((presentation_direction) direction);
+    if (oldRToL != newRToL && update == 2) {
+      for (curpos_t y = 0, yN = b->m_height; y < yN; y++) {
+        if (!(b->line(y)->lflags & character_path_mask))
+          reverse_line_content(b, y);
+      }
+    }
+
+    s->presentation_direction = (presentation_direction) direction;
+
+    // update position
+    b->cur.y = 0;
+    if (update == 2) {
+      board_line* const line = b->line(b->cur.y);
+      b->cur.x = line->to_data_position(0, line->is_rtol(s->presentation_direction));
+    } else {
+      b->cur.x = 0;
+    }
+
+    return true;
+  }
+
+  bool do_scp(tty_player& play, csi_parameters& params) {
+    csi_single_param_t charPath;
+    params.read_param(charPath, 0);
+    csi_single_param_t update;
+    params.read_param(update, 0);
+    if (charPath > 2 || update > 2) return false;
+
+    tty_state* const s = play.state();
+    board* const b = play.board();
+    board_line* const line = b->line(b->cur.y);
+
+    bool const oldRToL = line->is_rtol(s->presentation_direction);
+
+    // update line attributes
+    play.apply_line_attribute(line);
+    line->lflags &= ~(line_attr_t) character_path_mask;
+    s->lflags &= ~(line_attr_t) character_path_mask;
+    switch (charPath) {
+    case 1:
+      line->lflags |= is_character_path_ltor;
+      s->lflags |= is_character_path_ltor;
+      break;
+    case 2:
+      line->lflags |= is_character_path_rtol;
+      s->lflags |= is_character_path_rtol;
+      break;
+    }
+
+    bool const newRToL = line->is_rtol(s->presentation_direction);
+
+    // update line content
+    if (oldRToL != newRToL && update == 2)
+      reverse_line_content(b, b->cur.y);
+
+    if (update == 2)
+      b->cur.x = line->to_data_position(0, newRToL);
+    else
+      b->cur.x = 0;
+
+    return true;
+  }
 
   bool do_slh(tty_player& play, csi_parameters& params) {
     tty_state * const s = play.state();

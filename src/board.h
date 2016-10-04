@@ -430,12 +430,32 @@ namespace contra {
      */
     is_character_path_rtol = 0x0002,
     is_character_path_ltor = 0x0004,
+    character_path_mask = 0x0004,
 
     // bit 6-7: DECDHL, DECDWL, DECSWL
     // The same values are used as in `xflags_t`.
     // The related constants are defined in `enum extended_flags`.
 
   };
+
+  enum presentation_direction {
+    presentation_direction_default = 0,
+    presentation_direction_lrtb = 0,
+    presentation_direction_tbrl = 1,
+    presentation_direction_tblr = 2,
+    presentation_direction_rltb = 3,
+    presentation_direction_btlr = 4,
+    presentation_direction_rlbt = 5,
+    presentation_direction_lrbt = 6,
+    presentation_direction_btrl = 7,
+  };
+
+  constexpr bool is_charpath_rtol(presentation_direction presentationDirection) {
+    return presentationDirection == presentation_direction_rltb
+      || presentationDirection == presentation_direction_btlr
+      || presentationDirection == presentation_direction_rlbt
+      || presentationDirection == presentation_direction_btrl;
+  }
 
   enum string_direction {
     string_direction_default  = 0,
@@ -468,6 +488,21 @@ namespace contra {
     //   一方が他方を完全に包含するかのどちらかである。
     // 想定: 子よりも親が先に来る。
     std::vector<directed_string> strings;
+
+  public:
+    /*?lwiki
+     * @param[in] presentation_direction presentationDirection;
+     *   表示部の既定の方向性を指定します。
+     *   具体的には `tty_player::m_state.presentation_direction` を指定します。
+     */
+    bool is_rtol(presentation_direction presentationDirection) const {
+      if (lflags & is_character_path_ltor)
+        return false;
+      else if (lflags & is_character_path_rtol)
+        return true;
+      else
+        return is_charpath_rtol(presentationDirection);
+    }
 
   public:
     /*?lwiki
@@ -519,6 +554,13 @@ namespace contra {
       curpos_t x = dataX - shift;
       if (default_rtol != rtol) x = -x;
       return x;
+    }
+
+    curpos_t to_data_position(curpos_t presentationX, presentation_direction presentationDirection) const {
+      return to_data_position(presentationX, is_rtol(presentationDirection));
+    }
+    curpos_t to_presentation_position(curpos_t dataX, presentation_direction presentationDirection) const {
+      return to_presentation_position(dataX, is_rtol(presentationDirection));
     }
   };
 

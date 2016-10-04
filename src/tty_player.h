@@ -23,7 +23,7 @@ namespace contra {
       | index << mode_index_shift;
   }
 
-  constexpr std::uint32_t pack_byte_sequence(byte major, byte minor) {
+  constexpr std::uint32_t compose_bytes(byte major, byte minor) {
     return minor << 8 | major;
   }
 
@@ -43,6 +43,9 @@ namespace contra {
     curpos_t page_home_position {0};
     curpos_t line_home  {-1};
     curpos_t line_limit {-1};
+
+    contra::presentation_direction presentation_direction {presentation_direction_default};
+    line_attr_t lflags {0};
 
     tty_state() {
       this->initialize_mode();
@@ -490,6 +493,9 @@ namespace contra {
   bool do_slh(tty_player& play, csi_parameters& params);
   bool do_sll(tty_player& play, csi_parameters& params);
 
+  bool do_scp(tty_player& play, csi_parameters& params);
+  bool do_spd(tty_player& play, csi_parameters& params);
+
   struct tty_player {
   private:
     contra::board* m_board;
@@ -507,6 +513,7 @@ namespace contra {
 
     void apply_line_attribute(board_line* line) const {
       if (line->lflags & is_line_used) return;
+      line->lflags = is_line_used | m_state.lflags;
       line->home = m_state.line_home;
       line->limit = m_state.line_limit;
     }
@@ -606,7 +613,7 @@ namespace contra {
     void do_bel() {
       m_state.do_bel();
     }
-    void do_bs () {
+    void do_bs() {
       if (m_state.get_mode(mode_simd)) {
         int limit = m_board->m_width;
         if (!m_state.get_mode(mode_xenl)) limit--;
@@ -649,10 +656,6 @@ namespace contra {
       do_plain_vt(true);
       if (m_state.get_mode(mode_lnm)) do_cr();
     }
-    void do_crlf() {
-      do_cr();
-      do_lf();
-    }
     void do_ff() {
       if (m_state.ff_clearing_screen) {
         m_board->clear_screen();
@@ -673,15 +676,15 @@ namespace contra {
 
       curpos_t x;
       if (m_state.get_mode(mode_simd)) {
-        x = m_board->m_width - 1;
-        if (0 <= line->limit && line->limit < x) x = line->limit;
+        x = line->limit < 0? m_board->m_width - 1:
+          std::min(line->limit, m_board->m_width - 1);
       } else {
-        x = 0;
-        if (line->home >= 0) x = line->home;
+        x = line->home < 0? 0:
+          std::min(line->home, m_board->m_width - 1);
       }
 
       if (!m_state.get_mode(mode_dcsm))
-        x = line->to_data_position(x, false); //@@
+        x = line->to_data_position(x, m_state.presentation_direction);
 
       m_board->cur.x = x;
     }
@@ -717,9 +720,11 @@ namespace contra {
           }
         } else if (intermediateSize == 1) {
           mwg_assert(seq.intermediate()[0] <= 0xFF);
-          switch (pack_byte_sequence((byte) seq.intermediate()[0], seq.final())) {
-          case pack_byte_sequence(ascii_sp, ascii_U): result = do_slh(*this, params); break;
-          case pack_byte_sequence(ascii_sp, ascii_V): result = do_sll(*this, params); break;
+          switch (compose_bytes((byte) seq.intermediate()[0], seq.final())) {
+          case compose_bytes(ascii_sp, ascii_U): result = do_slh(*this, params); break;
+          case compose_bytes(ascii_sp, ascii_V): result = do_sll(*this, params); break;
+          case compose_bytes(ascii_sp, ascii_S): result = do_spd(*this, params); break;
+          case compose_bytes(ascii_sp, ascii_k): result = do_scp(*this, params); break;
           }
         }
 
