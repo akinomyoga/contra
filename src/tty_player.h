@@ -16,19 +16,25 @@ namespace contra {
     mode_param_mask = 0x0000FFFFu, mode_param_shift = 0,
   };
 
-  constexpr mode_t construct_mode_spec(mode_t type, mode_t param, mode_t index) {
+  constexpr mode_t construct_mode_spec(mode_t index, mode_t type, mode_t param) {
     return type << mode_type_shift
       | param << mode_param_shift
       | index << mode_index_shift;
   }
 
   enum mode_spec {
-    mode_lnm = construct_mode_spec(0, 20, 0),
+    ansi_mode   = 0, // CSI Ps h
+    dec_mode    = 1, // CSI ? Ps h
+    contra_mode = 2, // private mode
+
+    mode_dcsm = construct_mode_spec(2,  ansi_mode, 9),
+    mode_lnm  = construct_mode_spec(0, ansi_mode, 20),
+
+    mode_simd = construct_mode_spec(1, contra_mode, 8501),
+    mode_xenl = construct_mode_spec(3, contra_mode, 8502),
   };
 
   struct tty_config {
-    bool xenl {1};
-
     tty_config() {
       this->initialize_mode();
     }
@@ -50,6 +56,7 @@ namespace contra {
     void initialize_mode() {
       std::fill(std::begin(m_mode_flags), std::end(m_mode_flags), 0);
       set_mode(mode_lnm);
+      set_mode(mode_xenl);
     }
 
   public:
@@ -433,7 +440,7 @@ namespace contra {
 
       cur.x += charwidth;
 
-      if (!m_config.xenl && cur.x == m_board->m_width) do_crlf();
+      if (!m_config.get_mode(mode_xenl) && cur.x == m_board->m_width) do_crlf();
     }
 
     void set_fg(color_t index, aflags_t colorSpace = color_spec_indexed) {
@@ -476,8 +483,17 @@ namespace contra {
       m_config.do_bel();
     }
     void do_bs () {
-      if (m_board->cur.x > 0)
-        m_board->cur.x--;
+      board_line const* const line = m_board->line(m_board->cur.y);
+      if (m_config.get_mode(mode_simd)) {
+        int limit = line->limit >= 0? line->limit: m_board->m_width;
+        if (!m_board->get_mode(xenl)) limit--;
+        if (m_board->cur.x < limit)
+          m_board->cur.x++;
+      } else {
+        int home = line->home >= 0? line->home: 0;
+        if (m_board->cur.x > home)
+          m_board->cur.x--;
+      }
     }
     void do_ht() {
       board_cursor& cur = m_board->cur;

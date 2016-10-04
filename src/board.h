@@ -435,6 +435,8 @@ namespace contra {
 
   struct board_line {
     line_attr_t lattr {0};
+    curpos_t home     {-1};
+    curpos_t limit    {-1};
     std::vector<directed_string> strings;
   };
 
@@ -508,6 +510,14 @@ namespace contra {
 
     board_cell* cell(int x, int y) {
       return const_cast<board_cell*>(const_cast<board const*>(this)->cell(x, y));
+    }
+
+    const board_line* line(int y) const {
+      return &m_lines[internal_line_index(y)];
+    }
+
+    board_line* line(int y) {
+      return const_cast<board_line*>(const_cast<board const*>(this)->line(x, y));
     }
 
     void rotate(int offset = 1) {
