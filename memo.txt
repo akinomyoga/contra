@@ -86,6 +86,42 @@
   ToDo
 ------------------------------------------------------------------------------
 
+2016-10-05
+
+* RIS
+
+* SPH/SPL
+  page_home_position -> page_home, page_limit
+
+* 基本的な機能
+
+  CUU CUD CUB CUF (現在位置・上下左右)
+  HPA HPB HPR VPA VPB VPR (記憶位置・行列)
+  CHA CNL CPL (行列)
+  CPR
+  DCH ICH ECH DL IL EL ED
+
+* RI は一度消えた行ではなくて新しい行を挿入している @ screen
+  RI IND
+
+* http://invisible-island.net/vttest/
+
+* TAB 関連の機能
+
+  Mode TSM
+
+  VT VTS
+  TAC TALE TATE TBC TCC TSR
+  STAB (ISO 8613-6) HTJ HT HTS CHT CBT CTC CVT
+
+  影響のあるもの: DAQ(7) DCH ICH DL IL RIS
+
+  RLogin は HTS, DECHTS, VTS, DECVTS を認識するが、
+  何も設定しない状態で HT を呼び出すと何が起こるのだろうか。
+  確認する必要がある。
+  因みに VT に関しては次の行に単に進むだけの様に見える。
+  VTS を設定してる状態で VT を実行するとどうなるだろうか?
+
 2016-10-04
 
 * 本当に行毎に SLL/SLH の値を保持するべきなのか。
@@ -158,16 +194,22 @@
     後 CR の直前にも実行しなければならない。というか LF の代わりに CR で実行するべき?
   - ED 等の消去関数を用いた場合には空になった行は新しい行としてマークする。
 
-
-* sequence_decoder, sequence: support ESC sequence
+  これらについてはタブ関連の機能について調べてからで良いだろう。
+  タブ関連の機能を見て、行毎に tab stop を管理しなければならなそうであれば、
+  SLL/SLH も含めて行毎に管理をする様にする。
+  もしタブは全ての行について共有なのだとすれば SLL/SLH もその様にする。
+  →どうもタブ関連の機能は TSM で動作を切り替えられる様である。
+    しかし TSM に影響されずに動作する DAQ(7) 等の機能も存在する。
+    つまり基本的に character tab stop は行毎に管理して、
+    但し、TSM = MULTIPLE の場合には特定の制御機能は
+    全ての既存の行に対して作用するという事らしい。
+    全体で共通の tab stop を管理するという様な事ではない様だ。
 
 2016-09-25
 
 * 各機能のテストコードを書く必要がある。
 
-* escape sequences の解釈
-
-* BEL/HT の正しい実装
+* BEL/HT/VT の正しい実装
 
 * cell で毎回セルのアドレスを計算して取得するのではなくて、
   window.cur に現在のセル、もしくは現在の行へのポインタを保持した方が
@@ -299,6 +341,11 @@
 ------------------------------------------------------------------------------
   Done
 ------------------------------------------------------------------------------
+
+2016-10-05
+
+* sequence_decoder, sequence: support ESC sequence
+* escape sequences の解釈
 
 2016-10-04
 

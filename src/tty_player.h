@@ -189,6 +189,7 @@ namespace contra {
 
     enum decode_state {
       decode_default,
+      decode_escape_sequence,
       decode_control_sequence,
       decode_command_string,
       decode_character_string,
@@ -215,6 +216,11 @@ namespace contra {
       clear();
     }
 
+    void process_escape_sequence() {
+      m_proc->process_escape_sequence(this->m_seq);
+      clear();
+    }
+
     void process_control_sequence() {
       m_proc->process_control_sequence(this->m_seq);
       clear();
@@ -228,6 +234,17 @@ namespace contra {
     void process_character_string() {
       m_proc->process_character_string(this->m_seq);
       clear();
+    }
+
+    void process_char_for_escape_sequence(char32_t uchar) {
+      if (0x30 <= uchar && uchar <= 0x7E) {
+        m_seq.set_final((byte) uchar);
+        process_escape_sequence();
+      } else if (0x20 <= uchar && uchar <= 0x3F) {
+        m_seq.append(uchar);
+      } else {
+        process_invalid_sequence();
+      }
     }
 
     void process_char_for_control_sequence(char32_t uchar) {
@@ -337,8 +354,20 @@ namespace contra {
     void process_char_default(char32_t uchar) {
       if (m_hasPendingESC) {
         m_hasPendingESC = false;
-        if (0x40 <= uchar && uchar < 0x60) {
-          process_char_default_c1((uchar & 0x1F) | 0x80);
+        if (0x20 <= uchar && uchar < 0x7E) {
+          if (uchar < 0x30) {
+            // <I> to start an escape sequence
+            m_seq.set_type((byte) ascii_esc);
+            m_dstate = decode_escape_sequence;
+          } else if (0x40 <= uchar && uchar < 0x60) {
+            // <F> to call C1
+            process_char_default_c1((uchar & 0x1F) | 0x80);
+          } else {
+            // <F>/<P> to complete an escape sequence
+            m_seq.set_type((byte) ascii_esc);
+            m_seq.set_final((byte) uchar);
+            process_escape_sequence();
+          }
         } else {
           process_invalid_sequence();
         }
@@ -364,6 +393,9 @@ namespace contra {
       case decode_default:
         process_char_default(uchar);
         break;
+      case decode_escape_sequence:
+        process_char_for_escape_sequence(uchar);
+        break;
       case decode_control_sequence:
         process_char_for_control_sequence(uchar);
         break;
@@ -378,6 +410,7 @@ namespace contra {
 
     void process_end() {
       switch (m_dstate) {
+      case decode_escape_sequence:
       case decode_control_sequence:
       case decode_command_string:
       case decode_character_string:
@@ -722,6 +755,10 @@ namespace contra {
 
     void process_invalid_sequence(sequence const& seq) {
       // ToDo: 何処かにログ出力
+      mwg_printd("%p", &seq);
+    }
+
+    void process_escape_sequence(sequence const& seq) {
       mwg_printd("%p", &seq);
     }
 
