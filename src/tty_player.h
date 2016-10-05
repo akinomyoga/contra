@@ -34,6 +34,7 @@ namespace contra {
 
     mode_dcsm = construct_mode_spec( 9, ansi_mode,  9),
     mode_lnm  = construct_mode_spec(20, ansi_mode, 20),
+    mode_grcm = construct_mode_spec(21, ansi_mode, 21),
 
     mode_simd = construct_mode_spec(23, contra_mode, 9201),
     mode_xenl = construct_mode_spec(24, contra_mode, 9202),
@@ -68,6 +69,7 @@ namespace contra {
     void initialize_mode() {
       std::fill(std::begin(m_mode_flags), std::end(m_mode_flags), 0);
       set_mode(mode_lnm);
+      set_mode(mode_grcm);
       set_mode(mode_xenl);
     }
 

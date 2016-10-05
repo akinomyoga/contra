@@ -323,13 +323,12 @@ namespace contra {
   }
 
   bool do_sgr(tty_player& play, csi_parameters& params) {
-    if (params.size() == 0) {
+    if (params.size() == 0 || !play.state()->get_mode(mode_grcm))
       do_sgr_parameter(play, 0, params);
-    } else {
-      csi_single_param_t value;
-      while (params.read_param(value, 0))
-        do_sgr_parameter(play, value, params);
-    }
+
+    csi_single_param_t value;
+    while (params.read_param(value, 0))
+      do_sgr_parameter(play, value, params);
 
     return true;
   }
