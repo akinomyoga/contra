@@ -489,16 +489,6 @@ namespace contra {
     }
   };
 
-  struct tty_player;
-
-  bool do_spd(tty_player& play, csi_parameters& params);
-  bool do_scp(tty_player& play, csi_parameters& params);
-  bool do_simd(tty_player& play, csi_parameters& params);
-  bool do_slh(tty_player& play, csi_parameters& params);
-  bool do_sll(tty_player& play, csi_parameters& params);
-
-  bool do_sgr(tty_player& play, csi_parameters& params);
-
   class tty_player {
   private:
     contra::board* m_board;
@@ -527,6 +517,7 @@ namespace contra {
     //   apply_line_attribute(m_board->cur.y);
     // }
 
+    // ToDo: IRM
     void insert_char(char32_t u) {
       board_cursor& cur = m_board->cur;
       board_line* line = m_board->line(cur.y);
@@ -708,38 +699,8 @@ namespace contra {
       mwg_printd("%p", &seq);
     }
 
-    void process_control_sequence(sequence const& seq) {
-      {
-        if (seq.is_private_csi()) goto unrecognized;
+    void process_control_sequence(sequence const& seq);
 
-        csi_parameters params(seq);
-        if (!params) goto unrecognized;
-
-        bool result = false;
-        std::int32_t const intermediateSize = seq.intermediateSize();
-        if (intermediateSize == 0) {
-          switch (seq.final()) {
-          case ascii_m: result = do_sgr(*this, params); break;
-          case ascii_circumflex: result = do_simd(*this, params); break;
-          }
-        } else if (intermediateSize == 1) {
-          mwg_assert(seq.intermediate()[0] <= 0xFF);
-          switch (compose_bytes((byte) seq.intermediate()[0], seq.final())) {
-          case compose_bytes(ascii_sp, ascii_U): result = do_slh(*this, params); break;
-          case compose_bytes(ascii_sp, ascii_V): result = do_sll(*this, params); break;
-          case compose_bytes(ascii_sp, ascii_S): result = do_spd(*this, params); break;
-          case compose_bytes(ascii_sp, ascii_k): result = do_scp(*this, params); break;
-          }
-        }
-
-        if (result) return;
-      }
-
-    unrecognized:
-      std::fprintf(stderr, "unrecognized sequence: ");
-      seq.print(stderr);
-      std::fputc('\n', stderr);
-    }
     void process_command_string(sequence const& seq) {
       mwg_printd("%p", &seq);
     }
