@@ -489,14 +489,15 @@ namespace contra {
 
   struct tty_player;
 
-  bool do_sgr(tty_player& play, csi_parameters& params);
+  bool do_spd(tty_player& play, csi_parameters& params);
+  bool do_scp(tty_player& play, csi_parameters& params);
+  bool do_simd(tty_player& play, csi_parameters& params);
   bool do_slh(tty_player& play, csi_parameters& params);
   bool do_sll(tty_player& play, csi_parameters& params);
 
-  bool do_scp(tty_player& play, csi_parameters& params);
-  bool do_spd(tty_player& play, csi_parameters& params);
+  bool do_sgr(tty_player& play, csi_parameters& params);
 
-  struct tty_player {
+  class tty_player {
   private:
     contra::board* m_board;
 
@@ -717,6 +718,7 @@ namespace contra {
         if (intermediateSize == 0) {
           switch (seq.final()) {
           case ascii_m: result = do_sgr(*this, params); break;
+          case ascii_circumflex: result = do_simd(*this, params); break;
           }
         } else if (intermediateSize == 1) {
           mwg_assert(seq.intermediate()[0] <= 0xFF);

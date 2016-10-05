@@ -103,6 +103,14 @@ namespace contra {
     return true;
   }
 
+  bool do_simd(tty_player& play, csi_parameters& params) {
+    csi_single_param_t param;
+    params.read_param(param, 0);
+    if (param > 1) return false;
+    play.state()->set_mode(mode_simd, param != 0);
+    return true;
+  }
+
   bool do_slh(tty_player& play, csi_parameters& params) {
     tty_state * const s = play.state();
     board     * const b = play.board();
