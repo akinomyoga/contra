@@ -77,6 +77,8 @@ int main() {
   term.printt("Hello, world!\n");
   term.printt("Thank you!\n");
 
+  term.printt("\nA\x1b[AB\x1b[BC\x1b[2DD\x1b[0CE");
+
   contra::termcap_sgr_type sgrcap;
   sgrcap.initialize();
 

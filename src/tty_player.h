@@ -35,6 +35,7 @@ namespace contra {
     mode_dcsm = construct_mode_spec( 9, ansi_mode,  9),
     mode_lnm  = construct_mode_spec(20, ansi_mode, 20),
     mode_grcm = construct_mode_spec(21, ansi_mode, 21),
+    mode_zdm  = construct_mode_spec(22, ansi_mode, 22),
 
     mode_simd = construct_mode_spec(23, contra_mode, 9201),
     mode_xenl = construct_mode_spec(24, contra_mode, 9202),
@@ -72,6 +73,7 @@ namespace contra {
       set_mode(mode_lnm);
       set_mode(mode_dcsm);
       set_mode(mode_grcm);
+      set_mode(mode_zdm);
       set_mode(mode_xenl);
     }
 

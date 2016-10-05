@@ -187,6 +187,113 @@ namespace contra {
     return true;
   }
 
+  enum du_cux_direction {
+    do_cux_prec_line,
+    do_cux_succ_line,
+    do_cux_prec_char,
+    do_cux_succ_char,
+  };
+
+  static bool do_cux(tty_player& play, csi_parameters& params, du_cux_direction direction) {
+    tty_state * const s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s->get_mode(mode_zdm))
+        param = 1;
+      else
+        return true;
+    }
+
+    if (param == 0 && s->get_mode(mode_zdm)) param = 1;
+
+    board* const b = play.board();
+
+    curpos_t y = b->cur.y;
+    switch (direction) {
+    case do_cux_prec_line:
+      b->cur.y = std::max((curpos_t) 0, y - (curpos_t) param);
+      break;
+    case do_cux_succ_line:
+      b->cur.y = std::min(play.board()->m_height - 1, y + (curpos_t) param);
+      break;
+    case do_cux_prec_char:
+      {
+        board_line* line = b->line(y);
+        curpos_t x = b->cur.x;
+        x = line->to_presentation_position(x, s->presentation_direction);
+        x = std::max((curpos_t) 0, x - (curpos_t) param);
+        x = line->to_data_position(x, s->presentation_direction);
+        b->cur.x = x;
+      }
+      break;
+    case do_cux_succ_char:
+      {
+        board_line* line = b->line(y);
+        curpos_t x = b->cur.x;
+        x = line->to_presentation_position(x, s->presentation_direction);
+        x = std::min(play.board()->m_width - 1, x + (curpos_t) param);
+        x = line->to_data_position(x, s->presentation_direction);
+        b->cur.x = x;
+      }
+      break;
+    }
+
+    return true;
+  }
+
+  bool do_cuu(tty_player& play, csi_parameters& params) {
+    switch(play.state()->presentation_direction) {
+    default:
+    case presentation_direction_lrtb:
+    case presentation_direction_rltb: return do_cux(play, params, do_cux_prec_line);
+    case presentation_direction_lrbt:
+    case presentation_direction_rlbt: return do_cux(play, params, do_cux_succ_line);
+    case presentation_direction_tblr:
+    case presentation_direction_tbrl: return do_cux(play, params, do_cux_prec_char);
+    case presentation_direction_btlr:
+    case presentation_direction_btrl: return do_cux(play, params, do_cux_succ_char);
+    }
+  }
+  bool do_cud(tty_player& play, csi_parameters& params) {
+    switch(play.state()->presentation_direction) {
+    default:
+    case presentation_direction_lrtb:
+    case presentation_direction_rltb: return do_cux(play, params, do_cux_succ_line);
+    case presentation_direction_lrbt:
+    case presentation_direction_rlbt: return do_cux(play, params, do_cux_prec_line);
+    case presentation_direction_tblr:
+    case presentation_direction_tbrl: return do_cux(play, params, do_cux_succ_char);
+    case presentation_direction_btlr:
+    case presentation_direction_btrl: return do_cux(play, params, do_cux_prec_char);
+    }
+  }
+  bool do_cuf(tty_player& play, csi_parameters& params) {
+    switch(play.state()->presentation_direction) {
+    default:
+    case presentation_direction_lrtb:
+    case presentation_direction_lrbt: return do_cux(play, params, do_cux_succ_char);
+    case presentation_direction_rltb:
+    case presentation_direction_rlbt: return do_cux(play, params, do_cux_prec_char);
+    case presentation_direction_tblr:
+    case presentation_direction_btlr: return do_cux(play, params, do_cux_succ_line);
+    case presentation_direction_tbrl:
+    case presentation_direction_btrl: return do_cux(play, params, do_cux_prec_line);
+    }
+  }
+  bool do_cub(tty_player& play, csi_parameters& params) {
+    switch(play.state()->presentation_direction) {
+    default:
+    case presentation_direction_lrtb:
+    case presentation_direction_lrbt: return do_cux(play, params, do_cux_prec_char);
+    case presentation_direction_rltb:
+    case presentation_direction_rlbt: return do_cux(play, params, do_cux_succ_char);
+    case presentation_direction_tblr:
+    case presentation_direction_btlr: return do_cux(play, params, do_cux_prec_line);
+    case presentation_direction_tbrl:
+    case presentation_direction_btrl: return do_cux(play, params, do_cux_succ_line);
+    }
+  }
 
   static void do_sgr_iso8613_colors(tty_player& play, csi_parameters& params, bool isfg) {
     csi_single_param_t colorSpace;
@@ -376,6 +483,10 @@ namespace contra {
       if (intermediateSize == 0) {
         switch (seq.final()) {
         case ascii_m: result = do_sgr(*this, params); break;
+        case ascii_A: result = do_cuu(*this, params); break;
+        case ascii_B: result = do_cud(*this, params); break;
+        case ascii_C: result = do_cuf(*this, params); break;
+        case ascii_D: result = do_cub(*this, params); break;
         case ascii_circumflex: result = do_simd(*this, params); break;
         }
       } else if (intermediateSize == 1) {
