@@ -61,11 +61,11 @@
   > [ECMA-48/8.3.15] CR: Carriage Return  35
   > [ECMA-48/8.3.16] CSI: Control Sequence Introducer  36
   [ECMA-48/8.3.17] CTC: Cursor Tabulation Control  36
-  [ECMA-48/8.3.18] CUB: Cursor Left  36
-  [ECMA-48/8.3.19] CUD: Cursor Down  36
-  [ECMA-48/8.3.20] CUF: Cursor Right  36
+  > [ECMA-48/8.3.18] CUB: Cursor Left  36
+  > [ECMA-48/8.3.19] CUD: Cursor Down  36
+  > [ECMA-48/8.3.20] CUF: Cursor Right  36
   [ECMA-48/8.3.21] CUP: Cursor Position  36
-  [ECMA-48/8.3.22] CUU: Cursor Up  37
+  > [ECMA-48/8.3.22] CUU: Cursor Up  37
   [ECMA-48/8.3.23] CVT: Cursor Line Tabulation  37
   [ECMA-48/8.3.24] DA: Device Attributes  37
   [ECMA-48/8.3.25] DAQ: Define Area Qualification  37

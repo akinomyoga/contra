@@ -73,7 +73,7 @@
 
 <p>制御機能を表現するバイト列として以下の種類がある。</p>
 <table class="normal center">
-<tr><th colspan="2">名称</th><th>表現</th><th>説明</th><th>関連規格</th></tr>
+<tr><th colspan="2">略号</th><th>表現</th><th>説明</th><th>関連規格</th></tr>
 <tr><th colspan="2" rowspan="2">制御文字</th>
     <td><i>&lt;C0&gt;</i></td><td>基本の制御</td><td>ISO/IEC 646 (ASCII)</td></tr>
 <tr><td><i>&lt;C1&gt;</i></td><td>基本の制御</td><td>ECMA-48 (ANSI, ISO/IEC 6429)</td></tr>
@@ -132,10 +132,10 @@
 <table class="normal center">
 <tr><th colspan="12">C0 (ISO/IEC-646)</th><th colspan="12">C1 (ISO/IEC-6429)</th></tr>
 <tr>
-  <th>名称</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
-  <th>名称</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
-  <th>名称</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
-  <th>名称</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
 </tr>
 <tr>
   <th>NUL</th><td>\x00</td><td>\000</td><td>0/0</td><td>^@</td><td></td>
@@ -307,12 +307,12 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 以下にバイト値と図形文字の対応を載せる。</p>
 
 <table class="normal center">
-<tr><th>名称</th><th>R/C</th>
-    <th>名称</th><th>R/C</th>
-    <th>名称</th><th>R/C</th>
-    <th>名称</th><th>R/C</th>
-    <th>名称</th><th>R/C</th>
-    <th>名称</th><th>R/C</th>
+<tr><th>略号</th><th>R/C</th>
+    <th>略号</th><th>R/C</th>
+    <th>略号</th><th>R/C</th>
+    <th>略号</th><th>R/C</th>
+    <th>略号</th><th>R/C</th>
+    <th>略号</th><th>R/C</th>
 </tr>
 <tr><td>SP</td>   <td>02/00</td><td>0</td>   <td>03/00</td><td>@</td><td>04/00</td><td>P</td><td>05/00</td><td>`</td><td>06/00</td><td>p</td>  <td>07/00</td></tr>
 <tr><td>!</td>    <td>02/01</td><td>1</td>   <td>03/01</td><td>A</td><td>04/01</td><td>Q</td><td>05/01</td><td>a</td><td>06/01</td><td>q</td>  <td>07/01</td></tr>
@@ -342,7 +342,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </li>
 </ul>
 <table class="normal center">
-<tr><th>名称</th><th>表現</th>                     <th>Hex; 行/列</th>         <th>名称</th><th>表現</th>      <th>Hex; 行/列</th>         <th>名称</th><th>表現</th>    <th>Hex; 行/列</th>         </tr>
+<tr><th>略号</th><th>表現</th>                     <th>Hex; 行/列</th>         <th>略号</th><th>表現</th>      <th>Hex; 行/列</th>         <th>略号</th><th>表現</th>    <th>Hex; 行/列</th>         </tr>
 <tr><th class="markB">ACS</th><td>ESC SP</td><td>\x1B\x20; 1/11 2/0</td> <th>---</th><td>ESC @</td>      <td>\x1B\x40; 1/11 4/0</td> <th>DMI</th><td>ESC `</td>    <td>\x1B\x60; 1/11 6/0</td> </tr>
 <tr><th class="markB">CZD</th>       <td>ESC !</td><td>\x1B\x21; 1/11 2/1</td> <th>---</th><td>ESC A</td>      <td>\x1B\x41; 1/11 4/1</td> <th>INT</th><td>ESC a</td>    <td>\x1B\x61; 1/11 6/1</td> </tr>
 <tr><th class="markB">C1D</th>       <td>ESC "</td><td>\x1B\x22; 1/11 2/2</td> <th>---</th><td>ESC B</td>      <td>\x1B\x42; 1/11 4/2</td> <th>EMI</th><td>ESC b</td>    <td>\x1B\x62; 1/11 6/2</td> </tr>
@@ -368,7 +368,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th class="markB">G2D6</th>      <td>ESC .</td><td>\x1B\x2E; 1/11 2/14</td><th>SS2</th><td>ESC N</td>     <td>\x1B\x4E; 1/11 4/14</td><th>LS2</th><td>ESC n</td>    <td>\x1B\x6E; 1/11 6/14</td></tr>
 <tr><th class="markB">G3D6</th>      <td>ESC /</td><td>\x1B\x2F; 1/11 2/15</td><th>SS3</th><td>ESC O</td>     <td>\x1B\x4F; 1/11 4/15</td><th>LS3</th><td>ESC o</td>    <td>\x1B\x6F; 1/11 6/15</td></tr>
 
-<tr><th>名称</th><th>表現</th>       <th>Hex; 行/列</th>         <th>名称</th><th>表現</th>    <th>Hex; 行/列</th>                   <th>名称</th><th>表現</th>     <th>Hex; 行/列</th>         </tr>
+<tr><th>略号</th><th>表現</th>       <th>Hex; 行/列</th>         <th>略号</th><th>表現</th>    <th>Hex; 行/列</th>                   <th>略号</th><th>表現</th>     <th>Hex; 行/列</th>         </tr>
 <tr><th>---</th><td>ESC 0</td>       <td>\x1B\x30; 1/11 3/0</td> <th class="markB">DCS</th><td>ESC P</td><td>\x1B\x50; 1/11 5/0</td> <th>PCD</th><td>ESC p</td>     <td>\x1B\x70; 1/11 7/0</td> </tr>
 <tr><th>---</th><td>ESC 1</td>       <td>\x1B\x31; 1/11 3/1</td> <th>---</th>              <td>ESC Q</td><td>\x1B\x51; 1/11 5/1</td> <th>-R-</th><td>ESC q</td>     <td>\x1B\x71; 1/11 7/1</td> </tr>
 <tr><th>---</th><td>ESC 2</td>       <td>\x1B\x32; 1/11 3/2</td> <th>---</th>              <td>ESC R</td><td>\x1B\x52; 1/11 5/2</td> <th>-R-</th><td>ESC r</td>     <td>\x1B\x72; 1/11 7/2</td> </tr>
@@ -420,7 +420,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 それらを以下に纏める。
 </p>
 <table class="normal center">
-<tr><th>名称</th>   <th>表現</th><th>Hex; 行/列</th></tr>
+<tr><th>略号</th>   <th>表現</th><th>Hex; 行/列</th></tr>
 <tr><th>RSCF</th>
   <td>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
   <td>\x1B\x23<i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i>;
@@ -595,7 +595,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <h2>モード</h2>
 
 <table class="normal center">
-<tr><th>名称</th><th>表現</th></tr>
+<tr><th>略号</th><th>表現</th></tr>
 <tr><th>SM</th>     <td>CSI <i>&lt;Pm&gt;</i> h</td></tr>
 <tr><th>DECSET</th> <td>CSI ? <i>&lt;Pm&gt;</i> h</td></tr>
 <tr><th>RM</th>     <td>CSI <i>&lt;Pm&gt;</i> l</td></tr>
@@ -648,7 +648,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 
 <h4>一覧表</h4>
 <table class="normal center">
-<tr><th>名称</th><th>Mode</th><th>名前</th></tr>
+<tr><th>略号</th><th>Mode</th><th>名前</th></tr>
 <tr><th>GATM</th> <td>1</td> <td>Guarded Area Transfer Mode</td></tr>
 <tr><th>KAM</th>  <td>2</td> <td>Keyboard Action Mode</td></tr>
 <tr><th>CRM</th>  <td>3</td> <td>Control Representation Mode</td></tr>
@@ -668,7 +668,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>SATM</th> <td>17</td><td>Selected Area Transfer Mode</td></tr>
 <tr><th>TSM</th>  <td>18</td><td>Tabulation Stop Mode</td></tr>
 <tr><th><del>EBM</del></th>        <td>19</td><td><del>Editing Boundary Mode</del> (廃止)</td></tr>
-<tr><th><del>LMN (LF/NL)</del></th><td>20</td><td><del>Line Feed/New Line Mode</del> (廃止)</td></tr>
+<tr><th><del>LNM (LF/NL)</del></th><td>20</td><td><del>Line Feed/New Line Mode</del> (廃止)</td></tr>
 <tr><th>GRCM</th> <td>21</td><td>Graphic Rendition Combination</td></tr>
 <tr><th>ZDM</th>  <td>22</td><td>Zero Default Mode (deprecated)</td></tr>
 <tr><th>DECTCEM</th>            <td>?25</td>  <td></td></tr>
@@ -708,7 +708,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <col style="width:40%;" />
   <col style="width:40%;" />
 </colgroup>
-<tr><th>引数</th><th>環境</th><th>名称</th><th>有効</th><th>無効</th><th>実装</th></tr>
+<tr><th>引数</th><th>環境</th><th>略号</th><th>有効</th><th>無効</th><th>実装</th></tr>
 <tr><td>1</td>     <td class="markA">-</td><td>GATM</td> <td>Guarded area transfer</td><td></td><td></td></tr>
 <tr><td>2</td>     <td>x</td><td>AM/KAM</td>             <td>Keyboard Action Mode</td><td class="markB"></td><td></td></tr>
 <tr><td>4</td>     <td>x</td><td>IRM</td>                <td>Insert Mode</td><td class="markB"></td><td>@</td></tr>
@@ -725,7 +725,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><td>17</td>    <td class="markA">-</td><td>SATM</td> <td>Selected area transfer</td><td></td><td>X</td></tr>
 <tr><td>18</td>    <td class="markA">-</td><td>TSM</td>  <td>Tabulation stop</td><td></td><td>X</td></tr>
 <tr><td>19</td>    <td class="markA">-</td><td>EBM</td>  <td>Editing boundary</td><td></td><td>X</td></tr>
-<tr><td>20</td>    <td>vx</td><td>LMN</td>       <td>Set new line mode (Automatic Newline)</td><td class="markB">Set line feed mode (Normal Linefeed)</td><td>X</td></tr>
+<tr><td>20</td>    <td>vx</td><td>LNM</td>       <td>Set new line mode (Automatic Newline)</td><td class="markB">Set line feed mode (Normal Linefeed)</td><td>X</td></tr>
 <tr><td>21</td>    <td>/ansi</td><td>GRCM</td>   <td>Cumulative</td><td>Replacing</td></tr>
 <tr><td>34</td>    <td>/putty</td><td></td>      <td>MakeCursorBig</td><td></td><td></td></tr>
 <tr><td>?1</td>    <td>vxr</td><td>DECCKM</td>   <td>Set cursor key to application (Application cursor key)</td><td>Set cursor key to cursor (Normal cursor key)</td><td>X</td></tr>
@@ -841,36 +841,36 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 
 <h3>装置の構成</h3>
 <p>[ECMA-48/6.1] 装置 (device) (ディスプレイやプリンターを想定) は3つの部分で構成される。
-<b>入力部</b> (input component)・<b>表示部</b> (presentation component)・<b>記憶部</b> (data component) である。
+<dfn>入力部</dfn> (input component)・<dfn>表示部</dfn> (presentation component)・<dfn>記憶部</dfn> (data component) である。
 特に記憶部は双方向の文字列表示 (bidi) に対応する為に用意するが、単方向しか対応しなければ表示部と等価なので省略可能である。
-表示部・記憶部は共にそれぞれ<b>行</b>の集まりであり、行は<b>文字表示位置</b>の集まりである。
+表示部・記憶部は共にそれぞれ<dfn>行</dfn>の集まりであり、行は<dfn>文字表示位置</dfn> (character position) の集まりである。
 表示部・記憶部の各行にはそれぞれ自然な方向があり、
-それぞれ文字進路 (character path)・文字進行 (character progression) という。
+それぞれ<dfn>文字進路</dfn> (character path)・<dfn>文字進行</dfn> (character progression) という。
 表示部は実際に表示されるときの固有の座標(行・列)を持ち、
 記憶部は内部的な取り扱いで使用する固有の座標を持ち、一対一に対応がある。
-表示部・記憶部はそれぞれカーソルを持ち、<b>現在表示位置</b> (active presentation position)・<b>現在記憶位置</b> (active data position) という。
-文字の挿入によるカーソルの移動は、記憶位置を行内の次の文字表示位置に移動するものである。これを<b>暗黙的移動</b> (implicit movement) という。
-制御機能によるカーソルの移動は記憶位置もしくは表示位置に作用する。これを<b>明示的移動</b> (explicit movement) という。
-表示位置と記憶位置は連動する。つまり一方の位置に対する移動操作によって、他方が<b>間接的移動</b> (indirect movement) する。
+表示部・記憶部はそれぞれカーソルを持ち、<dfn>現在表示位置</dfn> (active presentation position)・<dfn>現在記憶位置</dfn> (active data position) という。
+文字の挿入によるカーソルの移動は、記憶位置を行内の次の文字表示位置に移動するものである。これを<dfn>暗黙的移動</dfn> (implicit movement) という。
+制御機能によるカーソルの移動は記憶位置もしくは表示位置に作用する。これを<dfn>明示的移動</dfn> (explicit movement) という。
+表示位置と記憶位置は連動する。つまり一方の位置に対する移動操作によって、他方が<dfn>間接的移動</dfn> (indirect movement) する。
 何れの移動も、存在しない場所に移動しようとしたときの動作は処理系依存である (例えば行折り返しをしたり、動作を停止したりする)。
 </p>
-<p>明示的には書かれていないが、ECMA-48 および ECMA-TR/53 の記述を総合するに、
+<p>明示されてはいないが、ECMA-48 および ECMA-TR/53 の記述を総合するに、
 以下の様なことが言えると考えられる。</p>
 <ul>
-<li>表示部には既定の<b>文字進路</b> (character path) が存在して、<b>SPD</b> で設定される。</li>
-<li>各行には文字進路が存在して <b>SCP</b> で設定される。
+<li>表示部には既定の文字進路が存在して、SPD で設定される。</li>
+<li>各行には文字進路が存在して SCP で設定される。
   既定の文字進路の場合には、
   記憶部と表示部で対応する文字表示位置の番号は一致する。
   逆の文字進路の場合には丁度反転する。
 </li>
 <li>行中で部分的に表示方向を変更するには SDS, SRS を用いる。
-  この部分的に変更された部分を<b>方向付き文字列</b> (directed string) と呼ぶ。
+  この部分的に変更された部分を<a>文字列</a> (directed string) と呼ぶ。
   但し、方向付き文字列の内部では記憶部と表示部での位置の対応関係は規定されない。
 </li>
 </ul>
 
 <table class="normal center">
-<tr><th>名称</th><th>表現</th></tr>
+<tr><th>略号</th><th>表現</th></tr>
 <tr><th>SPD</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> SP S</kbd></td></tr>
 <tr><th>SCP</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> SP k</kbd></td></tr>
 <tr><th>SIMD</th><td><kbd>CSI <i>&lt;Ps1&gt;</i> ^</kbd></td></tr>
@@ -947,7 +947,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </ul>
 
 <table class="normal center">
-<tr><th>名称</th><th>表現</th></tr>
+<tr><th>略号</th><th>表現</th></tr>
 <tr><th>SLH</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP U</kbd></td></tr>
 <tr><th>SLL</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP V</kbd></td></tr>
 <tr><th>SPH</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> SP i</kbd></td></tr>
@@ -958,7 +958,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <p>[ECMA-48/8.3.122] 現在行と以降の行で、文章を表示する先頭列を指定する。
   この値は CR, DL, IL, NEL において、現在表示位置 (DCSM(PRESENTATION) のとき)
   または現在記憶位置 (DCSM(DATA) のとき) が移動する先の列になる。
-  <b>DCSM</b>(<b>DATA</b>) もしくは表示部と記憶部に区別のない装置の場合、
+  DCSM(DATA) もしくは表示部と記憶部に区別のない装置の場合、
   設定された列は現在記憶位置が暗黙的移動によって移動できる一番左の位置となる。
   引数 <i>&lt;Pn&gt;</i> は列番号を指定し、既定値はない。
   </p>
@@ -974,9 +974,9 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </li>
 <li><dfn class="cfunc">SLL</dfn>: Set Line Limit
   <p>[ECMA-48/8.3.123] 現在行と以降の行で、文章を表示する最終列を指定する。
-  この値は、<b>DCSM</b>(<b>PRESENTATION</b>), <b>SIMD</b>(1) の時、
-  <b>CR</b>, <b>NEL</b> による移動先の列になる。
-  また、<b>DCSM</b>(<b>DATA</b>) もしくは表示部と記憶部に区別のない装置の場合、
+  この値は、DCSM(PRESENTATION), SIMD(1) の時、
+  CR, NEL による移動先の列になる。
+  また、DCSM(DATA) もしくは表示部と記憶部に区別のない装置の場合、
   設定された列は現在記憶位置が暗黙的移動によって移動できる一番右の位置になる。
   引数 <i>&lt;Pn&gt;</i> は列番号を指定し、既定値はない。
   </p>
@@ -1047,7 +1047,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <p>以下に関連する制御機能を挙げる。</p>
 <table class="normal center">
-<tr><th>名称</th><th>表現</th><th>名称</th></tr>
+<tr><th>略号</th><th>表現</th><th>名称</th></tr>
 <tr><th>SDS</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ]</kbd></td><td>Start Directed String</td></tr>
 <tr><th>SRS</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> [</kbd></td><td>Start Reversed String</td></tr>
 <tr><th>ALM</th><td><kbd>U+061C</kbd></td><td>Arabic letter mark</td></tr>
@@ -1091,17 +1091,18 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <h2>カーソル位置</h2>
 
 <table class="normal center">
-<tr><th>名称</th><th>種類</th><th>表現</th></tr>
-<tr><th>BS</th><td>制御</td><td><kbd>BS</kbd></td></tr>
-<tr><th>HT</th><td>制御</td><td><kbd>HT</kbd></td></tr>
-<tr><th>LF</th><td>制御</td><td><kbd>LF</kbd></td></tr>
-<tr><th>VT</th><td>制御</td><td><kbd>VT</kbd></td></tr>
-<tr><th>FF</th><td>制御</td><td><kbd>FF</kbd></td></tr>
-<tr><th>CR</th><td>制御</td><td><kbd>CR</kbd></td></tr>
-<tr><th>CUU</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> A</kbd></td></tr>
-<tr><th>CUD</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> B</kbd></td></tr>
-<tr><th>CUF</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> C</kbd></td></tr>
-<tr><th>CUB</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> D</kbd></td></tr>
+<tr><th>略号</th><th>種類</th><th>表現</th><th>対象</th><th>意味</th></tr>
+<tr><th>BS</th> <td>制御</td><td><kbd>BS</kbd></td> <td>記憶部</td><td>一文字戻る</td></tr>
+<tr><th>HT</th> <td>制御</td><td><kbd>HT</kbd></td> <td>表示部</td><td>次のタブストップ</td></tr>
+<tr><th>LF</th> <td>制御</td><td><kbd>LF</kbd></td> <td>DCSM</td>  <td>一行下</td></tr>
+<tr><th>VT</th> <td>制御</td><td><kbd>VT</kbd></td> <td>表示部</td><td>次の垂直タブ</td></tr>
+<tr><th>FF</th> <td>制御</td><td><kbd>FF</kbd></td> <td>表示部</td><td>次の頁</td></tr>
+<tr><th>CR</th> <td>制御</td><td><kbd>CR</kbd></td> <td>DCSM</td>  <td>行頭</td></tr>
+<tr><th>NEL</th><td>制御</td><td><kbd>NEL</kbd></td><td>DCSM</td>  <td>次行の行頭</td></tr>
+<tr><th>CUU</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> A</kbd></td><td>表示部</td><td><i>&lt;Ps&gt;</i> 個上</td></tr>
+<tr><th>CUD</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> B</kbd></td><td>表示部</td><td><i>&lt;Ps&gt;</i> 個下</td></tr>
+<tr><th>CUF</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> C</kbd></td><td>表示部</td><td><i>&lt;Ps&gt;</i> 個右</td></tr>
+<tr><th>CUB</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> D</kbd></td><td>表示部</td><td><i>&lt;Ps&gt;</i> 個左</td></tr>
 <tr><th>CUP</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> H</kbd></td></tr>
 <tr><th rowspan="2">CPR</th><td>制御</td><td><kbd>CSI 6 n</kbd></td></tr>
 <tr>                        <td>応答</td><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> R</kbd></td></tr>
@@ -1116,14 +1117,14 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <ul>
 <li><dfn class="cfunc">BS</dfn>: Backspace
-  <p>[ECMA-48/8.3.5] 現在表示位置を現在の暗黙的移動とは逆の方向に1文字動かす。暗黙的移動の方向は <b>SIMD</b> で変更できる。</p>
+  <p>[ECMA-48/8.3.5] 現在記憶位置を現在の暗黙的移動とは逆の方向に1文字動かす。暗黙的移動の方向は <b>SIMD</b> で変更できる。</p>
 </li>
 <li><dfn class="cfunc">LF</dfn>: Line Feed
-  <p>[ECMA-48/8.1.74] 現在表示位置または現在記憶位置 (<b>DCSM</b> に応じて変わる) を次の行に移動する。列はそのまま。</p>
+  <p>[ECMA-48/8.1.74] 現在表示位置または現在記憶位置 (DCSM に応じて変わる) を次の行に移動する。列はそのまま。</p>
   <ul>
   <li>一般的な実装では、最終行にいる時には一行最後に追加してからその行に移動する。</li>
-  <li>xterm, RLogin, mintty では <b>LNM</b> が設定されている時は次の行の先頭に移動する。</li>
-  <li>screen, Poderosa は常に列はそのままである (というより <b>LNM</b> がない)。</li>
+  <li>xterm, RLogin, mintty では LNM が設定されている時は次の行の先頭に移動する。</li>
+  <li>screen, Poderosa は常に列はそのままである (というより LNM がない)。</li>
   </ul>
 </li>
 <li><dfn class="cfunc">VT</dfn>: Line Tabulation
@@ -1131,20 +1132,20 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <ul>
   <li>一般的な実装では単に次の行に移動する。
     最終行にいる時には一行最後に追加してからその行に移動する。</li>
-  <li>xterm, RLogin は <b>LNM</b> が設定されている時には次の行の先頭に移動する。</li>
-  <li>mintty, screen, Poderosa は <b>LNM</b> の値に拘らず列は移動しない。</li>
+  <li>xterm, RLogin は LNM が設定されている時には次の行の先頭に移動する。</li>
+  <li>mintty, screen, Poderosa は LNM の値に拘らず列は移動しない。</li>
   <li>RLogin では最終行にいても行の追加・移動は行わない。
-    <b>LNM</b> が設定されている時に最終行にいる時は単に行頭に移動する。</li>
+    LNM が設定されている時に最終行にいる時は単に行頭に移動する。</li>
   <li>xterm, screen, Poderosa では LF と全く同じ動作である。</li>
   </ul>
 </li>
 <li><dfn class="cfunc">FF</dfn>: Form Feed
-  <p>[ECMA-48/8.1.51] 現在表示位置を次のページの page home position がある行に移動する。列はそのまま。</p>
+  <p>[ECMA-48/8.1.51] 現在表示位置を次のページの SPH の行に移動する。列はそのまま。</p>
   <ul>
   <li>一般的な実装では単に次の行に移動する。
     最終行にいる時には一行最後に追加してからその行に移動する。</li>
-  <li>mintty, screen, Poderosa は <b>LNM</b> の値に拘らず列は移動しない。</li>
-  <li>xterm, RLogin では <b>LMN</b> が設定されている時は次の行の先頭に移動する。</li>
+  <li>mintty, screen, Poderosa は LNM の値に拘らず列は移動しない。</li>
+  <li>xterm, RLogin では LNM が設定されている時は次の行の先頭に移動する。</li>
   <li>xterm, screen, Poderosa では LF および VT と全く同じ動作である。
     RLogin では LF と全く同じ動作である。mintty では VT と全く同じ動作である。
   </li>
@@ -1165,32 +1166,30 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   規格の文面を見るに移った先の行の SLH/SLL を用いることになるだろう。
   </p>
 </li>
-<li><dfn class="cfunc">CUU</dfn>: Cursor Up
-  <p><i>&lt;Ps&gt;</i> 行だけ上へ移動。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
+<li><dfn class="cfunc">CUU</dfn>: Cursor Up</li>
+<li><dfn class="cfunc">CUD</dfn>: Cursor Down</li>
+<li><dfn class="cfunc">CUF</dfn>: Cursor Right</li>
+<li><dfn class="cfunc">CUB</dfn>: Cursor Left
+  <p>[ECMA-48/8.3.22 CUU, 8.3.19 CUD, 8.3.18 CUB, 8.3.20 CUF]
+  CUU, CUD, CUB, CUF は、現在表示位置を &lt;Pn&gt; 行または &lt;Pn&gt; 字だけ、
+  それぞれ上・下・左・右に移動する。既定値は 1 である。
+  ZDM(DEFAULT) の場合は 0 を指定すると 1 と解釈する。
+  </p>
+  <p>Note: 横書きの場合は CUU, CUD が行の移動で CUB, CUF が列の移動になる。
+  縦書きの場合は CUB, CUF が行の移動で CUU, CUD が列の移動になる。</p>
+  <p>Note: CUF, CUB は ECMA-48 では実態に合わせて
+  Cursor Right, Cursor Left という名称になっているが、
+  VT510 のマニュアルではそれぞれ元々の名称である
+  Cursor Forward, Cursor Backward が記載されている。
+  </p>
   <ul>
-  <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CUU">VT510: CUU</a></li>
-  </ul>
-</li>
-<li><dfn class="cfunc">CUD</dfn>: Cursor Down
-  <p><i>&lt;Ps&gt;</i> 行だけ下へ移動。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
-  <ul>
-  <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CUD">VT510: CUD</a></li>
-  </ul>
-</li>
-<li><dfn class="cfunc">CUF</dfn>: Cursor Forward
-  <p><i>&lt;Ps&gt;</i> 文字だけ右へ移動。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
-  <ul>
-  <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CUF">VT510: CUF</a></li>
-  </ul>
-</li>
-<li><dfn class="cfunc">CUB</dfn>: Cursor Backward
-  <p><i>&lt;Ps&gt;</i> 文字だけ左へ移動。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
-  <ul>
-  <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CUB">VT510: CUB</a></li>
+  <li>xterm, screen では 0 を指定すると 1 と解釈する。</li>
+  <li>vt100:
+    <a href="http://www.vt100.net/docs/vt510-rm/CUU">VT510: CUU</a>
+    <a href="http://www.vt100.net/docs/vt510-rm/CUD">VT510: CUD</a>
+    <a href="http://www.vt100.net/docs/vt510-rm/CUF">VT510: CUF</a>
+    <a href="http://www.vt100.net/docs/vt510-rm/CUB">VT510: CUB</a>
+  </li>
   </ul>
 </li>
 <li><dfn class="cfunc">CUP</dfn>: Cursor Position
@@ -1256,7 +1255,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <h2>挿入・削除</h2>
 
 <table class="normal center">
-<tr><th>名称</th><th>表現</th></tr>
+<tr><th>略号</th><th>表現</th></tr>
 <tr><th>ED</th> <td>CSI <i>&lt;Ps&gt;</i> J</td></tr>
 <tr><th>DCH</th><td>CSI <i>&lt;Ps&gt;</i> P</td></tr>
 <tr><th>ECH</th><td>CSI <i>&lt;Ps&gt;</i> X</td></tr>
@@ -1350,7 +1349,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <p>■ 以下 xterm の CSI Sequence (未だ纏めていない物)</p>
 <table class="normal center">
-<tr><th>名称</th><th>表現</th></tr>
+<tr><th>略号</th><th>表現</th></tr>
 <tr><th>DECSED</th><td>CSI ? <i>&lt;Ps&gt;</i> J</td></tr>
 <tr><th>DECSEL</th><td>CSI ? <i>&lt;Ps&gt;</i> K</td></tr>
 <tr><th>SU</th>     <td>CSI <i>&lt;Ps&gt;</i> S</td></tr>
@@ -1388,7 +1387,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <h3>問い合わせ</h3>
 <table class="normal center">
-<tr><th>名称</th><th>種類</th><th>表現</th></tr>
+<tr><th>略号</th><th>種類</th><th>表現</th></tr>
 <tr><th>DA1</th> <td>制御</td><td>CSI <i>&lt;Ps&gt;</i> c</td></tr>
 <tr><th>DA1R</th><td>応答</td><td>CSI ? 6 4 ; <i>&lt;Pm&gt;</i> c</td></tr>
 <tr><th>DA2</th> <td>制御</td><td>CSI &gt; <i>&lt;Ps&gt;</i> c</td></tr>
@@ -1437,7 +1436,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h3>他</h3>
 <table class="normal center">
-<tr><th>名称</th>    <th>表現</th></tr>
+<tr><th>略号</th>    <th>表現</th></tr>
 <tr><th>DECSCUSR</th><td>CSI <i>&lt;Ps&gt;</i> SP q</td></tr>
 </table>
 
@@ -1484,7 +1483,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <h3>文字挿入時の属性</h3>
 <table class="normal center">
-<tr><th>名称</th><th>表現</th></tr>
+<tr><th>略号</th><th>表現</th></tr>
 <tr><th>SGR</th> <td>CSI <i>&lt;Pm&gt;</i> m</td></tr>
 <tr><th>PLD</th> <td>PLD</td></tr>
 <tr><th>PLU</th> <td>PLU</td></tr>
@@ -1519,7 +1518,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <h3>行に対する属性</h3>
 <table class="normal center">
-<tr><th>名称</th><th>表現</th></tr>
+<tr><th>略号</th><th>表現</th></tr>
 <tr><th rowspan="2">DECDHL</th>
     <td>ESC # 3</td></tr>
 <tr><td>ESC # 4</td></tr>
@@ -2220,7 +2219,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <h3><dfn class="cfunc">ACS</dfn>: Announcer Code Structure</h3>
 <table class="normal center">
-<tr><th>名称</th><th>Sequence</th><th>R/C</th></tr>
+<tr><th>略号</th><th>Sequence</th><th>R/C</th></tr>
 <tr><th>ACS</th>
   <td>ESC SP <i>&lt;F&gt;</i></td>
   <td>1/11 2/0 <i>&lt;F&gt;</i></td>
@@ -2316,7 +2315,7 @@ j.行消す, ESC[2K
 -->
 
 <table class="normal center">
-<tr><th>Control</th><th>ESC Sequence</th><th>環境</th><th>名称</th><th>説明</th></tr>
+<tr><th>Control</th><th>ESC Sequence</th><th>環境</th><th>略号</th><th>説明</th></tr>
 <tr><td>\x84</td><td><code>\eD</code></td><td></td><td>IND</td><td>Index: Move/scroll window up one line. カーソルを下へ移動。もし一番下にいるならば新しい行を先頭に挿入。</td></tr>
 <tr><td>\x8d</td><td><code>\eM</code></td><td></td><td>RI</td> <td>Reverse Index: Move/scroll window down one line. カーソルを上へ移動。もし一番上にいるならば新しい行を先頭に挿入。</td></tr>
 <tr><td>\x85</td><td><code>\eE</code></td><td></td><td>NEL</td><td>Next Line: Move to next line. 次の行の先頭へ移動</td></tr>
@@ -2348,7 +2347,7 @@ j.行消す, ESC[2K
   </p>
 
   <table class="normal center">
-  <tr><th>名称</th>                <th>形式</th> <th>Sequence</th></tr>
+  <tr><th>略号</th>                <th>形式</th> <th>Sequence</th></tr>
   <tr><th>smSendMouseR</th>        <td>既定</td> <td>CSI M <i>&lt;C&gt;</i> <i>&lt;C&gt;</i> <i>&lt;C&gt;</i></td></tr>
   <tr><th>smExMouseUtf8R</th>      <td>utf-8</td><td>CSI M <i>&lt;C8&gt;</i> <i>&lt;C8&gt;</i> <i>&lt;C8&gt;</i></td></tr>
   <tr><th>smExMouseUrxvtR</th>     <td>urxvt</td><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> M</td></tr>
