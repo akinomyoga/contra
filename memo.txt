@@ -174,9 +174,9 @@
   > [ECMA-48/8.3.128] SOS: Start Of String  66
   [ECMA-48/8.3.129] SPA: Start Of Guarded Area  66
   > [ECMA-48/8.3.130] SPD: Select Presentation Directions  66
-  [ECMA-48/8.3.131] SPH: Set Page Home  67
+  > [ECMA-48/8.3.131] SPH: Set Page Home  67
   [ECMA-48/8.3.132] SPI: Spacing Increment  67
-  [ECMA-48/8.3.133] SPL: Set Page Limit  68
+  > [ECMA-48/8.3.133] SPL: Set Page Limit  68
   [ECMA-48/8.3.134] SPQR: Select Print Quality And Rapidity  68
   [ECMA-48/8.3.135] SR: Scroll Right  68
   [ECMA-48/8.3.136] SRCS: Set Reduced Character Separation  68

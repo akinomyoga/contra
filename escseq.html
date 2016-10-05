@@ -874,8 +874,6 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>SPD</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> SP S</kbd></td></tr>
 <tr><th>SCP</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> SP k</kbd></td></tr>
 <tr><th>SIMD</th><td><kbd>CSI <i>&lt;Ps1&gt;</i> ^</kbd></td></tr>
-<tr><th>SLH</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP U</kbd></td></tr>
-<tr><th>SLL</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP V</kbd></td></tr>
 </table>
 <ul>
 <li>Mode 9 <dfn class="cmode">DCSM</dfn>: Device Component Select Mode
@@ -910,6 +908,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   例えば次に CR, FF などの現在位置を明示的に移動する制御機能が呼び出される時まで更新が遅延されるという実装も考えうる。
   既定値は 0 である。
   </p>
+  <p>contra では、第2引数に 0 を指定した時の動作は 1 と同じである。</p>
 </li>
 <li><dfn class="cfunc">SCP</dfn>: Select Character Path
   <p>[ECMA-48/8.3.111] 現在表示行および以降の表示行の文字進路を変更する。</p>
@@ -932,6 +931,11 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   ただ、現在行 (the active line) の更新方法だけ記述されていることから、
   subsequent lines は新しく確立される空の行を指すのが自然と思われる。
   </p>
+  <p>contra では、
+  第1引数の既定値は 0 とし、character path を解除して SPD で設定した値に戻す。
+  第2引数の既定値は 0 とし、1 と同じ意味とする。
+  引数に範囲外の値を指定した場合は、何も実行しない。
+  </p>
 </li>
 <li><dfn class="cfunc">SIMD</dfn>: Select Implicit Movement Direction
   <p>[ECMA-48/8.3.120] 暗黙的移動の向きを設定する。この設定は次の <b>SIMD</b> まで有効である。
@@ -940,6 +944,16 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   引数の既定値は 0 である。
   </p>
 </li>
+</ul>
+
+<table class="normal center">
+<tr><th>名称</th><th>表現</th></tr>
+<tr><th>SLH</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP U</kbd></td></tr>
+<tr><th>SLL</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP V</kbd></td></tr>
+<tr><th>SPH</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> SP i</kbd></td></tr>
+<tr><th>SPL</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> SP j</kbd></td></tr>
+</table>
+<ul>
 <li><dfn class="cfunc">SLH</dfn>: Set Line Home
   <p>[ECMA-48/8.3.122] 現在行と以降の行で、文章を表示する先頭列を指定する。
   この値は CR, DL, IL, NEL において、現在表示位置 (DCSM(PRESENTATION) のとき)
@@ -965,6 +979,26 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   また、<b>DCSM</b>(<b>DATA</b>) もしくは表示部と記憶部に区別のない装置の場合、
   設定された列は現在記憶位置が暗黙的移動によって移動できる一番右の位置になる。
   引数 <i>&lt;Pn&gt;</i> は列番号を指定し、既定値はない。
+  </p>
+</li>
+<li><dfn class="cfunc">SPH</dfn>: Set Page Home
+  <p>[ECMA-48/8.3.131] <dfn>頁初期位置</dfn> (page home position) を設定する。
+  現在頁と以降の頁に FF によって移動した後に、
+  現在表示位置または現在記憶位置 (DCSM による) をおく行を <i>&lt;Pn&gt;</i> で指定する。
+  DCSM(DATA) または記憶部と表示部に区別のない装置の場合、
+  暗黙的移動によってこの行より前に移動できない。
+  この値は次に SPH が呼び出されるまで持続する。
+  パラメータの既定値はない。
+  </p>
+</li>
+<li><dfn class="cfunc">SPL</dfn>: Set Page Limit
+  <p>[ECMA-48/8.3.133] <dfn>頁限界位置</dfn> (page limit position) を設定する。
+  現在頁と以降の頁において
+  現在表示位置または現在記憶位置 (DCSM による) がそれより下に移動できない行を <i>&lt;Pn&gt;</i> で指定する。
+  DCSM(DATA) または記憶部と表示部に区別のない装置の場合、
+  暗黙的移動によってこの行より下に移動することはない。
+  この値は次に SPL が呼び出されるまで持続する。
+  パラメータの既定値はない。
   </p>
 </li>
 <li>互換性
@@ -1058,26 +1092,26 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <table class="normal center">
 <tr><th>名称</th><th>種類</th><th>表現</th></tr>
-<tr><th>BS</th><td>制御</td><td>BS</td></tr>
-<tr><th>HT</th><td>制御</td><td>HT</td></tr>
-<tr><th>LF</th><td>制御</td><td>LF</td></tr>
-<tr><th>VT</th><td>制御</td><td>VT</td></tr>
-<tr><th>FF</th><td>制御</td><td>FF</td></tr>
-<tr><th>CR</th><td>制御</td><td>CR</td></tr>
-<tr><th>CUU</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> A</td></tr>
-<tr><th>CUD</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> B</td></tr>
-<tr><th>CUF</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> C</td></tr>
-<tr><th>CUB</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> D</td></tr>
-<tr><th>CUP</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> H</td></tr>
-<tr><th rowspan="2">CPR</th><td>制御</td><td>CSI 6 n</td></tr>
-<tr>                        <td>応答</td><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> R</td></tr>
-<tr><th>CNL</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> E</td></tr>
-<tr><th>CPL</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> F</td></tr>
-<tr><th>CHA</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> G</td></tr>
-<tr><th>CHT</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> I</td></tr>
-<tr><th>CBT</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> Z</td></tr>
-<tr><th>SCOSC</th><td>制御</td><td>CSI s</td></tr>
-<tr><th>SCORC</th><td>制御</td><td>CSI u</td></tr>
+<tr><th>BS</th><td>制御</td><td><kbd>BS</kbd></td></tr>
+<tr><th>HT</th><td>制御</td><td><kbd>HT</kbd></td></tr>
+<tr><th>LF</th><td>制御</td><td><kbd>LF</kbd></td></tr>
+<tr><th>VT</th><td>制御</td><td><kbd>VT</kbd></td></tr>
+<tr><th>FF</th><td>制御</td><td><kbd>FF</kbd></td></tr>
+<tr><th>CR</th><td>制御</td><td><kbd>CR</kbd></td></tr>
+<tr><th>CUU</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> A</kbd></td></tr>
+<tr><th>CUD</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> B</kbd></td></tr>
+<tr><th>CUF</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> C</kbd></td></tr>
+<tr><th>CUB</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> D</kbd></td></tr>
+<tr><th>CUP</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> H</kbd></td></tr>
+<tr><th rowspan="2">CPR</th><td>制御</td><td><kbd>CSI 6 n</kbd></td></tr>
+<tr>                        <td>応答</td><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> R</kbd></td></tr>
+<tr><th>CNL</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> E</kbd></td></tr>
+<tr><th>CPL</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> F</kbd></td></tr>
+<tr><th>CHA</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> G</kbd></td></tr>
+<tr><th>CHT</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> I</kbd></td></tr>
+<tr><th>CBT</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> Z</kbd></td></tr>
+<tr><th>SCOSC</th><td>制御</td><td><kbd>CSI s</kbd></td></tr>
+<tr><th>SCORC</th><td>制御</td><td><kbd>CSI u</kbd></td></tr>
 </table>
 
 <ul>
