@@ -69,6 +69,7 @@ namespace contra {
     void initialize_mode() {
       std::fill(std::begin(m_mode_flags), std::end(m_mode_flags), 0);
       set_mode(mode_lnm);
+      set_mode(mode_dcsm);
       set_mode(mode_grcm);
       set_mode(mode_xenl);
     }
@@ -635,34 +636,59 @@ namespace contra {
       }
     }
 
-    void do_plain_vt(bool toAppendNewLine = true) {
-      m_board->cur.y++;
-      if (m_board->cur.y >= m_board->m_height) {
-        m_board->cur.y--;
-        if (toAppendNewLine) {
-          // ToDo: 消えてなくなる行を記録する?
-          m_board->rotate();
-          m_board->clear_line(m_board->cur.y);
-        }
-      }
+    void do_generic_ff(bool toAppendNewLine, bool toAdjustXAsPresentationPosition) {
+      curpos_t x = m_board->cur.x;
+      if (toAdjustXAsPresentationPosition)
+        x = m_board->line(m_board->cur.y)->to_presentation_position(x, m_state.presentation_direction);
+
+      if (m_board->cur.y + 1 < m_board->m_height)
+        m_board->cur.y++;
+      else if (toAppendNewLine) {
+        // ToDo: 消えてなくなる行を記録する?
+        m_board->rotate();
+        m_board->clear_line(m_board->cur.y);
+      } else
+        return;
+
+      if (toAdjustXAsPresentationPosition)
+        x = m_board->line(m_board->cur.y)->to_data_position(x, m_state.presentation_direction);
+      m_board->cur.x = x;
     }
     void do_lf() {
-      do_plain_vt(true);
-      if (m_state.get_mode(mode_lnm)) do_cr();
+      bool const toCallCR = m_state.get_mode(mode_lnm);
+      do_generic_ff(true, !toCallCR && !m_state.get_mode(mode_dcsm));
+      if (toCallCR) do_cr();
     }
     void do_ff() {
+      bool const toCallCR = m_state.ff_affected_by_lnm && m_state.get_mode(mode_lnm);
+
       if (m_state.ff_clearing_screen) {
-        m_board->clear_screen();
-        if (m_state.ff_using_home_position)
-          m_board->cur.y = m_state.page_home_position;
+        if (m_state.ff_using_home_position) {
+          curpos_t x = m_board->cur.x;
+          curpos_t y = m_board->cur.y;
+          if (!toCallCR)
+            x = m_board->line(y)->to_presentation_position(x, m_state.presentation_direction);
+
+          m_board->clear_screen();
+          y = m_state.page_home_position;
+
+          if (!toCallCR)
+            x = m_board->line(y)->to_data_position(x, m_state.presentation_direction);
+
+          m_board->cur.x = x;
+          m_board->cur.y = y;
+        } else
+          m_board->clear_screen();
       } else {
-        do_plain_vt(true);
+        do_generic_ff(true, !toCallCR);
       }
-      if (m_state.ff_affected_by_lnm && m_state.get_mode(mode_lnm)) do_cr();
+
+      if (toCallCR) do_cr();
     }
     void do_vt() {
-      do_plain_vt(m_state.vt_appending_newline);
-      if (m_state.vt_affected_by_lnm && m_state.get_mode(mode_lnm)) do_cr();
+      bool const toCallCR = m_state.vt_affected_by_lnm && m_state.get_mode(mode_lnm);
+      do_generic_ff(m_state.vt_appending_newline, !toCallCR);
+      if (toCallCR) do_cr();
     }
     void do_cr() {
       board_line* const line = m_board->line(m_board->cur.y);
