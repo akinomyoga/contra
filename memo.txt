@@ -90,10 +90,20 @@
 
 * RIS
 
-* SPH/SPL
-  page_home_position -> page_home, page_limit
+* SPH/SPL の効果について
 
-* 基本的な機能
+  FF 及び implicit movement それから
+  active presentation position does not normally go
+  beyond the page limit position というのを実装する。
+
+  しかし、そもそも頁の概念を端末上でどの様に実装するべきかが明確でない。
+  その他の頁を制御する制御機能の説明を調べて、
+  その上で適切な頁の概念の再現方法を考える事にしたい。
+
+  また SLH/SLL と同様に頁毎に home/limit
+  の値を設定する事ができるかどうか考察する。
+
+* 基本的な移動機能
 
   CUU CUD CUB CUF (現在位置・上下左右)
   HPA HPB HPR VPA VPB VPR (記憶位置・行列)
@@ -343,6 +353,11 @@
 ------------------------------------------------------------------------------
 
 2016-10-05
+
+* SPH/SPL
+
+  page_home_position -> page_home, page_limit
+  取り敢えず値を設定できる様にする。
 
 * sequence_decoder, sequence: support ESC sequence
 * escape sequences の解釈

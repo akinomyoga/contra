@@ -41,7 +41,8 @@ namespace contra {
   };
 
   struct tty_state {
-    curpos_t page_home_position {0};
+    curpos_t page_home  {-1};
+    curpos_t page_limit {-1};
     curpos_t line_home  {-1};
     curpos_t line_limit {-1};
 
@@ -59,9 +60,9 @@ namespace contra {
     bool vt_appending_newline  {true};
     bool vt_using_line_tabstop {false}; // ToDo: not yet supported
 
-    bool ff_affected_by_lnm     {true};
-    bool ff_clearing_screen     {false};
-    bool ff_using_home_position {false};
+    bool ff_affected_by_lnm {true};
+    bool ff_clearing_screen {false};
+    bool ff_using_page_home {false};
 
   private:
     std::uint32_t m_mode_flags[1];
@@ -696,14 +697,14 @@ namespace contra {
       bool const toCallCR = m_state.ff_affected_by_lnm && m_state.get_mode(mode_lnm);
 
       if (m_state.ff_clearing_screen) {
-        if (m_state.ff_using_home_position) {
+        if (m_state.ff_using_page_home) {
           curpos_t x = m_board->cur.x;
           curpos_t y = m_board->cur.y;
           if (!toCallCR)
             x = m_board->line(y)->to_presentation_position(x, m_state.presentation_direction);
 
           m_board->clear_screen();
-          y = m_state.page_home_position;
+          y = std::max(m_state.page_home, 0);
 
           if (!toCallCR)
             x = m_board->line(y)->to_data_position(x, m_state.presentation_direction);

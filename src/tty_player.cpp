@@ -157,6 +157,37 @@ namespace contra {
     return true;
   }
 
+  bool do_sph(tty_player& play, csi_parameters& params) {
+    tty_state * const s = play.state();
+
+    csi_single_param_t param;
+    if (params.read_param(param, 0) && param) {
+      curpos_t const y = (curpos_t) param - 1;
+      s->page_home = y;
+      if (s->page_limit >= 0 && s->page_limit < y)
+        s->page_limit = y;
+    } else {
+      s->page_home = -1;
+    }
+    return true;
+  }
+
+  bool do_spl(tty_player& play, csi_parameters& params) {
+    tty_state * const s = play.state();
+
+    csi_single_param_t param;
+    if (params.read_param(param, 0) && param) {
+      curpos_t const y = (curpos_t) param - 1;
+      s->page_limit = y;
+      if (s->page_home >= 0 && s->page_home > y)
+        s->page_home = y;
+    } else {
+      s->page_limit = -1;
+    }
+    return true;
+  }
+
+
   static void do_sgr_iso8613_colors(tty_player& play, csi_parameters& params, bool isfg) {
     csi_single_param_t colorSpace;
     params.read_arg(colorSpace, true, 0);
@@ -354,6 +385,8 @@ namespace contra {
         case compose_bytes(ascii_sp, ascii_V): result = do_sll(*this, params); break;
         case compose_bytes(ascii_sp, ascii_S): result = do_spd(*this, params); break;
         case compose_bytes(ascii_sp, ascii_k): result = do_scp(*this, params); break;
+        case compose_bytes(ascii_sp, ascii_i): result = do_sph(*this, params); break;
+        case compose_bytes(ascii_sp, ascii_j): result = do_spl(*this, params); break;
         }
       }
 
