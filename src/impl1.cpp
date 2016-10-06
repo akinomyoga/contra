@@ -67,7 +67,6 @@ int main() {
   b.resize(20, 10);
 
   contra::tty_player term(b);
-
   term.printt("\x1b[38:5:196;4mabcdefghijklmnopqrstuvwxyz");
   term.printt("\x1b[38:5:202mabcdefghijklmnopqrstuvwxyz");
   term.printt("\x1b[38:5:220;24mabcdefghijklmnopqrstuvwxyz");

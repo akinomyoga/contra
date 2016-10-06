@@ -348,9 +348,6 @@ namespace contra {
         m_seq.set_type((byte) c1char);
         m_dstate = decode_command_string;
         break;
-      default:
-        process_invalid_sequence();
-        break;
       }
     }
 
@@ -756,22 +753,47 @@ namespace contra {
     decoder_type m_seqdecoder {this, &this->m_state};
     friend decoder_type;
 
+    void print_unrecognized_sequence(sequence const& seq) {
+      const char* name = "sequence";
+      switch (seq.type()) {
+      case ascii_csi:
+        name = "control sequence";
+        break;
+      case ascii_esc:
+        name = "escape sequence";
+        break;
+      case ascii_sos:
+        name = "character string";
+        break;
+      case ascii_pm:
+      case ascii_apc:
+      case ascii_dcs:
+      case ascii_osc:
+        name = "command string";
+        break;
+      }
+
+      std::fprintf(stderr, "unrecognized %s: ", name);
+      seq.print(stderr);
+      std::fputc('\n', stderr);
+    }
+
     void process_invalid_sequence(sequence const& seq) {
       // ToDo: 何処かにログ出力
-      mwg_printd("%p", &seq);
+      print_unrecognized_sequence(seq);
     }
 
     void process_escape_sequence(sequence const& seq) {
-      mwg_printd("%p", &seq);
+      print_unrecognized_sequence(seq);
     }
 
     void process_control_sequence(sequence const& seq);
 
     void process_command_string(sequence const& seq) {
-      mwg_printd("%p", &seq);
+      print_unrecognized_sequence(seq);
     }
     void process_character_string(sequence const& seq) {
-      mwg_printd("%p", &seq);
+      print_unrecognized_sequence(seq);
     }
 
     void process_control_character(char32_t uchar) {
@@ -792,6 +814,10 @@ namespace contra {
     }
     void putc(char32_t uchar) {
       m_seqdecoder.process_char(uchar);
+    }
+    void write(const char* data, std::size_t size) {
+      for (std::size_t i = 0; i < size; i++)
+        m_seqdecoder.process_char(data[i]);
     }
   };
 

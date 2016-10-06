@@ -472,42 +472,42 @@ namespace contra {
   }
 
   void tty_player::process_control_sequence(sequence const& seq) {
-    {
-      if (seq.is_private_csi()) goto unrecognized;
-
-      csi_parameters params(seq);
-      if (!params) goto unrecognized;
-
-      bool result = false;
-      std::int32_t const intermediateSize = seq.intermediateSize();
-      if (intermediateSize == 0) {
-        switch (seq.final()) {
-        case ascii_m: result = do_sgr(*this, params); break;
-        case ascii_A: result = do_cuu(*this, params); break;
-        case ascii_B: result = do_cud(*this, params); break;
-        case ascii_C: result = do_cuf(*this, params); break;
-        case ascii_D: result = do_cub(*this, params); break;
-        case ascii_circumflex: result = do_simd(*this, params); break;
-        }
-      } else if (intermediateSize == 1) {
-        mwg_assert(seq.intermediate()[0] <= 0xFF);
-        switch (compose_bytes((byte) seq.intermediate()[0], seq.final())) {
-        case compose_bytes(ascii_sp, ascii_U): result = do_slh(*this, params); break;
-        case compose_bytes(ascii_sp, ascii_V): result = do_sll(*this, params); break;
-        case compose_bytes(ascii_sp, ascii_S): result = do_spd(*this, params); break;
-        case compose_bytes(ascii_sp, ascii_k): result = do_scp(*this, params); break;
-        case compose_bytes(ascii_sp, ascii_i): result = do_sph(*this, params); break;
-        case compose_bytes(ascii_sp, ascii_j): result = do_spl(*this, params); break;
-        }
-      }
-
-      if (result) return;
+    if (seq.is_private_csi()) {
+      print_unrecognized_sequence(seq);
+      return;
     }
 
-  unrecognized:
-    std::fprintf(stderr, "unrecognized sequence: ");
-    seq.print(stderr);
-    std::fputc('\n', stderr);
+    csi_parameters params(seq);
+    if (!params) {
+      print_unrecognized_sequence(seq);
+      return;
+    }
+
+    bool result = false;
+    std::int32_t const intermediateSize = seq.intermediateSize();
+    if (intermediateSize == 0) {
+      switch (seq.final()) {
+      case ascii_m: result = do_sgr(*this, params); break;
+      case ascii_A: result = do_cuu(*this, params); break;
+      case ascii_B: result = do_cud(*this, params); break;
+      case ascii_C: result = do_cuf(*this, params); break;
+      case ascii_D: result = do_cub(*this, params); break;
+      case ascii_circumflex: result = do_simd(*this, params); break;
+      }
+    } else if (intermediateSize == 1) {
+      mwg_assert(seq.intermediate()[0] <= 0xFF);
+      switch (compose_bytes((byte) seq.intermediate()[0], seq.final())) {
+      case compose_bytes(ascii_sp, ascii_U): result = do_slh(*this, params); break;
+      case compose_bytes(ascii_sp, ascii_V): result = do_sll(*this, params); break;
+      case compose_bytes(ascii_sp, ascii_S): result = do_spd(*this, params); break;
+      case compose_bytes(ascii_sp, ascii_k): result = do_scp(*this, params); break;
+      case compose_bytes(ascii_sp, ascii_i): result = do_sph(*this, params); break;
+      case compose_bytes(ascii_sp, ascii_j): result = do_spl(*this, params); break;
+      }
+    }
+
+    if (!result)
+      print_unrecognized_sequence(seq);
   }
 
 }
