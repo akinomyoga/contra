@@ -844,8 +844,10 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <dfn>入力部</dfn> (input component)・<dfn>表示部</dfn> (presentation component)・<dfn>記憶部</dfn> (data component) である。
 特に記憶部は双方向の文字列表示 (bidi) に対応する為に用意するが、単方向しか対応しなければ表示部と等価なので省略可能である。
 表示部・記憶部は共にそれぞれ<dfn>行</dfn>の集まりであり、行は<dfn>文字表示位置</dfn> (character position) の集まりである。
+表示部・記憶部の行の並びには方向性があり<dfn>行進行</dfn> (line progression) という。
 表示部・記憶部の各行にはそれぞれ自然な方向があり、
 それぞれ<dfn>文字進路</dfn> (character path)・<dfn>文字進行</dfn> (character progression) という。
+行及び文字表示位置は、1 から始まる整数によって、行進行および文字進路・文字進行の順序で番号付けられる。
 表示部は実際に表示されるときの固有の座標(行・列)を持ち、
 記憶部は内部的な取り扱いで使用する固有の座標を持ち、一対一に対応がある。
 表示部・記憶部はそれぞれカーソルを持ち、<dfn>現在表示位置</dfn> (active presentation position)・<dfn>現在記憶位置</dfn> (active data position) という。
@@ -1099,11 +1101,11 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>FF</th> <td>制御</td><td><kbd>FF</kbd></td> <td>表示部</td><td>次の頁</td></tr>
 <tr><th>CR</th> <td>制御</td><td><kbd>CR</kbd></td> <td>DCSM</td>  <td>行頭</td></tr>
 <tr><th>NEL</th><td>制御</td><td><kbd>NEL</kbd></td><td>DCSM</td>  <td>次行の行頭</td></tr>
-<tr><th>CUU</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> A</kbd></td><td>表示部</td><td><i>&lt;Ps&gt;</i> 個上</td></tr>
-<tr><th>CUD</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> B</kbd></td><td>表示部</td><td><i>&lt;Ps&gt;</i> 個下</td></tr>
-<tr><th>CUF</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> C</kbd></td><td>表示部</td><td><i>&lt;Ps&gt;</i> 個右</td></tr>
-<tr><th>CUB</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> D</kbd></td><td>表示部</td><td><i>&lt;Ps&gt;</i> 個左</td></tr>
-<tr><th>CUP</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> H</kbd></td></tr>
+<tr><th>CUU</th><td>制御</td><td><kbd>CSI <i>&lt;Pn&gt;</i> A</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 個上</td></tr>
+<tr><th>CUD</th><td>制御</td><td><kbd>CSI <i>&lt;Pn&gt;</i> B</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 個下</td></tr>
+<tr><th>CUF</th><td>制御</td><td><kbd>CSI <i>&lt;Pn&gt;</i> C</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 個右</td></tr>
+<tr><th>CUB</th><td>制御</td><td><kbd>CSI <i>&lt;Pn&gt;</i> D</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 個左</td></tr>
+<tr><th>CUP</th><td>制御</td><td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> H</kbd></td><td>表示部</td><td><i>&lt;Pn1&gt;</i> 行目 <i>&lt;Pn2&gt;</i> 文字目</td></tr>
 <tr><th rowspan="2">CPR</th><td>制御</td><td><kbd>CSI 6 n</kbd></td></tr>
 <tr>                        <td>応答</td><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> R</kbd></td></tr>
 <tr><th>CNL</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> E</kbd></td></tr>
@@ -1166,6 +1168,24 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   規格の文面を見るに移った先の行の SLH/SLL を用いることになるだろう。
   </p>
 </li>
+<li>Mode 22 <dfn class="cfunc">ZDM</dfn>: Zero Default Mode
+  <p>[ECMA-48/7.2.20, F.4.2] 制御機能 CBT, CHA, CHT, CNL, CPL, CPR, CUB, CUD, CUF, CUP, CUU, CVT,
+  DCH, DL, ECH, GSM, HPA, HPB, HPR, HVP, ICH, IL, NP, PP, PPA, PPB, PPR, REP, SD, SL, SR, SU,
+  TCC, VPA, VPB, VPR に 0 を指定した時の解釈を切り替える。
+  </p>
+  <ul>
+  <li><dfn>ZERO</dfn> (RM): 0 は 0 を意味する。</li>
+  <li><dfn>DEFAULT</dfn> (SM): 0 は引数の既定値を使うことを意味する。</li>
+  </ul>
+  <p>Note: ECMA-48 1st Edition では空引数と 0 は共に既定値を意味していた。
+  然し、現在の版では引数の既定値の取り扱いが変わった。
+  0 を特別扱いしないことによって、引数 0 を指定できるようになった。
+  例えば、SSU 単位の引数で 0 を指定できる。
+  また、繰り返し回数を指定する引数では 0 は何もしないことを意味する。
+  既定値を使いたい時は空引数を用いる。
+  ZDM(DEFALT) は初版の動作を期待する場合に使用する。
+  </p>
+</li>
 <li><dfn class="cfunc">CUU</dfn>: Cursor Up</li>
 <li><dfn class="cfunc">CUD</dfn>: Cursor Down</li>
 <li><dfn class="cfunc">CUF</dfn>: Cursor Right</li>
@@ -1183,7 +1203,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   Cursor Forward, Cursor Backward が記載されている。
   </p>
   <ul>
-  <li>xterm, screen では 0 を指定すると 1 と解釈する。</li>
+  <li>xterm, screen, mintty, RLogin, Poderosa では 0 を指定すると 1 と解釈する。</li>
   <li>vt100:
     <a href="http://www.vt100.net/docs/vt510-rm/CUU">VT510: CUU</a>
     <a href="http://www.vt100.net/docs/vt510-rm/CUD">VT510: CUD</a>
@@ -1193,6 +1213,9 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </ul>
 </li>
 <li><dfn class="cfunc">CUP</dfn>: Cursor Position
+  <p>[ECMA-48/8.3.21] 現在表示位置を &lt;Pn1&gt; 行目、&lt;Pn2&gt; 文字目に移動する。
+  両引数の既定値は共に 1 である。ZDM(DEFAULT) の場合は 0 を指定すると 1 が使用される。
+  </p>
   <ul>
   <li>互換性: vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/CUP">VT510: CUP</a></li>

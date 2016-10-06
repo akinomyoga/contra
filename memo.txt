@@ -64,7 +64,7 @@
   > [ECMA-48/8.3.18] CUB: Cursor Left  36
   > [ECMA-48/8.3.19] CUD: Cursor Down  36
   > [ECMA-48/8.3.20] CUF: Cursor Right  36
-  [ECMA-48/8.3.21] CUP: Cursor Position  36
+  > [ECMA-48/8.3.21] CUP: Cursor Position  36
   > [ECMA-48/8.3.22] CUU: Cursor Up  37
   [ECMA-48/8.3.23] CVT: Cursor Line Tabulation  37
   [ECMA-48/8.3.24] DA: Device Attributes  37
@@ -227,6 +227,13 @@
   [ECMA-48/7.2.18] Mode 16 TTM: Transfer Termination Mode  25
   [ECMA-48/7.2.19] Mode 7  VEM: Line Editing Mode  25
   [ECMA-48/7.2.20] Mode 22 ZDM: Zero Default Mode
+
+
+  ZDM affects CBT, CHA, CHT, CNL, CPL, CPR, CVT,
+  DCH, DL, ECH, GSM, HPA, HPB, HPR, HVP, ICH, IL, NP, PP, PPA, PPB, PPR, REP, SD, SL, SR, SU,
+  TCC, VPA, VPB, VPR
+  > CUB, CUD, CUF, CUP, CUU
+
 
 
 ------------------------------------------------------------------------------
