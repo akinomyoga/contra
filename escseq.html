@@ -33,20 +33,6 @@
 </div>
 <hr style="height:1px;"/>
 <h1>akinomyoga/contra :: Control functions</h1>
-<!--===================================================================================-->
-<div class="note">
-<b>termcap/terminfo</b>
-
-<p>色々な端末の差異を吸収する為に作られたデータベース・ライブラリ。ncurses もこれを利用する。</p>
-<ul>
-<li><a href="http://linuxpakistan.net/man.php?query=terminfo&amp;type=2&amp;section=5">terminfo man page</a></li>
-<li><a href="http://h50146.www5.hp.com/products/software/oe/tru64unix/manual/v51a_ref/HTML/MAN/MAN4/0087____.HTM">terminfo(4)</a> 日本語 man</li>
-<li><a href="http://invisible-island.net/ncurses/man/terminfo.5.html">terminfo.5</a></li>
-</ul>
-<p>特定の TERM に対する terminfo のエスケープシーケンスの定義などは、</p>
-<pre class="agh-prog-bash">infocmp cygwin</pre>
-<p class="resume">等として見る事ができる。</p>
-</div>
 
 <!--===================================================================================-->
 <h2>制御機能 一般論</h2>
@@ -71,18 +57,53 @@
 そのバイト列としての表現が異なっていたりする事に注意する。
 </p>
 
-<p>制御機能を表現するバイト列として以下の種類がある。</p>
+<h3>関連する標準規格</h3>
+<p>複数ある主要な標準規格の名称と関係について簡潔に述べる。
+詳細な情報については<a class="internal" href="#section.reference">文献</a>に記述する。
+</p>
+
+<ul>
+<li>いわゆる <dfn>ASCII</dfn> の規格は <dfn class="standard">ANSI X3.4</dfn> になる。
+  ASCII の 7-bit 符号については <dfn class="standard">ISO/IEC 646</dfn> (<dfn class="standard">ECMA-6</dfn>) が対応する。
+  8-bit 符号については
+  一連の <dfn class="standard">ISO/IEC 8859</dfn> と対応する ECMA 規格 (西欧の文字)、
+  および <dfn class="standard">JIS X 0201</dfn> (いわゆる半角仮名) が存在する。
+</li>
+<li><dfn class="standard">ISO/IEC 2022</dfn> (<dfn class="standard">ECMA-35</dfn>, <dfn class="standard">JIS X 0202</dfn>)
+  は文字符号拡張方法についての標準規格である。
+</li>
+<li>いわゆる <dfn>ANSI 端末</dfn> は <dfn class="standard">ECMA-48</dfn>
+  (<dfn class="standard">ANSI X3.64</dfn>, <dfn class="standard">ISO/IEC 6429</dfn>, <dfn class="standard">JIS X 0211</dfn>) に当たる。
+  双方向テキストの対応に関する報告書は <dfn class="standard">ECMA-TR/53</dfn> にある。
+  一部の制御機能については文書ファイル形式の規格 <dfn class="standard">ISO 8613-6</dfn>
+  (<dfn class="standard">ITU T.416</dfn>, CCITT Recommendation T.416, <dfn class="standard">JIS X 4106</dfn>)
+  を参照する (というよりこれらの標準規格で使用するために予約されている)。
+  またテレテックス文字集合の規格 <dfn class="standard">ITU T.61</dfn> (CCITT Recommendation T.61) に対する参照もある。
+</li>
+<li><dfn class="standard">ISO/IEC 10646</dfn> (<dfn class="standard">JIS X 0221</dfn>) は国際符号化文字集合の規格で、
+  実質 Unicode のうち文字集合の部分に対応する。
+</li>
+</ul>
+
+<h3>符号表現 (code representation)</h3>
+<p>以降ではバイトを row/column の組み合わせで表現する。
+row と column は 0-15 の十進整数であり、それぞれ上位 4 bit と下位 4 bit を表す。
+例えば 02/00 は 0x20 を表し ASCII コードにおいて空白文字に対応する。
+</p>
+<p>制御機能を表現するバイト列を<dfn>符号表現</dfn> (code representation) という。
+その形式によって以下の様に分類される。
+</p>
 <table class="normal center">
-<tr><th colspan="2">略号</th><th>表現</th><th>説明</th><th>関連規格</th></tr>
+<tr><th colspan="2">略号</th><th>符号表現</th><th>説明</th><th>関連規格</th></tr>
 <tr><th colspan="2" rowspan="2">制御文字</th>
-    <td><i>&lt;C0&gt;</i></td><td>基本の制御</td><td>ISO/IEC 646 (ASCII)</td></tr>
-<tr><td><i>&lt;C1&gt;</i></td><td>基本の制御</td><td>ECMA-48 (ANSI, ISO/IEC 6429)</td></tr>
+    <td><i>&lt;C0&gt;</i></td><td>基本の制御</td><td>ISO/IEC 646</td></tr>
+<tr><td><i>&lt;C1&gt;</i></td><td>基本の制御</td><td>ISO/IEC 6429 (ECMA-48)</td></tr>
 <tr><th colspan="2" rowspan="2">エスケープシーケンス</th>
-    <td>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td><td>文字コードの制御</td><td rowspan="2">ISO 2022</td></tr>
+    <td>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td><td>文字コードの制御</td><td rowspan="2">ISO/IEC 2022</td></tr>
 <tr><td>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></td><td>私用の制御</td></tr>
 <tr><th colspan="2">制御シーケンス</th>
     <td>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
-    <td>ANSI の制御</td><td rowspan="6">ECMA-48 (ANSI, ISO/IEC 6429)</td></tr>
+    <td>ANSI の制御</td><td rowspan="6">ISO/IEC 6429 (ECMA-48)</td></tr>
 <tr><th rowspan="5">制御列</th><th rowspan="4">コマンド列</th>
     <td>DCS ... ST</td><td>装置制御</td></tr>
 <tr><td>OSC ... ST</td><td>OSの機能</td></tr>
@@ -101,30 +122,6 @@
 <li>ESC は 01/11 であり、
   DCS, SOS, CSI, ST, OSC, PM, APC は C1 の文字で、
   それぞれ 09/00, 09/08, 09/11, 09/12, 09/13, 09/14, 09/15 である。
-</li>
-</ul>
-
-<h3>関連する規格と略称</h3>
-<p>この節では関連する規格と、それらをこの文書の中で参照する際に用いる略称についてまとめる。</p>
-<ul>
-<li><dfn class="standard">ECMA-48</dfn>: ISO/IEC 6429, JIS X 0211 (和訳)
-  <p>通称 ANSI と呼ばれ、またこれを実装する端末を ANSI Terminal などと呼ぶ。</p>
-</li>
-<li><dfn class="standard">T.416</dfn>: ISO 8613-6, CCITT Recommendation T.416, JIS X 4106 (和訳、2010年廃止)</li>
-<li><dfn class="standard">T.61</dfn>: CCITT Recommendation T.61</li>
-<li>References
-  <ul>
-  <li><a href="http://en.wikipedia.org/wiki/Control_code">Control character - Wikipedia, the free encyclopedia</a></li>
-  <li><a href="http://en.wikipedia.org/wiki/C0_and_C1_control_codes">C0 and C1 control codes - Wikipedia, the free encyclopedia</a></li>
-  <li><a href="http://ja.wikipedia.org/wiki/%E5%88%B6%E5%BE%A1%E6%96%87%E5%AD%97">制御文字 - Wikipedia</a></li>
-  <li></li>
-  <li><a href="http://www.wdic.org/w/WDIC/ISO/IEC%202022">ISO/IEC 2022 ‐ 通信用語の基礎知識</a></li>
-  <li><a href="http://ja.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia</a></li>
-  <li><a href="http://en.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia, the free encyclopedia</a></li>
-  <li><a href="http://isoreg.com/">::: ISO REG Quality Registrars Inc. :::: - HOME</a></li>
-  <li><a href="http://www.itscj.ipsj.or.jp/ISO-IR/">International Register of Coded Character Sets</a></li>
-  <li></li>
-  </ul>
 </li>
 </ul>
 
@@ -342,7 +339,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </li>
 </ul>
 <table class="normal center">
-<tr><th>略号</th><th>表現</th>                     <th>Hex; 行/列</th>         <th>略号</th><th>表現</th>      <th>Hex; 行/列</th>         <th>略号</th><th>表現</th>    <th>Hex; 行/列</th>         </tr>
+<tr><th>略号</th><th>符号表現</th>                 <th>Hex; 行/列</th>         <th>略号</th><th>符号表現</th>  <th>Hex; 行/列</th>         <th>略号</th><th>符号表現</th><th>Hex; 行/列</th>         </tr>
 <tr><th class="markB">ACS</th><td>ESC SP</td><td>\x1B\x20; 1/11 2/0</td> <th>---</th><td>ESC @</td>      <td>\x1B\x40; 1/11 4/0</td> <th>DMI</th><td>ESC `</td>    <td>\x1B\x60; 1/11 6/0</td> </tr>
 <tr><th class="markB">CZD</th>       <td>ESC !</td><td>\x1B\x21; 1/11 2/1</td> <th>---</th><td>ESC A</td>      <td>\x1B\x41; 1/11 4/1</td> <th>INT</th><td>ESC a</td>    <td>\x1B\x61; 1/11 6/1</td> </tr>
 <tr><th class="markB">C1D</th>       <td>ESC "</td><td>\x1B\x22; 1/11 2/2</td> <th>---</th><td>ESC B</td>      <td>\x1B\x42; 1/11 4/2</td> <th>EMI</th><td>ESC b</td>    <td>\x1B\x62; 1/11 6/2</td> </tr>
@@ -368,7 +365,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th class="markB">G2D6</th>      <td>ESC .</td><td>\x1B\x2E; 1/11 2/14</td><th>SS2</th><td>ESC N</td>     <td>\x1B\x4E; 1/11 4/14</td><th>LS2</th><td>ESC n</td>    <td>\x1B\x6E; 1/11 6/14</td></tr>
 <tr><th class="markB">G3D6</th>      <td>ESC /</td><td>\x1B\x2F; 1/11 2/15</td><th>SS3</th><td>ESC O</td>     <td>\x1B\x4F; 1/11 4/15</td><th>LS3</th><td>ESC o</td>    <td>\x1B\x6F; 1/11 6/15</td></tr>
 
-<tr><th>略号</th><th>表現</th>       <th>Hex; 行/列</th>         <th>略号</th><th>表現</th>    <th>Hex; 行/列</th>                   <th>略号</th><th>表現</th>     <th>Hex; 行/列</th>         </tr>
+<tr><th>略号</th><th>符号表現</th>   <th>Hex; 行/列</th>         <th>略号</th><th>符号表現</th><th>Hex; 行/列</th>                   <th>略号</th><th>符号表現</th> <th>Hex; 行/列</th>         </tr>
 <tr><th>---</th><td>ESC 0</td>       <td>\x1B\x30; 1/11 3/0</td> <th class="markB">DCS</th><td>ESC P</td><td>\x1B\x50; 1/11 5/0</td> <th>PCD</th><td>ESC p</td>     <td>\x1B\x70; 1/11 7/0</td> </tr>
 <tr><th>---</th><td>ESC 1</td>       <td>\x1B\x31; 1/11 3/1</td> <th>---</th>              <td>ESC Q</td><td>\x1B\x51; 1/11 5/1</td> <th>-R-</th><td>ESC q</td>     <td>\x1B\x71; 1/11 7/1</td> </tr>
 <tr><th>---</th><td>ESC 2</td>       <td>\x1B\x32; 1/11 3/2</td> <th>---</th>              <td>ESC R</td><td>\x1B\x52; 1/11 5/2</td> <th>-R-</th><td>ESC r</td>     <td>\x1B\x72; 1/11 7/2</td> </tr>
@@ -420,7 +417,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 それらを以下に纏める。
 </p>
 <table class="normal center">
-<tr><th>略号</th>   <th>表現</th><th>Hex; 行/列</th></tr>
+<tr><th>略号</th>   <th>符号表現</th><th>Hex; 行/列</th></tr>
 <tr><th>RSCF</th>
   <td>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
   <td>\x1B\x23<i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i>;
@@ -439,7 +436,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 
 <h3>制御シーケンス (control sequence)</h3>
 <table class="normal center">
-<tr><th>先頭</th><th>表現</th><th>名前</th></tr>
+<tr><th>先頭</th><th>符号表現</th><th>名前</th></tr>
 <tr><th>CSI</th>
   <td>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
   <td><dfn>制御シーケンス</dfn> (control sequence)</td>
@@ -492,7 +489,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 
 <h3>制御列 (control string)</h3>
 <table class="normal center">
-<tr><th>先頭</th><th>表現</th><th>名前</th></tr>
+<tr><th>先頭</th><th>符号表現</th><th>名前</th></tr>
 <tr><th>OSC</th>
   <td>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> BEL<br/>
   OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> ST
@@ -595,7 +592,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <h2>モード</h2>
 
 <table class="normal center">
-<tr><th>略号</th><th>表現</th></tr>
+<tr><th>略号</th><th>符号表現</th></tr>
 <tr><th>SM</th>     <td>CSI <i>&lt;Pm&gt;</i> h</td></tr>
 <tr><th>DECSET</th> <td>CSI ? <i>&lt;Pm&gt;</i> h</td></tr>
 <tr><th>RM</th>     <td>CSI <i>&lt;Pm&gt;</i> l</td></tr>
@@ -872,7 +869,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </ul>
 
 <table class="normal center">
-<tr><th>略号</th><th>表現</th></tr>
+<tr><th>略号</th><th>符号表現</th></tr>
 <tr><th>SPD</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> SP S</kbd></td></tr>
 <tr><th>SCP</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> SP k</kbd></td></tr>
 <tr><th>SIMD</th><td><kbd>CSI <i>&lt;Ps1&gt;</i> ^</kbd></td></tr>
@@ -949,7 +946,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </ul>
 
 <table class="normal center">
-<tr><th>略号</th><th>表現</th></tr>
+<tr><th>略号</th><th>符号表現</th></tr>
 <tr><th>SLH</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP U</kbd></td></tr>
 <tr><th>SLL</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP V</kbd></td></tr>
 <tr><th>SPH</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> SP i</kbd></td></tr>
@@ -1049,7 +1046,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <p>以下に関連する制御機能を挙げる。</p>
 <table class="normal center">
-<tr><th>略号</th><th>表現</th><th>名称</th></tr>
+<tr><th>略号</th><th>符号表現</th><th>名称</th></tr>
 <tr><th>SDS</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ]</kbd></td><td>Start Directed String</td></tr>
 <tr><th>SRS</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> [</kbd></td><td>Start Reversed String</td></tr>
 <tr><th>ALM</th><td><kbd>U+061C</kbd></td><td>Arabic letter mark</td></tr>
@@ -1093,7 +1090,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <h2>カーソル位置</h2>
 
 <table class="normal center">
-<tr><th>略号</th><th>種類</th><th>表現</th><th>対象</th><th>意味</th></tr>
+<tr><th>略号</th><th>種類</th><th>符号表現</th><th>対象</th><th>意味</th></tr>
 <tr><th>BS</th> <td>制御</td><td><kbd>BS</kbd></td> <td>記憶部</td><td>一文字戻る</td></tr>
 <tr><th>HT</th> <td>制御</td><td><kbd>HT</kbd></td> <td>表示部</td><td>次のタブストップ</td></tr>
 <tr><th>LF</th> <td>制御</td><td><kbd>LF</kbd></td> <td>DCSM</td>  <td>一行下</td></tr>
@@ -1278,7 +1275,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <h2>挿入・削除</h2>
 
 <table class="normal center">
-<tr><th>略号</th><th>表現</th></tr>
+<tr><th>略号</th><th>符号表現</th></tr>
 <tr><th>ED</th> <td>CSI <i>&lt;Ps&gt;</i> J</td></tr>
 <tr><th>DCH</th><td>CSI <i>&lt;Ps&gt;</i> P</td></tr>
 <tr><th>ECH</th><td>CSI <i>&lt;Ps&gt;</i> X</td></tr>
@@ -1372,7 +1369,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <p>■ 以下 xterm の CSI Sequence (未だ纏めていない物)</p>
 <table class="normal center">
-<tr><th>略号</th><th>表現</th></tr>
+<tr><th>略号</th><th>符号表現</th></tr>
 <tr><th>DECSED</th><td>CSI ? <i>&lt;Ps&gt;</i> J</td></tr>
 <tr><th>DECSEL</th><td>CSI ? <i>&lt;Ps&gt;</i> K</td></tr>
 <tr><th>SU</th>     <td>CSI <i>&lt;Ps&gt;</i> S</td></tr>
@@ -1410,7 +1407,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <h3>問い合わせ</h3>
 <table class="normal center">
-<tr><th>略号</th><th>種類</th><th>表現</th></tr>
+<tr><th>略号</th><th>種類</th><th>符号表現</th></tr>
 <tr><th>DA1</th> <td>制御</td><td>CSI <i>&lt;Ps&gt;</i> c</td></tr>
 <tr><th>DA1R</th><td>応答</td><td>CSI ? 6 4 ; <i>&lt;Pm&gt;</i> c</td></tr>
 <tr><th>DA2</th> <td>制御</td><td>CSI &gt; <i>&lt;Ps&gt;</i> c</td></tr>
@@ -1459,7 +1456,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h3>他</h3>
 <table class="normal center">
-<tr><th>略号</th>    <th>表現</th></tr>
+<tr><th>略号</th>    <th>符号表現</th></tr>
 <tr><th>DECSCUSR</th><td>CSI <i>&lt;Ps&gt;</i> SP q</td></tr>
 </table>
 
@@ -1506,7 +1503,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <h3>文字挿入時の属性</h3>
 <table class="normal center">
-<tr><th>略号</th><th>表現</th></tr>
+<tr><th>略号</th><th>符号表現</th></tr>
 <tr><th>SGR</th> <td>CSI <i>&lt;Pm&gt;</i> m</td></tr>
 <tr><th>PLD</th> <td>PLD</td></tr>
 <tr><th>PLU</th> <td>PLU</td></tr>
@@ -1541,7 +1538,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <h3>行に対する属性</h3>
 <table class="normal center">
-<tr><th>略号</th><th>表現</th></tr>
+<tr><th>略号</th><th>符号表現</th></tr>
 <tr><th rowspan="2">DECDHL</th>
     <td>ESC # 3</td></tr>
 <tr><td>ESC # 4</td></tr>
@@ -2481,16 +2478,92 @@ j.行消す, ESC[2K
 </li>
 </ul>
 
-<!--...................................................................................-->
-<h3>参考文献 Reference</h3>
-
+<!--===================================================================================-->
+<h2 id="section.reference">文献 (reference)</h2>
+<h3>標準規格 (standards)</h3>
 <ul>
-<li>ECMA-48
+<li><b>ANSI X3.4</b>
+  [<a href="https://en.wikipedia.org/wiki/ASCII">ASCII - Wikipedia</a> <a href="https://ja.wikipedia.org/wiki/ASCII">日本語</a>]
+  <p>いわゆる <b>ASCII</b> である。
+  7-bit 符号は ISO/IEC 646 として、
+  8-bit 符号は ISO/IEC 8859 として発展している。
+  JIS X 0201 は日本語で用いられる 8 bit 符号である。
+  以下の表は Wikipedia から。</p>
   <ul>
-  <li><a href="http://www.ecma-international.org/publications/standards/Ecma-048.htm">Standard ECMA-48</a></li>
-  <li>JIS X 0211 <a href="http://kikakurui.com/x0/X0211-1994-01.html">JIS X 0211:1994 符号化文字集合用制御機能</a></li>
+  <li>ASA X3.4-1963</li>
+  <li>ASA X3.4-1965 (approved, but not published)</li>
+  <li>USAS X3.4-1967</li>
+  <li>USAS X3.4-1968</li>
+  <li>ANSI X3.4-1977</li>
+  <li>ANSI X3.4-1986</li>
+  <li>ANSI X3.4-1986 (R1992)</li>
+  <li>ANSI X3.4-1986 (R1997)</li>
+  <li>ANSI INCITS 4-1986 (R2002)</li>
+  <li>ANSI INCITS 4-1986 (R2007)</li>
+  <li>ANSI INCITS 4-1986 (R2012)</li>
   </ul>
 </li>
+<li><b>ECMA-6</b>, <b>ISO/IEC 646</b>
+  [<a href="https://en.wikipedia.org/wiki/ISO/IEC_646">ISO/IEC 646 - Wikipedia</a> <a href="https://ja.wikipedia.org/wiki/ISO/IEC_646">日本語</a>]
+  <p>ASCII 7-bit 符号。</p>
+  <ul>
+  <li>ISO/R646-1967</li>
+  <li>ISO 646:1972</li>
+  <li>ISO 646:1983</li>
+  <li><b>ISO/IEC 646:1991</b></li>
+  <li>ECMA-6 1st edition (1965-04-30)</li>
+  <li>ECMA-6 2nd edition (1967-06)</li>
+  <li>ECMA-6 3rd edition (1970-07)</li>
+  <li>ECMA-6 4th edition (1973-08)</li>
+  <li>ECMA-6 5th edition (1984-12, 1985-03)</li>
+  <li><b>ECMA-6 6th edition</b> (1991-12, 1997-08)</li>
+  </ul>
+</li>
+<li><b>ISO/IEC 8859</b> [<a href="https://en.wikipedia.org/wiki/ISO/IEC_8859">ISO/IEC 8859 - Wikipedia</a> <a href="https://ja.wikipedia.org/wiki/ISO/IEC_8859">日本語]</a>
+</li>
+<li><b>ECMA-48</b>, <b>ISO/IEC 6429</b>, <b>JIS X 0211</b>
+  [<a href="https://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code - Wikipedia</a>]
+  <p>いわゆる <b>ANSI</b> と呼ばれる規格は初め ECMA-48 として出発した。
+  これは ECMA-6 (ISO/IEC 646, ASCII) の拡張として定義された。
+  その後で ANSI 規格として採用された。
+  これを実装する端末を ANSI terminals などと呼ぶ。
+  </p>
+  <ul>
+  <li>ECMA-48 1st edition (1976, 1979 廃止)</li>
+  <li>ANSI X3.64 (1979, 1994 廃止)</li>
+  <li>ECMA-48 2nd edition (1979, 1984 廃止): <a href="http://www.ecma-international.org/publications/standards/Ecma-048-arch.htm">Standard ECMA-48-archive</a></li>
+  <li>FIPS PUB 86 (1981, 廃止)</li>
+  <li>ISO 6429:1983 (1983, 1988 廃止)</li>
+  <li>ECMA-48 3rd edition (1984, 1986 廃止): <a href="http://www.ecma-international.org/publications/standards/Ecma-048-arch.htm">Standard ECMA-48-archive</a></li>
+  <li>ECMA-48 4th edition (1986, 1991 廃止): <a href="http://www.ecma-international.org/publications/standards/Ecma-048-arch.htm">Standard ECMA-48-archive</a></li>
+  <li>JIS X 0211:1986 (1986, 1991 廃止)</li>
+  <li>ISO 6429:1988 (1988, 1992 廃止)</li>
+  <li><b>ECMA-48 5th edition</b> (1991): <a href="http://www.ecma-international.org/publications/standards/Ecma-048.htm">Standard ECMA-48</a></li>
+  <li>JIS X 0211:1991 (1991, 1994 廃止)</li>
+  <li><b>ISO/IEC 6429:1992</b> (1992)</li>
+  <li><b>JIS X 0211:1994</b> (1994): <a href="http://kikakurui.com/x0/X0211-1994-01.html">JIS X 0211:1994 符号化文字集合用制御機能</a></li>
+  </ul>
+</li>
+<li><b>T.416</b>: ISO 8613-6, CCITT Recommendation T.416, JIS X 4106 (和訳、2010年廃止)</li>
+<li><b>T.61</b>: CCITT Recommendation T.61</li>
+<li>References
+  <ul>
+  <li><a href="http://en.wikipedia.org/wiki/Control_code">Control character - Wikipedia, the free encyclopedia</a></li>
+  <li><a href="http://en.wikipedia.org/wiki/C0_and_C1_control_codes">C0 and C1 control codes - Wikipedia, the free encyclopedia</a></li>
+  <li><a href="http://ja.wikipedia.org/wiki/%E5%88%B6%E5%BE%A1%E6%96%87%E5%AD%97">制御文字 - Wikipedia</a></li>
+  <li></li>
+  <li><a href="http://www.wdic.org/w/WDIC/ISO/IEC%202022">ISO/IEC 2022 ‐ 通信用語の基礎知識</a></li>
+  <li><a href="http://ja.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia</a></li>
+  <li><a href="http://en.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia, the free encyclopedia</a></li>
+  <li><a href="http://isoreg.com/">::: ISO REG Quality Registrars Inc. :::: - HOME</a></li>
+  <li><a href="http://www.itscj.ipsj.or.jp/ISO-IR/">International Register of Coded Character Sets</a></li>
+  <li></li>
+  </ul>
+</li>
+</ul>
+
+<h3>端末の実装 (terminals)</h3>
+<ul>
 <li>xterm
   <a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.html">ctlseqs(ms)</a>
   <a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.pdf">pdf</a>
@@ -2516,12 +2589,6 @@ j.行消す, ESC[2K
   <li><a href="http://ascii-table.com/ansi-escape-sequences.php">ASCII Table &#45; ANSI Escape sequences</a></li>
   </ul>
 </li>
-<li>Wikipedia
-  <ul>
-  <li><a href="http://en.wikipedia.org/wiki/C0_and_C1_control_codes">C0 and C1 control codes - Wikipedia, the free encyclopedia</a></li>
-  <li><a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code - Wikipedia, the free encyclopedia</a></li>
-  </ul>
-</li>
 <li><a href="http://bjh21.me.uk/all-escapes/all-escapes.txt">all-escapes.txt</a></li>
 <li>rxvt <a href="http://doc.gnu-darwin.org/rxvt/rxvtRef.html">Rxvt Technical Reference</a> [<a href="http://www.usf.uos.de/infoservice/doc/localhtml/rxvt/refer.html">old</a>]</li>
 <li>urxvt <a href="http://manpages.ubuntu.com/manpages/lucid/man7/urxvt.7.html">Ubuntu Manpage: RXVT REFERENCE - FAQ, command sequences and other background</a></li>
@@ -2542,6 +2609,19 @@ j.行消す, ESC[2K
 <li><a href="http://odl.sysworks.biz/disk$cddoc04jan11/decw$book/aa-pbwga-12_a02.decw$book">Digital ANSI-Compliant Printing Protocol Level 3 Programming Reference Manual</a></li>
 <li><a href=""></a></li>
 </ul>
+
+<h3>termcap/terminfo</h3>
+
+<p>色々な端末の差異を吸収する為に作られたデータベース・ライブラリ。ncurses もこれを利用する。</p>
+<ul>
+<li><a href="http://linuxpakistan.net/man.php?query=terminfo&amp;type=2&amp;section=5">terminfo man page</a></li>
+<li><a href="http://h50146.www5.hp.com/products/software/oe/tru64unix/manual/v51a_ref/HTML/MAN/MAN4/0087____.HTM">terminfo(4)</a> 日本語 man</li>
+<li><a href="http://invisible-island.net/ncurses/man/terminfo.5.html">terminfo.5</a></li>
+</ul>
+<p>特定の TERM に対する terminfo のエスケープシーケンスの定義などは、</p>
+<pre class="agh-prog-bash">infocmp cygwin</pre>
+<p class="resume">等として見る事ができる。</p>
+
 <!--===================================================================================-->
 <h2>ISO/IEC 2022 文字集合制御</h2>
 <!--...................................................................................-->
