@@ -3,5 +3,6 @@
 # generated files
 /out
 /src/impl1
+/src/impl2
 /minimal_openpt
 /mat

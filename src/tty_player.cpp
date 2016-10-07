@@ -205,8 +205,6 @@ namespace contra {
         return true;
     }
 
-    if (param == 0 && s->get_mode(mode_zdm)) param = 1;
-
     board* const b = play.board();
 
     curpos_t y = b->cur.y;
@@ -293,6 +291,26 @@ namespace contra {
     case presentation_direction_tbrl:
     case presentation_direction_btrl: return do_cux(play, params, do_cux_succ_line);
     }
+  }
+
+  bool do_cup(tty_player& play, csi_parameters& params) {
+    tty_state * const s = play.state();
+    csi_single_param_t param1, param2;
+    params.read_param(param1, 1);
+    params.read_param(param2, 1);
+    if (s->get_mode(mode_zdm)) {
+      if (param1 == 0) param1 = 1;
+      if (param2 == 0) param2 = 1;
+    }
+
+    if (param1 == 0 || param2 == 0) return false;
+    curpos_t const x = param2 - 1;
+    curpos_t const y = param1 - 1;
+
+    board* const b = play.board();
+    b->cur.x = b->line(y)->to_data_position(x, s->presentation_direction);
+    b->cur.y = y;
+    return true;
   }
 
   static void do_sgr_iso8613_colors(tty_player& play, csi_parameters& params, bool isfg) {
@@ -492,6 +510,7 @@ namespace contra {
       case ascii_B: result = do_cud(*this, params); break;
       case ascii_C: result = do_cuf(*this, params); break;
       case ascii_D: result = do_cub(*this, params); break;
+      case ascii_H: result = do_cup(*this, params); break;
       case ascii_circumflex: result = do_simd(*this, params); break;
       }
     } else if (intermediateSize == 1) {
