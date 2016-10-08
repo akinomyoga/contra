@@ -4,6 +4,7 @@
 
 
 namespace contra {
+namespace {
 
   static void reverse_line_content(board* b, curpos_t y) {
     board_cell* const cells = b->cell(0, y);
@@ -187,14 +188,24 @@ namespace contra {
     return true;
   }
 
-  enum du_cux_direction {
-    do_cux_prec_line,
-    do_cux_succ_line,
-    do_cux_prec_char,
-    do_cux_succ_char,
+  enum do_cux_direction {
+    do_cux_prec_char = 0,
+    do_cux_succ_char = 1,
+    do_cux_prec_line = 2,
+    do_cux_succ_line = 3,
+
+    do_cux_shift = 2,
+    do_cux_mask  = 0x3,
   };
 
-  static bool do_cux(tty_player& play, csi_parameters& params, du_cux_direction direction) {
+  static constexpr std::uint32_t do_cux_vec_construct(presentation_direction dir, do_cux_direction value) {
+    return value << do_cux_shift * dir;
+  }
+  static do_cux_direction do_cux_vec_select(std::uint32_t vec, presentation_direction value) {
+    return do_cux_direction(vec >> do_cux_shift * (0 <= value && value < 8? value: 0) & do_cux_mask);
+  }
+
+  static bool do_cux(tty_player& play, csi_parameters& params, do_cux_direction direction, bool isData) {
     tty_state * const s = play.state();
     csi_single_param_t param;
     params.read_param(param, 1);
@@ -209,19 +220,15 @@ namespace contra {
 
     curpos_t y = b->cur.y;
     switch (direction) {
-    case do_cux_prec_line:
-      b->cur.y = std::max((curpos_t) 0, y - (curpos_t) param);
-      break;
-    case do_cux_succ_line:
-      b->cur.y = std::min(play.board()->m_height - 1, y + (curpos_t) param);
-      break;
     case do_cux_prec_char:
       {
         board_line* line = b->line(y);
         curpos_t x = b->cur.x;
-        x = line->to_presentation_position(x, s->presentation_direction);
+        if (!isData)
+          x = line->to_presentation_position(x, s->presentation_direction);
         x = std::max((curpos_t) 0, x - (curpos_t) param);
-        x = line->to_data_position(x, s->presentation_direction);
+        if (!isData)
+          x = line->to_data_position(x, s->presentation_direction);
         b->cur.x = x;
       }
       break;
@@ -229,11 +236,19 @@ namespace contra {
       {
         board_line* line = b->line(y);
         curpos_t x = b->cur.x;
-        x = line->to_presentation_position(x, s->presentation_direction);
+        if (!isData)
+          x = line->to_presentation_position(x, s->presentation_direction);
         x = std::min(play.board()->m_width - 1, x + (curpos_t) param);
-        x = line->to_data_position(x, s->presentation_direction);
+        if (!isData)
+          x = line->to_data_position(x, s->presentation_direction);
         b->cur.x = x;
       }
+      break;
+    case do_cux_prec_line:
+      b->cur.y = std::max((curpos_t) 0, y - (curpos_t) param);
+      break;
+    case do_cux_succ_line:
+      b->cur.y = std::min(play.board()->m_height - 1, y + (curpos_t) param);
       break;
     }
 
@@ -241,56 +256,109 @@ namespace contra {
   }
 
   bool do_cuu(tty_player& play, csi_parameters& params) {
-    switch(play.state()->presentation_direction) {
-    default:
-    case presentation_direction_lrtb:
-    case presentation_direction_rltb: return do_cux(play, params, do_cux_prec_line);
-    case presentation_direction_lrbt:
-    case presentation_direction_rlbt: return do_cux(play, params, do_cux_succ_line);
-    case presentation_direction_tblr:
-    case presentation_direction_tbrl: return do_cux(play, params, do_cux_prec_char);
-    case presentation_direction_btlr:
-    case presentation_direction_btrl: return do_cux(play, params, do_cux_succ_char);
-    }
+    constexpr std::uint32_t vec
+      = do_cux_vec_construct(presentation_direction_tblr, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_tbrl, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_btlr, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_btrl, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_lrtb, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_rltb, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_lrbt, do_cux_succ_line)
+      | do_cux_vec_construct(presentation_direction_rlbt, do_cux_succ_line);
+
+    return do_cux(
+      play, params,
+      do_cux_vec_select(vec, play.state()->presentation_direction),
+      false);
   }
   bool do_cud(tty_player& play, csi_parameters& params) {
-    switch(play.state()->presentation_direction) {
-    default:
-    case presentation_direction_lrtb:
-    case presentation_direction_rltb: return do_cux(play, params, do_cux_succ_line);
-    case presentation_direction_lrbt:
-    case presentation_direction_rlbt: return do_cux(play, params, do_cux_prec_line);
-    case presentation_direction_tblr:
-    case presentation_direction_tbrl: return do_cux(play, params, do_cux_succ_char);
-    case presentation_direction_btlr:
-    case presentation_direction_btrl: return do_cux(play, params, do_cux_prec_char);
-    }
+    constexpr std::uint32_t vec
+      = do_cux_vec_construct(presentation_direction_btlr, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_btrl, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_tblr, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_tbrl, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_lrbt, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_rlbt, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_lrtb, do_cux_succ_line)
+      | do_cux_vec_construct(presentation_direction_rltb, do_cux_succ_line);
+
+    return do_cux(
+      play, params,
+      do_cux_vec_select(vec, play.state()->presentation_direction),
+      false);
   }
   bool do_cuf(tty_player& play, csi_parameters& params) {
-    switch(play.state()->presentation_direction) {
-    default:
-    case presentation_direction_lrtb:
-    case presentation_direction_lrbt: return do_cux(play, params, do_cux_succ_char);
-    case presentation_direction_rltb:
-    case presentation_direction_rlbt: return do_cux(play, params, do_cux_prec_char);
-    case presentation_direction_tblr:
-    case presentation_direction_btlr: return do_cux(play, params, do_cux_succ_line);
-    case presentation_direction_tbrl:
-    case presentation_direction_btrl: return do_cux(play, params, do_cux_prec_line);
-    }
+    constexpr std::uint32_t vec
+      = do_cux_vec_construct(presentation_direction_rltb, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_rlbt, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_lrtb, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_lrbt, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_tbrl, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_btrl, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_tblr, do_cux_succ_line)
+      | do_cux_vec_construct(presentation_direction_btlr, do_cux_succ_line);
+
+    return do_cux(
+      play, params,
+      do_cux_vec_select(vec, play.state()->presentation_direction),
+      false);
   }
   bool do_cub(tty_player& play, csi_parameters& params) {
-    switch(play.state()->presentation_direction) {
-    default:
-    case presentation_direction_lrtb:
-    case presentation_direction_lrbt: return do_cux(play, params, do_cux_prec_char);
-    case presentation_direction_rltb:
-    case presentation_direction_rlbt: return do_cux(play, params, do_cux_succ_char);
-    case presentation_direction_tblr:
-    case presentation_direction_btlr: return do_cux(play, params, do_cux_prec_line);
-    case presentation_direction_tbrl:
-    case presentation_direction_btrl: return do_cux(play, params, do_cux_succ_line);
-    }
+    constexpr std::uint32_t vec
+      = do_cux_vec_construct(presentation_direction_lrtb, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_lrbt, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_rltb, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_rlbt, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_tblr, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_btlr, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_tbrl, do_cux_succ_line)
+      | do_cux_vec_construct(presentation_direction_btrl, do_cux_succ_line);
+
+    return do_cux(
+      play, params,
+      do_cux_vec_select(vec, play.state()->presentation_direction),
+      false);
+  }
+
+  bool do_hpb(tty_player& play, csi_parameters& params) {
+    return do_cux(play, params, do_cux_prec_char, true);
+  }
+  bool do_hpr(tty_player& play, csi_parameters& params) {
+    return do_cux(play, params, do_cux_succ_char, true);
+  }
+  bool do_vpb(tty_player& play, csi_parameters& params) {
+    return do_cux(play, params, do_cux_prec_line, true);
+  }
+  bool do_vpr(tty_player& play, csi_parameters& params) {
+    return do_cux(play, params, do_cux_succ_line, true);
+  }
+
+  static bool do_cup(board* b, curpos_t x, curpos_t y, presentation_direction presentationDirection) {
+    b->cur.x = b->line(y)->to_data_position(x, presentationDirection);
+    b->cur.y = y;
+    return true;
+  }
+
+  bool do_cnl(tty_player& play, csi_parameters& params) {
+    tty_state * const s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0 && s->get_mode(mode_zdm)) param = 1;
+
+    board* const b = play.board();
+    curpos_t const y = std::min(b->cur.y + (curpos_t) param, b->m_width - 1);
+    return do_cup(b, 0, y, s->presentation_direction);
+  }
+
+  bool do_cpl(tty_player& play, csi_parameters& params) {
+    tty_state * const s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0 && s->get_mode(mode_zdm)) param = 1;
+
+    board* const b = play.board();
+    curpos_t const y = std::max(b->cur.y - (curpos_t) param, 0);
+    return do_cup(b, 0, y, s->presentation_direction);
   }
 
   bool do_cup(tty_player& play, csi_parameters& params) {
@@ -304,12 +372,52 @@ namespace contra {
     }
 
     if (param1 == 0 || param2 == 0) return false;
-    curpos_t const x = param2 - 1;
-    curpos_t const y = param1 - 1;
+
+    return do_cup(play.board(), (curpos_t) param2 - 1, (curpos_t) param1 - 1, s->presentation_direction);
+  }
+
+  bool do_cha(tty_player& play, csi_parameters& params) {
+    tty_state * const s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s->get_mode(mode_zdm))
+        param = 1;
+      else
+        return false;
+    }
 
     board* const b = play.board();
-    b->cur.x = b->line(y)->to_data_position(x, s->presentation_direction);
-    b->cur.y = y;
+    return do_cup(b, param - 1, b->cur.y, s->presentation_direction);
+  }
+
+  bool do_hpa(tty_player& play, csi_parameters& params) {
+    tty_state * const s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s->get_mode(mode_zdm))
+        param = 1;
+      else
+        return false;
+    }
+
+    play.board()->cur.x = param - 1;
+    return true;
+  }
+
+  bool do_vpa(tty_player& play, csi_parameters& params) {
+    tty_state * const s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s->get_mode(mode_zdm))
+        param = 1;
+      else
+        return false;
+    }
+
+    play.board()->cur.y = param - 1;
     return true;
   }
 
@@ -489,6 +597,8 @@ namespace contra {
     return true;
   }
 
+}
+
   void tty_player::process_control_sequence(sequence const& seq) {
     if (seq.is_private_csi()) {
       print_unrecognized_sequence(seq);
@@ -505,12 +615,25 @@ namespace contra {
     std::int32_t const intermediateSize = seq.intermediateSize();
     if (intermediateSize == 0) {
       switch (seq.final()) {
-      case ascii_m: result = do_sgr(*this, params); break;
-      case ascii_A: result = do_cuu(*this, params); break;
-      case ascii_B: result = do_cud(*this, params); break;
-      case ascii_C: result = do_cuf(*this, params); break;
-      case ascii_D: result = do_cub(*this, params); break;
-      case ascii_H: result = do_cup(*this, params); break;
+      case ascii_m:          result = do_sgr(*this, params); break;
+
+      case ascii_A:          result = do_cuu(*this, params); break;
+      case ascii_B:          result = do_cud(*this, params); break;
+      case ascii_C:          result = do_cuf(*this, params); break;
+      case ascii_D:          result = do_cub(*this, params); break;
+      case ascii_j:          result = do_hpb(*this, params); break;
+      case ascii_a:          result = do_hpr(*this, params); break;
+      case ascii_k:          result = do_vpb(*this, params); break;
+      case ascii_e:          result = do_vpr(*this, params); break;
+
+      case ascii_E:          result = do_cnl(*this, params); break;
+      case ascii_F:          result = do_cpl(*this, params); break;
+
+      case ascii_G:          result = do_cha(*this, params); break;
+      case ascii_H:          result = do_cup(*this, params); break;
+      case ascii_back_quote: result = do_hpa(*this, params); break;
+      case ascii_d:          result = do_vpa(*this, params); break;
+
       case ascii_circumflex: result = do_simd(*this, params); break;
       }
     } else if (intermediateSize == 1) {
