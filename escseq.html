@@ -10,12 +10,16 @@
   <link rel="stylesheet" type="text/css" href="/agh/mwg.slide.css" />
   <link rel="stylesheet" type="text/css" href="/agh/prog.std.css" />
   <script type="text/javascript" charset="utf-8" src="/agh/agh.fly.js"></script>
+  <script type="text/javascript" charset="utf-8" src="escseq.js"></script>
   <style type="text/css">
   table.normal>*>tr>th{background-color:#eee;}
   table.normal>*>tr>th.markB{background-color:#fee;}
   dfn.cfunc{color:blue;}
   dfn.cmode{color:brown;}
   dfn.sgr{color:brown;}
+
+  a.contra-autolink{text-decoration:none;color:#48d;}
+  a.contra-autolink:hover{text-decoration:underline;}
   </style>
 </head>
 <body class="tex:math_bqd">
@@ -99,18 +103,18 @@ row と column は 0-15 の十進整数であり、それぞれ上位 4 bit と�
     <td><i>&lt;C0&gt;</i></td><td>基本の制御</td><td>ISO/IEC 646</td></tr>
 <tr><td><i>&lt;C1&gt;</i></td><td>基本の制御</td><td>ISO/IEC 6429 (ECMA-48)</td></tr>
 <tr><th colspan="2" rowspan="2">エスケープシーケンス</th>
-    <td>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td><td>文字コードの制御</td><td rowspan="2">ISO/IEC 2022</td></tr>
-<tr><td>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></td><td>私用の制御</td></tr>
+    <td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td><td>文字コードの制御</td><td rowspan="2">ISO/IEC 2022</td></tr>
+<tr><td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></kbd></td><td>私用の制御</td></tr>
 <tr><th colspan="2">制御シーケンス</th>
-    <td>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
+    <td><kbd>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td>
     <td>ANSI の制御</td><td rowspan="6">ISO/IEC 6429 (ECMA-48)</td></tr>
 <tr><th rowspan="5">制御列</th><th rowspan="4">コマンド列</th>
-    <td>DCS ... ST</td><td>装置制御</td></tr>
-<tr><td>OSC ... ST</td><td>OSの機能</td></tr>
-<tr><td>PM ... ST</td> <td>私用の機能</td></tr>
-<tr><td>APC ... ST</td><td>アプリケーションの機能</td></tr>
+    <td><kbd>DCS ... ST</kbd></td><td>装置制御</td></tr>
+<tr><td><kbd>OSC ... ST</kbd></td><td>OSの機能</td></tr>
+<tr><td><kbd>PM ... ST</kbd></td> <td>私用の機能</td></tr>
+<tr><td><kbd>APC ... ST</kbd></td><td>アプリケーションの機能</td></tr>
 <tr><th>文字列</th>
-    <td>SOS ... ST</td><td>文字列</td></tr>
+    <td><kbd>SOS ... ST</kbd></td><td>文字列</td></tr>
 </table>
 <p>但し、</p>
 <ul>
@@ -311,22 +315,22 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>略号</th><th>R/C</th>
     <th>略号</th><th>R/C</th>
 </tr>
-<tr><td>SP</td>   <td>02/00</td><td>0</td>   <td>03/00</td><td>@</td><td>04/00</td><td>P</td><td>05/00</td><td>`</td><td>06/00</td><td>p</td>  <td>07/00</td></tr>
-<tr><td>!</td>    <td>02/01</td><td>1</td>   <td>03/01</td><td>A</td><td>04/01</td><td>Q</td><td>05/01</td><td>a</td><td>06/01</td><td>q</td>  <td>07/01</td></tr>
-<tr><td>"</td>    <td>02/02</td><td>2</td>   <td>03/02</td><td>B</td><td>04/02</td><td>R</td><td>05/02</td><td>b</td><td>06/02</td><td>r</td>  <td>07/02</td></tr>
-<tr><td>#</td>    <td>02/03</td><td>3</td>   <td>03/03</td><td>C</td><td>04/03</td><td>S</td><td>05/03</td><td>c</td><td>06/03</td><td>s</td>  <td>07/03</td></tr>
-<tr><td>$</td>    <td>02/04</td><td>4</td>   <td>03/04</td><td>D</td><td>04/04</td><td>T</td><td>05/04</td><td>d</td><td>06/04</td><td>t</td>  <td>07/04</td></tr>
-<tr><td>%</td>    <td>02/05</td><td>5</td>   <td>03/05</td><td>E</td><td>04/05</td><td>U</td><td>05/05</td><td>e</td><td>06/05</td><td>u</td>  <td>07/05</td></tr>
-<tr><td>&amp;</td><td>02/06</td><td>6</td>   <td>03/06</td><td>F</td><td>04/06</td><td>V</td><td>05/06</td><td>f</td><td>06/06</td><td>v</td>  <td>07/06</td></tr>
-<tr><td>'</td>    <td>02/07</td><td>7</td>   <td>03/07</td><td>G</td><td>04/07</td><td>W</td><td>05/07</td><td>g</td><td>06/07</td><td>w</td>  <td>07/07</td></tr>
-<tr><td>(</td>    <td>02/08</td><td>8</td>   <td>03/08</td><td>H</td><td>04/08</td><td>X</td><td>05/08</td><td>h</td><td>06/08</td><td>x</td>  <td>07/08</td></tr>
-<tr><td>)</td>    <td>02/09</td><td>9</td>   <td>03/09</td><td>I</td><td>04/09</td><td>Y</td><td>05/09</td><td>i</td><td>06/09</td><td>y</td>  <td>07/09</td></tr>
-<tr><td>*</td>    <td>02/10</td><td>:</td>   <td>03/10</td><td>J</td><td>04/10</td><td>Z</td><td>05/10</td><td>j</td><td>06/10</td><td>z</td>  <td>07/10</td></tr>
-<tr><td>+</td>    <td>02/11</td><td>;</td>   <td>03/11</td><td>K</td><td>04/11</td><td>[</td><td>05/11</td><td>k</td><td>06/11</td><td>{</td>  <td>07/11</td></tr>
-<tr><td>,</td>    <td>02/12</td><td>&lt;</td><td>03/12</td><td>L</td><td>04/12</td><td>\</td><td>05/12</td><td>l</td><td>06/12</td><td>|</td>  <td>07/12</td></tr>
-<tr><td>-</td>    <td>02/13</td><td>=</td>   <td>03/13</td><td>M</td><td>04/13</td><td>]</td><td>05/13</td><td>m</td><td>06/13</td><td>}</td>  <td>07/13</td></tr>
-<tr><td>.</td>    <td>02/14</td><td>&gt;</td><td>03/14</td><td>N</td><td>04/14</td><td>^</td><td>05/14</td><td>n</td><td>06/14</td><td>~</td>  <td>07/14</td></tr>
-<tr><td>/</td>    <td>02/15</td><td>?</td>   <td>03/15</td><td>O</td><td>04/15</td><td>_</td><td>05/15</td><td>o</td><td>06/15</td><td>DEL</td><td>07/15</td></tr>
+<tr><th>SP</th>   <td>02/00</td><th>0</th>   <td>03/00</td><th>@</th><td>04/00</td><th>P</th><td>05/00</td><th>`</th><td>06/00</td><th>p</th>  <td>07/00</td></tr>
+<tr><th>!</th>    <td>02/01</td><th>1</th>   <td>03/01</td><th>A</th><td>04/01</td><th>Q</th><td>05/01</td><th>a</th><td>06/01</td><th>q</th>  <td>07/01</td></tr>
+<tr><th>"</th>    <td>02/02</td><th>2</th>   <td>03/02</td><th>B</th><td>04/02</td><th>R</th><td>05/02</td><th>b</th><td>06/02</td><th>r</th>  <td>07/02</td></tr>
+<tr><th>#</th>    <td>02/03</td><th>3</th>   <td>03/03</td><th>C</th><td>04/03</td><th>S</th><td>05/03</td><th>c</th><td>06/03</td><th>s</th>  <td>07/03</td></tr>
+<tr><th>$</th>    <td>02/04</td><th>4</th>   <td>03/04</td><th>D</th><td>04/04</td><th>T</th><td>05/04</td><th>d</th><td>06/04</td><th>t</th>  <td>07/04</td></tr>
+<tr><th>%</th>    <td>02/05</td><th>5</th>   <td>03/05</td><th>E</th><td>04/05</td><th>U</th><td>05/05</td><th>e</th><td>06/05</td><th>u</th>  <td>07/05</td></tr>
+<tr><th>&amp;</th><td>02/06</td><th>6</th>   <td>03/06</td><th>F</th><td>04/06</td><th>V</th><td>05/06</td><th>f</th><td>06/06</td><th>v</th>  <td>07/06</td></tr>
+<tr><th>'</th>    <td>02/07</td><th>7</th>   <td>03/07</td><th>G</th><td>04/07</td><th>W</th><td>05/07</td><th>g</th><td>06/07</td><th>w</th>  <td>07/07</td></tr>
+<tr><th>(</th>    <td>02/08</td><th>8</th>   <td>03/08</td><th>H</th><td>04/08</td><th>X</th><td>05/08</td><th>h</th><td>06/08</td><th>x</th>  <td>07/08</td></tr>
+<tr><th>)</th>    <td>02/09</td><th>9</th>   <td>03/09</td><th>I</th><td>04/09</td><th>Y</th><td>05/09</td><th>i</th><td>06/09</td><th>y</th>  <td>07/09</td></tr>
+<tr><th>*</th>    <td>02/10</td><th>:</th>   <td>03/10</td><th>J</th><td>04/10</td><th>Z</th><td>05/10</td><th>j</th><td>06/10</td><th>z</th>  <td>07/10</td></tr>
+<tr><th>+</th>    <td>02/11</td><th>;</th>   <td>03/11</td><th>K</th><td>04/11</td><th>[</th><td>05/11</td><th>k</th><td>06/11</td><th>{</th>  <td>07/11</td></tr>
+<tr><th>,</th>    <td>02/12</td><th>&lt;</th><td>03/12</td><th>L</th><td>04/12</td><th>\</th><td>05/12</td><th>l</th><td>06/12</td><th>|</th>  <td>07/12</td></tr>
+<tr><th>-</th>    <td>02/13</td><th>=</th>   <td>03/13</td><th>M</th><td>04/13</td><th>]</th><td>05/13</td><th>m</th><td>06/13</td><th>}</th>  <td>07/13</td></tr>
+<tr><th>.</th>    <td>02/14</td><th>&gt;</th><td>03/14</td><th>N</th><td>04/14</td><th>^</th><td>05/14</td><th>n</th><td>06/14</td><th>~</th>  <td>07/14</td></tr>
+<tr><th>/</th>    <td>02/15</td><th>?</th>   <td>03/15</td><th>O</th><td>04/15</td><th>_</th><td>05/15</td><th>o</th><td>06/15</td><th>DEL</th><td>07/15</td></tr>
 </table>
 
 <h3>エスケープシーケンス (escape sequence)</h3>
@@ -339,49 +343,109 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </li>
 </ul>
 <table class="normal center">
-<tr><th>略号</th><th>符号表現</th>                 <th>Hex; 行/列</th>         <th>略号</th><th>符号表現</th>  <th>Hex; 行/列</th>         <th>略号</th><th>符号表現</th><th>Hex; 行/列</th>         </tr>
-<tr><th class="markB">ACS</th><td>ESC SP</td><td>\x1B\x20; 1/11 2/0</td> <th>---</th><td>ESC @</td>      <td>\x1B\x40; 1/11 4/0</td> <th>DMI</th><td>ESC `</td>    <td>\x1B\x60; 1/11 6/0</td> </tr>
-<tr><th class="markB">CZD</th>       <td>ESC !</td><td>\x1B\x21; 1/11 2/1</td> <th>---</th><td>ESC A</td>      <td>\x1B\x41; 1/11 4/1</td> <th>INT</th><td>ESC a</td>    <td>\x1B\x61; 1/11 6/1</td> </tr>
-<tr><th class="markB">C1D</th>       <td>ESC "</td><td>\x1B\x22; 1/11 2/2</td> <th>---</th><td>ESC B</td>      <td>\x1B\x42; 1/11 4/2</td> <th>EMI</th><td>ESC b</td>    <td>\x1B\x62; 1/11 6/2</td> </tr>
-<tr><th class="markB">(1B23+)</th>   <td>ESC #</td><td>\x1B\x23; 1/11 2/3</td> <th>---</th><td>ESC C</td>      <td>\x1B\x43; 1/11 4/3</td> <th>RIS</th><td>ESC c</td>    <td>\x1B\x63; 1/11 6/3</td> </tr>
-<tr><th class="markB">GnDMm</th>     <td>ESC $</td><td>\x1B\x24; 1/11 2/4</td> <th>IND</th><td>ESC D</td>      <td>\x1B\x44; 1/11 4/4</td> <th>CMD</th><td>ESC d</td>    <td>\x1B\x64; 1/11 6/4</td> </tr>
-<tr><th class="markB">DOCS</th>      <td>ESC %</td><td>\x1B\x25; 1/11 2/5</td> <th>NEL</th><td>ESC E</td>      <td>\x1B\x45; 1/11 4/5</td> <th>-R-</th><td>ESC e</td>    <td>\x1B\x65; 1/11 6/5</td> </tr>
-<tr><th class="markB">IRR</th>   <td>ESC &amp;</td><td>\x1B\x26; 1/11 2/6</td> <th>hpLowLeft</th><td>ESC F</td><td>\x1B\x46; 1/11 4/6</td> <th>-R-</th><td>ESC f</td>    <td>\x1B\x66; 1/11 6/6</td> </tr>
-<tr><th>-R-</th>                     <td>ESC '</td><td>\x1B\x27; 1/11 2/7</td> <th>---</th><td>ESC G</td>      <td>\x1B\x47; 1/11 4/7</td> <th>-R-</th><td>ESC g</td>    <td>\x1B\x67; 1/11 6/7</td> </tr>
-<tr><th class="markB">GZD4</th>      <td>ESC (</td><td>\x1B\x28; 1/11 2/8</td> <th>HTS</th><td>ESC H</td>      <td>\x1B\x48; 1/11 4/8</td> <th>-R-</th><td>ESC h</td>    <td>\x1B\x68; 1/11 6/8</td> </tr>
-<tr><th class="markB">G1D4</th>      <td>ESC )</td><td>\x1B\x29; 1/11 2/9</td> <th>---</th><td>ESC I</td>      <td>\x1B\x49; 1/11 4/9</td> <th>-R-</th><td>ESC i</td>    <td>\x1B\x69; 1/11 6/9</td> </tr>
-<tr><th class="markB">G2D4</th>      <td>ESC *</td><td>\x1B\x2A; 1/11 2/10</td><th>---</th><td>ESC J</td>      <td>\x1B\x4A; 1/11 4/10</td><th>-R-</th><td>ESC j</td>    <td>\x1B\x6A; 1/11 6/10</td></tr>
-<tr><th class="markB">G3D4</th>      <td>ESC +</td><td>\x1B\x2B; 1/11 2/11</td><th>---</th><td>ESC K</td>      <td>\x1B\x4B; 1/11 4/11</td><th>LS1R</th><td>ESC k</td>   <td>\x1B\x6B; 1/11 6/11</td></tr>
-<tr>
-  <th>-R-</th>                  <td>ESC ,</td><td>\x1B\x2C; 1/11 2/12</td>
-  <th>---</th>                  <td>ESC L</td><td>\x1B\x4C; 1/11 4/12</td>
-  <th>hpMemUnlk<br/>LS2R</th>   <td>ESC l</td><td>\x1B\x6C; 1/11 6/12</td>
-</tr>
-<tr>
-  <th class="markB">G1D6</th>   <td>ESC -</td><td>\x1B\x2D; 1/11 2/13</td>
-  <th>RI</th>                   <td>ESC M</td><td>\x1B\x4D; 1/11 4/13</td>
-  <th>hpMemLk<br/>LS3R</th>     <td>ESC m</td><td>\x1B\x6D; 1/11 6/13</td>
-</tr>
-<tr><th class="markB">G2D6</th>      <td>ESC .</td><td>\x1B\x2E; 1/11 2/14</td><th>SS2</th><td>ESC N</td>     <td>\x1B\x4E; 1/11 4/14</td><th>LS2</th><td>ESC n</td>    <td>\x1B\x6E; 1/11 6/14</td></tr>
-<tr><th class="markB">G3D6</th>      <td>ESC /</td><td>\x1B\x2F; 1/11 2/15</td><th>SS3</th><td>ESC O</td>     <td>\x1B\x4F; 1/11 4/15</td><th>LS3</th><td>ESC o</td>    <td>\x1B\x6F; 1/11 6/15</td></tr>
+<tr><th>略号</th><th>符号表現</th><th>Hex; 行/列</th>
+    <th>略号</th><th>符号表現</th><th>Hex; 行/列</th>
+    <th>略号</th><th>符号表現</th><th>Hex; 行/列</th></tr>
+<tr><th class="markB">ACS</th><td><kbd>ESC SP</kbd></td><td>\x1B\x20; 1/11 2/0</td>
+    <th>---</th><td><kbd>ESC @</kbd></td><td>\x1B\x40; 1/11 4/0</td>
+    <th>DMI</th><td><kbd>ESC `</kbd></td><td>\x1B\x60; 1/11 6/0</td></tr>
+<tr><th class="markB">CZD</th><td><kbd>ESC !</kbd></td><td>\x1B\x21; 1/11 2/1</td>
+    <th>---</th><td><kbd>ESC A</kbd></td><td>\x1B\x41; 1/11 4/1</td>
+    <th>INT</th><td><kbd>ESC a</kbd></td><td>\x1B\x61; 1/11 6/1</td></tr>
+<tr><th class="markB">C1D</th><td><kbd>ESC "</kbd></td><td>\x1B\x22; 1/11 2/2</td>
+    <th>---</th><td><kbd>ESC B</kbd></td><td>\x1B\x42; 1/11 4/2</td>
+    <th>EMI</th><td><kbd>ESC b</kbd></td><td>\x1B\x62; 1/11 6/2</td></tr>
+<tr><th class="markB">(1B23+)</th><td><kbd>ESC #</kbd></td><td>\x1B\x23; 1/11 2/3</td>
+    <th>---</th><td><kbd>ESC C</kbd></td><td>\x1B\x43; 1/11 4/3</td>
+    <th>RIS</th><td><kbd>ESC c</kbd></td><td>\x1B\x63; 1/11 6/3</td></tr>
+<tr><th class="markB">GnDMm</th><td><kbd>ESC $</kbd></td><td>\x1B\x24; 1/11 2/4</td>
+    <th>IND</th><td><kbd>ESC D</kbd></td><td>\x1B\x44; 1/11 4/4</td>
+    <th>CMD</th><td><kbd>ESC d</kbd></td><td>\x1B\x64; 1/11 6/4</td></tr>
+<tr><th class="markB">DOCS</th><td><kbd>ESC %</kbd></td><td>\x1B\x25; 1/11 2/5</td>
+    <th>NEL</th><td><kbd>ESC E</kbd></td><td>\x1B\x45; 1/11 4/5</td>
+    <th>-R-</th><td><kbd>ESC e</kbd></td><td>\x1B\x65; 1/11 6/5</td></tr>
+<tr><th class="markB">IRR</th><td><kbd>ESC &amp;</kbd></td><td>\x1B\x26; 1/11 2/6</td>
+    <th>hpLowLeft</th><td><kbd>ESC F</kbd></td><td>\x1B\x46; 1/11 4/6</td>
+    <th>-R-</th><td><kbd>ESC f</kbd></td><td>\x1B\x66; 1/11 6/6</td></tr>
+<tr><th>-R-</th><td><kbd>ESC '</kbd></td><td>\x1B\x27; 1/11 2/7</td>
+    <th>---</th><td><kbd>ESC G</kbd></td><td>\x1B\x47; 1/11 4/7</td>
+    <th>-R-</th><td><kbd>ESC g</kbd></td><td>\x1B\x67; 1/11 6/7</td></tr>
+<tr><th class="markB">GZD4</th><td><kbd>ESC (</kbd></td><td>\x1B\x28; 1/11 2/8</td>
+    <th>HTS</th><td><kbd>ESC H</kbd></td><td>\x1B\x48; 1/11 4/8</td>
+    <th>-R-</th><td><kbd>ESC h</kbd></td><td>\x1B\x68; 1/11 6/8</td></tr>
+<tr><th class="markB">G1D4</th><td><kbd>ESC )</kbd></td><td>\x1B\x29; 1/11 2/9</td>
+    <th>---</th><td><kbd>ESC I</kbd></td><td>\x1B\x49; 1/11 4/9</td>
+    <th>-R-</th><td><kbd>ESC i</kbd></td><td>\x1B\x69; 1/11 6/9</td></tr>
+<tr><th class="markB">G2D4</th><td><kbd>ESC *</kbd></td><td>\x1B\x2A; 1/11 2/10</td>
+    <th>---</th><td><kbd>ESC J</kbd></td><td>\x1B\x4A; 1/11 4/10</td>
+    <th>-R-</th><td><kbd>ESC j</kbd></td><td>\x1B\x6A; 1/11 6/10</td></tr>
+<tr><th class="markB">G3D4</th><td><kbd>ESC +</kbd></td><td>\x1B\x2B; 1/11 2/11</td>
+    <th>---</th><td><kbd>ESC K</kbd></td><td>\x1B\x4B; 1/11 4/11</td>
+    <th>LS1R</th><td><kbd>ESC k</kbd></td><td>\x1B\x6B; 1/11 6/11</td></tr>
+<tr><th>-R-</th><td><kbd>ESC ,</kbd></td><td>\x1B\x2C; 1/11 2/12</td>
+    <th>---</th><td><kbd>ESC L</kbd></td><td>\x1B\x4C; 1/11 4/12</td>
+    <th>hpMemUnlk<br/>LS2R</th><td><kbd>ESC l</kbd></td><td>\x1B\x6C; 1/11 6/12</td></tr>
+<tr><th class="markB">G1D6</th><td><kbd>ESC -</kbd></td><td>\x1B\x2D; 1/11 2/13</td>
+    <th>RI</th><td><kbd>ESC M</kbd></td><td>\x1B\x4D; 1/11 4/13</td>
+    <th>hpMemLk<br/>LS3R</th><td><kbd>ESC m</kbd></td><td>\x1B\x6D; 1/11 6/13</td></tr>
+<tr><th class="markB">G2D6</th><td><kbd>ESC .</kbd></td><td>\x1B\x2E; 1/11 2/14</td>
+    <th>SS2</th><td><kbd>ESC N</kbd></td><td>\x1B\x4E; 1/11 4/14</td>
+    <th>LS2</th><td><kbd>ESC n</kbd></td><td>\x1B\x6E; 1/11 6/14</td></tr>
+<tr><th class="markB">G3D6</th><td><kbd>ESC /</kbd></td><td>\x1B\x2F; 1/11 2/15</td>
+    <th>SS3</th><td><kbd>ESC O</kbd></td><td>\x1B\x4F; 1/11 4/15</td>
+    <th>LS3</th><td><kbd>ESC o</kbd></td><td>\x1B\x6F; 1/11 6/15</td></tr>
 
-<tr><th>略号</th><th>符号表現</th>   <th>Hex; 行/列</th>         <th>略号</th><th>符号表現</th><th>Hex; 行/列</th>                   <th>略号</th><th>符号表現</th> <th>Hex; 行/列</th>         </tr>
-<tr><th>---</th><td>ESC 0</td>       <td>\x1B\x30; 1/11 3/0</td> <th class="markB">DCS</th><td>ESC P</td><td>\x1B\x50; 1/11 5/0</td> <th>PCD</th><td>ESC p</td>     <td>\x1B\x70; 1/11 7/0</td> </tr>
-<tr><th>---</th><td>ESC 1</td>       <td>\x1B\x31; 1/11 3/1</td> <th>---</th>              <td>ESC Q</td><td>\x1B\x51; 1/11 5/1</td> <th>-R-</th><td>ESC q</td>     <td>\x1B\x71; 1/11 7/1</td> </tr>
-<tr><th>---</th><td>ESC 2</td>       <td>\x1B\x32; 1/11 3/2</td> <th>---</th>              <td>ESC R</td><td>\x1B\x52; 1/11 5/2</td> <th>-R-</th><td>ESC r</td>     <td>\x1B\x72; 1/11 7/2</td> </tr>
-<tr><th>---</th><td>ESC 3</td>       <td>\x1B\x33; 1/11 3/3</td> <th>---</th>              <td>ESC S</td><td>\x1B\x53; 1/11 5/3</td> <th>-R-</th><td>ESC s</td>     <td>\x1B\x73; 1/11 7/3</td> </tr>
-<tr><th>---</th><td>ESC 4</td>       <td>\x1B\x34; 1/11 3/4</td> <th>---</th>              <td>ESC T</td><td>\x1B\x54; 1/11 5/4</td> <th>-R-</th><td>ESC t</td>     <td>\x1B\x74; 1/11 7/4</td> </tr>
-<tr><th>---</th><td>ESC 5</td>       <td>\x1B\x35; 1/11 3/5</td> <th>---</th>              <td>ESC U</td><td>\x1B\x55; 1/11 5/5</td> <th>-R-</th><td>ESC u</td>     <td>\x1B\x75; 1/11 7/5</td> </tr>
-<tr><th>---</th><td>ESC 6</td>       <td>\x1B\x36; 1/11 3/6</td> <th>SPA</th>              <td>ESC V</td><td>\x1B\x56; 1/11 5/6</td> <th>-R-</th><td>ESC v</td>     <td>\x1B\x76; 1/11 7/6</td> </tr>
-<tr><th>DECSC</th><td>ESC 7</td>       <td>\x1B\x37; 1/11 3/7</td> <th>EPA</th>            <td>ESC W</td><td>\x1B\x57; 1/11 5/7</td> <th>-R-</th><td>ESC w</td>     <td>\x1B\x77; 1/11 7/7</td> </tr>
-<tr><th>DECRC</th><td>ESC 8</td>       <td>\x1B\x38; 1/11 3/8</td> <th>SOS</th>            <td>ESC X</td><td>\x1B\x58; 1/11 5/8</td> <th>-R-</th><td>ESC x</td>     <td>\x1B\x78; 1/11 7/8</td> </tr>
-<tr><th>---</th><td>ESC 9</td>       <td>\x1B\x39; 1/11 3/9</td> <th>---</th>              <td>ESC Y</td><td>\x1B\x59; 1/11 5/9</td> <th>-R-</th><td>ESC y</td>     <td>\x1B\x79; 1/11 7/9</td> </tr>
-<tr><th>---</th><td>ESC :</td>       <td>\x1B\x3A; 1/11 3/10</td><th>DECID</th>            <td>ESC Z</td><td>\x1B\x5A; 1/11 5/10</td><th>-R-</th><td>ESC z</td>     <td>\x1B\x7A; 1/11 7/10</td></tr>
-<tr><th>---</th><td>ESC ;</td>       <td>\x1B\x3B; 1/11 3/11</td><th class="markB">CSI</th><td>ESC [</td><td>\x1B\x5B; 1/11 5/11</td><th>-R-</th><td>ESC {</td>     <td>\x1B\x7B; 1/11 7/11</td></tr>
-<tr><th>---</th><td>ESC &lt;</td>    <td>\x1B\x3C; 1/11 3/12</td><th>ST</th>               <td>ESC \</td><td>\x1B\x5C; 1/11 5/12</td><th>LS3R</th><td>ESC |</td>    <td>\x1B\x7C; 1/11 7/12</td></tr>
-<tr><th>DECKPAM</th><td>ESC =</td>   <td>\x1B\x3D; 1/11 3/13</td><th class="markB">OSC</th><td>ESC ]</td><td>\x1B\x5D; 1/11 5/13</td><th>LS2R</th><td>ESC }</td>    <td>\x1B\x7D; 1/11 7/13</td></tr>
-<tr><th>DECKPNM</th><td>ESC &gt;</td><td>\x1B\x3E; 1/11 3/14</td><th class="markB">PM</th> <td>ESC ^</td><td>\x1B\x5E; 1/11 5/14</td><th>LS1R</th><td>ESC ~</td>    <td>\x1B\x7E; 1/11 7/14</td></tr>
-<tr><th>---</th><td>ESC ?</td>       <td>\x1B\x3F; 1/11 3/15</td><th class="markB">APC</th><td>ESC _</td><td>\x1B\x5F; 1/11 5/15</td><th>-R-</th><td>ESC DEL</td>   <td>\x1B\x7F; 1/11 7/15</td></tr>
+<tr><th>略号</th><th>符号表現</th><th>Hex; 行/列</th>
+    <th>略号</th><th>符号表現</th><th>Hex; 行/列</th>
+    <th>略号</th><th>符号表現</th><th>Hex; 行/列</th></tr>
+<tr><th>---</th><td><kbd>ESC 0</kbd></td><td>\x1B\x30; 1/11 3/0</td>
+    <th class="markB">DCS</th><td><kbd>ESC P</kbd></td><td>\x1B\x50; 1/11 5/0</td>
+    <th>PCD</th><td><kbd>ESC p</kbd></td><td>\x1B\x70; 1/11 7/0</td></tr>
+<tr><th>---</th><td><kbd>ESC 1</kbd></td><td>\x1B\x31; 1/11 3/1</td>
+    <th>---</th><td><kbd>ESC Q</kbd></td><td>\x1B\x51; 1/11 5/1</td>
+    <th>-R-</th><td><kbd>ESC q</kbd></td><td>\x1B\x71; 1/11 7/1</td></tr>
+<tr><th>---</th><td><kbd>ESC 2</kbd></td><td>\x1B\x32; 1/11 3/2</td>
+    <th>---</th><td><kbd>ESC R</kbd></td><td>\x1B\x52; 1/11 5/2</td>
+    <th>-R-</th><td><kbd>ESC r</kbd></td><td>\x1B\x72; 1/11 7/2</td></tr>
+<tr><th>---</th><td><kbd>ESC 3</kbd></td><td>\x1B\x33; 1/11 3/3</td>
+    <th>---</th><td><kbd>ESC S</kbd></td><td>\x1B\x53; 1/11 5/3</td>
+    <th>-R-</th><td><kbd>ESC s</kbd></td><td>\x1B\x73; 1/11 7/3</td></tr>
+<tr><th>---</th><td><kbd>ESC 4</kbd></td><td>\x1B\x34; 1/11 3/4</td>
+    <th>---</th><td><kbd>ESC T</kbd></td><td>\x1B\x54; 1/11 5/4</td>
+    <th>-R-</th><td><kbd>ESC t</kbd></td><td>\x1B\x74; 1/11 7/4</td></tr>
+<tr><th>---</th><td><kbd>ESC 5</kbd></td><td>\x1B\x35; 1/11 3/5</td>
+    <th>---</th><td><kbd>ESC U</kbd></td><td>\x1B\x55; 1/11 5/5</td>
+    <th>-R-</th><td><kbd>ESC u</kbd></td><td>\x1B\x75; 1/11 7/5</td></tr>
+<tr><th>---</th><td><kbd>ESC 6</kbd></td><td>\x1B\x36; 1/11 3/6</td>
+    <th>SPA</th><td><kbd>ESC V</kbd></td><td>\x1B\x56; 1/11 5/6</td>
+    <th>-R-</th><td><kbd>ESC v</kbd></td><td>\x1B\x76; 1/11 7/6</td></tr>
+<tr><th>DECSC</th><td><kbd>ESC 7</kbd></td><td>\x1B\x37; 1/11 3/7</td>
+    <th>EPA</th><td><kbd>ESC W</kbd></td><td>\x1B\x57; 1/11 5/7</td>
+    <th>-R-</th><td><kbd>ESC w</kbd></td><td>\x1B\x77; 1/11 7/7</td></tr>
+<tr><th>DECRC</th><td><kbd>ESC 8</kbd></td><td>\x1B\x38; 1/11 3/8</td>
+    <th>SOS</th><td><kbd>ESC X</kbd></td><td>\x1B\x58; 1/11 5/8</td>
+    <th>-R-</th><td><kbd>ESC x</kbd></td><td>\x1B\x78; 1/11 7/8</td></tr>
+<tr><th>---</th><td><kbd>ESC 9</kbd></td><td>\x1B\x39; 1/11 3/9</td>
+    <th>---</th><td><kbd>ESC Y</kbd></td><td>\x1B\x59; 1/11 5/9</td>
+    <th>-R-</th><td><kbd>ESC y</kbd></td><td>\x1B\x79; 1/11 7/9</td></tr>
+<tr><th>---</th><td><kbd>ESC :</kbd></td><td>\x1B\x3A; 1/11 3/10</td>
+    <th>DECID</th><td><kbd>ESC Z</kbd></td><td>\x1B\x5A; 1/11 5/10</td>
+    <th>-R-</th><td><kbd>ESC z</kbd></td><td>\x1B\x7A; 1/11 7/10</td></tr>
+<tr><th>---</th><td><kbd>ESC ;</kbd></td><td>\x1B\x3B; 1/11 3/11</td>
+    <th class="markB">CSI</th><td><kbd>ESC [</kbd></td><td>\x1B\x5B; 1/11 5/11</td>
+    <th>-R-</th><td><kbd>ESC {</kbd></td><td>\x1B\x7B; 1/11 7/11</td></tr>
+<tr><th>---</th><td><kbd>ESC &lt;</kbd></td><td>\x1B\x3C; 1/11 3/12</td>
+    <th>ST</th><td><kbd>ESC \</kbd></td><td>\x1B\x5C; 1/11 5/12</td>
+    <th>LS3R</th><td><kbd>ESC |</kbd></td><td>\x1B\x7C; 1/11 7/12</td></tr>
+<tr><th>DECKPAM</th><td><kbd>ESC =</kbd></td><td>\x1B\x3D; 1/11 3/13</td>
+    <th class="markB">OSC</th><td><kbd>ESC ]</kbd></td><td>\x1B\x5D; 1/11 5/13</td>
+    <th>LS2R</th><td><kbd>ESC }</kbd></td><td>\x1B\x7D; 1/11 7/13</td></tr>
+<tr><th>DECKPNM</th><td><kbd>ESC &gt;</kbd></td><td>\x1B\x3E; 1/11 3/14</td>
+    <th class="markB">PM</th><td><kbd>ESC ^</kbd></td><td>\x1B\x5E; 1/11 5/14</td>
+    <th>LS1R</th><td><kbd>ESC ~</kbd></td><td>\x1B\x7E; 1/11 7/14</td></tr>
+<tr><th>---</th><td><kbd>ESC ?</kbd></td><td>\x1B\x3F; 1/11 3/15</td>
+    <th class="markB">APC</th><td><kbd>ESC _</kbd></td><td>\x1B\x5F; 1/11 5/15</td>
+    <th>-R-</th><td><kbd>ESC DEL</kbd></td><td>\x1B\x7F; 1/11 7/15</td></tr>
 </table>
 
 <ul>
@@ -419,16 +483,16 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <table class="normal center">
 <tr><th>略号</th>   <th>符号表現</th><th>Hex; 行/列</th></tr>
 <tr><th>RSCF</th>
-  <td>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
+  <td><kbd>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td>
   <td>\x1B\x23<i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i>;
     1/11 2/3 <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i>
   </td>
 </tr>
-<tr><th>DECDHL</th> <td>ESC # 3</td> <td>\x1B\x23\x33; 1/11 2/3 3/3</td></tr>
-<tr><th>DECDHL</th> <td>ESC # 4</td> <td>\x1B\x23\x34; 1/11 2/3 3/4</td></tr>
-<tr><th>DECSWL</th> <td>ESC # 5</td> <td>\x1B\x23\x34; 1/11 2/3 3/4</td></tr>
-<tr><th>DECDWL</th> <td>ESC # 6</td> <td>\x1B\x23\x36; 1/11 2/3 3/6</td></tr>
-<tr><th>DECALN</th> <td>ESC # 8</td> <td>\x1B\x23\x38; 1/11 2/3 3/8</td></tr>
+<tr><th>DECDHL</th> <td><kbd>ESC # 3</kbd></td> <td>\x1B\x23\x33; 1/11 2/3 3/3</td></tr>
+<tr><th>DECDHL</th> <td><kbd>ESC # 4</kbd></td> <td>\x1B\x23\x34; 1/11 2/3 3/4</td></tr>
+<tr><th>DECSWL</th> <td><kbd>ESC # 5</kbd></td> <td>\x1B\x23\x34; 1/11 2/3 3/4</td></tr>
+<tr><th>DECDWL</th> <td><kbd>ESC # 6</kbd></td> <td>\x1B\x23\x36; 1/11 2/3 3/6</td></tr>
+<tr><th>DECALN</th> <td><kbd>ESC # 8</kbd></td> <td>\x1B\x23\x38; 1/11 2/3 3/8</td></tr>
 </table>
 <p>但し、<i>&lt;I&gt;</i> は [0x20, 0x30) の範囲の文字であり、
 <i>&lt;F&gt;</i> は [0x40, 0x7F) の範囲の文字である。
@@ -438,7 +502,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <table class="normal center">
 <tr><th>先頭</th><th>符号表現</th><th>名前</th></tr>
 <tr><th>CSI</th>
-  <td>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></td>
+  <td><kbd>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td>
   <td><dfn>制御シーケンス</dfn> (control sequence)</td>
 </tr>
 </table>
@@ -491,15 +555,15 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <table class="normal center">
 <tr><th>先頭</th><th>符号表現</th><th>名前</th></tr>
 <tr><th>OSC</th>
-  <td>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> BEL<br/>
-  OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> ST
+  <td><kbd>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> BEL</kbd><br/>
+  <kbd>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> ST</kbd>
   </td>
   <td>Operating System Command</td>
 </tr>
-<tr><th>DCS</th><td>DCS <strong>.*</strong> ST</td><td>Device Control String</td></tr>
-<tr><th>SOS</th> <td>SOS <strong>.*</strong> ST</td> <td>Start of String</td></tr>
-<tr><th>PM</th> <td>PM <strong>.*</strong> ST</td> <td>Privacy Message</td></tr>
-<tr><th>APC</th><td>APC <strong>.*</strong> ST</td><td>Application Program Command</td>
+<tr><th>DCS</th><td><kbd>DCS <strong>.*</strong> ST</kbd></td><td>Device Control String</td></tr>
+<tr><th>SOS</th><td><kbd>SOS <strong>.*</strong> ST</kbd></td> <td>Start of String</td></tr>
+<tr><th>PM</th> <td><kbd>PM <strong>.*</strong> ST</kbd></td> <td>Privacy Message</td></tr>
+<tr><th>APC</th><td><kbd>APC <strong>.*</strong> ST</kbd></td><td>Application Program Command</td>
 </tr>
 </table>
 
@@ -593,11 +657,11 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 
 <table class="normal center">
 <tr><th>略号</th><th>符号表現</th></tr>
-<tr><th>SM</th>     <td>CSI <i>&lt;Pm&gt;</i> h</td></tr>
-<tr><th>DECSET</th> <td>CSI ? <i>&lt;Pm&gt;</i> h</td></tr>
-<tr><th>RM</th>     <td>CSI <i>&lt;Pm&gt;</i> l</td></tr>
-<tr><th>DECRST</th> <td>CSI ? <i>&lt;Pm&gt;</i> l</td></tr>
-<tr><th>DECRQM</th> <td>CSI <i>&lt;Pm&gt;</i> $ p<br/>CSI ? <i>&lt;Pm&gt;</i> $ p</td></tr>
+<tr><th>SM</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> h</kbd></td></tr>
+<tr><th>DECSET</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> h</kbd></td></tr>
+<tr><th>RM</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> l</kbd></td></tr>
+<tr><th>DECRST</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> l</kbd></td></tr>
+<tr><th>DECRQM</th> <td><kbd>CSI <i>&lt;Pm&gt;</i> $ p</kbd><br/><kbd>CSI ? <i>&lt;Pm&gt;</i> $ p</kbd></td></tr>
 </table>
 <ul>
 <li><dfn class="cfunc">SM</dfn>: Set Mode
@@ -681,8 +745,8 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 
 <ul>
 <li>Mode 3 <dfn class="cmode">CRM</dfn>: Show Control Character Mode [既定値 off]
-  <p><b>Control</b> (RM): 全ての制御機能を通常通りに処理する。</p>
-  <p><b>Graphic</b> (SM): RM 以外の受信した全ての制御機能を実行せずに図形文字として表示する。</p>
+  <p><dfn class="cmode-rm">CONTROL</dfn> (RM): 全ての制御機能を通常通りに処理する。</p>
+  <p><dfn class="cmode-sm">GRAPHIC</dfn> (SM): RM 以外の受信した全ての制御機能を実行せずに図形文字として表示する。</p>
   <ul>
   <li>互換性: [ECMA-48/7.2.2], VT100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/CRM">VT510: CRM</a></li>
@@ -863,7 +927,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   逆の文字進路の場合には丁度反転する。
 </li>
 <li>行中で部分的に表示方向を変更するには SDS, SRS を用いる。
-  この部分的に変更された部分を<a>文字列</a> (directed string) と呼ぶ。
+  この部分的に変更された部分を<dfn>文字列</dfn> (directed string) と呼ぶ。
   但し、方向付き文字列の内部では記憶部と表示部での位置の対応関係は規定されない。
 </li>
 </ul>
@@ -880,8 +944,8 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   SLL, SPH, SPL が作用する対象が表示部か記憶部かを設定する。
   </p>
   <ul>
-  <li><b>PRESENTATION</b> (RM): 上記の制御機能は、現在表示位置において表示部に対して実施される。</li>
-  <li><b>DATA</b> (SM): 上記の制御機能は、現在記憶位置において記憶部に対して実施される。</li>
+  <li><dfn class="cmode-rm">PRESENTATION</dfn> (RM): 上記の制御機能は、現在表示位置において表示部に対して実施される。</li>
+  <li><dfn class="cmode-sm">DATA</dfn> (SM): 上記の制御機能は、現在記憶位置において記憶部に対して実施される。</li>
   </ul>
 </li>
 <li><dfn class="cfunc">SPD</dfn>: Select Presentation Directions
@@ -937,7 +1001,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   </p>
 </li>
 <li><dfn class="cfunc">SIMD</dfn>: Select Implicit Movement Direction
-  <p>[ECMA-48/8.3.120] 暗黙的移動の向きを設定する。この設定は次の <b>SIMD</b> まで有効である。
+  <p>[ECMA-48/8.3.120] 暗黙的移動の向きを設定する。この設定は次の SIMD まで有効である。
   0 を指定すると暗黙的移動は右向きである。
   1 を指定すると暗黙的移動は左向きである。
   引数の既定値は 0 である。
@@ -962,11 +1026,11 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   引数 <i>&lt;Pn&gt;</i> は列番号を指定し、既定値はない。
   </p>
   <p>Note: どの瞬間の DCSM が効くのか規格には明記されていないが、
-  CR の説明によると、DCSM は CR/DL/IL/NEL が呼び出された時の値が単に使用される。
-  つまり、SLH/SLL で記録される状態は DCSM の影響を受けず、
-  単に CR/DL/IL/NEL の動作が DCSM の値によって変わるという事である。
+  CR の説明によると、DCSM は CR, DL, IL, NEL が呼び出された時の値が単に使用される。
+  つまり、SLH, SLL で記録される状態は DCSM の影響を受けず、
+  単に CR, DL, IL, NEL の動作が DCSM の値によって変わるという事である。
   </p>
-  <p>Note: 行毎に SLH/SLL の値を保持するのかどうか規格には明記されていない。
+  <p>Note: 行毎に SLH, SLL の値を保持するのかどうか規格には明記されていない。
   これは "以降の行" (lines of subsequent text) をどう解釈するかに依存する。
   因みに SCP の "以降の行" (subsequent lines) とは表現が異なる。
   </p>
@@ -1002,7 +1066,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </li>
 <li>互換性
   <ul>
-  <li>contra では SLH/SLL の引数を省略した時、または 0 を指定した時、既定値(行頭/行末)に戻す。</li>
+  <li>contra では SLH, SLL の引数を省略した時、または 0 を指定した時、既定値(行頭/行末)に戻す。</li>
   </ul>
 </li>
 </ul>
@@ -1018,11 +1082,11 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 それぞれ SDS, SRS によって始まりと終わりを指定される。
 これらは記憶部での文字前進 (character progression) には影響を与えず、
 文字列の内容はそのままそれまでの文章の続きとして記憶される。
-文字列は、SDS/SRS の区別なく任意の階層で入れ子にする事ができる。
+文字列は、SDS, SRS の区別なく任意の階層で入れ子にする事ができる。
 ECMA-48 では入れ子文字列内部における現在記憶位置を指定しない。
 入れ子文字列を閉じる度に、一つ外側の入れ子文字列の方向が復元される。
-SDS/SRS 文字列内部で CVT, HT, SCP, SPD, VT を呼び出した時の動作は規定されない。
-SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA を呼び出してはならない。
+SDS, SRS 文字列内部で CVT, HT, SCP, SPD, VT を呼び出した時の動作は規定されない。
+SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA を呼び出してはならない。
 </p>
 <p>[ECMA-TR/35] 文章による定義はないが、Annex A に動作例が載っている。
 動作例から以下のような規則が読み取れるが、疑問が多々残る。
@@ -1116,7 +1180,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <ul>
 <li><dfn class="cfunc">BS</dfn>: Backspace
-  <p>[ECMA-48/8.3.5] 現在記憶位置を現在の暗黙的移動とは逆の方向に1文字動かす。暗黙的移動の方向は <b>SIMD</b> で変更できる。</p>
+  <p>[ECMA-48/8.3.5] 現在記憶位置を現在の暗黙的移動とは逆の方向に1文字動かす。暗黙的移動の方向は SIMD で変更できる。</p>
 </li>
 <li><dfn class="cfunc">LF</dfn>: Line Feed
   <p>[ECMA-48/8.1.74] 現在表示位置または現在記憶位置 (DCSM に応じて変わる) を次の行に移動する。列はそのまま。</p>
@@ -1161,18 +1225,18 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <p>[ECMA-48/8.3.86] 次の行の行頭に移動する。
   実質、次の行に移ってから CR を実行するのに等価である。
   </p>
-  <p>Note: もし行毎に SLH/SLL の値を保持するのだとしたら、
-  規格の文面を見るに移った先の行の SLH/SLL を用いることになるだろう。
+  <p>Note: もし行毎に SLH, SLL の値を保持するのだとしたら、
+  規格の文面を見るに移った先の行の SLH, SLL を用いることになるだろう。
   </p>
 </li>
-<li>Mode 22 <dfn class="cfunc">ZDM</dfn>: Zero Default Mode
+<li>Mode 22 <dfn class="cmode">ZDM</dfn>: Zero Default Mode
   <p>[ECMA-48/7.2.20, F.4.2] 制御機能 CBT, CHA, CHT, CNL, CPL, CPR, CUB, CUD, CUF, CUP, CUU, CVT,
   DCH, DL, ECH, GSM, HPA, HPB, HPR, HVP, ICH, IL, NP, PP, PPA, PPB, PPR, REP, SD, SL, SR, SU,
   TCC, VPA, VPB, VPR に 0 を指定した時の解釈を切り替える。
   </p>
   <ul>
-  <li><dfn>ZERO</dfn> (RM): 0 は 0 を意味する。</li>
-  <li><dfn>DEFAULT</dfn> (SM): 0 は引数の既定値を使うことを意味する。</li>
+  <li><dfn class="cmode-rm">ZERO</dfn> (RM): 0 は 0 を意味する。</li>
+  <li><dfn class="cmode-sm">DEFAULT</dfn> (SM): 0 は引数の既定値を使うことを意味する。</li>
   </ul>
   <p>Note: ECMA-48 1st Edition では空引数と 0 は共に既定値を意味していた。
   然し、現在の版では引数の既定値の取り扱いが変わった。
@@ -1276,13 +1340,13 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <table class="normal center">
 <tr><th>略号</th><th>符号表現</th></tr>
-<tr><th>ED</th> <td>CSI <i>&lt;Ps&gt;</i> J</td></tr>
-<tr><th>DCH</th><td>CSI <i>&lt;Ps&gt;</i> P</td></tr>
-<tr><th>ECH</th><td>CSI <i>&lt;Ps&gt;</i> X</td></tr>
-<tr><th>ICH</th><td>CSI <i>&lt;Ps&gt;</i> @</td></tr>
-<tr><th>DL</th> <td>CSI <i>&lt;Ps&gt;</i> M</td></tr>
-<tr><th>EL</th> <td>CSI <i>&lt;Ps&gt;</i> K</td></tr>
-<tr><th>IL</th> <td>CSI <i>&lt;Ps&gt;</i> L</td></tr>
+<tr><th>ED</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> J</kbd></td></tr>
+<tr><th>DCH</th><td><kbd>CSI <i>&lt;Ps&gt;</i> P</kbd></td></tr>
+<tr><th>ECH</th><td><kbd>CSI <i>&lt;Ps&gt;</i> X</kbd></td></tr>
+<tr><th>ICH</th><td><kbd>CSI <i>&lt;Ps&gt;</i> @</kbd></td></tr>
+<tr><th>DL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> M</kbd></td></tr>
+<tr><th>EL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> K</kbd></td></tr>
+<tr><th>IL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> L</kbd></td></tr>
 </table>
 <ul>
 <li><dfn class="cfunc">ED</dfn>: Erase in Display
@@ -1370,55 +1434,55 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <p>■ 以下 xterm の CSI Sequence (未だ纏めていない物)</p>
 <table class="normal center">
 <tr><th>略号</th><th>符号表現</th></tr>
-<tr><th>DECSED</th><td>CSI ? <i>&lt;Ps&gt;</i> J</td></tr>
-<tr><th>DECSEL</th><td>CSI ? <i>&lt;Ps&gt;</i> K</td></tr>
-<tr><th>SU</th>     <td>CSI <i>&lt;Ps&gt;</i> S</td></tr>
-<tr><th>SD</th>     <td>CSI <i>&lt;Ps&gt;</i> T</td></tr>
-<tr><th>(IHMT)</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> T</td></tr>
-<tr><th>HPA</th>    <td>CSI <i>&lt;Ps&gt;</i> `</td></tr>
-<tr><th>REP</th>    <td>CSI <i>&lt;Pm&gt;</i> b</td></tr>
-<tr><th>VPA</th>    <td>CSI <i>&lt;Pm&gt;</i> d</td></tr>
-<tr><th>HVP</th>    <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> f</td></tr>
-<tr><th>TBC</th>    <td>CSI <i>&lt;Ps&gt;</i> g</td></tr>
-<tr><th>MC</th>     <td>CSI <i>&lt;Pm&gt;</i> i</td></tr>
-<tr><th>DECMC</th>  <td>CSI ? <i>&lt;Pm&gt;</i> i</td></tr>
-<tr><th>DSR</th>    <td>CSI <i>&lt;Ps&gt;</i> n</td></tr>
-<tr><th>DECDSR</th> <td>CSI ? <i>&lt;Ps&gt;</i> n</td></tr>
-<tr><th>DECSTR</th> <td>CSI ! p</td></tr>
-<tr><th>DECSCL</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> " p</td></tr>
-<tr><th>DECSCA</th> <td>CSI <i>&lt;Ps&gt;</i> q</td></tr>
-<tr><th>DECSTBM</th><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> r</td></tr>
-<tr><th>XTREST</th> <td>CSI ? <i>&lt;Pm&gt;</i> r</td></tr>
-<tr><th>DECCARA</th><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ r</td></tr>
-<tr><th>XTSAVE</th> <td>CSI ? <i>&lt;Pm&gt;</i> s</td></tr>
-<tr><th>XTWOP</th>  <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> t</td></tr>
-<tr><th>DECRARA</th><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ t</td></tr>
-<tr><th>DECCRA</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ w</td></tr>
-<tr><th>DECEFR</th> <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ' w</td></tr>
-<tr><th>DECREQTPARM</th><td>CSI <i>&lt;Ps&gt;</i> x</td></tr>
-<tr><th>DECSACE</th>    <td>CSI <i>&lt;Ps&gt;</i> * x</td></tr>
-<tr><th>DECFRA</th>     <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ x</td></tr>
-<tr><th>DECELR</th>     <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ' z</td></tr>
-<tr><th>DECERA</th>     <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ z</td></tr>
-<tr><th>DECSLE</th>     <td>CSI <i>&lt;Pm&gt;</i> ' {</td></tr>
-<tr><th>DECSERA</th>    <td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ {</td></tr>
-<tr><th>DECRQLP</th>    <td>CSI <i>&lt;Ps&gt;</i> ' |</td></tr>
+<tr><th>DECSED</th><td><kbd>CSI ? <i>&lt;Ps&gt;</i> J</kbd></td></tr>
+<tr><th>DECSEL</th><td><kbd>CSI ? <i>&lt;Ps&gt;</i> K</kbd></td></tr>
+<tr><th>SU</th>     <td><kbd>CSI <i>&lt;Ps&gt;</i> S</kbd></td></tr>
+<tr><th>SD</th>     <td><kbd>CSI <i>&lt;Ps&gt;</i> T</kbd></td></tr>
+<tr><th>(IHMT)</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> T</kbd></td></tr>
+<tr><th>HPA</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> `</kbd></td></tr>
+<tr><th>REP</th>    <td><kbd>CSI <i>&lt;Pm&gt;</i> b</kbd></td></tr>
+<tr><th>VPA</th>    <td><kbd>CSI <i>&lt;Pm&gt;</i> d</kbd></td></tr>
+<tr><th>HVP</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> f</kbd></td></tr>
+<tr><th>TBC</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> g</kbd></td></tr>
+<tr><th>MC</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> i</kbd></td></tr>
+<tr><th>DECMC</th>  <td><kbd>CSI ? <i>&lt;Pm&gt;</i> i</kbd></td></tr>
+<tr><th>DSR</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> n</kbd></td></tr>
+<tr><th>DECDSR</th> <td><kbd>CSI ? <i>&lt;Ps&gt;</i> n</kbd></td></tr>
+<tr><th>DECSTR</th> <td><kbd>CSI ! p</kbd></td></tr>
+<tr><th>DECSCL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> " p</kbd></td></tr>
+<tr><th>DECSCA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> q</kbd></td></tr>
+<tr><th>DECSTBM</th><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> r</kbd></td></tr>
+<tr><th>XTREST</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> r</kbd></td></tr>
+<tr><th>DECCARA</th><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ r</kbd></td></tr>
+<tr><th>XTSAVE</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> s</kbd></td></tr>
+<tr><th>XTWOP</th>  <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> t</kbd></td></tr>
+<tr><th>DECRARA</th><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ t</kbd></td></tr>
+<tr><th>DECCRA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ w</kbd></td></tr>
+<tr><th>DECEFR</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ' w</kbd></td></tr>
+<tr><th>DECREQTPARM</th><td><kbd>CSI <i>&lt;Ps&gt;</i> x</kbd></td></tr>
+<tr><th>DECSACE</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> * x</kbd></td></tr>
+<tr><th>DECFRA</th>     <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ x</kbd></td></tr>
+<tr><th>DECELR</th>     <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ' z</kbd></td></tr>
+<tr><th>DECERA</th>     <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ z</kbd></td></tr>
+<tr><th>DECSLE</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> ' {</kbd></td></tr>
+<tr><th>DECSERA</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ {</kbd></td></tr>
+<tr><th>DECRQLP</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> ' |</kbd></td></tr>
 </table>
 
 <h3>問い合わせ</h3>
 <table class="normal center">
 <tr><th>略号</th><th>種類</th><th>符号表現</th></tr>
-<tr><th>DA1</th> <td>制御</td><td>CSI <i>&lt;Ps&gt;</i> c</td></tr>
-<tr><th>DA1R</th><td>応答</td><td>CSI ? 6 4 ; <i>&lt;Pm&gt;</i> c</td></tr>
-<tr><th>DA2</th> <td>制御</td><td>CSI &gt; <i>&lt;Ps&gt;</i> c</td></tr>
-<tr><th>DA2R</th><td>応答</td><td>CSI &gt; 6 1 ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> c</td></tr>
-<tr><th>DA3</th> <td>制御</td><td>CSI = <i>&lt;Ps&gt;</i> c</td></tr>
-<tr><th>DA3R</th><td>応答</td><td>DCS ! | <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> ST</td></tr>
-<tr><th>DECRQTSR</th><td>制御</td><td>CSI <i>&lt;Ps&gt;</i> $ u</td></tr>
-<tr><th>DECTSR</th><td>応答</td><td>DCS 1 $ s <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> ST</td></tr>
-<tr><th>DDD1</th><td>応答</td><td>ESC ) 1</td></tr>
-<tr><th>DDD2</th><td>応答</td><td>ESC ) B</td></tr>
-<tr><th>DDD3</th><td>応答</td><td>ESC ( 1</td></tr>
+<tr><th>DA1</th> <td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> c</kbd></td></tr>
+<tr><th>DA1R</th><td>応答</td><td><kbd>CSI ? 6 4 ; <i>&lt;Pm&gt;</i> c</kbd></td></tr>
+<tr><th>DA2</th> <td>制御</td><td><kbd>CSI &gt; <i>&lt;Ps&gt;</i> c</kbd></td></tr>
+<tr><th>DA2R</th><td>応答</td><td><kbd>CSI &gt; 6 1 ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> c</kbd></td></tr>
+<tr><th>DA3</th> <td>制御</td><td><kbd>CSI = <i>&lt;Ps&gt;</i> c</kbd></td></tr>
+<tr><th>DA3R</th><td>応答</td><td><kbd>DCS ! | <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> ST</kbd></td></tr>
+<tr><th>DECRQTSR</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> $ u</kbd></td></tr>
+<tr><th>DECTSR</th><td>応答</td><td><kbd>DCS 1 $ s <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> ST</kbd></td></tr>
+<tr><th>DDD1</th><td>応答</td><td><kbd>ESC ) 1</kbd></td></tr>
+<tr><th>DDD2</th><td>応答</td><td><kbd>ESC ) B</kbd></td></tr>
+<tr><th>DDD3</th><td>応答</td><td><kbd>ESC ( 1</kbd></td></tr>
 </table>
 
 <ul>
@@ -1457,7 +1521,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <h3>他</h3>
 <table class="normal center">
 <tr><th>略号</th>    <th>符号表現</th></tr>
-<tr><th>DECSCUSR</th><td>CSI <i>&lt;Ps&gt;</i> SP q</td></tr>
+<tr><th>DECSCUSR</th><td><kbd>CSI <i>&lt;Ps&gt;</i> SP q</kbd></td></tr>
 </table>
 
 <ul>
@@ -1504,9 +1568,9 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <h3>文字挿入時の属性</h3>
 <table class="normal center">
 <tr><th>略号</th><th>符号表現</th></tr>
-<tr><th>SGR</th> <td>CSI <i>&lt;Pm&gt;</i> m</td></tr>
-<tr><th>PLD</th> <td>PLD</td></tr>
-<tr><th>PLU</th> <td>PLU</td></tr>
+<tr><th>SGR</th> <td><kbd>CSI <i>&lt;Pm&gt;</i> m</kbd></td></tr>
+<tr><th>PLD</th> <td><kbd>PLD</kbd></td></tr>
+<tr><th>PLU</th> <td><kbd>PLU</kbd></td></tr>
 </table>
 
 <ul>
@@ -1530,8 +1594,8 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <li>Mode 21 <dfn class="cmode">GRCM</dfn>: Graphic Rendition Combination Mode
   <p>[ECMA-48/7.2.8] SGR でそれまでに設定されていた属性を持続するかどうかを決める。</p>
   <ul>
-  <li><b>REPLACING</b> (RM): SGR が登場する度にそれまでに設定されていた属性をすべて解除する。適用したい属性は毎回指定する必要がある。</li>
-  <li><b>CUMULATIVE</b> (SM): SGR をそれまでに設定されていた属性に対する変更として扱う。</li>
+  <li><dfn class="cmode-rm">REPLACING</dfn> (RM): SGR が登場する度にそれまでに設定されていた属性をすべて解除する。適用したい属性は毎回指定する必要がある。</li>
+  <li><dfn class="cmode-sm">CUMULATIVE</dfn> (SM): SGR をそれまでに設定されていた属性に対する変更として扱う。</li>
   </ul>
 </li>
 </ul>
@@ -1540,10 +1604,10 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <table class="normal center">
 <tr><th>略号</th><th>符号表現</th></tr>
 <tr><th rowspan="2">DECDHL</th>
-    <td>ESC # 3</td></tr>
-<tr><td>ESC # 4</td></tr>
-<tr><th>DECSWL</th><td>ESC # 5</td></tr>
-<tr><th>DECDWL</th><td>ESC # 6</td></tr>
+    <td><kbd>ESC # 3</kbd></td></tr>
+<tr><td><kbd>ESC # 4</kbd></td></tr>
+<tr><th>DECSWL</th><td><kbd>ESC # 5</kbd></td></tr>
+<tr><th>DECDWL</th><td><kbd>ESC # 6</kbd></td></tr>
 </table>
 <ul>
 <li><dfn class="cfunc">DECDHL</dfn>: Double-Width, Double-Height Line
@@ -1577,47 +1641,47 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <h3>SGR 詳細</h3>
 <h4>一覧表</h4>
 <table class="normal center">
-<tr><th>番号</th>          <th>機能</th>                       <th>ansi</th> <th>vt</th><th>xterm</th><th>rxvt</th></tr>
-<tr><td>0</td>             <td><b>sgrDefault</b></td>          <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><td>1</td>             <td><b>sgrBold</b></td>             <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><td>2</td>             <td><b>sgrFaint</b></td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>3</td>             <td><b>sgrItalic</b></td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>4</td>             <td><b>sgrUnderline</b></td>        <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><td>5</td>             <td><b>sgrBlink</b></td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><td>6</td>             <td><b>sgrRapidBlink</b></td>       <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>7</td>             <td><b>sgrNega</b></td>             <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><td>8</td>             <td><b>sgrInvisible</b></td>        <td>*</td>    <td>*</td> <td>*</td>    <td>-</td>   </tr>
-<tr><td>9</td>             <td><b>sgrStrike</b></td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>10-19</td>         <td><b>sgrAnsiFont</b></td>         <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>10</td>            <td><b>sgrCharsetASCII</b></td>     <td>-</td>    <td>*</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>11</td>            <td><b>sgrCharsetL</b></td>         <td>-</td>    <td>*</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>12</td>            <td><b>sgrCharsetR</b></td>         <td>-</td>    <td>*</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>20</td>            <td><b>sgrFraktur</b></td>          <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>21</td>            <td><b>sgrDoubleUnderline</b></td>  <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>22</td>            <td><b>sgrBoldOff</b></td>          <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><td>23</td>            <td><b>sgrItalicOff</b></td>        <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>24</td>            <td><b>sgrUnderlineOff</b></td>     <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><td>25</td>            <td><b>sgrBlinkOff</b></td>         <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><td>26</td>            <td><b>sgrProportional</b></td>     <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>27</td>            <td><b>sgrNegaOff</b></td>          <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><td>28</td>            <td><b>sgrInvisibleOff</b></td>     <td>*</td>    <td>*</td> <td>*</td>    <td>-</td>   </tr>
-<tr><td>29</td>            <td><b>sgrStrikeOff</b></td>        <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>30-37, 40-47</td>  <td><b>sgrAnsiColor</b></td>        <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
-<tr><td>38, 48</td>        <td><b>sgrISO8613_6Color</b></td>   <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>39</td>            <td><b>sgrFgDefault</b></td>        <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
-<tr><td>49</td>            <td><b>sgrBgDefault</b></td>        <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
-<tr><td>50</td>            <td><b>sgrProportionalOff</b></td>  <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>51</td>            <td><b>sgrFrame</b></td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>52</td>            <td><b>sgrCircle</b></td>           <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>53</td>            <td><b>sgrOverline</b></td>         <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>54</td>            <td><b>sgrFrameOff</b></td>         <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>55</td>            <td><b>sgrOverlineOff</b></td>      <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>56-59</td>         <td><b>sgrAnsiReserved</b></td>     <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>60-64</td>         <td><b>sgrIdeoDecoration</b></td>   <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>65</td>            <td><b>sgrIdeoDecorationOff</b></td><td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>66-69</td>         <td><b>sgrJISX0211Deco</b></td>     <td>-</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><td>90-97, 100-107</td><td><b>sgrAixColor</b></td>         <td>-</td>    <td>-</td> <td>*</td>    <td>-</td>   </tr>
-<tr><td>100</td>           <td><b>sgrDefaultColor</b></td>     <td>-</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>名称</th>                <th>Sgr</th >          <th>ansi</th> <th>vt</th><th>xterm</th><th>rxvt</th></tr>
+<tr><th>sgrDefault</th>          <td>0</td>             <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrBold</th>             <td>1</td>             <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrFaint</th>            <td>2</td>             <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrItalic</th>           <td>3</td>             <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrUnderline</th>        <td>4</td>             <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrBlink</th>            <td>5</td>             <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrRapidBlink</th>       <td>6</td>             <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrNega</th>             <td>7</td>             <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrInvisible</th>        <td>8</td>             <td>*</td>    <td>*</td> <td>*</td>    <td>-</td>   </tr>
+<tr><th>sgrStrike</th>           <td>9</td>             <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrAnsiFont</th>         <td>10-19</td>         <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrCharsetASCII</th>     <td>10</td>            <td>-</td>    <td>*</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrCharsetL</th>         <td>11</td>            <td>-</td>    <td>*</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrCharsetR</th>         <td>12</td>            <td>-</td>    <td>*</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrFraktur</th>          <td>20</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrDoubleUnderline</th>  <td>21</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrBoldOff</th>          <td>22</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrItalicOff</th>        <td>23</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrUnderlineOff</th>     <td>24</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrBlinkOff</th>         <td>25</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrProportional</th>     <td>26</td>            <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrNegaOff</th>          <td>27</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrInvisibleOff</th>     <td>28</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>-</td>   </tr>
+<tr><th>sgrStrikeOff</th>        <td>29</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrAnsiColor</th>        <td>30-37, 40-47</td>  <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrISO8613_6Color</th>   <td>38, 48</td>        <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrFgDefault</th>        <td>39</td>            <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrBgDefault</th>        <td>49</td>            <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
+<tr><th>sgrProportionalOff</th>  <td>50</td>            <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrFrame</th>            <td>51</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrCircle</th>           <td>52</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrOverline</th>         <td>53</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrFrameOff</th>         <td>54</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrOverlineOff</th>      <td>55</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrAnsiReserved</th>     <td>56-59</td>         <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrIdeoDecoration</th>   <td>60-64</td>         <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrIdeoDecorationOff</th><td>65</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrIdeoDecoration2</th>  <td>66-69</td>         <td>-</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>sgrAixColor</th>         <td>90-97, 100-107</td><td>-</td>    <td>-</td> <td>*</td>    <td>-</td>   </tr>
+<tr><th>sgrDefaultColor</th>     <td>100</td>           <td>-</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
 </table>
 
 <h4>既定に戻す</h4>
@@ -1999,8 +2063,8 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <p>前景色及び背景色を既定色に戻す。
     rxvt 由来の機能 (と xterm の説明には書かれているが、
     rxvt のマニュアル (1998) にこの記述はない)。
-    <b>sgrAixColor</b> と値が被っているので注意する。
-    xterm は <b>sgrAixColor</b> が無効の時にこれが利用可能である。
+    sgrAixColor と値が被っているので注意する。
+    xterm は sgrAixColor が無効の時にこれが利用可能である。
   </p>
   <ul>
   <li>互換性: xterm (16 色無効時)</li>
@@ -2075,8 +2139,11 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>互換性: ansi</li>
   </ul>
 </li>
-<li>SGR 66-69 <dfn class="sgr">sgrIdeoDecoration</dfn>: CJK装飾(JIS)
-  <p>CJK文字に対する装飾で 60-64 の時とは、縦書き・横書きの切り替わり方が異なる物である。JIS X 0211 に規定されている。</p>
+<li>SGR 66-69 <dfn class="sgr">sgrIdeoDecoration2</dfn>: CJK装飾2
+  <p>CJK文字に対する装飾で 60-64 の時とは、縦書き・横書きの切り替わり方が異なる物である。</p>
+  <p>Note: ECMA-48 5th edition (1991) には書かれていないが JIS X 0211 にはある。
+  恐らく、ISO/IEC 6429:1992 で導入された物だろう。
+  </p>
   <table class="normal center">
   <tr><th>番号</th><th>機能</th>    <th>横書き</th>  <th>縦書き</th>  </tr>
   <tr><td>66</td><td>左傍線</td>    <td>下線</td>    <td>左線</td>    </tr>
@@ -2142,8 +2209,8 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <li><a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.html">xterm</a> (2016-09-20):
   ECMA-48 の 0-50 の内 5 (rapid blink), 10-20 (fonts, fraktur),
   26,50 (proportional spacing), 38,48 (ISO 8613-6) 以外に対応。
-  16色対応がコンパイルされている場合は 90-97,100-107 (<b>sgrAixColors</b>) に対応し、
-  そうでない場合は 100 (<b>sgrDefaultColor</b>) に対応する。
+  16色対応がコンパイルされている場合は 90-97,100-107 (sgrAixColors) に対応し、
+  そうでない場合は 100 (sgrDefaultColor) に対応する。
   更に、88/256色対応がコンパイルされている場合は
   38:2, 38:5, 48:2, 48:5 (ISO-8613-6) に対応する
   (註: xterm のドキュメントには ISO-8613-3 と書かれているがこれは ISO-8613-6 の誤りである)。
@@ -2241,7 +2308,7 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <table class="normal center">
 <tr><th>略号</th><th>Sequence</th><th>R/C</th></tr>
 <tr><th>ACS</th>
-  <td>ESC SP <i>&lt;F&gt;</i></td>
+  <td><kbd>ESC SP <i>&lt;F&gt;</i></kbd></td>
   <td>1/11 2/0 <i>&lt;F&gt;</i></td>
   </tr>
 </table>
@@ -2252,35 +2319,35 @@ SDS/SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </p>
 
 <table class="normal center">
-<tr><th>Sequence</th><th>R/C</th><th>機能</th></tr>
-<tr><td>ESC SP A</td><td>1/11 2/0 4/1 </td><td></td></tr>
-<tr><td>ESC SP B</td><td>1/11 2/0 4/2 </td><td></td></tr>
-<tr><td>ESC SP C</td><td>1/11 2/0 4/3 </td><td></td></tr>
-<tr><td>ESC SP D</td><td>1/11 2/0 4/4 </td><td></td></tr>
-<tr><td>ESC SP E</td><td>1/11 2/0 4/5 </td><td></td></tr>
-<tr><td>ESC SP F</td><td>1/11 2/0 4/6 </td><td>S7C1T</td></tr>
-<tr><td>ESC SP G</td><td>1/11 2/0 4/7 </td><td>S8C1T</td></tr>
-<tr><td>ESC SP H</td><td>1/11 2/0 4/8 </td><td></td></tr>
-<tr><td>ESC SP I</td><td>1/11 2/0 4/9 </td><td></td></tr>
-<tr><td>ESC SP J</td><td>1/11 2/0 4/10</td><td></td></tr>
-<tr><td>ESC SP K</td><td>1/11 2/0 4/11</td><td></td></tr>
-<tr><td>ESC SP L</td><td>1/11 2/0 4/12</td><td>ANSI conformance Lv1 (dpANS X3.134.1), ECMA-43 Lv1</td></tr>
-<tr><td>ESC SP M</td><td>1/11 2/0 4/13</td><td>ANSI conformance Lv2 (dpANS X3.134.1), ECMA-43 Lv2</td></tr>
-<tr><td>ESC SP N</td><td>1/11 2/0 4/14</td><td>ANSI conformance Lv3 (dpANS X3.134.1), ECMA-43 Lv3</td></tr>
-<tr><td>ESC SP O</td><td>1/11 2/0 4/15</td><td>-</td></tr>
-<tr><td>ESC SP P</td><td>1/11 2/0 5/0 </td><td></td></tr>
-<tr><td>ESC SP Q</td><td>1/11 2/0 5/1 </td><td>-</td></tr>
-<tr><td>ESC SP R</td><td>1/11 2/0 5/2 </td><td></td></tr>
-<tr><td>ESC SP S</td><td>1/11 2/0 5/3 </td><td></td></tr>
-<tr><td>ESC SP T</td><td>1/11 2/0 5/4 </td><td></td></tr>
-<tr><td>ESC SP U</td><td>1/11 2/0 5/5 </td><td></td></tr>
-<tr><td>ESC SP V</td><td>1/11 2/0 5/6 </td><td></td></tr>
-<tr><td>ESC SP W</td><td>1/11 2/0 5/7 </td><td></td></tr>
-<tr><td>ESC SP X</td><td>1/11 2/0 5/8 </td><td>-</td></tr>
-<tr><td>ESC SP Y</td><td>1/11 2/0 5/9 </td><td>-</td></tr>
-<tr><td>ESC SP Z</td><td>1/11 2/0 5/10</td><td></td></tr>
-<tr><td>ESC SP [</td><td>1/11 2/0 5/11</td><td></td></tr>
-<tr><td>ESC SP \</td><td>1/11 2/0 5/12</td><td></td></tr>
+<tr><th>符号表現</th><th>R/C</th><th>機能</th></tr>
+<tr><td><kbd>ESC SP A</kbd></td><td>1/11 2/0 4/1 </td><td></td></tr>
+<tr><td><kbd>ESC SP B</kbd></td><td>1/11 2/0 4/2 </td><td></td></tr>
+<tr><td><kbd>ESC SP C</kbd></td><td>1/11 2/0 4/3 </td><td></td></tr>
+<tr><td><kbd>ESC SP D</kbd></td><td>1/11 2/0 4/4 </td><td></td></tr>
+<tr><td><kbd>ESC SP E</kbd></td><td>1/11 2/0 4/5 </td><td></td></tr>
+<tr><td><kbd>ESC SP F</kbd></td><td>1/11 2/0 4/6 </td><td>S7C1T</td></tr>
+<tr><td><kbd>ESC SP G</kbd></td><td>1/11 2/0 4/7 </td><td>S8C1T</td></tr>
+<tr><td><kbd>ESC SP H</kbd></td><td>1/11 2/0 4/8 </td><td></td></tr>
+<tr><td><kbd>ESC SP I</kbd></td><td>1/11 2/0 4/9 </td><td></td></tr>
+<tr><td><kbd>ESC SP J</kbd></td><td>1/11 2/0 4/10</td><td></td></tr>
+<tr><td><kbd>ESC SP K</kbd></td><td>1/11 2/0 4/11</td><td></td></tr>
+<tr><td><kbd>ESC SP L</kbd></td><td>1/11 2/0 4/12</td><td>ANSI conformance Lv1 (dpANS X3.134.1), ECMA-43 Lv1</td></tr>
+<tr><td><kbd>ESC SP M</kbd></td><td>1/11 2/0 4/13</td><td>ANSI conformance Lv2 (dpANS X3.134.1), ECMA-43 Lv2</td></tr>
+<tr><td><kbd>ESC SP N</kbd></td><td>1/11 2/0 4/14</td><td>ANSI conformance Lv3 (dpANS X3.134.1), ECMA-43 Lv3</td></tr>
+<tr><td><kbd>ESC SP O</kbd></td><td>1/11 2/0 4/15</td><td>-</td></tr>
+<tr><td><kbd>ESC SP P</kbd></td><td>1/11 2/0 5/0 </td><td></td></tr>
+<tr><td><kbd>ESC SP Q</kbd></td><td>1/11 2/0 5/1 </td><td>-</td></tr>
+<tr><td><kbd>ESC SP R</kbd></td><td>1/11 2/0 5/2 </td><td></td></tr>
+<tr><td><kbd>ESC SP S</kbd></td><td>1/11 2/0 5/3 </td><td></td></tr>
+<tr><td><kbd>ESC SP T</kbd></td><td>1/11 2/0 5/4 </td><td></td></tr>
+<tr><td><kbd>ESC SP U</kbd></td><td>1/11 2/0 5/5 </td><td></td></tr>
+<tr><td><kbd>ESC SP V</kbd></td><td>1/11 2/0 5/6 </td><td></td></tr>
+<tr><td><kbd>ESC SP W</kbd></td><td>1/11 2/0 5/7 </td><td></td></tr>
+<tr><td><kbd>ESC SP X</kbd></td><td>1/11 2/0 5/8 </td><td>-</td></tr>
+<tr><td><kbd>ESC SP Y</kbd></td><td>1/11 2/0 5/9 </td><td>-</td></tr>
+<tr><td><kbd>ESC SP Z</kbd></td><td>1/11 2/0 5/10</td><td></td></tr>
+<tr><td><kbd>ESC SP [</kbd></td><td>1/11 2/0 5/11</td><td></td></tr>
+<tr><td><kbd>ESC SP \</kbd></td><td>1/11 2/0 5/12</td><td></td></tr>
 </table>
 
 <ul>
@@ -3165,9 +3232,9 @@ j.行消す, ESC[2K
   </span>
 </div>
 <div class="address2">
-  <span class="left">起稿 2010-11-08</span>
-  <span class="left">更新 2016-09-20</span>
-  <address class="right">&copy; 2010, K. Murase <a href="mailto:myoga.murase@gmail.com">myoga.murase@gmail.com</a></address>
+  <span class="left">作成 2010-11-08</span>
+  <span class="left">更新 2016-10-08</span>
+  <address class="right">&copy; 2010-2016, K. Murase <a href="mailto:myoga.murase@gmail.com">myoga.murase@gmail.com</a></address>
 </div>
 </body>
 </html>
