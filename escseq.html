@@ -178,7 +178,7 @@ row と column は 0-15 の十進整数であり、それぞれ上位 4 bit と�
   <th>NEL</th><td>08/05</td><td>\x85</td><td>\205</td><td></td><td>&#x2325;^E</td>
   <th>MW</th> <td>09/05</td><td>\x95</td><td>\225</td><td></td><td>&#x2325;^U</td>
 </tr>
-<tr>  
+<tr>
   <th>ACK</th><td>00/06</td><td>\x06</td><td>\006</td><td></td><td>^F</td>
   <th>SYN</th><td>01/06</td><td>\x16</td><td>\026</td><td></td><td>^V</td>
   <th>SSA</th><td>08/06</td><td>\x86</td><td>\206</td><td></td><td>&#x2325;^F</td>
@@ -961,7 +961,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   </ul>
 </li>
 <li><dfn class="cfunc">SPD</dfn>: Select Presentation Directions
-  <p>[ECMA-48/8.3.130] 
+  <p>[ECMA-48/8.3.130]
   一つ目の引数 <kbd><i>&lt;Ps1&gt;</i></kbd> は
   表示部の行の向き、行の追加方向、文字進路を設定する。既定値は 0 である。
   </p>
@@ -1165,29 +1165,29 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h2>カーソル位置</h2>
 
+<h3>移動</h3>
 <table class="normal center">
-<tr><th>略号</th><th>用途</th><th>符号化表現</th><th>対象</th><th>意味</th></tr>
-<tr><th>BS</th> <td>制御</td><td><kbd>BS</kbd></td> <td>記憶部</td><td>一文字戻る</td></tr>
-<tr><th>HT</th> <td>制御</td><td><kbd>HT</kbd></td> <td>表示部</td><td>次のタブストップ</td></tr>
-<tr><th>LF</th> <td>制御</td><td><kbd>LF</kbd></td> <td>DCSM</td>  <td>一行下</td></tr>
-<tr><th>VT</th> <td>制御</td><td><kbd>VT</kbd></td> <td>表示部</td><td>次の垂直タブ</td></tr>
-<tr><th>FF</th> <td>制御</td><td><kbd>FF</kbd></td> <td>表示部</td><td>次の頁</td></tr>
-<tr><th>CR</th> <td>制御</td><td><kbd>CR</kbd></td> <td>DCSM</td>  <td>行頭</td></tr>
-<tr><th>NEL</th><td>制御</td><td><kbd>NEL</kbd></td><td>DCSM</td>  <td>次行の行頭</td></tr>
-<tr><th>CUU</th><td>制御</td><td><kbd>CSI <i>&lt;Pn&gt;</i> A</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 個上</td></tr>
-<tr><th>CUD</th><td>制御</td><td><kbd>CSI <i>&lt;Pn&gt;</i> B</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 個下</td></tr>
-<tr><th>CUF</th><td>制御</td><td><kbd>CSI <i>&lt;Pn&gt;</i> C</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 個右</td></tr>
-<tr><th>CUB</th><td>制御</td><td><kbd>CSI <i>&lt;Pn&gt;</i> D</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 個左</td></tr>
-<tr><th>CUP</th><td>制御</td><td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> H</kbd></td><td>表示部</td><td><i>&lt;Pn1&gt;</i> 行目 <i>&lt;Pn2&gt;</i> 文字目</td></tr>
-<tr><th rowspan="2">CPR</th><td>制御</td><td><kbd>CSI 6 n</kbd></td></tr>
-<tr>                        <td>応答</td><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> R</kbd></td></tr>
-<tr><th>CNL</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> E</kbd></td></tr>
-<tr><th>CPL</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> F</kbd></td></tr>
-<tr><th>CHA</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> G</kbd></td></tr>
-<tr><th>CHT</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> I</kbd></td></tr>
-<tr><th>CBT</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> Z</kbd></td></tr>
-<tr><th>SCOSC</th><td>制御</td><td><kbd>CSI s</kbd></td></tr>
-<tr><th>SCORC</th><td>制御</td><td><kbd>CSI u</kbd></td></tr>
+<tr><th>略号</th><th>符号化表現</th><th>対象</th><th>意味</th></tr>
+<tr><th>BS</th> <td><kbd>BS</kbd></td> <td>記憶部</td><td>一文字戻る</td></tr>
+<tr><th>LF</th> <td><kbd>LF</kbd></td> <td>DCSM</td>  <td>一行下</td></tr>
+<tr><th>VT</th> <td><kbd>VT</kbd></td> <td>表示部</td><td>次の垂直タブ</td></tr>
+<tr><th>FF</th> <td><kbd>FF</kbd></td> <td>表示部</td><td>次の頁</td></tr>
+<tr><th>CR</th> <td><kbd>CR</kbd></td> <td>DCSM</td>  <td>行頭</td></tr>
+<tr><th>NEL</th><td><kbd>NEL</kbd></td><td>DCSM</td>  <td>次行の行頭</td></tr>
+<tr><th>CUU</th><td><kbd>CSI <i>&lt;Pn&gt;</i> A</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 個上</td></tr>
+<tr><th>CUD</th><td><kbd>CSI <i>&lt;Pn&gt;</i> B</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 個下</td></tr>
+<tr><th>CUF</th><td><kbd>CSI <i>&lt;Pn&gt;</i> C</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 個右</td></tr>
+<tr><th>CUB</th><td><kbd>CSI <i>&lt;Pn&gt;</i> D</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 個左</td></tr>
+<tr><th>CUP</th><td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> H</kbd></td><td>表示部</td><td><i>&lt;Pn1&gt;</i> 行目の <i>&lt;Pn2&gt;</i> 文字目</td></tr>
+<tr><th>CNL</th><td><kbd>CSI <i>&lt;Pn&gt;</i> E</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 行次の行頭</td></tr>
+<tr><th>CPL</th><td><kbd>CSI <i>&lt;Pn&gt;</i> F</kbd></td><td>表示部</td><td><i>&lt;Pn&gt;</i> 行前の行頭</td></tr>
+<tr><th>CHA</th><td><kbd>CSI <i>&lt;Pn&gt;</i> G</kbd></td><td>表示部</td><td>現在行の <i>&lt;Pn&gt;</i> 文字目</td></tr>
+<tr><th>HPA</th><td><kbd>CSI <i>&lt;Pn&gt;</i> `</kbd></td><td>記憶部</td><td><i>&lt;Pn&gt;</i> 文字目</td></tr>
+<tr><th>HPB</th><td><kbd>CSI <i>&lt;Pn&gt;</i> j</kbd></td><td>記憶部</td><td><i>&lt;Pn&gt;</i> 文字左</td></tr>
+<tr><th>HPR</th><td><kbd>CSI <i>&lt;Pn&gt;</i> a</kbd></td><td>記憶部</td><td><i>&lt;Pn&gt;</i> 文字右</td></tr>
+<tr><th>VPA</th><td><kbd>CSI <i>&lt;Pn&gt;</i> d</kbd></td><td>記憶部</td><td><i>&lt;Pn&gt;</i> 行目</td></tr>
+<tr><th>VPB</th><td><kbd>CSI <i>&lt;Pn&gt;</i> k</kbd></td><td>記憶部</td><td><i>&lt;Pn&gt;</i> 行上</td></tr>
+<tr><th>VPR</th><td><kbd>CSI <i>&lt;Pn&gt;</i> e</kbd></td><td>記憶部</td><td><i>&lt;Pn&gt;</i> 行下</td></tr>
 </table>
 
 <ul>
@@ -1287,50 +1287,82 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </li>
 <li><dfn class="cfunc">CUP</dfn>: Cursor Position
   <p>[ECMA-48/8.3.21] 現在表示位置を &lt;Pn1&gt; 行目、&lt;Pn2&gt; 文字目に移動する。
-  両引数の既定値は共に 1 である。ZDM(DEFAULT) の場合は 0 を指定すると 1 が使用される。
+  両引数の既定値は共に 1 である。ZDM(DEFAULT) の場合は 0 を指定すると既定値 1 が使用される。
   </p>
   <ul>
-  <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CUP">VT510: CUP</a></li>
+  <li>xterm</li>
+  <li>vt100: <a href="http://www.vt100.net/docs/vt510-rm/CUP">VT510: CUP</a></li>
   </ul>
 </li>
-<li>DSR 6 <dfn class="cfunc">CPR</dfn>: Cursor Position Report
+<li><dfn class="cfunc">CNL</dfn>: Cursor Next Line</li>
+<li><dfn class="cfunc">CPL</dfn>: Cursor Preceding Line (vt510: Cursor Previous Line)
+  <p>[ECMA-48/8.3.12 CNL, 8.3.13 CPL] 現在表示位置を <i>&lt;Pn&gt;</i> 行だけ次 (CNL の場合) または前 (CPL の場合) の行頭に移動する。
+  引数の既定値は 1 である。ZDM(DEFAULT) の場合は 0 を指定すると既定値 1 が使用される。
+  </p>
   <ul>
-  <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CPR">VT510: CPR</a></li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DSR-CPR">VT510: DSR-CPR</a></li>
+  <li>xterm</li>
+  <li>vt510: <a href="http://www.vt100.net/docs/vt510-rm/CNL">VT510: CNL</a>
+    <a href="http://www.vt100.net/docs/vt510-rm/CPL">VT510: CPL</a>
+  </li>
   </ul>
 </li>
-<li><dfn class="cfunc">CNL</dfn>: Cursor Next Line
+<li><dfn class="cfunc">CHA</dfn>: Cursor Character Absolute (vt510: Cursor Horizontal Absolute)
+  <p>[ECMA-48/8.3.9] 現在表示位置を現在行の <i>&lt;Pn&gt;</i> 文字目に移動する。引数の既定値は 1 であり、ZDM(DEFAULT) の場合は 0 は既定値 1 を意味する。</p>
   <ul>
-  <li>互換性: vt510, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CNL">VT510: CNL</a></li>
+  <li>xterm</li>
+  <li>vt510: <a href="http://www.vt100.net/docs/vt510-rm/CHA">VT510: CHA</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">CPL</dfn>: Cursor Previous Line
-  <ul>
-  <li>互換性: vt510, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CPL">VT510: CPL</a></li>
-  </ul>
+<li><dfn class="cfunc">HPA</dfn>: Character Position Absolute</li>
+<li><dfn class="cfunc">VPA</dfn>: Line Position Absolute
+  <p>[ECMA-48/8.3.57 HPA, 8.3.158 VPA]
+  現在記憶位置を <i>&lt;Pn&gt;</i> 文字目 (の場合) または<i>&lt;Pn&gt;</i> 行目 (VPA の場合) に移動する。
+  ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
+  </p>
 </li>
-<li><dfn class="cfunc">CHA</dfn>: Cursor Horizontal Absolute
-  <ul>
-  <li>互換性: vt510, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CHA">VT510: CHA</a></li>
-  </ul>
+<li><dfn class="cfunc">HPB</dfn>: Character Position Backward</li>
+<li><dfn class="cfunc">HPR</dfn>: Character Position Forward</li>
+<li><dfn class="cfunc">VPB</dfn>: Line Position Backward</li>
+<li><dfn class="cfunc">VPR</dfn>: Line Position Forward
+  <p>[ECMA-48/8.3.58 HPB, 8.3.59 HPR, 8.3.159 VPB, 8.3.160 VPR]
+  HPB, HPR, VPB, VPR はそれぞれ現在記憶位置を左・右・上・下に <i>&lt;Pn&gt;</i> 行または <i>&lt;Pn&gt;</i> 文字だけ移動する。
+  ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
+  </p>
 </li>
+</ul>
+
+<h3>タブ</h3>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
+<tr><th>HT</th> <td><kbd>HT</kbd></td> <td>表示部</td><td>次のタブストップ</td></tr>
+<tr><th>CHT</th><td><kbd>CSI <i>&lt;Pn&gt;</i> I</kbd></td></tr>
+<tr><th>CBT</th><td><kbd>CSI <i>&lt;Pn&gt;</i> Z</kbd></td></tr>
+</table>
+
+<ul>
 <li><dfn class="cfunc">CHT</dfn>: Cursor Horizontal Forward Tabulation
+  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
   <ul>
   <li>互換性: vt510, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/CHT">VT510: CHT</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">CBT</dfn>: Cursor Backward Tabulation
+  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
   <ul>
   <li>互換性: vt510, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/CBT">VT510: CBT</a></li>
   </ul>
 </li>
+</ul>
+
+<h3>位置記録</h3>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
+<tr><th>SCOSC</th><td><kbd>CSI s</kbd></td></tr>
+<tr><th>SCORC</th><td><kbd>CSI u</kbd></td></tr>
+</table>
+<ul>
 <li><dfn class="cfunc">SCOSC</dfn>: Save Current Cursor Position
   <p>現在のカーソル位置を記録する。</p>
   <ul>
@@ -1343,6 +1375,28 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <ul>
   <li>互換性: vt510, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SCORC">SCORC</a></li>
+  </ul>
+</li>
+</ul>
+
+<h3>問い合わせ</h3>
+<table class="normal center">
+<tr><th>略号</th><th>用途</th><th>符号化表現</th><th>意味</th></tr>
+<tr><th>DSR(5)</th><td>制御</td><td><kbd>CSI 5 n</kbd></td><td rowspan="2">装置の状態を確認</td></tr>
+<tr><th>DSR</th><td>応答</td><td><kbd>CSI <i>&lt;Ps&gt;</i> n</kbd></td></tr>
+<tr><th>DSR(6)</th><td>制御</td><td><kbd>CSI 6 n</kbd></td><td rowspan="2">カーソル位置を取得</td></tr>
+<tr><th>CPR</th><td>応答</td><td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> R</kbd></td></tr>
+</table>
+
+<ul>
+<li>DSR(6)
+</li>
+<li><dfn class="cfunc">CPR</dfn>: Cursor Position Report
+  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
+  <ul>
+  <li>互換性: vt100, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/CPR">VT510: CPR</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DSR-CPR">VT510: DSR-CPR</a></li>
   </ul>
 </li>
 </ul>
@@ -1368,24 +1422,28 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </ul>
 </li>
 <li><dfn class="cfunc">DCH</dfn>: Delete Character
+  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
   <ul>
   <li>VT100; xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DCH">VT510: DCH</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">ECH</dfn>: Erase Character
+  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
   <ul>
   <li>VT420; xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/ECH">VT510: ECH</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">ICH</dfn>: Insert Character
+  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
   <ul>
   <li>VT420; xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/ICH">VT510: ICH</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DL</dfn>: Delete Line
+  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
   <p><i>&lt;Ps&gt;</i> 行だけ削除して抜き去る。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
   <ul>
   <li>VT100; xterm</li>
@@ -1399,6 +1457,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </ul>
 </li>
 <li><dfn class="cfunc">IL</dfn>: Insert Line
+  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
   <p><i>&lt;Ps&gt;</i> 行だけ空白行を挿入。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
   <ul>
   <li>VT100; xterm</li>
@@ -2409,7 +2468,7 @@ f.面クリ, CLS 　このコマンドはバッチファイルのみに利用で
 g.右消す, ESC[0K
 h.右消す, ESC[K
 i.左消す, ESC[1K
-j.行消す, ESC[2K 
+j.行消す, ESC[2K
 
 -->
 
@@ -3115,7 +3174,7 @@ j.行消す, ESC[2K
   <th>key</th><th>C-</th><th>C-M- (1)</th><th>C-M- (2)</th>
   <th>S-</th><th>S-C-</th><th>S-C-M- (1)</th><th>S-C-M- (2)</th>
 </tr>
-<tr><td><code>\t</code></td>         <td><code>\e[27;5;9~</code></td> <td><code>\e[27;13;9~</code></td> <td><code>\e[27;7;9~</code></td> 
+<tr><td><code>\t</code></td>         <td><code>\e[27;5;9~</code></td> <td><code>\e[27;13;9~</code></td> <td><code>\e[27;7;9~</code></td>
     <td><code>\e[27;2;9~</code></td> <td><code>\e[27;6;9~</code></td><td>--</td><td>--</td></tr>
 <tr><td><code>\r</code></td>         <td><code>\e[27;5;13~</code></td><td><code>\e[27;13;13~</code></td><td><code>\e[27;7;13~</code></td>
     <td><code>\e[27;2;13~</code></td><td><code>\e[27;6;13~</code></td><td>--</td><td>--</td></tr>

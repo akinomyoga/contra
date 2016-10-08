@@ -56,11 +56,11 @@
   [ECMA-48/8.3.6] CAN: Cancel  34
   [ECMA-48/8.3.7] CBT: Cursor Backward Tabulation  34
   [ECMA-48/8.3.8] CCH: Cancel Character  34
-  [ECMA-48/8.3.9] CHA: Cursor Character Absolute  34
+  > [ECMA-48/8.3.9] CHA: Cursor Character Absolute  34
   [ECMA-48/8.3.10] CHT: Cursor Forward Tabulation  34
   [ECMA-48/8.3.11] CMD: Coding Method Delimiter  34
-  [ECMA-48/8.3.12] CNL: Cursor Next Line  35
-  [ECMA-48/8.3.13] CPL: Cursor Preceding Line  35
+  > [ECMA-48/8.3.12] CNL: Cursor Next Line  35
+  > [ECMA-48/8.3.13] CPL: Cursor Preceding Line  35
   [ECMA-48/8.3.14] CPR: Active Position Report  35
   > [ECMA-48/8.3.15] CR: Carriage Return  35
   > [ECMA-48/8.3.16] CSI: Control Sequence Introducer  36
@@ -104,9 +104,9 @@
   [ECMA-48/8.3.54] GCC: Graphic Character Combination  44
   [ECMA-48/8.3.55] GSM: Graphic Size Modification  45
   [ECMA-48/8.3.56] GSS: Graphic Size Selection  45
-  [ECMA-48/8.3.57] HPA: Character Position Absolute  45
-  [ECMA-48/8.3.58] HPB: Character Position Backward  45
-  [ECMA-48/8.3.59] HPR: Character Position Forward  45
+  > [ECMA-48/8.3.57] HPA: Character Position Absolute  45
+  > [ECMA-48/8.3.58] HPB: Character Position Backward  45
+  > [ECMA-48/8.3.59] HPR: Character Position Forward  45
   [ECMA-48/8.3.60] HT: Character Tabulation  45
   [ECMA-48/8.3.61] HTJ: Character Tabulation With Justification  46
   [ECMA-48/8.3.62] HTS: Character Tabulation Set  46
@@ -205,9 +205,9 @@
   [ECMA-48/8.3.155] TCC: Tabulation Centred On Character  73
   [ECMA-48/8.3.156] TSR: Tabulation Stop Remove  73
   [ECMA-48/8.3.157] TSS: Thin Space Specification  73
-  [ECMA-48/8.3.158] VPA: Line Position Absolute  74
-  [ECMA-48/8.3.159] VPB: Line Position Backward  74
-  [ECMA-48/8.3.160] VPR: Line Position Forward  74
+  > [ECMA-48/8.3.158] VPA: Line Position Absolute  74
+  > [ECMA-48/8.3.159] VPB: Line Position Backward  74
+  > [ECMA-48/8.3.160] VPR: Line Position Forward  74
   > [ECMA-48/8.3.161] VT: Line Tabulation  74
   [ECMA-48/8.3.162] VTS: Line Tabulation Set  74
 
