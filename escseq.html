@@ -42,23 +42,27 @@
 <h2>制御機能 一般論</h2>
 
 <p>制御機能 (control functions) とは端末などでの文字列の交換(やりとり)に於いて、
-通常の文字列の中に埋め込まれる特別なバイト列によって指定・実行される端末などの機能のことである。
-制御機能は
+通常の文字列の中に埋め込まれる特定のバイト列 (シーケンス) によって指定・実行される端末などの機能のことである。
+これらのシーケンスは、例えば以下の様な目的で使われる。
 </p>
 <ul>
+<li>"通信の開始・終了" や "文字コードの切替" などのデータのやり取り自体に関する制御</li>
 <li>"スペース・タブ・改行・改頁・カーソル移動" など文字列の配置に関する制御</li>
-<li>"通信の開始・終了" や "文字コードの切替" などの通信自体に関する制御</li>
 <li>"文字の色・字体・背景色・下線・記号" などの文字列の修飾に関する制御</li>
-<li>"カーソルキー・Functionキー・テンキー・マウス操作" などの特別な入力に関する制御</li>
-<li>"文字の表示領域のサイズ・ウィンドウのタイトルの通知・変更" などの制御</li>
+<li>"カーソルキー・Functionキー・テンキー・マウス操作" などの特別な入力に関する通知</li>
+<li>"文字の表示領域のサイズ・ウィンドウのタイトル" などの設定の問い合わせ・応答</li>
 <li>その他、様々な特別な機能の制御</li>
 </ul>
-<p class="resume">等に用いられる。
-またこれらの制御機能には、
-アプリケーションからの出力 (アプリケーションから端末に対して送られるバイト列) 中で指定される端末制御の為の物と、
-アプリケーションへの入力 (端末からアプリケーションに対して送られるバイト列) 中で指定される端末の応答・ユーザ入力がある。
-また、同じ制御機能であっても、端末によって対応していなかったり、
-そのバイト列としての表現が異なっていたりする事に注意する。
+
+<p>シーケンスが使われる場所は二つに分けることができる。
+アプリケーションからの出力 (アプリケーションから端末に対して送られるバイト列) では端末制御の為に使われる。
+アプリケーションへの入力 (端末からアプリケーションに対して送られるバイト列) の中では端末の応答やユーザの入力を伝達する為に使われる。
+シーケンスは、これらの2つの場所でそれぞれ独立な体系を持っている。
+つまり、片方で或る意味を持つバイト列は他方では全く異なる意味を持つ。
+この文書では便宜のため、
+アプリケーションからの出力に使われる物を<dfn>制御</dfn>の用途のシーケンスとし、
+入力に使われる物を<dfn>応答</dfn>の用途のシーケンスと呼ぶ事にする。
+この文書では特に制御の用途のシーケンスを中心に扱い、特に断りがなければこれを指す。
 </p>
 
 <h3>関連する標準規格</h3>
@@ -89,16 +93,16 @@
 </li>
 </ul>
 
-<h3>符号表現 (code representation)</h3>
+<h3>符号化表現 (coded representation)</h3>
 <p>以降ではバイトを row/column の組み合わせで表現する。
 row と column は 0-15 の十進整数であり、それぞれ上位 4 bit と下位 4 bit を表す。
 例えば 02/00 は 0x20 を表し ASCII コードにおいて空白文字に対応する。
 </p>
-<p>制御機能を表現するバイト列を<dfn>符号表現</dfn> (code representation) という。
+<p>制御機能を表現するバイト列を<dfn>符号化表現</dfn> (coded representation) という。
 その形式によって以下の様に分類される。
 </p>
 <table class="normal center">
-<tr><th colspan="2">略号</th><th>符号表現</th><th>説明</th><th>関連規格</th></tr>
+<tr><th colspan="2">名称</th><th>符号化表現</th><th>説明</th><th>関連規格</th></tr>
 <tr><th colspan="2" rowspan="2">制御文字</th>
     <td><i>&lt;C0&gt;</i></td><td>基本の制御</td><td>ISO/IEC 646</td></tr>
 <tr><td><i>&lt;C1&gt;</i></td><td>基本の制御</td><td>ISO/IEC 6429 (ECMA-48)</td></tr>
@@ -131,148 +135,156 @@ row と column は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 
 <h3>制御文字 (control character)</h3>
 <table class="normal center">
-<tr><th colspan="12">C0 (ISO/IEC-646)</th><th colspan="12">C1 (ISO/IEC-6429)</th></tr>
+<tr><th colspan="12">C0 (ISO/IEC 646)</th><th colspan="12">C1 (ISO/IEC 6429)</th></tr>
 <tr>
-  <th>略号</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
-  <th>略号</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
-  <th>略号</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
-  <th>略号</th><th>16進</th><th>8進</th><th>R/C</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>R/C</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>R/C</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>R/C</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>R/C</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
 </tr>
 <tr>
-  <th>NUL</th><td>\x00</td><td>\000</td><td>0/0</td><td>^@</td><td></td>
-  <th>DLE</th><td>\x10</td><td>\020</td><td>1/0</td><td>^P</td><td></td>
-  <th>(PAD)</th><td>\x80</td><td>\200</td><td>8/0</td><td>&#x2325;^@</td><td></td>
-  <th class="markB">DCS</th><td>\x90</td><td>\220</td><td>9/0</td><td>&#x2325;^P</td><td></td>
+  <th>NUL</th><td>00/00</td><td>\x00</td><td>\000</td><td></td><td>^@</td>
+  <th>DLE</th><td>01/00</td><td>\x10</td><td>\020</td><td></td><td>^P</td>
+  <th>(PAD)</th><td>08/00</td><td>\x80</td><td>\200</td><td></td><td>&#x2325;^@</td>
+  <th class="markB">DCS</th><td>09/00</td><td>\x90</td><td>\220</td><td></td><td>&#x2325;^P</td>
 </tr>
 <tr>
-  <th>SOH</th><td>\x01</td><td>\000</td><td>0/1</td><td>^A</td><td></td>
-  <th>DC1<br/>(XON)</th><td>\x11</td><td>\020</td><td>1/1</td><td>^Q</td><td></td>
-  <th>(HOP)</th><td>\x81</td><td>\200</td><td>8/1</td><td>&#x2325;^A</td><td></td>
-  <th>PU1</th><td>\x91</td><td>\220</td><td>9/1</td><td>&#x2325;^Q</td><td></td>
+  <th>SOH</th><td>00/01</td><td>\x01</td><td>\001</td><td></td><td>^A</td>
+  <th>DC1<br/>(XON)</th><td>01/01</td><td>\x11</td><td>\021</td><td></td><td>^Q</td>
+  <th>(HOP)</th><td>08/01</td><td>\x81</td><td>\201</td><td></td><td>&#x2325;^A</td>
+  <th>PU1</th><td>09/01</td><td>\x91</td><td>\221</td><td></td><td>&#x2325;^Q</td>
 </tr>
 <tr>
-  <th>STX</th><td>\x02</td><td>\000</td><td>0/2</td><td>^B</td><td></td>
-  <th>DC2</th><td>\x12</td><td>\020</td><td>1/2</td><td>^R</td><td></td>
-  <th>BPH</th><td>\x82</td><td>\200</td><td>8/2</td><td>&#x2325;^B</td><td></td>
-  <th>PU2</th><td>\x92</td><td>\220</td><td>9/2</td><td>&#x2325;^R</td><td></td>
+  <th>STX</th><td>00/02</td><td>\x02</td><td>\002</td><td></td><td>^B</td>
+  <th>DC2</th><td>01/02</td><td>\x12</td><td>\022</td><td></td><td>^R</td>
+  <th>BPH</th><td>08/02</td><td>\x82</td><td>\202</td><td></td><td>&#x2325;^B</td>
+  <th>PU2</th><td>09/02</td><td>\x92</td><td>\222</td><td></td><td>&#x2325;^R</td>
 </tr>
 <tr>
-  <th>ETX</th><td>\x03</td><td>\000</td><td>0/3</td><td>^C</td><td></td>
-  <th>DC3<br/>(XOFF)</th><td>\x13</td><td>\020</td><td>1/3</td><td>^S</td><td></td>
-  <th>NBH</th><td>\x83</td><td>\200</td><td>8/3</td><td>&#x2325;^C</td><td></td>
-  <th>STS</th><td>\x93</td><td>\220</td><td>9/3</td><td>&#x2325;^S</td><td></td>
+  <th>ETX</th><td>00/03</td><td>\x03</td><td>\003</td><td></td><td>^C</td>
+  <th>DC3<br/>(XOFF)</th><td>01/03</td><td>\x13</td><td>\023</td><td></td><td>^S</td>
+  <th>NBH</th><td>08/03</td><td>\x83</td><td>\203</td><td></td><td>&#x2325;^C</td>
+  <th>STS</th><td>09/03</td><td>\x93</td><td>\223</td><td></td><td>&#x2325;^S</td>
 </tr>
 <tr>
-  <th>EOT</th><td>\x04</td><td>\000</td><td>0/4</td><td>^D</td><td></td>
-  <th>DC4</th><td>\x14</td><td>\020</td><td>1/4</td><td>^T</td><td></td>
-  <th>(IND)</th><td>\x84</td><td>\200</td><td>8/4</td><td>&#x2325;^D</td><td></td>
-  <th>CCH</th><td>\x94</td><td>\220</td><td>9/4</td><td>&#x2325;^T</td><td></td>
+  <th>EOT</th><td>00/04</td><td>\x04</td><td>\004</td><td></td><td>^D</td>
+  <th>DC4</th><td>01/04</td><td>\x14</td><td>\024</td><td></td><td>^T</td>
+  <th>(IND)</th><td>08/04</td><td>\x84</td><td>\204</td><td></td><td>&#x2325;^D</td>
+  <th>CCH</th><td>09/04</td><td>\x94</td><td>\224</td><td></td><td>&#x2325;^T</td>
 </tr>
 <tr>
-  <th>ENQ</th><td>\x05</td><td>\000</td><td>0/5</td><td>^E</td><td></td>
-  <th>NAK</th><td>\x15</td><td>\020</td><td>1/5</td><td>^U</td><td></td>
-  <th>NEL</th><td>\x85</td><td>\200</td><td>8/5</td><td>&#x2325;^E</td><td></td>
-  <th>MW</th> <td>\x95</td><td>\220</td><td>9/5</td><td>&#x2325;^U</td><td></td>
+  <th>ENQ</th><td>00/05</td><td>\x05</td><td>\005</td><td></td><td>^E</td>
+  <th>NAK</th><td>01/05</td><td>\x15</td><td>\025</td><td></td><td>^U</td>
+  <th>NEL</th><td>08/05</td><td>\x85</td><td>\205</td><td></td><td>&#x2325;^E</td>
+  <th>MW</th> <td>09/05</td><td>\x95</td><td>\225</td><td></td><td>&#x2325;^U</td>
 </tr>
 <tr>  
-  <th>ACK</th><td>\x06</td><td>\000</td><td>0/6</td><td>^F</td><td></td>
-  <th>SYN</th><td>\x16</td><td>\020</td><td>1/6</td><td>^V</td><td></td>
-  <th>SSA</th><td>\x86</td><td>\200</td><td>8/6</td><td>&#x2325;^F</td><td></td>
-  <th>SPA</th><td>\x96</td><td>\220</td><td>9/6</td><td>&#x2325;^V</td><td></td>
+  <th>ACK</th><td>00/06</td><td>\x06</td><td>\006</td><td></td><td>^F</td>
+  <th>SYN</th><td>01/06</td><td>\x16</td><td>\026</td><td></td><td>^V</td>
+  <th>SSA</th><td>08/06</td><td>\x86</td><td>\206</td><td></td><td>&#x2325;^F</td>
+  <th>SPA</th><td>09/06</td><td>\x96</td><td>\226</td><td></td><td>&#x2325;^V</td>
 </tr>
 <tr>
-  <th>BEL</th><td>\x07</td><td>\000</td><td>0/7</td><td>^G</td><td>\a</td>
-  <th>ETB</th><td>\x17</td><td>\020</td><td>1/7</td><td>^W</td><td></td>
-  <th>ESA</th><td>\x87</td><td>\200</td><td>8/7</td><td>&#x2325;^G</td><td></td>
-  <th>EPA</th><td>\x97</td><td>\220</td><td>9/7</td><td>&#x2325;^W</td><td></td>
+  <th>BEL</th><td>00/07</td><td>\x07</td><td>\007</td><td>\a</td><td>^G</td>
+  <th>ETB</th><td>01/07</td><td>\x17</td><td>\027</td><td></td><td>^W</td>
+  <th>ESA</th><td>08/07</td><td>\x87</td><td>\207</td><td></td><td>&#x2325;^G</td>
+  <th>EPA</th><td>09/07</td><td>\x97</td><td>\227</td><td></td><td>&#x2325;^W</td>
 </tr>
 
 <tr>
-  <th>BS</th> <td>\x08</td><td>\010</td><td>0/8</td><td>^H</td><td>\b</td>
-  <th>CAN</th><td>\x18</td><td>\030</td><td>1/8</td><td>^X</td><td></td>
-  <th>HTS</th><td>\x88</td><td>\210</td><td>8/8</td><td>&#x2325;^H</td><td></td>
-  <th class="markB">SOS</th><td>\x98</td><td>\230</td><td>9/8</td><td>&#x2325;^X</td><td></td>
+  <th>BS</th> <td>00/08</td><td>\x08</td><td>\010</td><td>\b</td><td>^H</td>
+  <th>CAN</th><td>01/08</td><td>\x18</td><td>\030</td><td></td><td>^X</td>
+  <th>HTS</th><td>08/08</td><td>\x88</td><td>\210</td><td></td><td>&#x2325;^H</td>
+  <th class="markB">SOS</th><td>09/08</td><td>\x98</td><td>\230</td><td></td><td>&#x2325;^X</td>
 </tr>
 <tr>
-  <th>HT</th> <td>\x09</td><td>\011</td><td>0/9</td><td>^I</td><td>\t</td>
-  <th>EM</th> <td>\x19</td><td>\031</td><td>1/9</td><td>^Y</td><td></td>
-  <th>HTJ</th><td>\x89</td><td>\211</td><td>8/9</td><td>&#x2325;^I</td><td></td>
-  <th>(SGCI)</th><td>\x99</td><td>\231</td><td>9/9</td><td>&#x2325;^Y</td><td></td>
+  <th>HT</th> <td>00/09</td><td>\x09</td><td>\011</td><td>\t</td><td>^I</td>
+  <th>EM</th> <td>01/09</td><td>\x19</td><td>\031</td><td></td><td>^Y</td>
+  <th>HTJ</th><td>08/09</td><td>\x89</td><td>\211</td><td></td><td>&#x2325;^I</td>
+  <th>(SGCI)</th><td>09/09</td><td>\x99</td><td>\231</td><td></td><td>&#x2325;^Y</td>
 </tr>
 <tr>
-  <th>LF</th> <td>\x0A</td><td>\012</td><td>0/10</td><td>^J</td><td>\n</td>
-  <th>SUB</th><td>\x1A</td><td>\032</td><td>1/10</td><td>^Z</td><td>\z</td>
-  <th>VTS</th><td>\x8A</td><td>\212</td><td>8/10</td><td>&#x2325;^J</td><td></td>
-  <th>SCI<br/>(DECID)</th><td>\x9A</td><td>\232</td><td>9/10</td><td>&#x2325;^Z</td><td></td>
+  <th>LF</th> <td>00/10</td><td>\x0A</td><td>\012</td><td>\n</td><td>^J</td>
+  <th>SUB</th><td>01/10</td><td>\x1A</td><td>\032</td><td>\z</td><td>^Z</td>
+  <th>VTS</th><td>08/10</td><td>\x8A</td><td>\212</td><td></td><td>&#x2325;^J</td>
+  <th>SCI<br/>(DECID)</th><td>09/10</td><td>\x9A</td><td>\232</td><td></td><td>&#x2325;^Z</td>
 </tr>
 <tr>
-  <th>VT</th> <td>\x0B</td><td>\013</td><td>0/11</td><td>^K</td><td>\v</td>
-  <th class="markB">ESC</th><td>\x1B</td><td>\033</td><td>1/11</td><td>^[</td><td>\e</td>
-  <th>PLD</th><td>\x8B</td><td>\213</td><td>8/11</td><td>&#x2325;^K</td><td></td>
-  <th class="markB">CSI</th><td>\x9B</td><td>\233</td><td>9/11</td><td>&#x2325;^[</td><td></td>
+  <th>VT</th> <td>00/11</td><td>\x0B</td><td>\013</td><td>\v</td><td>^K</td>
+  <th class="markB">ESC</th><td>01/11</td><td>\x1B</td><td>\033</td><td>\e</td><td>^[</td>
+  <th>PLD</th><td>08/11</td><td>\x8B</td><td>\213</td><td></td><td>&#x2325;^K</td>
+  <th class="markB">CSI</th><td>09/11</td><td>\x9B</td><td>\233</td><td></td><td>&#x2325;^[</td>
 </tr>
 <tr>
-  <th>FF</th> <td>\x0C</td><td>\014</td><td>0/12</td><td>^L</td><td>\f</td>
-  <th>FS</th> <td>\x1C</td><td>\034</td><td>1/12</td><td>^\</td><td></td>
-  <th>PLU</th><td>\x8C</td><td>\214</td><td>8/12</td><td>&#x2325;^L</td><td></td>
-  <th>ST</th><td>\x9C</td><td>\234</td><td>9/12</td><td>&#x2325;^\</td><td></td>
+  <th>FF</th> <td>00/12</td><td>\x0C</td><td>\014</td><td>\f</td><td>^L</td>
+  <th>FS</th> <td>01/12</td><td>\x1C</td><td>\034</td><td></td><td>^\</td>
+  <th>PLU</th><td>08/12</td><td>\x8C</td><td>\214</td><td></td><td>&#x2325;^L</td>
+  <th>ST</th><td>09/12</td><td>\x9C</td><td>\234</td><td></td><td>&#x2325;^\</td>
 </tr>
 <tr>
-  <th>CR</th> <td>\x0D</td><td>\015</td><td>0/13</td><td>^M</td><td>\r</td>
-  <th>GS</th> <td>\x1D</td><td>\035</td><td>1/13</td><td>^]</td><td></td>
-  <th>RI</th><td>\x8D</td><td>\215</td><td>8/13</td><td>&#x2325;^M</td><td></td>
-  <th class="markB">OSC</th><td>\x9D</td><td>\235</td><td>9/13</td><td>&#x2325;^]</td><td></td>
+  <th>CR</th> <td>00/13</td><td>\x0D</td><td>\015</td><td>\r</td><td>^M</td>
+  <th>GS</th> <td>01/13</td><td>\x1D</td><td>\035</td><td></td><td>^]</td>
+  <th>RI</th><td>08/13</td><td>\x8D</td><td>\215</td><td></td><td>&#x2325;^M</td>
+  <th class="markB">OSC</th><td>09/13</td><td>\x9D</td><td>\235</td><td></td><td>&#x2325;^]</td>
 </tr>
 <tr>
-  <th>SO<br/>LS1</th> <td>\x0E</td><td>\016</td><td>0/14</td><td>^N</td><td></td>
-  <th>RS</th> <td>\x1E</td><td>\036</td><td>1/14</td><td>^^</td><td></td>
-  <th>SS2</th><td>\x8E</td><td>\216</td><td>8/14</td><td>&#x2325;^N</td><td></td>
-  <th class="markB">PM</th><td>\x9E</td><td>\236</td><td>9/14</td><td>&#x2325;^^</td><td></td>
+  <th>SO<br/>LS1</th> <td>00/14</td><td>\x0E</td><td>\016</td><td></td><td>^N</td>
+  <th>RS</th> <td>01/14</td><td>\x1E</td><td>\036</td><td></td><td>^^</td>
+  <th>SS2</th><td>08/14</td><td>\x8E</td><td>\216</td><td></td><td>&#x2325;^N</td>
+  <th class="markB">PM</th><td>09/14</td><td>\x9E</td><td>\236</td><td></td><td>&#x2325;^^</td>
 </tr>
 <tr>
-  <th>SI<br/>LS0</th> <td>\x0F</td><td>\017</td><td>0/15</td><td>^O</td><td></td>
-  <th>US</th><td>\x1F</td><td>\037</td><td>1/15</td><td>^_</td><td></td>
-  <th>SS3</th><td>\x8F</td><td>\217</td><td>8/15</td><td>&#x2325;^O</td><td></td>
-  <th class="markB">APC</th><td>\x9F</td><td>\237</td><td>9/15</td><td>&#x2325;^_</td><td></td>
+  <th>SI<br/>LS0</th> <td>00/15</td><td>\x0F</td><td>\017</td><td></td><td>^O</td>
+  <th>US</th><td>01/15</td><td>\x1F</td><td>\037</td><td></td><td>^_</td>
+  <th>SS3</th><td>08/15</td><td>\x8F</td><td>\217</td><td></td><td>&#x2325;^O</td>
+  <th class="markB">APC</th><td>09/15</td><td>\x9F</td><td>\237</td><td></td><td>&#x2325;^_</td>
 </tr>
 
 <tr><th colspan="12">GL</th></tr>
 <tr>
-  <th>SP</th><td>\x20</td><td>\040</td><td>2/0</td><td>&#x2423;</td><td></td>
-  <th>DEL</th><td>\x7F</td><td>\177</td><td>7/15</td><td>^?</td><td></td>
+  <th>SP</th><td>02/00</td><td>\x20</td><td>\040</td><td></td><td>&#x2423;</td>
+  <th>DEL</th><td>07/15</td><td>\x7F</td><td>\177</td><td></td><td>^?</td>
 </tr>
 </table>
 
 <ul>
 <li>C0, C1, GL 等とした物は、バイト値のグループ分けの事で、
-  [0x00, 0x20) の範囲の文字の集合を <dfn>C0</dfn> (ASCII control characters) と呼び、
-  [0x80, 0xA0) の範囲の文字の集合を <dfn>C1</dfn> (8-bit control characters) と呼ぶ。
+  00/00-01/15 の範囲の文字の集合を <dfn>C0</dfn> (ASCII control characters) と呼び、
+  08/00-09/15 の範囲の文字の集合を <dfn>C1</dfn> (8-bit control characters) と呼ぶ。
   この C0 C1 の二つの文字の集合を総称して<dfn>制御文字</dfn> (control character, 制御キャラクタ, 制御機能文字) と呼ぶ。
-  一方で、[0x20,0x80) の範囲のバイトの集合を <dfn>GL</dfn> と呼び、
-  [0xA0,0xFF] の範囲のバイトの集合を <dfn>GR</dfn> (8-bit graphic code) と呼ぶ。
+  一方で、02/00-07/15 の範囲のバイトの集合を <dfn>GL</dfn> と呼び、
+  10/00-15/15 の範囲のバイトの集合を <dfn>GR</dfn> (8-bit graphic code) と呼ぶ。
   GL のバイトには通常、キーボードの表面に印刷されている様な普通の文字 (ASCII文字) が割り当てられている。
   GR のバイトには文字集合 (character set) に応じて様々な文字が割り当てられる。
   GL GR に割り当てられる文字を総称して<dfn>図形文字</dfn> (graphic character) と呼ぶ。
   但し、特に GL に属する SP 及び DEL については、
   制御文字的な性格が多少あるので上の表の隅に載せた。
 </li>
-<li>制御文字の中でも、或る物は単独で一つの意味を持ち、
-  或る物は後続するバイト列と一連の系列を為して一つ意味を持つ。
-  特に、単独で意味を為す制御文字を<dfn>制御コード</dfn> (control code) と呼び、
-  複数バイトで一つの意味を為す系列を<dfn>制御シーケンス</dfn> (control sequence, 制御系列)
-  または <dfn>エスケープシーケンス</dfn> (escape sequence) と呼ぶ。
-  表中で赤色で示した物が、制御シーケンスの先頭になる制御文字である。
+<li>制御文字の中でも、或る物は単独で一つの制御機能を表し、
+  或る物は後続するバイト列と一連のシーケンスを為して一つ制御機能を表す。
+  <b>制御シーケンス</b>・<b>エスケープシーケンス</b> は狭義には
+  それぞれ CSI, ESC から始まるシーケンスの事であるが、
+  複数バイトからなるシーケンスの総称として用いられる事も多い。
+  表中で赤色で示した物が、シーケンスの開始として用いられる制御文字である。
 </li>
 <li>列の項目について
-  <p>"名称" の列には ASCII や、各端末に於いて定義された機能の短縮名を示してある。
-  "16進"　の列は 16 進数による C リテラル表現、
-  "8進" の列は 8 進数による C リテラル表現でバイト値を示す。
-  "R/C" の列は ISO/IEC 2022 で使用される様な、行と列によるバイト表記である。
-  "CN" の列は caret notation によるバイトの表現である。
-  キーボード上で Control+A の入力は <code class="agh-prog-cpp">0x1F&amp;'A'</code> の様に、
-  但し、C1 の文字に対応する caret notation はないので、
-  ここだけの表現として、バイトの Meta 修飾 (c|=0x80) を &#x2325; を先頭に冠して表現する事にした。
-  "ES" の列には、様々の言語の文字リテラル中で用いられる特別な表現があれば、それを記した。
+  <ul>
+  <li>"略号" の列には ASCII や、各端末に於いて定義された機能の短縮名を示してある。</li>
+  <li>"R/C" の列は、行と列によるバイト値の表記である。</li>
+  <li>"16進", "8進", "ES" の列には C 言語などの文字列リテラル中で用いられる表現を示した。
+  それぞれ 16進数、8進数、(文字列リテラルの) エスケープシーケンス による表現である。
+  "ES" の列に関しては必ずしも全ての言語で全ての表現に対応しているとは限らない。</li>
+  <li>"CN" の列は caret notation によるバイトの表現である。
+  例えば、端末のキーボードで Control+A を入力すると
+  <code class="agh-prog-cpp">0x1F &amp; 'A'</code> の様に計算されたバイトが送信される。
+  それを以て <kbd>^A</kbd> の様に表記する。
+  同様にして端末のキーボードで Meta と一緒に文字を入力すると、
+  bit 7 (最上位ビット) が立てられるので、C1 の文字は例えば Control+Meta+A の様にして送信できる
+  しかし、Meta に対応する caret notation は一般的にないので、
+  ここだけの表現として Meta を &#x2325; で表現する事にした。
+  </li>
+  </ul>
+  <p>
   </p>
 </li>
 <li>ISO/IEC 646 には C0 が含まれる。ISO/IEC 6429, ISO/IEC 10646 には C0/C1 の療法が含まれる。
@@ -343,9 +355,9 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </li>
 </ul>
 <table class="normal center">
-<tr><th>略号</th><th>符号表現</th><th>Hex; 行/列</th>
-    <th>略号</th><th>符号表現</th><th>Hex; 行/列</th>
-    <th>略号</th><th>符号表現</th><th>Hex; 行/列</th></tr>
+<tr><th>略号</th><th>符号化表現</th><th>Hex; 行/列</th>
+    <th>略号</th><th>符号化表現</th><th>Hex; 行/列</th>
+    <th>略号</th><th>符号化表現</th><th>Hex; 行/列</th></tr>
 <tr><th class="markB">ACS</th><td><kbd>ESC SP</kbd></td><td>\x1B\x20; 1/11 2/0</td>
     <th>---</th><td><kbd>ESC @</kbd></td><td>\x1B\x40; 1/11 4/0</td>
     <th>DMI</th><td><kbd>ESC `</kbd></td><td>\x1B\x60; 1/11 6/0</td></tr>
@@ -395,9 +407,9 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>SS3</th><td><kbd>ESC O</kbd></td><td>\x1B\x4F; 1/11 4/15</td>
     <th>LS3</th><td><kbd>ESC o</kbd></td><td>\x1B\x6F; 1/11 6/15</td></tr>
 
-<tr><th>略号</th><th>符号表現</th><th>Hex; 行/列</th>
-    <th>略号</th><th>符号表現</th><th>Hex; 行/列</th>
-    <th>略号</th><th>符号表現</th><th>Hex; 行/列</th></tr>
+<tr><th>略号</th><th>符号化表現</th><th>Hex; 行/列</th>
+    <th>略号</th><th>符号化表現</th><th>Hex; 行/列</th>
+    <th>略号</th><th>符号化表現</th><th>Hex; 行/列</th></tr>
 <tr><th>---</th><td><kbd>ESC 0</kbd></td><td>\x1B\x30; 1/11 3/0</td>
     <th class="markB">DCS</th><td><kbd>ESC P</kbd></td><td>\x1B\x50; 1/11 5/0</td>
     <th>PCD</th><td><kbd>ESC p</kbd></td><td>\x1B\x70; 1/11 7/0</td></tr>
@@ -481,7 +493,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 それらを以下に纏める。
 </p>
 <table class="normal center">
-<tr><th>略号</th>   <th>符号表現</th><th>Hex; 行/列</th></tr>
+<tr><th>略号</th>   <th>符号化表現</th><th>Hex; 行/列</th></tr>
 <tr><th>RSCF</th>
   <td><kbd>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td>
   <td>\x1B\x23<i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i>;
@@ -500,7 +512,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 
 <h3>制御シーケンス (control sequence)</h3>
 <table class="normal center">
-<tr><th>先頭</th><th>符号表現</th><th>名前</th></tr>
+<tr><th>先頭</th><th>符号化表現</th><th>名前</th></tr>
 <tr><th>CSI</th>
   <td><kbd>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td>
   <td><dfn>制御シーケンス</dfn> (control sequence)</td>
@@ -553,7 +565,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 
 <h3>制御列 (control string)</h3>
 <table class="normal center">
-<tr><th>先頭</th><th>符号表現</th><th>名前</th></tr>
+<tr><th>先頭</th><th>符号化表現</th><th>名前</th></tr>
 <tr><th>OSC</th>
   <td><kbd>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> BEL</kbd><br/>
   <kbd>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> ST</kbd>
@@ -656,7 +668,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <h2>モード</h2>
 
 <table class="normal center">
-<tr><th>略号</th><th>符号表現</th></tr>
+<tr><th>略号</th><th>符号化表現</th></tr>
 <tr><th>SM</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> h</kbd></td></tr>
 <tr><th>DECSET</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> h</kbd></td></tr>
 <tr><th>RM</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> l</kbd></td></tr>
@@ -933,7 +945,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </ul>
 
 <table class="normal center">
-<tr><th>略号</th><th>符号表現</th></tr>
+<tr><th>略号</th><th>符号化表現</th></tr>
 <tr><th>SPD</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> SP S</kbd></td></tr>
 <tr><th>SCP</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> SP k</kbd></td></tr>
 <tr><th>SIMD</th><td><kbd>CSI <i>&lt;Ps1&gt;</i> ^</kbd></td></tr>
@@ -1010,7 +1022,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </ul>
 
 <table class="normal center">
-<tr><th>略号</th><th>符号表現</th></tr>
+<tr><th>略号</th><th>符号化表現</th></tr>
 <tr><th>SLH</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP U</kbd></td></tr>
 <tr><th>SLL</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP V</kbd></td></tr>
 <tr><th>SPH</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> SP i</kbd></td></tr>
@@ -1110,7 +1122,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <p>以下に関連する制御機能を挙げる。</p>
 <table class="normal center">
-<tr><th>略号</th><th>符号表現</th><th>名称</th></tr>
+<tr><th>略号</th><th>符号化表現</th><th>名称</th></tr>
 <tr><th>SDS</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ]</kbd></td><td>Start Directed String</td></tr>
 <tr><th>SRS</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> [</kbd></td><td>Start Reversed String</td></tr>
 <tr><th>ALM</th><td><kbd>U+061C</kbd></td><td>Arabic letter mark</td></tr>
@@ -1154,7 +1166,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <h2>カーソル位置</h2>
 
 <table class="normal center">
-<tr><th>略号</th><th>種類</th><th>符号表現</th><th>対象</th><th>意味</th></tr>
+<tr><th>略号</th><th>用途</th><th>符号化表現</th><th>対象</th><th>意味</th></tr>
 <tr><th>BS</th> <td>制御</td><td><kbd>BS</kbd></td> <td>記憶部</td><td>一文字戻る</td></tr>
 <tr><th>HT</th> <td>制御</td><td><kbd>HT</kbd></td> <td>表示部</td><td>次のタブストップ</td></tr>
 <tr><th>LF</th> <td>制御</td><td><kbd>LF</kbd></td> <td>DCSM</td>  <td>一行下</td></tr>
@@ -1339,7 +1351,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <h2>挿入・削除</h2>
 
 <table class="normal center">
-<tr><th>略号</th><th>符号表現</th></tr>
+<tr><th>略号</th><th>符号化表現</th></tr>
 <tr><th>ED</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> J</kbd></td></tr>
 <tr><th>DCH</th><td><kbd>CSI <i>&lt;Ps&gt;</i> P</kbd></td></tr>
 <tr><th>ECH</th><td><kbd>CSI <i>&lt;Ps&gt;</i> X</kbd></td></tr>
@@ -1433,7 +1445,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <p>■ 以下 xterm の CSI Sequence (未だ纏めていない物)</p>
 <table class="normal center">
-<tr><th>略号</th><th>符号表現</th></tr>
+<tr><th>略号</th><th>符号化表現</th></tr>
 <tr><th>DECSED</th><td><kbd>CSI ? <i>&lt;Ps&gt;</i> J</kbd></td></tr>
 <tr><th>DECSEL</th><td><kbd>CSI ? <i>&lt;Ps&gt;</i> K</kbd></td></tr>
 <tr><th>SU</th>     <td><kbd>CSI <i>&lt;Ps&gt;</i> S</kbd></td></tr>
@@ -1471,7 +1483,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <h3>問い合わせ</h3>
 <table class="normal center">
-<tr><th>略号</th><th>種類</th><th>符号表現</th></tr>
+<tr><th>略号</th><th>用途</th><th>符号化表現</th></tr>
 <tr><th>DA1</th> <td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> c</kbd></td></tr>
 <tr><th>DA1R</th><td>応答</td><td><kbd>CSI ? 6 4 ; <i>&lt;Pm&gt;</i> c</kbd></td></tr>
 <tr><th>DA2</th> <td>制御</td><td><kbd>CSI &gt; <i>&lt;Ps&gt;</i> c</kbd></td></tr>
@@ -1520,7 +1532,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h3>他</h3>
 <table class="normal center">
-<tr><th>略号</th>    <th>符号表現</th></tr>
+<tr><th>略号</th>    <th>符号化表現</th></tr>
 <tr><th>DECSCUSR</th><td><kbd>CSI <i>&lt;Ps&gt;</i> SP q</kbd></td></tr>
 </table>
 
@@ -1567,7 +1579,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <h3>文字挿入時の属性</h3>
 <table class="normal center">
-<tr><th>略号</th><th>符号表現</th></tr>
+<tr><th>略号</th><th>符号化表現</th></tr>
 <tr><th>SGR</th> <td><kbd>CSI <i>&lt;Pm&gt;</i> m</kbd></td></tr>
 <tr><th>PLD</th> <td><kbd>PLD</kbd></td></tr>
 <tr><th>PLU</th> <td><kbd>PLU</kbd></td></tr>
@@ -1602,7 +1614,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <h3>行に対する属性</h3>
 <table class="normal center">
-<tr><th>略号</th><th>符号表現</th></tr>
+<tr><th>略号</th><th>符号化表現</th></tr>
 <tr><th rowspan="2">DECDHL</th>
     <td><kbd>ESC # 3</kbd></td></tr>
 <tr><td><kbd>ESC # 4</kbd></td></tr>
@@ -2319,7 +2331,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </p>
 
 <table class="normal center">
-<tr><th>符号表現</th><th>R/C</th><th>機能</th></tr>
+<tr><th>符号化表現</th><th>R/C</th><th>機能</th></tr>
 <tr><td><kbd>ESC SP A</kbd></td><td>1/11 2/0 4/1 </td><td></td></tr>
 <tr><td><kbd>ESC SP B</kbd></td><td>1/11 2/0 4/2 </td><td></td></tr>
 <tr><td><kbd>ESC SP C</kbd></td><td>1/11 2/0 4/3 </td><td></td></tr>
