@@ -94,8 +94,8 @@
 </ul>
 
 <h3>符号化表現 (coded representation)</h3>
-<p>以降ではバイトを row/column の組み合わせで表現する。
-row と column は 0-15 の十進整数であり、それぞれ上位 4 bit と下位 4 bit を表す。
+<p>以降ではバイトを column/row の組み合わせで表現する。
+column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と下位 4 bit を表す。
 例えば 02/00 は 0x20 を表し ASCII コードにおいて空白文字に対応する。
 </p>
 <p>制御機能を表現するバイト列を<dfn>符号化表現</dfn> (coded representation) という。
@@ -107,9 +107,9 @@ row と column は 0-15 の十進整数であり、それぞれ上位 4 bit と�
     <td><kbd><i>&lt;C0&gt;</i></kbd></td><td>基本の制御</td><td>ISO/IEC 646</td></tr>
 <tr><td><kbd><i>&lt;C1&gt;</i></kbd></td><td>基本の制御</td><td>ISO/IEC 6429 (ECMA-48)</td></tr>
 <tr><th colspan="2">DLE シーケンス</th>
-    <td><kbd>DLE <i>&lt;I&gt;</i><strong>+</strong> <i>&lt;P&gt;</i></kbd><br />
-        <kbd>DLE <i>&lt;I&gt;</i><strong>+</strong> <i>&lt;F&gt;</i></kbd><br />
-        <kbd>DLE <i>?</i></kbd></td><td>伝送の制御</td><td>ISO/IEC 1745 (ECMA-16, ECMA-37)</td></tr>
+    <td><kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></kbd><br />
+        <kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd><br />
+        <kbd>DLE <i>&lt;C0&gt;</i></kbd></td><td>伝送の制御</td><td>ISO/IEC 1745 (ECMA-16, ECMA-37)</td></tr>
 <tr><th colspan="2" rowspan="2">エスケープシーケンス</th>
     <td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td><td>文字コードの制御</td><td rowspan="2">ISO/IEC 2022</td></tr>
 <tr><td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></kbd></td><td>私用の制御</td></tr>
@@ -141,14 +141,14 @@ row と column は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 <table class="normal center">
 <tr><th colspan="12">C0 (ISO/IEC 646)</th><th colspan="12">C1 (ISO/IEC 6429)</th></tr>
 <tr>
-  <th>略号</th><th>R/C</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
-  <th>略号</th><th>R/C</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
-  <th>略号</th><th>R/C</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
-  <th>略号</th><th>R/C</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>C/R</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>C/R</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>C/R</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>C/R</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
 </tr>
 <tr>
   <th>NUL</th><td>00/00</td><td>\x00</td><td>\000</td><td></td><td>^@</td>
-  <th>DLE</th><td>01/00</td><td>\x10</td><td>\020</td><td></td><td>^P</td>
+  <th class="markB">DLE</th><td>01/00</td><td>\x10</td><td>\020</td><td></td><td>^P</td>
   <th>(PAD)</th><td>08/00</td><td>\x80</td><td>\200</td><td></td><td>&#x2325;^@</td>
   <th class="markB">DCS</th><td>09/00</td><td>\x90</td><td>\220</td><td></td><td>&#x2325;^P</td>
 </tr>
@@ -274,7 +274,7 @@ row と column は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 <li>列の項目について
   <ul>
   <li>"略号" の列には ASCII や、各端末に於いて定義された機能の短縮名を示してある。</li>
-  <li>"R/C" の列は、行と列によるバイト値の表記である。</li>
+  <li>"C/R" の列は、行と列によるバイト値の表記である。</li>
   <li>"16進", "8進", "ES" の列には C 言語などの文字列リテラル中で用いられる表現を示した。
   それぞれ 16進数、8進数、(文字列リテラルの) エスケープシーケンス による表現である。
   "ES" の列に関しては必ずしも全ての言語で全ての表現に対応しているとは限らない。</li>
@@ -324,12 +324,12 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 以下にバイト値と図形文字の対応を載せる。</p>
 
 <table class="normal center">
-<tr><th>略号</th><th>R/C</th>
-    <th>略号</th><th>R/C</th>
-    <th>略号</th><th>R/C</th>
-    <th>略号</th><th>R/C</th>
-    <th>略号</th><th>R/C</th>
-    <th>略号</th><th>R/C</th>
+<tr><th>略号</th><th>C/R</th>
+    <th>略号</th><th>C/R</th>
+    <th>略号</th><th>C/R</th>
+    <th>略号</th><th>C/R</th>
+    <th>略号</th><th>C/R</th>
+    <th>略号</th><th>C/R</th>
 </tr>
 <tr><th>SP</th>   <td>02/00</td><th>0</th>   <td>03/00</td><th>@</th><td>04/00</td><th>P</th><td>05/00</td><th>`</th><td>06/00</td><th>p</th>  <td>07/00</td></tr>
 <tr><th>!</th>    <td>02/01</td><th>1</th>   <td>03/01</td><th>A</th><td>04/01</td><th>Q</th><td>05/01</td><th>a</th><td>06/01</td><th>q</th>  <td>07/01</td></tr>
@@ -2381,7 +2381,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <h3><dfn class="cfunc">ACS</dfn>: Announcer Code Structure</h3>
 <table class="normal center">
-<tr><th>略号</th><th>Sequence</th><th>R/C</th></tr>
+<tr><th>略号</th><th>Sequence</th><th>C/R</th></tr>
 <tr><th>ACS</th>
   <td><kbd>ESC SP <i>&lt;F&gt;</i></kbd></td>
   <td>1/11 2/0 <i>&lt;F&gt;</i></td>
@@ -2394,7 +2394,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </p>
 
 <table class="normal center">
-<tr><th>符号化表現</th><th>R/C</th><th>機能</th></tr>
+<tr><th>符号化表現</th><th>C/R</th><th>機能</th></tr>
 <tr><td><kbd>ESC SP A</kbd></td><td>1/11 2/0 4/1 </td><td></td></tr>
 <tr><td><kbd>ESC SP B</kbd></td><td>1/11 2/0 4/2 </td><td></td></tr>
 <tr><td><kbd>ESC SP C</kbd></td><td>1/11 2/0 4/3 </td><td></td></tr>
