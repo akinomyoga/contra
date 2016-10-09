@@ -104,8 +104,12 @@ row と column は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 <table class="normal center">
 <tr><th colspan="2">名称</th><th>符号化表現</th><th>説明</th><th>関連規格</th></tr>
 <tr><th colspan="2" rowspan="2">制御文字</th>
-    <td><i>&lt;C0&gt;</i></td><td>基本の制御</td><td>ISO/IEC 646</td></tr>
-<tr><td><i>&lt;C1&gt;</i></td><td>基本の制御</td><td>ISO/IEC 6429 (ECMA-48)</td></tr>
+    <td><kbd><i>&lt;C0&gt;</i></kbd></td><td>基本の制御</td><td>ISO/IEC 646</td></tr>
+<tr><td><kbd><i>&lt;C1&gt;</i></kbd></td><td>基本の制御</td><td>ISO/IEC 6429 (ECMA-48)</td></tr>
+<tr><th colspan="2">DLE シーケンス</th>
+    <td><kbd>DLE <i>&lt;I&gt;</i><strong>+</strong> <i>&lt;P&gt;</i></kbd><br />
+        <kbd>DLE <i>&lt;I&gt;</i><strong>+</strong> <i>&lt;F&gt;</i></kbd><br />
+        <kbd>DLE <i>?</i></kbd></td><td>伝送の制御</td><td>ISO/IEC 1745 (ECMA-16, ECMA-37)</td></tr>
 <tr><th colspan="2" rowspan="2">エスケープシーケンス</th>
     <td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td><td>文字コードの制御</td><td rowspan="2">ISO/IEC 2022</td></tr>
 <tr><td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></kbd></td><td>私用の制御</td></tr>
