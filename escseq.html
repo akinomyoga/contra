@@ -1441,63 +1441,200 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th></tr>
+<tr><th>SEE</th><td><kbd>CSI <i>&lt;Ps&gt;</i> Q</kbd></td></tr>
+<tr><th>DCH</th><td><kbd>CSI <i>&lt;Pn&gt;</i> P</kbd></td></tr>
+<tr><th>ECH</th><td><kbd>CSI <i>&lt;Pn&gt;</i> X</kbd></td></tr>
+<tr><th>ICH</th><td><kbd>CSI <i>&lt;Pn&gt;</i> @</kbd></td></tr>
+<tr><th>DL</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> M</kbd></td></tr>
+<tr><th>EL</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> K</kbd></td></tr>
+<tr><th>IL</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> L</kbd></td></tr>
+<tr><th>EF</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> N</kbd></td></tr>
+<tr><th>EA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> O</kbd></td></tr>
 <tr><th>ED</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> J</kbd></td></tr>
-<tr><th>DCH</th><td><kbd>CSI <i>&lt;Ps&gt;</i> P</kbd></td></tr>
-<tr><th>ECH</th><td><kbd>CSI <i>&lt;Ps&gt;</i> X</kbd></td></tr>
-<tr><th>ICH</th><td><kbd>CSI <i>&lt;Ps&gt;</i> @</kbd></td></tr>
-<tr><th>DL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> M</kbd></td></tr>
-<tr><th>EL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> K</kbd></td></tr>
-<tr><th>IL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> L</kbd></td></tr>
 </table>
 <ul>
-<li><dfn class="cfunc">ED</dfn>: Erase in Display
+<li>Mode 6 <dfn class="cmode">ERM</dfn>: Erasure Mode
+  <p>[ECMA-48/7.2.4] EA, ECH, ED, EF, EL で保護領域の文字を消去するかどうかを設定する。</p>
   <ul>
-  <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/ED">VT510: ED</a></li>
+  <li><dfn class="cmode-rm">PROTECT</dfn> (SM): 保護領域の内容は消去されない。</li>
+  <li><dfn class="cmode-sm">ALL</dfn> (RM): 保護領域の内容も消去される。</li>
   </ul>
 </li>
+<li>Mode 7 <dfn class="cmode">VEM</dfn>: Line Editing Mode
+  <p>[ECMA-48/7.2.19] DL, IL の動作を指定する。</p>
+  <ul>
+  <li><dfn class="cmode-rm">FOLLOWING</dfn> (RM): 行挿入・削除において現在行以降がシフトの対象となる。</li>
+  <li><dfn class="cmode-sm">PRECEDING</dfn> (SM): 行挿入・削除において現在行以前がシフトの対象となる。</li>
+  </ul>
+  <p>DCSM の値に従って表示部または記憶部でシフトが実行される。
+  行の前後は行進行の方向に従って定めたものである。
+  </p>
+</li>
+<li>Mode 10 <dfn class="cmode">HEM</dfn>: Character Editing Mode
+  <p>[ECMA-48/7.2.9] DCH, ICH の動作を指定する。</p>
+  <ul>
+  <li><dfn class="cmode-rm">FOLLOWING</dfn> (RM): 文字挿入・削除において現在位置以降がシフトの対象となる。</li>
+  <li><dfn class="cmode-sm">PRECEDING</dfn> (SM): 文字挿入・削除において現在位置以前がシフトの対象となる。</li>
+  </ul>
+  <p>DCSM の値に従って表示部または記憶部でシフトが実行される。
+  位置の前後は文字進行または文字進路の方向に従って定めたものである。
+  </p>
+</li>
+<li><dfn class="cfunc">SEE</dfn>: Select Editing Extent
+  <p>[ECMA-48/8.3.115] DCH, DL, ICH, IL においてシフト対象の範囲を設定する。
+  設定は次の SEE が現れるまで有効である。既定値は 0 である。
+  </p>
+  <table class="normal center">
+  <tr><th><i>&lt;Ps&gt;</i></th><th>シフト対象</th></tr>
+  <tr><td>0</td><td>表示部の現在ページに限られる。</td></tr>
+  <tr><td>1</td><td>表示部の現在行に限られる。</td></tr>
+  <tr><td>2</td><td>表示部の現在のフィールドに限られる。</td></tr>
+  <tr><td>3</td><td>現在の属性化領域に限られる。</td></tr>
+  <tr><td>4</td><td>表示部全体の関係ある部分からなる。</td></tr>
+  </table>
+  <p>Note: 関係ある部分 (the relevant part of the entire presentation component) が一体何なのかは不明瞭である。
+  処理系で完全に自由に定義できるのか、或いは、できるだけ表示部の中で大きく取らなければならないのか。
+  </p>
+</li>
 <li><dfn class="cfunc">DCH</dfn>: Delete Character
-  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
+  <p>[ECMA-48/8.3.26]
+  現在位置および次 (HEM(FOLLOWING) のとき) または前 (HEM(PRECEDING) のとき) の <i>&lt;Pn&gt;</i> - 1 個の文字位置を行から除去する。
+  つまり、現在位置から <i>&lt;Pn&gt;</i> 文字次以降の内容が現在位置に向かってシフトされ、シフトによってできた余白は消去される。
+  シフトの範囲は SEE によって指定される。シフトに依って選択領域・属性化領域・タブがどう影響を受けるかは規格では指定されない。
+  除去範囲およびシフトは DCSM に応じて表示部または記憶部で決定される。
+  引数の既定値は 1 で、ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
+  </p>
   <ul>
   <li>VT100; xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DCH">VT510: DCH</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">ECH</dfn>: Erase Character
-  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
+  <p>[ECMA-48/8.3.38]
+  現在位置に加えて <i>&lt;Pn&gt;</i> -1 個の文字位置を消去する。
+  消去の範囲は DCSM に応じて表示部または記憶部で決定される。
+  ERM に依存して保護領域の文字も消去するかどうかが決まる。
+  引数の既定値は 1 で、ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
+  </p>
   <ul>
   <li>VT420; xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/ECH">VT510: ECH</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">ICH</dfn>: Insert Character
-  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
+  <p>[ECMA-48/8.3.64]
+  現在位置および <i>&lt;Pn&gt;</i> - 1 個の文字位置を HEM に応じて後または前に挿入する。
+  つまり、現在位置とその後または前の部分が <i>&lt;Pn&gt;</i> 個だけシフトされ、
+  シフト部分の反対側の端にあった <i>&lt;Pn&gt;</i> 個の文字は失われる。
+  現在位置は SLH に移動する。シフト対象は SEE によって設定される。
+  現在位置およびシフト部分の決定は DCSM に応じて表示部または記憶部で行われる。
+  選択領域・属性化領域・横タブの上で ICH をした時の振る舞いは定義されない。
+  引数の既定値は 1 で、ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
+  </p>
   <ul>
-  <li>VT420; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/ICH">VT510: ICH</a></li>
+  <li>xterm, RLogin, mintty, screen, Poderosa では現在位置は変化しない。</li>
+  <li>VT420 <a href="http://www.vt100.net/docs/vt510-rm/ICH">VT510: ICH</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DL</dfn>: Delete Line
-  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
-  <p><i>&lt;Ps&gt;</i> 行だけ削除して抜き去る。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
+  <p>[ECMA-48/8.3.32]
+  現在行と、VEM に応じて前または後の <i>&lt;Pn&gt;</i> - 1 行を除去する。
+  つまり、<i>&lt;Pn&gt;</i> 行目以降を現在行の方向にシフトさせ、シフト部分の反対側の <i>&lt;Pn&gt;</i> 行の内容は消去される。
+  引数の既定値は 1 で、ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
+  シフト範囲は SEE による。現在位置は現在行の SLH に移動する。
+  現在位置の移動およびシフトは DCSM に応じて表示部または記憶部で実行される。
+  選択領域・属性化領域・横タブも一緒にシフトされる。
+  TSM(SINGLE) のとき、消去される行の横タブは削除される。
+  </p>
   <ul>
-  <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DL">VT510: DL</a></li>
-  </ul>
-</li>
-<li><dfn class="cfunc">EL</dfn>: Erase in Line
-  <ul>
-  <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/EL">VT510: EL</a></li>
+  <li>xterm は現在位置を SLH に移動する。screen, RLogin, Poderosa, mintty では現在位置は変化しない。</li>
+  <li>RLogin ではシフト範囲は DECSTBM で指定した範囲に限られる (他の端末は調べていない)。</li>
+  <li>VT100 <a href="http://www.vt100.net/docs/vt510-rm/DL">VT510: DL</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">IL</dfn>: Insert Line
-  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
-  <p><i>&lt;Ps&gt;</i> 行だけ空白行を挿入。<i>&lt;Ps&gt;</i> に 0 を指定した場合、及び省略した場合は 1 と解釈する。</p>
+  <p>[ECMA-48/8.3.67] 現在行の位置に空行を <i>&lt;Pn&gt;</i> 行挿入する。
+  つまり、現在行及び、VEM に応じて前または後の <i>&lt;Pn&gt;</i> - 1 行を <i>&lt;Pn&gt;</i> 行分だけ現在行から離れる方向にシフトし、
+  空いた行の内容を消去する。シフト範囲の反対側の <i>&lt;Pn&gt;</i> 行の内容は失われる。
+  引数の既定値は 1 で、ZDM(DEFAULT) のとき 0 は既定値 1 を意味する。
+  現在位置は SLH に移動する。
+  シフトの範囲は SEE によって決まる。
+  シフト範囲に含まれる選択領域・属性化領域・タブも一緒にシフトされる。
+  TSM(SINGLE) の時、挿入される行のタブは消去される。
+  現在位置及びシフトは DCSM に応じて表示部または記憶部で行われる。
+  </p>
+  <ul>
+  <li>xterm は現在位置を SLH に移動する。screen, RLogin, mintty, Poderosa は現在位置は変化しない。</li>
+  <li>vt100 <a href="http://www.vt100.net/docs/vt510-rm/DCH">VT510: IL</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">EL</dfn>: Erase In Line
+  <p>[ECMA-48/8.3.41] 引数に応じて現在行の全てまたは一部の文字を消去する。</p>
+  <table class="normal center">
+  <tr><th><i>&lt;Ps&gt;</i></th><th>消去の対象</th></tr>
+  <tr><td>0</td><td>現在位置及び行末まで</td></tr>
+  <tr><td>1</td><td>現在位置及び行頭まで</td></tr>
+  <tr><td>2</td><td>行内の全ての文字</td></tr>
+  </table>
+  <p>
+  引数の既定値は 0 である。
+  DCSM に応じて消去範囲は表示部または記憶部で決定される。
+  保護領域の文字が消去されるかどうかは ERM による。
+  </p>
+  <ul>
+  <li>xterm</li>
+  <li>vt100 <a href="http://www.vt100.net/docs/vt510-rm/EL">VT510: EL</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">EF</dfn>: Erase In Field
+  <p>[ECMA-48/8.3.40] 引数に応じて現在フィールドの一部または全ての文字を消去する。引数の既定値は 0 である。</p>
+  <table class="normal center">
+  <tr><th><i>&lt;Ps&gt;</i></th><th>消去の対象</th></tr>
+  <tr><td>0</td><td>現在位置と現在フィールドの末尾まで</td></tr>
+  <tr><td>1</td><td>現在位置と現在フィールドの先頭まで</td></tr>
+  <tr><td>2</td><td>現在フィールドの内容全て</td></tr>
+  </table>
+  <p>DCSM に応じて表示部または記憶部において消去範囲を決定する。
+  保護領域の文字も消去するかどうかは ERM による。
+  </p>
+</li>
+<li><dfn class="cfunc">EA</dfn>: Erase In Area
+  <p>[ECMA-48/8.3.37] 引数に応じて現在の属性化領域の一部または全ての文字を消去する。引数の既定値は 0 である。</p>
+  <table class="normal center">
+  <tr><th><i>&lt;Ps&gt;</i></th><th>消去の対象</th></tr>
+  <tr><td>0</td><td>現在位置と現在領域の末尾まで</td></tr>
+  <tr><td>1</td><td>現在位置と現在領域の先頭まで</td></tr>
+  <tr><td>2</td><td>現在領域の内容全て</td></tr>
+  </table>
+  <p>DCSM に応じて消去範囲は表示部または記憶部において決定される。
+  保護領域の文字も消去するかどうかは ERM による。
+  </p>
+</li>
+<li><dfn class="cfunc">ED</dfn>: Erase In Page (vt100: Erase in Display)
+  <p>[ECMA-48/8.3.39]
+  <i>&lt;Ps&gt;</i> = 0 のとき、現在位置とそこからページの終わりまでの全ての文字を消去する。
+  <i>&lt;Ps&gt;</i> = 1 のとき、現在位置とそこからページの始まりまでの全ての文字を消去する。
+  <i>&lt;Ps&gt;</i> = 2 のとき、現在ページの全ての文字を消去する。
+  引数の既定値は 0 である。
+  消去する範囲は DCSM に応じて表示部または記憶部の中で決定される。
+  ERM に依存して保護領域の文字も消去するかどうかが決まる。
+  </p>
   <ul>
   <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DCH">VT510: IL</a></li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/ED">VT510: ED</a></li>
   </ul>
+</li>
+</ul>
+
+<h4>互換性</h4>
+<ul>
+<li>Poderosa では、下部に空行がある状態で IL を実行すると
+scrolling region がその時に存在している行の範囲に設定されて表示領域が限られてしまう。
+DL を実行した場合も、分かりにくいが似たような問題が生じる。
+また、一度 IL, DL を使うと上端から流れて出ていった内容が記録されず、
+スクロールして確認することができない。
+自分は何年も前にこのバグを勝手に修正した Poderosa を使っているが、
+このバグが何年も前から直っていないのは不思議な事である。
 </li>
 </ul>
 
@@ -1523,8 +1660,8 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
  DECSNLS, DECSPP, DECSPPCS, DECSPRTT, DECSR, DECSRC, DECSRFR, DECSSCLS, DECSSDT, DECSSL,
  DECST8C, DECSTBM, DECSTR, DECSTRL, DECSWBV, DECTABSR, DECTID, DECTME, DECTSR,
  DECTST, DECUDK, DECVCCM, DECXCPR, DECXRLM, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR,
- HPA, HPR, HTS, HVP, IND, IRM, KAM, LNM, LS, MC, NEL, NP, PP, PPA, PPB, PPR, RIS, SCODFK,
- SCS, SD, SRM, SS, SU, TBC, VPA, VPR
+ HTS, HVP, IND, IRM, KAM, LNM, LS, MC, NP, PP, PPA, PPB, PPR, RIS, SCODFK,
+ SCS, SD, SRM, SS, SU, TBC
 </li>
 <li>VT520
   <ul>

@@ -4,6 +4,11 @@
   ToDo
 ------------------------------------------------------------------------------
 
+2016-10-12
+
+* やはり変な名称をつけるのは良くないので、
+  記憶部・現在記憶位置は JIS に従ってデータ部・現在データ位置に修正する。
+
 2016-10-11
 
 * HVP 抜けている
@@ -73,22 +78,22 @@
   [ECMA-48/8.3.23] CVT: Cursor Line Tabulation  37
   [ECMA-48/8.3.24] DA: Device Attributes  37
   [ECMA-48/8.3.25] DAQ: Define Area Qualification  37
-  [ECMA-48/8.3.26] DCH: Delete Character  38
+  > [ECMA-48/8.3.26] DCH: Delete Character  38
   > [ECMA-48/8.3.27] DCS: Device Control String  38
   [ECMA-48/8.3.28] DC1: Device Control One  38
   [ECMA-48/8.3.29] DC2: Device Control Two  38
   [ECMA-48/8.3.30] DC3: Device Control Three  39
   [ECMA-48/8.3.31] DC4: Device Control Four  39
-  [ECMA-48/8.3.32] DL: Delete Line  39
+  > [ECMA-48/8.3.32] DL: Delete Line  39
   [ECMA-48/8.3.33] DLE: Data Link Escape  39
   [ECMA-48/8.3.34] DMI: Disable Manual Input  39
   [ECMA-48/8.3.35] DSR: Device Status Report  40
   [ECMA-48/8.3.36] DTA: Dimension Text Area  40
-  [ECMA-48/8.3.37] EA: Erase In Area  40
-  [ECMA-48/8.3.38] ECH: Erase Character  41
-  [ECMA-48/8.3.39] ED: Erase In Page  41
-  [ECMA-48/8.3.40] EF: Erase In Field  41
-  [ECMA-48/8.3.41] EL: Erase In Line  42
+  > [ECMA-48/8.3.37] EA: Erase In Area  40
+  > [ECMA-48/8.3.38] ECH: Erase Character  41
+  > [ECMA-48/8.3.39] ED: Erase In Page  41
+  > [ECMA-48/8.3.40] EF: Erase In Field  41
+  > [ECMA-48/8.3.41] EL: Erase In Line  42
   [ECMA-48/8.3.42] EM: End Of Medium  42
   [ECMA-48/8.3.43] EMI: Enable Manual Input  42
   [ECMA-48/8.3.44] ENQ: Enquiry  43
@@ -111,10 +116,10 @@
   [ECMA-48/8.3.61] HTJ: Character Tabulation With Justification  46
   [ECMA-48/8.3.62] HTS: Character Tabulation Set  46
   [ECMA-48/8.3.63] HVP: Character And Line Position  46
-  [ECMA-48/8.3.64] ICH: Insert Character  46
+  > [ECMA-48/8.3.64] ICH: Insert Character  46
   [ECMA-48/8.3.65] IDCS: Identify Device Control String  47
   [ECMA-48/8.3.66] IGS: Identify Graphic Subrepertoire  47
-  [ECMA-48/8.3.67] IL: Insert Line  47
+  > [ECMA-48/8.3.67] IL: Insert Line  47
   [ECMA-48/8.3.68] INT: Interrupt  48
   [ECMA-48/8.3.69] IS1: Information Separator One (Us: Unit Separator)  48
   [ECMA-48/8.3.70] IS2: Information Separator Two (Rs: Record Separator)  48
@@ -162,7 +167,7 @@
   [ECMA-48/8.3.112] SCS: Set Character Spacing  59
   [ECMA-48/8.3.113] SD: Scroll Down  59
   > [ECMA-48/8.3.114] SDS: Start Directed String  59
-  [ECMA-48/8.3.115] SEE: Select Editing Extent  60
+  > [ECMA-48/8.3.115] SEE: Select Editing Extent  60
   [ECMA-48/8.3.116] SEF: Sheet Eject And Feed  60
   > [ECMA-48/8.3.117] SGR: Select Graphic Rendition  61
   [ECMA-48/8.3.118] SHS: Select Character Spacing  63
@@ -214,12 +219,12 @@
   [ECMA-48/7.2.1]  Mode 8  BDSM: Bi-Directional Support Mode  21
   > [ECMA-48/7.2.2]  Mode 3  CRM: Control Representation Mode  22
   > [ECMA-48/7.2.3]  Mode 9  DCSM: Device Component Select Mode  22
-  [ECMA-48/7.2.4]  Mode 6  ERM: Erasure Mode  22
+  > [ECMA-48/7.2.4]  Mode 6  ERM: Erasure Mode  22
   [ECMA-48/7.2.5]  Mode 13 FEAM: Format Effector Action Mode  22
   [ECMA-48/7.2.6]  Mode 14 FETM: Format Effector Transfer Mode  22
   [ECMA-48/7.2.7]  Mode 1  GATM: Guarded Area Transfer Mode  23
   > [ECMA-48/7.2.8]  Mode 21 GRCM: Graphic Rendition Combination Mode  23
-  [ECMA-48/7.2.9]  Mode 10 HEM: Character Editing Mode  23
+  > [ECMA-48/7.2.9]  Mode 10 HEM: Character Editing Mode  23
   [ECMA-48/7.2.10] Mode 4  IRM: Insertion Replacement Mode  24
   [ECMA-48/7.2.11] Mode 2  KAM: Keyboard Action Mode  24
   [ECMA-48/7.2.12] Mode 15 MATM: Multiple Area Transfer Mode  24
@@ -229,7 +234,7 @@
   [ECMA-48/7.2.16] Mode 5  SRTM: Status Report Transfer Mode  24
   [ECMA-48/7.2.17] Mode 18 TSM: Tabulation Stop Mode  25
   [ECMA-48/7.2.18] Mode 16 TTM: Transfer Termination Mode  25
-  [ECMA-48/7.2.19] Mode 7  VEM: Line Editing Mode  25
+  > [ECMA-48/7.2.19] Mode 7  VEM: Line Editing Mode  25
   [ECMA-48/7.2.20] Mode 22 ZDM: Zero Default Mode
 
 
