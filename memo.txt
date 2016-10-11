@@ -115,7 +115,7 @@
   [ECMA-48/8.3.60] HT: Character Tabulation  45
   [ECMA-48/8.3.61] HTJ: Character Tabulation With Justification  46
   [ECMA-48/8.3.62] HTS: Character Tabulation Set  46
-  [ECMA-48/8.3.63] HVP: Character And Line Position  46
+  > [ECMA-48/8.3.63] HVP: Character And Line Position  46
   > [ECMA-48/8.3.64] ICH: Insert Character  46
   [ECMA-48/8.3.65] IDCS: Identify Device Control String  47
   [ECMA-48/8.3.66] IGS: Identify Graphic Subrepertoire  47
