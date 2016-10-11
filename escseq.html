@@ -1568,60 +1568,32 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>vt100 <a href="http://www.vt100.net/docs/vt510-rm/DCH">VT510: IL</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">EL</dfn>: Erase In Line
-  <p>[ECMA-48/8.3.41] 引数に応じて現在行の全てまたは一部の文字を消去する。</p>
-  <table class="normal center">
-  <tr><th><i>&lt;Ps&gt;</i></th><th>消去の対象</th></tr>
-  <tr><td>0</td><td>現在位置及び行末まで</td></tr>
-  <tr><td>1</td><td>現在位置及び行頭まで</td></tr>
-  <tr><td>2</td><td>行内の全ての文字</td></tr>
-  </table>
-  <p>
-  引数の既定値は 0 である。
-  DCSM に応じて消去範囲は表示部または記憶部で決定される。
-  保護領域の文字が消去されるかどうかは ERM による。
-  </p>
-  <ul>
-  <li>xterm</li>
-  <li>vt100 <a href="http://www.vt100.net/docs/vt510-rm/EL">VT510: EL</a></li>
-  </ul>
-</li>
-<li><dfn class="cfunc">EF</dfn>: Erase In Field
-  <p>[ECMA-48/8.3.40] 引数に応じて現在フィールドの一部または全ての文字を消去する。引数の既定値は 0 である。</p>
-  <table class="normal center">
-  <tr><th><i>&lt;Ps&gt;</i></th><th>消去の対象</th></tr>
-  <tr><td>0</td><td>現在位置と現在フィールドの末尾まで</td></tr>
-  <tr><td>1</td><td>現在位置と現在フィールドの先頭まで</td></tr>
-  <tr><td>2</td><td>現在フィールドの内容全て</td></tr>
-  </table>
-  <p>DCSM に応じて表示部または記憶部において消去範囲を決定する。
-  保護領域の文字も消去するかどうかは ERM による。
-  </p>
-</li>
-<li><dfn class="cfunc">EA</dfn>: Erase In Area
-  <p>[ECMA-48/8.3.37] 引数に応じて現在の属性化領域の一部または全ての文字を消去する。引数の既定値は 0 である。</p>
-  <table class="normal center">
-  <tr><th><i>&lt;Ps&gt;</i></th><th>消去の対象</th></tr>
-  <tr><td>0</td><td>現在位置と現在領域の末尾まで</td></tr>
-  <tr><td>1</td><td>現在位置と現在領域の先頭まで</td></tr>
-  <tr><td>2</td><td>現在領域の内容全て</td></tr>
-  </table>
-  <p>DCSM に応じて消去範囲は表示部または記憶部において決定される。
-  保護領域の文字も消去するかどうかは ERM による。
-  </p>
-</li>
+<li><dfn class="cfunc">EF</dfn>: Erase In Field</li>
+<li><dfn class="cfunc">EA</dfn>: Erase In Area</li>
+<li><dfn class="cfunc">EL</dfn>: Erase In Line</li>
 <li><dfn class="cfunc">ED</dfn>: Erase In Page (vt100: Erase in Display)
-  <p>[ECMA-48/8.3.39]
-  <i>&lt;Ps&gt;</i> = 0 のとき、現在位置とそこからページの終わりまでの全ての文字を消去する。
-  <i>&lt;Ps&gt;</i> = 1 のとき、現在位置とそこからページの始まりまでの全ての文字を消去する。
-  <i>&lt;Ps&gt;</i> = 2 のとき、現在ページの全ての文字を消去する。
-  引数の既定値は 0 である。
-  消去する範囲は DCSM に応じて表示部または記憶部の中で決定される。
-  ERM に依存して保護領域の文字も消去するかどうかが決まる。
+  <p>[ECMA-48/8.3.40 EF, 8.3.37 EA, 8.3.41 EL, 8.3.39 ED]
+  EF・EA・EL・ED はそれぞれ現在のフィールド・属性化領域・行・ページを作用の対象範囲とする。
+  引数に応じて対象範囲の一部または全ての文字を消去する。
+  </p>
+  <table class="normal center">
+  <tr><th><i>&lt;Ps&gt;</i></th><th>消去の対象</th></tr>
+  <tr><td>0</td><td>現在位置と対象範囲の末尾まで</td></tr>
+  <tr><td>1</td><td>現在位置と対象範囲の先頭まで</td></tr>
+  <tr><td>2</td><td>対象範囲の内容全て</td></tr>
+  </table>
+  <p>引数の既定値は 0 である。
+  消去範囲は、DCSM に応じて表示部または記憶部において決定される。
+  ERM によって保護領域の文字も消去するかどうかが決まる。
   </p>
   <ul>
-  <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/ED">VT510: ED</a></li>
+  <li>xterm は EL と ED に対応する。
+    RLogin では EL, ED が実装され、EF, EA は ED と同じ動作になる。
+  </li>
+  <li>vt100 は EL と ED に対応する。
+    <a href="http://www.vt100.net/docs/vt510-rm/EL">VT510: EL</a>
+    <a href="http://www.vt100.net/docs/vt510-rm/ED">VT510: ED</a>
+  </li>
   </ul>
 </li>
 </ul>
