@@ -17,7 +17,7 @@
     var dict = {};
     var idcount = 0;
     agh.Array.each(document.getElementsByTagName("dfn"),function(dfn){
-      if (/(?:^|\s)(?:cfunc|cmode(?:-[rs]m)?|sgr)(?:\s|$)/.test(dfn.className)) {
+      if (/(?:^|\s)(?:cfunc|cmode|sgr)(?:\s|$)/.test(dfn.className)) {
         var word = agh.dom.getInnerText(dfn);
         if (word in dict) return;
         var id;
