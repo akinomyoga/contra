@@ -927,15 +927,15 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <p>[ECMA-48/6.1] 装置 (device) (ディスプレイやプリンターを想定) は3つの部分で構成される。
 <dfn>入力部</dfn> (input component)・<dfn>表示部</dfn> (presentation component)・<dfn>記憶部</dfn> (data component) である。
 特に記憶部は双方向の文字列表示 (bidi) に対応する為に用意するが、単方向しか対応しなければ表示部と等価なので省略可能である。
-表示部・記憶部は共にそれぞれ<dfn>行</dfn>の集まりであり、行は<dfn>文字表示位置</dfn> (character position) の集まりである。
+表示部・記憶部は共にそれぞれ<dfn>行</dfn>の集まりであり、行は<dfn>文字位置</dfn> (character position) の集まりである。
 表示部・記憶部の行の並びには方向性があり<dfn>行進行</dfn> (line progression) という。
 表示部・記憶部の各行にはそれぞれ自然な方向があり、
 それぞれ<dfn>文字進路</dfn> (character path)・<dfn>文字進行</dfn> (character progression) という。
-行及び文字表示位置は、1 から始まる整数によって、行進行および文字進路・文字進行の順序で番号付けられる。
+行及び文字位置は、1 から始まる整数によって、行進行および文字進路・文字進行の順序で番号付けられる。
 表示部は実際に表示されるときの固有の座標(行・列)を持ち、
 記憶部は内部的な取り扱いで使用する固有の座標を持ち、一対一に対応がある。
 表示部・記憶部はそれぞれカーソルを持ち、<dfn>現在表示位置</dfn> (active presentation position)・<dfn>現在記憶位置</dfn> (active data position) という。
-文字の挿入によるカーソルの移動は、記憶位置を行内の次の文字表示位置に移動するものである。これを<dfn>暗黙的移動</dfn> (implicit movement) という。
+文字の挿入によるカーソルの移動は、記憶位置を行内の次の文字位置に移動するものである。これを<dfn>暗黙的移動</dfn> (implicit movement) という。
 制御機能によるカーソルの移動は記憶位置もしくは表示位置に作用する。これを<dfn>明示的移動</dfn> (explicit movement) という。
 表示位置と記憶位置は連動する。つまり一方の位置に対する移動操作によって、他方が<dfn>間接的移動</dfn> (indirect movement) する。
 何れの移動も、存在しない場所に移動しようとしたときの動作は処理系依存である (例えば行折り返しをしたり、動作を停止したりする)。
@@ -946,7 +946,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <li>表示部には既定の文字進路が存在して、SPD で設定される。</li>
 <li>各行には文字進路が存在して SCP で設定される。
   既定の文字進路の場合には、
-  記憶部と表示部で対応する文字表示位置の番号は一致する。
+  記憶部と表示部で対応する文字位置の番号は一致する。
   逆の文字進路の場合には丁度反転する。
 </li>
 <li>行中で部分的に表示方向を変更するには SDS, SRS を用いる。
@@ -1170,6 +1170,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </li>
 <li>その他 Unicode に方向を制御する文字がある。
   参考: <a href="https://ja.wikipedia.org/wiki/%E5%8F%8C%E6%96%B9%E5%90%91%E3%83%86%E3%82%AD%E3%82%B9%E3%83%88">双方向テキスト</a>。
+  <a href="http://unicode.org/reports/tr9/">UAX #9: Unicode Bidirectional Algorithm</a>
 </li>
 </ul>
 
@@ -1251,6 +1252,9 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <p>Note: もし行毎に SLH, SLL の値を保持するのだとしたら、
   規格の文面を見るに移った先の行の SLH, SLL を用いることになるだろう。
   </p>
+  <ul>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/NEL.html">VT510: NEL</a></li>
+  </ul>
 </li>
 <li>Mode 22 <dfn class="cmode">ZDM</dfn>: Zero Default Mode
   <p>[ECMA-48/7.2.20, F.4.2] 制御機能 CBT, CHA, CHT, CNL, CPL, CPR, CUB, CUD, CUF, CUP, CUU, CVT,
@@ -1330,6 +1334,11 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   現在記憶位置を <i>&lt;Pn&gt;</i> 文字目 (の場合) または<i>&lt;Pn&gt;</i> 行目 (VPA の場合) に移動する。
   ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
   </p>
+  <ul>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/HPA.html">VT510: HPA</a>
+    <a href="http://www.vt100.net/docs/vt510-rm/VPA.html">VT510: VPA</a>
+  </li>
+  </ul>
 </li>
 <li><dfn class="cfunc">HPB</dfn>: Character Position Backward</li>
 <li><dfn class="cfunc">HPR</dfn>: Character Position Forward</li>
@@ -1339,6 +1348,21 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   HPB, HPR, VPB, VPR はそれぞれ現在記憶位置を左・右・上・下に <i>&lt;Pn&gt;</i> 行または <i>&lt;Pn&gt;</i> 文字だけ移動する。
   ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
   </p>
+  <ul>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/HPR.html">VT510: HPR</a>
+    <a href="http://www.vt100.net/docs/vt510-rm/VPR.html">VT510: VPR</a>
+  </li>
+  </ul>
+</li>
+</ul>
+
+<h4>互換性</h4>
+<ul>
+<li>ECMA-48 に厳密に従うと、全角文字は二つの文字位置を占有するのではなくて、
+  一つ<sup>[ECMA-48/6.1.6/2]</sup>の文字位置の大きさが大きい<sup>[ECMA-48/6.3/5]</sup>ものとして扱うことになると思われる。
+  しかし xterm, screen, RLogin, mintty, Poderosa のどの実装でも全角文字は二つの文字位置を占有し、
+  CUF, CUB その他の制御機能は文字単位ではなくて文字位置単位 (半角単位) で移動する。
+  中途半端な位置にカーソルがある状態で文字を挿入すると、下にある全角文字が消去されてからの挿入になる。
 </li>
 </ul>
 
