@@ -299,6 +299,7 @@ namespace contra {
 
   public:
     void process_char(char32_t uchar) {
+      if (uchar == ascii_nul || uchar == ascii_del) return;
       switch (m_dstate) {
       case decode_default:
         process_char_default(uchar);
