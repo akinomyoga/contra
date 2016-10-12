@@ -115,14 +115,14 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 <tr><th>C1 制御文字</th><td><kbd><i>&lt;C1&gt;</i></kbd></td><td>制御機能の補助集合</td><td>ISO/IEC 6429 (ECMA-48)</td></tr>
 <tr><th>Unicode 制御文字</th><td><kbd><i>&lt;Cc&gt;</i></kbd></td><td>Unicode 制御機能</td><td>ISO/IEC 10646, Unicode UAXs</td></tr>
 <tr><th colspan="2">DLE シーケンス</th>
-    <td><kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></kbd><br />
-        <kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd><br />
+    <td><kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Fp&gt;</i></kbd><br />
+        <kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd><br />
         <kbd>DLE <i>&lt;C0&gt;</i></kbd></td><td>伝送の制御</td><td>ISO/IEC 1745 (ECMA-16, ECMA-37)</td></tr>
 <tr><th colspan="2" rowspan="2">エスケープシーケンス</th>
-    <td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td><td>文字コードの制御</td><td rowspan="2">ISO/IEC 2022</td></tr>
-<tr><td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></kbd></td><td>私用の制御</td></tr>
+    <td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>文字コードの制御</td><td rowspan="2">ISO/IEC 2022</td></tr>
+<tr><td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Fp&gt;</i></kbd></td><td>私用の制御</td></tr>
 <tr><th colspan="2">制御シーケンス</th>
-    <td><kbd>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td>
+    <td><kbd>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
     <td>ANSI 制御機能</td><td rowspan="6">ISO/IEC 6429 (ECMA-48)</td></tr>
 <tr><th rowspan="5">制御列</th><th rowspan="4">コマンド列</th>
     <td><kbd>DCS ... ST</kbd></td><td>装置制御</td></tr>
@@ -132,19 +132,32 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 <tr><th>文字列</th>
     <td><kbd>SOS ... ST</kbd></td><td>文字列</td></tr>
 </table>
-<p>但し、</p>
+<p>但し、DLE, ESC, DCS, SOS, CSI, ST, OSC, PM, APC は C0 または C1 に含まれる制御文字である (後述)。</p>
+<p>[ECMA-48/5.4, ECMA-35/13.2.1] また、<i>&lt;Name&gt;</i> の表記で示したバイトは、Name に応じて特定の集合に含まれる。
+</p>
+<table class="normal center">
+<tr><th colspan="3"><i>&lt;Name&gt;</i></th><th>範囲</th></tr>
+<tr><th colspan="3"><i>&lt;C0&gt;</i></th><td>00/00 - 01/15</td></tr>
+<tr><th colspan="3"><i>&lt;I&gt;</i></th><td>02/00 - 02/15</td></tr>
+<tr><th rowspan="3"><i>&lt;F&gt;</i></th>
+    <th colspan="2"><i>&lt;Fp&gt;</i>, <i>&lt;P&gt;</i></th><td>03/00 - 03/15</td></tr>
+<tr><th rowspan="2"><i>&lt;Ft&gt;</i></th>
+    <th><i>&lt;Fe&gt;</i></th><td>04/00 - 05/15</td></tr>
+<tr><th><i>&lt;Fs&gt;</i></th><td>06/00 - 07/14</td></tr>
+<tr><th colspan="3"><i>&lt;C1&gt;</i></th><td>08/00 - 09/15</td></tr>
+<tr><th colspan="3"><i>&lt;Cc&gt;</i></th>
+    <td>Unicode General Category "Cc" の文字 (C0, C1 以外)<br/>
+    (特定の文字符号化方式でバイト列を Unicode 文字の列に変換した後)
+    </td></tr>
+</table>
 <ul>
-<li><i>&lt;C0&gt;</i> は 00/00 - 01/15 のバイトである。</li>
-<li><i>&lt;I&gt;</i> は 02/00 - 02/15 のバイトである。</li>
-<li><i>&lt;P&gt;</i> は 03/00 - 03/15 のバイトである。</li>
-<li><i>&lt;F&gt;</i> は 04/00 - 07/14 のバイトである。</li>
-<li><i>&lt;C1&gt;</i> は 08/00 - 09/15 のバイトである。</li>
-<li>ESC は 01/11 であり、
-  DCS, SOS, CSI, ST, OSC, PM, APC は C1 の文字で、
-  それぞれ 09/00, 09/08, 09/11, 09/12, 09/13, 09/14, 09/15 である。
+<li>ECMA-35 では <i>&lt;F&gt;</i> を 03/00 - 07/14 と定義しているが、ECMA-48 では 04/00 - 07/14 と定義している。
+  混乱を避ける為にこの文書では ECMA-35 での定義を採用し、
+  ECMA-48 の <i>&lt;F&gt;</i> は ECMA-35 に倣って <i>&lt;Ft&gt;</i> に置き換えて表記する。
 </li>
-<li><i>&lt;Cc&gt;</i> は Unicode General Category "Cc" の (C0, C1 以外の) 文字である。
-  この制御文字は特定の文字符号化方式でバイト列を文字の列に変換した後に有効である。
+<li>エスケープシーケンス (ECMA-35) では 03/00 - 03/15 は終端バイト (final byte) として働き <i>&lt;Fp&gt;</i> と表記する。
+  制御シーケンス (ECMA-48) では 03/00 - 03/15 は引数バイト (parameter byte) として働き <i>&lt;P&gt;</i> と表記する。
+  両者は役割が異なるので表記も異なっているが、文字集合としての区別はない。
 </li>
 </ul>
 
@@ -326,11 +339,21 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 </ul>
 
 <ul>
+<li><dfn class="cfunc">NUL</dfn>: NULL</li>
 <li><dfn class="cfunc">DEL</dfn>: DELETE
-  <p>[ECMA-35/6.2.1] DEL は元々パンチカードで、誤りまたは不要の文字を塗り潰し無視させるために使われた。
-  DEL は単に無視され、任意に挿入・削除しても情報の意味は変わらない。
+  <p>[ECMA-48/8.3.88 NUL, ECMA-35/6.2.1 DEL]
+  これらのバイトは単に無視され、(CCデータ要素に) 任意に挿入・削除しても情報の意味は変わらない。
   media-fill または time-fill に用いることができる。
   </p>
+  <p>[ECMA-35/6.2.1] DEL は元々パンチカードで、誤りまたは不要の文字を塗り潰し無視させるために使われた。</p>
+  <p>Note: 制御機能の符号化表現の途中に含まれていても無視されるべきと読める。
+  以下は実際の実装で CSI の途中に NUL, DEL を挟んで試した
+  (<code>printf '\e\x00[34mhello\e[m\n\e\x7F[34mhello\e[m\n'</code>) 結果である。</p>
+  <ul>
+  <li>xterm, RLogin, Poderosa では途中の NUL, DEL は無視される。</li>
+  <li>mintty では NUL は無視されるが DEL は不正なシーケンスになる。</li>
+  <li>screen では NUL, DEL のどちらも不正なシーケンスになる。</li>
+  </ul>
 </li>
 </ul>
 
@@ -377,10 +400,10 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <p>[ECMA-48/8.3.48, ECMA-35/6.2.2]
   符号拡張の目的で使用される。後続の CC データ要素のバイトの意味を変える。
   結果として ESC と後続のバイトで<dfn>エスケープシーケンス</dfn> (escape sequence) を成す。
-  エスケープシーケンスは<dfn>符号指定機能</dfn> (code-identification function) およびある種の制御機能の符号化表現となる。
+  エスケープシーケンスは<dfn>符号識別機能</dfn> (code-identification function) およびある種の制御機能の符号化表現となる。
   </p>
   <p>[ECMA-35/13.1] エスケープシーケンスは ESC で始まり終端バイト 03/00-07/15 で終わる。
-  間に 0 個以上の中間バイト &lt;I&gt; 02/00-02/15 を含む。
+  間に 0 個以上の中間バイト <i>&lt;I&gt;</i> を含む。
   その形式によって以下の様な型 (types) に分類される。
   </p>
   <table class="normal center">
@@ -417,10 +440,6 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <tr><td>12Ft</td><td><kbd>ESC , <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td></tr>
   </table>
   <ul>
-  <li><i>&lt;Fp&gt;</i> は 03/00-03/15 のバイト、
-      <i>&lt;Ft&gt;</i> は 04/00-07/14 のバイト、
-      <i>&lt;Fe&gt;</i> は 04/00-05/15 のバイト、
-      <i>&lt;Fs&gt;</i> は 06/00-07/14 のバイト</li>
   <li><i>&lt;Fp&gt;</i> で終端するエスケープシーケンスは私用の為に保留されている。</li>
   <li>2バイト目が <i>&lt;I&gt;</i> のエスケープシーケンスは符号識別機能に用いられ、
     特に文字集合の設定に用いられる。</li>
@@ -563,7 +582,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </li>
 </ul>
 
-<h4>3Fp 私用制御機能</h4>
+<h4>3Fp型 私用制御機能</h4>
 <p>実際の端末実装で確認できる私用制御機能を以下に挙げる。</p>
 <table class="normal center">
 <tr><th>略号</th>   <th>符号化表現</th><th>Hex; 行/列</th></tr>
@@ -573,15 +592,12 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>DECDWL</th> <td><kbd>ESC # 6</kbd></td> <td>\x1B\x23\x36; 1/11 2/3 3/6</td></tr>
 <tr><th>DECALN</th> <td><kbd>ESC # 8</kbd></td> <td>\x1B\x23\x38; 1/11 2/3 3/8</td></tr>
 </table>
-<p>但し、<i>&lt;I&gt;</i> は [0x20, 0x30) の範囲の文字であり、
-<i>&lt;F&gt;</i> は [0x40, 0x7F) の範囲の文字である。
-</p>
 
 <h3>制御シーケンス (control sequence)</h3>
 <table class="normal center">
 <tr><th>先頭</th><th>符号化表現</th><th>名前</th></tr>
 <tr><th>CSI</th>
-  <td><kbd>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td>
+  <td><kbd>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
   <td><dfn>制御シーケンス</dfn> (control sequence)</td>
 </tr>
 </table>
@@ -596,15 +612,15 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <p>CSI は 01/11 05/11 (<kbd>ESC [</kbd>)、または 09/11 で表現される。
   [ECMA-48/5.4]
   <i>&lt;I&gt;</i> は 02/00 - 02/15 の範囲の文字を指定し、
-  <i>&lt;F&gt;</i> は 04/00 - 07/15 の範囲の文字を指定する。
-  <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i>
+  <i>&lt;Ft&gt;</i> は 04/00 - 07/15 の範囲の文字を指定する。
+  <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i>
   の組合せによって、その制御シーケンスが特にどの様な機能を持った物かを指定する。
   それぞれの組合せに対応する制御シーケンスの機能は、端末に依存する所が大きい。
-  特に <i>&lt;F&gt;</i> = 07/00 - 07/14 のシーケンスは私用・実験用のシーケンスとして使って良い。
+  特に <i>&lt;Ft&gt;</i> = 07/00 - 07/14 のシーケンスは私用・実験用のシーケンスとして使って良い。
   <i>&lt;P&gt;</i> は 03/00 - 03/15 の範囲の文字を表す。
   <i>&lt;P&gt;</i><strong>*</strong> の部分は、
   引数列 (parameter bytes, parameter string) と呼ばれ、
-  <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i> で指定された機能に対する引数として働く。
+  <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i> で指定された機能に対する引数として働く。
   引数列が1文字以上あるとき、
   [ECMA-48/5.4.1a] 一番初めの文字が 03/12 - 03/15 ("&lt;", "=", "&gt;", "?") のものは
   私用・実験用の引数列であり形式は規定されない。
@@ -625,8 +641,13 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   今や 09/11 は既定では CSI として解釈しない端末も多い。
   この事情は他の全ての C1 制御文字で同様である。
   </p>
-  <p></p>
-  <p>, [ECMA-48/5.4]</p>
+  <p>[ECMA-48/5.4]</p>
+  <p>以降では説明の為に以下の記号を用いる</p>
+  <ul>
+  <li><i>&lt;Pn&gt;</i>: 整数引数。大きさに意味のある基数。</li>
+  <li><i>&lt;Ps&gt;</i>: 整数引数。番号で選択肢を選ぶ序数。</li>
+  <li><i>&lt;Pm&gt;</i>: 複数の整数を 03/11 (";")で区切った物。</li>
+  </ul>
 </li>
 </ul>
 
@@ -659,6 +680,9 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   間には SOS および ST を表すバイト列以外の任意のバイト列を含む。
   特に SOS で始まるシーケンスが規格で定められている。
   </p>
+</li>
+<li><dfn class="cfunc">ST</dfn>: STRING TERMINATOR
+  <p>[ECMA-48/8.3.143] APC, DCS, OSC, PM, SOS で始まった制御列の終端として用いられる。</p>
 </li>
 <li><dfn class="cfunc">OSC</dfn>: OPERATING SYSTEM COMMAND
   <p>[ECMA-48/8.3.89]
@@ -718,17 +742,6 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   APC は 01/11 05/15 (<kbd>ESC _</kbd>) または 09/15 で表現される。
   </p>
 </li>
-</ul>
-
-<h3>記号</h3>
-<p>以降では説明の為に以下の記号を用いる</p>
-<ul>
-<li><i>&lt;I&gt;</i>: 02/00 - 02/15 の範囲にある文字</li>
-<li><i>&lt;P&gt;</i>: 03/00 - 03/15 の範囲にある文字</li>
-<li><i>&lt;F&gt;</i>: 04/00 - 07/14 の範囲にある文字</li>
-<li><i>&lt;Ps&gt;</i>: 03/00 - 03/09 ("0" - "9") の文字の並びを表す。整数。</li>
-<li><i>&lt;Pm&gt;</i>: 複数の整数を 03/11 (";")で区切った物。</li>
-<li></li>
 </ul>
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
@@ -1385,7 +1398,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <li><dfn class="cfunc">CUU</dfn>: CURSOR UP</li>
 <li><dfn class="cfunc">CUD</dfn>: Cursor Down</li>
 <li><dfn class="cfunc">CUF</dfn>: CURSOR RIGHT (vt510: Cursor Forward)</li>
-<li><dfn class="cfunc">CUB</dfn>: CURSOR LEFT (ct510: Cursor Backward)
+<li><dfn class="cfunc">CUB</dfn>: CURSOR LEFT (vt510: Cursor Backward)
   <p>[ECMA-48/8.3.22 CUU, 8.3.19 CUD, 8.3.18 CUB, 8.3.20 CUF]
   CUU, CUD, CUB, CUF は、現在表示位置を &lt;Pn&gt; 行または &lt;Pn&gt; 字だけ、
   それぞれ上・下・左・右に移動する。既定値は 1 である。
@@ -2638,14 +2651,14 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <table class="normal center">
 <tr><th>略号</th><th>Sequence</th><th>C/R</th></tr>
 <tr><th>ACS</th>
-  <td><kbd>ESC SP <i>&lt;F&gt;</i></kbd></td>
-  <td>1/11 2/0 <i>&lt;F&gt;</i></td>
+  <td><kbd>ESC SP <i>&lt;Ft&gt;</i></kbd></td>
+  <td>1/11 2/0 <i>&lt;Ft&gt;</i></td>
   </tr>
 </table>
 
-<p>ESC SP <i>&lt;F&gt;</i> の形式のシーケンスは ACS と呼ばれる。
+<p>ESC SP <i>&lt;Ft&gt;</i> の形式のシーケンスは ACS と呼ばれる。
 通信の初めに、文字コードで有効な G0 G1 G2 G3 から GL GR へのシフトの構造を伝達する為の符号である。
-<i>&lt;F&gt;</i> に指定する文字で構造を指定する。
+<i>&lt;Ft&gt;</i> に指定する文字で構造を指定する。
 </p>
 
 <table class="normal center">
@@ -3023,9 +3036,9 @@ j.行消す, ESC[2K
 <h2>ISO/IEC 2022 文字集合制御</h2>
 <!--...................................................................................-->
 <table class="normal center">
-<tr><td><code>\e!<i>&lt;I&gt; &lt;F&gt;</i></code></td><td>C0 への呼出</td></tr>
-<tr><td><code>\e"<i>&lt;I&gt; &lt;F&gt;</i></code></td><td>C1 への呼出</td></tr>
-<tr><td><code>\e&amp;<i>&lt;F&gt;</i></code></td><td>改訂番号識別</td></tr>
+<tr><td><code>\e!<i>&lt;I&gt; &lt;Ft&gt;</i></code></td><td>C0 への呼出</td></tr>
+<tr><td><code>\e"<i>&lt;I&gt; &lt;Ft&gt;</i></code></td><td>C1 への呼出</td></tr>
+<tr><td><code>\e&amp;<i>&lt;Ft&gt;</i></code></td><td>改訂番号識別</td></tr>
 <tr><td><code>\17</code></td><td>G0 から GL へとシフト</td></tr>
 <tr><td><code>\16</code></td><td>G1 から GL へとシフト</td></tr>
 <tr><td><code>\en</code></td><td>G2 から GL へとシフト</td></tr>
