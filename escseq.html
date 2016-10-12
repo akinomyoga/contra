@@ -1173,7 +1173,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <p>例えば、<dfn>方向付き文字列</dfn> (directed string),
 <dfn>反転文字列</dfn> (reversed string)はデータ部の中の領域で、
 それぞれ SDS, SRS によって始まりと終わりを指定される。
-これらはデータ部での文字前進 (character progression) には影響を与えず、
+これらはデータ部での文字進行には影響を与えず、
 文字列の内容はそのままそれまでの文章の続きとして記録される。
 文字列は、SDS, SRS の区別なく任意の階層で入れ子にする事ができる。
 ECMA-48 では入れ子文字列内部における現在データ位置を指定しない。
@@ -1253,7 +1253,8 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>SP</th> <td><kbd>SP</kbd></td> <td>データ部</td><td>空白を挿入し、一文字進む</td></tr>
 <tr><th>BS</th> <td><kbd>BS</kbd></td> <td>データ部</td><td>一文字戻る</td></tr>
 <tr><th>LF</th> <td><kbd>LF</kbd></td> <td>DCSM</td>  <td rowspan="2">一行下</td></tr>
-<tr><th>IND</th><td><kbd>IND</kbd></td><td>?</td>     </tr>
+<tr><th>IND</th><td><kbd>IND</kbd></td><td>?</td>   </tr>
+<tr><th>RI</th> <td><kbd>RI</kbd></td> <td>DCSM</td></tr>
 <tr><th>VT</th> <td><kbd>VT</kbd></td> <td>表示部</td><td>次の垂直タブ</td></tr>
 <tr><th>FF</th> <td><kbd>FF</kbd></td> <td>表示部</td><td>次の頁</td></tr>
 <tr><th>CR</th> <td><kbd>CR</kbd></td> <td>DCSM</td>  <td>行頭</td></tr>
@@ -1267,7 +1268,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </li>
 <li><dfn class="cfunc">BS</dfn>: BACKSPACE
   <p>[ECMA-48/8.3.5] 現在データ位置を現在の暗黙的移動とは逆の方向に1文字動かす。暗黙的移動の方向は SIMD で変更できる。</p>
-  <p>Note: 一つの文字位置に複数の文字を重ね書きできる装置では、SP と BS は完全に対称な役割を持つ。
+  <p>Note: プリンタなど一つの文字位置に複数の文字を重ね書きできる装置では SP と BS は完全に対称な役割を持つ。
   しかし、ディスプレイ端末など1つの文字位置に1つの文字しか表示できない場合、両者は対称でない。
   SP は現在位置の文字を空白に置き換えてから移動するが、BS は単に現在位置を移動するのみである。
   </p>
@@ -1286,6 +1287,15 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>一般的な実装では、最終行にいる時には一行最後に追加してからその行に移動する。</li>
   <li>xterm, RLogin, mintty では LNM が設定されている時は次の行の先頭に移動する。</li>
   <li>screen, Poderosa は常に列はそのままである (というより LNM がない)。</li>
+  </ul>
+</li>
+<li><dfn class="cfunc">RI</dfn>: REVERSE LINE FEED
+  <p>[ECMA-48/8.3.104] DCSM に応じて現在表示位置または現在データ位置を前の行の対応する文字位置に移動する。</p>
+  <ul>
+  <li>一般的な実装では、最初の行にいる時には1行先頭に追加 (SD(1)) してその行に移動する。</li>
+  <li>Poderosa は RI で死ぬことがある。例えば、新しい接続を開いて
+  <code>printf '\e[2H\e[L\e[M\n\e[H\eM'</code> を実行すると無限にウィンドウを開いて死ぬ。
+  </li>
   </ul>
 </li>
 <li><dfn class="cfunc">VT</dfn>: LINE TABULATION
