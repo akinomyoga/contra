@@ -17,6 +17,8 @@ namespace {
       while (cell + 1 < cellN && cell->character & is_wide_extension) cell++;
       if (cell != beg) std::swap(*beg, *cell);
     }
+
+    // ToDo: directed strings
   }
 
   bool do_spd(tty_player& play, csi_parameters& params) {

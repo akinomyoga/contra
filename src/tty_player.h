@@ -348,6 +348,9 @@ namespace contra {
         m_seq.set_type((byte) c1char);
         m_dstate = decode_command_string;
         break;
+      default:
+        m_proc->process_control_character(c1char);
+        break;
       }
     }
 
