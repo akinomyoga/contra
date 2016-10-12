@@ -325,6 +325,15 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 </li>
 </ul>
 
+<ul>
+<li><dfn class="cfunc">DEL</dfn>: DELETE
+  <p>[ECMA-35/6.2.1] DEL は元々パンチカードで、誤りまたは不要の文字を塗り潰し無視させるために使われた。
+  DEL は単に無視され、任意に挿入・削除しても情報の意味は変わらない。
+  media-fill または time-fill に用いることができる。
+  </p>
+</li>
+</ul>
+
 <h3>図形文字 (graphic characters)</h3>
 <p>エスケープシーケンスや制御シーケンス・制御列では、
 ISO 2022 の図形文字に相当するバイト値を構成要素として含む。
@@ -430,12 +439,10 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 例によって赤色で示したのが、続きのバイト列を持つシーケンスである。
 </p>
 <table class="normal center">
-<tr><th colspan="2">第2バイト 列 02</th>
-    <th colspan="2">第2バイト 列 03</th>
-    <th colspan="2">第2バイト 列 04</th>
-    <th colspan="2">第2バイト 列 05</th>
-    <th colspan="2">第2バイト 列 06</th>
-    <th colspan="2">第2バイト 列 07</th></tr>
+<tr><th colspan="2">nFt型: 符号識別機能<br/>(第2バイト <i>&lt;I&gt;</i>)</th>
+    <th colspan="2">Fp型: 私用制御機能<br/>(第2バイト <i>&lt;Fp&gt;</i>)</th>
+    <th colspan="4">Fe型: 補助集合 C1<br/>(第2バイト <i>&lt;Fe&gt;</i>)</th>
+    <th colspan="4">Fs型: 標準単独制御機能<br/>(第2バイト <i>&lt;Fs&gt;</i>)</th></tr>
 <tr><th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
@@ -466,7 +473,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>STS</th><td><kbd>ESC S</kbd></td>
     <th>RIS</th><td><kbd>ESC c</kbd></td>
     <th>-R-</th><td><kbd>ESC s</kbd></td></tr>
-<tr><th class="markB">"GnDMm"</th><td><kbd>ESC $ <i>&lt;I&gt;</i> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">GnDMm</th><td><kbd>ESC $ <i>&lt;I&gt;</i> <i>&lt;Ft&gt;</i></kbd></td>
     <th>DECAVT</th><td><kbd>ESC 4</kbd></td>
     <th>(IND)</th><td><kbd>ESC D</kbd></td>
     <th>CCH</th><td><kbd>ESC T</kbd></td>
@@ -480,7 +487,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>-R-</th><td><kbd>ESC u</kbd></td></tr>
 <tr><th class="markB">IRR</th><td><kbd>ESC &amp; <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
     <th>DECBI</th><td><kbd>ESC 6</kbd></td>
-    <th>SSA<br/>hpLowLeft</th><td><kbd>ESC F</kbd></td>
+    <th>SSA</th><td><kbd>ESC F</kbd></td>
     <th>SPA</th><td><kbd>ESC V</kbd></td>
     <th>-R-</th><td><kbd>ESC f</kbd></td>
     <th>-R-</th><td><kbd>ESC v</kbd></td></tr>
@@ -519,13 +526,13 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>V5EX</th><td><kbd>ESC &lt;</kbd></td>
     <th>PLU</th><td><kbd>ESC L</kbd></td>
     <th>ST</th><td><kbd>ESC \</kbd></td>
-    <th>(LS2R)<br/>hpMemUnlk</th><td><kbd>ESC l</kbd></td>
+    <th>(LS2R)</th><td><kbd>ESC l</kbd></td>
     <th>LS3R</th><td><kbd>ESC |</kbd></td></tr>
 <tr><th class="markB">G1D6</th><td><kbd>ESC - <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
     <th>DECKPAM</th><td><kbd>ESC =</kbd></td>
     <th>RI</th><td><kbd>ESC M</kbd></td>
     <th class="markB">OSC</th><td><kbd>ESC ]</kbd></td>
-    <th>(LS3R)<br/>hpMemLk</th><td><kbd>ESC m</kbd></td>
+    <th>(LS3R)</th><td><kbd>ESC m</kbd></td>
     <th>LS2R</th><td><kbd>ESC }</kbd></td></tr>
 <tr><th class="markB">G2D6</th><td><kbd>ESC . <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
     <th>DECKPNM</th><td><kbd>ESC &gt;</kbd></td>
@@ -546,21 +553,20 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   現在は LS1R, LS2R, LS3R はそれぞれ ESC ~, ESC }, ESC | を用いる。
   ただし、互換性の為に ESC k, ESC l, ESC m を認識する事もある。
 </li>
+<li>xterm のマニュアルによると HP terminals では以下の制御機能 (略号はこの文書だけで通用) が存在するが、ISO 2022 と衝突する。
+  <table class="normal center">
+  <tr><th>略号</th><th>符号化表現</th></tr>
+  <tr><th>hpLowerLeft</th>   <td><kbd>ESC F</kbd></td></tr>
+  <tr><th>hpMemoryLock</th>  <td><kbd>ESC l</kbd></td></tr>
+  <tr><th>hpMemoryUnlock</th><td><kbd>ESC m</kbd></td></tr>
+  </table>
+</li>
 </ul>
 
-<h4><dfn class="cfunc" id="tfunc.1B23">(1B23+)</dfn>: (prefix)</h4>
-<p>ISO/IEC 2022 では ESC # に続くシーケンスは、登録単独制御機能 (registered single control function) とされている。
-一方で、歴史的には VT100 端末で、ESC # で始まるシーケンスが使われてきた。
-それらを以下に纏める。
-</p>
+<h4>3Fp 私用制御機能</h4>
+<p>実際の端末実装で確認できる私用制御機能を以下に挙げる。</p>
 <table class="normal center">
 <tr><th>略号</th>   <th>符号化表現</th><th>Hex; 行/列</th></tr>
-<tr><th>RSCF</th>
-  <td><kbd>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td>
-  <td>\x1B\x23<i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i>;
-    1/11 2/3 <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i>
-  </td>
-</tr>
 <tr><th>DECDHL</th> <td><kbd>ESC # 3</kbd></td> <td>\x1B\x23\x33; 1/11 2/3 3/3</td></tr>
 <tr><th>DECDHL</th> <td><kbd>ESC # 4</kbd></td> <td>\x1B\x23\x34; 1/11 2/3 3/4</td></tr>
 <tr><th>DECSWL</th> <td><kbd>ESC # 5</kbd></td> <td>\x1B\x23\x34; 1/11 2/3 3/4</td></tr>
@@ -580,7 +586,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 </table>
 <ul>
-<li><dfn class="cfunc">CSI</dfn>: Constrol Sequence Introducer
+<li><dfn class="cfunc">CSI</dfn>: CONTROL SEQUENCE INTRODUCER
   <p>[ECMA-48/8.3.16] CSI (constrol sequence introducer) で始まるシーケンスを特に
   <dfn>CSI シーケンス</dfn> (CSI sequence)
   または (本来の) <dfn>制御シーケンス</dfn> (constrol sequence) と呼ぶ。
@@ -654,7 +660,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   特に SOS で始まるシーケンスが規格で定められている。
   </p>
 </li>
-<li><dfn class="cfunc">OSC</dfn>: Operating System Command
+<li><dfn class="cfunc">OSC</dfn>: OPERATING SYSTEM COMMAND
   <p>[ECMA-48/8.3.89]
   OSC (operating system command) で始まるシーケンスは、
   <dfn>OSC シーケンス</dfn> (OSC sequence)
@@ -671,7 +677,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   本来 ST で終端するはずだが BEL で終端することもある。
   </p>
 </li>
-<li><dfn class="cfunc">DCS</dfn>: Device Control String
+<li><dfn class="cfunc">DCS</dfn>: DEVICE CONTROL STRING
   <p>[ECMA-48/8.3.27]
   DCS で始まるシーケンスは <dfn>DCS シーケンス</dfn> (DCS sequence)
   または Device Control String と呼ばれる。
@@ -683,7 +689,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   DCS は 01/11 05/00 (<kbd>ESC P</kbd>) または 09/00 で表現される。
   </p>
 </li>
-<li><dfn class="cfunc">SOS</dfn>: Start of String
+<li><dfn class="cfunc">SOS</dfn>: START OF STRING
   <p>[ECMA-48/8.3.128]
   SOS で始まるシーケンスは <dfn>SOS シーケンス</dfn> (SOS sequence) と呼ばれる。
   解釈はアプリケーションに依存する。
@@ -692,7 +698,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   SOS は 01/11 05/08 (<kbd>ESC X</kbd>) または 09/08 で表現される。
   </p>
 </li>
-<li><dfn class="cfunc">PM</dfn>: Privacy Message
+<li><dfn class="cfunc">PM</dfn>: PRIVACY MESSAGE
   <p>[ECMA-48/8.3.94]
   PM で始まるシーケンスは <dfn>PM シーケンス</dfn> (PM sequence)
   または 私用メッセージ (privacy message) と呼ばれる。
@@ -702,7 +708,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   PM は 01/11 05/14 (<kbd>ESC ^</kbd>) または 09/14 で表現される。
   </p>
 </li>
-<li><dfn class="cfunc">APC</dfn>: Application Program Command
+<li><dfn class="cfunc">APC</dfn>: APPLICATION PROGRAM COMMAND
   <p>[ECMA-48/8.3.2]
   APC で始まるシーケンスは <dfn>APC シーケンス</dfn> (APC sequence)
   または アプリケーションプログラムコマンド (application program command) と呼ばれる。
@@ -737,14 +743,14 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>DECRQM</th> <td><kbd>CSI <i>&lt;Pm&gt;</i> $ p</kbd><br/><kbd>CSI ? <i>&lt;Pm&gt;</i> $ p</kbd></td></tr>
 </table>
 <ul>
-<li><dfn class="cfunc">SM</dfn>: Set Mode
+<li><dfn class="cfunc">SM</dfn>: SET MODE
   <p>番号で指定されたモードを有効にする。</p>
   <ul>
   <li>互換性: [ECMA-48/8.3.1251], vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT510: SM</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">RM</dfn>: Reset Mode
+<li><dfn class="cfunc">RM</dfn>: RESET MODE
   <p>番号で指定されたモードを無効にする。</p>
   <ul>
   <li>互換性: [ECMA-48/8.3.106], vt100, xterm</li>
@@ -817,7 +823,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </table>
 
 <ul>
-<li>Mode 3 <dfn class="cmode">CRM</dfn>: Show Control Character Mode [既定値 off]
+<li>Mode 3 <dfn class="cmode">CRM</dfn>: CONTROL REPRESENTATION MODE (Show Control Character Mode) [既定値 off]
   <p><dfn class="cmode-rm">CONTROL</dfn> (RM): 全ての制御機能を通常通りに処理する。</p>
   <p><dfn class="cmode-sm">GRAPHIC</dfn> (SM): RM 以外の受信した全ての制御機能を実行せずに図形文字として表示する。</p>
   <ul>
@@ -1012,7 +1018,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>SIMD</th><td><kbd>CSI <i>&lt;Ps1&gt;</i> ^</kbd></td></tr>
 </table>
 <ul>
-<li>Mode 9 <dfn class="cmode">DCSM</dfn>: Device Component Select Mode
+<li>Mode 9 <dfn class="cmode">DCSM</dfn>: DEVICE COMPONENT SELECT MODE
   <p>[ECMA-48/7.2.3] 制御機能 CPR, CR, DCH, DL, EA, ECH, ED, EF, EL, ICH, IL, LF, NEL, RI, SLH,
   SLL, SPH, SPL が作用する対象が表示部かデータ部かを設定する。
   </p>
@@ -1021,7 +1027,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <li><dfn class="cmode-sm">DATA</dfn> (SM): 上記の制御機能は、現在データ位置においてデータ部に対して実施される。</li>
   </ul>
 </li>
-<li><dfn class="cfunc">SPD</dfn>: Select Presentation Directions
+<li><dfn class="cfunc">SPD</dfn>: SELECT PRESENTATION DIRECTIONS
   <p>[ECMA-48/8.3.130]
   一つ目の引数 <kbd><i>&lt;Ps1&gt;</i></kbd> は
   表示部の行の向き、行の追加方向、文字進路を設定する。既定値は 0 である。
@@ -1046,7 +1052,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   </p>
   <p>contra では、第2引数に 0 を指定した時の動作は 1 と同じである。</p>
 </li>
-<li><dfn class="cfunc">SCP</dfn>: Select Character Path
+<li><dfn class="cfunc">SCP</dfn>: SELECT CHARACTER PATH
   <p>[ECMA-48/8.3.111] 現在表示行および以降の表示行の文字進路を変更する。</p>
   <p><kbd><i>&lt;Ps1&gt;</i></kbd> は文字進路を指定する。
   横書きの場合は 1 が左から右で 2 が右から左を意味する。
@@ -1073,7 +1079,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   引数に範囲外の値を指定した場合は、何も実行しない。
   </p>
 </li>
-<li><dfn class="cfunc">SIMD</dfn>: Select Implicit Movement Direction
+<li><dfn class="cfunc">SIMD</dfn>: SELECT IMPLICIT MOVEMENT DIRECTION
   <p>[ECMA-48/8.3.120] 暗黙的移動の向きを設定する。この設定は次の SIMD まで有効である。
   0 を指定すると暗黙的移動は右向きである。
   1 を指定すると暗黙的移動は左向きである。
@@ -1091,7 +1097,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>SPL</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> SP j</kbd></td></tr>
 </table>
 <ul>
-<li><dfn class="cfunc">SLH</dfn>: Set Line Home
+<li><dfn class="cfunc">SLH</dfn>: SET LINE HOME
   <p>[ECMA-48/8.3.122] 現在行と以降の行で、文章を表示する先頭列を指定する。
   この値は CR, DL, IL, NEL において、現在表示位置 (DCSM(PRESENTATION) のとき)
   または現在データ位置 (DCSM(DATA) のとき) が移動する先の列になる。
@@ -1109,7 +1115,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   因みに SCP の "以降の行" (subsequent lines) とは表現が異なる。
   </p>
 </li>
-<li><dfn class="cfunc">SLL</dfn>: Set Line Limit
+<li><dfn class="cfunc">SLL</dfn>: SET LINE LIMIT
   <p>[ECMA-48/8.3.123] 現在行と以降の行で、文章を表示する最終列を指定する。
   この値は、DCSM(PRESENTATION), SIMD(1) の時、
   CR, NEL による移動先の列になる。
@@ -1118,7 +1124,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   引数 <i>&lt;Pn&gt;</i> は列番号を指定し、既定値はない。
   </p>
 </li>
-<li><dfn class="cfunc">SPH</dfn>: Set Page Home
+<li><dfn class="cfunc">SPH</dfn>: SET PAGE HOME
   <p>[ECMA-48/8.3.131] <dfn>頁初期位置</dfn> (page home position) を設定する。
   現在頁と以降の頁に FF によって移動した後に、
   現在表示位置または現在データ位置 (DCSM による) をおく行を <i>&lt;Pn&gt;</i> で指定する。
@@ -1128,7 +1134,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   パラメータの既定値はない。
   </p>
 </li>
-<li><dfn class="cfunc">SPL</dfn>: Set Page Limit
+<li><dfn class="cfunc">SPL</dfn>: SET PAGE LIMIT
   <p>[ECMA-48/8.3.133] <dfn>頁限界位置</dfn> (page limit position) を設定する。
   現在頁と以降の頁において
   現在表示位置または現在データ位置 (DCSM による) がそれより下に移動できない行を <i>&lt;Pn&gt;</i> で指定する。
@@ -1201,7 +1207,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>PDI</th><td><kbd>U+2069</kbd></td><td>Pop directional isolate</td></tr>
 </table>
 <ul>
-<li><dfn class="cfunc">SDS</dfn>: Start Directed String
+<li><dfn class="cfunc">SDS</dfn>: START DIRECTED STRING
   <p>[ECMA-48/8.3.114] 方向付き文字列 (directed string) の開始と終了を指定する。
   <kbd><i>&lt;Ps&gt;</i></kbd> = 1, 2 の SDS は方向付き文字列の開始を指定する。
   1 を指定すると方向は左から右で、2 を指定すると方向は右から左になる。
@@ -1210,7 +1216,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <kbd><i>&lt;Ps&gt;</i></kbd> の既定値は 0 である。
   </p>
 </li>
-<li><dfn class="cfunc">SRS</dfn>: Start Reversed String
+<li><dfn class="cfunc">SRS</dfn>: START REVERSED STRING
   <p>[ECMA-48/8.3.137] 反転文字列 (reversed string) の開始と終了を指定する。
   <kbd><i>&lt;Ps&gt;</i></kbd> = 1 は反転文字列の開始を示し、
   方向はそれまでの方向と逆の方向になる。
@@ -1231,6 +1237,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <h3>基本制御</h3>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th><th>対象</th><th>意味</th></tr>
+<tr><th>SP</th> <td><kbd>SP</kbd></td> <td>データ部</td><td>空白を挿入し、一文字進む</td></tr>
 <tr><th>BS</th> <td><kbd>BS</kbd></td> <td>データ部</td><td>一文字戻る</td></tr>
 <tr><th>LF</th> <td><kbd>LF</kbd></td> <td>DCSM</td>  <td rowspan="2">一行下</td></tr>
 <tr><th>IND</th><td><kbd>IND</kbd></td><td>?</td>     </tr>
@@ -1240,11 +1247,20 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>NEL</th><td><kbd>NEL</kbd></td><td>DCSM</td>  <td>次行の行頭</td></tr>
 </table>
 <ul>
-<li><dfn class="cfunc">BS</dfn>: Backspace
-  <p>[ECMA-48/8.3.5] 現在データ位置を現在の暗黙的移動とは逆の方向に1文字動かす。暗黙的移動の方向は SIMD で変更できる。</p>
+<li><dfn class="cfunc">SP</dfn>: SPACE
+  <p>[ECMA-35/6.2.3] SP は図形文字で、何も図形がないという見た目を持つ。
+  現在位置を暗黙的移動によって一つ進める役割を持つと考えて良い。
+  </p>
 </li>
-<li><dfn class="cfunc">LF</dfn>: Line Feed</li>
-<li><dfn class="cfunc">IND</dfn>: Index
+<li><dfn class="cfunc">BS</dfn>: BACKSPACE
+  <p>[ECMA-48/8.3.5] 現在データ位置を現在の暗黙的移動とは逆の方向に1文字動かす。暗黙的移動の方向は SIMD で変更できる。</p>
+  <p>Note: 一つの文字位置に複数の文字を重ね書きできる装置では、SP と BS は完全に対称な役割を持つ。
+  しかし、ディスプレイ端末など1つの文字位置に1つの文字しか表示できない場合、両者は対称でない。
+  SP は現在位置の文字を空白に置き換えてから移動するが、BS は単に現在位置を移動するのみである。
+  </p>
+</li>
+<li><dfn class="cfunc">LF</dfn>: LINE FEED</li>
+<li><dfn class="cfunc">IND</dfn>: INDEX
   <p>[ECMA-48/8.1.74 LF] 現在表示位置または現在データ位置 (DCSM に応じて変わる) を次の行に移動する。列はそのまま。</p>
   <p>Note: IND は ECMA-48 3rd edition までは存在した<sup>[ECMA-48 3rd/8.2.46]</sup>が、
   4th edition で削除予定とされ<sup>[ECMA-48 4th/E.2.3]</sup>、
@@ -1259,7 +1275,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>screen, Poderosa は常に列はそのままである (というより LNM がない)。</li>
   </ul>
 </li>
-<li><dfn class="cfunc">VT</dfn>: Line Tabulation
+<li><dfn class="cfunc">VT</dfn>: LINE TABULATION
   <p>[ECMA-48/8.1.161] 現在表示位置を次の縦タブのある行に移動する。列はそのまま。</p>
   <ul>
   <li>一般的な実装では単に次の行に移動する。
@@ -1271,7 +1287,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>xterm, screen, Poderosa では LF と全く同じ動作である。</li>
   </ul>
 </li>
-<li><dfn class="cfunc">FF</dfn>: Form Feed
+<li><dfn class="cfunc">FF</dfn>: FORM FEED
   <p>[ECMA-48/8.1.51] 現在表示位置を次のページの SPH の行に移動する。列はそのまま。</p>
   <ul>
   <li>一般的な実装では単に次の行に移動する。
@@ -1283,14 +1299,14 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </li>
   </ul>
 </li>
-<li><dfn class="cfunc">CR</dfn>: Carriage Return
+<li><dfn class="cfunc">CR</dfn>: CARRIAGE RETURN
   <p>[ECMA-48/8.3.15] 行頭に移動する。
   CR の動作は DCSM と SIMD によって変化する。
   現在表示位置または現在データ位置 (DCSM によって変わる) を、
   行内で SLH (SIMD(0) のとき) または SLL (SIMD(1) のとき) に移動する。
   </p>
 </li>
-<li><dfn class="cfunc">NEL</dfn>: Next Line
+<li><dfn class="cfunc">NEL</dfn>: NEXT LINE
   <p>[ECMA-48/8.3.86] 次の行の行頭に移動する。
   実質、次の行に移ってから CR を実行するのに等価である。
   </p>
@@ -1348,7 +1364,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
     <td><i>&lt;Pn&gt;</i> 文字目</td></tr>
 </table>
 <ul>
-<li>Mode 22 <dfn class="cmode">ZDM</dfn>: Zero Default Mode
+<li>Mode 22 <dfn class="cmode">ZDM</dfn>: ZERO DEFAULT MODE
   <p>[ECMA-48/7.2.20, F.4.2] 制御機能 CBT, CHA, CHT, CNL, CPL, CPR, CUB, CUD, CUF, CUP, CUU, CVT,
   DCH, DL, ECH, GSM, HPA, HPB, HPR, HVP, ICH, IL, NP, PP, PPA, PPB, PPR, REP, SD, SL, SR, SU,
   TCC, VPA, VPB, VPR に 0 を指定した時の解釈を切り替える。
@@ -1366,10 +1382,10 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   ZDM(DEFALT) は初版の動作を期待する場合に使用する。
   </p>
 </li>
-<li><dfn class="cfunc">CUU</dfn>: Cursor Up</li>
+<li><dfn class="cfunc">CUU</dfn>: CURSOR UP</li>
 <li><dfn class="cfunc">CUD</dfn>: Cursor Down</li>
-<li><dfn class="cfunc">CUF</dfn>: Cursor Right</li>
-<li><dfn class="cfunc">CUB</dfn>: Cursor Left
+<li><dfn class="cfunc">CUF</dfn>: CURSOR RIGHT (vt510: Cursor Forward)</li>
+<li><dfn class="cfunc">CUB</dfn>: CURSOR LEFT (ct510: Cursor Backward)
   <p>[ECMA-48/8.3.22 CUU, 8.3.19 CUD, 8.3.18 CUB, 8.3.20 CUF]
   CUU, CUD, CUB, CUF は、現在表示位置を &lt;Pn&gt; 行または &lt;Pn&gt; 字だけ、
   それぞれ上・下・左・右に移動する。既定値は 1 である。
@@ -1377,11 +1393,6 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </p>
   <p>Note: 横書きの場合は CUU, CUD が行の移動で CUB, CUF が列の移動になる。
   縦書きの場合は CUB, CUF が行の移動で CUU, CUD が列の移動になる。</p>
-  <p>Note: CUF, CUB は ECMA-48 では実態に合わせて
-  Cursor Right, Cursor Left という名称になっているが、
-  VT510 のマニュアルではそれぞれ元々の名称である
-  Cursor Forward, Cursor Backward が記載されている。
-  </p>
   <ul>
   <li>xterm, screen, mintty, RLogin, Poderosa では 0 を指定すると 1 と解釈する。</li>
   <li>vt100:
@@ -1392,7 +1403,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </li>
   </ul>
 </li>
-<li><dfn class="cfunc">CUP</dfn>: Cursor Position
+<li><dfn class="cfunc">CUP</dfn>: CURSOR POSITION
   <p>[ECMA-48/8.3.21] 現在表示位置を &lt;Pn1&gt; 行目、&lt;Pn2&gt; 文字目に移動する。
   両引数の既定値は共に 1 である。ZDM(DEFAULT) の場合は 0 を指定すると既定値 1 が使用される。
   </p>
@@ -1401,8 +1412,8 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>vt100: <a href="http://www.vt100.net/docs/vt510-rm/CUP">VT510: CUP</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">CNL</dfn>: Cursor Next Line</li>
-<li><dfn class="cfunc">CPL</dfn>: Cursor Preceding Line (vt510: Cursor Previous Line)
+<li><dfn class="cfunc">CNL</dfn>: CURSOR NEXT LINE</li>
+<li><dfn class="cfunc">CPL</dfn>: CURSOR PRECEDING LINE (vt510: Cursor Previous Line)
   <p>[ECMA-48/8.3.12 CNL, 8.3.13 CPL] 現在表示位置を <i>&lt;Pn&gt;</i> 行だけ次 (CNL の場合) または前 (CPL の場合) の行頭に移動する。
   引数の既定値は 1 である。ZDM(DEFAULT) の場合は 0 を指定すると既定値 1 が使用される。
   </p>
@@ -1413,15 +1424,15 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </li>
   </ul>
 </li>
-<li><dfn class="cfunc">CHA</dfn>: Cursor Character Absolute (vt510: Cursor Horizontal Absolute)
+<li><dfn class="cfunc">CHA</dfn>: CURSOR CHARACTER ABSOLUTE (vt510: Cursor Horizontal Absolute)
   <p>[ECMA-48/8.3.9] 現在表示位置を現在行の <i>&lt;Pn&gt;</i> 文字目に移動する。引数の既定値は 1 であり、ZDM(DEFAULT) の場合は 0 は既定値 1 を意味する。</p>
   <ul>
   <li>xterm</li>
   <li>vt510: <a href="http://www.vt100.net/docs/vt510-rm/CHA">VT510: CHA</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">HPA</dfn>: Character Position Absolute (Horizontal Position Absolute)</li>
-<li><dfn class="cfunc">VPA</dfn>: Line Position Absolute (Vertical Line Position Absolute)
+<li><dfn class="cfunc">HPA</dfn>: CHARACTER POSITION ABSOLUTE (Horizontal Position Absolute)</li>
+<li><dfn class="cfunc">VPA</dfn>: LINE POSITION ABSOLUTE (Vertical Line Position Absolute)
   <p>[ECMA-48/8.3.57 HPA, 8.3.158 VPA]
   現在データ位置を <i>&lt;Pn&gt;</i> 文字目 (の場合) または<i>&lt;Pn&gt;</i> 行目 (VPA の場合) に移動する。
   ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
@@ -1433,10 +1444,10 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </li>
   </ul>
 </li>
-<li><dfn class="cfunc">HPB</dfn>: Character Position Backward</li>
-<li><dfn class="cfunc">HPR</dfn>: Character Position Forward (Horizontal Position Relative)</li>
-<li><dfn class="cfunc">VPB</dfn>: Line Position Backward</li>
-<li><dfn class="cfunc">VPR</dfn>: Line Position Forward (Vertical Position Relative)
+<li><dfn class="cfunc">HPB</dfn>: CHARACTER POSITION BACKWARD</li>
+<li><dfn class="cfunc">HPR</dfn>: CHARACTER POSITION FORWARD (Horizontal Position Relative)</li>
+<li><dfn class="cfunc">VPB</dfn>: LINE POSITION BACKWARD</li>
+<li><dfn class="cfunc">VPR</dfn>: LINE POSITION FORWARD (Vertical Position Relative)
   <p>[ECMA-48/8.3.58 HPB, 8.3.59 HPR, 8.3.159 VPB, 8.3.160 VPR]
   HPB, HPR, VPB, VPR はそれぞれ現在データ位置を左・右・上・下に <i>&lt;Pn&gt;</i> 行または <i>&lt;Pn&gt;</i> 文字だけ移動する。
   ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
@@ -1449,7 +1460,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </li>
   </ul>
 </li>
-<li><dfn class="cfunc">HVP</dfn>: Character And Line Position (Horizontal and Vertical Position)
+<li><dfn class="cfunc">HVP</dfn>: CHARACTER AND LINE POSITION (Horizontal and Vertical Position)
   <p>[ECMA-48/8.3.63] 現在データ位置を <i>&lt;Pn1&gt;</i> 行目 <i>&lt;Pn2&gt;</i> 文字目に移動する。
   <i>&lt;Pn1&gt;</i> と <i>&lt;Pn2&gt;</i> の既定値は共に 1 である。
   ZDM(DEFAULT) のとき値 0 は既定値 1 を意味する。
@@ -1479,14 +1490,14 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </table>
 
 <ul>
-<li><dfn class="cfunc">CHT</dfn>: Cursor Horizontal Forward Tabulation
+<li><dfn class="cfunc">CHT</dfn>: CURSOR HORIZONTAL FORWARD TABULATION
   <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
   <ul>
   <li>互換性: vt510, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/CHT">VT510: CHT</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">CBT</dfn>: Cursor Backward Tabulation
+<li><dfn class="cfunc">CBT</dfn>: CURSOR BACKWARD TABULATION
   <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
   <ul>
   <li>互換性: vt510, xterm</li>
@@ -1502,14 +1513,14 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>SCORC</th><td><kbd>CSI u</kbd></td></tr>
 </table>
 <ul>
-<li><dfn class="cfunc">SCOSC</dfn>: Save Current Cursor Position
+<li><dfn class="cfunc">SCOSC</dfn>: SAVE CURRENT CURSOR POSITION
   <p>現在のカーソル位置を記録する。</p>
   <ul>
   <li>互換性: vt510, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SCOSC">SCOSC</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">SCORC</dfn>: Restore Saved Cursor Position
+<li><dfn class="cfunc">SCORC</dfn>: RESTORE SAVED CURSOR POSITION
   <p>SCOSC で記録した位置にカーソル位置を戻す。</p>
   <ul>
   <li>互換性: vt510, xterm</li>
@@ -1530,7 +1541,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <ul>
 <li>DSR(6)
 </li>
-<li><dfn class="cfunc">CPR</dfn>: Cursor Position Report
+<li><dfn class="cfunc">CPR</dfn>: CURSOR POSITION REPORT
   <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
   <ul>
   <li>互換性: vt100, xterm</li>
@@ -1557,14 +1568,14 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>ED</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> J</kbd></td><td>頁内の消去</td></tr>
 </table>
 <ul>
-<li>Mode 6 <dfn class="cmode">ERM</dfn>: Erasure Mode
+<li>Mode 6 <dfn class="cmode">ERM</dfn>: ERASURE MODE
   <p>[ECMA-48/7.2.4] EA, ECH, ED, EF, EL で保護領域の文字を消去するかどうかを設定する。</p>
   <ul>
   <li><dfn class="cmode-rm">PROTECT</dfn> (SM): 保護領域の内容は消去されない。</li>
   <li><dfn class="cmode-sm">ALL</dfn> (RM): 保護領域の内容も消去される。</li>
   </ul>
 </li>
-<li>Mode 7 <dfn class="cmode">VEM</dfn>: Line Editing Mode
+<li>Mode 7 <dfn class="cmode">VEM</dfn>: LINE EDITING MODE
   <p>[ECMA-48/7.2.19] DL, IL の動作を指定する。</p>
   <ul>
   <li><dfn class="cmode-rm">FOLLOWING</dfn> (RM): 行挿入・削除において現在行以降がシフトの対象となる。</li>
@@ -1574,7 +1585,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   行の前後は行進行の方向に従って定めたものである。
   </p>
 </li>
-<li>Mode 10 <dfn class="cmode">HEM</dfn>: Character Editing Mode
+<li>Mode 10 <dfn class="cmode">HEM</dfn>: CHARACTER EDITING MODE
   <p>[ECMA-48/7.2.9] DCH, ICH の動作を指定する。</p>
   <ul>
   <li><dfn class="cmode-rm">FOLLOWING</dfn> (RM): 文字挿入・削除において現在位置以降がシフトの対象となる。</li>
@@ -1584,7 +1595,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   位置の前後は文字進行または文字進路の方向に従って定めたものである。
   </p>
 </li>
-<li><dfn class="cfunc">SEE</dfn>: Select Editing Extent
+<li><dfn class="cfunc">SEE</dfn>: SELECT EDITING EXTENT
   <p>[ECMA-48/8.3.115] DCH, DL, ICH, IL においてシフト対象の範囲を設定する。
   設定は次の SEE が現れるまで有効である。既定値は 0 である。
   </p>
@@ -1600,7 +1611,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   処理系で完全に自由に定義できるのか、或いは、できるだけ表示部の中で大きく取らなければならないのか。
   </p>
 </li>
-<li><dfn class="cfunc">DCH</dfn>: Delete Character
+<li><dfn class="cfunc">DCH</dfn>: DELETE CHARACTER
   <p>[ECMA-48/8.3.26]
   現在位置および次 (HEM(FOLLOWING) のとき) または前 (HEM(PRECEDING) のとき) の <i>&lt;Pn&gt;</i> - 1 個の文字位置を行から除去する。
   つまり、現在位置から <i>&lt;Pn&gt;</i> 文字次以降の内容が現在位置に向かってシフトされ、シフトによってできた余白は消去される。
@@ -1613,7 +1624,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li><a href="http://www.vt100.net/docs/vt510-rm/DCH">VT510: DCH</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">ECH</dfn>: Erase Character
+<li><dfn class="cfunc">ECH</dfn>: ERASE CHARACTER
   <p>[ECMA-48/8.3.38]
   現在位置に加えて <i>&lt;Pn&gt;</i> -1 個の文字位置を消去する。
   消去の範囲は DCSM に応じて表示部またはデータ部で決定される。
@@ -1625,7 +1636,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li><a href="http://www.vt100.net/docs/vt510-rm/ECH">VT510: ECH</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">ICH</dfn>: Insert Character
+<li><dfn class="cfunc">ICH</dfn>: INSERT CHARACTER
   <p>[ECMA-48/8.3.64]
   現在位置および <i>&lt;Pn&gt;</i> - 1 個の文字位置を HEM に応じて後または前に挿入する。
   つまり、現在位置とその後または前の部分が <i>&lt;Pn&gt;</i> 個だけシフトされ、
@@ -1640,7 +1651,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>VT420 <a href="http://www.vt100.net/docs/vt510-rm/ICH">VT510: ICH</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DL</dfn>: Delete Line
+<li><dfn class="cfunc">DL</dfn>: DELETE LINE
   <p>[ECMA-48/8.3.32]
   現在行と、VEM に応じて前または後の <i>&lt;Pn&gt;</i> - 1 行を除去する。
   つまり、<i>&lt;Pn&gt;</i> 行目以降を現在行の方向にシフトさせ、シフト部分の反対側の <i>&lt;Pn&gt;</i> 行の内容は消去される。
@@ -1656,7 +1667,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>VT100 <a href="http://www.vt100.net/docs/vt510-rm/DL">VT510: DL</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">IL</dfn>: Insert Line
+<li><dfn class="cfunc">IL</dfn>: INSERT LINE
   <p>[ECMA-48/8.3.67] 現在行の位置に空行を <i>&lt;Pn&gt;</i> 行挿入する。
   つまり、現在行及び、VEM に応じて前または後の <i>&lt;Pn&gt;</i> - 1 行を <i>&lt;Pn&gt;</i> 行分だけ現在行から離れる方向にシフトし、
   空いた行の内容を消去する。シフト範囲の反対側の <i>&lt;Pn&gt;</i> 行の内容は失われる。
@@ -1672,10 +1683,10 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>vt100 <a href="http://www.vt100.net/docs/vt510-rm/DCH">VT510: IL</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">EF</dfn>: Erase In Field</li>
-<li><dfn class="cfunc">EA</dfn>: Erase In Area</li>
-<li><dfn class="cfunc">EL</dfn>: Erase In Line</li>
-<li><dfn class="cfunc">ED</dfn>: Erase In Page (vt100: Erase in Display)
+<li><dfn class="cfunc">EF</dfn>: ERASE IN FIELD</li>
+<li><dfn class="cfunc">EA</dfn>: ERASE IN AREA</li>
+<li><dfn class="cfunc">EL</dfn>: ERASE IN LINE</li>
+<li><dfn class="cfunc">ED</dfn>: ERASE IN PAGE (vt100: Erase in Display)
   <p>[ECMA-48/8.3.40 EF, 8.3.37 EA, 8.3.41 EL, 8.3.39 ED]
   EF・EA・EL・ED はそれぞれ現在のフィールド・属性化領域・行・ページを作用の対象範囲とする。
   引数に応じて対象範囲の一部または全ての文字を消去する。
@@ -1893,7 +1904,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </table>
 
 <ul>
-<li><dfn class="cfunc">SGR</dfn>: Select Graphic Rendition (Set Graphic Rendition)
+<li><dfn class="cfunc">SGR</dfn>: SELECT GRAPHIC RENDITION (Set Graphic Rendition)
   <p><i>&lt;Pm&gt;</i> にはセミコロン ';' 区切りで複数の番号を指定する。
   各番号はそれぞれ対応する描画属性を設定したり解除したりするのに用いられる。
   パラメータを省略したときの既定値は 0 である。
@@ -1904,13 +1915,13 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <li><a href="http://www.vt100.net/docs/vt510-rm/SGR">VT510: SGR</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">PLD</dfn>: Partial Line Down
+<li><dfn class="cfunc">PLD</dfn>: PARTIAL LINE DOWN
   <p>[ECMA-48/8.3.92] 下付き文字にする。PLU で解除する。</p>
 </li>
-<li><dfn class="cfunc">PLU</dfn>: Partial Line Up
+<li><dfn class="cfunc">PLU</dfn>: PARTIAL LINE UP
   <p>[ECMA-48/8.3.93] 上付き文字にする。PLD で解除する。</p>
 </li>
-<li>Mode 21 <dfn class="cmode">GRCM</dfn>: Graphic Rendition Combination Mode
+<li>Mode 21 <dfn class="cmode">GRCM</dfn>: GRAPHIC RENDITION COMBINATION MODE
   <p>[ECMA-48/7.2.8] SGR でそれまでに設定されていた属性を持続するかどうかを決める。</p>
   <ul>
   <li><dfn class="cmode-rm">REPLACING</dfn> (RM): SGR が登場する度にそれまでに設定されていた属性をすべて解除する。適用したい属性は毎回指定する必要がある。</li>
@@ -2623,7 +2634,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <!--************************************************************************-->
 <h2>ISO/IEC 2022 関連</h2>
 
-<h3><dfn class="cfunc">ACS</dfn>: Announcer Code Structure</h3>
+<h3><dfn class="cfunc">ACS</dfn>: ANNOUNCER CODE STRUCTURE</h3>
 <table class="normal center">
 <tr><th>略号</th><th>Sequence</th><th>C/R</th></tr>
 <tr><th>ACS</th>
