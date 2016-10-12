@@ -100,7 +100,7 @@
   [ECMA-48/8.3.45] EOT: End Of Transmission  43
   [ECMA-48/8.3.46] EPA: End Of Guarded Area  43
   [ECMA-48/8.3.47] ESA: End Of Selected Area  43
-  [ECMA-48/8.3.48] ESC: Escape  43
+  > [ECMA-48/8.3.48] ESC: Escape  43
   [ECMA-48/8.3.49] ETB: End Of Transmission Block  43
   [ECMA-48/8.3.50] ETX: End Of Text  43
   > [ECMA-48/8.3.51] FF: Form Feed  44

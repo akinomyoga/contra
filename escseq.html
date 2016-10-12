@@ -110,9 +110,10 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 </p>
 <table class="normal center">
 <tr><th colspan="2">名称</th><th>符号化表現</th><th>説明</th><th>関連規格</th></tr>
-<tr><th colspan="2" rowspan="2">制御文字</th>
-    <td><kbd><i>&lt;C0&gt;</i></kbd></td><td>基本の制御</td><td>ISO/IEC 646</td></tr>
-<tr><td><kbd><i>&lt;C1&gt;</i></kbd></td><td>基本の制御</td><td>ISO/IEC 6429 (ECMA-48)</td></tr>
+<tr><th rowspan="3">制御文字</th>
+    <th>C0 制御文字</th><td><kbd><i>&lt;C0&gt;</i></kbd></td><td>制御機能の基本集合</td><td>ISO/IEC 646</td></tr>
+<tr><th>C1 制御文字</th><td><kbd><i>&lt;C1&gt;</i></kbd></td><td>制御機能の補助集合</td><td>ISO/IEC 6429 (ECMA-48)</td></tr>
+<tr><th>Unicode 制御文字</th><td><kbd><i>&lt;Cc&gt;</i></kbd></td><td>Unicode 制御機能</td><td>ISO/IEC 10646, Unicode UAXs</td></tr>
 <tr><th colspan="2">DLE シーケンス</th>
     <td><kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></kbd><br />
         <kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd><br />
@@ -122,7 +123,7 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 <tr><td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;P&gt;</i></kbd></td><td>私用の制御</td></tr>
 <tr><th colspan="2">制御シーケンス</th>
     <td><kbd>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd></td>
-    <td>ANSI の制御</td><td rowspan="6">ISO/IEC 6429 (ECMA-48)</td></tr>
+    <td>ANSI 制御機能</td><td rowspan="6">ISO/IEC 6429 (ECMA-48)</td></tr>
 <tr><th rowspan="5">制御列</th><th rowspan="4">コマンド列</th>
     <td><kbd>DCS ... ST</kbd></td><td>装置制御</td></tr>
 <tr><td><kbd>OSC ... ST</kbd></td><td>OSの機能</td></tr>
@@ -141,6 +142,9 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 <li>ESC は 01/11 であり、
   DCS, SOS, CSI, ST, OSC, PM, APC は C1 の文字で、
   それぞれ 09/00, 09/08, 09/11, 09/12, 09/13, 09/14, 09/15 である。
+</li>
+<li><i>&lt;Cc&gt;</i> は Unicode General Category "Cc" の (C0, C1 以外の) 文字である。
+  この制御文字は特定の文字符号化方式でバイト列を文字の列に変換した後に有効である。
 </li>
 </ul>
 
@@ -298,7 +302,9 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
   <p>
   </p>
 </li>
-<li>ISO/IEC 646 には C0 が含まれる。ISO/IEC 6429, ISO/IEC 10646 には C0/C1 の療法が含まれる。
+<li>ISO/IEC 646 には C0 が含まれる。ISO/IEC 6429, ISO/IEC 10646 には C0/C1 の両方が含まれる。
+  ISO/IEC 2022 では C0 は primary set of control functions と呼ばれ、
+  C1 は supplementary sets of control functions と呼ばれる。
   表中の C0 の制御文字は ISO/IEC 646 (1967) による。また C1 の制御文字は ISO/IEC 6429 による。
   <ul>
   <li>[ECMA-48] ISO/IEC 6429 では FS, GS, RS, US には
@@ -358,143 +364,187 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 
 <h3>エスケープシーケンス (escape sequence)</h3>
 <ul>
-<li id="acro.ESC"><dfn class="cfunc">ESC</dfn>: Escape
-  <p>ESC で始まるシーケンスを<dfn>エスケープシーケンス</dfn>と呼ぶ。
-  以下に 2バイト目 (ESC の次のバイト) で分類した表を載せる。
-  例によって赤色で示したのが、続きのバイト列を持つシーケンスである。
+<li id="acro.ESC"><dfn class="cfunc">ESC</dfn>: ESCAPE
+  <p>[ECMA-48/8.3.48, ECMA-35/6.2.2]
+  符号拡張の目的で使用される。後続の CC データ要素のバイトの意味を変える。
+  結果として ESC と後続のバイトで<dfn>エスケープシーケンス</dfn> (escape sequence) を成す。
+  エスケープシーケンスは<dfn>符号指定機能</dfn> (code-identification function) およびある種の制御機能の符号化表現となる。
   </p>
+  <p>[ECMA-35/13.1] エスケープシーケンスは ESC で始まり終端バイト 03/00-07/15 で終わる。
+  間に 0 個以上の中間バイト &lt;I&gt; 02/00-02/15 を含む。
+  その形式によって以下の様な型 (types) に分類される。
+  </p>
+  <table class="normal center">
+  <tr><th>種類</th><th>型</th><th>符号化表現</th><th>名称</th><th>規格</th></tr>
+  <tr><th rowspan="3">制御機能</th>
+      <td>Fe</td><td><kbd>ESC <i>&lt;Fe&gt;</i></kbd></td>
+      <td>制御機能の補助集合 (Supplementary sets of coded control functions)</td><td>ECMA-35/6.4.3</td></tr>
+  <tr><td>Fs</td><td><kbd>ESC <i>&lt;Fs&gt;</i></kbd></td>
+      <td>標準単独制御機能 (Standardized single control functions)</td><td>ECMA-35/6.5.1</td></tr>
+  <tr><td>3Ft</td><td><kbd>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Fs&gt;</i></kbd></td>
+      <td>登録単独制御機能 (Registered single control functions)</td><td>ECMA-35/6.5.2</td></tr>
+  <tr><th rowspan="13">符号識別機能</th>
+      <td>0Ft</td><td><kbd>ESC SP <i>&lt;Ft&gt;</i></kbd></td><td>ACS (ANNOUNCE CODE STRUCTURE)</td><td>ECMA-35/15.2</td></tr>
+  <tr><td>1Ft</td><td><kbd>ESC ! <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>CZD (C0-DESIGNATE)</td><td rowspan="2">ECMA-35/14.2</td></tr>
+  <tr><td>2Ft</td><td><kbd>ESC " <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>C1D (C1-DESIGNATE)</td></tr>
+  <tr><td>4Ft</td><td><kbd>ESC $ <i>&lt;I&gt;</i> <i>&lt;Ft&gt;</i></kbd></td><td>Designation of multiple-byte graphic character sets</td><td>ECMA-35/13.2.3, 14.3</td></tr>
+  <tr><td>5Ft</td><td><kbd>ESC % <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>DOCS (DESIGNATE OTHER CODING SYSTEM)</td><td>ECMA-35/15.4</td></tr>
+  <tr><td>6Ft</td><td><kbd>ESC &amp; <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>IRR (IDENTIFY REVISED REGISTRATION)</td><td>ECMA-35/14.5</td></tr>
+  <tr><td>8Ft</td> <td><kbd>ESC ( <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>GZD4 (G0-DESIGNATE 94-SET)</td><td rowspan="7">ECMA-35/14.3</td></tr>
+  <tr><td>9Ft</td> <td><kbd>ESC ) <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>G1D4 (G1-DESIGNATE 94-SET)</td></tr>
+  <tr><td>10Ft</td><td><kbd>ESC * <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>G2D4 (G2-DESIGNATE 94-SET)</td></tr>
+  <tr><td>11Ft</td><td><kbd>ESC + <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>G3D4 (G3-DESIGNATE 94-SET)</td></tr>
+  <tr><td>13Ft</td><td><kbd>ESC - <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>G1D6 (G1-DESIGNATE 96-SET)</td></tr>
+  <tr><td>14Ft</td><td><kbd>ESC . <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>G2D6 (G2-DESIGNATE 96-SET)</td></tr>
+  <tr><td>15Ft</td><td><kbd>ESC / <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>G3D6 (G3-DESIGNATE 96-SET)</td></tr>
+  <tr><th rowspan="3">私用の機能</th>
+      <td>Fp</td><td><kbd>ESC <i>&lt;Fp&gt;</i></kbd></td>
+      <td rowspan="2">私用制御機能 (Private control functions)</td><td rowspan="2">ECMA-35/6.5.3</td></tr>
+  <tr><td>3Fp</td><td><kbd>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Fp&gt;</i></kbd></td></tr>
+  <tr><td>nFp</td><td><kbd>ESC <i>&lt;I&gt;</i><strong>+</strong> <i>&lt;Fp&gt;</i></kbd></td>
+      <td>私用の機能その他 (Reserved for Private use)</td><td>ECMA-35/13.2.2</td></tr>
+  <tr><th rowspan="2">(予約)</th>
+      <td>7Ft</td> <td><kbd>ESC ' <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td rowspan="2">-R- (予約)</td><td rowspan="2">-</td></tr>
+  <tr><td>12Ft</td><td><kbd>ESC , <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td></tr>
+  </table>
+  <ul>
+  <li><i>&lt;Fp&gt;</i> は 03/00-03/15 のバイト、
+      <i>&lt;Ft&gt;</i> は 04/00-07/14 のバイト、
+      <i>&lt;Fe&gt;</i> は 04/00-05/15 のバイト、
+      <i>&lt;Fs&gt;</i> は 06/00-07/14 のバイト</li>
+  <li><i>&lt;Fp&gt;</i> で終端するエスケープシーケンスは私用の為に保留されている。</li>
+  <li>2バイト目が <i>&lt;I&gt;</i> のエスケープシーケンスは符号識別機能に用いられ、
+    特に文字集合の設定に用いられる。</li>
+  <li>2バイト目が <i>&lt;Fe&gt;</i> にあるエスケープシーケンスは、
+    C1 の文字を 7bit で符号化するのに用いられる。
+    実際の端末の実装においては、
+    歴史的な背景からこの領域の特定の文字に別の機能を割り当てている事がある。
+  </li>
+  <li>2バイト目が範囲 <i>&lt;Fs&gt;</i> にあるシーケンスは ISO/IEC 2022 (ECMA-35) で規定される単独制御機能である。</li>
+  <li>(予約) とした物は現在は規定されていないが、将来の規格変更・文字集合登録の為に予約されている。</li>
+  <li>[ECMA-35/6.4.4, 6.5.4] 00/00-01/15 の基本集合および Fe 型の補助集合および一部の標準単独制御機能は ECMA-48 で定義される。</li>
+  </ul>
 </li>
 </ul>
+<p>以下に 2バイト目 (ESC の次のバイト) で分類した表を載せる。
+例によって赤色で示したのが、続きのバイト列を持つシーケンスである。
+</p>
 <table class="normal center">
-<tr><th>略号</th><th>符号化表現</th><th>Hex; 行/列</th>
-    <th>略号</th><th>符号化表現</th><th>Hex; 行/列</th>
-    <th>略号</th><th>符号化表現</th><th>Hex; 行/列</th></tr>
-<tr><th class="markB">ACS</th><td><kbd>ESC SP</kbd></td><td>\x1B\x20; 1/11 2/0</td>
-    <th>---</th><td><kbd>ESC @</kbd></td><td>\x1B\x40; 1/11 4/0</td>
-    <th>DMI</th><td><kbd>ESC `</kbd></td><td>\x1B\x60; 1/11 6/0</td></tr>
-<tr><th class="markB">CZD</th><td><kbd>ESC !</kbd></td><td>\x1B\x21; 1/11 2/1</td>
-    <th>---</th><td><kbd>ESC A</kbd></td><td>\x1B\x41; 1/11 4/1</td>
-    <th>INT</th><td><kbd>ESC a</kbd></td><td>\x1B\x61; 1/11 6/1</td></tr>
-<tr><th class="markB">C1D</th><td><kbd>ESC "</kbd></td><td>\x1B\x22; 1/11 2/2</td>
-    <th>---</th><td><kbd>ESC B</kbd></td><td>\x1B\x42; 1/11 4/2</td>
-    <th>EMI</th><td><kbd>ESC b</kbd></td><td>\x1B\x62; 1/11 6/2</td></tr>
-<tr><th class="markB">(1B23+)</th><td><kbd>ESC #</kbd></td><td>\x1B\x23; 1/11 2/3</td>
-    <th>---</th><td><kbd>ESC C</kbd></td><td>\x1B\x43; 1/11 4/3</td>
-    <th>RIS</th><td><kbd>ESC c</kbd></td><td>\x1B\x63; 1/11 6/3</td></tr>
-<tr><th class="markB">GnDMm</th><td><kbd>ESC $</kbd></td><td>\x1B\x24; 1/11 2/4</td>
-    <th>IND</th><td><kbd>ESC D</kbd></td><td>\x1B\x44; 1/11 4/4</td>
-    <th>CMD</th><td><kbd>ESC d</kbd></td><td>\x1B\x64; 1/11 6/4</td></tr>
-<tr><th class="markB">DOCS</th><td><kbd>ESC %</kbd></td><td>\x1B\x25; 1/11 2/5</td>
-    <th>NEL</th><td><kbd>ESC E</kbd></td><td>\x1B\x45; 1/11 4/5</td>
-    <th>-R-</th><td><kbd>ESC e</kbd></td><td>\x1B\x65; 1/11 6/5</td></tr>
-<tr><th class="markB">IRR</th><td><kbd>ESC &amp;</kbd></td><td>\x1B\x26; 1/11 2/6</td>
-    <th>hpLowLeft</th><td><kbd>ESC F</kbd></td><td>\x1B\x46; 1/11 4/6</td>
-    <th>-R-</th><td><kbd>ESC f</kbd></td><td>\x1B\x66; 1/11 6/6</td></tr>
-<tr><th>-R-</th><td><kbd>ESC '</kbd></td><td>\x1B\x27; 1/11 2/7</td>
-    <th>---</th><td><kbd>ESC G</kbd></td><td>\x1B\x47; 1/11 4/7</td>
-    <th>-R-</th><td><kbd>ESC g</kbd></td><td>\x1B\x67; 1/11 6/7</td></tr>
-<tr><th class="markB">GZD4</th><td><kbd>ESC (</kbd></td><td>\x1B\x28; 1/11 2/8</td>
-    <th>HTS</th><td><kbd>ESC H</kbd></td><td>\x1B\x48; 1/11 4/8</td>
-    <th>-R-</th><td><kbd>ESC h</kbd></td><td>\x1B\x68; 1/11 6/8</td></tr>
-<tr><th class="markB">G1D4</th><td><kbd>ESC )</kbd></td><td>\x1B\x29; 1/11 2/9</td>
-    <th>---</th><td><kbd>ESC I</kbd></td><td>\x1B\x49; 1/11 4/9</td>
-    <th>-R-</th><td><kbd>ESC i</kbd></td><td>\x1B\x69; 1/11 6/9</td></tr>
-<tr><th class="markB">G2D4</th><td><kbd>ESC *</kbd></td><td>\x1B\x2A; 1/11 2/10</td>
-    <th>---</th><td><kbd>ESC J</kbd></td><td>\x1B\x4A; 1/11 4/10</td>
-    <th>-R-</th><td><kbd>ESC j</kbd></td><td>\x1B\x6A; 1/11 6/10</td></tr>
-<tr><th class="markB">G3D4</th><td><kbd>ESC +</kbd></td><td>\x1B\x2B; 1/11 2/11</td>
-    <th>---</th><td><kbd>ESC K</kbd></td><td>\x1B\x4B; 1/11 4/11</td>
-    <th>LS1R</th><td><kbd>ESC k</kbd></td><td>\x1B\x6B; 1/11 6/11</td></tr>
-<tr><th>-R-</th><td><kbd>ESC ,</kbd></td><td>\x1B\x2C; 1/11 2/12</td>
-    <th>---</th><td><kbd>ESC L</kbd></td><td>\x1B\x4C; 1/11 4/12</td>
-    <th>hpMemUnlk<br/>LS2R</th><td><kbd>ESC l</kbd></td><td>\x1B\x6C; 1/11 6/12</td></tr>
-<tr><th class="markB">G1D6</th><td><kbd>ESC -</kbd></td><td>\x1B\x2D; 1/11 2/13</td>
-    <th>RI</th><td><kbd>ESC M</kbd></td><td>\x1B\x4D; 1/11 4/13</td>
-    <th>hpMemLk<br/>LS3R</th><td><kbd>ESC m</kbd></td><td>\x1B\x6D; 1/11 6/13</td></tr>
-<tr><th class="markB">G2D6</th><td><kbd>ESC .</kbd></td><td>\x1B\x2E; 1/11 2/14</td>
-    <th>SS2</th><td><kbd>ESC N</kbd></td><td>\x1B\x4E; 1/11 4/14</td>
-    <th>LS2</th><td><kbd>ESC n</kbd></td><td>\x1B\x6E; 1/11 6/14</td></tr>
-<tr><th class="markB">G3D6</th><td><kbd>ESC /</kbd></td><td>\x1B\x2F; 1/11 2/15</td>
-    <th>SS3</th><td><kbd>ESC O</kbd></td><td>\x1B\x4F; 1/11 4/15</td>
-    <th>LS3</th><td><kbd>ESC o</kbd></td><td>\x1B\x6F; 1/11 6/15</td></tr>
+<tr><th colspan="2">第2バイト 列 02</th>
+    <th colspan="2">第2バイト 列 03</th>
+    <th colspan="2">第2バイト 列 04</th>
+    <th colspan="2">第2バイト 列 05</th>
+    <th colspan="2">第2バイト 列 06</th>
+    <th colspan="2">第2バイト 列 07</th></tr>
+<tr><th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th></tr>
+<tr><th class="markB">ACS</th><td><kbd>ESC SP <i>&lt;Ft&gt;</i></kbd></td>
+    <th>---</th><td><kbd>ESC 0</kbd></td>
+    <th>(PAD)</th><td><kbd>ESC @</kbd></td>
+    <th class="markB">DCS</th><td><kbd>ESC P</kbd></td>
+    <th>DMI</th><td><kbd>ESC `</kbd></td>
+    <th>PCD</th><td><kbd>ESC p</kbd></td></tr>
+<tr><th class="markB">CZD</th><td><kbd>ESC ! <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>DECHTS</th><td><kbd>ESC 1</kbd></td>
+    <th>(HOP)</th><td><kbd>ESC A</kbd></td>
+    <th>PU1</th><td><kbd>ESC Q</kbd></td>
+    <th>INT</th><td><kbd>ESC a</kbd></td>
+    <th>-R-</th><td><kbd>ESC q</kbd></td></tr>
+<tr><th class="markB">C1D</th><td><kbd>ESC " <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>DECCAHT</th><td><kbd>ESC 2</kbd></td>
+    <th>BPH</th><td><kbd>ESC B</kbd></td>
+    <th>PU2</th><td><kbd>ESC R</kbd></td>
+    <th>EMI</th><td><kbd>ESC b</kbd></td>
+    <th>-R-</th><td><kbd>ESC r</kbd></td></tr>
+<tr><th class="markB">"RSCF"</th><td><kbd>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>DECVTS</th><td><kbd>ESC 3</kbd></td>
+    <th>NBH</th><td><kbd>ESC C</kbd></td>
+    <th>STS</th><td><kbd>ESC S</kbd></td>
+    <th>RIS</th><td><kbd>ESC c</kbd></td>
+    <th>-R-</th><td><kbd>ESC s</kbd></td></tr>
+<tr><th class="markB">"GnDMm"</th><td><kbd>ESC $ <i>&lt;I&gt;</i> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>DECAVT</th><td><kbd>ESC 4</kbd></td>
+    <th>(IND)</th><td><kbd>ESC D</kbd></td>
+    <th>CCH</th><td><kbd>ESC T</kbd></td>
+    <th>CMD</th><td><kbd>ESC d</kbd></td>
+    <th>-R-</th><td><kbd>ESC t</kbd></td></tr>
+<tr><th class="markB">DOCS</th><td><kbd>ESC % <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>---</th><td><kbd>ESC 5</kbd></td>
+    <th>NEL</th><td><kbd>ESC E</kbd></td>
+    <th>MW</th><td><kbd>ESC U</kbd></td>
+    <th>-R-</th><td><kbd>ESC e</kbd></td>
+    <th>-R-</th><td><kbd>ESC u</kbd></td></tr>
+<tr><th class="markB">IRR</th><td><kbd>ESC &amp; <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>DECBI</th><td><kbd>ESC 6</kbd></td>
+    <th>SSA<br/>hpLowLeft</th><td><kbd>ESC F</kbd></td>
+    <th>SPA</th><td><kbd>ESC V</kbd></td>
+    <th>-R-</th><td><kbd>ESC f</kbd></td>
+    <th>-R-</th><td><kbd>ESC v</kbd></td></tr>
+<tr><th>-R-</th><td><kbd>ESC '</kbd></td>
+    <th>DECSC</th><td><kbd>ESC 7</kbd></td>
+    <th>ESA</th><td><kbd>ESC G</kbd></td>
+    <th>EPA</th><td><kbd>ESC W</kbd></td>
+    <th>-R-</th><td><kbd>ESC g</kbd></td>
+    <th>-R-</th><td><kbd>ESC w</kbd></td></tr>
 
-<tr><th>略号</th><th>符号化表現</th><th>Hex; 行/列</th>
-    <th>略号</th><th>符号化表現</th><th>Hex; 行/列</th>
-    <th>略号</th><th>符号化表現</th><th>Hex; 行/列</th></tr>
-<tr><th>---</th><td><kbd>ESC 0</kbd></td><td>\x1B\x30; 1/11 3/0</td>
-    <th class="markB">DCS</th><td><kbd>ESC P</kbd></td><td>\x1B\x50; 1/11 5/0</td>
-    <th>PCD</th><td><kbd>ESC p</kbd></td><td>\x1B\x70; 1/11 7/0</td></tr>
-<tr><th>---</th><td><kbd>ESC 1</kbd></td><td>\x1B\x31; 1/11 3/1</td>
-    <th>---</th><td><kbd>ESC Q</kbd></td><td>\x1B\x51; 1/11 5/1</td>
-    <th>-R-</th><td><kbd>ESC q</kbd></td><td>\x1B\x71; 1/11 7/1</td></tr>
-<tr><th>---</th><td><kbd>ESC 2</kbd></td><td>\x1B\x32; 1/11 3/2</td>
-    <th>---</th><td><kbd>ESC R</kbd></td><td>\x1B\x52; 1/11 5/2</td>
-    <th>-R-</th><td><kbd>ESC r</kbd></td><td>\x1B\x72; 1/11 7/2</td></tr>
-<tr><th>---</th><td><kbd>ESC 3</kbd></td><td>\x1B\x33; 1/11 3/3</td>
-    <th>---</th><td><kbd>ESC S</kbd></td><td>\x1B\x53; 1/11 5/3</td>
-    <th>-R-</th><td><kbd>ESC s</kbd></td><td>\x1B\x73; 1/11 7/3</td></tr>
-<tr><th>---</th><td><kbd>ESC 4</kbd></td><td>\x1B\x34; 1/11 3/4</td>
-    <th>---</th><td><kbd>ESC T</kbd></td><td>\x1B\x54; 1/11 5/4</td>
-    <th>-R-</th><td><kbd>ESC t</kbd></td><td>\x1B\x74; 1/11 7/4</td></tr>
-<tr><th>---</th><td><kbd>ESC 5</kbd></td><td>\x1B\x35; 1/11 3/5</td>
-    <th>---</th><td><kbd>ESC U</kbd></td><td>\x1B\x55; 1/11 5/5</td>
-    <th>-R-</th><td><kbd>ESC u</kbd></td><td>\x1B\x75; 1/11 7/5</td></tr>
-<tr><th>---</th><td><kbd>ESC 6</kbd></td><td>\x1B\x36; 1/11 3/6</td>
-    <th>SPA</th><td><kbd>ESC V</kbd></td><td>\x1B\x56; 1/11 5/6</td>
-    <th>-R-</th><td><kbd>ESC v</kbd></td><td>\x1B\x76; 1/11 7/6</td></tr>
-<tr><th>DECSC</th><td><kbd>ESC 7</kbd></td><td>\x1B\x37; 1/11 3/7</td>
-    <th>EPA</th><td><kbd>ESC W</kbd></td><td>\x1B\x57; 1/11 5/7</td>
-    <th>-R-</th><td><kbd>ESC w</kbd></td><td>\x1B\x77; 1/11 7/7</td></tr>
-<tr><th>DECRC</th><td><kbd>ESC 8</kbd></td><td>\x1B\x38; 1/11 3/8</td>
-    <th>SOS</th><td><kbd>ESC X</kbd></td><td>\x1B\x58; 1/11 5/8</td>
-    <th>-R-</th><td><kbd>ESC x</kbd></td><td>\x1B\x78; 1/11 7/8</td></tr>
-<tr><th>---</th><td><kbd>ESC 9</kbd></td><td>\x1B\x39; 1/11 3/9</td>
-    <th>---</th><td><kbd>ESC Y</kbd></td><td>\x1B\x59; 1/11 5/9</td>
-    <th>-R-</th><td><kbd>ESC y</kbd></td><td>\x1B\x79; 1/11 7/9</td></tr>
-<tr><th>---</th><td><kbd>ESC :</kbd></td><td>\x1B\x3A; 1/11 3/10</td>
-    <th>DECID</th><td><kbd>ESC Z</kbd></td><td>\x1B\x5A; 1/11 5/10</td>
-    <th>-R-</th><td><kbd>ESC z</kbd></td><td>\x1B\x7A; 1/11 7/10</td></tr>
-<tr><th>---</th><td><kbd>ESC ;</kbd></td><td>\x1B\x3B; 1/11 3/11</td>
-    <th class="markB">CSI</th><td><kbd>ESC [</kbd></td><td>\x1B\x5B; 1/11 5/11</td>
-    <th>-R-</th><td><kbd>ESC {</kbd></td><td>\x1B\x7B; 1/11 7/11</td></tr>
-<tr><th>---</th><td><kbd>ESC &lt;</kbd></td><td>\x1B\x3C; 1/11 3/12</td>
-    <th>ST</th><td><kbd>ESC \</kbd></td><td>\x1B\x5C; 1/11 5/12</td>
-    <th>LS3R</th><td><kbd>ESC |</kbd></td><td>\x1B\x7C; 1/11 7/12</td></tr>
-<tr><th>DECKPAM</th><td><kbd>ESC =</kbd></td><td>\x1B\x3D; 1/11 3/13</td>
-    <th class="markB">OSC</th><td><kbd>ESC ]</kbd></td><td>\x1B\x5D; 1/11 5/13</td>
-    <th>LS2R</th><td><kbd>ESC }</kbd></td><td>\x1B\x7D; 1/11 7/13</td></tr>
-<tr><th>DECKPNM</th><td><kbd>ESC &gt;</kbd></td><td>\x1B\x3E; 1/11 3/14</td>
-    <th class="markB">PM</th><td><kbd>ESC ^</kbd></td><td>\x1B\x5E; 1/11 5/14</td>
-    <th>LS1R</th><td><kbd>ESC ~</kbd></td><td>\x1B\x7E; 1/11 7/14</td></tr>
-<tr><th>---</th><td><kbd>ESC ?</kbd></td><td>\x1B\x3F; 1/11 3/15</td>
-    <th class="markB">APC</th><td><kbd>ESC _</kbd></td><td>\x1B\x5F; 1/11 5/15</td>
-    <th>-R-</th><td><kbd>ESC DEL</kbd></td><td>\x1B\x7F; 1/11 7/15</td></tr>
+<tr><th class="markB">GZD4</th><td><kbd>ESC ( <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>DECRC</th><td><kbd>ESC 8</kbd></td>
+    <th>HTS</th><td><kbd>ESC H</kbd></td>
+    <th>SOS</th><td><kbd>ESC X</kbd></td>
+    <th>-R-</th><td><kbd>ESC h</kbd></td>
+    <th>-R-</th><td><kbd>ESC x</kbd></td></tr>
+<tr><th class="markB">G1D4</th><td><kbd>ESC ) <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>DECFI</th><td><kbd>ESC 9</kbd></td>
+    <th>HTJ</th><td><kbd>ESC I</kbd></td>
+    <th>(SGCI)</th><td><kbd>ESC Y</kbd></td>
+    <th>-R-</th><td><kbd>ESC i</kbd></td>
+    <th>-R-</th><td><kbd>ESC y</kbd></td></tr>
+<tr><th class="markB">G2D4</th><td><kbd>ESC * <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>---</th><td><kbd>ESC :</kbd></td>
+    <th>VTS</th><td><kbd>ESC J</kbd></td>
+    <th>SCI<br/>DECID</th><td><kbd>ESC Z</kbd></td>
+    <th>-R-</th><td><kbd>ESC j</kbd></td>
+    <th>-R-</th><td><kbd>ESC z</kbd></td></tr>
+<tr><th class="markB">G3D4</th><td><kbd>ESC + <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>---</th><td><kbd>ESC ;</kbd></td>
+    <th>PLD</th><td><kbd>ESC K</kbd></td>
+    <th class="markB">CSI</th><td><kbd>ESC [</kbd></td>
+    <th>(LS1R)</th><td><kbd>ESC k</kbd></td>
+    <th>-R-</th><td><kbd>ESC {</kbd></td></tr>
+<tr><th>-R-</th><td><kbd>ESC ,</kbd></td>
+    <th>V5EX</th><td><kbd>ESC &lt;</kbd></td>
+    <th>PLU</th><td><kbd>ESC L</kbd></td>
+    <th>ST</th><td><kbd>ESC \</kbd></td>
+    <th>(LS2R)<br/>hpMemUnlk</th><td><kbd>ESC l</kbd></td>
+    <th>LS3R</th><td><kbd>ESC |</kbd></td></tr>
+<tr><th class="markB">G1D6</th><td><kbd>ESC - <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>DECKPAM</th><td><kbd>ESC =</kbd></td>
+    <th>RI</th><td><kbd>ESC M</kbd></td>
+    <th class="markB">OSC</th><td><kbd>ESC ]</kbd></td>
+    <th>(LS3R)<br/>hpMemLk</th><td><kbd>ESC m</kbd></td>
+    <th>LS2R</th><td><kbd>ESC }</kbd></td></tr>
+<tr><th class="markB">G2D6</th><td><kbd>ESC . <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>DECKPNM</th><td><kbd>ESC &gt;</kbd></td>
+    <th>SS2</th><td><kbd>ESC N</kbd></td>
+    <th class="markB">PM</th><td><kbd>ESC ^</kbd></td>
+    <th>LS2</th><td><kbd>ESC n</kbd></td>
+    <th>LS1R</th><td><kbd>ESC ~</kbd></td></tr>
+<tr><th class="markB">G3D6</th><td><kbd>ESC / <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <th>---</th><td><kbd>ESC ?</kbd></td>
+    <th>SS3</th><td><kbd>ESC O</kbd></td>
+    <th class="markB">APC</th><td><kbd>ESC _</kbd></td>
+    <th>LS3</th><td><kbd>ESC o</kbd></td>
+    <th>---</th><td>-</td></tr>
 </table>
 
 <ul>
-<li>ISO/IEC 2022 に従うと、
-  <ul>
-  <li>2バイト目が範囲 03/00-03/15 にあるシーケンスは私用の為に保留されている。</li>
-  <li>2バイト目が範囲 02/00-02/15 にあるシーケンスは、
-    主に ISO/IEC 2022 に基づく文字集合設定の為のエスケープシーケンスである。
-    但し、この組合せで始まるシーケンスの内でも、
-    03/00-03/15 の文字で終端する物は私用の為に保留されている。
-  </li>
-  <li>2バイト目が範囲 04/00, 05/15 にあるシーケンスは、C1 の文字を 7bit で符号化するのに用いられる。
-    しかし、全ての C1 領域の符号が現代に於いて使われているとは限らず、
-    実際の端末・端末エミュレータにおいては、
-    歴史的な背景から、この領域の特定の文字に別の機能を割り当てている事がある。
-  </li>
-  <li>2バイト目が範囲 06/00-07/14 にあるシーケンス及び SS2, SS3 は、
-    主に ISO/IEC 2022 に基づく文字集合設定の為の制御である。
-  </li>
-  <li>-R- とした物は現在は規定されていないが、将来の規格変更・文字集合登録の為に予約されている。
-  </li>
-  <li>ESC k, ESC l, ESC m には昔は LS1R, LS2R, LS3R が与えられていたが、
-    現在は LS1R, LS2R, LS3R はそれぞれ ESC ~, ESC }, ESC | を用いる。
-    ただし、互換性の為に ESC k, ESC l, ESC m を認識する事もある。
-  </li>
-  </ul>
+<li>ESC k, ESC l, ESC m には昔は LS1R, LS2R, LS3R が与えられていたが、
+  現在は LS1R, LS2R, LS3R はそれぞれ ESC ~, ESC }, ESC | を用いる。
+  ただし、互換性の為に ESC k, ESC l, ESC m を認識する事もある。
 </li>
 </ul>
 
