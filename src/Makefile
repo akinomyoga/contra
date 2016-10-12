@@ -32,7 +32,7 @@ $(objdir)/board.o: board.cpp | $(objdir)
 
 -include $(objdir)/impl2.dep
 all: impl2
-impl2: $(objdir)/impl2.o $(objdir)/tty_player.o $(objdir)/board.o
+impl2: $(objdir)/impl2.o $(objdir)/tty_observer.o $(objdir)/tty_player.o $(objdir)/board.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 $(objdir)/impl2.o: impl2.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ -MD -MF $(@:.o=.dep) $<
@@ -46,3 +46,7 @@ $(objdir)/minimal_openpt.o: minimal_openpt.cpp | $(objdir)
 
 $(directories):
 	mkdir -p $@
+
+clean:
+	-rm -rf $(objdir)
+.PHONY: clean

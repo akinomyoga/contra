@@ -1,10 +1,113 @@
 #include "tty_player.h"
-#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <cstdio>
-
+#include <vector>
+#include <algorithm>
 
 namespace contra {
 namespace {
+
+  typedef std::uint32_t csi_single_param_t;
+
+  struct csi_param_type {
+    csi_single_param_t value;
+    bool isColon;
+    bool isDefault;
+  };
+
+  class csi_parameters {
+    std::vector<csi_param_type> m_data;
+    std::size_t m_index {0};
+    bool m_result;
+
+  public:
+    csi_parameters(sequence const& seq) {
+      extract_parameters(seq.parameter(), seq.parameterSize());
+    }
+
+    operator bool() const {return this->m_result;}
+
+  public:
+    std::size_t size() const {return m_data.size();}
+    void push_back(csi_param_type const& value) {m_data.push_back(value);}
+
+  private:
+    bool extract_parameters(char32_t const* str, std::size_t len) {
+      m_data.clear();
+      m_index = 0;
+      m_isColonAppeared = false;
+      m_result = false;
+
+      bool isSet = false;
+      csi_param_type param {0, false, true};
+      for (std::size_t i = 0; i < len; i++) {
+        char32_t const c = str[i];
+        if (!(ascii_0 <= c && c <= ascii_semicolon)) {
+          std::fprintf(stderr, "invalid value of CSI parameter values.\n");
+          return false;
+        }
+
+        if (c <= ascii_9) {
+          std::uint32_t const newValue = param.value * 10 + (c - ascii_0);
+          if (newValue < param.value) {
+            // overflow
+            std::fprintf(stderr, "a CSI parameter value is too large.\n");
+            return false;
+          }
+
+          isSet = true;
+          param.value = newValue;
+          param.isDefault = false;
+        } else {
+          m_data.push_back(param);
+          isSet = true;
+          param.value = 0;
+          param.isColon = c == ascii_colon;
+          param.isDefault = true;
+        }
+      }
+
+      if (isSet) m_data.push_back(param);
+      return m_result = true;
+    }
+
+  public:
+    bool m_isColonAppeared;
+
+    bool read_param(csi_single_param_t& result, std::uint32_t defaultValue) {
+      while (m_index < m_data.size()) {
+        csi_param_type const& param = m_data[m_index++];
+        if (!param.isColon) {
+          m_isColonAppeared = false;
+          if (!param.isDefault)
+            result = param.value;
+          else
+            result = defaultValue;
+          return true;
+        }
+      }
+      result = defaultValue;
+      return false;
+    }
+
+    bool read_arg(csi_single_param_t& result, bool toAllowSemicolon, csi_single_param_t defaultValue) {
+      if (m_index <m_data.size()
+        && (m_data[m_index].isColon || (toAllowSemicolon && !m_isColonAppeared))
+      ) {
+        csi_param_type const& param = m_data[m_index++];
+        if (param.isColon) m_isColonAppeared = true;
+        if (!param.isDefault)
+          result = param.value;
+        else
+          result = defaultValue;
+        return true;
+      }
+
+      result = defaultValue;
+      return false;
+    }
+  };
 
   static void reverse_line_content(board* b, curpos_t y) {
     board_cell* const cells = b->cell(0, y);

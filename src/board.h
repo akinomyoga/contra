@@ -7,10 +7,9 @@
 #include <cstdlib>
 #include <cstdio>
 #include <vector>
+#include "contradef.h"
 
 namespace contra {
-
-  typedef std::uint8_t byte;
 
   enum ascii_codes {
 

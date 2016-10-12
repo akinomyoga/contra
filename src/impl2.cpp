@@ -18,7 +18,8 @@ void msleep(int milliseconds) {
 }
 
 #include "tty_player.h"
-#include "sequence_printer.h"
+#include "sequence.h"
+#include "tty_observer.h"
 
 namespace contra {
   struct idevice {
@@ -175,15 +176,18 @@ int main() {
   contra::fd_device d0(STDOUT_FILENO);
   dev.push(&d0);
 
+  struct winsize winsize;
+  ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &winsize);
   contra::board b;
-  b.resize(20, 10);
+  b.resize(winsize.ws_col, winsize.ws_row);
+
   contra::tty_player term(b);
   contra::tty_player_device d1(&term);
   dev.push(&d1);
 
-  contra::sequence_printer printer("impl2-allseq.txt");
-  contra::sequence_printer_device d2(&printer);
-  dev.push(&d2);
+  // contra::sequence_printer printer("impl2-allseq.txt");
+  // contra::sequence_printer_device d2(&printer);
+  // dev.push(&d2);
 
   set_fd_nonblock(STDIN_FILENO);
   contra::fd_device devIn(sess.masterfd);
@@ -198,6 +202,11 @@ int main() {
 
   kill(sess.pid, SIGTERM);
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &oldTermios);
+
+  contra::termcap_sgr_type sgrcap;
+  sgrcap.initialize();
+  contra::tty_observer target(stdout, &sgrcap);
+  target.print_screen(b);
 
   return 0;
 }
