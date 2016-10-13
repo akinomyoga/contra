@@ -582,6 +582,10 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </li>
 </ul>
 
+<h4>3Ft型 登録単独制御機能</h4>
+<p>[ECMA-35/6.5.2] ISO-IR (ISO International Register of Coded Character Sets) に後から登録される制御機能。</p>
+<p>Note: 現在 (2016-10-13) この型の制御機能は一つも登録されていない様だ。</p>
+
 <h4>3Fp型 私用制御機能</h4>
 <p>実際の端末実装で確認できる私用制御機能を以下に挙げる。</p>
 <table class="normal center">
@@ -611,8 +615,6 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   </p>
   <p>CSI は 01/11 05/11 (<kbd>ESC [</kbd>)、または 09/11 で表現される。
   [ECMA-48/5.4]
-  <i>&lt;I&gt;</i> は 02/00 - 02/15 の範囲の文字を指定し、
-  <i>&lt;Ft&gt;</i> は 04/00 - 07/15 の範囲の文字を指定する。
   <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i>
   の組合せによって、その制御シーケンスが特にどの様な機能を持った物かを指定する。
   それぞれの組合せに対応する制御シーケンスの機能は、端末に依存する所が大きい。
@@ -650,6 +652,150 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   </ul>
 </li>
 </ul>
+
+<p>Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong> のないもの) を <i>&lt;Ft&gt;</i> に従って表にする。</p>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th></tr>
+<tr><th>ICH</th>    <td><kbd>CSI @</kbd></td>
+    <th>DCH</th>    <td><kbd>CSI P</kbd></td>
+    <th>HPA</th>    <td><kbd>CSI `</kbd></td>
+    <th>---</th>    <td><kbd>CSI p</kbd></td></tr>
+<tr><th>CUU</th>    <td><kbd>CSI A</kbd></td>
+    <th>SEE</th>    <td><kbd>CSI Q</kbd></td>
+    <th>HPR</th>    <td><kbd>CSI a</kbd></td>
+    <th>---</th>    <td><kbd>CSI q</kbd></td></tr>
+<tr><th>CUD</th>    <td><kbd>CSI B</kbd></td>
+    <th>CPR</th>    <td><kbd>CSI R</kbd></td>
+    <th>---</th>    <td><kbd>CSI b</kbd></td>
+    <th>---</th>    <td><kbd>CSI r</kbd></td></tr>
+<tr><th>CUF</th>    <td><kbd>CSI C</kbd></td>
+    <th>---</th>    <td><kbd>CSI S</kbd></td>
+    <th>---</th>    <td><kbd>CSI c</kbd></td>
+    <th>SCOSC</th>  <td><kbd>CSI s</kbd></td></tr>
+<tr><th>CUB</th>    <td><kbd>CSI D</kbd></td>
+    <th>---</th>    <td><kbd>CSI T</kbd></td>
+    <th>VPA</th>    <td><kbd>CSI d</kbd></td>
+    <th>---</th>    <td><kbd>CSI t</kbd></td></tr>
+<tr><th>CNL</th>    <td><kbd>CSI E</kbd></td>
+    <th>---</th>    <td><kbd>CSI U</kbd></td>
+    <th>VPR</th>    <td><kbd>CSI e</kbd></td>
+    <th>SCORC</th>  <td><kbd>CSI u</kbd></td></tr>
+<tr><th>CPL</th>    <td><kbd>CSI F</kbd></td>
+    <th>---</th>    <td><kbd>CSI V</kbd></td>
+    <th>HVP</th>    <td><kbd>CSI f</kbd></td>
+    <th>---</th>    <td><kbd>CSI v</kbd></td></tr>
+<tr><th>CHA</th>    <td><kbd>CSI G</kbd></td>
+    <th>---</th>    <td><kbd>CSI W</kbd></td>
+    <th>---</th>    <td><kbd>CSI g</kbd></td>
+    <th>---</th>    <td><kbd>CSI w</kbd></td></tr>
+<tr><th>CUP</th>    <td><kbd>CSI H</kbd></td>
+    <th>ECH</th>    <td><kbd>CSI X</kbd></td>
+    <th>SM</th>     <td><kbd>CSI h</kbd></td>
+    <th>---</th>    <td><kbd>CSI x</kbd></td></tr>
+<tr><th>CHT</th>    <td><kbd>CSI I</kbd></td>
+    <th>---</th>    <td><kbd>CSI Y</kbd></td>
+    <th>---</th>    <td><kbd>CSI i</kbd></td>
+    <th>---</th>    <td><kbd>CSI y</kbd></td></tr>
+<tr><th>ED</th>     <td><kbd>CSI J</kbd></td>
+    <th>CBT</th>    <td><kbd>CSI Z</kbd></td>
+    <th>HPB</th>    <td><kbd>CSI j</kbd></td>
+    <th>---</th>    <td><kbd>CSI z</kbd></td></tr>
+<tr><th>EL</th>     <td><kbd>CSI K</kbd></td>
+    <th>SRS</th>    <td><kbd>CSI [</kbd></td>
+    <th>VPB</th>    <td><kbd>CSI k</kbd></td>
+    <th>---</th>    <td><kbd>CSI {</kbd></td></tr>
+<tr><th>IL</th>     <td><kbd>CSI L</kbd></td>
+    <th>---</th>    <td><kbd>CSI \</kbd></td>
+    <th>RM</th>     <td><kbd>CSI l</kbd></td>
+    <th>---</th>    <td><kbd>CSI |</kbd></td></tr>
+<tr><th>DL</th>     <td><kbd>CSI M</kbd></td>
+    <th>SDS</th>    <td><kbd>CSI ]</kbd></td>
+    <th>---</th>    <td><kbd>CSI m</kbd></td>
+    <th>---</th>    <td><kbd>CSI }</kbd></td></tr>
+<tr><th>EF</th>     <td><kbd>CSI N</kbd></td>
+    <th>SIMD</th>   <td><kbd>CSI ^</kbd></td>
+    <th>DSR</th>    <td><kbd>CSI n</kbd></td>
+    <th>---</th>    <td><kbd>CSI ~</kbd></td></tr>
+<tr><th>EA</th>     <td><kbd>CSI O</kbd></td>
+    <th>---</th>    <td><kbd>CSI _</kbd></td>
+    <th>---</th>    <td><kbd>CSI o</kbd></td>
+    <th>---</th>    <td>-</td></tr>
+</table>
+
+<p>0Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong> = <kbd>SP</kbd> のもの) を <i>&lt;Ft&gt;</i> に従って表にする。</p>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th></tr>
+<tr><th>---</th>    <td><kbd>CSI SP @</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP P</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP `</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP p</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP A</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP Q</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP a</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP q</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP B</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP R</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP b</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP r</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP C</kbd></td>
+    <th>SPD</th>    <td><kbd>CSI SP S</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP c</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP s</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP D</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP T</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP d</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP t</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP E</kbd></td>
+    <th>SLH</th>    <td><kbd>CSI SP U</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP e</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP u</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP F</kbd></td>
+    <th>SLL</th>    <td><kbd>CSI SP V</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP f</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP v</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP G</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP W</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP g</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP w</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP H</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP X</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP h</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP x</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP I</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP Y</kbd></td>
+    <th>SPH</th>    <td><kbd>CSI SP i</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP y</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP J</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP Z</kbd></td>
+    <th>SPL</th>    <td><kbd>CSI SP j</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP z</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP K</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP [</kbd></td>
+    <th>SCP</th>    <td><kbd>CSI SP k</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP {</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP L</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP \</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP l</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP |</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP M</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP ]</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP m</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP }</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP N</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP ^</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP n</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP ~</kbd></td></tr>
+<tr><th>---</th>    <td><kbd>CSI SP O</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP _</kbd></td>
+    <th>---</th>    <td><kbd>CSI SP o</kbd></td>
+    <th>---</th>    <td>-</td></tr>
+</table>
 
 <h3>制御列 (control string)</h3>
 <table class="normal center">
@@ -1253,8 +1399,8 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>SP</th> <td><kbd>SP</kbd></td> <td>データ部</td><td>空白を挿入し、一文字進む</td></tr>
 <tr><th>BS</th> <td><kbd>BS</kbd></td> <td>データ部</td><td>一文字戻る</td></tr>
 <tr><th>LF</th> <td><kbd>LF</kbd></td> <td>DCSM</td>  <td rowspan="2">一行下</td></tr>
-<tr><th>IND</th><td><kbd>IND</kbd></td><td>?</td>   </tr>
-<tr><th>RI</th> <td><kbd>RI</kbd></td> <td>DCSM</td></tr>
+<tr><th>IND</th><td><kbd>IND</kbd></td><td>DCSM?</td> </tr>
+<tr><th>RI</th> <td><kbd>RI</kbd></td> <td>DCSM</td>  <td>一行上</td></tr>
 <tr><th>VT</th> <td><kbd>VT</kbd></td> <td>表示部</td><td>次の垂直タブ</td></tr>
 <tr><th>FF</th> <td><kbd>FF</kbd></td> <td>表示部</td><td>次の頁</td></tr>
 <tr><th>CR</th> <td><kbd>CR</kbd></td> <td>DCSM</td>  <td>行頭</td></tr>
