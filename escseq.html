@@ -197,7 +197,7 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 <tr>
   <th>EOT</th><td>00/04</td><td>\x04</td><td>\004</td><td></td><td>^D</td>
   <th>DC4</th><td>01/04</td><td>\x14</td><td>\024</td><td></td><td>^T</td>
-  <th>(IND)</th><td>08/04</td><td>\x84</td><td>\204</td><td></td><td>&#x2325;^D</td>
+  <th>IND<sup>廃</sup></th><td>08/04</td><td>\x84</td><td>\204</td><td></td><td>&#x2325;^D</td>
   <th>CCH</th><td>09/04</td><td>\x94</td><td>\224</td><td></td><td>&#x2325;^T</td>
 </tr>
 <tr>
@@ -346,6 +346,8 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
   media-fill または time-fill に用いることができる。
   </p>
   <p>[ECMA-35/6.2.1] DEL は元々パンチカードで、誤りまたは不要の文字を塗り潰し無視させるために使われた。</p>
+  <p>[ECMA-48/F.8.1] DEL は厳密には制御機能といいがたいので ECMA-48 からは削除されたそうだ。
+    それでも別の規格 (ECMA-35) に記述が残っているので、まだ効力はあるものと思われる。</p>
   <p>Note: 制御機能の符号化表現の途中に含まれていても無視されるべきと読める。
   以下は実際の実装で CSI の途中に NUL, DEL を挟んで試した
   (<code>printf '\e\x00[34mhello\e[m\n\e\x7F[34mhello\e[m\n'</code>) 結果である。</p>
@@ -494,7 +496,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>-R-</th><td><kbd>ESC s</kbd></td></tr>
 <tr><th class="markB">GnDMm</th><td><kbd>ESC $ <i>&lt;I&gt;</i> <i>&lt;Ft&gt;</i></kbd></td>
     <th>DECAVT</th><td><kbd>ESC 4</kbd></td>
-    <th>(IND)</th><td><kbd>ESC D</kbd></td>
+    <th>IND<sup>廃</sup></th><td><kbd>ESC D</kbd></td>
     <th>CCH</th><td><kbd>ESC T</kbd></td>
     <th>CMD</th><td><kbd>ESC d</kbd></td>
     <th>-R-</th><td><kbd>ESC t</kbd></td></tr>
@@ -659,69 +661,69 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th></tr>
-<tr><th>ICH</th>    <td><kbd>CSI @</kbd></td>
-    <th>DCH</th>    <td><kbd>CSI P</kbd></td>
-    <th>HPA</th>    <td><kbd>CSI `</kbd></td>
-    <th>---</th>    <td><kbd>CSI p</kbd></td></tr>
-<tr><th>CUU</th>    <td><kbd>CSI A</kbd></td>
-    <th>SEE</th>    <td><kbd>CSI Q</kbd></td>
-    <th>HPR</th>    <td><kbd>CSI a</kbd></td>
-    <th>---</th>    <td><kbd>CSI q</kbd></td></tr>
-<tr><th>CUD</th>    <td><kbd>CSI B</kbd></td>
-    <th>CPR</th>    <td><kbd>CSI R</kbd></td>
-    <th>---</th>    <td><kbd>CSI b</kbd></td>
-    <th>---</th>    <td><kbd>CSI r</kbd></td></tr>
-<tr><th>CUF</th>    <td><kbd>CSI C</kbd></td>
-    <th>---</th>    <td><kbd>CSI S</kbd></td>
-    <th>---</th>    <td><kbd>CSI c</kbd></td>
-    <th>SCOSC</th>  <td><kbd>CSI s</kbd></td></tr>
-<tr><th>CUB</th>    <td><kbd>CSI D</kbd></td>
-    <th>---</th>    <td><kbd>CSI T</kbd></td>
-    <th>VPA</th>    <td><kbd>CSI d</kbd></td>
-    <th>---</th>    <td><kbd>CSI t</kbd></td></tr>
-<tr><th>CNL</th>    <td><kbd>CSI E</kbd></td>
-    <th>---</th>    <td><kbd>CSI U</kbd></td>
-    <th>VPR</th>    <td><kbd>CSI e</kbd></td>
-    <th>SCORC</th>  <td><kbd>CSI u</kbd></td></tr>
-<tr><th>CPL</th>    <td><kbd>CSI F</kbd></td>
-    <th>---</th>    <td><kbd>CSI V</kbd></td>
-    <th>HVP</th>    <td><kbd>CSI f</kbd></td>
-    <th>---</th>    <td><kbd>CSI v</kbd></td></tr>
-<tr><th>CHA</th>    <td><kbd>CSI G</kbd></td>
-    <th>---</th>    <td><kbd>CSI W</kbd></td>
-    <th>---</th>    <td><kbd>CSI g</kbd></td>
-    <th>---</th>    <td><kbd>CSI w</kbd></td></tr>
-<tr><th>CUP</th>    <td><kbd>CSI H</kbd></td>
-    <th>ECH</th>    <td><kbd>CSI X</kbd></td>
-    <th>SM</th>     <td><kbd>CSI h</kbd></td>
-    <th>---</th>    <td><kbd>CSI x</kbd></td></tr>
-<tr><th>CHT</th>    <td><kbd>CSI I</kbd></td>
-    <th>---</th>    <td><kbd>CSI Y</kbd></td>
-    <th>---</th>    <td><kbd>CSI i</kbd></td>
-    <th>---</th>    <td><kbd>CSI y</kbd></td></tr>
-<tr><th>ED</th>     <td><kbd>CSI J</kbd></td>
-    <th>CBT</th>    <td><kbd>CSI Z</kbd></td>
-    <th>HPB</th>    <td><kbd>CSI j</kbd></td>
-    <th>---</th>    <td><kbd>CSI z</kbd></td></tr>
-<tr><th>EL</th>     <td><kbd>CSI K</kbd></td>
-    <th>SRS</th>    <td><kbd>CSI [</kbd></td>
-    <th>VPB</th>    <td><kbd>CSI k</kbd></td>
-    <th>---</th>    <td><kbd>CSI {</kbd></td></tr>
-<tr><th>IL</th>     <td><kbd>CSI L</kbd></td>
-    <th>---</th>    <td><kbd>CSI \</kbd></td>
-    <th>RM</th>     <td><kbd>CSI l</kbd></td>
-    <th>---</th>    <td><kbd>CSI |</kbd></td></tr>
-<tr><th>DL</th>     <td><kbd>CSI M</kbd></td>
-    <th>SDS</th>    <td><kbd>CSI ]</kbd></td>
-    <th>---</th>    <td><kbd>CSI m</kbd></td>
-    <th>---</th>    <td><kbd>CSI }</kbd></td></tr>
-<tr><th>EF</th>     <td><kbd>CSI N</kbd></td>
-    <th>SIMD</th>   <td><kbd>CSI ^</kbd></td>
-    <th>DSR</th>    <td><kbd>CSI n</kbd></td>
-    <th>---</th>    <td><kbd>CSI ~</kbd></td></tr>
-<tr><th>EA</th>     <td><kbd>CSI O</kbd></td>
-    <th>---</th>    <td><kbd>CSI _</kbd></td>
-    <th>---</th>    <td><kbd>CSI o</kbd></td>
+<tr><th>ICH</th>    <td><kbd>CSI ... @</kbd></td>
+    <th>DCH</th>    <td><kbd>CSI ... P</kbd></td>
+    <th>HPA</th>    <td><kbd>CSI ... `</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... p</kbd></td></tr>
+<tr><th>CUU</th>    <td><kbd>CSI ... A</kbd></td>
+    <th>SEE</th>    <td><kbd>CSI ... Q</kbd></td>
+    <th>HPR</th>    <td><kbd>CSI ... a</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... q</kbd></td></tr>
+<tr><th>CUD</th>    <td><kbd>CSI ... B</kbd></td>
+    <th>CPR</th>    <td><kbd>CSI ... R</kbd></td>
+    <th>REP</th>    <td><kbd>CSI ... b</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... r</kbd></td></tr>
+<tr><th>CUF</th>    <td><kbd>CSI ... C</kbd></td>
+    <th>SU</th>     <td><kbd>CSI ... S</kbd></td>
+    <th>DA</th>     <td><kbd>CSI ... c</kbd></td>
+    <th>SCOSC</th>  <td><kbd>CSI ... s</kbd></td></tr>
+<tr><th>CUB</th>    <td><kbd>CSI ... D</kbd></td>
+    <th>SD</th>     <td><kbd>CSI ... T</kbd></td>
+    <th>VPA</th>    <td><kbd>CSI ... d</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... t</kbd></td></tr>
+<tr><th>CNL</th>    <td><kbd>CSI ... E</kbd></td>
+    <th>NP</th>     <td><kbd>CSI ... U</kbd></td>
+    <th>VPR</th>    <td><kbd>CSI ... e</kbd></td>
+    <th>SCORC</th>  <td><kbd>CSI ... u</kbd></td></tr>
+<tr><th>CPL</th>    <td><kbd>CSI ... F</kbd></td>
+    <th>PP</th>     <td><kbd>CSI ... V</kbd></td>
+    <th>HVP</th>    <td><kbd>CSI ... f</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... v</kbd></td></tr>
+<tr><th>CHA</th>    <td><kbd>CSI ... G</kbd></td>
+    <th>CTC</th>    <td><kbd>CSI ... W</kbd></td>
+    <th>TBC</th>    <td><kbd>CSI ... g</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... w</kbd></td></tr>
+<tr><th>CUP</th>    <td><kbd>CSI ... H</kbd></td>
+    <th>ECH</th>    <td><kbd>CSI ... X</kbd></td>
+    <th>SM</th>     <td><kbd>CSI ... h</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... x</kbd></td></tr>
+<tr><th>CHT</th>    <td><kbd>CSI ... I</kbd></td>
+    <th>CVT</th>    <td><kbd>CSI ... Y</kbd></td>
+    <th>MC</th>     <td><kbd>CSI ... i</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... y</kbd></td></tr>
+<tr><th>ED</th>     <td><kbd>CSI ... J</kbd></td>
+    <th>CBT</th>    <td><kbd>CSI ... Z</kbd></td>
+    <th>HPB</th>    <td><kbd>CSI ... j</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... z</kbd></td></tr>
+<tr><th>EL</th>     <td><kbd>CSI ... K</kbd></td>
+    <th>SRS</th>    <td><kbd>CSI ... [</kbd></td>
+    <th>VPB</th>    <td><kbd>CSI ... k</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... {</kbd></td></tr>
+<tr><th>IL</th>     <td><kbd>CSI ... L</kbd></td>
+    <th>PTX</th>    <td><kbd>CSI ... \</kbd></td>
+    <th>RM</th>     <td><kbd>CSI ... l</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... |</kbd></td></tr>
+<tr><th>DL</th>     <td><kbd>CSI ... M</kbd></td>
+    <th>SDS</th>    <td><kbd>CSI ... ]</kbd></td>
+    <th>SGR</th>    <td><kbd>CSI ... m</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... }</kbd></td></tr>
+<tr><th>EF</th>     <td><kbd>CSI ... N</kbd></td>
+    <th>SIMD</th>   <td><kbd>CSI ... ^</kbd></td>
+    <th>DSR</th>    <td><kbd>CSI ... n</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... ~</kbd></td></tr>
+<tr><th>EA</th>     <td><kbd>CSI ... O</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... _</kbd></td>
+    <th>DAQ</th>    <td><kbd>CSI ... o</kbd></td>
     <th>---</th>    <td>-</td></tr>
 </table>
 
@@ -731,69 +733,69 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th></tr>
-<tr><th>---</th>    <td><kbd>CSI SP @</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP P</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP `</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP p</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP A</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP Q</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP a</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP q</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP B</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP R</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP b</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP r</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP C</kbd></td>
-    <th>SPD</th>    <td><kbd>CSI SP S</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP c</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP s</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP D</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP T</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP d</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP t</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP E</kbd></td>
-    <th>SLH</th>    <td><kbd>CSI SP U</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP e</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP u</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP F</kbd></td>
-    <th>SLL</th>    <td><kbd>CSI SP V</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP f</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP v</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP G</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP W</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP g</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP w</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP H</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP X</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP h</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP x</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP I</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP Y</kbd></td>
-    <th>SPH</th>    <td><kbd>CSI SP i</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP y</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP J</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP Z</kbd></td>
-    <th>SPL</th>    <td><kbd>CSI SP j</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP z</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP K</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP [</kbd></td>
-    <th>SCP</th>    <td><kbd>CSI SP k</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP {</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP L</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP \</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP l</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP |</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP M</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP ]</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP m</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP }</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP N</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP ^</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP n</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP ~</kbd></td></tr>
-<tr><th>---</th>    <td><kbd>CSI SP O</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP _</kbd></td>
-    <th>---</th>    <td><kbd>CSI SP o</kbd></td>
+<tr><th>SL</th>     <td><kbd>CSI ... SP @</kbd></td>
+    <th>PPA</th>    <td><kbd>CSI ... SP P</kbd></td>
+    <th>TATE</th>   <td><kbd>CSI ... SP `</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP p</kbd></td></tr>
+<tr><th>SR</th>     <td><kbd>CSI ... SP A</kbd></td>
+    <th>PPR</th>    <td><kbd>CSI ... SP Q</kbd></td>
+    <th>TALE</th>   <td><kbd>CSI ... SP a</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP q</kbd></td></tr>
+<tr><th>GSM</th>    <td><kbd>CSI ... SP B</kbd></td>
+    <th>PPB</th>    <td><kbd>CSI ... SP R</kbd></td>
+    <th>TAC</th>    <td><kbd>CSI ... SP b</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP r</kbd></td></tr>
+<tr><th>GSS</th>    <td><kbd>CSI ... SP C</kbd></td>
+    <th>SPD</th>    <td><kbd>CSI ... SP S</kbd></td>
+    <th>TCC</th>    <td><kbd>CSI ... SP c</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP s</kbd></td></tr>
+<tr><th>FNT</th>    <td><kbd>CSI ... SP D</kbd></td>
+    <th>DTA</th>    <td><kbd>CSI ... SP T</kbd></td>
+    <th>TSR</th>    <td><kbd>CSI ... SP d</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP t</kbd></td></tr>
+<tr><th>TSS</th>    <td><kbd>CSI ... SP E</kbd></td>
+    <th>SLH</th>    <td><kbd>CSI ... SP U</kbd></td>
+    <th>SCO</th>    <td><kbd>CSI ... SP e</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP u</kbd></td></tr>
+<tr><th>JFY</th>    <td><kbd>CSI ... SP F</kbd></td>
+    <th>SLL</th>    <td><kbd>CSI ... SP V</kbd></td>
+    <th>SRCS</th>   <td><kbd>CSI ... SP f</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP v</kbd></td></tr>
+<tr><th>SPL</th>    <td><kbd>CSI ... SP G</kbd></td>
+    <th>FNK</th>    <td><kbd>CSI ... SP W</kbd></td>
+    <th>SCS</th>    <td><kbd>CSI ... SP g</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP w</kbd></td></tr>
+<tr><th>QUAD</th>   <td><kbd>CSI ... SP H</kbd></td>
+    <th>SPQR</th>   <td><kbd>CSI ... SP X</kbd></td>
+    <th>SLS</th>    <td><kbd>CSI ... SP h</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP x</kbd></td></tr>
+<tr><th>SSU</th>    <td><kbd>CSI ... SP I</kbd></td>
+    <th>SEF</th>    <td><kbd>CSI ... SP Y</kbd></td>
+    <th>SPH</th>    <td><kbd>CSI ... SP i</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP y</kbd></td></tr>
+<tr><th>PFS</th>    <td><kbd>CSI ... SP J</kbd></td>
+    <th>PEC</th>    <td><kbd>CSI ... SP Z</kbd></td>
+    <th>SPL</th>    <td><kbd>CSI ... SP j</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP z</kbd></td></tr>
+<tr><th>SHS</th>    <td><kbd>CSI ... SP K</kbd></td>
+    <th>SSW</th>    <td><kbd>CSI ... SP [</kbd></td>
+    <th>SCP</th>    <td><kbd>CSI ... SP k</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP {</kbd></td></tr>
+<tr><th>SVS</th>    <td><kbd>CSI ... SP L</kbd></td>
+    <th>SACS</th>   <td><kbd>CSI ... SP \</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP l</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP |</kbd></td></tr>
+<tr><th>IGS</th>    <td><kbd>CSI ... SP M</kbd></td>
+    <th>SAPV</th>   <td><kbd>CSI ... SP ]</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP m</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP }</kbd></td></tr>
+<tr><th>HTSA<sup>廃</sup></th><td><kbd>CSI ... SP N</kbd></td>
+    <th>STAB</th>   <td><kbd>CSI ... SP ^</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP n</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP ~</kbd></td></tr>
+<tr><th>IDCS</th>   <td><kbd>CSI ... SP O</kbd></td>
+    <th>GCC</th>    <td><kbd>CSI ... SP _</kbd></td>
+    <th>---</th>    <td><kbd>CSI ... SP o</kbd></td>
     <th>---</th>    <td>-</td></tr>
 </table>
 
@@ -1401,7 +1403,6 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>LF</th> <td><kbd>LF</kbd></td> <td>DCSM</td>  <td rowspan="2">一行下</td></tr>
 <tr><th>IND</th><td><kbd>IND</kbd></td><td>DCSM?</td> </tr>
 <tr><th>RI</th> <td><kbd>RI</kbd></td> <td>DCSM</td>  <td>一行上</td></tr>
-<tr><th>VT</th> <td><kbd>VT</kbd></td> <td>表示部</td><td>次の垂直タブ</td></tr>
 <tr><th>FF</th> <td><kbd>FF</kbd></td> <td>表示部</td><td>次の頁</td></tr>
 <tr><th>CR</th> <td><kbd>CR</kbd></td> <td>DCSM</td>  <td>行頭</td></tr>
 <tr><th>NEL</th><td><kbd>NEL</kbd></td><td>DCSM</td>  <td>次行の行頭</td></tr>
@@ -1442,18 +1443,6 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>Poderosa は RI で死ぬことがある。例えば、新しい接続を開いて
   <code>printf '\e[2H\e[L\e[M\n\e[H\eM'</code> を実行すると無限にウィンドウを開いて死ぬ。
   </li>
-  </ul>
-</li>
-<li><dfn class="cfunc">VT</dfn>: LINE TABULATION
-  <p>[ECMA-48/8.1.161] 現在表示位置を次の縦タブのある行に移動する。列はそのまま。</p>
-  <ul>
-  <li>一般的な実装では単に次の行に移動する。
-    最終行にいる時には一行最後に追加してからその行に移動する。</li>
-  <li>xterm, RLogin は LNM が設定されている時には次の行の先頭に移動する。</li>
-  <li>mintty, screen, Poderosa は LNM の値に拘らず列は移動しない。</li>
-  <li>RLogin では最終行にいても行の追加・移動は行わない。
-    LNM が設定されている時に最終行にいる時は単に行頭に移動する。</li>
-  <li>xterm, screen, Poderosa では LF と全く同じ動作である。</li>
   </ul>
 </li>
 <li><dfn class="cfunc">FF</dfn>: FORM FEED
@@ -1534,7 +1523,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </table>
 <ul>
 <li>Mode 22 <dfn class="cmode">ZDM</dfn>: ZERO DEFAULT MODE
-  <p>[ECMA-48/7.2.20, F.4.2] 制御機能 CBT, CHA, CHT, CNL, CPL, CPR, CUB, CUD, CUF, CUP, CUU, CVT,
+  <p>[ECMA-48/7.2.20, F.4.2 (非推奨)] 制御機能 CBT, CHA, CHT, CNL, CPL, CPR, CUB, CUD, CUF, CUP, CUU, CVT,
   DCH, DL, ECH, GSM, HPA, HPB, HPR, HVP, ICH, IL, NP, PP, PPA, PPB, PPR, REP, SD, SL, SR, SU,
   TCC, VPA, VPB, VPR に 0 を指定した時の解釈を切り替える。
   </p>
@@ -1650,31 +1639,6 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </li>
 </ul>
 
-<h3>タブ</h3>
-<table class="normal center">
-<tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
-<tr><th>HT</th> <td><kbd>HT</kbd></td> <td>表示部</td><td>次のタブストップ</td></tr>
-<tr><th>CHT</th><td><kbd>CSI <i>&lt;Pn&gt;</i> I</kbd></td></tr>
-<tr><th>CBT</th><td><kbd>CSI <i>&lt;Pn&gt;</i> Z</kbd></td></tr>
-</table>
-
-<ul>
-<li><dfn class="cfunc">CHT</dfn>: CURSOR HORIZONTAL FORWARD TABULATION
-  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
-  <ul>
-  <li>互換性: vt510, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CHT">VT510: CHT</a></li>
-  </ul>
-</li>
-<li><dfn class="cfunc">CBT</dfn>: CURSOR BACKWARD TABULATION
-  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
-  <ul>
-  <li>互換性: vt510, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CBT">VT510: CBT</a></li>
-  </ul>
-</li>
-</ul>
-
 <h3>位置記録</h3>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
@@ -1717,6 +1681,217 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li><a href="http://www.vt100.net/docs/vt510-rm/CPR">VT510: CPR</a></li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DSR-CPR">VT510: DSR-CPR</a></li>
   </ul>
+</li>
+</ul>
+
+<h2>タブ (tabulation)</h2>
+<p>[ECMA-48/6.7] <dfn>タブ</dfn> (tabulation) は文字列を縦横に綺麗に並べる為の仕組みである。
+そのために表示部で指定される文字位置はまたは行を<dfn>タブ位置</dfn> (tabulation stop) という。
+<dfn>文字タブ位置</dfn> (character tabulation stop) は CTC, HTS, TAC, TALE, TATE, TCC によって設置され、
+<dfn>行タブ位置</dfn> (line tabulation stop) は VTS によって設置される。
+<dfn>フィールド</dfn> (field) はある文字タブ位置から次の文字タブ位置の直前までの文字列を指す。
+フィールド内の文字位置の順序、乃至、行内の文字タブ位置の順序はその行の文字進路に従う。
+</p>
+
+<p>各文字タブ位置には文字列の揃え方を指定する属性がある。
+この文書では各属性値に対応する制御機能名 TATE, TALE, TAC, TCC を以てその属性値を表す事にする
+(T.416/9.1.13 ではそれぞれの属性値に明示的に名前が割り当てられている)。
+既定値は TATE である。
+</p>
+<table class="normal center">
+<tr><th>属性値</th><th>T.416 alignment</th><th>意味</th></tr>
+<tr><td>TATE (終端揃えタブ)</td><td>start-aligned</td> <td>以降の文字列の最初の文字がタブ位置に来る様に揃える。</td></tr>
+<tr><td>TALE (始端揃えタブ)</td><td>end-aligned</td>   <td>以降の文字列の最後の文字がタブ位置に来る様に揃える。</td></tr>
+<tr><td>TAC  (中央揃えタブ)</td><td>centred</td>       <td>文字列の最初の文字と最後の文字がタブ位置からできるだけ等距離になる様に揃える。</td></tr>
+<tr><td>TCC  (文字中央タブ)</td><td>aligned-around</td>
+    <td>TCC で指定した揃え文字がタブ位置に来る様に揃える。<br/>
+    揃え文字が文字列中に複数現れるときは最初のものを使う。<br/>
+    揃え文字が文字列中に現れない時は TATE と同様に振る舞う。</td></tr>
+</table>
+
+<p>Note: ECMA-48 4th 以前では水平タブ位置 (horizontal tabulation stop)・垂直タブ位置 (vertical tabulation stop) と呼称していたが、
+5th edition での SPD による縦書きなどの対応に従って、
+文字タブ位置 (character tabulation stop)・行タブ位置 (line tabulation stop) に改められた。
+</p>
+
+<h3>タブの設置</h3>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
+<tr><th>HTS</th><td><kbd>HTS</kbd></td><td>現在表示位置に文字タブ位置を設置</td></tr>
+<tr><th>VTS</th><td><kbd>VTS</kbd></td><td>現在表示行に行タブ位置を設置</td></tr>
+<tr><th>HTSA<sup>廃</sup></th><td><kbd>CSI <i>&lt;Pn&gt;</i>... SP N</kbd></td><td>現在表示行の文字タブ位置を設定</td></tr>
+<tr><th>TATE</th><td><kbd>CSI <i>&lt;Pn1&gt;</i> SP `</kbd></td><td rowspan="4">現在表示行 <i>&lt;Pn1&gt;</i> 文字目に各属性のタブを設置</td></tr>
+<tr><th>TALE</th><td><kbd>CSI <i>&lt;Pn1&gt;</i> SP a</kbd></td></tr>
+<tr><th>TAC</th> <td><kbd>CSI <i>&lt;Pn1&gt;</i> SP b</kbd></td></tr>
+<tr><th>TCC</th> <td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> SP c</kbd></td></tr>
+<tr><th>TSR</th><td><kbd>CSI <i>&lt;Pn&gt;</i> SP d</kbd></td><td>現在表示行 <i>&lt;Pn&gt;</i> 文字目の文字タブ位置を解除</td></tr>
+<tr><th>CTC</th><td><kbd>CSI <i>&lt;Ps&gt;</i> W</kbd></td><td>タブ位置の操作</td></tr>
+<tr><th>TBC</th><td><kbd>CSI <i>&lt;Ps&gt;</i> g</kbd></td><td>タブ位置の解除</td></tr>
+</table>
+<ul>
+<li>Mode 18 <dfn class="cmode">TSM</dfn>: TABULATION STOP MODE
+  <p>[ECMA-48/7.2.17] CTC, DL, HTS, HTSA, IL, TBC における文字タブ位置の扱いを設定する。</p>
+  <ul>
+  <li><dfn class="cmode-rm">MULTIPLE</dfn> (RM): 文字タブ位置の設定と解除は、現在表示行と前後の全ての行に同時に適用する。</li>
+  <li><dfn class="cmode-sm">SINGLE</dfn> (RM): 文字タブ位置は現在表示行にのみ適用される。</li>
+  </ul>
+  <p>Note: TSM(MULTIPLE) のとき "of the preceding lines and of the following lines" とあるので他のページの行には同時に適用されないのだと思われる。
+  実際、RLogin の実装ではページ毎に文字タブ位置の設定が記録され、或るページでの設定は別のページに影響を与えない様だ。
+  </p>
+</li>
+<li><dfn class="cfunc">HTS</dfn>: CHARACTER TABULATION SET
+  <p>[ECMA-48/8.3.62] 現在表示位置に文字タブ位置を設定する。対象の行は TSM によって決まる。</p>
+</li>
+<li><dfn class="cfunc">VTS</dfn>: LINE TABULATION SET
+  <p>[ECMA-48/8.3.162] 現在表示行に行タブ位置を設定する。</p>
+</li>
+<li><dfn class="cfunc">HTSA</dfn>: CHARACTER TABULATION SET ABSOLUTE
+  <p>[ECMA-48 3rd/8.2.40] 対象の行の文字タブ位置を全て削除し、引数で指定した位置に文字タブ位置を設定する。
+  対象の行は TSM で決まる。引数の単位は PUM で決まる。</p>
+  <p>Note: [ECMA-48/F.8.3] ECMA-48 3rd で導入され 4th で非推奨となり 5th で廃止された。以下に 3rd edition における原文を載せる。</p>
+  <div class="note" style="max-width:50em;margin:auto;">8.2.40 HTS - HORIZONTAL TABULATION SET ABSOLUTE
+    <p>Representation : Table 3 - variable number of numeric parameters; no defualt value.</p>
+    <p>HTSA is a format effector which causes a horizontal tabulation stop to be set at each position corresponding to a parameter value.
+    All other horizontal tabulation stops in the affected line or lines are cleared. The active position is not affected.
+    </p>
+    <p>The unit in which the parameters are expressed depends on the setting of the POSITION UNIT MODE (PUM).</p>
+    <p>The number of lines affected depends on the setting of the TABULATION STOP MODE (TSM).</p>
+  </div>
+</li>
+<li><dfn class="cfunc">TATE</dfn>: TABULATION ALIGNED TRAILING EDGE</li>
+<li><dfn class="cfunc">TALE</dfn>: TABULATION ALIGNED LEADING EDGE</li>
+<li><dfn class="cfunc">TAC</dfn>: TABULATION ALIGNED CENTRED</li>
+<li><dfn class="cfunc">TCC</dfn>: TABULATION CENTRED ON CHARACTER
+  <p>[ECMA-48/8.3.153 TATE, 8.3.152 TALE, 8.3.151 TAC, 8.3.155 TCC]
+  現在行と以降の行の <i>&lt;Pn1&gt;</i> 個目の文字位置に、
+  それぞれの制御機能に対応した alignment を持つタブ位置を設置する。
+  TCC の場合は <i>&lt;Pn2&gt;</i> に揃える文字の文字コードを指定する。
+  文字コードの指定は、現在 GL, GR に呼び出されている文字について、その番号 32-127, 160-255 で行う。
+  指定した文字位置に既にタブ位置が設定されている場合はそれを置き換える。
+  引数の既定値は指定されない。
+  </p>
+</li>
+<li><dfn class="cfunc">TSR</dfn>: TABULATION STOP REMOVE
+  <p>[ECMA-48/8.3.156] 現在行と以降の行の &lt;Pn&gt; 文字目にある文字タブ位置を削除する。引数の既定値は指定されない。</p>
+</li>
+<li><dfn class="cfunc">CTC</dfn>: CURSOR TABULATION CONTROL
+  <p>[ECMA-48/8.3.17] 引数に応じて表示部にある複数のタブ位置を設定または解除する。
+  </p>
+  <table class="normal center">
+  <tr><th><i>&lt;Ps&gt;</i></th><th>意味</th></tr>
+  <tr><td>0 (既定値)</td><td>現在位置に文字タブ位置を設定する</td></tr>
+  <tr><td>1</td><td>現在行に行タブ位置を設定する</td></tr>
+  <tr><td>2</td><td>現在位置の文字タブ位置を解除する</td></tr>
+  <tr><td>3</td><td>現在行の行タブ位置を解除する</td></tr>
+  <tr><td>4</td><td>現在行の全ての文字タブ位置を解除する</td></tr>
+  <tr><td>5</td><td>全ての文字タブ位置を解除する</td></tr>
+  <tr><td>6</td><td>全ての行タブ位置を解除する</td></tr>
+  </table>
+  <p>引数 0, 2 または 4 を指定したときに影響を受ける行は TSM による。</p>
+</li>
+<li><dfn class="cfunc">TBC</dfn>: TABULATION CLEAR
+  <p>[ECMA-48/8.3.154] 引数に応じて表示部にある複数のタブ位置を解除する。</p>
+  <table class="normal center">
+  <tr><th><i>&lt;Ps&gt;</i></th><th>意味</th></tr>
+  <tr><td>0 (既定値)</td><td>現在位置の文字タブ位置を解除する</td></tr>
+  <tr><td>1</td><td>現在行の行タブ位置を解除する</td></tr>
+  <tr><td>2</td><td>現在行の全ての文字タブ位置を解除する</td></tr>
+  <tr><td>3</td><td>全ての文字タブ位置を解除する</td></tr>
+  <tr><td>4</td><td>全ての行タブ位置を解除する</td></tr>
+  <tr><td>5</td><td>全てのタブ位置を解除する</td></tr>
+  </table>
+  <p>引数 0 または 2 を指定したとき影響のある行は TSM による。</p>
+</li>
+</ul>
+
+<h3>タブ移動</h3>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
+<tr><th>HT</th> <td><kbd>HT</kbd></td><td>次の文字タブ位置</td></tr>
+<tr><th>HTJ</th><td><kbd>HTJ</kbd></td><td>フィールド右寄せ・次の文字タブ位置</td></tr>
+<tr><th>VT</th> <td><kbd>VT</kbd></td><td>次の行タブ位置</td></tr>
+<tr><th>CHT</th><td><kbd>CSI <i>&lt;Pn&gt;</i> I</kbd></td><td></td></tr>
+<tr><th>CBT</th><td><kbd>CSI <i>&lt;Pn&gt;</i> Z</kbd></td><td></td></tr>
+<tr><th>CVT</th><td><kbd>CSI <i>&lt;Pn&gt;</i> Y</kbd></td><td></td></tr>
+<tr><th>STAB</th><td><kbd>CSI <i>&lt;Pn&gt;</i> SP ^</kbd></td><td></td></tr>
+</table>
+<ul>
+<li><dfn class="cfunc">HT</dfn>: CHARACTER TABULATION
+  <p>[ECMA-48/8.3.60] 現在表示位置を次の文字タブ位置に移動する。
+  更に、その文字タブ位置が TATE, TALE, TAC, TCC によって設置された物の場合、
+  HT は TATE, TALE, TAC, TCC による位置揃えの対象となる文字列の開始を示す。
+  文字列は次の HT, CR, NEL によって終わる。
+  </p>
+</li>
+<li><dfn class="cfunc">HTJ</dfn>: CHARACTER TABULATION WITH JUSTIFICATION
+  <p>[ECMA-48/8.3.61] 現在フィールドの内容を右寄せし、
+  現在表示位置を次の文字タブ位置に移動する。
+  つまり、現在フィールドの内容をシフトし、フィールド先頭の余った文字位置は消去する。
+  </p>
+</li>
+<li><dfn class="cfunc">VT</dfn>: LINE TABULATION
+  <p>[ECMA-48/8.1.161] 現在表示位置を次の行タブ位置のある行に移動する。列はそのまま。</p>
+  <ul>
+  <li>一般的な実装では単に次の行に移動する。
+    最終行にいる時には一行最後に追加してからその行に移動する。</li>
+  <li>xterm, RLogin は LNM が設定されている時には次の行の先頭に移動する。</li>
+  <li>mintty, screen, Poderosa は LNM の値に拘らず列は移動しない。</li>
+  <li>RLogin では最終行にいても行の追加・移動は行わない。
+    LNM が設定されている時に最終行にいる時は単に行頭に移動する。</li>
+  <li>xterm, screen, Poderosa では LF と全く同じ動作である。</li>
+  </ul>
+</li>
+<li><dfn class="cfunc">CVT</dfn>: CURSOR LINE TABULATION
+  <p>[ECMA-48/8.3.23]
+  現在表示位置を <i>&lt;Pn&gt;</i> 個次の行タブ位置のある行の同じ列に移動する。
+  <i>&lt;Pn&gt;</i> の既定値は 1 で、ZDM(DEFAULT) のとき 0 は既定値を意味する。
+  </p>
+</li>
+<li><dfn class="cfunc">CHT</dfn>: CURSOR FORWARD TABULATION (Cursor Horizontal Forward Tabulation)
+  <p>[ECMA-48/8.3.10]
+  現在表示位置を文字進路方向に <i>&lt;Pn&gt;</i> 個次の文字タブ位置に移動する。
+  <i>&lt;Pn&gt;</i> の既定値は 1 で、ZDM(DEFAULT) のとき 0 は既定値を意味する。
+  </p>
+  <p>Note: 次の行の文字タブ位置まで移動できるかどうかは規格の文面からは不明瞭である。
+  実際の実装ではどの実装も行内での移動になっている。
+  規格には the n-th following character tabulation stop in the presentation component,
+  according to the character path と書かれている。"表示部内で n 番目" ということは次の行の文字タブ位置まで
+  移動しても良いような気がするが、一方で "文字進路によって" とも書かれているので行内に限られるとも読める。
+  </p>
+  <ul>
+  <li>xterm, screen, RLogin, Poderosa は行内で移動する。</li>
+  <li>mintty は対応していない。</li>
+  <li>vt510 <a href="http://www.vt100.net/docs/vt510-rm/CHT">VT510: CHT</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">CBT</dfn>: CURSOR BACKWARD TABULATION
+  <p>[ECMA-48/8.3.7]
+  現在表示位置を文字進路と逆方向に <i>&lt;Pn&gt;</i> 個次の文字タブ位置に移動する。
+  <i>&lt;Pn&gt;</i> の既定値は 1 で、ZDM(DEFAULT) のとき 0 は既定値を意味する。
+  </p>
+  <ul>
+  <li>xterm, screen, mintty, RLogin, Poderosa が対応する。
+    mintty は CHT に対応していないが CBT には対応していることに注意。
+  </li>
+  <li>vt510 <a href="http://www.vt100.net/docs/vt510-rm/CBT">VT510: CBT</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">STAB</dfn>: SELECTIVE TABULATION
+  <p>[ECMA-48/8.3.144]
+  表示部において以降の文字列を、引数によって指定されるタブ位置とその性質に従って揃える。
+  タブ位置のリストは他の規格 (例えば ISO 8613-6) によって提供される。引数の既定値はない。
+  </p>
+  <p>[T.416/13.1.12]
+  以降の文章 (別の STAB または行末まで) の配置を指定する。
+  引数は行レイアウト表 (line layout table) 中のタブ位置を指定する。
+  文章はそのタブ位置においてそのタブ位置の性質に従って揃えられる。
+  引数を省略すると文章は次のタブ位置に揃えられる。
+  </p>
+  <p>[T.416/9.1.13] 行レイアウト表は (index, position, alignment, string) の集合である。
+  index は 0-9999 で指定する STAB の引数で指定する為のもので、position は非負整数、
+  alignment は start-aligned, end-aligned, centred, aligned-around の内の一つ、
+  string は alignment: aligned-around のときに使われる揃える文字列を示す。
+  </p>
 </li>
 </ul>
 
@@ -1784,7 +1959,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <p>[ECMA-48/8.3.26]
   現在位置および次 (HEM(FOLLOWING) のとき) または前 (HEM(PRECEDING) のとき) の <i>&lt;Pn&gt;</i> - 1 個の文字位置を行から除去する。
   つまり、現在位置から <i>&lt;Pn&gt;</i> 文字次以降の内容が現在位置に向かってシフトされ、シフトによってできた余白は消去される。
-  シフトの範囲は SEE によって指定される。シフトに依って選択領域・属性化領域・タブがどう影響を受けるかは規格では指定されない。
+  シフトの範囲は SEE によって指定される。シフトに依って選択領域・属性化領域・タブ位置がどう影響を受けるかは規格では指定されない。
   除去範囲およびシフトは DCSM に応じて表示部またはデータ部で決定される。
   引数の既定値は 1 で、ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
   </p>
@@ -1812,7 +1987,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   シフト部分の反対側の端にあった <i>&lt;Pn&gt;</i> 個の文字は失われる。
   現在位置は SLH に移動する。シフト対象は SEE によって設定される。
   現在位置およびシフト部分の決定は DCSM に応じて表示部またはデータ部で行われる。
-  選択領域・属性化領域・横タブの上で ICH をした時の振る舞いは定義されない。
+  選択領域・属性化領域・文字タブ位置の上で ICH をした時の振る舞いは定義されない。
   引数の既定値は 1 で、ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
   </p>
   <ul>
@@ -1827,8 +2002,8 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   引数の既定値は 1 で、ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
   シフト範囲は SEE による。現在位置は現在行の SLH に移動する。
   現在位置の移動およびシフトは DCSM に応じて表示部またはデータ部で実行される。
-  選択領域・属性化領域・横タブも一緒にシフトされる。
-  TSM(SINGLE) のとき、消去される行の横タブは削除される。
+  選択領域・属性化領域・文字タブ位置も一緒にシフトされる。
+  TSM(SINGLE) のとき、消去される行の文字タブ位置は削除される。
   </p>
   <ul>
   <li>xterm は現在位置を SLH に移動する。screen, RLogin, Poderosa, mintty では現在位置は変化しない。</li>
@@ -1843,8 +2018,8 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   引数の既定値は 1 で、ZDM(DEFAULT) のとき 0 は既定値 1 を意味する。
   現在位置は SLH に移動する。
   シフトの範囲は SEE によって決まる。
-  シフト範囲に含まれる選択領域・属性化領域・タブも一緒にシフトされる。
-  TSM(SINGLE) の時、挿入される行のタブは消去される。
+  シフト範囲に含まれる選択領域・属性化領域・タブ位置も一緒にシフトされる。
+  TSM(SINGLE) の時、挿入される行のタブ位置は消去される。
   現在位置及びシフトは DCSM に応じて表示部またはデータ部で行われる。
   </p>
   <ul>
@@ -1896,6 +2071,10 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h2>他</h2>
+
+<h3>Format effector</h3>
+<p>HTSA
+</p>
 
 <h3>TODO</h3>
 <ul>
