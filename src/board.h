@@ -469,6 +469,19 @@ namespace contra {
     int direction;
   };
 
+  enum tabstop_align {
+    tabstop_align_normal   = 0,
+    tabstop_align_start    = 1,
+    tabstop_align_end      = 2,
+    tabstop_align_centered = 3,
+    tabstop_align_char     = 4,
+  };
+  struct tabstop_property {
+    curpos_t      m_pos;
+    tabstop_align m_align;
+    char32_t      m_alignChar;
+  };
+
   struct board_line {
     line_attr_t lflags {0};
 
@@ -487,6 +500,9 @@ namespace contra {
     //   一方が他方を完全に包含するかのどちらかである。
     // 想定: 子よりも親が先に来る。
     std::vector<directed_string> strings;
+
+  public:
+    std::vector<tabstop_property> tabs;
 
   public:
     /*?lwiki
