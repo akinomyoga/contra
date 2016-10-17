@@ -738,69 +738,57 @@ namespace contra {
     presentation_direction m_presentationDirection {presentation_direction_default};
 
   public:
-    curpos_t to_data_position(curpos_t y, curpos_t presentationX) const {
-      board_line const* const line = this->line(y);
-      bool const defaultRToL = line->is_rtol(m_presentationDirection);
-      bool rtol = defaultRToL;
-      curpos_t x = presentationX;
-      for (nested_string const& range: line->get_nested_strings()) {
-        if (x < range.begin) break;
+    curpos_t line_length(curpos_t y) const {
+      board_cell const* cell = this->cell(0, y);
+      for (curpos_t end = m_width; end > 0; end--)
+        if (cell[end - 1].character) return end;
+      return 0;
+    }
 
-        //curpos_t const end = range.end == nested_string::npos? : range.end;
-        if (x < range.end) {
+    curpos_t convert_position(curpos_t y, curpos_t srcX, bool toPresentationPosition) const {
+      board_line const* const line = this->line(y);
+      std::vector<nested_string> const& strings = line->get_nested_strings();
+      if (strings.empty()) return srcX;
+
+      bool const defaultRToL = line->is_rtol(m_presentationDirection);
+      curpos_t const len = this->line_length(y);
+
+      bool rtol = defaultRToL;
+      curpos_t x = toPresentationPosition? 0: srcX;
+      for (nested_string const& range: strings) {
+        curpos_t const referenceX = toPresentationPosition? srcX: x;
+
+        if (referenceX < range.begin) break;
+
+        curpos_t const end = range.end == nested_string::npos? len: range.end;
+        if (referenceX < end) {
           bool const reverse = range.stype == string_reversed
             || (rtol? range.stype == string_directed_ltor:
               range.stype == string_directed_rtol)
             || (range.stype == string_directed_charpath && rtol != defaultRToL);
 
           if (reverse) {
-            x = range.end - 1 - (x - range.begin);
+            x = end - 1 - (x - range.begin);
             rtol = !rtol;
           }
         }
       }
 
+      if (toPresentationPosition) {
+        x = srcX - x;
+        if (defaultRToL != rtol) x = -x;
+      }
+
       return x;
+    }
+
+    curpos_t to_data_position(curpos_t y, curpos_t presentationX) const {
+      return convert_position(y, presentationX, false);
     }
 
     curpos_t to_presentation_position(curpos_t y, curpos_t dataX) const {
-      board_line const* const line = this->line(y);
-      bool const defaultRToL = line->is_rtol(m_presentationDirection);
-      bool rtol = defaultRToL;
-      curpos_t shift = 0;
-      for (nested_string const& range: line->get_nested_strings()) {
-        if (dataX < range.begin)
-          break;
-        else if (dataX < range.end) {
-          bool const reverse = range.stype == string_reversed
-            || (rtol? range.stype == string_directed_ltor:
-              range.stype == string_directed_rtol)
-            || (range.stype == string_directed_charpath && rtol != defaultRToL);
-
-          if (reverse) {
-            shift = range.end - 1 - (shift - range.begin);
-            rtol = !rtol;
-          }
-        }
-      }
-
-      curpos_t x = dataX - shift;
-      if (defaultRToL != rtol) x = -x;
-      return x;
+      return convert_position(y, dataX, true);
     }
-
-    // curpos_t to_data_position(curpos_t presentationX, presentation_direction presentationDirection) const {
-    //   return to_data_position(presentationX, is_rtol(presentationDirection));
-    // }
-    // curpos_t to_presentation_position(curpos_t dataX, presentation_direction presentationDirection) const {
-    //   return to_presentation_position(dataX, is_rtol(presentationDirection));
-    // }
-    // curpos_t to_data_position(curpos_t y, curpos_t x) const {
-    //   return this->line(y)->to_data_position(x, m_presentationDirection);
-    // }
-    // curpos_t to_presentation_position(curpos_t y, curpos_t x) const {
-    //   return this->line(y)->to_presentation_position(x, m_presentationDirection);
-    // }
 
   public:
     typedef extension_store<attribute_t, extended_attribute, has_extended_attribute> extended_attribute_store;
