@@ -48,7 +48,6 @@ namespace contra {
     curpos_t line_home  {-1};
     curpos_t line_limit {-1};
 
-    contra::presentation_direction presentation_direction {presentation_direction_default};
     line_attr_t lflags {0};
 
     tty_state() {
@@ -256,7 +255,7 @@ namespace contra {
     void do_generic_ff(bool toAppendNewLine, bool toAdjustXAsPresentationPosition) {
       curpos_t x = m_board->cur.x;
       if (toAdjustXAsPresentationPosition)
-        x = m_board->line(m_board->cur.y)->to_presentation_position(x, m_state.presentation_direction);
+        x = m_board->to_presentation_position(m_board->cur.y, x);
 
       if (m_board->cur.y + 1 < m_board->m_height)
         m_board->cur.y++;
@@ -268,7 +267,7 @@ namespace contra {
         return;
 
       if (toAdjustXAsPresentationPosition)
-        x = m_board->line(m_board->cur.y)->to_data_position(x, m_state.presentation_direction);
+        x = m_board->to_data_position(m_board->cur.y, x);
       m_board->cur.x = x;
     }
     void do_lf() {
@@ -284,13 +283,13 @@ namespace contra {
           curpos_t x = m_board->cur.x;
           curpos_t y = m_board->cur.y;
           if (!toCallCR)
-            x = m_board->line(y)->to_presentation_position(x, m_state.presentation_direction);
+            x = m_board->to_presentation_position(y, x);
 
           m_board->clear_screen();
           y = std::max(m_state.page_home, 0);
 
           if (!toCallCR)
-            x = m_board->line(y)->to_data_position(x, m_state.presentation_direction);
+            x = m_board->to_data_position(y, x);
 
           m_board->cur.x = x;
           m_board->cur.y = y;
@@ -321,7 +320,7 @@ namespace contra {
       }
 
       if (!m_state.get_mode(mode_dcsm))
-        x = line->to_data_position(x, m_state.presentation_direction);
+        x = m_board->to_data_position(m_board->cur.y, x);
 
       m_board->cur.x = x;
     }

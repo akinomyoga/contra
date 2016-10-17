@@ -459,15 +459,18 @@ namespace contra {
 
 
   enum nested_string_type {
-    string_normal            = 0,
+    string_unknown           = 0,
+
+    string_directed_charpath = 1, // 独自
+    string_directed_ltor     = 2,
+    string_directed_rtol     = 3,
+    string_directed_end      = 4,
+    string_reversed          = 5,
+    string_reversed_end      = 6,
 
     _string_directed_minValue = 1,
-    string_directed_ltor     = 1,
-    string_directed_rtol     = 2,
-    string_directed_end      = 3,
-    string_reversed          = 4,
-    string_reversed_end      = 5,
-    _string_reversed_maxValue = 5,
+    _string_directed_maxValue = 4,
+    _string_reversed_maxValue = 6,
 
     string_aligned_left      = 10,
     string_aligned_right     = 11,
@@ -477,16 +480,23 @@ namespace contra {
   };
 
   constexpr bool is_string_directed(nested_string_type value) {
-    return value == string_directed_rtol || value == string_directed_rtol;
+    return _string_directed_minValue <= value && value <= _string_directed_maxValue;
   }
   constexpr bool is_string_directed_or_reversed(nested_string_type value) {
     return _string_directed_minValue <= value && value <= _string_reversed_maxValue;
   }
 
-
   struct line_marker {
     curpos_t           position;
     nested_string_type stype;
+  };
+
+  struct nested_string {
+    curpos_t begin;
+    curpos_t end;
+    nested_string_type stype;
+
+    enum {npos = -1};
   };
 
   struct tabstop_property {
@@ -510,14 +520,6 @@ namespace contra {
 
   private:
     std::vector<line_marker> m_markers;
-
-    struct nested_string {
-      curpos_t begin;
-      curpos_t end;
-      nested_string_type stype;
-
-      enum {npos = -1};
-    };
 
     /*?lwiki
      * @var std::vector<nested_string> m_strings_cached;
@@ -571,9 +573,10 @@ namespace contra {
       std::vector<std::size_t> nest;
       for (line_marker const marker: m_markers) {
         switch (marker.stype) {
-        case string_reversed:
+        case string_directed_charpath:
         case string_directed_rtol:
         case string_directed_ltor:
+        case string_reversed:
           goto begin_string;
 
         case string_directed_end:
@@ -644,65 +647,6 @@ namespace contra {
         return true;
       else
         return is_charpath_rtol(presentationDirection);
-    }
-
-  public:
-    /*?lwiki
-     * @param[in] rtol
-     *   既定の向きが right-to-left または bottom-to-top かどうかを指定します。
-     */
-    curpos_t to_data_position(curpos_t presentationX, bool default_rtol) const {
-      curpos_t x = presentationX;
-      bool rtol = default_rtol;
-      for (nested_string const& range: get_nested_strings()) {
-        if (x < range.begin)
-          break;
-        else if (x < range.end) {
-          bool const reverse = range.stype == string_reversed
-            || (rtol? range.stype == string_directed_ltor:
-              range.stype == string_directed_rtol)
-            || (range.stype == string_normal && rtol != default_rtol);
-
-          if (reverse) {
-            x = range.end - 1 - (x - range.begin);
-            rtol = !rtol;
-          }
-        }
-      }
-
-      return x;
-    }
-
-    curpos_t to_presentation_position(curpos_t dataX, bool default_rtol) const {
-      bool rtol = default_rtol;
-
-      curpos_t shift = 0;
-      for (nested_string const& range: get_nested_strings()) {
-        if (dataX < range.begin)
-          break;
-        else if (dataX < range.end) {
-          bool const reverse = range.stype == string_reversed
-            || (rtol? range.stype == string_directed_ltor:
-              range.stype == string_directed_rtol)
-            || (range.stype == string_normal && rtol != default_rtol);
-
-          if (reverse) {
-            shift = range.end - 1 - (shift - range.begin);
-            rtol = !rtol;
-          }
-        }
-      }
-
-      curpos_t x = dataX - shift;
-      if (default_rtol != rtol) x = -x;
-      return x;
-    }
-
-    curpos_t to_data_position(curpos_t presentationX, presentation_direction presentationDirection) const {
-      return to_data_position(presentationX, is_rtol(presentationDirection));
-    }
-    curpos_t to_presentation_position(curpos_t dataX, presentation_direction presentationDirection) const {
-      return to_presentation_position(dataX, is_rtol(presentationDirection));
     }
   };
 
@@ -789,6 +733,74 @@ namespace contra {
     void rotate(int offset = 1) {
       this->m_rotation = (m_rotation + offset) % m_height;
     }
+
+  public:
+    presentation_direction m_presentationDirection {presentation_direction_default};
+
+  public:
+    curpos_t to_data_position(curpos_t y, curpos_t presentationX) const {
+      board_line const* const line = this->line(y);
+      bool const defaultRToL = line->is_rtol(m_presentationDirection);
+      bool rtol = defaultRToL;
+      curpos_t x = presentationX;
+      for (nested_string const& range: line->get_nested_strings()) {
+        if (x < range.begin) break;
+
+        //curpos_t const end = range.end == nested_string::npos? : range.end;
+        if (x < range.end) {
+          bool const reverse = range.stype == string_reversed
+            || (rtol? range.stype == string_directed_ltor:
+              range.stype == string_directed_rtol)
+            || (range.stype == string_directed_charpath && rtol != defaultRToL);
+
+          if (reverse) {
+            x = range.end - 1 - (x - range.begin);
+            rtol = !rtol;
+          }
+        }
+      }
+
+      return x;
+    }
+
+    curpos_t to_presentation_position(curpos_t y, curpos_t dataX) const {
+      board_line const* const line = this->line(y);
+      bool const defaultRToL = line->is_rtol(m_presentationDirection);
+      bool rtol = defaultRToL;
+      curpos_t shift = 0;
+      for (nested_string const& range: line->get_nested_strings()) {
+        if (dataX < range.begin)
+          break;
+        else if (dataX < range.end) {
+          bool const reverse = range.stype == string_reversed
+            || (rtol? range.stype == string_directed_ltor:
+              range.stype == string_directed_rtol)
+            || (range.stype == string_directed_charpath && rtol != defaultRToL);
+
+          if (reverse) {
+            shift = range.end - 1 - (shift - range.begin);
+            rtol = !rtol;
+          }
+        }
+      }
+
+      curpos_t x = dataX - shift;
+      if (defaultRToL != rtol) x = -x;
+      return x;
+    }
+
+    // curpos_t to_data_position(curpos_t presentationX, presentation_direction presentationDirection) const {
+    //   return to_data_position(presentationX, is_rtol(presentationDirection));
+    // }
+    // curpos_t to_presentation_position(curpos_t dataX, presentation_direction presentationDirection) const {
+    //   return to_presentation_position(dataX, is_rtol(presentationDirection));
+    // }
+    // curpos_t to_data_position(curpos_t y, curpos_t x) const {
+    //   return this->line(y)->to_data_position(x, m_presentationDirection);
+    // }
+    // curpos_t to_presentation_position(curpos_t y, curpos_t x) const {
+    //   return this->line(y)->to_presentation_position(x, m_presentationDirection);
+    // }
 
   public:
     typedef extension_store<attribute_t, extended_attribute, has_extended_attribute> extended_attribute_store;

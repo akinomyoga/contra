@@ -131,7 +131,6 @@ namespace {
     params.read_param(update, 0);
     if (direction > 7 || update > 2) return false;
 
-    tty_state* const s = play.state();
     board* const b = play.board();
 
     /* update content
@@ -144,7 +143,7 @@ namespace {
      *   今後この動作は変更する可能性がある。
      *
      */
-    bool const oldRToL = is_charpath_rtol(s->presentation_direction);
+    bool const oldRToL = is_charpath_rtol(b->m_presentationDirection);
     bool const newRToL = is_charpath_rtol((presentation_direction) direction);
     if (oldRToL != newRToL && update == 2) {
       for (curpos_t y = 0, yN = b->m_height; y < yN; y++) {
@@ -153,13 +152,12 @@ namespace {
       }
     }
 
-    s->presentation_direction = (presentation_direction) direction;
+    b->m_presentationDirection = (presentation_direction) direction;
 
     // update position
     b->cur.y = 0;
     if (update == 2) {
-      board_line* const line = b->line(b->cur.y);
-      b->cur.x = line->to_data_position(0, line->is_rtol(s->presentation_direction));
+      b->cur.x = b->to_data_position(b->cur.y, 0);
     } else {
       b->cur.x = 0;
     }
@@ -178,7 +176,7 @@ namespace {
     board* const b = play.board();
     board_line* const line = b->line(b->cur.y);
 
-    bool const oldRToL = line->is_rtol(s->presentation_direction);
+    bool const oldRToL = line->is_rtol(b->m_presentationDirection);
 
     // update line attributes
     play.apply_line_attribute(line);
@@ -195,14 +193,14 @@ namespace {
       break;
     }
 
-    bool const newRToL = line->is_rtol(s->presentation_direction);
+    bool const newRToL = line->is_rtol(b->m_presentationDirection);
 
     // update line content
     if (oldRToL != newRToL && update == 2)
       reverse_line_content(b, b->cur.y);
 
     if (update == 2)
-      b->cur.x = line->to_data_position(0, newRToL);
+      b->cur.x = b->to_data_position(b->cur.y, 0);
     else
       b->cur.x = 0;
 
@@ -327,25 +325,23 @@ namespace {
     switch (direction) {
     case do_cux_prec_char:
       {
-        board_line* line = b->line(y);
         curpos_t x = b->cur.x;
         if (!isData)
-          x = line->to_presentation_position(x, s->presentation_direction);
+          x = b->to_presentation_position(y, x);
         x = std::max((curpos_t) 0, x - (curpos_t) param);
         if (!isData)
-          x = line->to_data_position(x, s->presentation_direction);
+          x = b->to_data_position(y, x);
         b->cur.x = x;
       }
       break;
     case do_cux_succ_char:
       {
-        board_line* line = b->line(y);
         curpos_t x = b->cur.x;
         if (!isData)
-          x = line->to_presentation_position(x, s->presentation_direction);
+          x = b->to_presentation_position(y, x);
         x = std::min(play.board()->m_width - 1, x + (curpos_t) param);
         if (!isData)
-          x = line->to_data_position(x, s->presentation_direction);
+          x = b->to_data_position(y, x);
         b->cur.x = x;
       }
       break;
@@ -373,7 +369,7 @@ namespace {
 
     return do_cux(
       play, params,
-      do_cux_vec_select(vec, play.state()->presentation_direction),
+      do_cux_vec_select(vec, play.board()->m_presentationDirection),
       false);
   }
   bool do_cud(tty_player& play, csi_parameters& params) {
@@ -389,7 +385,7 @@ namespace {
 
     return do_cux(
       play, params,
-      do_cux_vec_select(vec, play.state()->presentation_direction),
+      do_cux_vec_select(vec, play.board()->m_presentationDirection),
       false);
   }
   bool do_cuf(tty_player& play, csi_parameters& params) {
@@ -405,7 +401,7 @@ namespace {
 
     return do_cux(
       play, params,
-      do_cux_vec_select(vec, play.state()->presentation_direction),
+      do_cux_vec_select(vec, play.board()->m_presentationDirection),
       false);
   }
   bool do_cub(tty_player& play, csi_parameters& params) {
@@ -421,7 +417,7 @@ namespace {
 
     return do_cux(
       play, params,
-      do_cux_vec_select(vec, play.state()->presentation_direction),
+      do_cux_vec_select(vec, play.board()->m_presentationDirection),
       false);
   }
 
@@ -438,8 +434,8 @@ namespace {
     return do_cux(play, params, do_cux_succ_line, true);
   }
 
-  static bool do_cup(board* b, curpos_t x, curpos_t y, presentation_direction presentationDirection) {
-    b->cur.x = b->line(y)->to_data_position(x, presentationDirection);
+  static bool do_cup(board* b, curpos_t x, curpos_t y) {
+    b->cur.x = b->to_data_position(y, x);
     b->cur.y = y;
     return true;
   }
@@ -452,7 +448,7 @@ namespace {
 
     board* const b = play.board();
     curpos_t const y = std::min(b->cur.y + (curpos_t) param, b->m_width - 1);
-    return do_cup(b, 0, y, s->presentation_direction);
+    return do_cup(b, 0, y);
   }
 
   bool do_cpl(tty_player& play, csi_parameters& params) {
@@ -463,7 +459,7 @@ namespace {
 
     board* const b = play.board();
     curpos_t const y = std::max(b->cur.y - (curpos_t) param, 0);
-    return do_cup(b, 0, y, s->presentation_direction);
+    return do_cup(b, 0, y);
   }
 
   bool do_cup(tty_player& play, csi_parameters& params) {
@@ -478,7 +474,7 @@ namespace {
 
     if (param1 == 0 || param2 == 0) return false;
 
-    return do_cup(play.board(), (curpos_t) param2 - 1, (curpos_t) param1 - 1, s->presentation_direction);
+    return do_cup(play.board(), (curpos_t) param2 - 1, (curpos_t) param1 - 1);
   }
 
   bool do_cha(tty_player& play, csi_parameters& params) {
@@ -493,7 +489,7 @@ namespace {
     }
 
     board* const b = play.board();
-    return do_cup(b, param - 1, b->cur.y, s->presentation_direction);
+    return do_cup(b, param - 1, b->cur.y);
   }
 
   bool do_hpa(tty_player& play, csi_parameters& params) {
