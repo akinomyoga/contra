@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <vector>
+#include <algorithm>
 #include "contradef.h"
 
 namespace contra {
@@ -456,30 +457,42 @@ namespace contra {
       || presentationDirection == presentation_direction_btrl;
   }
 
-  enum string_direction {
-    string_direction_default  = 0,
-    string_direction_ltor     = 1,
-    string_direction_rtol     = 2,
-    string_direction_reversed = 3,
+
+  enum nested_string_type {
+    string_normal            = 0,
+
+    _string_directed_minValue = 1,
+    string_directed_ltor     = 1,
+    string_directed_rtol     = 2,
+    string_directed_end      = 3,
+    string_reversed          = 4,
+    string_reversed_end      = 5,
+    _string_reversed_maxValue = 5,
+
+    string_aligned_left      = 10,
+    string_aligned_right     = 11,
+    string_aligned_centered  = 12,
+    string_aligned_char      = 13,
+    string_aligned_end       = 14,
   };
 
-  struct directed_string {
-    curpos_t begin;
-    curpos_t end;
-    int direction;
+  constexpr bool is_string_directed(nested_string_type value) {
+    return value == string_directed_rtol || value == string_directed_rtol;
+  }
+  constexpr bool is_string_directed_or_reversed(nested_string_type value) {
+    return _string_directed_minValue <= value && value <= _string_reversed_maxValue;
+  }
+
+
+  struct line_marker {
+    curpos_t           position;
+    nested_string_type stype;
   };
 
-  enum tabstop_align {
-    tabstop_align_normal   = 0,
-    tabstop_align_start    = 1,
-    tabstop_align_end      = 2,
-    tabstop_align_centered = 3,
-    tabstop_align_char     = 4,
-  };
   struct tabstop_property {
-    curpos_t      m_pos;
-    tabstop_align m_align;
-    char32_t      m_alignChar;
+    curpos_t           m_pos;
+    nested_string_type m_align;
+    char32_t           m_alignChar;
   };
 
   struct board_line {
@@ -495,11 +508,125 @@ namespace contra {
     curpos_t home     {-1};
     curpos_t limit    {-1};
 
-    // 想定: 開始点の番号の小さいものが先に来る。
-    // 想定: 二つの文字列の関係は必ず、共有部分がないか、
-    //   一方が他方を完全に包含するかのどちらかである。
-    // 想定: 子よりも親が先に来る。
-    std::vector<directed_string> strings;
+  private:
+    std::vector<line_marker> m_markers;
+
+    struct nested_string {
+      curpos_t begin;
+      curpos_t end;
+      nested_string_type stype;
+
+      enum {npos = -1};
+    };
+
+    /*?lwiki
+     * @var std::vector<nested_string> m_strings_cached;
+     * 想定: 開始点の番号の小さいものが先に来る。
+     * 想定: 二つの文字列の関係は必ず、共有部分がないか、
+     *   一方が他方を完全に包含するかのどちらかである。
+     * 想定: 子よりも親が先に来る。
+     */
+    mutable std::vector<nested_string> m_strings_cached;
+
+    mutable bool m_strings_updated {true};
+
+  public:
+    void clear_markers() {
+      this->m_markers.clear();
+      this->m_strings_cached.clear();
+      this->m_strings_updated = true;
+    }
+
+    void append_marker_at(curpos_t pos, nested_string_type marker) {
+      m_strings_updated = false;
+      m_markers.insert(
+        std::upper_bound(
+          m_markers.begin(), m_markers.end(), pos,
+          [](curpos_t pos, line_marker const& marker) {return pos < marker.position;}),
+        {pos, marker});
+    }
+    void prepend_marker_at(curpos_t pos, nested_string_type marker) {
+      m_strings_updated = false;
+      m_markers.insert(
+        std::lower_bound(
+          m_markers.begin(), m_markers.end(), pos,
+          [](line_marker const& marker, curpos_t pos) {return marker.position < pos;}),
+        {pos, marker});
+    }
+    void _set_string(curpos_t beg, curpos_t end, nested_string_type marker) {
+      if (is_string_directed_or_reversed(marker)) {
+        append_marker_at(beg, marker);
+        prepend_marker_at(end, marker == string_reversed? string_reversed_end: string_directed_end);
+      } else
+        mwg_check(0, "BUG: not supported");
+    }
+
+    std::vector<nested_string> const& get_nested_strings() const {
+      if (m_strings_updated) return m_strings_cached;
+      m_strings_updated = true;
+
+      std::vector<nested_string>& strings = m_strings_cached;
+      strings.clear();
+
+      std::vector<std::size_t> nest;
+      for (line_marker const marker: m_markers) {
+        switch (marker.stype) {
+        case string_reversed:
+        case string_directed_rtol:
+        case string_directed_ltor:
+          goto begin_string;
+
+        case string_directed_end:
+        case string_reversed_end:
+          {
+            nested_string_type stype;
+            while (nest.size() && is_string_directed_or_reversed(stype = strings[nest.back()].stype)) {
+              strings[nest.back()].end = marker.position;
+              nest.pop_back();
+              if ((stype == string_reversed) == (marker.stype == string_reversed_end)) break;
+            }
+            break;
+          }
+
+        case string_aligned_left:
+        case string_aligned_right:
+        case string_aligned_centered:
+        case string_aligned_char:
+        case string_aligned_end:
+          for (std::size_t index: nest)
+            strings[index].end = marker.position;
+          nest.clear();
+          if (marker.stype != string_aligned_end)
+            goto begin_string;
+          break;
+
+        default:
+          mwg_assert(0, "BUG");
+          break;
+
+        begin_string:
+          {
+            nested_string str;
+            str.begin = marker.position;
+            str.end   = nested_string::npos;
+            str.stype = marker.stype;
+
+            std::size_t const index = strings.size();
+            nest.push_back(index);
+            strings.push_back(str);
+            break;
+          }
+        }
+      }
+
+      return strings;
+    }
+
+  public:
+    void _tst_push_string(nested_string const& value) {
+      this->m_strings_cached.push_back(value);
+    }
+    void _tst_clear_strings() {this->m_strings_cached.clear();}
 
   public:
     std::vector<tabstop_property> tabs;
@@ -527,14 +654,14 @@ namespace contra {
     curpos_t to_data_position(curpos_t presentationX, bool default_rtol) const {
       curpos_t x = presentationX;
       bool rtol = default_rtol;
-      for (directed_string const& range: strings) {
+      for (nested_string const& range: get_nested_strings()) {
         if (x < range.begin)
           break;
         else if (x < range.end) {
-          bool const reverse = range.direction == string_direction_reversed
-            || (rtol? range.direction == string_direction_ltor:
-              range.direction == string_direction_rtol)
-            || (range.direction == string_direction_default && rtol != default_rtol);
+          bool const reverse = range.stype == string_reversed
+            || (rtol? range.stype == string_directed_ltor:
+              range.stype == string_directed_rtol)
+            || (range.stype == string_normal && rtol != default_rtol);
 
           if (reverse) {
             x = range.end - 1 - (x - range.begin);
@@ -550,14 +677,14 @@ namespace contra {
       bool rtol = default_rtol;
 
       curpos_t shift = 0;
-      for (directed_string const& range: strings) {
+      for (nested_string const& range: get_nested_strings()) {
         if (dataX < range.begin)
           break;
         else if (dataX < range.end) {
-          bool const reverse = range.direction == string_direction_reversed
-            || (rtol? range.direction == string_direction_ltor:
-              range.direction == string_direction_rtol)
-            || (range.direction == string_direction_default && rtol != default_rtol);
+          bool const reverse = range.stype == string_reversed
+            || (rtol? range.stype == string_directed_ltor:
+              range.stype == string_directed_rtol)
+            || (range.stype == string_normal && rtol != default_rtol);
 
           if (reverse) {
             shift = range.end - 1 - (shift - range.begin);

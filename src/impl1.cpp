@@ -33,29 +33,29 @@ void check_data_presentation_conversion(bool verbose = false) {
 
   // abcd_[efgh]_ij
   int const px_result1[] = {0, 1, 2, 3, 4, 8, 7, 6, 5, 9, 10, 11};
-  line.strings.clear();
-  line.strings.push_back(directed_string {5, 9, string_direction_rtol});
+  line.clear_markers();
+  line._set_string(5, 9, string_directed_rtol);
   tester("abcd_efgh_ij", px_result1);
-  line.strings.clear();
-  line.strings.push_back(directed_string {5, 9, string_direction_reversed});
+  line.clear_markers();
+  line._set_string(5, 9, string_reversed);
   tester("abcd_efgh_ij", px_result1);
 
-  // kl_[mnop_[qrst]_uvw]_xyz
+  // // kl_[mnop_[qrst]_uvw]_xyz
   int const px_result2[] = {0, 1, 2, 15, 14, 13, 12, 11, 7, 8, 9, 10, 6, 5, 4, 3, 16, 17, 18, 19};
-  line.strings.clear();
-  line.strings.push_back({3, 16, string_direction_rtol});
-  line.strings.push_back({8, 12, string_direction_ltor});
+  line.clear_markers();
+  line._set_string(3, 16, string_directed_rtol);
+  line._set_string(8, 12, string_directed_ltor);
   tester("kl_mnop_qrst_uvw_xyz", px_result2);
-  line.strings.clear();
-  line.strings.push_back({3, 16, string_direction_reversed});
-  line.strings.push_back({8, 12, string_direction_reversed});
+  line.clear_markers();
+  line._set_string(3, 16, string_reversed);
+  line._set_string(8, 12, string_reversed);
   tester("kl_mnop_qrst_uvw_xyz", px_result2);
-  line.strings.clear();
-  line.strings.push_back({1, 17, string_direction_default});
-  line.strings.push_back({3, 16, string_direction_reversed});
-  line.strings.push_back({5, 14, string_direction_rtol});
-  line.strings.push_back({8, 12, string_direction_reversed});
-  line.strings.push_back({9, 11, string_direction_ltor});
+  line.clear_markers();
+  line._set_string(1, 17, string_normal       );
+  line._set_string(3, 16, string_reversed     );
+  line._set_string(5, 14, string_directed_rtol);
+  line._set_string(8, 12, string_reversed     );
+  line._set_string(9, 11, string_directed_ltor);
   tester("kl_mnop_qrst_uvw_xyz", px_result2);
 }
 
