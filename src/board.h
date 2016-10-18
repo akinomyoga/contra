@@ -477,14 +477,37 @@ namespace contra {
     string_aligned_centered  = 12,
     string_aligned_char      = 13,
     string_aligned_end       = 14,
+
+    _string_aligned_minValue = 10,
+    _string_aligned_maxValue = 14,
   };
 
   constexpr bool is_string_directed(nested_string_type value) {
     return _string_directed_minValue <= value && value <= _string_directed_maxValue;
   }
-  constexpr bool is_string_directed_or_reversed(nested_string_type value) {
+  constexpr bool is_string_bidi(nested_string_type value) {
     return _string_directed_minValue <= value && value <= _string_reversed_maxValue;
   }
+  constexpr bool is_string_bidi_end(nested_string_type value) {
+    return value == string_directed_end || value == string_reversed_end;
+  }
+  constexpr bool is_string_bidi_begin(nested_string_type value) {
+    return is_string_bidi(value) && ! is_string_bidi_end(value);
+  }
+  constexpr bool is_string_aligned(nested_string_type value) {
+    return _string_aligned_minValue <= value && value <= _string_aligned_maxValue;
+  }
+  constexpr bool is_string_corresponding_pair(nested_string_type beg, nested_string_type end) {
+    if (end == string_directed_end)
+      return beg != end && is_string_directed(beg);
+    else if (end == string_reversed_end)
+      return beg == string_reversed;
+    else if (end == string_aligned_end)
+      return beg != end && is_string_aligned(beg);
+    else
+      return false;
+  }
+
 
   struct line_marker {
     curpos_t           position;
@@ -539,6 +562,8 @@ namespace contra {
       this->m_strings_updated = true;
     }
 
+    void update_markers_on_overwriting(curpos_t beg, curpos_t end, bool simd);
+
     void append_marker_at(curpos_t pos, nested_string_type marker) {
       m_strings_updated = false;
       m_markers.insert(
@@ -556,7 +581,7 @@ namespace contra {
         {pos, marker});
     }
     void _set_string(curpos_t beg, curpos_t end, nested_string_type marker) {
-      if (is_string_directed_or_reversed(marker)) {
+      if (is_string_bidi(marker)) {
         append_marker_at(beg, marker);
         prepend_marker_at(end, marker == string_reversed? string_reversed_end: string_directed_end);
       } else
@@ -583,7 +608,7 @@ namespace contra {
         case string_reversed_end:
           {
             nested_string_type stype;
-            while (nest.size() && is_string_directed_or_reversed(stype = strings[nest.back()].stype)) {
+            while (nest.size() && is_string_bidi(stype = strings[nest.back()].stype)) {
               strings[nest.back()].end = marker.position;
               nest.pop_back();
               if ((stype == string_reversed) == (marker.stype == string_reversed_end)) break;
@@ -676,7 +701,7 @@ namespace contra {
     board_cursor cur;
 
   public:
-    void update_cursor_attribute() {
+    attribute_t update_cursor_attribute() {
       if (cur.is_attribute_changed()) {
         cur.xattr = cur.xattr_edit;
 
@@ -690,6 +715,7 @@ namespace contra {
       }
 
       cur.xattr_dirty = false;
+      return cur.attribute;
     }
 
   private:
@@ -737,7 +763,7 @@ namespace contra {
   public:
     presentation_direction m_presentationDirection {presentation_direction_default};
 
-  public:
+  private:
     curpos_t line_length(curpos_t y) const {
       board_cell const* cell = this->cell(0, y);
       for (curpos_t end = m_width; end > 0; end--)
@@ -782,6 +808,7 @@ namespace contra {
       return x;
     }
 
+  public:
     curpos_t to_data_position(curpos_t y, curpos_t presentationX) const {
       return convert_position(y, presentationX, false);
     }
@@ -789,6 +816,16 @@ namespace contra {
     curpos_t to_presentation_position(curpos_t y, curpos_t dataX) const {
       return convert_position(y, dataX, true);
     }
+
+  public:
+    curpos_t line_home(board_line const* line) const {
+      return line->home < 0? 0: line->home;
+    }
+    curpos_t line_limit(board_line const* line) const {
+      return line->limit < 0? m_width - 1: line->limit;
+    }
+    curpos_t line_home(curpos_t y) const {return line_home(line(y));}
+    curpos_t line_limit(curpos_t y) const {return line_limit(line(y));}
 
   public:
     typedef extension_store<attribute_t, extended_attribute, has_extended_attribute> extended_attribute_store;

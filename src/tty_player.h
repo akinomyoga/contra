@@ -145,44 +145,35 @@ namespace contra {
         std::exit(1); // ToDo: control chars, etc.
       }
 
-      if (m_state.get_mode(mode_simd)) {
-        // 折り返し1
-        curpos_t beg = line->home < 0? 0: line->home;
-        curpos_t end = line->limit < 0? m_board->m_width: line->limit + 1;
-        if (cur.x - charWidth + 1 < beg && cur.x < end) {
-          do_nel();
-          line = m_board->line(cur.y);
-          apply_line_attribute(line);
-          beg = line->home < 0? 0: line->home;
-        }
+      bool const simd = m_state.get_mode(mode_simd);
+      curpos_t const dir = simd? -1: 1;
 
-        board_cell* const cells = m_board->cell(0, cur.y);
-        m_board->update_cursor_attribute();
-        m_board->put_character(cells + cur.x - charWidth + 1, u, cur.attribute, charWidth);
-        cur.x -= charWidth;
+      curpos_t slh = m_board->line_home(line);
+      curpos_t sll = m_board->line_limit(line);
+      if (simd) std::swap(slh, sll);
 
-        // 折り返し2
-        // Note: xenl かつ cur.x >= 0 ならば beg - 1 の位置にいる事を許容する。
-        if (cur.x <= beg - 1 && !(cur.x == beg - 1 && cur.x >= 0 && m_state.get_mode(mode_xenl))) do_nel();
-      } else {
-        // 折り返し1
-        curpos_t beg = line->home < 0? 0: line->home;
-        curpos_t end = line->limit < 0? m_board->m_width: line->limit + 1;
-        if (cur.x + charWidth > end && cur.x > beg) {
-          do_nel();
-          line = m_board->line(cur.y);
-          apply_line_attribute(line);
-          end = line->limit < 0? m_board->m_width: line->limit + 1;
-        }
-
-        board_cell* const cells = m_board->cell(0, cur.y);
-        m_board->update_cursor_attribute();
-        m_board->put_character(cells + cur.x, u, cur.attribute, charWidth);
-        cur.x += charWidth;
-
-        // 折り返し2
-        if (cur.x >= end && !(cur.x == end && m_state.get_mode(mode_xenl))) do_nel();
+      // 行末に文字が入らない時は折り返し
+      curpos_t const x0 = cur.x;
+      curpos_t const x1 = x0 + dir * (charWidth - 1);
+      if ((x1 - sll) * dir > 0 && (x0 - slh) * dir > 0) {
+        do_nel();
+        line = m_board->line(cur.y);
+        apply_line_attribute(line);
+        sll = simd? m_board->line_home(line): m_board->line_limit(line);
       }
+
+      curpos_t const xL = simd? cur.x - (charWidth - 1): cur.x;
+      curpos_t const xR = xL + charWidth;
+      line->update_markers_on_overwriting(xL, xR, simd);
+      m_board->put_character(
+        m_board->cell(xL, cur.y),
+        u, m_board->update_cursor_attribute(), charWidth);
+      cur.x += dir * charWidth;
+
+      // 行末を超えた時は折り返し
+      // Note: xenl かつ cur.x >= 0 ならば sll + dir の位置にいる事を許容する。
+      if ((cur.x - sll) * dir >= 1 &&
+        !(cur.x == sll + dir && cur.x >= 0 && m_state.get_mode(mode_xenl))) do_nel();
     }
 
     void set_fg(color_t index, aflags_t colorSpace = color_spec_indexed) {
