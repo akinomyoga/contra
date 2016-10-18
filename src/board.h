@@ -461,9 +461,9 @@ namespace contra {
   enum nested_string_type {
     string_unknown           = 0,
 
-    string_directed_charpath = 1, // 独自
-    string_directed_ltor     = 2,
-    string_directed_rtol     = 3,
+    string_directed_ltor     = 1,
+    string_directed_rtol     = 2,
+    string_directed_charpath = 3, // 独自
     string_directed_end      = 4,
     string_reversed          = 5,
     string_reversed_end      = 6,

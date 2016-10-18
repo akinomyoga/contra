@@ -7,12 +7,14 @@
 #include <cstdlib>
 #include <vector>
 
-void check_data_presentation_conversion(bool verbose = false) {
+void check_data_presentation_conversion(bool useseq, bool verbose = false) {
   using namespace contra;
 
   contra::board b;
   b.resize(40, 1);
   contra::board_line* line = b.line(0);
+
+  contra::tty_player term(b);
 
   auto tester = [&](const char* s, const int* expected){
     std::size_t N = std::strlen(s);
@@ -36,34 +38,55 @@ void check_data_presentation_conversion(bool verbose = false) {
   // abcd_[efgh]_ij
   int const px_result1[] = {0, 1, 2, 3, 4, 8, 7, 6, 5, 9, 10, 11};
   line->clear_markers();
-  line->_set_string(5, 9, string_directed_rtol);
+  if (useseq)
+    term.printt("\x1b[Habcd_\x1b[2]efgh\x1b[0]_ij");
+  else
+    line->_set_string(5, 9, string_directed_rtol);
   tester("abcd_efgh_ij", px_result1);
+
   line->clear_markers();
-  line->_set_string(5, 9, string_reversed);
+  if (useseq)
+    term.printt("\x1b[Habcd_\x1b[1[efgh\x1b[0[_ij");
+  else
+    line->_set_string(5, 9, string_reversed);
   tester("abcd_efgh_ij", px_result1);
 
   // // kl_[mnop_[qrst]_uvw]_xyz
   int const px_result2[] = {0, 1, 2, 15, 14, 13, 12, 11, 7, 8, 9, 10, 6, 5, 4, 3, 16, 17, 18, 19};
   line->clear_markers();
-  line->_set_string(3, 16, string_directed_rtol);
-  line->_set_string(8, 12, string_directed_ltor);
+  if (useseq)
+    term.printt("\x1b[Hkl_\x1b[2]mnop_\x1b[1]qrst\x1b[]_uvw\x1b[]_xyz");
+  else {
+    line->_set_string(3, 16, string_directed_rtol);
+    line->_set_string(8, 12, string_directed_ltor);
+  }
   tester("kl_mnop_qrst_uvw_xyz", px_result2);
+
   line->clear_markers();
-  line->_set_string(3, 16, string_reversed);
-  line->_set_string(8, 12, string_reversed);
+  if (useseq)
+    term.printt("\x1b[Hkl_\x1b[1[mnop_\x1b[1[qrst\x1b[[_uvw\x1b[[_xyz");
+  else {
+    line->_set_string(3, 16, string_reversed);
+    line->_set_string(8, 12, string_reversed);
+  }
   tester("kl_mnop_qrst_uvw_xyz", px_result2);
+
   line->clear_markers();
-  line->_set_string(1, 17, string_directed_charpath);
-  line->_set_string(3, 16, string_reversed     );
-  line->_set_string(5, 14, string_directed_rtol);
-  line->_set_string(8, 12, string_reversed     );
-  line->_set_string(9, 11, string_directed_ltor);
+  if (useseq)
+    term.printt("\x1b[Hk\x1b[1]l_\x1b[1[mn\x1b[2]op_\x1b[1[q\x1b[1]rs\x1b[]t\x1b[[_u\x1b[]vw\x1b[[_\x1b[]xyz");
+  else {
+    line->_set_string(1, 17, string_directed_charpath);
+    line->_set_string(3, 16, string_reversed     );
+    line->_set_string(5, 14, string_directed_rtol);
+    line->_set_string(8, 12, string_reversed     );
+    line->_set_string(9, 11, string_directed_ltor);
+  }
   tester("kl_mnop_qrst_uvw_xyz", px_result2);
 }
 
 using namespace contra;
 int main() {
-  check_data_presentation_conversion();
+  check_data_presentation_conversion(true);
 
   contra::board b;
   b.resize(20, 10);

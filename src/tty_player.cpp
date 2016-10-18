@@ -215,6 +215,30 @@ namespace {
     return true;
   }
 
+  static bool do_sds(tty_player& play, nested_string_type stype) {
+    board* const b = play.board();
+    if (play.state()->get_mode(mode_simd))
+      b->line(b->cur.y)->prepend_marker_at(b->cur.x + 1, stype);
+    else
+      b->line(b->cur.y)->append_marker_at(b->cur.x, stype);
+    return true;
+  }
+  bool do_sds(tty_player& play, csi_parameters& params) {
+    csi_single_param_t param;
+    params.read_param(param, 0);
+    if (param > 2) return false;
+    return do_sds(play,
+      param == 1? string_directed_ltor:
+      param == 2? string_directed_rtol:
+      string_directed_end);
+  }
+  bool do_srs(tty_player& play, csi_parameters& params) {
+    csi_single_param_t param;
+    params.read_param(param, 0);
+    if (param > 1) return false;
+    return do_sds(play, param == 1? string_reversed: string_reversed_end);
+  }
+
   bool do_slh(tty_player& play, csi_parameters& params) {
     tty_state * const s = play.state();
     board     * const b = play.board();
@@ -736,6 +760,9 @@ namespace {
       case ascii_d:          result = do_vpa(*this, params); break;
 
       case ascii_circumflex: result = do_simd(*this, params); break;
+
+      case ascii_right_bracket: result = do_sds(*this, params); break;
+      case ascii_left_bracket : result = do_srs(*this, params); break;
       }
     } else if (intermediateSize == 1) {
       mwg_assert(seq.intermediate()[0] <= 0xFF);
