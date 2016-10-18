@@ -35,7 +35,7 @@ namespace contra {
       return is_string_corresponding_pair(m1.stype, m2.stype);
   }
 
-  void board_line::update_markers_on_overwriting(curpos_t beg, curpos_t end, bool simd) {
+  void board_line::update_markers_on_overwrite(curpos_t beg, curpos_t end, bool simd) {
     std::vector<line_marker>::iterator const it0 = m_markers.begin();
     std::ptrdiff_t const ibeg = std::lower_bound(it0, m_markers.end(), beg,
       [](line_marker& m, curpos_t pos){ return m.position < pos;}) - it0;
@@ -103,6 +103,68 @@ namespace contra {
       }
       m_markers.erase(m_markers.begin() + idst, m_markers.end());
     }
+  }
+
+  std::vector<nested_string> const& board_line::get_nested_strings() const {
+    if (m_strings_updated) return m_strings_cached;
+    m_strings_updated = true;
+
+    std::vector<nested_string>& strings = m_strings_cached;
+    strings.clear();
+
+    std::vector<std::size_t> nest;
+    for (line_marker const marker: m_markers) {
+      switch (marker.stype) {
+      case string_directed_charpath:
+      case string_directed_rtol:
+      case string_directed_ltor:
+      case string_reversed:
+        goto begin_string;
+
+      case string_directed_end:
+      case string_reversed_end:
+        {
+          nested_string_type stype;
+          while (nest.size() && is_string_bidi(stype = strings[nest.back()].stype)) {
+            strings[nest.back()].end = marker.position;
+            nest.pop_back();
+            if ((stype == string_reversed) == (marker.stype == string_reversed_end)) break;
+          }
+          break;
+        }
+
+      case string_aligned_left:
+      case string_aligned_right:
+      case string_aligned_centered:
+      case string_aligned_char:
+      case string_aligned_end:
+        for (std::size_t index: nest)
+          strings[index].end = marker.position;
+        nest.clear();
+        if (marker.stype != string_aligned_end)
+          goto begin_string;
+        break;
+
+      default:
+        mwg_assert(0, "BUG");
+        break;
+
+      begin_string:
+        {
+          nested_string str;
+          str.begin = marker.position;
+          str.end   = nested_string::npos;
+          str.stype = marker.stype;
+
+          std::size_t const index = strings.size();
+          nest.push_back(index);
+          strings.push_back(str);
+          break;
+        }
+      }
+    }
+
+    return strings;
   }
 
 }

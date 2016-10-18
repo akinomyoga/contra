@@ -562,7 +562,7 @@ namespace contra {
       this->m_strings_updated = true;
     }
 
-    void update_markers_on_overwriting(curpos_t beg, curpos_t end, bool simd);
+    void update_markers_on_overwrite(curpos_t beg, curpos_t end, bool simd);
 
     void append_marker_at(curpos_t pos, nested_string_type marker) {
       m_strings_updated = false;
@@ -588,73 +588,7 @@ namespace contra {
         mwg_check(0, "BUG: not supported");
     }
 
-    std::vector<nested_string> const& get_nested_strings() const {
-      if (m_strings_updated) return m_strings_cached;
-      m_strings_updated = true;
-
-      std::vector<nested_string>& strings = m_strings_cached;
-      strings.clear();
-
-      std::vector<std::size_t> nest;
-      for (line_marker const marker: m_markers) {
-        switch (marker.stype) {
-        case string_directed_charpath:
-        case string_directed_rtol:
-        case string_directed_ltor:
-        case string_reversed:
-          goto begin_string;
-
-        case string_directed_end:
-        case string_reversed_end:
-          {
-            nested_string_type stype;
-            while (nest.size() && is_string_bidi(stype = strings[nest.back()].stype)) {
-              strings[nest.back()].end = marker.position;
-              nest.pop_back();
-              if ((stype == string_reversed) == (marker.stype == string_reversed_end)) break;
-            }
-            break;
-          }
-
-        case string_aligned_left:
-        case string_aligned_right:
-        case string_aligned_centered:
-        case string_aligned_char:
-        case string_aligned_end:
-          for (std::size_t index: nest)
-            strings[index].end = marker.position;
-          nest.clear();
-          if (marker.stype != string_aligned_end)
-            goto begin_string;
-          break;
-
-        default:
-          mwg_assert(0, "BUG");
-          break;
-
-        begin_string:
-          {
-            nested_string str;
-            str.begin = marker.position;
-            str.end   = nested_string::npos;
-            str.stype = marker.stype;
-
-            std::size_t const index = strings.size();
-            nest.push_back(index);
-            strings.push_back(str);
-            break;
-          }
-        }
-      }
-
-      return strings;
-    }
-
-  public:
-    void _tst_push_string(nested_string const& value) {
-      this->m_strings_cached.push_back(value);
-    }
-    void _tst_clear_strings() {this->m_strings_cached.clear();}
+    std::vector<nested_string> const& get_nested_strings() const;
 
   public:
     std::vector<tabstop_property> tabs;

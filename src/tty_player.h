@@ -164,7 +164,7 @@ namespace contra {
 
       curpos_t const xL = simd? cur.x - (charWidth - 1): cur.x;
       curpos_t const xR = xL + charWidth;
-      line->update_markers_on_overwriting(xL, xR, simd);
+      line->update_markers_on_overwrite(xL, xR, simd);
       m_board->put_character(
         m_board->cell(xL, cur.y),
         u, m_board->update_cursor_attribute(), charWidth);

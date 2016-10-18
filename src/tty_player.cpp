@@ -4,9 +4,16 @@
 #include <cstdio>
 #include <vector>
 #include <algorithm>
+#include <utility>
+#include <iterator>
+#include <unordered_map>
 
 namespace contra {
 namespace {
+
+  class csi_parameters;
+
+  typedef bool control_function_t(tty_player& play, csi_parameters& params);
 
   typedef std::uint32_t csi_single_param_t;
 
@@ -25,6 +32,11 @@ namespace {
     csi_parameters(sequence const& seq) {
       extract_parameters(seq.parameter(), seq.parameterSize());
     }
+
+    // csi_parameters(std::initializer_list<csi_single_param_t> args) {
+    //   for (csi_single_param_t value: args)
+    //     this->push_back({value, false, false});
+    // }
 
     operator bool() const {return this->m_result;}
 
@@ -724,6 +736,77 @@ namespace {
 
 }
 
+  struct control_function_dictionary {
+    control_function_t* data1[63];
+    std::unordered_map<std::uint16_t, control_function_t*> data2;
+
+    void register_cfunc(control_function_t* fp, byte F) {
+      int const index = (int) F - ascii_at;
+      mwg_assert(0 <= index && index < (int) size(data1), "final byte out of range");
+      mwg_assert(data1[index] == nullptr, "another function is already registered");
+      data1[index] = fp;
+    }
+
+    void register_cfunc(control_function_t* fp, byte I, byte F) {
+      data2[compose_bytes(I, F)] = fp;
+    }
+
+    control_function_dictionary() {
+      std::fill(std::begin(data1), std::end(data1), nullptr);
+
+      // sgr
+      register_cfunc(&do_sgr, ascii_m);
+
+      // cursor movement
+      register_cfunc(&do_cuu, ascii_A);
+      register_cfunc(&do_cud, ascii_B);
+      register_cfunc(&do_cuf, ascii_C);
+      register_cfunc(&do_cub, ascii_D);
+      register_cfunc(&do_hpb, ascii_j);
+      register_cfunc(&do_hpr, ascii_a);
+      register_cfunc(&do_vpb, ascii_k);
+      register_cfunc(&do_vpr, ascii_e);
+      register_cfunc(&do_cnl, ascii_E);
+      register_cfunc(&do_cpl, ascii_F);
+
+      // cursor position
+      register_cfunc(&do_cha, ascii_G);
+      register_cfunc(&do_cup, ascii_H);
+      register_cfunc(&do_hpa, ascii_back_quote);
+      register_cfunc(&do_vpa, ascii_d);
+
+      // implicit movement
+      register_cfunc(&do_simd, ascii_circumflex);
+
+      // bidi strings
+      register_cfunc(&do_sds, ascii_right_bracket);
+      register_cfunc(&do_srs, ascii_left_bracket);
+
+      // presentation/line directions
+      register_cfunc(&do_spd, ascii_sp, ascii_S);
+      register_cfunc(&do_scp, ascii_sp, ascii_k);
+
+      // line/page limits
+      register_cfunc(&do_slh, ascii_sp, ascii_U);
+      register_cfunc(&do_sll, ascii_sp, ascii_V);
+      register_cfunc(&do_sph, ascii_sp, ascii_i);
+      register_cfunc(&do_spl, ascii_sp, ascii_j);
+    }
+
+    control_function_t* get(byte F) const {
+      int const index = (int) F - ascii_at;
+      return 0 <= index && index < (int) size(data1)? data1[index]: nullptr;
+    }
+
+    control_function_t* get(byte I, byte F) const {
+      typedef std::unordered_map<std::uint16_t, control_function_t*>::const_iterator const_iterator;
+      const_iterator it = data2.find(compose_bytes(I, F));
+      return it != data2.end()? it->second: nullptr;
+    }
+  };
+
+  static control_function_dictionary cfunc_dict;
+
   void tty_player::process_control_sequence(sequence const& seq) {
     if (seq.is_private_csi()) {
       print_unrecognized_sequence(seq);
@@ -739,41 +822,14 @@ namespace {
     bool result = false;
     std::int32_t const intermediateSize = seq.intermediateSize();
     if (intermediateSize == 0) {
-      switch (seq.final()) {
-      case ascii_m:          result = do_sgr(*this, params); break;
-
-      case ascii_A:          result = do_cuu(*this, params); break;
-      case ascii_B:          result = do_cud(*this, params); break;
-      case ascii_C:          result = do_cuf(*this, params); break;
-      case ascii_D:          result = do_cub(*this, params); break;
-      case ascii_j:          result = do_hpb(*this, params); break;
-      case ascii_a:          result = do_hpr(*this, params); break;
-      case ascii_k:          result = do_vpb(*this, params); break;
-      case ascii_e:          result = do_vpr(*this, params); break;
-
-      case ascii_E:          result = do_cnl(*this, params); break;
-      case ascii_F:          result = do_cpl(*this, params); break;
-
-      case ascii_G:          result = do_cha(*this, params); break;
-      case ascii_H:          result = do_cup(*this, params); break;
-      case ascii_back_quote: result = do_hpa(*this, params); break;
-      case ascii_d:          result = do_vpa(*this, params); break;
-
-      case ascii_circumflex: result = do_simd(*this, params); break;
-
-      case ascii_right_bracket: result = do_sds(*this, params); break;
-      case ascii_left_bracket : result = do_srs(*this, params); break;
-      }
+      if (seq.final() == ascii_m)
+        result = do_sgr(*this, params);
+      else if (control_function_t* const f = cfunc_dict.get(seq.final()))
+        result = f(*this, params);
     } else if (intermediateSize == 1) {
       mwg_assert(seq.intermediate()[0] <= 0xFF);
-      switch (compose_bytes((byte) seq.intermediate()[0], seq.final())) {
-      case compose_bytes(ascii_sp, ascii_U): result = do_slh(*this, params); break;
-      case compose_bytes(ascii_sp, ascii_V): result = do_sll(*this, params); break;
-      case compose_bytes(ascii_sp, ascii_S): result = do_spd(*this, params); break;
-      case compose_bytes(ascii_sp, ascii_k): result = do_scp(*this, params); break;
-      case compose_bytes(ascii_sp, ascii_i): result = do_sph(*this, params); break;
-      case compose_bytes(ascii_sp, ascii_j): result = do_spl(*this, params); break;
-      }
+      if (control_function_t* const f = cfunc_dict.get((byte) seq.intermediate()[0], seq.final()))
+        result = f(*this, params);
     }
 
     if (!result)
