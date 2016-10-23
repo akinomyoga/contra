@@ -734,7 +734,19 @@ namespace {
     return true;
   }
 
-}
+  bool do_sco(tty_player& play, csi_parameters& params) {
+    csi_single_param_t param;
+    params.read_param(param, 0);
+    if (param > 7) return false;
+
+    board* const b = play.board();
+    xflags_t& xflags = b->cur.xattr_edit.xflags;
+    if ((xflags & sco_mask) != param << sco_shift) {
+      xflags = (xflags & ~(xflags_t) sco_mask) | param << sco_shift;
+      b->cur.xattr_dirty = true;
+    }
+    return true;
+  }
 
   struct control_function_dictionary {
     control_function_t* data1[63];
@@ -791,6 +803,8 @@ namespace {
       register_cfunc(&do_sll, ascii_sp, ascii_V);
       register_cfunc(&do_sph, ascii_sp, ascii_i);
       register_cfunc(&do_spl, ascii_sp, ascii_j);
+
+      register_cfunc(&do_sco, ascii_sp, ascii_e);
     }
 
     control_function_t* get(byte F) const {
@@ -800,12 +814,13 @@ namespace {
 
     control_function_t* get(byte I, byte F) const {
       typedef std::unordered_map<std::uint16_t, control_function_t*>::const_iterator const_iterator;
-      const_iterator it = data2.find(compose_bytes(I, F));
+      const_iterator const it = data2.find(compose_bytes(I, F));
       return it != data2.end()? it->second: nullptr;
     }
   };
 
   static control_function_dictionary cfunc_dict;
+}
 
   void tty_player::process_control_sequence(sequence const& seq) {
     if (seq.is_private_csi()) {

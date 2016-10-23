@@ -159,25 +159,25 @@ namespace contra {
     color_spec_cmyk_bit        = 1 << color_spec_cmyk       ,
     color_spec_indexed_bit     = 1 << color_spec_indexed    ,
 
-    is_fg_color_set         = 0x00010000,
-    is_bg_color_set         = 0x00020000,
-    is_bold_set             = 0x00040000, // -+- SGR 1,2
-    is_faint_set            = 0x00080000, // -'
-    is_italic_set           = 0x00100000, // -+- SGR 3,20
-    is_fraktur_set          = 0x00200000, // -'
-    is_underline_set        = 0x00400000, // -+- SGR 4,21
-    is_double_underline_set = 0x00800000, // -'
-    is_blink_set            = 0x01000000, // -+- SGR 5,6
-    is_rapid_blink_set      = 0x02000000, // -'
-    is_inverse_set          = 0x04000000, // SGR 7
-    is_invisible_set        = 0x08000000, // SGR 8
-    is_strike_set           = 0x10000000, // SGR 9
+    is_fg_color_set         = (std::uint32_t) 1 << 16,
+    is_bg_color_set         = (std::uint32_t) 1 << 17,
+    is_bold_set             = (std::uint32_t) 1 << 18, // -+- SGR 1,2
+    is_faint_set            = (std::uint32_t) 1 << 19, // -'
+    is_italic_set           = (std::uint32_t) 1 << 20, // -+- SGR 3,20
+    is_fraktur_set          = (std::uint32_t) 1 << 21, // -'
+    is_underline_set        = (std::uint32_t) 1 << 22, // -+- SGR 4,21
+    is_double_underline_set = (std::uint32_t) 1 << 23, // -'
+    is_blink_set            = (std::uint32_t) 1 << 24, // -+- SGR 5,6
+    is_rapid_blink_set      = (std::uint32_t) 1 << 25, // -'
+    is_inverse_set          = (std::uint32_t) 1 << 26, // SGR 7
+    is_invisible_set        = (std::uint32_t) 1 << 27, // SGR 8
+    is_strike_set           = (std::uint32_t) 1 << 28, // SGR 9
 
-    attribute_reserved_bit1 = 0x20000000,
-    attribute_reserved_bit2 = 0x40000000,
+    attribute_reserved_bit1 = (std::uint32_t) 1 << 29,
+    attribute_reserved_bit2 = (std::uint32_t) 1 << 30,
 
     // only valid for attribute_t
-    has_extended_attribute  = 0x80000000u,
+    has_extended_attribute  = (std::uint32_t) 1 << 31,
   };
 
   enum extended_flags {
@@ -186,32 +186,44 @@ namespace contra {
     ansi_font_shift = 0,
 
     // bit 4,5: PLD, PLU
-    is_sub_set  = 0x00000010,
-    is_sup_set  = 0x00000020,
+    is_sub_set  = (std::uint32_t) 1 << 4,
+    is_sup_set  = (std::uint32_t) 1 << 5,
 
     // bit 6,7: DECDHL, DECDWL, DECSWL
-    decdhl_mask         = 0x000000C0,
-    decdhl_top_half     = 0x00000080,
-    decdhl_bottom_half  = 0x000000C0,
-    decdhl_double_width = 0x00000040,
-    decdhl_single_width = 0x00000000,
+    decdhl_mask         = (std::uint32_t) 0x3 << 6,
+    decdhl_single_width = (std::uint32_t) 0x0 << 6,
+    decdhl_double_width = (std::uint32_t) 0x1 << 6,
+    decdhl_top_half     = (std::uint32_t) 0x2 << 6,
+    decdhl_bottom_half  = (std::uint32_t) 0x3 << 6,
 
-    // bit 12-15:
-    is_frame_set             = 0x00001000, // -+- SGR 51,52
-    is_circle_set            = 0x00002000, // -'
-    is_overline_set          = 0x00004000, // --- SGR 53
-    is_proportional_set      = 0x00008000, // --- SGR 26 (deprecated)
+    // bit 8-10: SCO
+    sco_shift     = 8,
+    sco_mask      = (std::uint32_t) 0x7 << sco_shift,
+    sco_default   = (std::uint32_t) 0x0 << sco_shift,
+    sco_rotate45  = (std::uint32_t) 0x1 << sco_shift,
+    sco_rotate90  = (std::uint32_t) 0x2 << sco_shift,
+    sco_rotate135 = (std::uint32_t) 0x3 << sco_shift,
+    sco_rotate180 = (std::uint32_t) 0x4 << sco_shift,
+    sco_rotate225 = (std::uint32_t) 0x5 << sco_shift,
+    sco_rotate270 = (std::uint32_t) 0x6 << sco_shift,
+    sco_rotate315 = (std::uint32_t) 0x7 << sco_shift,
 
-    // bit 16-25: ideogram decorations
-    is_ideogram_single_rb_set = 0x00010000, // -+- SGR 60,61
-    is_ideogram_double_rb_set = 0x00020000, // -'
-    is_ideogram_single_lt_set = 0x00040000, // -+- SGR 62,63
-    is_ideogram_double_lt_set = 0x00080000, // -'
-    is_ideogram_single_lb_set = 0x00100000, // -+- SGR 66,67
-    is_ideogram_double_lb_set = 0x00200000, // -'
-    is_ideogram_single_rt_set = 0x00400000, // -+- SGR 68,69
-    is_ideogram_double_rt_set = 0x00800000, // -'
-    is_ideogram_stress_set    = 0x01000000, // --- SGR 64
+    // bit 12-15: SGR(ECMA-48:1986)
+    is_frame_set        = (std::uint32_t) 1 << 12, // -+- SGR 51,52
+    is_circle_set       = (std::uint32_t) 1 << 13, // -'
+    is_overline_set     = (std::uint32_t) 1 << 14, // --- SGR 53
+    is_proportional_set = (std::uint32_t) 1 << 15, // --- SGR 26 (deprecated)
+
+    // bit 16-24: SGR(ECMA-48:1986) ideogram decorations
+    is_ideogram_single_rb_set = (std::uint32_t) 1 << 16, // -+- SGR 60,61
+    is_ideogram_double_rb_set = (std::uint32_t) 1 << 17, // -'
+    is_ideogram_single_lt_set = (std::uint32_t) 1 << 18, // -+- SGR 62,63
+    is_ideogram_double_lt_set = (std::uint32_t) 1 << 19, // -'
+    is_ideogram_single_lb_set = (std::uint32_t) 1 << 20, // -+- SGR 66,67
+    is_ideogram_double_lb_set = (std::uint32_t) 1 << 21, // -'
+    is_ideogram_single_rt_set = (std::uint32_t) 1 << 22, // -+- SGR 68,69
+    is_ideogram_double_rt_set = (std::uint32_t) 1 << 23, // -'
+    is_ideogram_stress_set    = (std::uint32_t) 1 << 24, // --- SGR 64
     is_ideogram_decoration_mask
       = is_ideogram_single_rb_set | is_ideogram_double_rb_set
       | is_ideogram_single_lt_set | is_ideogram_double_lt_set
@@ -219,7 +231,7 @@ namespace contra {
       | is_ideogram_single_rt_set | is_ideogram_double_rt_set
       | is_ideogram_stress_set,
 
-    non_sgr_xflags_mask = is_sub_set | is_sup_set | decdhl_mask,
+    non_sgr_xflags_mask = is_sub_set | is_sup_set | decdhl_mask | sco_mask,
   };
 
   struct extended_attribute {
