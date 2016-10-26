@@ -664,31 +664,31 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>ICH</th>    <td><kbd>CSI ... @</kbd></td>
     <th>DCH</th>    <td><kbd>CSI ... P</kbd></td>
     <th>HPA</th>    <td><kbd>CSI ... `</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... p</kbd></td></tr>
+    <th>DECSLL</th> <td><kbd>CSI ... p</kbd></td></tr>
 <tr><th>CUU</th>    <td><kbd>CSI ... A</kbd></td>
     <th>SEE</th>    <td><kbd>CSI ... Q</kbd></td>
     <th>HPR</th>    <td><kbd>CSI ... a</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... q</kbd></td></tr>
+    <th>DECLL</th>  <td><kbd>CSI ... q</kbd></td></tr>
 <tr><th>CUD</th>    <td><kbd>CSI ... B</kbd></td>
     <th>CPR</th>    <td><kbd>CSI ... R</kbd></td>
     <th>REP</th>    <td><kbd>CSI ... b</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... r</kbd></td></tr>
+    <th>DECSTBM</th><td><kbd>CSI ... r</kbd></td></tr>
 <tr><th>CUF</th>    <td><kbd>CSI ... C</kbd></td>
     <th>SU</th>     <td><kbd>CSI ... S</kbd></td>
     <th>DA</th>     <td><kbd>CSI ... c</kbd></td>
-    <th>SCOSC</th>  <td><kbd>CSI ... s</kbd></td></tr>
+    <th>SCOSC, DECSLRM</th><td><kbd>CSI ... s</kbd></td></tr>
 <tr><th>CUB</th>    <td><kbd>CSI ... D</kbd></td>
     <th>SD</th>     <td><kbd>CSI ... T</kbd></td>
     <th>VPA</th>    <td><kbd>CSI ... d</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... t</kbd></td></tr>
+    <th>DECSLPP</th><td><kbd>CSI ... t</kbd></td></tr>
 <tr><th>CNL</th>    <td><kbd>CSI ... E</kbd></td>
     <th>NP</th>     <td><kbd>CSI ... U</kbd></td>
     <th>VPR</th>    <td><kbd>CSI ... e</kbd></td>
-    <th>SCORC</th>  <td><kbd>CSI ... u</kbd></td></tr>
+    <th>SCORC, DECSHTS</th><td><kbd>CSI ... u</kbd></td></tr>
 <tr><th>CPL</th>    <td><kbd>CSI ... F</kbd></td>
     <th>PP</th>     <td><kbd>CSI ... V</kbd></td>
     <th>HVP</th>    <td><kbd>CSI ... f</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... v</kbd></td></tr>
+    <th>DECSVTS</th><td><kbd>CSI ... v</kbd></td></tr>
 <tr><th>CHA</th>    <td><kbd>CSI ... G</kbd></td>
     <th>CTC</th>    <td><kbd>CSI ... W</kbd></td>
     <th>TBC</th>    <td><kbd>CSI ... g</kbd></td>
@@ -696,11 +696,11 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>CUP</th>    <td><kbd>CSI ... H</kbd></td>
     <th>ECH</th>    <td><kbd>CSI ... X</kbd></td>
     <th>SM</th>     <td><kbd>CSI ... h</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... x</kbd></td></tr>
+    <th>DECREQTPARM</th><td><kbd>CSI ... x</kbd></td></tr>
 <tr><th>CHT</th>    <td><kbd>CSI ... I</kbd></td>
     <th>CVT</th>    <td><kbd>CSI ... Y</kbd></td>
     <th>MC</th>     <td><kbd>CSI ... i</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... y</kbd></td></tr>
+    <th>DECTST</th> <td><kbd>CSI ... y</kbd></td></tr>
 <tr><th>ED</th>     <td><kbd>CSI ... J</kbd></td>
     <th>CBT</th>    <td><kbd>CSI ... Z</kbd></td>
     <th>HPB</th>    <td><kbd>CSI ... j</kbd></td>
@@ -736,11 +736,11 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>SL</th>     <td><kbd>CSI ... SP @</kbd></td>
     <th>PPA</th>    <td><kbd>CSI ... SP P</kbd></td>
     <th>TATE</th>   <td><kbd>CSI ... SP `</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP p</kbd></td></tr>
+    <th>DECSSCLS</th><td><kbd>CSI ... SP p</kbd></td></tr>
 <tr><th>SR</th>     <td><kbd>CSI ... SP A</kbd></td>
     <th>PPR</th>    <td><kbd>CSI ... SP Q</kbd></td>
     <th>TALE</th>   <td><kbd>CSI ... SP a</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP q</kbd></td></tr>
+    <th>DECSCUSR</th><td><kbd>CSI ... SP q</kbd></td></tr>
 <tr><th>GSM</th>    <td><kbd>CSI ... SP B</kbd></td>
     <th>PPB</th>    <td><kbd>CSI ... SP R</kbd></td>
     <th>TAC</th>    <td><kbd>CSI ... SP b</kbd></td>
@@ -752,11 +752,11 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>FNT</th>    <td><kbd>CSI ... SP D</kbd></td>
     <th>DTA</th>    <td><kbd>CSI ... SP T</kbd></td>
     <th>TSR</th>    <td><kbd>CSI ... SP d</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP t</kbd></td></tr>
+    <th>DECSWBV</th><td><kbd>CSI ... SP t</kbd></td></tr>
 <tr><th>TSS</th>    <td><kbd>CSI ... SP E</kbd></td>
     <th>SLH</th>    <td><kbd>CSI ... SP U</kbd></td>
     <th>SCO</th>    <td><kbd>CSI ... SP e</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP u</kbd></td></tr>
+    <th>DECSMBV</th><td><kbd>CSI ... SP u</kbd></td></tr>
 <tr><th>JFY</th>    <td><kbd>CSI ... SP F</kbd></td>
     <th>SLL</th>    <td><kbd>CSI ... SP V</kbd></td>
     <th>SRCS</th>   <td><kbd>CSI ... SP f</kbd></td>
@@ -792,12 +792,59 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>HTSA<sup>廃</sup></th><td><kbd>CSI ... SP N</kbd></td>
     <th>STAB</th>   <td><kbd>CSI ... SP ^</kbd></td>
     <th>---</th>    <td><kbd>CSI ... SP n</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP ~</kbd></td></tr>
+    <th>DECTME</th> <td><kbd>CSI ... SP ~</kbd></td></tr>
 <tr><th>IDCS</th>   <td><kbd>CSI ... SP O</kbd></td>
     <th>GCC</th>    <td><kbd>CSI ... SP _</kbd></td>
     <th>---</th>    <td><kbd>CSI ... SP o</kbd></td>
     <th>---</th>    <td>-</td></tr>
 </table>
+
+<!--
+<ul>
+<li>CSI ... ! p DECSTR</li>
+<li>CSI ... $ p DECRQM</li>
+<li>CSI ... " p DECSCL</li>
+<li>CSI ... + p DECSR</li>
+<li>CSI ... * q DECSRC</li>
+<li>CSI ... " q DECSCA</li>
+<li>CSI ... , q DECTID</li>
+<li>CSI ... $ r DECCARA</li>
+<li>CSI ... $ t DECRARA</li>
+<li>CSI ... " t DECSRFR</li>
+<li>CSI ... $ u DECRQTSR</li>
+<li>CSI ... &amp; u DECRQUPSS</li>
+<li>CSI ... , u DECRQKT</li>
+<li>CSI ... " v DECRQDE</li>
+<li>CSI ... $ v DECCRA</li>
+<li>CSI ... " w DECRPDE</li>
+<li>CSI ... $ w DECRQPSR</li>
+<li>CSI ... ' w DECEFR</li>
+<li>CSI ... , w DECRQKD</li>
+<li>CSI ... * x DECSACE</li>
+<li>CSI ... + x DECRQPKFM</li>
+<li>CSI ... $ y DECRPM</li>
+<li>CSI ... * y DECRQCRA</li>
+<li>CSI ... + y DECPKFMR</li>
+<li>CSI ... $ x DECFRA</li>
+<li>CSI ... $ z DECERA</li>
+<li>CSI ... ' z DECELR</li>
+<li>CSI ... * z DECINVM</li>
+<li>CSI ... $ { DECSERA</li>
+<li>CSI ... ' { DECSLE</li>
+<li>CSI ... ) { DECSTGLT</li>
+<li>CSI ... $ | DECSCPP</li>
+<li>CSI ... ' | DECRQLP</li>
+<li>CSI ... $ } DECSASD</li>
+<li>CSI ... ' } DECIC</li>
+<li>CSI ... , } DECATC</li>
+<li>CSI ... $ ~ DECSSDT</li>
+<li>CSI ... ' ~ DECDC</li>
+<li>CSI ... , ~ DECPS</li>
+<li></li>
+<li>DECRQMH</li>
+<li>DECPQPLFM</li>
+</ul>
+-->
 
 <h3>制御列 (control string)</h3>
 <table class="normal center">
