@@ -5,7 +5,7 @@ all:
 
 ifeq ($(HOSTNAME),padparadscha)
 CXX := cxx
-CXXFLAGS := -Wall -Wextra
+CXXFLAGS := -Wall -Wextra -O2
 endif
 
 objdir = ../out

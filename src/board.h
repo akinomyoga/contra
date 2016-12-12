@@ -442,7 +442,7 @@ namespace contra {
      */
     is_character_path_rtol = 0x0002,
     is_character_path_ltor = 0x0004,
-    character_path_mask = 0x0004,
+    character_path_mask    = is_character_path_rtol | is_character_path_ltor,
 
     // bit 6-7: DECDHL, DECDWL, DECSWL
     // The same values are used as in `xflags_t`.
@@ -497,6 +497,15 @@ namespace contra {
   constexpr bool is_string_directed(nested_string_type value) {
     return _string_directed_minValue <= value && value <= _string_directed_maxValue;
   }
+  constexpr bool is_string_directed_begin(nested_string_type value) {
+    return _string_directed_minValue <= value && value < _string_directed_maxValue;
+  }
+  constexpr bool is_string_reversed(nested_string_type value) {
+    return value == string_reversed || value == string_reversed_end;
+  }
+  constexpr bool is_string_reversed_begin(nested_string_type value) {
+    return value == string_reversed;
+  }
   constexpr bool is_string_bidi(nested_string_type value) {
     return _string_directed_minValue <= value && value <= _string_reversed_maxValue;
   }
@@ -509,6 +518,12 @@ namespace contra {
   constexpr bool is_string_aligned(nested_string_type value) {
     return _string_aligned_minValue <= value && value <= _string_aligned_maxValue;
   }
+  constexpr bool is_string_aligned_begin(nested_string_type value) {
+    return _string_aligned_minValue <= value && value < _string_aligned_maxValue;
+  }
+  constexpr bool is_string_end(nested_string_type value) {
+    return is_string_bidi_end(value) || value == string_aligned_end;
+  }
   constexpr bool is_string_corresponding_pair(nested_string_type beg, nested_string_type end) {
     if (end == string_directed_end)
       return beg != end && is_string_directed(beg);
@@ -519,7 +534,6 @@ namespace contra {
     else
       return false;
   }
-
 
   struct line_marker {
     curpos_t           position;
@@ -601,7 +615,10 @@ namespace contra {
     }
 
     std::vector<nested_string> const& get_nested_strings() const;
-
+    void set_nested_strings(std::vector<nested_string>&&);
+    void set_nested_strings(std::vector<nested_string> const& strings) {
+      set_nested_strings(std::vector<nested_string>(strings));
+    }
   public:
     std::vector<tabstop_property> tabs;
 

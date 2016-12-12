@@ -1,5 +1,8 @@
 # gitignore
 
+# files to edit
+/COMMIT
+
 # generated files
 /out
 /src/impl1

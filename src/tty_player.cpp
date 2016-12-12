@@ -121,10 +121,17 @@ namespace {
     }
   };
 
+  /*?lwiki
+   *
+   * @remarks
+   * `b->m_presentationDirection` 及び `b->line(y)->lflags` の値は反転後の値になっていることを要求する。
+   */
   static void reverse_line_content(board* b, curpos_t y) {
+    curpos_t const w = b->m_width;
+
     board_cell* const cells = b->cell(0, y);
-    board_cell* const cellN = cells + b->m_width;
-    std::reverse(cells, cells + b->m_width);
+    board_cell* const cellN = cells + w;
+    std::reverse(cells, cells + w);
 
     // correct wide characters
     for (board_cell* cell = cells; cell < cellN - 1; cell++) {
@@ -133,7 +140,40 @@ namespace {
       if (cell != beg) std::swap(*beg, *cell);
     }
 
-    // ToDo: directed strings
+    // reverse nested strings
+
+    board_line* const line = b->line(y);
+    std::vector<nested_string> const& srcNested = line->get_nested_strings();
+    std::size_t const n = srcNested.size();
+
+    std::vector<nested_string> dstNested(n);
+    {
+      std::size_t istk = 0;
+      std::size_t idst = n;
+      bool const isOriginallyR2L = !line->is_rtol(b->m_presentationDirection);
+      for (nested_string const& src: srcNested) {
+        nested_string str;
+        {
+          str.stype = src.stype;
+          if (str.stype == string_directed_charpath)
+            str.stype = isOriginallyR2L? string_directed_rtol: string_directed_ltor;
+
+          if (src.end == nested_string::npos)
+            str.begin = 0;
+          else
+            str.begin = w - src.end;
+
+          str.end = w - src.begin;
+        }
+
+        while (istk > 0 && str.end <= dstNested[istk - 1].begin)
+          dstNested[--idst] = dstNested[--istk];
+
+        dstNested[istk++] = str;
+      }
+    }
+
+    line->set_nested_strings(std::move(dstNested));
   }
 
   bool do_spd(tty_player& play, csi_parameters& params) {
@@ -145,6 +185,9 @@ namespace {
 
     board* const b = play.board();
 
+    bool const oldRToL = is_charpath_rtol(b->m_presentationDirection);
+    bool const newRToL = is_charpath_rtol(b->m_presentationDirection = (presentation_direction) direction);
+
     /* update content
      *
      * Note: update == 2 の場合、見た目が変わらない様にデータを更新する。
@@ -155,8 +198,6 @@ namespace {
      *   今後この動作は変更する可能性がある。
      *
      */
-    bool const oldRToL = is_charpath_rtol(b->m_presentationDirection);
-    bool const newRToL = is_charpath_rtol((presentation_direction) direction);
     if (oldRToL != newRToL && update == 2) {
       for (curpos_t y = 0, yN = b->m_height; y < yN; y++) {
         if (!(b->line(y)->lflags & character_path_mask))
@@ -164,7 +205,6 @@ namespace {
       }
     }
 
-    b->m_presentationDirection = (presentation_direction) direction;
 
     // update position
     b->cur.y = 0;
@@ -298,7 +338,7 @@ namespace {
   }
 
   bool do_sph(tty_player& play, csi_parameters& params) {
-    tty_state * const s = play.state();
+    tty_state* const s = play.state();
 
     csi_single_param_t param;
     if (params.read_param(param, 0) && param) {
@@ -313,7 +353,7 @@ namespace {
   }
 
   bool do_spl(tty_player& play, csi_parameters& params) {
-    tty_state * const s = play.state();
+    tty_state* const s = play.state();
 
     csi_single_param_t param;
     if (params.read_param(param, 0) && param) {
@@ -345,7 +385,7 @@ namespace {
   }
 
   static bool do_cux(tty_player& play, csi_parameters& params, do_cux_direction direction, bool isData) {
-    tty_state * const s = play.state();
+    tty_state* const s = play.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -477,7 +517,7 @@ namespace {
   }
 
   bool do_cnl(tty_player& play, csi_parameters& params) {
-    tty_state * const s = play.state();
+    tty_state* const s = play.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0 && s->get_mode(mode_zdm)) param = 1;
@@ -488,7 +528,7 @@ namespace {
   }
 
   bool do_cpl(tty_player& play, csi_parameters& params) {
-    tty_state * const s = play.state();
+    tty_state* const s = play.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0 && s->get_mode(mode_zdm)) param = 1;
@@ -499,7 +539,7 @@ namespace {
   }
 
   bool do_cup(tty_player& play, csi_parameters& params) {
-    tty_state * const s = play.state();
+    tty_state* const s = play.state();
     csi_single_param_t param1, param2;
     params.read_param(param1, 1);
     params.read_param(param2, 1);
@@ -514,7 +554,7 @@ namespace {
   }
 
   bool do_cha(tty_player& play, csi_parameters& params) {
-    tty_state * const s = play.state();
+    tty_state* const s = play.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -529,7 +569,7 @@ namespace {
   }
 
   bool do_hpa(tty_player& play, csi_parameters& params) {
-    tty_state * const s = play.state();
+    tty_state* const s = play.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -544,7 +584,7 @@ namespace {
   }
 
   bool do_vpa(tty_player& play, csi_parameters& params) {
-    tty_state * const s = play.state();
+    tty_state* const s = play.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -579,6 +619,8 @@ namespace {
     case color_spec_cmy:
     case color_spec_cmyk:
       {
+        color = 0;
+
         int const ncomp = colorSpace == color_spec_cmyk ? 4: 3;
         csi_single_param_t comp;
         for (int i = 0; i < ncomp; i++) {

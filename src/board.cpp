@@ -38,9 +38,9 @@ namespace contra {
   void board_line::update_markers_on_overwrite(curpos_t beg, curpos_t end, bool simd) {
     std::vector<line_marker>::iterator const it0 = m_markers.begin();
     std::ptrdiff_t const ibeg = std::lower_bound(it0, m_markers.end(), beg,
-      [](line_marker& m, curpos_t pos){ return m.position < pos;}) - it0;
+      [](line_marker& m, curpos_t pos) {return m.position < pos;}) - it0;
     std::ptrdiff_t const iend = std::upper_bound(it0, m_markers.end(), end,
-      [](curpos_t pos, line_marker& m){ return pos < m.position;}) - it0;
+      [](curpos_t pos, line_marker& m) {return pos < m.position;}) - it0;
 
     constexpr nested_string_type removeMark = string_unknown;
     bool toRemove = false;
@@ -165,6 +165,80 @@ namespace contra {
     }
 
     return strings;
+  }
+
+  void board_line::set_nested_strings(std::vector<nested_string>&& strings) {
+    this->m_markers.clear();
+    this->m_markers.reserve(strings.size() * 2);
+
+    std::vector<line_marker> endMarkers;
+    endMarkers.reserve(strings.size());
+    for (std::size_t i = 0, iN = strings.size(); i < iN; i++) {
+      nested_string const& str = strings[i];
+      mwg_check(
+        str.begin < str.end,
+        "invalid_argument 'strings': strings[%zu] has non-positive range %d..%d",
+        i, (int) str.begin, (int) str.end);
+      mwg_check(
+        !is_string_end(str.stype),
+        "invalid_argument 'strings': strings[%zu].stype (%d) is the end of string",
+        i, (int) str.stype);
+
+      {
+        line_marker bmark;
+        bmark.position = str.begin;
+        bmark.stype = str.stype;
+
+        while (endMarkers.size() &&
+          endMarkers.back().position != nested_string::npos &&
+          endMarkers.back().position <= bmark.position
+        ) {
+          /* Aligned strings clear all the existing nesting levels because
+           * they cannot be nested, so the end markers can be omitted.
+           * 省略せずに明示的に終端マーカを設置しても問題はないが省略する。
+           */
+          bool const toOmit = is_string_aligned(bmark.stype);
+
+          if (!toOmit) this->m_markers.push_back(endMarkers.back());
+          endMarkers.pop_back();
+        }
+
+        mwg_check(
+          this->m_markers.size() == 0 ||
+          this->m_markers.back().position <= bmark.position,
+          "invalid_argument 'string': 'strings' is not properly sorted at strings[%zu]", i);
+
+        this->m_markers.push_back(bmark);
+      }
+
+      {
+        line_marker emark;
+        emark.position = str.end;
+        emark.stype =
+          is_string_directed_begin(str.stype)? string_directed_end:
+          is_string_reversed_begin(str.stype)? string_reversed_end:
+          is_string_aligned_begin(str.stype)? string_aligned_end:
+          string_unknown;
+
+        mwg_check(
+          endMarkers.size() == 0 ||
+          endMarkers.back().position == nested_string::npos ||
+          emark.position <= endMarkers.back().position,
+          "invalid_argument 'strings': strings[%zu] overruns the parent-string end", i);
+
+        mwg_check(
+          emark.stype != string_unknown,
+          "invalid_argument 'strings': strings[%zu].stype has unrecognized value %d", i, (int) str.stype);
+
+        endMarkers.push_back(emark);
+      }
+    }
+
+    for (std::size_t i = endMarkers.size(); i--; )
+      this->m_markers.push_back(endMarkers[i]);
+
+    this->m_strings_cached = std::move(strings);
+    this->m_strings_updated = true;
   }
 
 }
