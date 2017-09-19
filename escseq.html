@@ -371,29 +371,45 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 以下にバイト値と図形文字の対応を載せる。</p>
 
 <table class="normal center">
-<tr><th>略号</th><th>C/R</th>
-    <th>略号</th><th>C/R</th>
-    <th>略号</th><th>C/R</th>
-    <th>略号</th><th>C/R</th>
-    <th>略号</th><th>C/R</th>
-    <th>略号</th><th>C/R</th>
+<tr><th>略号</th><th>C/R 16進 8進 10進</th>
+    <th>略号</th><th>C/R 16進 8進 10進</th>
+    <th>略号</th><th>C/R 16進 8進 10進</th>
+    <th>略号</th><th>C/R 16進 8進 10進</th>
+    <th>略号</th><th>C/R 16進 8進 10進</th>
+    <th>略号</th><th>C/R 16進 8進 10進</th>
 </tr>
-<tr><th>SP</th>   <td>02/00</td><th>0</th>   <td>03/00</td><th>@</th><td>04/00</td><th>P</th><td>05/00</td><th>`</th><td>06/00</td><th>p</th>  <td>07/00</td></tr>
-<tr><th>!</th>    <td>02/01</td><th>1</th>   <td>03/01</td><th>A</th><td>04/01</td><th>Q</th><td>05/01</td><th>a</th><td>06/01</td><th>q</th>  <td>07/01</td></tr>
-<tr><th>"</th>    <td>02/02</td><th>2</th>   <td>03/02</td><th>B</th><td>04/02</td><th>R</th><td>05/02</td><th>b</th><td>06/02</td><th>r</th>  <td>07/02</td></tr>
-<tr><th>#</th>    <td>02/03</td><th>3</th>   <td>03/03</td><th>C</th><td>04/03</td><th>S</th><td>05/03</td><th>c</th><td>06/03</td><th>s</th>  <td>07/03</td></tr>
-<tr><th>$</th>    <td>02/04</td><th>4</th>   <td>03/04</td><th>D</th><td>04/04</td><th>T</th><td>05/04</td><th>d</th><td>06/04</td><th>t</th>  <td>07/04</td></tr>
-<tr><th>%</th>    <td>02/05</td><th>5</th>   <td>03/05</td><th>E</th><td>04/05</td><th>U</th><td>05/05</td><th>e</th><td>06/05</td><th>u</th>  <td>07/05</td></tr>
-<tr><th>&amp;</th><td>02/06</td><th>6</th>   <td>03/06</td><th>F</th><td>04/06</td><th>V</th><td>05/06</td><th>f</th><td>06/06</td><th>v</th>  <td>07/06</td></tr>
-<tr><th>'</th>    <td>02/07</td><th>7</th>   <td>03/07</td><th>G</th><td>04/07</td><th>W</th><td>05/07</td><th>g</th><td>06/07</td><th>w</th>  <td>07/07</td></tr>
-<tr><th>(</th>    <td>02/08</td><th>8</th>   <td>03/08</td><th>H</th><td>04/08</td><th>X</th><td>05/08</td><th>h</th><td>06/08</td><th>x</th>  <td>07/08</td></tr>
-<tr><th>)</th>    <td>02/09</td><th>9</th>   <td>03/09</td><th>I</th><td>04/09</td><th>Y</th><td>05/09</td><th>i</th><td>06/09</td><th>y</th>  <td>07/09</td></tr>
-<tr><th>*</th>    <td>02/10</td><th>:</th>   <td>03/10</td><th>J</th><td>04/10</td><th>Z</th><td>05/10</td><th>j</th><td>06/10</td><th>z</th>  <td>07/10</td></tr>
-<tr><th>+</th>    <td>02/11</td><th>;</th>   <td>03/11</td><th>K</th><td>04/11</td><th>[</th><td>05/11</td><th>k</th><td>06/11</td><th>{</th>  <td>07/11</td></tr>
-<tr><th>,</th>    <td>02/12</td><th>&lt;</th><td>03/12</td><th>L</th><td>04/12</td><th>\</th><td>05/12</td><th>l</th><td>06/12</td><th>|</th>  <td>07/12</td></tr>
-<tr><th>-</th>    <td>02/13</td><th>=</th>   <td>03/13</td><th>M</th><td>04/13</td><th>]</th><td>05/13</td><th>m</th><td>06/13</td><th>}</th>  <td>07/13</td></tr>
-<tr><th>.</th>    <td>02/14</td><th>&gt;</th><td>03/14</td><th>N</th><td>04/14</td><th>^</th><td>05/14</td><th>n</th><td>06/14</td><th>~</th>  <td>07/14</td></tr>
-<tr><th>/</th>    <td>02/15</td><th>?</th>   <td>03/15</td><th>O</th><td>04/15</td><th>_</th><td>05/15</td><th>o</th><td>06/15</td><th>DEL</th><td>07/15</td></tr>
+<tr><th>SP</th>   <td>02/00 \x20 \040 32</td><th>0</th>   <td>03/00 \x30 \060  48</td><th>@</th>  <td>04/00 \x40 \100  64</td>
+    <th>P</th>    <td>05/00 \x50 \120 80</td><th>`</th>   <td>06/00 \x60 \140  96</td><th>p</th>  <td>07/00 \x70 \160 112</td></tr>
+<tr><th>!</th>    <td>02/01 \x21 \041 33</td><th>1</th>   <td>03/01 \x31 \061  49</td><th>A</th>  <td>04/01 \x41 \101  65</td>
+    <th>Q</th>    <td>05/01 \x51 \121 81</td><th>a</th>   <td>06/01 \x61 \141  97</td><th>q</th>  <td>07/01 \x71 \161 113</td></tr>
+<tr><th>"</th>    <td>02/02 \x22 \042 34</td><th>2</th>   <td>03/02 \x32 \062  50</td><th>B</th>  <td>04/02 \x42 \102  66</td>
+    <th>R</th>    <td>05/02 \x52 \122 82</td><th>b</th>   <td>06/02 \x62 \142  98</td><th>r</th>  <td>07/02 \x72 \162 114</td></tr>
+<tr><th>#</th>    <td>02/03 \x23 \043 35</td><th>3</th>   <td>03/03 \x33 \063  51</td><th>C</th>  <td>04/03 \x43 \103  67</td>
+    <th>S</th>    <td>05/03 \x53 \123 83</td><th>c</th>   <td>06/03 \x63 \143  99</td><th>s</th>  <td>07/03 \x73 \163 115</td></tr>
+<tr><th>$</th>    <td>02/04 \x24 \044 36</td><th>4</th>   <td>03/04 \x34 \064  52</td><th>D</th>  <td>04/04 \x44 \104  68</td>
+    <th>T</th>    <td>05/04 \x54 \124 84</td><th>d</th>   <td>06/04 \x64 \144 100</td><th>t</th>  <td>07/04 \x74 \164 116</td></tr>
+<tr><th>%</th>    <td>02/05 \x25 \045 37</td><th>5</th>   <td>03/05 \x35 \065  53</td><th>E</th>  <td>04/05 \x45 \105  69</td>
+    <th>U</th>    <td>05/05 \x55 \125 85</td><th>e</th>   <td>06/05 \x65 \145 101</td><th>u</th>  <td>07/05 \x75 \165 117</td></tr>
+<tr><th>&amp;</th><td>02/06 \x26 \046 38</td><th>6</th>   <td>03/06 \x36 \066  54</td><th>F</th>  <td>04/06 \x46 \106  70</td>
+    <th>V</th>    <td>05/06 \x56 \126 86</td><th>f</th>   <td>06/06 \x66 \146 102</td><th>v</th>  <td>07/06 \x76 \166 118</td></tr>
+<tr><th>'</th>    <td>02/07 \x27 \047 39</td><th>7</th>   <td>03/07 \x37 \067  55</td><th>G</th>  <td>04/07 \x47 \107  71</td>
+    <th>W</th>    <td>05/07 \x57 \127 87</td><th>g</th>   <td>06/07 \x67 \147 103</td><th>w</th>  <td>07/07 \x77 \167 119</td></tr>
+<tr><th>(</th>    <td>02/08 \x28 \050 40</td><th>8</th>   <td>03/08 \x38 \070  56</td><th>H</th>  <td>04/08 \x48 \110  72</td>
+    <th>X</th>    <td>05/08 \x58 \130 88</td><th>h</th>   <td>06/08 \x68 \150 104</td><th>x</th>  <td>07/08 \x78 \170 120</td></tr>
+<tr><th>)</th>    <td>02/09 \x29 \051 41</td><th>9</th>   <td>03/09 \x39 \071  57</td><th>I</th>  <td>04/09 \x49 \111  73</td>
+    <th>Y</th>    <td>05/09 \x59 \131 89</td><th>i</th>   <td>06/09 \x69 \151 105</td><th>y</th>  <td>07/09 \x79 \171 121</td></tr>
+<tr><th>*</th>    <td>02/10 \x2A \052 42</td><th>:</th>   <td>03/10 \x3A \072  58</td><th>J</th>  <td>04/10 \x4A \112  74</td>
+    <th>Z</th>    <td>05/10 \x5A \132 90</td><th>j</th>   <td>06/10 \x6A \152 106</td><th>z</th>  <td>07/10 \x7A \172 122</td></tr>
+<tr><th>+</th>    <td>02/11 \x2B \053 43</td><th>;</th>   <td>03/11 \x3B \073  59</td><th>K</th>  <td>04/11 \x4B \113  75</td>
+    <th>[</th>    <td>05/11 \x5B \133 91</td><th>k</th>   <td>06/11 \x6B \153 107</td><th>{</th>  <td>07/11 \x7B \173 123</td></tr>
+<tr><th>,</th>    <td>02/12 \x2C \054 44</td><th>&lt;</th><td>03/12 \x3C \074  60</td><th>L</th>  <td>04/12 \x4C \114  76</td>
+    <th>\</th>    <td>05/12 \x5C \134 92</td><th>l</th>   <td>06/12 \x6C \154 108</td><th>|</th>  <td>07/12 \x7C \174 124</td></tr>
+<tr><th>-</th>    <td>02/13 \x2D \055 45</td><th>=</th>   <td>03/13 \x3D \075  61</td><th>M</th>  <td>04/13 \x4D \115  77</td>
+    <th>]</th>    <td>05/13 \x5D \135 93</td><th>m</th>   <td>06/13 \x6D \155 109</td><th>}</th>  <td>07/13 \x7D \175 125</td></tr>
+<tr><th>.</th>    <td>02/14 \x2E \056 46</td><th>&gt;</th><td>03/14 \x3E \076  62</td><th>N</th>  <td>04/14 \x4E \116  78</td>
+    <th>^</th>    <td>05/14 \x5E \136 94</td><th>n</th>   <td>06/14 \x6E \156 110</td><th>~</th>  <td>07/14 \x7E \176 126</td></tr>
+<tr><th>/</th>    <td>02/15 \x2F \057 47</td><th>?</th>   <td>03/15 \x3F \077  63</td><th>O</th>  <td>04/15 \x4F \117  79</td>
+    <th>_</th>    <td>05/15 \x5F \137 95</td><th>o</th>   <td>06/15 \x6F \157 111</td><th>DEL</th><td>07/15 \x7F \177 127</td></tr>
 </table>
 
 <h3>エスケープシーケンス (escape sequence)</h3>
