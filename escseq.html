@@ -673,8 +673,12 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </li>
 </ul>
 
-<p>Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong> のないもの) を <i>&lt;Ft&gt;</i> に従って表にする。</p>
+<p>この文書ではエスケープシーケンスに倣って、制御シーケンスについても <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i> の部分により型を定めることにする。
+Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong> のないもの) を表にする。</p>
 <table class="normal center">
+<tr><th colspan="6">Ft型: 端末制御機能</th>
+    <th colspan="2">Ft型: 私用制御機能</th>
+    </tr>
 <tr><th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
@@ -747,6 +751,9 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 
 <p>0Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong> = <kbd>SP</kbd> のもの) を <i>&lt;Ft&gt;</i> に従って表にする。</p>
 <table class="normal center">
+<tr><th colspan="6">0Ft型: 端末制御機能</th>
+    <th colspan="2">0Ft型: 私用制御機能</th>
+    </tr>
 <tr><th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
@@ -817,8 +824,10 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>---</th>    <td>-</td></tr>
 </table>
 
-<p>その他の私用制御機能を以下にまとめる。</p>
-<table class="normal center">
+<p>その他の nFt 型の私用制御機能を以下にまとめる。</p>
+<table class="normal center contra-cell-centered">
+<tr><th></th><th colspan="9">nFt型: 私用制御機能</th>
+    </tr>
 <tr><th></th>
     <th>1Ft <kbd>!</kbd></th>
     <th>2Ft <kbd>"</kbd></th>
@@ -833,164 +842,164 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>DECSTR</td>
     <td>DECSCL</td>
     <td>DECRQM <!-- CSI ? ... $ p DECRQMH (RLogin による名称) --></td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECSDPT</td>
+    <td>DECSPPCS</td>
     <td>DECSR</td>
-    <td>--</td></tr>
+    <td>DECLTOD</td></tr>
 <tr><th><kbd>q</kbd></th>
-    <td>--</td>
+    <td>---</td>
     <td>DECSCA</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>DECSDDT</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECSRC</td>
-    <td>--</td>
+    <td>DECELF</td>
     <td>DECTID</td>
     </tr>
 <tr><th><kbd>r</kbd></th>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECCARA</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECSCS</td>
+    <td>DECSMKR</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>s</kbd></th>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECSPRTT</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECSFC</td>
+    <td>---</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>t</kbd></th>
-    <td>--</td>
+    <td>---</td>
     <td>DECSRFR</td>
     <td>DECRARA</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>u</kbd></th>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>DECSTRL</td>
     <td>DECRQTSR</td>
     <td>DECRQUPSS</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECSCP</td>
+    <td>---</td>
     <td>DECRQKT</td>
     </tr>
 <tr><th><kbd>v</kbd></th>
-    <td>--</td>
+    <td>---</td>
     <td>DECRQDE</td>
     <td>DECCRA</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECRPKT</td>
     </tr>
 <tr><th><kbd>w</kbd></th>
-    <td>--</td>
+    <td>---</td>
     <td>DECRPDE</td>
     <td>DECRQPSR</td>
-    <td>--</td>
+    <td>---</td>
     <td>DECEFR</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECSPP</td>
     <td>DECRQKD</td>
     </tr>
 <tr><th><kbd>x</kbd></th>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECFRA</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECSACE</td>
     <td>DECRQPKFM<!-- RLogin では DECPQPLFM と呼んでいる --></td>
-    <td>--</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>y</kbd></th>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECRPM</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECRQCRA</td>
     <td>DECPKFMR</td>
-    <td>--</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>z</kbd></th>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECERA</td>
-    <td>--</td>
+    <td>---</td>
     <td>DECELR</td>
-    <td>--</td>
+    <td>---</td>
     <td>DECINVM</td>
-    <td>--</td>
-    <td>--</td>
+    <td>DECPKA</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>{</kbd></th>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECSERA</td>
-    <td>--</td>
+    <td>---</td>
     <td>DECSLE</td>
     <td>DECSTGLT</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>DECMSR<br />DSR-MSR</td>
+    <td>---</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>|</kbd></th>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECSCPP</td>
-    <td>--</td>
+    <td>---</td>
     <td>DECRQLP</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>DECSNLS</td>
+    <td>---</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>}</kbd></th>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECSASD</td>
-    <td>--</td>
+    <td>---</td>
     <td>DECIC</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECATC</td>
     </tr>
 <tr><th><kbd>~</kbd></th>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECSSDT</td>
-    <td>--</td>
+    <td>---</td>
     <td>DECDC</td>
-    <td>--</td>
-    <td>--</td>
-    <td>--</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
     <td>DECPS</td>
     </tr>
 </table>
@@ -3537,7 +3546,12 @@ j.行消す, ESC[2K
 <li>rxvt <a href="http://doc.gnu-darwin.org/rxvt/rxvtRef.html">Rxvt Technical Reference</a> [<a href="http://www.usf.uos.de/infoservice/doc/localhtml/rxvt/refer.html">old</a>]</li>
 <li>urxvt <a href="http://manpages.ubuntu.com/manpages/lucid/man7/urxvt.7.html">Ubuntu Manpage: RXVT REFERENCE - FAQ, command sequences and other background</a></li>
 <li>ttssh2 <a href="http://ttssh2.sourceforge.jp/manual/ja/about/ctrlseq.html">対応制御シーケンス - Tera Term</a></li>
-<li>ANSI.SYS <a href="http://en.wikipedia.org/wiki/ANSI.SYS">ANSI.SYS - Wikipedia, the free encyclopedia</a></li>
+<li>ANSI.SYS
+  <ul>
+  <li><a href="http://en.wikipedia.org/wiki/ANSI.SYS">ANSI.SYS - Wikipedia, the free encyclopedia</a></li>
+  <li><a href="http://fpcu.on.coocan.jp/dosvcmd/ansi.htm">ANSI.SYS - キーボードと画面の拡張制御のサポート [FPCU]DOS/V&amp;Windowsコマンド・プロンプト・リファレンス</a></li>
+  </ul>
+</li>
 <li>RLogin
   <ul>
   <li><a href="http://nanno.dip.jp/softlib/man/rlogin/">rlogin/telnet/ssh(クライアント)ターミナルソフト</a></li>
