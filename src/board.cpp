@@ -35,29 +35,36 @@ namespace contra {
       return is_string_corresponding_pair(m1.stype, m2.stype);
   }
 
+  static std::ptrdiff_t find_next_string_aligned(std::vector<line_marker> const& markers, std::ptrdiff_t beg, std::ptrdiff_t end = -1) {
+    if (end < 0) end = markers.size();
+    for (std::ptrdiff_t j = beg + 1; j < end; j++)
+      if (is_string_aligned(markers[j].stype)) return j;
+    return -1;
+  }
+
   void board_line::update_markers_on_overwrite(curpos_t beg, curpos_t end, bool simd) {
     std::vector<line_marker>::iterator const it0 = m_markers.begin();
     std::ptrdiff_t const ibeg = std::lower_bound(it0, m_markers.end(), beg,
-      [](line_marker& m, curpos_t pos) {return m.position < pos;}) - it0;
+      [] (line_marker& m, curpos_t pos) { return m.position < pos; }) - it0;
     std::ptrdiff_t const iend = std::upper_bound(it0, m_markers.end(), end,
-      [](curpos_t pos, line_marker& m) {return pos < m.position;}) - it0;
+      [] (curpos_t pos, line_marker& m) { return pos < m.position; }) - it0;
 
     constexpr nested_string_type removeMark = string_unknown;
-    bool toRemove = false;
+    bool toRemove = false, flag_changed = false;
 
     for (std::ptrdiff_t i = ibeg; i < iend; i++) {
       line_marker& m = m_markers[i];
       if (is_string_bidi(m.stype)) {
         if (beg < m.position && m.position < end) {
-          m.position = simd? beg: end;
+          m.position = simd ? beg : end;
+          flag_changed = true;
 
           if (!simd && is_string_bidi_begin(m.stype)) {
             // SDS/SRS 開始直後に aligned string 開始/終了がある場合は空文字列として削除
-            for (std::ptrdiff_t j = i + 1; j < iend; i++) {
-              if (is_string_aligned(m_markers[j].stype)) {
-                m.stype = removeMark;
-                break;
-              }
+            if (find_next_string_aligned(m_markers, i, iend) > 0) {
+              m.stype = removeMark;
+              toRemove = true;
+              continue;
             }
           }
         }
@@ -75,19 +82,16 @@ namespace contra {
         }
 
       } else if (is_string_aligned(m.stype)) {
-        if ((beg < m.position && m.position < end) || m.position == (simd? beg: end)) {
+        if ((beg < m.position && m.position < end) || m.position == (simd ? beg : end)) {
           m.stype = removeMark;
           toRemove = true;
 
-          if (m.stype == string_aligned_end) break;
-
-          for (std::ptrdiff_t j = i + 1, jN = m_markers.size(); j < jN; j++) {
-            if (!is_string_aligned(m_markers[j].stype)) continue;
-            if (m_markers[j].stype == string_aligned_end) {
+          if (m.stype != string_aligned_end) {
+            std::ptrdiff_t const j = find_next_string_aligned(m_markers, i);
+            if (j >=0 && m_markers[j].stype == string_aligned_end) {
               m_markers[j].stype = removeMark;
               toRemove = true;
             }
-            break;
           }
         }
       } else
@@ -95,14 +99,13 @@ namespace contra {
     }
 
     if (toRemove) {
-      std::ptrdiff_t idst = ibeg;
-      for (std::ptrdiff_t isrc = ibeg, iN = m_markers.size(); isrc < iN; isrc++) {
-        if (m_markers[isrc].stype == removeMark) continue;
-        if (idst != isrc) m_markers[idst] = m_markers[isrc];
-        idst++;
-      }
-      m_markers.erase(m_markers.begin() + idst, m_markers.end());
+      m_markers.erase(
+        std::remove_if(m_markers.begin() + ibeg, m_markers.end(),
+          [] (line_marker const& m) { return m.stype == removeMark; }),
+        m_markers.end());
     }
+    if (toRemove || flag_changed)
+      m_strings_updated = false;
   }
 
   std::vector<nested_string> const& board_line::get_nested_strings() const {
