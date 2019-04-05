@@ -4,8 +4,13 @@ all:
 .PHONY: all
 
 ifeq ($(HOSTNAME),padparadscha)
-CXX := cxx
-CXXFLAGS := -Wall -Wextra -O2
+  libmwg_dir := $(HOME)/opt/libmwg-201509
+  libmwg_cxxprefix := i686-pc-linux-gnu-gcc-6.3.1+cxx11-release
+  CXX := g++
+  CXXFLAGS := -Wall -Wextra -O2 \
+    -I $(libmwg_dir)/include \
+    -I $(libmwg_dir)/include/$(libmwg_cxxprefix) \
+    -L $(libmwg_dir)/lib/$(libmwg_cxxprefix)
 endif
 
 objdir = ../out

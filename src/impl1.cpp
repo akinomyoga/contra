@@ -35,6 +35,10 @@ void check_data_presentation_conversion(bool useseq, bool verbose = false) {
     }
   };
 
+  //
+  // Test Directed Strings
+  //
+
   // abcd_[efgh]_ij
   int const px_result1[] = {0, 1, 2, 3, 4, 8, 7, 6, 5, 9, 10, 11};
   line->clear_markers();
@@ -51,7 +55,7 @@ void check_data_presentation_conversion(bool useseq, bool verbose = false) {
     line->_set_string(5, 9, string_reversed);
   tester("abcd_efgh_ij", px_result1);
 
-  // // kl_[mnop_[qrst]_uvw]_xyz
+  // kl_[mnop_[qrst]_uvw]_xyz
   int const px_result2[] = {0, 1, 2, 15, 14, 13, 12, 11, 7, 8, 9, 10, 6, 5, 4, 3, 16, 17, 18, 19};
   line->clear_markers();
   if (useseq)

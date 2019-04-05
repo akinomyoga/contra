@@ -790,6 +790,59 @@ namespace {
     return true;
   }
 
+  /*---------------------------------------------------------------------------
+   * ECH の動作
+   *
+   * DCSM(DATA) のときの動作
+   *
+   * 削除領域が文字の境界と一致していない場合がある。その場合は削除領域に一部が
+   * かかっている文字も含む様に領域を拡張する。
+   *
+   * 双方向文字列については削除領域の直前で全て閉じ、削除領域の直後で再開する。
+   * 位置揃え文字列については削除領域の直前で閉じ、再開はしない。
+   * Note: 位置揃え文字列は開始点が意味を持つ。異なる位置で再開しても位置がずれ
+   * てしまい本来の意味を失うので再開しない仕様とした。
+   *
+   * DCSM(PRESENTATION) のときの動作
+   *
+   *---------------------------------------------------------------------------
+   */
+  bool do_ech(tty_player& play, csi_parameters& params) {
+    tty_state* const s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s->get_mode(mode_zdm))
+        param = 1;
+      else
+        return true;
+    }
+
+    board* const b = play.board();
+
+    if (s->get_mode(mode_dcsm)) {
+      // DCSM(DATA)
+      if (b->cur.x >= b->m_width) return true;
+      board_cell* const base  = b->cell(0, b->cur.y);
+      board_cell* const limit = base + b->m_width;
+      board_cell* beg = base + b->cur.x;
+      while (base < beg && (beg[0].character & is_wide_extension) != 0) beg--;
+      board_cell* end = std::min(beg + param, limit);
+      while (end < limit && (end[0].character & is_wide_extension) != 0) end++;
+
+      b->clear_range(beg, end);
+      b->line(b->cur.y)->update_markers_on_erase(beg - base, end - base);
+    } else {
+      // DCSM(PRESENTATION)
+      curpos_t const x1 = b->to_presentation_position(b->cur.y, b->cur.x);
+      curpos_t const x2 = std::min(x1 + (curpos_t) param, b->m_width);
+
+      // ■ToDo: erase cells
+      // ■ToDo: update markers
+    }
+    return true;
+  }
+
   struct control_function_dictionary {
     control_function_t* data1[63];
     std::unordered_map<std::uint16_t, control_function_t*> data2;
@@ -828,6 +881,9 @@ namespace {
       register_cfunc(&do_cup, ascii_H);
       register_cfunc(&do_hpa, ascii_back_quote);
       register_cfunc(&do_vpa, ascii_d);
+
+      // ECH/DCH/ICH, etc.
+      register_cfunc(&do_ech, ascii_X);
 
       // implicit movement
       register_cfunc(&do_simd, ascii_circumflex);

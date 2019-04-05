@@ -116,7 +116,7 @@ namespace contra {
     strings.clear();
 
     std::vector<std::size_t> nest;
-    for (line_marker const marker: m_markers) {
+    for (line_marker const marker : m_markers) {
       switch (marker.stype) {
       case string_directed_charpath:
       case string_directed_rtol:
@@ -141,7 +141,7 @@ namespace contra {
       case string_aligned_centered:
       case string_aligned_char:
       case string_aligned_end:
-        for (std::size_t index: nest)
+        for (std::size_t index : nest)
           strings[index].end = marker.position;
         nest.clear();
         if (marker.stype != string_aligned_end)
@@ -218,9 +218,9 @@ namespace contra {
         line_marker emark;
         emark.position = str.end;
         emark.stype =
-          is_string_directed_begin(str.stype)? string_directed_end:
-          is_string_reversed_begin(str.stype)? string_reversed_end:
-          is_string_aligned_begin(str.stype)? string_aligned_end:
+          is_string_directed_begin(str.stype) ? string_directed_end :
+          is_string_reversed_begin(str.stype) ? string_reversed_end :
+          is_string_aligned_begin(str.stype) ? string_aligned_end :
           string_unknown;
 
         mwg_check(
@@ -242,6 +242,104 @@ namespace contra {
 
     this->m_strings_cached = std::move(strings);
     this->m_strings_updated = true;
+  }
+
+  /*---------------------------------------------------------------------------
+   *
+   * void board_line::update_markers_on_erase(curpos_t beg, curpos_t end);
+   *
+   *---------------------------------------------------------------------------
+   *
+   * 動作の詳細に関しては tty_player.cpp (do_ech) を参照のこと
+   *
+   * 開いている文字列を閉じなければならないので入れ子状態を追跡しなければならない。
+   * update_string_nest はその為の関数である。
+   *
+   */
+
+  template<typename ContinuePredicate>
+  static void update_string_nest(
+    std::vector<line_marker const*>& nest,
+    std::vector<line_marker>::const_iterator& it,
+    ContinuePredicate fcond
+  ) {
+    for (; fcond(); ++it) {
+      line_marker const& m = *it;
+      switch (m.stype) {
+      case string_directed_charpath:
+      case string_directed_rtol:
+      case string_directed_ltor:
+      case string_reversed:
+        nest.push_back(&m);
+        break;
+
+      case string_directed_end:
+      case string_reversed_end:
+        {
+          nested_string_type stype;
+          while (nest.size() && is_string_bidi(stype = nest.back()->stype)) {
+            nest.pop_back();
+            if ((stype == string_reversed) == (m.stype == string_reversed_end)) break;
+          }
+        }
+        break;
+
+      case string_aligned_left:
+      case string_aligned_right:
+      case string_aligned_centered:
+      case string_aligned_char:
+      case string_aligned_end:
+        nest.clear();
+        if (m.stype != string_aligned_end)
+          nest.push_back(&m);
+        break;
+
+      default:
+        mwg_check(0, "BUG: invalid stype");
+      }
+    }
+  }
+
+  void board_line::update_markers_on_erase(curpos_t beg, curpos_t end) {
+    if (beg >= end || m_markers.size() == 0) return;
+
+    typedef std::vector<line_marker>::const_iterator it_t;
+    it_t const it0 = m_markers.begin(), itN = m_markers.end();
+
+    it_t it = it0;
+    std::vector<line_marker const*> nest;
+    update_string_nest(nest, it, [=, &it] () { return it != itN && it->position < beg; });
+    std::vector<line_marker> markers2(it0, it);
+    if (nest.size()) {
+      std::ptrdiff_t const ibeg = it - it0;
+      if (is_string_aligned_begin(nest[0]->stype))
+        markers2.push_back(line_marker { ibeg, string_aligned_end });
+      else {
+        for (std::size_t i = nest.size(); i--; ) {
+          nested_string_type const stype = nest[i]->stype;
+          if (is_string_directed_begin(stype))
+            markers2.push_back(line_marker { ibeg, string_directed_end });
+          else if (is_string_reversed_begin(stype))
+            markers2.push_back(line_marker { ibeg, string_reversed_end });
+          else if (is_string_aligned_begin(stype)) {
+            mwg_assert(i == 0, "aligned string should be the top level");
+            markers2.push_back(line_marker { ibeg, string_aligned_end });
+          } else
+            mwg_assert(0, "BUG: invalid stype");
+        }
+      }
+    }
+
+    update_string_nest(nest, it, [=, &it] () { return it != itN && it->position <= end; });
+    if (nest.size()) {
+      std::ptrdiff_t const iend = it - it0;
+      for (line_marker const* m : nest)
+        markers2.push_back(line_marker { iend, m->stype });
+    }
+
+    markers2.insert(markers2.end(), it, itN);
+
+    m_markers.swap(markers2);
   }
 
 }

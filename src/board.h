@@ -114,10 +114,10 @@ namespace contra {
 
   enum character_flags {
     unicode_mask       = 0x001FFFFF,
-    is_acs_character   = 0x01000000,
+    is_acs_character   = 0x01000000, // not yet supported
     is_wide_extension  = 0x02000000,
-    is_unicode_cluster = 0x04000000,
-    is_embedded_object = 0x08000000,
+    is_unicode_cluster = 0x04000000, // not yet supported
+    is_embedded_object = 0x08000000, // not yet supported
   };
 
   enum attribute_flags {
@@ -242,7 +242,7 @@ namespace contra {
 
   private:
     static aflags_t construct_aflags(attribute_t attr, int fgColorSpace, int bgColorSpace) {
-      return (attr & ~(attribute_t)(has_extended_attribute | fg_color_mask | bg_color_mask))
+      return (attr & ~(attribute_t) (has_extended_attribute | fg_color_mask | bg_color_mask))
         | fgColorSpace << fg_color_shift
         | bgColorSpace << bg_color_shift;
     }
@@ -589,6 +589,7 @@ namespace contra {
     }
 
     void update_markers_on_overwrite(curpos_t beg, curpos_t end, bool simd);
+    void update_markers_on_erase(curpos_t beg, curpos_t end);
 
     void append_marker_at(curpos_t pos, nested_string_type marker) {
       m_strings_updated = false;
@@ -743,16 +744,16 @@ namespace contra {
       curpos_t const len = this->line_length(y);
 
       bool rtol = defaultRToL;
-      curpos_t x = toPresentationPosition? 0: srcX;
-      for (nested_string const& range: strings) {
-        curpos_t const referenceX = toPresentationPosition? srcX: x;
+      curpos_t x = toPresentationPosition ? 0 : srcX;
+      for (nested_string const& range : strings) {
+        curpos_t const referenceX = toPresentationPosition ? srcX : x;
 
         if (referenceX < range.begin) break;
 
-        curpos_t const end = range.end == nested_string::npos? len: range.end;
+        curpos_t const end = range.end == nested_string::npos ? len : range.end;
         if (referenceX < end) {
           bool const reverse = range.stype == string_reversed
-            || (rtol? range.stype == string_directed_ltor:
+            || (rtol ? range.stype == string_directed_ltor :
               range.stype == string_directed_rtol)
             || (range.stype == string_directed_charpath && rtol != defaultRToL);
 
@@ -782,13 +783,13 @@ namespace contra {
 
   public:
     curpos_t line_home(board_line const* line) const {
-      return line->home < 0? 0: line->home;
+      return line->home < 0 ? 0 : line->home;
     }
     curpos_t line_limit(board_line const* line) const {
-      return line->limit < 0? m_width - 1: line->limit;
+      return line->limit < 0 ? m_width - 1 : line->limit;
     }
-    curpos_t line_home(curpos_t y) const {return line_home(line(y));}
-    curpos_t line_limit(curpos_t y) const {return line_limit(line(y));}
+    curpos_t line_home(curpos_t y) const { return line_home(line(y)); }
+    curpos_t line_limit(curpos_t y) const { return line_limit(line(y)); }
 
   public:
     typedef extension_store<attribute_t, extended_attribute, has_extended_attribute> extended_attribute_store;
