@@ -114,123 +114,165 @@ namespace ansi {
   }
 
   struct line_t {
-    std::vector<cell_t> cells;
+    std::vector<cell_t> m_cells;
     line_attr_t m_lflags = {0};
     curpos_t m_home  {-1};
     curpos_t m_limit {-1};
 
-    // m_monospace の時、データ位置と cells のインデックスは一致する。
+    // !m_prop_enabled の時、データ位置と m_cells のインデックスは一致する。
     //   全角文字は wide_extension 文字を後ろにつける事により調節する。
     //   Grapheme cluster やマーカーは含まれない。
-    // それ以外の時、データ位置と cells のインデックスは一致しない。
+    // m_prop_enabled の時、データ位置と m_cells のインデックスは一致しない。
     //   各セルの幅を加算して求める必要がある。
     //   ゼロ幅の Grapheme cluster やマーカー等を含む事が可能である。
-    bool m_monospace = true;
+    bool m_prop_enabled = false;
+
+    // !m_monospace の時に前回の書き込み位置の情報をキャッシュしておく。
+    std::size_t m_prop_i;
+    curpos_t m_prop_x;
+
+  public:
+    std::vector<cell_t> const& cells() const { return m_cells; }
 
     void clear() {
-      this->cells.clear();
+      this->m_cells.clear();
       m_lflags = (line_attr_t) 0;
       m_home = -1;
       m_limit = -1;
-      m_monospace = true;
+      m_prop_enabled = false;
+      m_prop_i = 0;
+      m_prop_x = 0;
     }
 
   private:
     void convert_to_proportional() {
-      if (!this->m_monospace) return;
-      this->m_monospace = false;
-      cells.erase(
-        std::remove_if(cells.begin(), cells.end(),
+      if (this->m_prop_enabled) return;
+      this->m_prop_enabled = true;
+      m_cells.erase(
+        std::remove_if(m_cells.begin(), m_cells.end(),
           [] (cell_t const& cell) { return cell.character.is_wide_extension(); }),
-        cells.end());
+        m_cells.end());
+      m_prop_i = 0;
+      m_prop_x = 0;
     }
 
   private:
-    void monospace_put_character_at(curpos_t pos, cell_t const& cell) {
-      curpos_t const w = cell.width;
-      curpos_t const ncell = (curpos_t) cells.size();
-      if (ncell < pos + w) {
+    void monospace_write_cells(curpos_t pos, cell_t const* cell, int count, int repeat, int implicit_move) {
+      curpos_t width = 0;
+      for (int i = 0; i < count; i++) {
+        curpos_t const w = cell[i].width;
+        if (w == 0) {
+          convert_to_proportional();
+          proportional_write_cells(pos, cell, count, repeat, implicit_move);
+          return;
+        }
+        width += w;
+      }
+      width *= repeat;
+
+      curpos_t const ncell = (curpos_t) this->m_cells.size();
+      if (ncell < pos + width) {
         cell_t fill;
         fill.character = 0;
         fill.attribute = 0;
         fill.width = 1;
-        cells.resize((curpos_t) (pos + w), fill);
+        this->m_cells.resize((curpos_t) (pos + width), fill);
       }
 
       // 左側の中途半端な文字を消去
-      if (cells[pos].character.is_extension()) {
+      if (m_cells[pos].character.is_extension()) {
         for (std::ptrdiff_t q = pos - 1; q >= 0; q--) {
-          bool is_wide = cells[q].character.is_extension();
-          cells[q].character = ascii_sp;
-          cells[q].width = 1;
+          bool is_wide = this->m_cells[q].character.is_extension();
+          this->m_cells[q].character = ascii_sp;
+          this->m_cells[q].width = 1;
           if (!is_wide) break;
         }
       }
 
       // 右側の中途半端な文字を消去
-      for (curpos_t q = pos + w; q < ncell && cells[q].character.is_extension(); q++) {
-        cells[q].character = ascii_sp;
-        cells[q].width = 1;
+      for (curpos_t q = pos + width; q < ncell && this->m_cells[q].character.is_extension(); q++) {
+        this->m_cells[q].character = ascii_sp;
+        this->m_cells[q].width = 1;
       }
 
       // 文字を書き込む
-      cells[pos] = cell;
-      for (curpos_t i = 1; i < w; i++) {
-        cells[pos + i].character = character_t::flag_wide_extension;
-        cells[pos + i].attribute = cell.attribute;
-        cells[pos + i].width = 0;
+      for (int r = 0; r < repeat; r++) {
+        for (int i = 0; i < count; i++) {
+          curpos_t const w = cell[i].width;
+          m_cells[pos] = cell[i];
+          for (curpos_t i = 1; i < w; i++) {
+            m_cells[pos + i].character = character_t::flag_wide_extension;
+            m_cells[pos + i].attribute = cell[i].attribute;
+            m_cells[pos + i].width = 0;
+          }
+          pos += w;
+        }
       }
     }
 
   private:
-    std::pair<std::size_t, curpos_t> proportional_glb(curpos_t xdst, std::size_t beg, curpos_t xbeg, std::size_t end, bool include_zw_body) {
-      std::size_t i = beg;
-      curpos_t x = xbeg;
-      while (i < end) {
-        curpos_t xnew = x + cells[i].width;
+    std::pair<std::size_t, curpos_t> proportional_glb(curpos_t xdst, bool include_zw_body) {
+      std::size_t const ncell = m_cells.size();
+      std::size_t i = 0;
+      curpos_t x = 0;
+      if (m_prop_x <= xdst) {
+        i = m_prop_i;
+        x = m_prop_x;
+      }
+      while (i < ncell) {
+        curpos_t xnew = x + m_cells[i].width;
         if (xdst < xnew) break;
-        i++;
+        ++i;
         x = xnew;
       }
       if (include_zw_body && x == xdst)
-        while (i > 0 && cells[i - 1].is_zero_width_body()) i--;
+        while (i > 0 && m_cells[i - 1].is_zero_width_body()) i--;
+      m_prop_i = i;
+      m_prop_x = x;
       return {i, x};
     }
-    std::pair<std::size_t, curpos_t> proportional_lub(curpos_t xdst, std::size_t beg, curpos_t xbeg, std::size_t end, bool include_zw_body) {
-      std::size_t i = beg;
-      curpos_t x = xbeg;
-      while (i < end) {
-        x += cells[i++].width;
-        if (xdst <= x) {
-          while (i < end && cells[i].character.is_extension()) i++;
-          break;
-        }
+    std::pair<std::size_t, curpos_t> proportional_lub(curpos_t xdst, bool include_zw_body) {
+      std::size_t const ncell = m_cells.size();
+      std::size_t i = 0;
+      curpos_t x = 0;
+      if (m_prop_x <= xdst) {
+        i = m_prop_i;
+        x = m_prop_x;
+        if (!include_zw_body && x == xdst)
+          while (i > 0 && m_cells[i - 1].is_zero_width_body()) i--;
       }
+      while (i < ncell && x < xdst) x += m_cells[i++].width;
+      while (i < ncell && m_cells[i].character.is_extension()) i++;
       if (include_zw_body && x == xdst)
-        while (i < end && cells[i].is_zero_width_body()) i++;
+        while (i < ncell && m_cells[i].is_zero_width_body()) i++;
+      m_prop_i = i;
+      m_prop_x = x;
       return {i, x};
     }
-
-    void proportional_put_character_at(curpos_t pos, cell_t const& cell, int implicit_move) {
-      curpos_t const left = pos, right = pos + cell.width;
-      std::size_t const ncell = cells.size();
+    void proportional_write_cells(curpos_t pos, cell_t const* cell, int count, int repeat, int implicit_move) {
+      curpos_t width = 0;
+      for (int i = 0; i < count; i++) width += cell[i].width;
+      width *= repeat;
+      curpos_t const left = pos, right = pos + width;
+      std::size_t const ncell = m_cells.size();
 
       // 置き換える範囲 i1..i2 を決定する。
       // Note: ゼロ幅の文字は "mark 文字 cluster" の様に文字の周りに分布している。
       //   暗黙移動の方向の境界上の zw body (marker 等) は削除の対象とする。
       std::size_t i1, i2;
       curpos_t x1, x2;
-      std::tie(i1, x1) = proportional_glb(left , 0 , 0 , ncell, implicit_move < 0);
-      std::tie(i2, x2) = proportional_lub(right, i1, x1, ncell, implicit_move > 0);
+      std::tie(i1, x1) = proportional_glb(left , implicit_move < 0);
+      std::tie(i2, x2) = proportional_lub(right, implicit_move > 0);
+      if (i1 > i2) i2 = i1; // cell.width=0 implicit_move=0 の時
 
       // 書き込み文字数の計算
-      std::size_t count = 1;
-      if (x1 < left) count += left - x1;
-      if (right < x2) count += x2 - right;
+      std::size_t nwrite = count * repeat;
+      if (x1 < left) nwrite += left - x1;
+      if (right < x2) nwrite += x2 - right;
       attribute_t lattr = 0, rattr = 0;
       if (i1 < i2) {
-        lattr = cells[i1].attribute;
-        rattr = cells[i2 - 1].attribute;
+        lattr = m_cells[i1].attribute;
+        rattr = m_cells[i2 - 1].attribute;
       }
 
       cell_t fill;
@@ -239,33 +281,34 @@ namespace ansi {
       fill.width = 1;
 
       // 書き込み領域の確保
-      if (count < i2 - i1) {
-        cells.erase(cells.begin() + (i1 + count), cells.begin() + i2);
-      } else if (count > i2 - i1) {
-        cells.insert(cells.begin() + i2, i1 + count - i2, fill);
+      if (nwrite < i2 - i1) {
+        m_cells.erase(m_cells.begin() + (i1 + nwrite), m_cells.begin() + i2);
+      } else if (nwrite > i2 - i1) {
+        m_cells.insert(m_cells.begin() + i2, i1 + nwrite - i2, fill);
       }
 
       // 余白と文字の書き込み
-      curpos_t i = i1;
+      curpos_t p = i1;
       if (x1 < left) {
         fill.attribute = lattr;
-        do cells[i++] = fill; while (++x1 < left);
+        do m_cells[p++] = fill; while (++x1 < left);
       }
-      cells[i++] = cell;
+      for (int r = 0; r < repeat; r++)
+        for (int i = 0; i < count; i++)
+          m_cells[p++] = cell[i];
       if (right < x2) {
         fill.attribute = rattr;
-        do cells[i++] = fill; while (right < --x2);
+        do m_cells[p++] = fill; while (right < --x2);
       }
     }
 
   public:
-    void put_character_at(curpos_t pos, cell_t const& cell, int implicit_move) {
-      if (m_monospace)
-        monospace_put_character_at(pos, cell);
+    void write_cells(curpos_t pos, cell_t const* cell, int count, int repeat, int implicit_move) {
+      if (m_prop_enabled)
+        proportional_write_cells(pos, cell, count, repeat, implicit_move);
       else
-        proportional_put_character_at(pos, cell, implicit_move);
+        monospace_write_cells(pos, cell, count, repeat, implicit_move);
     }
-
   };
 
   struct cursor_t {
@@ -330,10 +373,10 @@ namespace ansi {
     void debug_print(std::FILE* file) {
       for (auto const& line : m_lines) {
         if (line.m_lflags & line_attr_t::is_line_used) {
-          for (auto const& cell : line.cells) {
+          for (auto const& cell : line.cells()) {
             if (cell.character.is_wide_extension()) continue;
             char32_t c = (char32_t) (cell.character.value & character_t::unicode_mask);
-            if (c == 0) c = 32;
+            if (c == 0) c = '~';
             contra::encoding::put_u8(c, file);
           }
           std::putc('\n', file);

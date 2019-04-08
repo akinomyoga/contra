@@ -160,7 +160,7 @@ namespace ansi {
       cell.character = u;
       cell.attribute = cur.attribute;
       cell.width = char_width;
-      m_board->line().put_character_at(xL, cell, dir);
+      m_board->line().write_cells(xL, &cell, 1, 1, dir);
       cur.x += dir * char_width;
 
       // 行末を超えた時は折り返し
@@ -191,16 +191,15 @@ namespace ansi {
       int const tabwidth = 8;
       curpos_t const xdst = std::min((cur.x + tabwidth - 1) / tabwidth * tabwidth, m_board->m_width - 1);
 
-      if (cur.x >= xdst) return;
-
-      cell_t fill;
-      fill.character = ascii_nul;
-      fill.attribute = cur.attribute;
-      fill.width = 1;
-
-      line_t& line = m_board->line();
-      for (; cur.x < xdst; cur.x++)
-        line.put_character_at(cur.x, fill, 1);
+      curpos_t const count = xdst - cur.x;
+      if (count > 0) {
+        cell_t fill;
+        fill.character = ascii_nul;
+        fill.attribute = cur.attribute;
+        fill.width = 1;
+        m_board->line().write_cells(cur.x, &fill, 1, count, 1);
+        cur.x += count;
+      }
     }
 
     void do_generic_ff(bool toAppendNewLine, bool toAdjustXAsPresentationPosition) {
@@ -307,21 +306,17 @@ namespace ansi {
       seq.print(stderr);
       std::fputc('\n', stderr);
     }
-
     void process_invalid_sequence(sequence const& seq) {
       // ToDo: 何処かにログ出力
       print_unrecognized_sequence(seq);
     }
-
     void process_escape_sequence(sequence const& seq) {
       print_unrecognized_sequence(seq);
     }
-
     void process_control_sequence(sequence const& seq) {
       // ToDo
       print_unrecognized_sequence(seq);
     }
-
     void process_command_string(sequence const& seq) {
       print_unrecognized_sequence(seq);
     }

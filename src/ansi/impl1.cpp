@@ -22,6 +22,13 @@ int main() {
     board.debug_print(stdout);
   }
 
+  // タブ挿入
+  {
+    board_t board(40, 1);
+    tty_player player(board);
+    player.printt("日本\thello\tworld");
+    board.debug_print(stdout);
+  }
 
   return 0;
 }
