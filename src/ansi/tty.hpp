@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_ANSI_TTY_H
-#define CONTRA_ANSI_TTY_H
+#ifndef CONTRA_ANSI_TTY_HPP
+#define CONTRA_ANSI_TTY_HPP
 #include "line.h"
 #include "../sequence.h"
 

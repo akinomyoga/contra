@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_ANSI_UTF8_H
-#define CONTRA_ANSI_UTF8_H
+#ifndef CONTRA_ANSI_UTF8_HPP
+#define CONTRA_ANSI_UTF8_HPP
 #include <cstdio>
 
 namespace contra {

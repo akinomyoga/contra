@@ -1,17 +1,17 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_ANSI_LINE_H
-#define CONTRA_ANSI_LINE_H
+#ifndef CONTRA_ANSI_LINE_HPP
+#define CONTRA_ANSI_LINE_HPP
 #include <mwg/except.h>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
 #include <algorithm>
 #include "../contradef.h"
-#include "util.h"
+#include "util.hpp"
 
 // debugging
 #include <cstdio>
-#include "utf8.h"
+#include "utf8.hpp"
 
 namespace contra {
 namespace ansi {

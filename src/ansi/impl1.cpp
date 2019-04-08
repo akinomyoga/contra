@@ -1,6 +1,6 @@
 #include <cstdio>
-#include "line.h"
-#include "tty.h"
+#include "line.hpp"
+#include "tty.hpp"
 
 int main() {
   using namespace contra::ansi;

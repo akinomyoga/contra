@@ -18,14 +18,14 @@ objdir = ../out
 CXXFLAGS += -std=c++17
 CPPFLAGS = -MP -MD -MF $(@:.o=.dep)
 
-directories += $(objdir) $(objdir)/experimental $(objdir)/bidi
+directories += $(objdir) $(objdir)/experimental $(objdir)/ansi
 
 -include $(wildcard $(objdir)/*.dep)
 -include $(wildcard $(objdir)/experimental/*.dep)
--include $(wildcard $(objdir)/bidi/*.dep)
+-include $(wildcard $(objdir)/ansi/*.dep)
 $(objdir)/%.o: %.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
-$(objdir)/bidi/%.o: bidi/%.cpp | $(objdir)/bidi
+$(objdir)/ansi/%.o: ansi/%.cpp | $(objdir)/ansi
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 $(objdir)/experimental/%.o: experimental/%.cpp | $(objdir)/experimental
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
@@ -64,11 +64,11 @@ all: experimental/bidi
 experimental/bidi: $(objdir)/experimental/bidi.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-all: bidi/impl1
-bidi_impl1_objs = \
-  $(objdir)/bidi/impl1.o \
+all: ansi/impl1
+ansi_impl1_objs = \
+  $(objdir)/ansi/impl1.o \
   $(objdir)/contradef.o
-bidi/impl1: $(bidi_impl1_objs)
+ansi/impl1: $(ansi_impl1_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 #all: minimal_openpt

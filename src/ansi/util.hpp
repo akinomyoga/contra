@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_ANSI_UTIL_H
-#define CONTRA_ANSI_UTIL_H
+#ifndef CONTRA_ANSI_UTIL_HPP
+#define CONTRA_ANSI_UTIL_HPP
 #include <iterator>
 #include <vector>
 #include <cstddef>
