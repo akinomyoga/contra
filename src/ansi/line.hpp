@@ -26,6 +26,24 @@ namespace ansi {
       flag_wide_extension    = 0x10000000,
       flag_cluster_extension = 0x20000000,
       flag_marker            = 0x30000000,
+
+      marker_base    = flag_marker | 0x00200000,
+      marker_sds_l2r = marker_base + 1,
+      marker_sds_r2l = marker_base + 2,
+      marker_sds_end = marker_base + 3,
+      marker_srs_beg = marker_base + 4,
+      marker_srs_end = marker_base + 5,
+
+      // Unicode bidi markers
+      marker_lre = flag_marker | 0x202A,
+      marker_rle = flag_marker | 0x202B,
+      marker_pdf = flag_marker | 0x202C,
+      marker_lro = flag_marker | 0x202D,
+      marker_rlo = flag_marker | 0x202E,
+      marker_lri = flag_marker | 0x2066,
+      marker_rli = flag_marker | 0x2067,
+      marker_fsi = flag_marker | 0x2068,
+      marker_pdi = flag_marker | 0x2069,
     };
 
     std::uint32_t value;

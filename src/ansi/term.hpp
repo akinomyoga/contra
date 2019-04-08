@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_ANSI_TTY_HPP
-#define CONTRA_ANSI_TTY_HPP
+#ifndef CONTRA_ANSI_TERM_HPP
+#define CONTRA_ANSI_TERM_HPP
 #include <cstring>
 #include "../sequence.h"
 #include "line.hpp"
@@ -22,10 +22,6 @@ namespace ansi {
     return type << mode_type_shift
       | param << mode_param_shift
       | index << mode_index_shift;
-  }
-
-  constexpr std::uint32_t compose_bytes(byte major, byte minor) {
-    return minor << 8 | major;
   }
 
   enum mode_spec {
@@ -128,8 +124,12 @@ namespace ansi {
   public:
     tty_player(contra::ansi::board_t& board): m_board(&board) {}
 
-    void insert_char(char32_t u) {
-      u &= character_t::unicode_mask;
+
+  public:
+    board_t& board() const { return *m_board; }
+
+  public:
+    void insert_graph(char32_t u) {
       // ToDo: 新しい行に移る時に line_limit, line_home を初期化する
       cursor_t& cur = m_board->cur;
       initialize_line(m_board->line());
@@ -167,6 +167,29 @@ namespace ansi {
       // Note: xenl かつ cur.x >= 0 ならば sll + dir の位置にいる事を許容する。
       if ((cur.x - sll) * dir >= 1 &&
         !(cur.x == sll + dir && cur.x >= 0 && m_state.get_mode(mode_xenl))) do_nel();
+    }
+
+    void insert_marker(std::uint32_t marker) {
+      bool const simd = m_state.get_mode(mode_simd);
+      curpos_t const dir = simd ? -1 : 1;
+
+      cell_t cell;
+      cell.character = marker | character_t::flag_marker;
+      cell.attribute = m_board->cur.attribute;
+      cell.width = 0;
+      initialize_line(m_board->line());
+      m_board->line().write_cells(m_board->cur.x, &cell, 1, 1, dir);
+    }
+
+    void insert_char(char32_t u) {
+      u &= character_t::unicode_mask;
+
+      // Unicode bidi formatting characters
+      if ((U'\u202A' <= u && u <= U'\u202E') ||
+        (U'\u2066' <= u && u <= U'\u2069'))
+        return insert_marker(u);
+
+      return insert_graph(u);
     }
 
   public:
@@ -335,10 +358,9 @@ namespace ansi {
     void process_escape_sequence(sequence const& seq) {
       print_unrecognized_sequence(seq);
     }
-    void process_control_sequence(sequence const& seq) {
-      // ToDo
-      print_unrecognized_sequence(seq);
-    }
+
+    void process_control_sequence(sequence const& seq);
+
     void process_command_string(sequence const& seq) {
       print_unrecognized_sequence(seq);
     }
