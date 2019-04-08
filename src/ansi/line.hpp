@@ -357,12 +357,20 @@ namespace ansi {
 
   public:
     void rotate(curpos_t count) {
-      if (count > m_height) count = m_height;
-      for (curpos_t i = 0; i < count; i++) {
-        // ToDo: 消える行を何処かに記録する?
-        m_lines[i].clear();
+      if (count > 0) {
+        if (count > m_height) count = m_height;
+        for (curpos_t i = 0; i < count; i++) {
+          // ToDo: 消える行を何処かに記録する?
+          m_lines[i].clear();
+        }
+        m_lines.rotate(count);
+      } else if (count < 0) {
+        count = -count;
+        if (count < m_height) count = m_height;
+        m_lines.rotate(m_lines.size() - count);
+        for (curpos_t i = 0; i < count; i++)
+          m_lines[i].clear();
       }
-      m_lines.rotate(count);
     }
     void clear_screen() {
       // ToDo: 何処かに記録する

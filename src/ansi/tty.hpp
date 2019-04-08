@@ -202,25 +202,47 @@ namespace ansi {
       }
     }
 
-    void do_generic_ff(bool toAppendNewLine, bool toAdjustXAsPresentationPosition) {
+    void do_generic_ff(int delta, bool toAppendNewLine, bool toAdjustXAsPresentationPosition) {
+      if (!delta) return;
+
       curpos_t x = m_board->cur.x;
       if (toAdjustXAsPresentationPosition)
         x = m_board->to_presentation_position(m_board->cur.y, x);
 
-      if (m_board->cur.y + 1 < m_board->m_height)
-        m_board->cur.y++;
-      else if (toAppendNewLine) {
-        m_board->rotate(1);
-      } else
-        return;
+      if (delta > 0) {
+        if (m_board->cur.y + delta < m_board->m_height)
+          m_board->cur.y += delta;
+        else {
+          curpos_t const y = m_board->cur.y;
+          m_board->cur.y = m_board->m_height - 1;
+          delta -= m_board->cur.y - y;
+          if (toAppendNewLine)
+            m_board->rotate(delta);
+        }
+      } else {
+        if (m_board->cur.y + delta >= 0)
+          m_board->cur.y += delta;
+        else {
+          delta += m_board->cur.y;
+          m_board->cur.y = 0;
+          if (toAppendNewLine)
+            m_board->rotate(delta);
+        }
+      }
 
       if (toAdjustXAsPresentationPosition)
         x = m_board->to_data_position(m_board->cur.y, x);
       m_board->cur.x = x;
     }
+    void do_ind() {
+      do_generic_ff(1, true, !m_state.get_mode(mode_dcsm));
+    }
+    void do_ri() {
+      do_generic_ff(-1, true, !m_state.get_mode(mode_dcsm));
+    }
     void do_lf() {
       bool const toCallCR = m_state.get_mode(mode_lnm);
-      do_generic_ff(true, !toCallCR && !m_state.get_mode(mode_dcsm));
+      do_generic_ff(1, true, !toCallCR && !m_state.get_mode(mode_dcsm));
       if (toCallCR) do_cr();
     }
     void do_ff() {
@@ -244,14 +266,14 @@ namespace ansi {
         } else
           m_board->clear_screen();
       } else {
-        do_generic_ff(true, !toCallCR);
+        do_generic_ff(1, true, !toCallCR);
       }
 
       if (toCallCR) do_cr();
     }
     void do_vt() {
       bool const toCallCR = m_state.vt_affected_by_lnm && m_state.get_mode(mode_lnm);
-      do_generic_ff(m_state.vt_appending_newline, !toCallCR);
+      do_generic_ff(1, m_state.vt_appending_newline, !toCallCR);
       if (toCallCR) do_cr();
     }
     void do_cr() {
@@ -333,6 +355,10 @@ namespace ansi {
       case ascii_ff:  do_ff();  break;
       case ascii_vt:  do_vt();  break;
       case ascii_cr:  do_cr();  break;
+
+      case ascii_ind: do_ind();  break;
+      case ascii_nel: do_nel();  break;
+      case ascii_ri:  do_ri();  break;
       }
     }
 

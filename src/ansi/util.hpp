@@ -82,6 +82,7 @@ namespace util {
     void rotate(std::size_t delta) {
       m_rotate = (m_rotate + delta) % data.size();
     }
+    std::size_t size() const { return data.size(); }
 
     typedef indexer_iterator<T, ring_buffer, std::size_t> iterator;
     typedef indexer_iterator<const T, const ring_buffer, std::size_t> const_iterator;
