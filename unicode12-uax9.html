@@ -1,0 +1,336 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>UAX #9: Unicode 双方向アルゴリズム</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Language" content="ja-jp" />
+  <style type="text/css">
+  h1 { text-align: center; }
+  h1>span.subtitle { font-size: 1rem; display: block; }
+
+  table.normal,
+  table.normal th,
+  table.normal td { border-collapse: collapse; border: 1px solid gray; padding: 0.3em; }
+
+  dfn { font-style: normal; font-weight: bold; }
+  sup { font-weight: bold; color: brown; }
+  code {
+    font-family: monospace;
+    padding: 2px 4px; background-color: #ddd; border-radius: 3px;
+  }
+  kbd {
+    font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", "Courier", monospace;
+    font-size: 80%; padding: 1px 5px; vertical-align: 1px;
+    border: 1px solid silver; border-bottom: 2px solid gray; border-radius: 3px;
+  }
+  kbd.bidi { border-color: #88f; }
+  </style>
+</head>
+<body>
+<h1><span class="subtitle">Unicode® Standard Annex #9</span>
+  Unicode 双方向アルゴリズム
+</h1>
+
+<ul>
+<li>Version: Unicode 12.0.0</li>
+<li>Editors: Mark Davis (markdavis@google.com), Aharon Lanin (aharon@google.com), and Andrew Glass (andrew.glass@microsoft.com)</li>
+<li>Date: 2019-02-04</li>
+<li>This Version: <a href="http://www.unicode.org/reports/tr9/tr9-41.html">http://www.unicode.org/reports/tr9/tr9-41.html</a></li>
+<li>Previous Version: <a href="http://www.unicode.org/reports/tr9/tr9-39.html">http://www.unicode.org/reports/tr9/tr9-39.html</a></li>
+<li>Latest Version: <a href="http://www.unicode.org/reports/tr9/">http://www.unicode.org/reports/tr9/</a></li>
+<li>Latest Proposed Update: <a href="http://www.unicode.org/reports/tr9/proposed.html">http://www.unicode.org/reports/tr9/proposed.html</a></li>
+<li>Revision: <a href="http://unicode.org/reports/tr9/#Modifications">41</a></li>
+</ul>
+
+<h2>概要</h2>
+<p>[注意: この文書は UAX #9 の要点をまとめた物であって完全な訳ではない。]</p>
+<p>UAX #9 はアラビア語やヘブライ語の様に右から左へ流れるテキストを含んだ文字の配置方法の仕様を指定する。</p>
+
+<!--
+<h2>現状</h2>
+<p>この文書は Unicode メンバー及びその他の関連する団体によって査読され、Unicode Consortium によって発行が承認された。
+  この文書は安定版であり参考文献および他の仕様から強制力のある参照として引用して良い。
+</p>
+<p>Unicode Standard Annex (UAX) は Unicode 標準全体の一部を為すが、独立した文書としてオンラインで提供される。
+  Unicode 標準はその版の適合性の章から UAX を強制力のある規定として要求する。
+  UAX の版はそれを一部として含む Unicode 標準の版に対応する。
+</p>
+-->
+
+<h2>1 導入</h2>
+<p>メモリ上の文字の順序を<dfn>論理順</dfn> (logical order) と呼ぶ。
+  表示順は左から右が普通だが右から左になる言語も存在する。
+  混在するテキストを<dfn>双方向</dfn> (bidirectional) と呼ぶ。
+  多くの場合、個々の文字に備わった属性により自動的に文字の配置は決まる。
+  都合上テキストの方向を明示する必要がある時は、
+  <dfn>方向整形文字</dfn> (directional formatting characters) を挿入するがこれは表示だけに影響を与えるべきで、
+  その他のテキスト処理に影響は与えないべきである。
+  個々の文字は暗黙的に<dfn>双方向性</dfn> (bidirectional type) を持つ。
+  <dfn>left-to-right</dfn> (左から右) 及び <dfn>right-to-left</dfn> (右から左) は
+  <dfn>強い方向性</dfn> (strong type) と呼び、
+  この方向性の文字は<dfn>強い方向性の文字</dfn> (strong directional characters) と呼ぶ。
+  数字などに割り当てられるのは<dfn>弱い方向性</dfn> (weak types) と呼び、
+  この方向性の文字は<dfn>弱い方向性の文字</dfn> (weak directional characters) と呼ぶ。
+  その他の方向性および文字は<dfn>中立</dfn> (neutral) と呼ぶ。
+  セキリティ上の問題 (ファイル名を欺くのに使える) が報告されている事に注意する。
+</p>
+
+<h2>2 方向整形文字</h2>
+<p>方向整形文字は <code>Bidi_Control</code> 属性を持ち、三種類に分けられる。これらの文字は段落内でのみ効力を持つ。
+  つまり <kbd>PS</kbd> (paragraph separator; 後述) で効果は終了する。
+</p>
+<table class="normal">
+<tr><th>名称</th><th>制御文字</th></tr>
+<tr><td>暗黙方向整形文字 (implicit directional formatting character)</td>
+    <td><kbd>LRM</kbd>, <kbd>RLM</kbd>, <kbd>ALM</kbd></td></tr>
+<tr><td>明示方向{埋込/上書き}整形文字 (explicit directional embedding/override formatting character)</td>
+    <td><kbd>LRE</kbd>, <kbd>RLE</kbd>, <kbd>LRO</kbd>, <kbd>RLO</kbd>, <kbd>PDF</kbd></td></tr>
+<tr><td>明示方向孤立整形文字 (explicit directional isolate formatting character)</td>
+    <td><kbd>LRI</kbd>, <kbd>RLI</kbd>, <kbd>FSI</kbd>, <kbd>PDI</kbd></td></tr>
+</table>
+<p>埋込整形範囲は全体として強い方向性の文字として振る舞い、
+  埋込整形範囲の中の文字と外の文字の配置は互いに影響しうる。
+  孤立整形範囲は全体として中立の文字として振る舞い、
+  孤立整形範囲の中の文字と外の文字の配置は互いに影響しない。
+  埋込整形文字よりも、Unicode 6.3 で新しく導入された孤立整形文字を使うことが推奨される。
+  HTML, CSS では制御文字ではなくそれ専用の仕組み (§2.7 に後述) を使うべきである。
+</p>
+
+<!--
+<h3>2.1 明示方向埋込</h3>
+<h3>2.2 明示方向上書き</h3>
+<h3>2.3 明示方向埋込・上書きの終了</h3>
+<h3>2.4 明示方向孤立</h3>
+<h3>2.5 明示方向孤立の終了</h3>
+<h3>2.6 暗黙方向記号</h3>
+<h3>2.7 明示方向埋込</h3>-->
+
+<h2>3 基本表示アルゴリズム</h2>
+<p><dfn>Unicode 双方向アルゴリズム</dfn> (Unicode Bidirectional Algorithm; UBA)
+は次の段階に分けられる。</p>
+<ol>
+<li>段落に分割。以降の処理は各段落ごとに行われる。</li>
+<li>初期化。各文字についての <code>Bidi_Class</code> 属性のリスト <code>type[i]</code> と埋込レベルのリスト <code>level[i]</code> が初期化される。</li>
+<li>埋込レベルの解決。各文字の <code>Bidi_Paired_Bracket</code> 及び <code>Bidi_Paired_Bracket_Type</code> 属性も参照しつつ、
+  前述のリストを複数の規則に依って順に修正していく。
+</li>
+<li>並び替え。先ず行に分割され、次に埋込レベルに従って並び替えが実行される。</li>
+</ol>
+<p>段落の区切りは <kbd>PS</kbd> (U+2029) または適切な改行 (<kbd>CR</kbd>, <kbd>LF</kbd>, <kbd>CR LF</kbd>, <kbd>NEL</kbd> 等; Unicode 4.4, 5.8 を参照) で行う。
+  更に、より上の仕組みによって段落は区切られうる。例えば表の別のセルのテキストは別段落である。
+  [Note: Unicode 5.8 の推奨規則 R2a, R2b によると word processor では改行は <kbd>PS</kbd> で、テキストエディタでは <kbd>LS</kbd> の様だ]
+  結合文字は(論理順で)前の文字に結合して一つの単位として処理される。
+</p>
+
+<h3>3.1 定義</h3>
+<h4>3.1.1 基本</h4>
+<p><sup>BD1</sup><dfn>双方向文字タイプ</dfn> (bidirectional character type) は各 Unicode 点に割り当てられた性質で <code>Bidi_Class</code> として参照される。
+  埋め込みの深さを <sup>BD2</sup><dfn>埋め込みレベル</dfn> (embedding level) と呼び、0 から <code>max_depth</code> = 125 までの値を取る。
+  <code>max_depth</code> は実装間の差異をなくす為に固定とし将来の変更もない。
+  <sup>BD3</sup><dfn>埋込方向</dfn> (embedding direction) は現在の埋め込みレベルの方向を示す。
+  偶数の埋め込みレベルは <code>L</code> (left-to-right) を意味し、奇数は <code>R</code> (right-to-left) を意味する。
+  <sup>BD4</sup><dfn>段落埋込レベル</dfn> (paragraph embedding direction) は段落の既定の埋め込みレベルである。
+  例えば、英語文書は 0 から始まり、アラビア語文書は 1 から始まる。
+  段落埋込レベルによって決まる方向を<sup>BD5</sup><dfn>段落方向</dfn> (paragraph direction) または<dfn>基底方向</dfn> (base direction) と呼ぶ。
+  <sup>BD6</sup><dfn>方向上書き状態</dfn> (directional override status) は各埋込レベルに於いて、
+  文字の双方向タイプを上書きするかどうかを表す。
+  <code>neutral</code>, <code>right-to-left</code>, <code>left-to-right</code> の三種類の値を持ちうる。
+  <sup>BD7</sup><dfn>レベルラン</dfn> (level run)または<dfn>方向ラン</dfn> (directional run) は同じ埋め込みレベルを持つ文字の並びである。
+</p>
+
+<h4>3.1.2 明示方向書式文字の対応</h4>
+<p><kbd>LRI</kbd>, <kbd>RLI</kbd>, <kbd>FSI</kbd> を <sup>BD9</sup> <dfn>孤立開始</dfn> (isolate initiator) と呼ぶ。
+  孤立開始に <sup>BD10</sup><dfn>対応する PDI</dfn> (matching PDI) は、
+  "孤立開始…<kbd>PDI</kbd>" の入れ子を考慮して決定される [つまり、次のアルゴリズムによる:
+  counter を 0 に初期化して以降のテキストを1文字ずつ順に検査し、
+  孤立開始が来たら1増やし<kbd>PDI</kbd>が来たら1減らす。<kbd>PDI</kbd>が counter を 0 にしたら、それが対応する <kbd>PDI</kbd> である。
+  もしそういう <kbd>PDI</kbd> がなければ対応する <kbd>PDI</kbd> はない。他の種類の制御文字の入れ子は考えない]。
+</p>
+<p><kbd>LRE</kbd>, <kbd>RLE</kbd>, <kbd>LRO</kbd>, <kbd>RLO</kbd> を<sup>BD10</sup><dfn>埋込開始</dfn> (embedding initiator) と呼ぶ。
+  埋込開始に<sup>BD11</sup><dfn>対応する PDF</dfn> (matching PDF) は、
+  "埋込開始…<kbd>PDF</kbd>" の入れ子を考慮して決定される。
+  その時 "孤立開始…<kbd>PDI</kbd>" は1単位としてその中身は検査しない。
+  単体の <kbd>PDI</kbd> が途中で現れたらそこで終了する。
+</p>
+<p>ブール値 <sup>BD12</sup><dfn>方向書式状態</dfn>は現在の埋込レベルが孤立開始によって開始された時に true の値になる。</p>
+<p><sup>BD13</sup><dfn>孤立ラン列</dfn> (isolaing run sequeces) は、
+  "孤立開始…<kbd>PDI</kbd>" で区切られた複数のランのできるだけ長い列である [具体的なアルゴリズムは UAX #9 を参照]。
+  どのレベルランも必ず1つの孤立ラン列に属する。孤立対が存在しない場合は、どの孤立ラン列も単一のレベルランから成る。
+  ある孤立ランの中に含まれるレベルランは全て同じレベルである。
+</p>
+<h4>3.1.3 対の括弧</h4>
+<p><code>type[i]=ON</code>  で <code>Bidi_Paired_Bracket_Type=Open</code>/<code>Close</code> の文字を、それぞれ
+  <sup>BD14</sup><dfn>括弧対開始</dfn> (opening paired bracket)/<sup>BD15</sup><dfn>括弧対終端</dfn> (closing paired bracket) と呼ぶ。
+  <sup>BD16</sup><dfn>括弧対</dfn>は <code>Bidi_Paired_Bracket</code> 属性に基づいて対応する括弧対開始と終端の組であり、
+  孤立ラン列の中から探し求められる [詳細なアルゴリズムは UAX #9 を参照]。
+</p>
+<h4>3.1.4 その他の略称</h4>
+<p><kbd class="bidi">NI</kbd> は中立文字もしくは孤立書式文字を示す。
+  <code>e</code> 及び <code>o</code> は現在の埋込レベル方向に一致・不一致のテキスト順序タイプを示す。
+  <kbd class="bidi">sos</kbd>, <kbd class="bidi">eos</kbd> は孤立ラン列の直前・直後に割り当てられるテキスト順序タイプを表す。
+</p>
+
+<h3>3.2 双方向文字タイプ</h3>
+<p><code>Bidi_Class</code> によって各文字に割り当てられている。
+  強いタイプは <kbd class="bidi">L</kbd>, <kbd class="bidi">R</kbd>, <kbd class="bidi">AL</kbd> である。
+  弱いタイプは <kbd class="bidi">EN</kbd>, <kbd class="bidi">ES</kbd>, <kbd class="bidi">ET</kbd>,
+  <kbd class="bidi">AN</kbd>, <kbd class="bidi">CS</kbd>, <kbd class="bidi">NSM</kbd>, <kbd class="bidi">BN</kbd> である。
+  中立は <kbd class="bidi">B</kbd>, <kbd class="bidi">S</kbd>, <kbd class="bidi">WS</kbd>, <kbd class="bidi">ON</kbd> である。
+  他に一連の方向書式文字がある。
+</p>
+
+<h3>3.3 埋め込みレベルの解決</h3>
+<p>以降の規則は P1 で段落分割をし、
+  P2 と P3 で段落レベルを決定し、
+  X1-X8 によって埋め込みレベルと方向を決定する。
+  X9 で色々の制御文字を除去し、X10 で各孤立ラン列について
+    W1-W7 で弱いタイプを解決し、
+    N0-N2 で中立タイプを解決し、
+    I1-I2 で暗黙埋込レベルを解決する。
+</p>
+<h4>3.3.1 段落レベル</h4>
+<p><sup>P1</sup> <kbd>PS</kbd> (type <kbd class="bidi">B</kbd>) の直後で段落分割する。
+  <sup>P2</sup> 各段落について最初の強いタイプの文字を探す (孤立範囲はスキップする。埋込範囲はスキップしない)。
+  <sup>P3</sup> もし強いタイプが見つかって <kbd class="bidi">AL</kbd> か <kbd class="bidi">R</kbd> ならば 1、それ以外ならば 0 を段落レベルとする。
+  もしより上位の方法に依って段落レベルが決定される場合は P2, P3 はそれで置き換える。
+</p>
+<h4>3.3.2 明示レベルと方向</h4>
+<p>1文字ずつ順に処理する。以下の変数を用いる。</p>
+<ul>
+<li><code>directional_status_stack = stack&lt;{level, override, isolate}&gt;</code>
+  {段落レベル, neutral, false} なる1項目で初期化される。
+</li>
+<li><code>overflow_isolate_count</code>: 0 に初期化される。</li>
+<li><code>overflow_embedding_count</code>: 0 に初期化される。</li>
+<li><code>valid_isolate_count</code>: 0 に初期化される。</li>
+</ul>
+<p><sup>X1</sup>段落の先頭で初期化を実行する。
+  各文字について順に X2-X8 を適用していく。
+</p>
+<p><b>明示埋込</b>: <sup>X2,X3</sup><kbd class="bidi">RLE</kbd>, <kbd class="bidi">LRE</kbd> に対して以下を適用する。
+  現在の埋込レベルより大きく新しい方向性に一致する次の埋め込みレベルを決定する。
+  このレベルが <code>max_depth</code> 以内であり <code>overflow_embedding_count==0</code> かつ <code>overflow_isolate_count==0</code> の時に有効である。
+  有効であれば、<code>{レベル, neutral, false}</code> を push し、
+  無効であれば <code>if (overflow_isolate_count == 0) overflow_embedding_count++</code> する。
+</p>
+<p><b>明示上書き</b>: <sup>X4,X5</sup><kbd class="bidi">RLO</kbd>, <kbd class="bidi">LRO</kbd> に対して以下を適用する。
+  現在の埋込レベルより大きく新しい方向性に一致する次の埋め込みレベルを決定する。
+  このレベルが <code>max_depth</code> 以内であり <code>overflow_embedding_count==0</code> かつ <code>overflow_isolate_count==0</code> の時に有効である。
+  有効であれば <code>{レベル, R2L/L2R, false}</code> を push し、
+  無効であれば <code>if (overflow_isolate_count == 0) overflow_embedding_count++</code> する。
+</p>
+<p><b>孤立</b>: <sup>X5a,X5b</sup><kbd class="bidi">RLI</kbd>, <kbd class="bidi">LRI</kbd> に対して以下を適用する。
+  現在の <code>override</code> が <code>neutral</code> でなければ <code>type[i]</code> をそれに書き換える。
+  現在の埋込レベルより大きく新しい方向性に一致する次の埋め込みレベルを決定する。
+  このレベルが <code>max_depth</code> 以内であり <code>overflow_embedding_count==0</code> かつ <code>overflow_isolate_count==0</code> の時に有効である。
+  有効であれば <code>{レベル, neutral, true}</code> を push し、
+  無効であれば <code>overflow_isolate_count++</code> する。
+  <sup>X5c</sup> <kbd class="bidi">FSI</kbd> はその中身に従って <kbd class="bidi">RLI</kbd> もしくは <kbd class="bidi">LRI</kbd> として振る舞う。
+  方向性は中身に P2,P3 を適用して決める。
+</p>
+<p><b>非書式文字</b>: <sup>X6</sup><kbd class="bidi">B</kbd>, <kbd class="bidi">BN</kbd>, formatting-characters 以外の文字について、
+  埋め込みレベルは現在のレベル。
+  <code>override</code> が <code>neutral</code> でなければ <code>type[i]</code> は書き換える。
+</p>
+<p><b>孤立終端</b>: <sup>X6a</sup><kbd class="bidi">PDI</kbd> について、
+  (a) <code>overflow_isolate_count</code> が 0 より大きければそれを減らす。
+  (b) <code>valid_isolate_count</code> が 0 より大きければ、それを減らして、
+    <code>directional_status_stack</code> の一番上の isolate まで pop する。
+  <kbd class="bidi">PDI</kbd> のレベルは (a),(b) の後のレベルに設定し、
+  override があればそれに従って type を書き換える。
+</p>
+<p><b>埋込・上書き終端</b>: <sup>X7</sup><kbd class="bidi">PDF</kbd> について、
+  (a) <code>overflow_isolate_count</code> が 0 より大きければ何もしない。
+  (b) <code>overflow_embedding_count</code> が 0 より大きければそれを減らす。
+  (c) stack に要素が2個以上あって、一番上が isolate でなければそれを pop する。
+</p>
+<p><b>段落終端</b>: <sup>X8</sup><kbd class="bidi">B</kbd> について、全ての入れ子は削除される。
+  つまり、stack は一番下の物を除いて全て削除される。
+  <kbd class="bidi">B</kbd> のレベルは段落レベルになる。
+</p>
+
+<h4>3.3.3 暗黙処理の準備</h4>
+<p><sup>X9</sup> <kbd class="bidi">RLE</kbd>, <kbd class="bidi">LRE</kbd>, <kbd class="bidi">RLO</kbd>,
+  <kbd class="bidi">LRO</kbd>, <kbd class="bidi">PDF</kbd>, <kbd class="bidi">BN</kbd> は全て削除する。
+  [Note: <kbd class="bidi">BN</kbd> の zero-width joiner, non-joiner は
+    周囲の文字が並び替えられて隣り合わなくなったとしても、
+    元々の論理順で変化させた字形の効果を保持する (訳?)。
+    <kbd class="bidi">FSI</kbd>, <kbd class="bidi">LRI</kbd>, <kbd class="bidi">RLI</kbd>, <kbd class="bidi">PDI</kbd> は残す。]
+</p>
+<p><sup>X10</sup>孤立ラン列を計算し、それぞれの <kbd class="bidi">sos</kbd>, <kbd class="bidi">eos</kbd>
+  を自身のレベルと隣り合うレベルの内より高い物と同じ方向性 (<kbd class="bidi">L</kbd> or <kbd class="bidi">R</kbd>) に定める。
+  各孤立ラン列内部で W1-W7, N0-N2, I1-I2 を以下に紹介する順序で適用する。
+</p>
+
+<h4>3.3.4 弱いタイプの解決</h4>
+<p><sup>W1</sup><kbd class="bidi">NSM</kbd> を直前の非NSM文字または <kbd class="bidi">sos</kbd> のタイプに書き換える。
+  但し、直前が孤立開始・終端の場合は <kbd class="bidi">ON</kbd> にする。
+  <sup>W2</sup><kbd class="bidi">EN</kbd> の直前の強いタイプ (<kbd class="bidi">R</kbd>, <kbd class="bidi">L</kbd>, <kbd class="bidi">AL</kbd>)
+  が <kbd class="bidi">AL</kbd> ならば <kbd class="bidi">AN</kbd> に書き換える。
+  <sup>W3</sup><kbd class="bidi">AL</kbd> を <kbd class="bidi">R</kbd> に書き換える。
+  <sup>W4</sup><kbd class="bidi">EN ES EN</kbd> → <kbd class="bidi">EN EN EN</kbd>,
+    <kbd class="bidi">EN CS EN</kbd> → <kbd class="bidi">EN EN EN</kbd>,
+    <kbd class="bidi">AN CS AN</kbd> → <kbd class="bidi">AN AN AN</kbd>。
+  <sup>W5</sup><kbd class="bidi">EN</kbd> に隣接する <kbd class="bidi">ET+</kbd> は全て <kbd class="bidi">EN+</kbd> に書き換える。
+  <sup>W6</sup>残った <kbd class="bidi">ET</kbd>, <kbd class="bidi">ES</kbd>, <kbd class="bidi">CS</kbd> は全て <kbd class="bidi">ON</kbd> に書き換える。
+  <sup>W7</sup><kbd class="bidi">EN</kbd> の直前の強いタイプが <kbd class="bidi">L</kbd> ならば <kbd class="bidi">L</kbd> に書き換える。
+</p>
+
+<h4>3.3.5 中立及び孤立書式タイプの解決</h4>
+<p>各孤立ラン列の中で、各<kbd class="bidi">NI</kbd>を隣接する強いタイプに書き換える。
+  孤立ラン列の一番端では隣接するタイプに <kbd class="bidi">sos</kbd>, <kbd class="bidi">eos</kbd> を用いる。
+  両側の強いタイプが異なる時はその埋め込みレベルの値を用いる。
+  括弧対は組で同時に書き換えられる。
+</p>
+<p><sup>N0</sup>現在の孤立ラン列の中で括弧対を列挙し、
+  各括弧対について
+  (a) 囲まれた文字の中に埋め込み方向に一致する強いタイプがあれば、括弧のタイプをそれに書き換える。
+  (b) 囲まれた文字の中に埋め込み方向と逆の強いタイプがあれば、括弧対の直前の強いタイプに書き換える。
+  (c) 囲まれた文字の中に強いタイプがなければそのままにする。
+  括弧に接している<kbd class="bidi">NSM</kbd>から書き換えられた<kbd class="bidi">ON</kbd>は、全て括弧と同様に書き換える。
+</p>
+<p><sup>N1</sup><kbd class="bidi">NI+</kbd> の両側の方向性
+  (残っている <kbd class="bidi">EN</kbd>, <kbd class="bidi">AN</kbd> は <kbd class="bidi">R</kbd> と解釈) が一致すればそれに書き換える。
+  <sup>N2</sup>残りの <kbd class="bidi">NI</kbd> は全て埋め込み方向に一致する様に書き換える。
+</p>
+
+<h4>3.3.6 暗黙レベルの解決</h4>
+<p><sup>I1</sup>埋め込み方向が<code>L</code>の時、<kbd class="bidi">R</kbd>の文字は1レベルを増やす。
+  <kbd class="bidi">EN</kbd>, <kbd class="bidi">AN</kbd>の文字は2レベル増やす。
+  <sup>I2</sup>埋め込み方向が<code>R</code>の時、<kbd class="bidi">L</kbd>, <kbd class="bidi">EN</kbd>, <kbd class="bidi">AN</kbd> の文字は1レベル増やす。
+</p>
+
+<h3>3.4 レベルの並び替え</h3>
+<p>各文字の字形を決定し文字幅を計算する。
+  行分割を行い L1-L4 の規則を適用する。
+  並び替え後の順序に従って表示が行われる。
+</p>
+<p><sup>L1</sup> <code>Bidi_Class</code> <kbd class="bidi">(WS|FSI|LRI|RLI|PDI)* (S|B|$)</kbd> の埋込レベルを段落レベルに戻す。
+  [Note: これが意味する所は <kbd>TAB</kbd> や <kbd>NEL</kbd> は移動前後で埋め込み状態を継続するが、
+    実際の並び替えの時には其処で切る、という事を意味する。]
+  <sup>L2</sup> 埋め込みレベルの高いものから順に反転を実施していく。
+  <sup>L3</sup> 結合文字と基底文字の関係は実装に応じて適切に処理する。
+  <sup>L4</sup> <kbd class="bidi">R</kbd> かつ <code>Bidi_Mirrored=Yes</code> の文字の字形は反転する。
+</p>
+
+<h3>3.5 字形について</h3>
+<p>[詳細は UAX #9 を参照] アラビア文字の繋がり方などについて。<kbd>SHY</kbd> (soft hyphen) が改行時に字形を持つ事について。など。
+</p>
+<h2>4 適合性</h2>
+<p>[詳細は UAX #9 を参照] <kbd class="bidi">BN</kbd> の取り扱い。
+  また、必ずしも全ての双方向機能に対応しなくても良い。
+  適合レベルは No bidirectional formatting, Implicit bidirectionality,
+  Non-isolate bidirectionality, Full bidirectionality に分けられる。
+  また上位の枠組みで様々な追加の処理を行っても良い。
+  テストケース。
+</p>
+<h2>5 実装の注意</h2>
+<p>[詳細は UAX #9 を参照] 参照実装。また BN や LRE 等を除去せずに処理する方法。</p>
+<h2>6 使用法</h2>
+<p>[詳細は UAX #9 を参照]</p>
+<h2>7 字形反転について</h2>
+<p>[詳細は UAX #9 を参照]</p>
+
+</body>
+</html>
