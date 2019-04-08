@@ -4,17 +4,17 @@
 #include <mwg/except.h>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
-#include <cstdio>
 #include <vector>
 #include <algorithm>
 #include "../contradef.h"
+#include "util.h"
 
 // debugging
+#include <cstdio>
 #include "utf8.h"
 
 namespace contra {
-namespace ansi_term {
+namespace ansi {
 
   struct character_t {
     enum flags {
@@ -56,16 +56,68 @@ namespace ansi_term {
     }
   };
 
+  typedef std::int32_t curpos_t;
+
+  struct line_attr_t: contra::util::flags<std::uint32_t, line_attr_t> {
+    using base = contra::util::flags<std::uint32_t, line_attr_t>;
+    using def = base::def;
+
+    template<typename... Args>
+    line_attr_t(Args&&... args): base(std::forward<Args>(args)...) {}
+
+    static constexpr def none = 0;
+
+    // bit 0
+    static constexpr def is_line_used = 0x0001;
+
+    // bit 1-2
+    /*?lwiki
+     * @const is_character_path_rtol
+     * If this flag is set, the character path of the line
+     * is right-to-left in the case of a horizontal line
+     * or bottom-top-top in the case of a vertical line.
+     * @const is_character_path_ltor
+     * If this flag is set, the character path of the line
+     * is left-to-right in the case of a horizontal line
+     * or top-to-bottom in the case of a vertical line.
+     *
+     * If neither bits are set, the default character path
+     * defined by SPD is used.
+     */
+    static constexpr def is_character_path_rtol = 0x0002;
+    static constexpr def is_character_path_ltor = 0x0004;
+    static constexpr def character_path_mask    = is_character_path_rtol | is_character_path_ltor;
+
+    // bit 6-7: DECDHL, DECDWL, DECSWL
+    // The same values are used as in `xflags_t`.
+    // The related constants are defined in `enum extended_flags`.
+  };
+
+  enum presentation_direction {
+    presentation_direction_default = 0,
+    presentation_direction_lrtb = 0,
+    presentation_direction_tbrl = 1,
+    presentation_direction_tblr = 2,
+    presentation_direction_rltb = 3,
+    presentation_direction_btlr = 4,
+    presentation_direction_rlbt = 5,
+    presentation_direction_lrbt = 6,
+    presentation_direction_btrl = 7,
+  };
+
+  constexpr bool is_charpath_rtol(presentation_direction presentationDirection) {
+    return presentationDirection == presentation_direction_rltb
+      || presentationDirection == presentation_direction_btlr
+      || presentationDirection == presentation_direction_rlbt
+      || presentationDirection == presentation_direction_btrl;
+  }
+
   struct line_t {
     std::vector<cell_t> cells;
+    line_attr_t m_lflags = {0};
+    curpos_t m_home  {-1};
+    curpos_t m_limit {-1};
 
-    // int marker_count;
-    // int cluster_count;
-    // int object_count;
-
-    int special_count;
-
-  private:
     // m_monospace の時、データ位置と cells のインデックスは一致する。
     //   全角文字は wide_extension 文字を後ろにつける事により調節する。
     //   Grapheme cluster やマーカーは含まれない。
@@ -74,7 +126,17 @@ namespace ansi_term {
     //   ゼロ幅の Grapheme cluster やマーカー等を含む事が可能である。
     bool m_monospace = true;
 
+    void clear() {
+      this->cells.clear();
+      m_lflags = (line_attr_t) 0;
+      m_home = -1;
+      m_limit = -1;
+      m_monospace = true;
+    }
+
+  private:
     void convert_to_proportional() {
+      if (!this->m_monospace) return;
       this->m_monospace = false;
       cells.erase(
         std::remove_if(cells.begin(), cells.end(),
@@ -83,14 +145,15 @@ namespace ansi_term {
     }
 
   private:
-    void monospace_put_character_at(std::size_t pos, cell_t const& cell) {
-      std::size_t const w = cell.width;
-      if (cells.size() < pos + w) {
+    void monospace_put_character_at(curpos_t pos, cell_t const& cell) {
+      curpos_t const w = cell.width;
+      curpos_t const ncell = (curpos_t) cells.size();
+      if (ncell < pos + w) {
         cell_t fill;
         fill.character = 0;
         fill.attribute = 0;
         fill.width = 1;
-        cells.resize((std::size_t) (pos + w), fill);
+        cells.resize((curpos_t) (pos + w), fill);
       }
 
       // 左側の中途半端な文字を消去
@@ -104,14 +167,14 @@ namespace ansi_term {
       }
 
       // 右側の中途半端な文字を消去
-      for (std::size_t q = pos + w; q < cells.size() && cells[q].character.is_extension(); q++) {
+      for (curpos_t q = pos + w; q < ncell && cells[q].character.is_extension(); q++) {
         cells[q].character = ascii_sp;
         cells[q].width = 1;
       }
 
       // 文字を書き込む
       cells[pos] = cell;
-      for (std::size_t i = 1; i < w; i++) {
+      for (curpos_t i = 1; i < w; i++) {
         cells[pos].character = character_t::flag_wide_extension;
         cells[pos].attribute = cell.attribute;
         cells[pos].width = 0;
@@ -119,23 +182,24 @@ namespace ansi_term {
     }
 
   private:
-    void proportional_put_character_at(std::size_t pos, cell_t const& cell, int implicit_move) {
-      std::size_t const left = pos, right = pos + cell.width;
+    void proportional_put_character_at(curpos_t pos, cell_t const& cell, int implicit_move) {
+      curpos_t const left = pos, right = pos + cell.width;
+      curpos_t const ncell = (curpos_t) cells.size();
 
       // 置き換える範囲 i1..i2 を決定する。
       // Note: ゼロ幅の文字は "mark 文字 cluster" の様に
       //   文字の周りに分布している。通常は mark の直後に挿入する。
       //   つまり、ゼロ幅文字の直後に境界があると考える。
-      std::size_t i1 = 0, x1 = 0;
-      while (i1 < cells.size()) {
-        std::size_t xnew = x1 + cells[i1].width;
+      curpos_t i1 = 0, x1 = 0;
+      while (i1 < ncell) {
+        curpos_t xnew = x1 + cells[i1].width;
         if (left < xnew) break;
         i1++;
         x1 = xnew;
       }
-      std::size_t i2 = i1, x2 = x1;
-      while (i2 < cells.size()) {
-        std::size_t xnew = x2 + cells[i2].width;
+      curpos_t i2 = i1, x2 = x1;
+      while (i2 < ncell) {
+        curpos_t xnew = x2 + cells[i2].width;
         if (right < xnew) break;
         i2++;
         x2 = xnew;
@@ -151,15 +215,20 @@ namespace ansi_term {
         while (i2 > 0 && cells[i2 - 1].is_zero_width_body()) i2--;
       }
 
-      cell_t fill;
-      fill.character = i1 < cells.size() ? ascii_sp : ascii_nul;
-      fill.attribute = i1 < i2 ? cells[i1].attribute : 0;
-      fill.width = 1;
-
       // 書き込み文字数の計算
-      std::size_t count = 1;
+      curpos_t count = 1;
       if (x1 < left) count += left - x1;
       if (right < x2) count += x2 - right;
+      attribute_t lattr = 0, rattr = 0;
+      if (i1 < i2) {
+        lattr = cells[i1].attribute;
+        rattr = cells[i2 - 1].attribute;
+      }
+
+      cell_t fill;
+      fill.character = i1 < ncell ? ascii_sp : ascii_nul;
+      fill.attribute = 0;
+      fill.width = 1;
 
       // 書き込み領域の確保
       if (count < i2 - i1) {
@@ -169,45 +238,101 @@ namespace ansi_term {
       }
 
       // 余白と文字の書き込み
-      std::size_t i = i1;
-      for (; x1 < left; x1++) cells[i++] = fill;
+      curpos_t i = i1;
+      if (x1 < left) {
+        fill.attribute = lattr;
+        do cells[i++] = fill; while (++x1 < left);
+      }
       cells[i++] = cell;
       if (right < x2) {
-        fill.attribute = i1 < i2 ? cells[i2 - 1].attribute : 0;
+        fill.attribute = rattr;
         do cells[i++] = fill; while (right < --x2);
       }
     }
 
   public:
-    void put_character_at(std::size_t pos, cell_t const& cell, int implicit_move) {
+    void put_character_at(curpos_t pos, cell_t const& cell, int implicit_move) {
       if (m_monospace)
         monospace_put_character_at(pos, cell);
       else
         proportional_put_character_at(pos, cell, implicit_move);
     }
 
-  public:
-    void debug_init(const char* str) {
-      cells.clear();
-      int x = 0;
-      while (*str) {
-        cell_t cell;
-        cell.character = (std::uint32_t) *str++;
-        cell.attribute = 0;
-        cell.width = 1;
-        put_character_at(x, cell, cell.width);
-        x += 2;
-      }
+  };
+
+  struct cursor_t {
+    curpos_t x, y;
+    attribute_t attribute;
+  };
+
+  struct board_t {
+    contra::util::ring_buffer<line_t> m_lines;
+
+    cursor_t cur;
+    int scroll_offset = 0;
+
+    curpos_t m_width;
+    curpos_t m_height;
+
+    board_t(curpos_t width, curpos_t height): m_lines(height), m_width(width), m_height(height) {
+      mwg_check(width > 0 && height > 0, "width = %d, height = %d", (int) width, (int) height);
+      this->cur.x = 0;
+      this->cur.y = 0;
     }
 
+  public:
+    line_t& line() { return m_lines[cur.y]; }
+    line_t const& line() const { return m_lines[cur.y]; }
+    curpos_t x() const { return cur.x; }
+    curpos_t y() const { return cur.y; }
+
+    curpos_t line_home() const {
+      curpos_t const home = line().m_home;
+      return home < 0 ? 0 : std::min(home, m_width - 1);
+    }
+    curpos_t line_limit() const {
+      curpos_t const limit = line().m_limit;
+      return limit < 0 ? m_width - 1 : std::min(limit, m_width - 1);
+    }
+
+    curpos_t to_data_position(curpos_t y, curpos_t x) const {
+      (void) y;
+      return x; // ToDo:実装
+    }
+    curpos_t to_presentation_position(curpos_t y, curpos_t x) const {
+      (void) y;
+      return x; // ToDo:実装
+    }
+
+  public:
+    void rotate(curpos_t count) {
+      if (count > m_height) count = m_height;
+      for (curpos_t i = 0; i < count; i++) {
+        // ToDo: 消える行を何処かに記録する?
+        m_lines[i].clear();
+      }
+      m_lines.rotate(count);
+    }
+    void clear_screen() {
+      // ToDo: 何処かに記録する
+      for (auto& line : m_lines) line.clear();
+    }
+
+  public:
     void debug_print(std::FILE* file) {
-      for (auto const& cell : cells) {
-        char32_t c = (char32_t) cell.character.value;
-        if (c == 0) c = 32;
-        contra::encoding::put_u8(c, file);
+      for (auto const& line : m_lines) {
+        if (line.m_lflags & line_attr_t::is_line_used) {
+          for (auto const& cell : line.cells) {
+            char32_t c = (char32_t) cell.character.value;
+            if (c == 0) c = 32;
+            contra::encoding::put_u8(c, file);
+          }
+          std::putc('\n', file);
+        }
       }
     }
   };
+
 }
 }
 

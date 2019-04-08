@@ -1,14 +1,11 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_TTY_PLAYER_H
-#define CONTRA_TTY_PLAYER_H
-#include "board.h"
-#include "sequence.h"
-#include <cstdio>
-#include <cstdlib>
-#include <algorithm>
-#include <iterator>
+#ifndef CONTRA_ANSI_TTY_H
+#define CONTRA_ANSI_TTY_H
+#include "line.h"
+#include "../sequence.h"
 
 namespace contra {
+namespace ansi {
 
   typedef std::uint32_t mode_t;
 
@@ -104,111 +101,68 @@ namespace contra {
     void do_bel() {
       std::fputc('\a', stdout);
     }
+
+  public:
+    std::size_t c2w(char32_t u) const {
+      (void) u;
+      return 1; // ToDo: 文字幅
+    }
   };
 
   class tty_player {
   private:
-    contra::board* m_board;
-
+    board_t* m_board;
     tty_state m_state;
 
-  public:
-    contra::board* board() {return this->m_board;}
-    contra::board const* board() const {return this->m_board;}
-    tty_state* state() {return &this->m_state;}
-    tty_state const* state() const {return &this->m_state;}
-
-  public:
-    tty_player(contra::board& board): m_board(&board) {}
-
-    void apply_line_attribute(board_line* line) const {
-      if (line->lflags & is_line_used) return;
-      line->lflags = is_line_used | m_state.lflags;
-      line->home = m_state.line_home;
-      line->limit = m_state.line_limit;
+  private:
+    void initialize_line(line_t& line) const {
+      if (line.m_lflags & line_attr_t::is_line_used) return;
+      line.m_lflags = line_attr_t::is_line_used | m_state.lflags;
+      line.m_home = m_state.line_home;
+      line.m_limit = m_state.line_limit;
     }
-    // void apply_line_attribute(curpos_t y) {
-    //   apply_line_attribute(m_board->line(y));
-    // }
-    // void apply_line_attribute() {
-    //   apply_line_attribute(m_board->cur.y);
-    // }
 
-    // ToDo: IRM
+  public:
+    tty_player(contra::ansi::board_t& board): m_board(&board) {}
+
     void insert_char(char32_t u) {
-      board_cursor& cur = m_board->cur;
-      board_line* line = m_board->line(cur.y);
-      apply_line_attribute(line);
+      // ToDo: 新しい行に移る時に line_limit, line_home を初期化する
+      cursor_t& cur = m_board->cur;
+      initialize_line(m_board->line());
 
-      int const charWidth = 1; // ToDo 文字幅
-      if (charWidth <= 0) {
+      int const char_width = m_state.c2w(u); // ToDo 文字幅
+      if (char_width <= 0) {
         std::exit(1); // ToDo: control chars, etc.
       }
 
       bool const simd = m_state.get_mode(mode_simd);
       curpos_t const dir = simd ? -1 : 1;
 
-      curpos_t slh = m_board->line_home(line);
-      curpos_t sll = m_board->line_limit(line);
+      curpos_t slh = m_board->line_home();
+      curpos_t sll = m_board->line_limit();
       if (simd) std::swap(slh, sll);
 
-      // 行末に文字が入らない時は折り返し
+      // (行頭より後でかつ) 行末に文字が入らない時は折り返し
       curpos_t const x0 = cur.x;
-      curpos_t const x1 = x0 + dir * (charWidth - 1);
+      curpos_t const x1 = x0 + dir * (char_width - 1);
       if ((x1 - sll) * dir > 0 && (x0 - slh) * dir > 0) {
         do_nel();
-        line = m_board->line(cur.y);
-        apply_line_attribute(line);
-        sll = simd ? m_board->line_home(line) : m_board->line_limit(line);
+        sll = simd ? m_board->line_home() : m_board->line_limit();
       }
 
-      curpos_t const xL = simd ? cur.x - (charWidth - 1) : cur.x;
-      curpos_t const xR = xL + charWidth;
-      line->update_markers_on_overwrite(xL, xR, simd);
-      m_board->put_character(
-        m_board->cell(xL, cur.y),
-        u, m_board->update_cursor_attribute(), charWidth);
-      cur.x += dir * charWidth;
+      curpos_t const xL = simd ? cur.x - (char_width - 1) : cur.x;
+
+      cell_t cell;
+      cell.character = u;
+      cell.attribute = cur.attribute;
+      cell.width = char_width;
+      m_board->line().put_character_at(xL, cell, dir);
+      cur.x += dir * char_width;
 
       // 行末を超えた時は折り返し
       // Note: xenl かつ cur.x >= 0 ならば sll + dir の位置にいる事を許容する。
       if ((cur.x - sll) * dir >= 1 &&
         !(cur.x == sll + dir && cur.x >= 0 && m_state.get_mode(mode_xenl))) do_nel();
-    }
-
-    void set_fg(color_t index, aflags_t colorSpace = color_spec_indexed) {
-      extended_attribute& xattr = m_board->cur.xattr_edit;
-      xattr.fg = index;
-      xattr.aflags
-        = (xattr.aflags & ~(attribute_t) fg_color_mask)
-        | (colorSpace << fg_color_shift & fg_color_mask)
-        | is_fg_color_set;
-      m_board->cur.xattr_dirty = true;
-    }
-    void reset_fg() {
-      m_board->cur.xattr_edit.fg = 0;
-      m_board->cur.xattr_edit.aflags &= ~(attribute_t) (is_fg_color_set | fg_color_mask);
-      m_board->cur.xattr_dirty = true;
-    }
-
-    void set_bg(color_t index, aflags_t colorSpace = color_spec_indexed) {
-      extended_attribute& xattr = m_board->cur.xattr_edit;
-      xattr.bg = index;
-      xattr.aflags
-        = (xattr.aflags & ~(attribute_t) bg_color_mask)
-        | (colorSpace << bg_color_shift & bg_color_mask)
-        | is_bg_color_set;
-      m_board->cur.xattr_dirty = true;
-    }
-    void reset_bg() {
-      m_board->cur.xattr_edit.bg = 0;
-      m_board->cur.xattr_edit.aflags &= ~(attribute_t) (is_bg_color_set | bg_color_mask);
-      m_board->cur.xattr_dirty = true;
-    }
-
-    void reset_attribute() {
-      m_board->cur.xattr_edit.clear();
-      m_board->cur.xattr_dirty = true;
     }
 
   public:
@@ -227,7 +181,7 @@ namespace contra {
       }
     }
     void do_ht() {
-      board_cursor& cur = m_board->cur;
+      cursor_t& cur = m_board->cur;
 
       // ToDo: tab stop の管理
       int const tabwidth = 8;
@@ -235,12 +189,14 @@ namespace contra {
 
       if (cur.x >= xdst) return;
 
-      char32_t const fillChar = U' ';
-      board_cell* cell = m_board->cell(cur.x, cur.y);
-      for (; cur.x < xdst; cur.x++) {
-        m_board->set_character(cell, fillChar);
-        m_board->set_attribute(cell, cur.attribute);
-      }
+      cell_t fill;
+      fill.character = ascii_nul;
+      fill.attribute = cur.attribute;
+      fill.width = 1;
+
+      line_t& line = m_board->line();
+      for (; cur.x < xdst; cur.x++)
+        line.put_character_at(cur.x, fill, 1);
     }
 
     void do_generic_ff(bool toAppendNewLine, bool toAdjustXAsPresentationPosition) {
@@ -251,9 +207,7 @@ namespace contra {
       if (m_board->cur.y + 1 < m_board->m_height)
         m_board->cur.y++;
       else if (toAppendNewLine) {
-        // ToDo: 消えてなくなる行を記録する?
-        m_board->rotate();
-        m_board->clear_line(m_board->cur.y);
+        m_board->rotate(1);
       } else
         return;
 
@@ -298,16 +252,14 @@ namespace contra {
       if (toCallCR) do_cr();
     }
     void do_cr() {
-      board_line* const line = m_board->line(m_board->cur.y);
-      apply_line_attribute(line);
+      line_t& line = m_board->line();
+      initialize_line(line);
 
       curpos_t x;
       if (m_state.get_mode(mode_simd)) {
-        x = line->limit < 0? m_board->m_width - 1:
-          std::min(line->limit, m_board->m_width - 1);
+        x = m_board->line_limit();
       } else {
-        x = line->home < 0? 0:
-          std::min(line->home, m_board->m_width - 1);
+        x = m_board->line_home();
       }
 
       if (!m_state.get_mode(mode_dcsm))
@@ -361,7 +313,10 @@ namespace contra {
       print_unrecognized_sequence(seq);
     }
 
-    void process_control_sequence(sequence const& seq);
+    void process_control_sequence(sequence const& seq) {
+      // ToDo
+      print_unrecognized_sequence(seq);
+    }
 
     void process_command_string(sequence const& seq) {
       print_unrecognized_sequence(seq);
@@ -395,5 +350,8 @@ namespace contra {
     }
   };
 
+
 }
+}
+
 #endif
