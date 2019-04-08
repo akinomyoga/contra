@@ -6,12 +6,13 @@
 #include <cstdint>
 #include <vector>
 #include <algorithm>
+#include <tuple>
 #include "../contradef.h"
 #include "util.hpp"
 
 // debugging
 #include <cstdio>
-#include "utf8.hpp"
+#include "enc.utf8.hpp"
 
 namespace contra {
 namespace ansi {
@@ -175,48 +176,55 @@ namespace ansi {
       // 文字を書き込む
       cells[pos] = cell;
       for (curpos_t i = 1; i < w; i++) {
-        cells[pos].character = character_t::flag_wide_extension;
-        cells[pos].attribute = cell.attribute;
-        cells[pos].width = 0;
+        cells[pos + i].character = character_t::flag_wide_extension;
+        cells[pos + i].attribute = cell.attribute;
+        cells[pos + i].width = 0;
       }
     }
 
   private:
+    std::pair<std::size_t, curpos_t> proportional_glb(curpos_t xdst, std::size_t beg, curpos_t xbeg, std::size_t end, bool include_zw_body) {
+      std::size_t i = beg;
+      curpos_t x = xbeg;
+      while (i < end) {
+        curpos_t xnew = x + cells[i].width;
+        if (xdst < xnew) break;
+        i++;
+        x = xnew;
+      }
+      if (include_zw_body && x == xdst)
+        while (i > 0 && cells[i - 1].is_zero_width_body()) i--;
+      return {i, x};
+    }
+    std::pair<std::size_t, curpos_t> proportional_lub(curpos_t xdst, std::size_t beg, curpos_t xbeg, std::size_t end, bool include_zw_body) {
+      std::size_t i = beg;
+      curpos_t x = xbeg;
+      while (i < end) {
+        x += cells[i++].width;
+        if (xdst <= x) {
+          while (i < end && cells[i].character.is_extension()) i++;
+          break;
+        }
+      }
+      if (include_zw_body && x == xdst)
+        while (i < end && cells[i].is_zero_width_body()) i++;
+      return {i, x};
+    }
+
     void proportional_put_character_at(curpos_t pos, cell_t const& cell, int implicit_move) {
       curpos_t const left = pos, right = pos + cell.width;
-      curpos_t const ncell = (curpos_t) cells.size();
+      std::size_t const ncell = cells.size();
 
       // 置き換える範囲 i1..i2 を決定する。
-      // Note: ゼロ幅の文字は "mark 文字 cluster" の様に
-      //   文字の周りに分布している。通常は mark の直後に挿入する。
-      //   つまり、ゼロ幅文字の直後に境界があると考える。
-      curpos_t i1 = 0, x1 = 0;
-      while (i1 < ncell) {
-        curpos_t xnew = x1 + cells[i1].width;
-        if (left < xnew) break;
-        i1++;
-        x1 = xnew;
-      }
-      curpos_t i2 = i1, x2 = x1;
-      while (i2 < ncell) {
-        curpos_t xnew = x2 + cells[i2].width;
-        if (right < xnew) break;
-        i2++;
-        x2 = xnew;
-      }
-
-      if (implicit_move == 0) {
-        // 暗黙移動を伴わない場合には直後の mark を残す様にする。
-        while (i2 > 0 && cells[i2 - 1].is_zero_width_body()) i2--;
-      } else if (implicit_move < 0) {
-        // 逆方向に動いている場合は直後の mark を残し、
-        // 直前の mark を削除する。
-        while (i1 > 0 && cells[i1 - 1].is_zero_width_body()) i1--;
-        while (i2 > 0 && cells[i2 - 1].is_zero_width_body()) i2--;
-      }
+      // Note: ゼロ幅の文字は "mark 文字 cluster" の様に文字の周りに分布している。
+      //   暗黙移動の方向の境界上の zw body (marker 等) は削除の対象とする。
+      std::size_t i1, i2;
+      curpos_t x1, x2;
+      std::tie(i1, x1) = proportional_glb(left , 0 , 0 , ncell, implicit_move < 0);
+      std::tie(i2, x2) = proportional_lub(right, i1, x1, ncell, implicit_move > 0);
 
       // 書き込み文字数の計算
-      curpos_t count = 1;
+      std::size_t count = 1;
       if (x1 < left) count += left - x1;
       if (right < x2) count += x2 - right;
       attribute_t lattr = 0, rattr = 0;
@@ -323,7 +331,8 @@ namespace ansi {
       for (auto const& line : m_lines) {
         if (line.m_lflags & line_attr_t::is_line_used) {
           for (auto const& cell : line.cells) {
-            char32_t c = (char32_t) cell.character.value;
+            if (cell.character.is_wide_extension()) continue;
+            char32_t c = (char32_t) (cell.character.value & character_t::unicode_mask);
             if (c == 0) c = 32;
             contra::encoding::put_u8(c, file);
           }

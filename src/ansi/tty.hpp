@@ -1,8 +1,11 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
 #ifndef CONTRA_ANSI_TTY_HPP
 #define CONTRA_ANSI_TTY_HPP
-#include "line.h"
+#include <cstring>
 #include "../sequence.h"
+#include "line.hpp"
+#include "enc.c2w.hpp"
+#include "enc.utf8.hpp"
 
 namespace contra {
 namespace ansi {
@@ -104,8 +107,8 @@ namespace ansi {
 
   public:
     std::size_t c2w(char32_t u) const {
-      (void) u;
-      return 1; // ToDo: 文字幅
+      // ToDo: 文字幅設定
+      return contra::encoding::c2w(u, contra::encoding::c2w_width_emacs);
     }
   };
 
@@ -126,6 +129,7 @@ namespace ansi {
     tty_player(contra::ansi::board_t& board): m_board(&board) {}
 
     void insert_char(char32_t u) {
+      u &= character_t::unicode_mask;
       // ToDo: 新しい行に移る時に line_limit, line_home を初期化する
       cursor_t& cur = m_board->cur;
       initialize_line(m_board->line());
@@ -338,8 +342,16 @@ namespace ansi {
     }
 
   public:
+    std::uint64_t printt_state = 0;
+    std::vector<char32_t> printt_buff;
     void printt(const char* text) {
-      while (*text) m_seqdecoder.process_char(*text++);
+      std::size_t len = std::strlen(text);
+      printt_buff.resize(len);
+      char32_t* const q0 = &printt_buff[0];
+      char32_t* q1 = q0;
+      contra::encoding::utf8_decode(text, text + len, q1, q0 + len, printt_state);
+      for (char32_t const* q = q0; q < q1; q++)
+        m_seqdecoder.process_char(*q);
     }
     void putc(char32_t uchar) {
       m_seqdecoder.process_char(uchar);
@@ -349,7 +361,6 @@ namespace ansi {
         m_seqdecoder.process_char(data[i]);
     }
   };
-
 
 }
 }

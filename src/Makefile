@@ -36,6 +36,7 @@ impl1_objs = \
   $(objdir)/tty_observer.o \
   $(objdir)/tty_player.o \
   $(objdir)/board.o \
+  $(objdir)/ansi/enc.utf8.o \
   $(objdir)/contradef.o
 impl1: $(impl1_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^
@@ -54,6 +55,7 @@ impl2_objs = \
   $(objdir)/tty_observer.o \
   $(objdir)/tty_player.o \
   $(objdir)/board.o \
+  $(objdir)/ansi/enc.utf8.o \
   $(objdir)/contradef.o
 impl2: $(impl2_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^
@@ -67,6 +69,8 @@ experimental/bidi: $(objdir)/experimental/bidi.o
 all: ansi/impl1
 ansi_impl1_objs = \
   $(objdir)/ansi/impl1.o \
+  $(objdir)/ansi/enc.c2w.o \
+  $(objdir)/ansi/enc.utf8.o \
   $(objdir)/contradef.o
 ansi/impl1: $(ansi_impl1_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^

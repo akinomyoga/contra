@@ -1,12 +1,14 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
 #ifndef CONTRA_TTY_PLAYER_H
 #define CONTRA_TTY_PLAYER_H
-#include "board.h"
-#include "sequence.h"
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <algorithm>
 #include <iterator>
+#include "board.h"
+#include "sequence.h"
+#include "ansi/enc.utf8.hpp"
 
 namespace contra {
 
@@ -383,8 +385,16 @@ namespace contra {
     }
 
   public:
+    std::uint64_t printt_state = 0;
+    std::vector<char32_t> printt_buff;
     void printt(const char* text) {
-      while (*text) m_seqdecoder.process_char(*text++);
+      std::size_t len = std::strlen(text);
+      printt_buff.resize(len);
+      char32_t* const q0 = &printt_buff[0];
+      char32_t* q1 = q0;
+      encoding::utf8_decode(text, text + len, q1, q0 + len, printt_state);
+      for (char32_t const* q = q0; q < q1; q++)
+        m_seqdecoder.process_char(*q);
     }
     void putc(char32_t uchar) {
       m_seqdecoder.process_char(uchar);
