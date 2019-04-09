@@ -25,7 +25,7 @@ namespace ansi {
 
       flag_wide_extension    = 0x10000000,
       flag_cluster_extension = 0x20000000,
-      flag_marker            = 0x30000000,
+      flag_marker            = 0x40000000,
 
       marker_base    = flag_marker | 0x00200000,
       marker_sds_l2r = marker_base + 1,
@@ -149,14 +149,15 @@ namespace ansi {
     bool m_prop_enabled = false;
 
     // !m_monospace の時に前回の書き込み位置の情報をキャッシュしておく。
-    std::size_t m_prop_i;
-    curpos_t m_prop_x;
+    mutable std::size_t m_prop_i;
+    mutable curpos_t m_prop_x;
 
     std::uint32_t m_version = 0;
 
     struct nested_string {
       curpos_t begin;
       curpos_t end;
+      std::uint32_t beg_marker;
       std::uint32_t end_marker;
       bool r2l;
       int parent;
@@ -251,7 +252,7 @@ namespace ansi {
     }
 
   private:
-    std::pair<std::size_t, curpos_t> proportional_glb(curpos_t xdst, bool include_zw_body) {
+    std::pair<std::size_t, curpos_t> proportional_glb(curpos_t xdst, bool include_zw_body) const {
       std::size_t const ncell = m_cells.size();
       std::size_t i = 0;
       curpos_t x = 0;
@@ -271,7 +272,7 @@ namespace ansi {
       m_prop_x = x;
       return {i, x};
     }
-    std::pair<std::size_t, curpos_t> proportional_lub(curpos_t xdst, bool include_zw_body) {
+    std::pair<std::size_t, curpos_t> proportional_lub(curpos_t xdst, bool include_zw_body) const {
       std::size_t const ncell = m_cells.size();
       std::size_t i = 0;
       curpos_t x = 0;
@@ -359,6 +360,22 @@ namespace ansi {
         monospace_write_cells(pos, cell, count, repeat, implicit_move);
     }
 
+    /// @fn cell_t const& char_at(curpos_t x) const;
+    /// 指定した位置にある有限幅の文字を取得します。
+    /// @param[in] x データ位置を指定します。
+    character_t char_at(curpos_t x) const {
+      if (!m_prop_enabled) {
+        if (x < 0 || (std::size_t) x >= m_cells.size()) return ascii_nul;
+        while (x > 0 && m_cells[x].character.is_extension()) x--;
+        return x;
+      } else {
+        std::size_t i;
+        curpos_t _;
+        std::tie(i, _) = proportional_glb(x, false);
+        return i < m_cells.size() ? m_cells[i].character : ascii_nul;
+      }
+    }
+
   public:
     bool is_r2l(presentation_direction board_charpath) const {
       return is_charpath_rtol(board_charpath); // L: 0, R: 1
@@ -371,27 +388,28 @@ namespace ansi {
 
       curpos_t x1 = 0;
       int istr = -1;
-      auto _push = [&] (std::uint32_t end_marker, bool new_r2l) {
+      auto _push = [&] (std::uint32_t beg_marker, std::uint32_t end_marker, bool new_r2l) {
         nested_string str;
         str.begin = x1;
         str.end = -1;
         str.r2l = new_r2l;
+        str.beg_marker = beg_marker;
         str.end_marker = end_marker;
         str.parent = istr;
         istr = ret.size();
         ret.emplace_back(str);
       };
 
-      _push(0, line_r2l);
+      _push(0, 0, line_r2l);
       ret[0].end = width;
 
       for (cell_t const& cell : m_cells) {
         std::uint32_t code = cell.character.value;
         if (cell.character.is_marker()) {
           switch (code) {
-          case character_t::marker_sds_l2r: _push(character_t::marker_sds_end, false); break;
-          case character_t::marker_sds_r2l: _push(character_t::marker_sds_end, true); break;
-          case character_t::marker_srs_beg: _push(character_t::marker_srs_end, !ret[istr].r2l); break;
+          case character_t::marker_sds_l2r: _push(character_t::marker_sds_l2r, character_t::marker_sds_end, false); break;
+          case character_t::marker_sds_r2l: _push(character_t::marker_sds_r2l, character_t::marker_sds_end, true); break;
+          case character_t::marker_srs_beg: _push(character_t::marker_srs_beg, character_t::marker_srs_end, !ret[istr].r2l); break;
           case character_t::marker_sds_end:
           case character_t::marker_srs_end:
             while (istr >= 1) {
@@ -404,12 +422,13 @@ namespace ansi {
 
           default: break;
           }
-        } else if (cell.character.value == ascii_nul) {
-          while (istr >= 1) {
-            ret[istr].end = x1;
-            istr = ret[istr].parent;
-          }
         } else {
+          if (cell.character.value == ascii_nul) {
+            while (istr >= 1) {
+              ret[istr].end = x1;
+              istr = ret[istr].parent;
+            }
+          }
           x1 += cell.width;
         }
       }
@@ -566,18 +585,241 @@ namespace ansi {
     }
 
   public:
+    typedef std::vector<std::pair<curpos_t, curpos_t>> slice_ranges_t;
+    void calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, curpos_t x1, curpos_t x2, curpos_t width, bool line_r2l) const {
+      ret.clear();
+      auto _register = [&ret] (curpos_t x1, curpos_t x2) {
+        if (ret.size() && ret.back().second == x1)
+          ret.back().second = x2;
+        else
+          ret.emplace_back(std::make_pair(x1, x2));
+      };
+
+      if (!m_prop_enabled) {
+        if (line_r2l)
+          _register(width - x2, width - x1);
+        else
+          _register(x1, x2);
+        return;
+      }
+
+      auto const& strings = this->update_strings(width, line_r2l);
+
+      struct elem_t { curpos_t x1, x2; bool r2l; int parent; };
+      std::vector<elem_t> stack;
+
+      bool r2l = false;
+      mwg_check(strings.size() <= std::numeric_limits<int>::max());
+      for (std::size_t i = 1; i < strings.size(); i++) {
+        auto const& str = strings[i];
+
+        while (stack.size() && stack.back().parent > str.parent) {
+          if (x1 >= 0) _register(x1, x2);
+          x1 = stack.back().x1;
+          x2 = stack.back().x2;
+          r2l = stack.back().r2l;
+          stack.pop_back();
+        }
+
+        if (x1 < 0 || str.end < x1) continue;
+
+        // (x1...x2) [beg...end]
+        if (x2 < str.begin) {
+          _register(x1, x2);
+          x1 = -1;
+          if(stack.empty()) break;
+          continue;
+        }
+
+        // (x1...[beg x2) ... end]
+        if (x1 <= str.begin) {
+          _register(x1, str.begin);
+          x1 = str.begin;
+        }
+
+        // [beg (x1... end] ... x2)
+        if (str.end <= x2) {
+          stack.emplace_back(elem_t({str.end, x2, r2l, (int) i}));
+          x2 = str.end;
+        }
+
+        // [beg (x1...x2) end]
+        if (str.r2l != r2l) {
+          x1 = str.begin + str.end - x1;
+          x2 = str.begin + str.end - x2;
+          std::swap(x1, x2);
+          r2l = str.r2l;
+        }
+      }
+
+      if (x1 >= 0) _register(x1, x2);
+      while (stack.size()) {
+        _register(stack.back().x1, stack.back().x2);
+        stack.pop_back();
+      }
+    }
+
+  public:
+    /// @fn std::size_t find_innermost_string(curpos_t x, bool left, curpos_t width, bool line_r2l) const;
+    /// 指定した位置がどの入れ子文字列の属しているかを取得します。
+    /// @param[in] x 入れ子状態を調べるデータ位置を指定します。
+    /// @param[in] left 入れ子状態を調べる位置が境界上の零幅文字の左側か右側かを指定します。
+    ///   この引数が true の時に境界上の零幅文字の左側に於ける状態を取得します。
+    /// @return line_t::update_strings の戻り値配列に於けるインデックスを返します。
+    std::size_t find_innermost_string(curpos_t x, bool left, curpos_t width, bool line_r2l) const {
+      if (!m_prop_enabled) return 0;
+      auto const& strings = this->update_strings(width, line_r2l);
+      int parent = 0;
+      mwg_check(strings.size() <= std::numeric_limits<int>::max());
+      for (std::size_t i = 1; i < strings.size(); i++) {
+        auto const& str = strings[i];
+        if (str.end < x || (!left && str.end == x)) continue;
+        while (str.parent < parent) {
+          if (x < strings[parent].end || (left && x == strings[parent].end)) return parent;
+          parent = strings[parent].parent;
+        }
+        if (x < str.begin || (left && x == str.begin)) return parent;
+        parent = i;
+      }
+      while (parent) {
+        if (x < strings[parent].end || (left && x == strings[parent].end)) return parent;
+        parent = strings[parent].parent;
+      }
+      return parent;
+    }
+
+  public:
+    void erase_presentation(curpos_t p1, curpos_t p2, curpos_t width, presentation_direction board_charpath) {
+      if (!(p1 < p2)) return;
+
+      cell_t fill;
+      fill.character = ascii_nul;
+      fill.attribute = 0;
+      fill.width = 1;
+
+      cell_t mark;
+      mark.attribute = 0;
+      mark.width = 0;
+
+      bool const line_r2l = is_r2l(board_charpath);
+      if (!m_prop_enabled) {
+        if (line_r2l) {
+          p1 = width - p1;
+          p2 = width - p2;
+          std::swap(p1, p2);
+        }
+        write_cells(p1, &fill, 1, p2 - p1, 0);
+        return;
+      }
+
+      slice_ranges_t ranges;
+      calculate_data_ranges_from_presentation_range(ranges, 0, p1, width, line_r2l);
+
+      std::vector<cell_t> cells;
+      auto const& strings = this->update_strings(width, line_r2l);
+
+      // 前半部分のコピー
+      std::size_t ilast = 0;
+      if (ranges.size()) {
+        for (auto const& range : ranges) {
+          std::size_t i1, i2;
+          curpos_t x1, x2;
+          std::tie(i1, x1) = proportional_glb(range.first , true);
+          std::tie(i2, x2) = proportional_lub(range.second, true);
+          cells.insert(cells.end(), m_cells.begin() + i1, m_cells.begin() + i2);
+          ilast = i2;
+        }
+
+        std::size_t istr = find_innermost_string(ranges.back().second, false, width, line_r2l);
+        while (istr) {
+          mark.character = strings[istr].end_marker;
+          cells.push_back(mark);
+          istr = strings[istr].parent;
+        }
+      }
+
+      // 余白
+      while (p1++ < p2) cells.push_back(fill);
+
+      // 後半部分のコピー
+      if (ilast != m_cells.size()) {
+        calculate_data_ranges_from_presentation_range(ranges, p2, width, width, line_r2l);
+        if (ranges.size()) {
+          std::size_t const insert_index = cells.size();
+          std::size_t istr = find_innermost_string(ranges[0].first, true, width, line_r2l);
+          while (istr) {
+            mark.character = strings[istr].beg_marker;
+            cells.insert(cells.begin() + insert_index, mark);
+            istr = strings[istr].parent;
+          }
+
+          for (auto const& range : ranges) {
+            std::size_t i1, i2;
+            curpos_t x1, x2;
+            std::tie(i1, x1) = proportional_glb(range.first , true);
+            std::tie(i2, x2) = proportional_lub(range.second, true);
+            cells.insert(cells.end(), m_cells.begin() + i1, m_cells.begin() + i2);
+          }
+        }
+      }
+
+      m_cells.swap(cells);
+      m_version++;
+      m_prop_i = 0;
+      m_prop_x = 0;
+    }
+
+  public:
+    void debug_string_nest(curpos_t width, presentation_direction board_charpath) const {
+      bool const line_r2l = is_r2l(board_charpath);
+      auto const& strings = this->update_strings(width, line_r2l);
+
+      curpos_t x = 0;
+      int parent = 0;
+      std::fprintf(stderr, "[");
+      for (std::size_t i = 1; i < strings.size(); i++) {
+        auto const& range = strings[i];
+
+        while (range.parent < parent) {
+          int delta = strings[parent].end - x;
+          if (delta) std::fprintf(stderr, "%d", delta);
+          std::fprintf(stderr, "]"); // 抜ける
+          x = strings[parent].end;
+          parent = strings[parent].parent;
+        }
+
+        if (x < range.begin) {
+          std::fprintf(stderr, "%d", range.begin - x);
+          x = range.begin;
+        }
+        std::fprintf(stderr, "[");
+        parent = i;
+      }
+      while (parent >= 0) {
+        int delta = strings[parent].end - x;
+        if (delta) std::fprintf(stderr, "%d", delta);
+        std::fprintf(stderr, "]"); // 抜ける
+        x = strings[parent].end;
+        parent = strings[parent].parent;
+      }
+      std::putc('\n', stderr);
+    }
+
+  public:
     void debug_dump() const {
       for (cell_t const& cell : m_cells) {
         std::uint32_t code = cell.character.value;
         if (cell.character.is_marker()) {
           switch (code) {
-          case character_t::marker_sds_l2r: std::fprintf(stderr, "SDS(1)"); break;
-          case character_t::marker_sds_r2l: std::fprintf(stderr, "SDS(2)"); break;
-          case character_t::marker_srs_beg: std::fprintf(stderr, "SRS(1)"); break;
-          case character_t::marker_sds_end: std::fprintf(stderr, "SDS(0)"); break;
-          case character_t::marker_srs_end: std::fprintf(stderr, "SRS(1)"); break;
+          case character_t::marker_sds_l2r: std::fprintf(stderr, "\x1b[91mSDS(1)\x1b[m"); break;
+          case character_t::marker_sds_r2l: std::fprintf(stderr, "\x1b[91mSDS(2)\x1b[m"); break;
+          case character_t::marker_srs_beg: std::fprintf(stderr, "\x1b[91mSRS(1)\x1b[m"); break;
+          case character_t::marker_sds_end: std::fprintf(stderr, "\x1b[91mSDS(0)\x1b[m"); break;
+          case character_t::marker_srs_end: std::fprintf(stderr, "\x1b[91mSRS(1)\x1b[m"); break;
           default: break;
           }
+        } else if (code == ascii_nul) {
+          std::fprintf(stderr, "\x1b[37m@\x1b[m");
         } else {
           std::putc((char) code, stderr);
         }
