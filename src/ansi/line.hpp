@@ -48,14 +48,17 @@ namespace ansi {
 
     std::uint32_t value;
 
-    character_t() {}
-    character_t(std::uint32_t value): value(value) {}
+    constexpr character_t(): value() {}
+    constexpr character_t(std::uint32_t value): value(value) {}
 
-    bool is_extension() const {
+    constexpr bool is_extension() const {
       return value & (flag_wide_extension | flag_cluster_extension);
     }
-    bool is_wide_extension() const {
+    constexpr bool is_wide_extension() const {
       return value & flag_wide_extension;
+    }
+    constexpr bool is_marker() const {
+      return value & flag_marker;
     }
   };
 
@@ -149,6 +152,19 @@ namespace ansi {
     std::size_t m_prop_i;
     curpos_t m_prop_x;
 
+    std::uint32_t m_version = 0;
+
+    struct nested_string {
+      curpos_t begin;
+      curpos_t end;
+      std::uint32_t end_marker;
+      bool r2l;
+      int parent;
+    };
+    mutable std::vector<nested_string> m_strings_cache;
+    mutable bool m_strings_r2l = false;
+    mutable std::uint32_t m_strings_version = (std::uint32_t) -1;
+
   public:
     std::vector<cell_t> const& cells() const { return m_cells; }
 
@@ -160,12 +176,17 @@ namespace ansi {
       m_prop_enabled = false;
       m_prop_i = 0;
       m_prop_x = 0;
+      m_version = 0;
+      m_strings_cache.clear();
+      m_strings_version = (std::uint32_t) -1;
+      m_strings_r2l = false;
     }
 
   private:
     void convert_to_proportional() {
       if (this->m_prop_enabled) return;
       this->m_prop_enabled = true;
+      this->m_version++;
       m_cells.erase(
         std::remove_if(m_cells.begin(), m_cells.end(),
           [] (cell_t const& cell) { return cell.character.is_wide_extension(); }),
@@ -176,6 +197,7 @@ namespace ansi {
 
   private:
     void monospace_write_cells(curpos_t pos, cell_t const* cell, int count, int repeat, int implicit_move) {
+      this->m_version++;
       curpos_t width = 0;
       for (int i = 0; i < count; i++) {
         curpos_t const w = cell[i].width;
@@ -191,7 +213,7 @@ namespace ansi {
       curpos_t const ncell = (curpos_t) this->m_cells.size();
       if (ncell < pos + width) {
         cell_t fill;
-        fill.character = 0;
+        fill.character = ascii_nul;
         fill.attribute = 0;
         fill.width = 1;
         this->m_cells.resize((curpos_t) (pos + width), fill);
@@ -200,7 +222,7 @@ namespace ansi {
       // 左側の中途半端な文字を消去
       if (m_cells[pos].character.is_extension()) {
         for (std::ptrdiff_t q = pos - 1; q >= 0; q--) {
-          bool is_wide = this->m_cells[q].character.is_extension();
+          bool const is_wide = this->m_cells[q].character.is_extension();
           this->m_cells[q].character = ascii_sp;
           this->m_cells[q].width = 1;
           if (!is_wide) break;
@@ -268,6 +290,7 @@ namespace ansi {
       return {i, x};
     }
     void proportional_write_cells(curpos_t pos, cell_t const* cell, int count, int repeat, int implicit_move) {
+      this->m_version++;
       curpos_t width = 0;
       for (int i = 0; i < count; i++) width += cell[i].width;
       width *= repeat;
@@ -287,37 +310,45 @@ namespace ansi {
       std::size_t nwrite = count * repeat;
       if (x1 < left) nwrite += left - x1;
       if (right < x2) nwrite += x2 - right;
-      attribute_t lattr = 0, rattr = 0;
-      if (i1 < i2) {
-        lattr = m_cells[i1].attribute;
-        rattr = m_cells[i2 - 1].attribute;
-      }
 
-      cell_t fill;
-      fill.character = i1 < ncell ? ascii_sp : ascii_nul;
-      fill.attribute = 0;
-      fill.width = 1;
+      // fill に使う文字を元の内容を元に決定しておく。
+      cell_t lfill, rfill;
+      if (x1 < left) {
+        // Note: x1 < left && i1 < ncell の時点で x1 < left <= right <= x2 より i1 < i2 は保証される。
+        // Note: 文字幅 2 以上の NUL が設置されている事があるか分からないが、その時には NUL で埋める。
+        if (i1 < ncell) mwg_assert(i1 < i2);
+        lfill.character = i1 < ncell && m_cells[i1].character.value != ascii_nul ? ascii_sp : ascii_nul;
+        lfill.attribute = i1 < i2 ? m_cells[i1].attribute : 0;
+        lfill.width = 1;
+      }
+      if (right < x2) {
+        // Note: right < x2 の時点で x1 <= left <= right < x2 なので i1 < i2 が保証される。
+        //   更に、i1 < i2 <= ncell も保証される。
+        // Note: 文字幅 2 以上の NUL が設置されている事があるか分からないが、その時には NUL で埋める。
+        mwg_assert(i1 < i2 && i1 < ncell);
+        rfill.character = m_cells[i2 - 1].character.value != ascii_nul ? ascii_sp : ascii_nul;
+        rfill.attribute = m_cells[i2 - 1].attribute;
+        rfill.width = 1;
+      }
 
       // 書き込み領域の確保
       if (nwrite < i2 - i1) {
         m_cells.erase(m_cells.begin() + (i1 + nwrite), m_cells.begin() + i2);
       } else if (nwrite > i2 - i1) {
-        m_cells.insert(m_cells.begin() + i2, i1 + nwrite - i2, fill);
+        m_cells.insert(m_cells.begin() + i2, i1 + nwrite - i2, rfill);
       }
+
+      // m_prop_i, m_prop_x 更新
+      m_prop_i = i1 + nwrite;
+      m_prop_x = std::max(x2, right);
 
       // 余白と文字の書き込み
       curpos_t p = i1;
-      if (x1 < left) {
-        fill.attribute = lattr;
-        do m_cells[p++] = fill; while (++x1 < left);
-      }
+      while (x1++ < left) m_cells[p++] = lfill;
       for (int r = 0; r < repeat; r++)
         for (int i = 0; i < count; i++)
           m_cells[p++] = cell[i];
-      if (right < x2) {
-        fill.attribute = rattr;
-        do m_cells[p++] = fill; while (right < --x2);
-      }
+      while (right < x2--) m_cells[p++] = rfill;
     }
 
   public:
@@ -326,6 +357,232 @@ namespace ansi {
         proportional_write_cells(pos, cell, count, repeat, implicit_move);
       else
         monospace_write_cells(pos, cell, count, repeat, implicit_move);
+    }
+
+  public:
+    bool is_r2l(presentation_direction board_charpath) const {
+      return is_charpath_rtol(board_charpath); // L: 0, R: 1
+    }
+
+    std::vector<nested_string> const& update_strings(curpos_t width, bool line_r2l) const {
+      std::vector<nested_string>& ret = m_strings_cache;
+      if (m_strings_version == m_version && m_strings_r2l == line_r2l) return ret;
+      ret.clear();
+
+      curpos_t x1 = 0;
+      int istr = -1;
+      auto _push = [&] (std::uint32_t end_marker, bool new_r2l) {
+        nested_string str;
+        str.begin = x1;
+        str.end = -1;
+        str.r2l = new_r2l;
+        str.end_marker = end_marker;
+        str.parent = istr;
+        istr = ret.size();
+        ret.emplace_back(str);
+      };
+
+      _push(0, line_r2l);
+      ret[0].end = width;
+
+      for (cell_t const& cell : m_cells) {
+        std::uint32_t code = cell.character.value;
+        if (cell.character.is_marker()) {
+          switch (code) {
+          case character_t::marker_sds_l2r: _push(character_t::marker_sds_end, false); break;
+          case character_t::marker_sds_r2l: _push(character_t::marker_sds_end, true); break;
+          case character_t::marker_srs_beg: _push(character_t::marker_srs_end, !ret[istr].r2l); break;
+          case character_t::marker_sds_end:
+          case character_t::marker_srs_end:
+            while (istr >= 1) {
+              bool const hit = ret[istr].end_marker == code;
+              ret[istr].end = x1;
+              istr = ret[istr].parent;
+              if (hit) break;
+            }
+            break;
+
+          default: break;
+          }
+        } else if (cell.character.value == ascii_nul) {
+          while (istr >= 1) {
+            ret[istr].end = x1;
+            istr = ret[istr].parent;
+          }
+        } else {
+          x1 += cell.width;
+        }
+      }
+      while (istr >= 1) {
+        ret[istr].end = x1;
+        istr = ret[istr].parent;
+      }
+
+      m_strings_version = m_version;
+      m_strings_r2l = line_r2l;
+      return ret;
+    }
+
+  private:
+    curpos_t convert_position(bool toPresentationPosition, curpos_t srcX, curpos_t width, bool line_r2l) const {
+      if (!m_prop_enabled) return line_r2l ? std::max(0, width - srcX - 1) : srcX;
+      std::vector<nested_string> const& strings = this->update_strings(width, line_r2l);
+      if (strings.empty()) return line_r2l ? std::max(0, width - srcX - 1) : srcX;
+
+      int r2l = 0;
+      curpos_t x = toPresentationPosition ? 0 : srcX;
+      for (nested_string const& range : strings) {
+        curpos_t const referenceX = toPresentationPosition ? srcX : x;
+        if (referenceX < range.begin) break;
+        if (referenceX < range.end && range.r2l != r2l) {
+          x = range.end - 1 - (x - range.begin);
+          r2l = range.r2l;
+        }
+      }
+
+      if (toPresentationPosition) {
+        x = srcX - x;
+        if (strings[0].r2l != r2l) x = -x;
+      }
+
+      return x;
+    }
+
+  public:
+    curpos_t to_data_position(curpos_t x, curpos_t width, presentation_direction board_charpath) const {
+      bool const line_r2l = is_r2l(board_charpath);
+      // !m_prop_enabled の時は SDS/SRS も Unicode bidi も存在しない。
+      if (!m_prop_enabled) return line_r2l ? std::max(0, width - x - 1) : x;
+      return convert_position(false, x, width, line_r2l);
+    }
+    curpos_t to_presentation_position(curpos_t x, curpos_t width, presentation_direction board_charpath) const {
+      bool const line_r2l = is_r2l(board_charpath);
+      // !m_prop_enabled の時は SDS/SRS も Unicode bidi も存在しない。
+      if (!m_prop_enabled) return line_r2l ? std::max(0, width - x - 1) : x;
+
+      // キャッシュがある時はそれを使った方が速いだろう。
+      if (m_strings_version == m_version && m_strings_r2l == line_r2l)
+        return convert_position(true, x, width, line_r2l);
+
+      struct nest_t {
+        curpos_t beg;
+        std::uint32_t end_marker;
+        int  save_r2l;
+        bool save_contains;
+      };
+
+      bool r2l = line_r2l; // false: L, true: R
+      bool contains = false;
+
+      std::vector<nest_t> stack;
+
+      curpos_t a = 0, x1 = 0, x2 = 0;
+      int contains_odd_count = -1;
+      auto _pop = [&] () {
+        if (contains) {
+          if (r2l != line_r2l) {
+            a += x1 - x2;
+            contains_odd_count--;
+          }
+          x2 = x1;
+        }
+        r2l = stack.back().save_r2l;
+        contains = stack.back().save_contains;
+        stack.pop_back();
+      };
+      auto _push = [&] (std::uint32_t end_marker, bool new_r2l) {
+        nest_t nest;
+        nest.beg = x1;
+        nest.end_marker = end_marker;
+        nest.save_r2l = r2l;
+        nest.save_contains = contains;
+        stack.emplace_back(std::move(nest));
+        r2l = new_r2l;
+        contains = false;
+      };
+
+      for (cell_t const& cell : m_cells) {
+        std::uint32_t code = cell.character.value;
+        if (cell.character.is_marker()) {
+          switch (code) {
+          case character_t::marker_sds_l2r:
+            _push(character_t::marker_sds_end, false);
+            break;
+          case character_t::marker_sds_r2l:
+            _push(character_t::marker_sds_end, true);
+            break;
+          case character_t::marker_srs_beg:
+            _push(character_t::marker_srs_end, !r2l);
+            break;
+
+          case character_t::marker_sds_end:
+          case character_t::marker_srs_end:
+            while (stack.size()) {
+              bool const hit = stack.back().end_marker == code;
+              _pop();
+              if (hit) break;
+            }
+            break;
+
+          default: break;
+          }
+        } else if (cell.character.value == ascii_nul) {
+          // Note: HT に対しては HT (TAB) の代わりに NUL が挿入される。
+          //   またその他の移動の後に文字を入れた時にも使われる。
+          //   これらの NUL は segment separator として使われる。
+          while (stack.size()) _pop();
+        } else {
+          if (x1 <= x && x < x1 + (curpos_t) cell.width) {
+            contains_odd_count = 0;
+
+            // 左側を集計しつつ contains マークを付ける。
+            for (auto& nest : stack) {
+              if (nest.save_r2l == line_r2l)
+                a += nest.beg - x2;
+              else
+                contains_odd_count++;
+              x2 = nest.beg;
+              nest.save_contains = true;
+            }
+
+            if (r2l == line_r2l)
+              a += x - x2;
+            else
+              contains_odd_count++;
+            x2 = x + 1;
+            contains = true;
+          }
+          x1 += cell.width;
+        }
+
+        // Note: 途中で見つかり更に反転範囲が全て閉じた時はその時点で確定。
+        if (contains_odd_count == 0)
+          return line_r2l ? width - a : a;
+      }
+
+      while (stack.size()) _pop();
+      if (!contains) a = x;
+      return line_r2l ? width - a : a;
+    }
+
+  public:
+    void debug_dump() const {
+      for (cell_t const& cell : m_cells) {
+        std::uint32_t code = cell.character.value;
+        if (cell.character.is_marker()) {
+          switch (code) {
+          case character_t::marker_sds_l2r: std::fprintf(stderr, "SDS(1)"); break;
+          case character_t::marker_sds_r2l: std::fprintf(stderr, "SDS(2)"); break;
+          case character_t::marker_srs_beg: std::fprintf(stderr, "SRS(1)"); break;
+          case character_t::marker_sds_end: std::fprintf(stderr, "SDS(0)"); break;
+          case character_t::marker_srs_end: std::fprintf(stderr, "SRS(1)"); break;
+          default: break;
+          }
+        } else {
+          std::putc((char) code, stderr);
+        }
+      }
+      std::putc('\n', stderr);
     }
   };
 
@@ -338,10 +595,11 @@ namespace ansi {
     contra::util::ring_buffer<line_t> m_lines;
 
     cursor_t cur;
-    int scroll_offset = 0;
 
     curpos_t m_width;
     curpos_t m_height;
+
+    presentation_direction m_presentation_direction {presentation_direction_default};
 
     board_t(curpos_t width, curpos_t height): m_lines(height), m_width(width), m_height(height) {
       mwg_check(width > 0 && height > 0, "width = %d, height = %d", (int) width, (int) height);
@@ -365,12 +623,10 @@ namespace ansi {
     }
 
     curpos_t to_data_position(curpos_t y, curpos_t x) const {
-      (void) y;
-      return x; // ToDo:実装
+      return m_lines[y].to_data_position(x, m_width, m_presentation_direction);
     }
     curpos_t to_presentation_position(curpos_t y, curpos_t x) const {
-      (void) y;
-      return x; // ToDo:実装
+      return m_lines[y].to_presentation_position(x, m_width, m_presentation_direction);
     }
 
   public:

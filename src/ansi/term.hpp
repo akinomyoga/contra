@@ -124,9 +124,17 @@ namespace ansi {
   public:
     tty_player(contra::ansi::board_t& board): m_board(&board) {}
 
-
   public:
-    board_t& board() const { return *m_board; }
+    board_t& board() { return *m_board; }
+    board_t const& board() const { return *m_board; }
+
+    // void set_fg(color_t index, aflags_t colorSpace = color_spec_indexed);
+    // void reset_fg();
+    // void set_bg(color_t index, aflags_t colorSpace = color_spec_indexed);
+    // void reset_bg();
+    // void reset_attribute() {
+    // tty_state* state() {return &this->m_state;}
+    // tty_state const* state() const {return &this->m_state;}
 
   public:
     void insert_graph(char32_t u) {

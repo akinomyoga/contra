@@ -192,7 +192,6 @@ namespace contra {
       m_board->cur.xattr_edit.aflags &= ~(attribute_t) (is_fg_color_set | fg_color_mask);
       m_board->cur.xattr_dirty = true;
     }
-
     void set_bg(color_t index, aflags_t colorSpace = color_spec_indexed) {
       extended_attribute& xattr = m_board->cur.xattr_edit;
       xattr.bg = index;
@@ -207,7 +206,6 @@ namespace contra {
       m_board->cur.xattr_edit.aflags &= ~(attribute_t) (is_bg_color_set | bg_color_mask);
       m_board->cur.xattr_dirty = true;
     }
-
     void reset_attribute() {
       m_board->cur.xattr_edit.clear();
       m_board->cur.xattr_dirty = true;
