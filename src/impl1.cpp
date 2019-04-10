@@ -10,7 +10,7 @@ void test_strings() {
   using namespace contra::ansi;
 
   board_t board(40, 1);
-  tty_player play(board);
+  term_t term(board);
 
   // to_presentation_position/to_data_position
   auto check_conversion = [&] (curpos_t xdata, curpos_t xpres) {
@@ -54,7 +54,7 @@ void test_strings() {
     }
   };
 
-  play.printt("SDS(1)----\x1b[1]---\x1b[0]----\r");
+  term.printt("SDS(1)----\x1b[1]---\x1b[0]----\r");
   check_conversion(6 , 6 );
   check_conversion(7 , 7 );
   check_conversion(10, 10);
@@ -65,21 +65,21 @@ void test_strings() {
   mwg_check(board.line().find_innermost_string(10, false, board.m_width, false) == 1);
   mwg_check(board.line().find_innermost_string(13, true,  board.m_width, false) == 1);
   mwg_check(board.line().find_innermost_string(13, false, board.m_width, false) == 0);
-  play.printt("SDS(2)----\x1b[2]---\x1b[0]----\r");
+  term.printt("SDS(2)----\x1b[2]---\x1b[0]----\r");
   check_conversion(6 , 6 );
   check_conversion(7 , 7 );
   check_conversion(10, 12);
   check_conversion(11, 11);
   check_conversion(13, 13);
   check_conversion(14, 14);
-  play.printt("SRS(2)----\x1b[1[---\x1b[0[----\r");
+  term.printt("SRS(2)----\x1b[1[---\x1b[0[----\r");
   check_conversion(6 , 6 );
   check_conversion(7 , 7 );
   check_conversion(10, 12);
   check_conversion(11, 11);
   check_conversion(13, 13);
   check_conversion(14, 14);
-  play.printt("--\x1b[2]---\x1b[1[----\x1b[0]---\r"); // ..SDS(2)..SRS(1)..SDS(0)..
+  term.printt("--\x1b[2]---\x1b[1[----\x1b[0]---\r"); // ..SDS(2)..SRS(1)..SDS(0)..
   check_conversion(1, 1);
   check_conversion(2, 8);
   check_conversion(4, 6);
@@ -98,7 +98,7 @@ void test_strings() {
   // DATA ab[cd[ef[gh]ij[kl]mn]op]qr
   //      ..[<<[..[<<]..[<<]..]<<]..
   // PRES ab[po[ef[hg]ij[lk]mn]dc]qr
-  play.printt("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r");
+  term.printt("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r");
   check_conversion( 0,  0);
   check_conversion( 2, 15);
   check_conversion( 4,  4);
@@ -143,7 +143,7 @@ void test_strings() {
     // board.line().debug_dump();
   };
   auto check_ech = [&] (const char* esc, curpos_t p1, curpos_t p2) {
-    play.printt(esc);
+    term.printt(esc);
 
     std::vector<char32_t> before, after;
     std::fprintf(stderr, "ECH before: "); _presentation(before);
@@ -170,7 +170,7 @@ void test_strings() {
   board.m_presentation_direction = presentation_direction_default;
 
   auto check_dch = [&] (const char* esc, curpos_t p1, curpos_t shift) {
-    play.printt(esc);
+    term.printt(esc);
 
     std::vector<char32_t> before, after;
     std::fprintf(stderr, "DCH before: "); _presentation(before);
@@ -189,7 +189,7 @@ void test_strings() {
   board.m_presentation_direction = presentation_direction_default;
 
   auto check_ich = [&] (const char* esc, curpos_t p1, curpos_t shift) {
-    play.printt(esc);
+    term.printt(esc);
 
     std::vector<char32_t> before, after;
     std::fprintf(stderr, "ICH before: "); _presentation(before);
@@ -226,27 +226,27 @@ void do_test() {
   using namespace contra::ansi;
   {
     board_t board(5, 5);
-    tty_player play(board);
-    play.printt("hello world!\n");
-    play.printt("hello world!\n");
+    term_t term(board);
+    term.printt("hello world!\n");
+    term.printt("hello world!\n");
     board.debug_print(stdout);
   }
 
   // 全角文字の挿入と上書き
   {
     board_t board(5, 3);
-    tty_player play(board);
-    play.printt("hello\r日\n");
-    play.printt("a日本\r全\n");
-    play.printt("a日本\ba");
+    term_t term(board);
+    term.printt("hello\r日\n");
+    term.printt("a日本\r全\n");
+    term.printt("a日本\ba");
     board.debug_print(stdout);
   }
 
   // タブ挿入
   {
     board_t board(40, 1);
-    tty_player play(board);
-    play.printt("日本\thello\tworld");
+    term_t term(board);
+    term.printt("日本\thello\tworld");
     board.debug_print(stdout);
   }
 }
@@ -255,7 +255,7 @@ void test_sgr() {
   using namespace contra::ansi;
   board_t board(20, 10);
 
-  tty_player term(board);
+  term_t term(board);
   term.printt("\x1b[38:5:196;4mabcdefghijklmnopqrstuvwxyz");
   term.printt("\x1b[38:5:202mabcdefghijklmnopqrstuvwxyz");
   term.printt("\x1b[38:5:220;24mabcdefghijklmnopqrstuvwxyz");

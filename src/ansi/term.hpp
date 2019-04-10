@@ -119,7 +119,7 @@ namespace ansi {
     }
   };
 
-  class tty_player {
+  class term_t {
   private:
     board_t* m_board;
     tty_state m_state;
@@ -133,7 +133,7 @@ namespace ansi {
     }
 
   public:
-    tty_player(contra::ansi::board_t& board): m_board(&board) {}
+    term_t(contra::ansi::board_t& board): m_board(&board) {}
 
   public:
     board_t& board() { return *m_board; }
@@ -342,7 +342,7 @@ namespace ansi {
     }
 
   private:
-    typedef sequence_decoder<tty_player> decoder_type;
+    typedef sequence_decoder<term_t> decoder_type;
     decoder_type m_seqdecoder {this, &this->m_state.m_sequence_decoder_config};
     friend decoder_type;
 

@@ -15,7 +15,7 @@ namespace {
 
   class csi_parameters;
 
-  typedef bool control_function_t(tty_player& play, csi_parameters& params);
+  typedef bool control_function_t(term_t& term, csi_parameters& params);
 
   typedef std::uint32_t csi_single_param_t;
 
@@ -126,14 +126,14 @@ namespace {
   //---------------------------------------------------------------------------
   // Page and line settings
 
-  bool do_spd(tty_player& play, csi_parameters& params) {
+  bool do_spd(term_t& term, csi_parameters& params) {
     csi_single_param_t direction;
     params.read_param(direction, 0);
     csi_single_param_t update;
     params.read_param(update, 0);
     if (direction > 7 || update > 2) return false;
 
-    board_t& b = play.board();
+    board_t& b = term.board();
 
     bool const oldRToL = is_charpath_rtol(b.m_presentation_direction);
     bool const newRToL = is_charpath_rtol(b.m_presentation_direction = (presentation_direction) direction);
@@ -167,21 +167,21 @@ namespace {
     return true;
   }
 
-  bool do_scp(tty_player& play, csi_parameters& params) {
+  bool do_scp(term_t& term, csi_parameters& params) {
     csi_single_param_t charPath;
     params.read_param(charPath, 0);
     csi_single_param_t update;
     params.read_param(update, 0);
     if (charPath > 2 || update > 2) return false;
 
-    tty_state& s = play.state();
-    board_t& b = play.board();
+    tty_state& s = term.state();
+    board_t& b = term.board();
     line_t& line = b.line();
 
     bool const oldRToL = line.is_r2l(b.m_presentation_direction);
 
     // update line attributes
-    play.initialize_line(line);
+    term.initialize_line(line);
     line.m_lflags &= ~line_attr_t::character_path_mask;
     s.lflags &= ~line_attr_t::character_path_mask;
     switch (charPath) {
@@ -209,17 +209,17 @@ namespace {
     return true;
   }
 
-  bool do_simd(tty_player& play, csi_parameters& params) {
+  bool do_simd(term_t& term, csi_parameters& params) {
     csi_single_param_t param;
     params.read_param(param, 0);
     if (param > 1) return false;
-    play.state().set_mode(mode_simd, param != 0);
+    term.state().set_mode(mode_simd, param != 0);
     return true;
   }
 
-  bool do_slh(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
-    board_t& b = play.board();
+  bool do_slh(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
+    board_t& b = term.board();
     line_t& line = b.line();
 
     csi_single_param_t param;
@@ -240,9 +240,9 @@ namespace {
     return true;
   }
 
-  bool do_sll(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
-    board_t& b = play.board();
+  bool do_sll(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
+    board_t& b = term.board();
     line_t& line = b.line();
 
     csi_single_param_t param;
@@ -263,8 +263,8 @@ namespace {
     return true;
   }
 
-  bool do_sph(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
+  bool do_sph(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
 
     csi_single_param_t param;
     if (params.read_param(param, 0) && param) {
@@ -278,8 +278,8 @@ namespace {
     return true;
   }
 
-  bool do_spl(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
+  bool do_spl(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
 
     csi_single_param_t param;
     if (params.read_param(param, 0) && param) {
@@ -296,21 +296,21 @@ namespace {
   //---------------------------------------------------------------------------
   // Strings
 
-  bool do_sds(tty_player& play, csi_parameters& params) {
+  bool do_sds(term_t& term, csi_parameters& params) {
     csi_single_param_t param;
     params.read_param(param, 0);
     if (param > 2) return false;
-    play.insert_marker(
+    term.insert_marker(
       param == 1 ? character_t::marker_sds_l2r :
       param == 2 ? character_t::marker_sds_r2l :
       character_t::marker_sds_end);
     return true;
   }
-  bool do_srs(tty_player& play, csi_parameters& params) {
+  bool do_srs(term_t& term, csi_parameters& params) {
     csi_single_param_t param;
     params.read_param(param, 0);
     if (param > 2) return false;
-    play.insert_marker(
+    term.insert_marker(
       param == 1 ? character_t::marker_srs_beg :
       character_t::marker_srs_end);
     return true;
@@ -336,8 +336,8 @@ namespace {
     return do_cux_direction(vec >> do_cux_shift * (0 <= value && value < 8? value: 0) & do_cux_mask);
   }
 
-  static bool do_cux(tty_player& play, csi_parameters& params, do_cux_direction direction, bool isData) {
-    tty_state& s = play.state();
+  static bool do_cux(term_t& term, csi_parameters& params, do_cux_direction direction, bool isData) {
+    tty_state& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -347,7 +347,7 @@ namespace {
         return true;
     }
 
-    board_t& b = play.board();
+    board_t& b = term.board();
 
     curpos_t y = b.cur.y;
     switch (direction) {
@@ -367,7 +367,7 @@ namespace {
         curpos_t x = b.cur.x;
         if (!isData)
           x = b.to_presentation_position(y, x);
-        x = std::min(play.board().m_width - 1, x + (curpos_t) param);
+        x = std::min(term.board().m_width - 1, x + (curpos_t) param);
         if (!isData)
           x = b.to_data_position(y, x);
         b.cur.x = x;
@@ -377,14 +377,14 @@ namespace {
       b.cur.y = std::max((curpos_t) 0, y - (curpos_t) param);
       break;
     case do_cux_succ_line:
-      b.cur.y = std::min(play.board().m_height - 1, y + (curpos_t) param);
+      b.cur.y = std::min(term.board().m_height - 1, y + (curpos_t) param);
       break;
     }
 
     return true;
   }
 
-  bool do_cuu(tty_player& play, csi_parameters& params) {
+  bool do_cuu(term_t& term, csi_parameters& params) {
     constexpr std::uint32_t vec
       = do_cux_vec_construct(presentation_direction_tblr, do_cux_prec_char)
       | do_cux_vec_construct(presentation_direction_tbrl, do_cux_prec_char)
@@ -396,11 +396,11 @@ namespace {
       | do_cux_vec_construct(presentation_direction_rlbt, do_cux_succ_line);
 
     return do_cux(
-      play, params,
-      do_cux_vec_select(vec, play.board().m_presentation_direction),
+      term, params,
+      do_cux_vec_select(vec, term.board().m_presentation_direction),
       false);
   }
-  bool do_cud(tty_player& play, csi_parameters& params) {
+  bool do_cud(term_t& term, csi_parameters& params) {
     constexpr std::uint32_t vec
       = do_cux_vec_construct(presentation_direction_btlr, do_cux_prec_char)
       | do_cux_vec_construct(presentation_direction_btrl, do_cux_prec_char)
@@ -412,11 +412,11 @@ namespace {
       | do_cux_vec_construct(presentation_direction_rltb, do_cux_succ_line);
 
     return do_cux(
-      play, params,
-      do_cux_vec_select(vec, play.board().m_presentation_direction),
+      term, params,
+      do_cux_vec_select(vec, term.board().m_presentation_direction),
       false);
   }
-  bool do_cuf(tty_player& play, csi_parameters& params) {
+  bool do_cuf(term_t& term, csi_parameters& params) {
     constexpr std::uint32_t vec
       = do_cux_vec_construct(presentation_direction_rltb, do_cux_prec_char)
       | do_cux_vec_construct(presentation_direction_rlbt, do_cux_prec_char)
@@ -428,11 +428,11 @@ namespace {
       | do_cux_vec_construct(presentation_direction_btlr, do_cux_succ_line);
 
     return do_cux(
-      play, params,
-      do_cux_vec_select(vec, play.board().m_presentation_direction),
+      term, params,
+      do_cux_vec_select(vec, term.board().m_presentation_direction),
       false);
   }
-  bool do_cub(tty_player& play, csi_parameters& params) {
+  bool do_cub(term_t& term, csi_parameters& params) {
     constexpr std::uint32_t vec
       = do_cux_vec_construct(presentation_direction_lrtb, do_cux_prec_char)
       | do_cux_vec_construct(presentation_direction_lrbt, do_cux_prec_char)
@@ -444,22 +444,22 @@ namespace {
       | do_cux_vec_construct(presentation_direction_btrl, do_cux_succ_line);
 
     return do_cux(
-      play, params,
-      do_cux_vec_select(vec, play.board().m_presentation_direction),
+      term, params,
+      do_cux_vec_select(vec, term.board().m_presentation_direction),
       false);
   }
 
-  bool do_hpb(tty_player& play, csi_parameters& params) {
-    return do_cux(play, params, do_cux_prec_char, true);
+  bool do_hpb(term_t& term, csi_parameters& params) {
+    return do_cux(term, params, do_cux_prec_char, true);
   }
-  bool do_hpr(tty_player& play, csi_parameters& params) {
-    return do_cux(play, params, do_cux_succ_char, true);
+  bool do_hpr(term_t& term, csi_parameters& params) {
+    return do_cux(term, params, do_cux_succ_char, true);
   }
-  bool do_vpb(tty_player& play, csi_parameters& params) {
-    return do_cux(play, params, do_cux_prec_line, true);
+  bool do_vpb(term_t& term, csi_parameters& params) {
+    return do_cux(term, params, do_cux_prec_line, true);
   }
-  bool do_vpr(tty_player& play, csi_parameters& params) {
-    return do_cux(play, params, do_cux_succ_line, true);
+  bool do_vpr(term_t& term, csi_parameters& params) {
+    return do_cux(term, params, do_cux_succ_line, true);
   }
 
   static bool do_cup(board_t& b, curpos_t x, curpos_t y) {
@@ -468,30 +468,30 @@ namespace {
     return true;
   }
 
-  bool do_cnl(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
+  bool do_cnl(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0 && s.get_mode(mode_zdm)) param = 1;
 
-    board_t& b = play.board();
+    board_t& b = term.board();
     curpos_t const y = std::min(b.cur.y + (curpos_t) param, b.m_width - 1);
     return do_cup(b, 0, y);
   }
 
-  bool do_cpl(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
+  bool do_cpl(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0 && s.get_mode(mode_zdm)) param = 1;
 
-    board_t& b = play.board();
+    board_t& b = term.board();
     curpos_t const y = std::max(b.cur.y - (curpos_t) param, 0);
     return do_cup(b, 0, y);
   }
 
-  bool do_cup(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
+  bool do_cup(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
     csi_single_param_t param1, param2;
     params.read_param(param1, 1);
     params.read_param(param2, 1);
@@ -502,11 +502,11 @@ namespace {
 
     if (param1 == 0 || param2 == 0) return false;
 
-    return do_cup(play.board(), (curpos_t) param2 - 1, (curpos_t) param1 - 1);
+    return do_cup(term.board(), (curpos_t) param2 - 1, (curpos_t) param1 - 1);
   }
 
-  bool do_cha(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
+  bool do_cha(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -516,12 +516,12 @@ namespace {
         return false;
     }
 
-    board_t& b = play.board();
+    board_t& b = term.board();
     return do_cup(b, param - 1, b.cur.y);
   }
 
-  bool do_hpa(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
+  bool do_hpa(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -531,12 +531,12 @@ namespace {
         return false;
     }
 
-    play.board().cur.x = param - 1;
+    term.board().cur.x = param - 1;
     return true;
   }
 
-  bool do_vpa(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
+  bool do_vpa(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -546,7 +546,7 @@ namespace {
         return false;
     }
 
-    play.board().cur.y = param - 1;
+    term.board().cur.y = param - 1;
     return true;
   }
 
@@ -620,8 +620,8 @@ namespace {
     }
   }
 
-  static void do_sgr_parameter(tty_player& play, csi_single_param_t param, csi_parameters& rest) {
-    board_t& b = play.board();
+  static void do_sgr_parameter(term_t& term, csi_single_param_t param, csi_parameters& rest) {
+    board_t& b = term.board();
     if (30 <= param && param < 40) {
       if (param < 38) {
         b.cur.attribute.set_fg(param - 30);
@@ -714,23 +714,23 @@ namespace {
     }
   }
 
-  bool do_sgr(tty_player& play, csi_parameters& params) {
-    if (params.size() == 0 || !play.state().get_mode(mode_grcm))
-      do_sgr_parameter(play, 0, params);
+  bool do_sgr(term_t& term, csi_parameters& params) {
+    if (params.size() == 0 || !term.state().get_mode(mode_grcm))
+      do_sgr_parameter(term, 0, params);
 
     csi_single_param_t value;
     while (params.read_param(value, 0))
-      do_sgr_parameter(play, value, params);
+      do_sgr_parameter(term, value, params);
 
     return true;
   }
 
-  bool do_sco(tty_player& play, csi_parameters& params) {
+  bool do_sco(term_t& term, csi_parameters& params) {
     csi_single_param_t param;
     params.read_param(param, 0);
     if (param > 7) return false;
 
-    xflags_t& xflags = play.board().cur.attribute.xflags;
+    xflags_t& xflags = term.board().cur.attribute.xflags;
     xflags = (xflags & ~(xflags_t) attribute_t::sco_mask) | param << attribute_t::sco_shift;
     return true;
   }
@@ -738,8 +738,8 @@ namespace {
   //---------------------------------------------------------------------------
   // ECH, DCH, ICH
 
-  bool do_ech(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
+  bool do_ech(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -749,7 +749,7 @@ namespace {
         return true;
     }
 
-    board_t& b = play.board();
+    board_t& b = term.board();
 
     if (s.get_mode(mode_dcsm)) {
       // DCSM(DATA)
@@ -775,8 +775,8 @@ namespace {
     return true;
   }
 
-  bool do_ich(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
+  bool do_ich(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -786,7 +786,7 @@ namespace {
         return true;
     }
 
-    board_t& b = play.board();
+    board_t& b = term.board();
     curpos_t const width = b.m_width;
 
     if (s.get_mode(mode_dcsm)) {
@@ -809,8 +809,8 @@ namespace {
     return true;
   }
 
-  bool do_dch(tty_player& play, csi_parameters& params) {
-    tty_state& s = play.state();
+  bool do_dch(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -820,7 +820,7 @@ namespace {
         return true;
     }
 
-    board_t& b = play.board();
+    board_t& b = term.board();
     curpos_t const width = b.m_width;
 
     if (s.get_mode(mode_dcsm)) {
@@ -929,7 +929,7 @@ namespace {
 
 }
 
-  void tty_player::process_control_sequence(sequence const& seq) {
+  void term_t::process_control_sequence(sequence const& seq) {
     if (seq.is_private_csi()) {
       print_unrecognized_sequence(seq);
       return;

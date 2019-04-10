@@ -63,11 +63,11 @@ namespace contra {
   };
 
   class tty_player_device: public idevice {
-    ansi::tty_player* play;
+    ansi::term_t* term;
   public:
-    tty_player_device(ansi::tty_player* play): play(play) {}
+    tty_player_device(ansi::term_t* term): term(term) {}
     virtual void write(char const* data, ssize_t size) override {
-      play->write(data, size);
+      term->write(data, size);
     }
   };
 
@@ -181,7 +181,7 @@ int main() {
   ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &winsize);
   contra::ansi::board_t b(winsize.ws_col, winsize.ws_row);
 
-  contra::ansi::tty_player term(b);
+  contra::ansi::term_t term(b);
   contra::tty_player_device d1(&term);
   dev.push(&d1);
 

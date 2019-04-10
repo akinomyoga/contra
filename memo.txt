@@ -118,6 +118,14 @@
   ToDo
 ------------------------------------------------------------------------------
 
+2019-04-10
+
+* ERM for EA, ECH, ED, EF, EL
+* VEM for DL IL
+* SEE for DCH DL ICH IL
+* SLH for ICH DL IL
+* DECSTBM と IL DL 等の関係を調べる
+
 2019-04-08
 
 * ansi: 思ったのだが marker と通常の文字を区別する意味はあるのだろうか。
