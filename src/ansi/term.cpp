@@ -132,6 +132,173 @@ namespace {
   // bool do_sph(tty_player& play, csi_parameters& params);
   // bool do_spl(tty_player& play, csi_parameters& params);
 
+  bool do_spd(tty_player& play, csi_parameters& params) {
+    csi_single_param_t direction;
+    params.read_param(direction, 0);
+    csi_single_param_t update;
+    params.read_param(update, 0);
+    if (direction > 7 || update > 2) return false;
+
+    board_t& b = play.board();
+
+    bool const oldRToL = is_charpath_rtol(b.m_presentation_direction);
+    bool const newRToL = is_charpath_rtol(b.m_presentation_direction = (presentation_direction) direction);
+
+    /* update content
+     *
+     * Note: update == 2 の場合、見た目が変わらない様にデータを更新する。
+     *   但し、縦書き・横書きの変更の場合には、
+     *   横書きの各行が縦書きの各行になる様にする。
+     *   また、line progression の変更も適用しない。
+     *   単に、character path ltor/ttob <-> rtol/btot の間の変換だけ行う。
+     *   今後この動作は変更する可能性がある。
+     *
+     */
+    if (oldRToL != newRToL && update == 2) {
+      for (curpos_t y = 0, yN = b.m_height; y < yN; y++) {
+        line_t& line = b.m_lines[y];
+        if (!(line.m_lflags & line_attr_t::character_path_mask))
+          line.reverse(b.m_width);
+      }
+    }
+
+    // update position
+    b.cur.y = 0;
+    if (update == 2) {
+      b.cur.x = b.to_data_position(b.cur.y, 0);
+    } else {
+      b.cur.x = 0;
+    }
+
+    return true;
+  }
+
+  bool do_scp(tty_player& play, csi_parameters& params) {
+    csi_single_param_t charPath;
+    params.read_param(charPath, 0);
+    csi_single_param_t update;
+    params.read_param(update, 0);
+    if (charPath > 2 || update > 2) return false;
+
+    tty_state& s = play.state();
+    board_t& b = play.board();
+    line_t& line = b.line();
+
+    bool const oldRToL = line.is_r2l(b.m_presentation_direction);
+
+    // update line attributes
+    play.initialize_line(line);
+    line.m_lflags &= ~line_attr_t::character_path_mask;
+    s.lflags &= ~line_attr_t::character_path_mask;
+    switch (charPath) {
+    case 1:
+      line.m_lflags |= line_attr_t::is_character_path_ltor;
+      s.lflags |= line_attr_t::is_character_path_ltor;
+      break;
+    case 2:
+      line.m_lflags |= line_attr_t::is_character_path_rtol;
+      s.lflags |= line_attr_t::is_character_path_rtol;
+      break;
+    }
+
+    bool const newRToL = line.is_r2l(b.m_presentation_direction);
+
+    // update line content
+    if (oldRToL != newRToL && update == 2)
+      b.line().reverse(b.m_width);
+
+    if (update == 2)
+      b.cur.x = b.to_data_position(b.cur.y, 0);
+    else
+      b.cur.x = 0;
+
+    return true;
+  }
+
+  bool do_simd(tty_player& play, csi_parameters& params) {
+    csi_single_param_t param;
+    params.read_param(param, 0);
+    if (param > 1) return false;
+    play.state().set_mode(mode_simd, param != 0);
+    return true;
+  }
+
+  bool do_slh(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+    board_t& b = play.board();
+    line_t& line = b.line();
+
+    csi_single_param_t param;
+    if (params.read_param(param, 0) && param) {
+      curpos_t const x = (curpos_t) param - 1;
+      line.m_home = x;
+      if (line.m_limit >= 0 && line.m_limit < x)
+        line.m_limit = x;
+
+      s.line_home = x;
+      if (s.line_limit >= 0 && s.line_limit < x)
+        s.line_limit = x;
+    } else {
+      line.m_home = -1;
+      s.line_home = -1;
+    }
+
+    return true;
+  }
+
+  bool do_sll(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+    board_t& b = play.board();
+    line_t& line = b.line();
+
+    csi_single_param_t param;
+    if (params.read_param(param, 0) && param) {
+      curpos_t const x = (curpos_t) param - 1;
+      line.m_limit = x;
+      if (line.m_home >= 0 && line.m_home > x)
+        line.m_home = x;
+
+      s.line_limit = x;
+      if (s.line_home >= 0 && s.line_home > x)
+        s.line_home = x;
+    } else {
+      line.m_limit = -1;
+      s.line_limit = -1;
+    }
+
+    return true;
+  }
+
+  bool do_sph(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+
+    csi_single_param_t param;
+    if (params.read_param(param, 0) && param) {
+      curpos_t const y = (curpos_t) param - 1;
+      s.page_home = y;
+      if (s.page_limit >= 0 && s.page_limit < y)
+        s.page_limit = y;
+    } else {
+      s.page_home = -1;
+    }
+    return true;
+  }
+
+  bool do_spl(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+
+    csi_single_param_t param;
+    if (params.read_param(param, 0) && param) {
+      curpos_t const y = (curpos_t) param - 1;
+      s.page_limit = y;
+      if (s.page_home >= 0 && s.page_home > y)
+        s.page_home = y;
+    } else {
+      s.page_limit = -1;
+    }
+    return true;
+  }
+
   //---------------------------------------------------------------------------
   // Strings
 
@@ -734,23 +901,22 @@ namespace {
       register_cfunc(&do_dch, ascii_P);
       register_cfunc(&do_ech, ascii_X);
 
-      // // implicit movement
-      // register_cfunc(&do_simd, ascii_circumflex);
+      // implicit movement
+      register_cfunc(&do_simd, ascii_circumflex);
 
       // bidi strings
       register_cfunc(&do_sds, ascii_right_bracket);
       register_cfunc(&do_srs, ascii_left_bracket);
 
-      // // presentation/line directions
-      // register_cfunc(&do_spd, ascii_sp, ascii_S);
-      // register_cfunc(&do_scp, ascii_sp, ascii_k);
+      // presentation/line directions
+      register_cfunc(&do_spd, ascii_sp, ascii_S);
+      register_cfunc(&do_scp, ascii_sp, ascii_k);
 
-      // // line/page limits
-      // register_cfunc(&do_slh, ascii_sp, ascii_U);
-      // register_cfunc(&do_sll, ascii_sp, ascii_V);
-      // register_cfunc(&do_sph, ascii_sp, ascii_i);
-      // register_cfunc(&do_spl, ascii_sp, ascii_j);
-
+      // line/page limits
+      register_cfunc(&do_slh, ascii_sp, ascii_U);
+      register_cfunc(&do_sll, ascii_sp, ascii_V);
+      register_cfunc(&do_sph, ascii_sp, ascii_i);
+      register_cfunc(&do_spl, ascii_sp, ascii_j);
     }
 
     control_function_t* get(byte F) const {

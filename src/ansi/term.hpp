@@ -118,7 +118,7 @@ namespace ansi {
     board_t* m_board;
     tty_state m_state;
 
-  private:
+  public:
     void initialize_line(line_t& line) const {
       if (line.m_lflags & line_attr_t::is_line_used) return;
       line.m_lflags = line_attr_t::is_line_used | m_state.lflags;

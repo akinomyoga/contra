@@ -180,23 +180,23 @@ namespace ansi {
     color_t  fg = 0;
     color_t  bg = 0;
 
-    attribute_t() {}
-    attribute_t(std::uint32_t value): aflags(value) {}
+    constexpr attribute_t() {}
+    constexpr attribute_t(std::uint32_t value): aflags(value) {}
 
-    bool is_default() const {
+    constexpr bool is_default() const {
       return aflags == 0 && xflags == 0 && fg == 0 && bg == 0;
     }
-    bool operator==(attribute_t const& rhs) const {
+    constexpr bool operator==(attribute_t const& rhs) const {
       return aflags == rhs.aflags && xflags == rhs.xflags && fg == rhs.fg && bg == rhs.bg;
     }
 
   public:
-    byte fg_index() const { return (aflags & fg_color_mask) >> fg_color_shift; }
-    byte bg_index() const { return (aflags & bg_color_mask) >> bg_color_shift; }
-    byte fg_space() const { return aflags & is_fg_color_set ? (byte) color_space_indexed : fg_index(); }
-    byte bg_space() const { return aflags & is_bg_color_set ? (byte) color_space_indexed : bg_index(); }
-    byte fg_color() const { return aflags & is_fg_color_set ? fg_index() : fg; }
-    byte bg_color() const { return aflags & is_bg_color_set ? bg_index() : bg; }
+    constexpr byte fg_index() const { return (aflags & fg_color_mask) >> fg_color_shift; }
+    constexpr byte bg_index() const { return (aflags & bg_color_mask) >> bg_color_shift; }
+    constexpr byte fg_space() const { return aflags & is_fg_color_set ? (byte) color_space_indexed : fg_index(); }
+    constexpr byte bg_space() const { return aflags & is_bg_color_set ? (byte) color_space_indexed : bg_index(); }
+    constexpr byte fg_color() const { return aflags & is_fg_color_set ? fg_index() : fg; }
+    constexpr byte bg_color() const { return aflags & is_bg_color_set ? bg_index() : bg; }
 
   public:
     void set_fg(color_t index, std::uint32_t colorSpace = color_space_indexed) {
@@ -246,6 +246,11 @@ namespace ansi {
     character_t   character;
     attribute_t   attribute;
     std::uint32_t width;
+
+    cell_t() {}
+    constexpr cell_t(std::uint32_t c):
+      character(c), attribute(0),
+      width(character.is_extension() || character.is_marker() ? 0 : 1) {}
 
     bool is_zero_width_body() const {
       return width == 0 && !character.is_extension();
@@ -589,6 +594,108 @@ namespace ansi {
         _mono_delete_cells(x1, x2);
     }
 
+  private:
+    void _mono_reverse(curpos_t width) {
+      if ((curpos_t) m_cells.size() != width)
+        m_cells.resize(width, cell_t(ascii_nul));
+
+      std::reverse(m_cells.begin(), m_cells.end());
+      for (auto cell = m_cells.begin(), cellM = m_cells.end() - 1; cell < cellM; ++cell) {
+        auto beg = cell;
+        while (cell < cellM && cell->character.is_wide_extension()) ++cell;
+        if (cell != beg) std::iter_swap(beg, cell);
+      }
+
+      m_version++;
+    }
+    void _prop_reverse(curpos_t width) {
+      // 幅を width に強制
+      std::size_t iN;
+      curpos_t xN;
+      std::tie(iN, xN) = _prop_glb(width, false);
+      if (iN < m_cells.size()) m_cells.erase(m_cells.begin() + iN, m_cells.end());
+      if (xN < width) m_cells.insert(m_cells.end(), width - xN, cell_t(ascii_nul));
+
+
+      std::vector<cell_t> buff;
+      buff.reserve(m_cells.size() * 2);
+
+      struct elem_t {
+        std::uint32_t beg_marker;
+        std::uint32_t end_marker;
+      };
+      std::vector<elem_t> stack;
+
+      auto _push = [&] (cell_t& cell, std::uint32_t beg_marker, std::uint32_t end_marker) {
+        cell.character = end_marker;
+        elem_t elem;
+        elem.beg_marker = beg_marker;
+        elem.end_marker = end_marker;
+        stack.emplace_back(std::move(elem));
+      };
+
+      auto _flush = [&] () {
+        while (stack.size()) {
+          buff.emplace_back(stack.back().beg_marker);
+          stack.pop_back();
+        }
+      };
+
+      for (std::size_t i = 0; i < m_cells.size(); ) {
+        cell_t& cell = m_cells[i];
+        std::uint32_t const code = cell.character.value;
+        bool remove = false;
+        if (cell.character.is_marker()) {
+          switch (code) {
+          case character_t::marker_sds_l2r: _push(cell, code, character_t::marker_sds_end); break;
+          case character_t::marker_sds_r2l: _push(cell, code, character_t::marker_sds_end); break;
+          case character_t::marker_srs_beg: _push(cell, code, character_t::marker_srs_end); break;
+          case character_t::marker_sds_end:
+          case character_t::marker_srs_end:
+            remove = true; // 対応する始まりがもし見つからなければ削除
+            while (stack.size()) {
+              if (stack.back().end_marker == code) {
+                cell.character = stack.back().beg_marker;
+                remove = false;
+                stack.pop_back();
+                break;
+              } else {
+                buff.emplace_back(stack.back().beg_marker);
+                stack.pop_back();
+              }
+            }
+            break;
+          default: break;
+          }
+        } else {
+          if (cell.character.value == ascii_nul) _flush();
+        }
+
+        std::size_t i1 = i++;
+        while (i < m_cells.size() && m_cells[i].character.is_extension()) i++;
+        if (!remove)
+          for (std::size_t p = i; p-- > i1; )
+            buff.emplace_back(std::move(m_cells[p]));
+      }
+      _flush();
+
+      std::reverse(buff.begin(), buff.end());
+
+      m_cells.swap(buff);
+      m_version++;
+      m_prop_i = 0;
+      m_prop_x = 0;
+    }
+
+  public:
+    void reverse(curpos_t width) {
+      if (m_prop_enabled)
+        _prop_reverse(width);
+      else
+        _mono_reverse(width);
+    }
+
+  public:
     /// @fn cell_t const& char_at(curpos_t x) const;
     /// 指定した位置にある有限幅の文字を取得します。
     /// @param[in] x データ位置を指定します。
@@ -641,9 +748,9 @@ namespace ansi {
         std::uint32_t code = cell.character.value;
         if (cell.character.is_marker()) {
           switch (code) {
-          case character_t::marker_sds_l2r: _push(character_t::marker_sds_l2r, character_t::marker_sds_end, false); break;
-          case character_t::marker_sds_r2l: _push(character_t::marker_sds_r2l, character_t::marker_sds_end, true); break;
-          case character_t::marker_srs_beg: _push(character_t::marker_srs_beg, character_t::marker_srs_end, !ret[istr].r2l); break;
+          case character_t::marker_sds_l2r: _push(code, character_t::marker_sds_end, false); break;
+          case character_t::marker_sds_r2l: _push(code, character_t::marker_sds_end, true); break;
+          case character_t::marker_srs_beg: _push(code, character_t::marker_srs_end, !ret[istr].r2l); break;
           case character_t::marker_sds_end:
           case character_t::marker_srs_end:
             while (istr >= 1) {
