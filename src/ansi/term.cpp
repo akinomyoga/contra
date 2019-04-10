@@ -127,6 +127,14 @@ namespace {
   // bool do_spd(tty_player& play, csi_parameters& params);
   // bool do_scp(tty_player& play, csi_parameters& params);
   // bool do_simd(tty_player& play, csi_parameters& params);
+  // bool do_slh(tty_player& play, csi_parameters& params);
+  // bool do_sll(tty_player& play, csi_parameters& params);
+  // bool do_sph(tty_player& play, csi_parameters& params);
+  // bool do_spl(tty_player& play, csi_parameters& params);
+
+  //---------------------------------------------------------------------------
+  // Strings
+
   bool do_sds(tty_player& play, csi_parameters& params) {
     csi_single_param_t param;
     params.read_param(param, 0);
@@ -146,24 +154,243 @@ namespace {
       character_t::marker_srs_end);
     return true;
   }
-  // bool do_slh(tty_player& play, csi_parameters& params);
-  // bool do_sll(tty_player& play, csi_parameters& params);
-  // bool do_sph(tty_player& play, csi_parameters& params);
-  // bool do_spl(tty_player& play, csi_parameters& params);
-  // bool do_cuu(tty_player& play, csi_parameters& params)
-  // bool do_cud(tty_player& play, csi_parameters& params);
-  // bool do_cuf(tty_player& play, csi_parameters& params);
-  // bool do_cub(tty_player& play, csi_parameters& params);
-  // bool do_hpb(tty_player& play, csi_parameters& params);
-  // bool do_hpr(tty_player& play, csi_parameters& params);
-  // bool do_vpb(tty_player& play, csi_parameters& params);
-  // bool do_vpr(tty_player& play, csi_parameters& params);
-  // bool do_cnl(tty_player& play, csi_parameters& params);
-  // bool do_cpl(tty_player& play, csi_parameters& params);
-  // bool do_cup(tty_player& play, csi_parameters& params);
-  // bool do_cha(tty_player& play, csi_parameters& params);
-  // bool do_hpa(tty_player& play, csi_parameters& params);
-  // bool do_vpa(tty_player& play, csi_parameters& params);
+
+  //---------------------------------------------------------------------------
+  // Cursor
+
+  enum do_cux_direction {
+    do_cux_prec_char = 0,
+    do_cux_succ_char = 1,
+    do_cux_prec_line = 2,
+    do_cux_succ_line = 3,
+
+    do_cux_shift = 2,
+    do_cux_mask  = 0x3,
+  };
+
+  static constexpr std::uint32_t do_cux_vec_construct(presentation_direction dir, do_cux_direction value) {
+    return value << do_cux_shift * dir;
+  }
+  static do_cux_direction do_cux_vec_select(std::uint32_t vec, presentation_direction value) {
+    return do_cux_direction(vec >> do_cux_shift * (0 <= value && value < 8? value: 0) & do_cux_mask);
+  }
+
+  static bool do_cux(tty_player& play, csi_parameters& params, do_cux_direction direction, bool isData) {
+    tty_state& s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s.get_mode(mode_zdm))
+        param = 1;
+      else
+        return true;
+    }
+
+    board_t& b = play.board();
+
+    curpos_t y = b.cur.y;
+    switch (direction) {
+    case do_cux_prec_char:
+      {
+        curpos_t x = b.cur.x;
+        if (!isData)
+          x = b.to_presentation_position(y, x);
+        x = std::max((curpos_t) 0, x - (curpos_t) param);
+        if (!isData)
+          x = b.to_data_position(y, x);
+        b.cur.x = x;
+      }
+      break;
+    case do_cux_succ_char:
+      {
+        curpos_t x = b.cur.x;
+        if (!isData)
+          x = b.to_presentation_position(y, x);
+        x = std::min(play.board().m_width - 1, x + (curpos_t) param);
+        if (!isData)
+          x = b.to_data_position(y, x);
+        b.cur.x = x;
+      }
+      break;
+    case do_cux_prec_line:
+      b.cur.y = std::max((curpos_t) 0, y - (curpos_t) param);
+      break;
+    case do_cux_succ_line:
+      b.cur.y = std::min(play.board().m_height - 1, y + (curpos_t) param);
+      break;
+    }
+
+    return true;
+  }
+
+  bool do_cuu(tty_player& play, csi_parameters& params) {
+    constexpr std::uint32_t vec
+      = do_cux_vec_construct(presentation_direction_tblr, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_tbrl, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_btlr, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_btrl, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_lrtb, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_rltb, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_lrbt, do_cux_succ_line)
+      | do_cux_vec_construct(presentation_direction_rlbt, do_cux_succ_line);
+
+    return do_cux(
+      play, params,
+      do_cux_vec_select(vec, play.board().m_presentation_direction),
+      false);
+  }
+  bool do_cud(tty_player& play, csi_parameters& params) {
+    constexpr std::uint32_t vec
+      = do_cux_vec_construct(presentation_direction_btlr, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_btrl, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_tblr, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_tbrl, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_lrbt, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_rlbt, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_lrtb, do_cux_succ_line)
+      | do_cux_vec_construct(presentation_direction_rltb, do_cux_succ_line);
+
+    return do_cux(
+      play, params,
+      do_cux_vec_select(vec, play.board().m_presentation_direction),
+      false);
+  }
+  bool do_cuf(tty_player& play, csi_parameters& params) {
+    constexpr std::uint32_t vec
+      = do_cux_vec_construct(presentation_direction_rltb, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_rlbt, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_lrtb, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_lrbt, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_tbrl, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_btrl, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_tblr, do_cux_succ_line)
+      | do_cux_vec_construct(presentation_direction_btlr, do_cux_succ_line);
+
+    return do_cux(
+      play, params,
+      do_cux_vec_select(vec, play.board().m_presentation_direction),
+      false);
+  }
+  bool do_cub(tty_player& play, csi_parameters& params) {
+    constexpr std::uint32_t vec
+      = do_cux_vec_construct(presentation_direction_lrtb, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_lrbt, do_cux_prec_char)
+      | do_cux_vec_construct(presentation_direction_rltb, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_rlbt, do_cux_succ_char)
+      | do_cux_vec_construct(presentation_direction_tblr, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_btlr, do_cux_prec_line)
+      | do_cux_vec_construct(presentation_direction_tbrl, do_cux_succ_line)
+      | do_cux_vec_construct(presentation_direction_btrl, do_cux_succ_line);
+
+    return do_cux(
+      play, params,
+      do_cux_vec_select(vec, play.board().m_presentation_direction),
+      false);
+  }
+
+  bool do_hpb(tty_player& play, csi_parameters& params) {
+    return do_cux(play, params, do_cux_prec_char, true);
+  }
+  bool do_hpr(tty_player& play, csi_parameters& params) {
+    return do_cux(play, params, do_cux_succ_char, true);
+  }
+  bool do_vpb(tty_player& play, csi_parameters& params) {
+    return do_cux(play, params, do_cux_prec_line, true);
+  }
+  bool do_vpr(tty_player& play, csi_parameters& params) {
+    return do_cux(play, params, do_cux_succ_line, true);
+  }
+
+  static bool do_cup(board_t& b, curpos_t x, curpos_t y) {
+    b.cur.x = b.to_data_position(y, x);
+    b.cur.y = y;
+    return true;
+  }
+
+  bool do_cnl(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0 && s.get_mode(mode_zdm)) param = 1;
+
+    board_t& b = play.board();
+    curpos_t const y = std::min(b.cur.y + (curpos_t) param, b.m_width - 1);
+    return do_cup(b, 0, y);
+  }
+
+  bool do_cpl(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0 && s.get_mode(mode_zdm)) param = 1;
+
+    board_t& b = play.board();
+    curpos_t const y = std::max(b.cur.y - (curpos_t) param, 0);
+    return do_cup(b, 0, y);
+  }
+
+  bool do_cup(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+    csi_single_param_t param1, param2;
+    params.read_param(param1, 1);
+    params.read_param(param2, 1);
+    if (s.get_mode(mode_zdm)) {
+      if (param1 == 0) param1 = 1;
+      if (param2 == 0) param2 = 1;
+    }
+
+    if (param1 == 0 || param2 == 0) return false;
+
+    return do_cup(play.board(), (curpos_t) param2 - 1, (curpos_t) param1 - 1);
+  }
+
+  bool do_cha(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s.get_mode(mode_zdm))
+        param = 1;
+      else
+        return false;
+    }
+
+    board_t& b = play.board();
+    return do_cup(b, param - 1, b.cur.y);
+  }
+
+  bool do_hpa(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s.get_mode(mode_zdm))
+        param = 1;
+      else
+        return false;
+    }
+
+    play.board().cur.x = param - 1;
+    return true;
+  }
+
+  bool do_vpa(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s.get_mode(mode_zdm))
+        param = 1;
+      else
+        return false;
+    }
+
+    play.board().cur.y = param - 1;
+    return true;
+  }
+
+  //---------------------------------------------------------------------------
+  // SGR and other graphics
 
   static void do_sgr_iso8613_colors(board_t& b, csi_parameters& params, bool isfg) {
     csi_single_param_t colorSpace;
@@ -347,6 +574,9 @@ namespace {
     return true;
   }
 
+  //---------------------------------------------------------------------------
+  // ECH, DCH, ICH
+
   bool do_ech(tty_player& play, csi_parameters& params) {
     tty_state& s = play.state();
     csi_single_param_t param;
@@ -452,6 +682,9 @@ namespace {
     return true;
   }
 
+  //---------------------------------------------------------------------------
+  // dispatch
+
   constexpr std::uint32_t compose_bytes(byte major, byte minor) {
     return minor << 8 | major;
   }
@@ -478,23 +711,23 @@ namespace {
       register_cfunc(&do_sgr, ascii_m);
       register_cfunc(&do_sco, ascii_sp, ascii_e);
 
-      // // cursor movement
-      // register_cfunc(&do_cuu, ascii_A);
-      // register_cfunc(&do_cud, ascii_B);
-      // register_cfunc(&do_cuf, ascii_C);
-      // register_cfunc(&do_cub, ascii_D);
-      // register_cfunc(&do_hpb, ascii_j);
-      // register_cfunc(&do_hpr, ascii_a);
-      // register_cfunc(&do_vpb, ascii_k);
-      // register_cfunc(&do_vpr, ascii_e);
-      // register_cfunc(&do_cnl, ascii_E);
-      // register_cfunc(&do_cpl, ascii_F);
+      // cursor movement
+      register_cfunc(&do_cuu, ascii_A);
+      register_cfunc(&do_cud, ascii_B);
+      register_cfunc(&do_cuf, ascii_C);
+      register_cfunc(&do_cub, ascii_D);
+      register_cfunc(&do_hpb, ascii_j);
+      register_cfunc(&do_hpr, ascii_a);
+      register_cfunc(&do_vpb, ascii_k);
+      register_cfunc(&do_vpr, ascii_e);
+      register_cfunc(&do_cnl, ascii_E);
+      register_cfunc(&do_cpl, ascii_F);
 
-      // // cursor position
-      // register_cfunc(&do_cha, ascii_G);
-      // register_cfunc(&do_cup, ascii_H);
-      // register_cfunc(&do_hpa, ascii_back_quote);
-      // register_cfunc(&do_vpa, ascii_d);
+      // cursor position
+      register_cfunc(&do_cha, ascii_G);
+      register_cfunc(&do_cup, ascii_H);
+      register_cfunc(&do_hpa, ascii_back_quote);
+      register_cfunc(&do_vpa, ascii_d);
 
       // ECH/DCH/ICH, etc.
       register_cfunc(&do_ich, ascii_at);
