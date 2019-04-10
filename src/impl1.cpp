@@ -1,8 +1,10 @@
 #include <cstdio>
 #include <algorithm>
-#include "line.hpp"
-#include "term.hpp"
-#include "observer.tty.hpp"
+#include <vector>
+#include <utility>
+#include "ansi/line.hpp"
+#include "ansi/term.hpp"
+#include "ansi/observer.tty.hpp"
 
 void test_strings() {
   using namespace contra::ansi;

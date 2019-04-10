@@ -30,6 +30,18 @@ $(objdir)/ansi/%.o: ansi/%.cpp | $(objdir)/ansi
 $(objdir)/experimental/%.o: experimental/%.cpp | $(objdir)/experimental
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
+all: impl1
+impl1_objs = \
+  $(objdir)/impl1.o \
+  $(objdir)/ansi/observer.tty.o \
+  $(objdir)/ansi/term.o \
+  $(objdir)/ansi/line.o \
+  $(objdir)/ansi/enc.c2w.o \
+  $(objdir)/ansi/enc.utf8.o \
+  $(objdir)/contradef.o
+impl1: $(impl1_objs)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
 all: impl2
 impl2_objs = \
   $(objdir)/impl2.o \
@@ -46,18 +58,6 @@ $(objdir)/impl2.o: impl2.cpp | $(objdir)
 
 all: experimental/bidi
 experimental/bidi: $(objdir)/experimental/bidi.o
-	$(CXX) $(CXXFLAGS) -o $@ $^
-
-all: ansi/impl1
-ansi_impl1_objs = \
-  $(objdir)/ansi/impl1.o \
-  $(objdir)/ansi/observer.tty.o \
-  $(objdir)/ansi/term.o \
-  $(objdir)/ansi/line.o \
-  $(objdir)/ansi/enc.c2w.o \
-  $(objdir)/ansi/enc.utf8.o \
-  $(objdir)/contradef.o
-ansi/impl1: $(ansi_impl1_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 #all: minimal_openpt
