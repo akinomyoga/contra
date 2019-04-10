@@ -70,6 +70,7 @@ all: ansi/impl1
 ansi_impl1_objs = \
   $(objdir)/ansi/impl1.o \
   $(objdir)/ansi/term.o \
+  $(objdir)/ansi/observer.tty.o \
   $(objdir)/ansi/enc.c2w.o \
   $(objdir)/ansi/enc.utf8.o \
   $(objdir)/contradef.o

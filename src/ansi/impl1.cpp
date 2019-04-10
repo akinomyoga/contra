@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "line.hpp"
 #include "term.hpp"
+#include "observer.tty.hpp"
 
 void test_strings() {
   using namespace contra::ansi;
@@ -235,10 +236,35 @@ void do_test() {
   }
 }
 
+void test_sgr() {
+  using namespace contra::ansi;
+  board_t board(20, 10);
+
+  tty_player term(board);
+  term.printt("\x1b[38:5:196;4mabcdefghijklmnopqrstuvwxyz");
+  term.printt("\x1b[38:5:202mabcdefghijklmnopqrstuvwxyz");
+  term.printt("\x1b[38:5:220;24mabcdefghijklmnopqrstuvwxyz");
+  term.printt("\x1b[38:5:154mabcdefghijklmnopqrstuvwxyz");
+  term.printt("\x1b[38:5:63mabcdefghijklmnopqrstuvwxyz\n");
+  term.printt("\x1b[39m");
+  term.printt("Hello, world!\n");
+  term.printt("Thank you!\n");
+
+  term.printt("\nA\x1b[AB\x1b[BC\x1b[2DD\x1b[0CE");
+  term.printt("\x1b[HA\x1b[2;2HB");
+
+  termcap_sgr_type sgrcap;
+  sgrcap.initialize();
+
+  tty_observer target(stdout, &sgrcap);
+  target.print_screen(board);
+}
+
 int main() {
   try {
     do_test();
     test_strings();
+    test_sgr();
   } catch(mwg::assertion_error& e) {}
   return 0;
 }
