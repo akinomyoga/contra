@@ -17,9 +17,10 @@ void msleep(int milliseconds) {
   nanosleep(&tv, NULL);
 }
 
-#include "tty_player.h"
 #include "sequence.h"
-#include "tty_observer.h"
+#include "ansi/line.hpp"
+#include "ansi/term.hpp"
+#include "ansi/observer.tty.hpp"
 
 namespace contra {
   struct idevice {
@@ -62,9 +63,9 @@ namespace contra {
   };
 
   class tty_player_device: public idevice {
-    tty_player* play;
+    ansi::tty_player* play;
   public:
-    tty_player_device(tty_player* play): play(play) {}
+    tty_player_device(ansi::tty_player* play): play(play) {}
     virtual void write(char const* data, ssize_t size) override {
       play->write(data, size);
     }
@@ -178,10 +179,9 @@ int main() {
 
   struct winsize winsize;
   ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &winsize);
-  contra::board b;
-  b.resize(winsize.ws_col, winsize.ws_row);
+  contra::ansi::board_t b(winsize.ws_col, winsize.ws_row);
 
-  contra::tty_player term(b);
+  contra::ansi::tty_player term(b);
   contra::tty_player_device d1(&term);
   dev.push(&d1);
 
@@ -203,9 +203,9 @@ int main() {
   kill(sess.pid, SIGTERM);
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &oldTermios);
 
-  contra::termcap_sgr_type sgrcap;
+  contra::ansi::termcap_sgr_type sgrcap;
   sgrcap.initialize();
-  contra::tty_observer target(stdout, &sgrcap);
+  contra::ansi::tty_observer target(stdout, &sgrcap);
   target.print_screen(b);
 
   return 0;

@@ -123,14 +123,8 @@ namespace {
     }
   };
 
-  // tty_player.cpp に実装がある物:
-  // bool do_spd(tty_player& play, csi_parameters& params);
-  // bool do_scp(tty_player& play, csi_parameters& params);
-  // bool do_simd(tty_player& play, csi_parameters& params);
-  // bool do_slh(tty_player& play, csi_parameters& params);
-  // bool do_sll(tty_player& play, csi_parameters& params);
-  // bool do_sph(tty_player& play, csi_parameters& params);
-  // bool do_spl(tty_player& play, csi_parameters& params);
+  //---------------------------------------------------------------------------
+  // Page and line settings
 
   bool do_spd(tty_player& play, csi_parameters& params) {
     csi_single_param_t direction;

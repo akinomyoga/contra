@@ -205,6 +205,19 @@ void test_strings() {
   check_ich("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 33, 6);
   board.m_presentation_direction = presentation_direction_default;
 
+  // test cases from src/impl1.cpp
+  // // abcd_[efgh]_ij
+  // term.printt("\x1b[Habcd_\x1b[2]efgh\x1b[0]_ij");
+  // tester("abcd_efgh_ij", px_result1);
+  // term.printt("\x1b[Habcd_\x1b[1[efgh\x1b[0[_ij");
+  // tester("abcd_efgh_ij", px_result1);
+  // // kl_[mnop_[qrst]_uvw]_xyz
+  // term.printt("\x1b[Hkl_\x1b[2]mnop_\x1b[1]qrst\x1b[]_uvw\x1b[]_xyz");
+  // tester("kl_mnop_qrst_uvw_xyz", px_result2);
+  // term.printt("\x1b[Hkl_\x1b[1[mnop_\x1b[1[qrst\x1b[[_uvw\x1b[[_xyz");
+  // tester("kl_mnop_qrst_uvw_xyz", px_result2);
+  // term.printt("\x1b[Hk\x1b[1]l_\x1b[1[mn\x1b[2]op_\x1b[1[q\x1b[1]rs\x1b[]t\x1b[[_u\x1b[]vw\x1b[[_\x1b[]xyz");
+  // tester("kl_mnop_qrst_uvw_xyz", px_result2);
 }
 
 void do_test() {

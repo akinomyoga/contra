@@ -2,6 +2,12 @@
 #ifndef CONTRA_ANSI_TERM_HPP
 #define CONTRA_ANSI_TERM_HPP
 #include <cstring>
+#include <cstdint>
+#include <cstddef>
+#include <cstdlib>
+#include <iterator>
+#include <algorithm>
+#include <vector>
 #include "../sequence.h"
 #include "line.hpp"
 #include "enc.c2w.hpp"

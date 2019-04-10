@@ -52,9 +52,10 @@ $(objdir)/board.o: board.cpp | $(objdir)
 all: impl2
 impl2_objs = \
   $(objdir)/impl2.o \
-  $(objdir)/tty_observer.o \
-  $(objdir)/tty_player.o \
-  $(objdir)/board.o \
+  $(objdir)/ansi/observer.tty.o \
+  $(objdir)/ansi/term.o \
+  $(objdir)/ansi/line.o \
+  $(objdir)/ansi/enc.c2w.o \
   $(objdir)/ansi/enc.utf8.o \
   $(objdir)/contradef.o
 impl2: $(impl2_objs)
@@ -69,8 +70,9 @@ experimental/bidi: $(objdir)/experimental/bidi.o
 all: ansi/impl1
 ansi_impl1_objs = \
   $(objdir)/ansi/impl1.o \
-  $(objdir)/ansi/term.o \
   $(objdir)/ansi/observer.tty.o \
+  $(objdir)/ansi/term.o \
+  $(objdir)/ansi/line.o \
   $(objdir)/ansi/enc.c2w.o \
   $(objdir)/ansi/enc.utf8.o \
   $(objdir)/contradef.o
@@ -85,7 +87,6 @@ $(objdir)/minimal_openpt.o: minimal_openpt.cpp | $(objdir)
 
 $(directories):
 	mkdir -p $@
-
 
 clean:
 	-rm -rf $(objdir)
