@@ -30,25 +30,6 @@ $(objdir)/ansi/%.o: ansi/%.cpp | $(objdir)/ansi
 $(objdir)/experimental/%.o: experimental/%.cpp | $(objdir)/experimental
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
-all: impl1
-impl1_objs = \
-  $(objdir)/impl1.o \
-  $(objdir)/tty_observer.o \
-  $(objdir)/tty_player.o \
-  $(objdir)/board.o \
-  $(objdir)/ansi/enc.utf8.o \
-  $(objdir)/contradef.o
-impl1: $(impl1_objs)
-	$(CXX) $(CXXFLAGS) -o $@ $^
-$(objdir)/impl1.o: impl1.cpp | $(objdir)
-	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
-$(objdir)/tty_observer.o: tty_observer.cpp | $(objdir)
-	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
-$(objdir)/tty_player.o: tty_player.cpp | $(objdir)
-	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
-$(objdir)/board.o: board.cpp | $(objdir)
-	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
-
 all: impl2
 impl2_objs = \
   $(objdir)/impl2.o \
