@@ -30,12 +30,16 @@ namespace ansi {
     contra_mode = 2, // private mode
 
     mode_dcsm = construct_mode_spec( 9, ansi_mode,  9),
+    mode_hem  = construct_mode_spec(10, ansi_mode, 10),
     mode_lnm  = construct_mode_spec(20, ansi_mode, 20),
     mode_grcm = construct_mode_spec(21, ansi_mode, 21),
     mode_zdm  = construct_mode_spec(22, ansi_mode, 22),
 
-    mode_simd = construct_mode_spec(23, contra_mode, 9201),
-    mode_xenl = construct_mode_spec(24, contra_mode, 9202),
+    mode_simd     = construct_mode_spec(23, contra_mode, 9201),
+    mode_xenl     = construct_mode_spec(24, contra_mode, 9202),
+    /// @var mode_xenl_ech
+    /// 行末にカーソルがある時に ECH, ICH, DCH は行の最後の文字に作用します。
+    mode_xenl_ech = construct_mode_spec(25, contra_mode, 9203),
   };
 
   struct tty_state {
@@ -70,6 +74,7 @@ namespace ansi {
       set_mode(mode_grcm);
       set_mode(mode_zdm);
       set_mode(mode_xenl);
+      set_mode(mode_xenl_ech);
     }
 
   public:
@@ -127,14 +132,14 @@ namespace ansi {
   public:
     board_t& board() { return *m_board; }
     board_t const& board() const { return *m_board; }
+    tty_state& state() {return this->m_state;}
+    tty_state const& state() const {return this->m_state;}
 
     // void set_fg(color_t index, aflags_t colorSpace = color_spec_indexed);
     // void reset_fg();
     // void set_bg(color_t index, aflags_t colorSpace = color_spec_indexed);
     // void reset_bg();
     // void reset_attribute() {
-    // tty_state* state() {return &this->m_state;}
-    // tty_state const* state() const {return &this->m_state;}
 
   public:
     void insert_graph(char32_t u) {

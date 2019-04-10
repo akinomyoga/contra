@@ -5,8 +5,17 @@
 namespace contra {
   typedef std::uint8_t byte;
 
+  // std::size (C++17 <iterator>)
   template<typename T, std::size_t N>
   constexpr std::size_t size(T const (&)[N]) {return N;}
+
+  template<typename T>
+  constexpr T clamp(T value, T min, T max) {
+    return value < min ? min : value > max ? max : value;
+  }
+
+  // discarded expression
+#define contra_unused(X) static_cast<void>(X)
 
   enum ascii_codes {
 

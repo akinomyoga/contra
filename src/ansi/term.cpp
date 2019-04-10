@@ -166,7 +166,111 @@ namespace {
   // bool do_vpa(tty_player& play, csi_parameters& params);
   bool do_sgr(tty_player& play, csi_parameters& params) { (void) play; (void) params; return false; }
   // bool do_sco(tty_player& play, csi_parameters& params);
-  // bool do_ech(tty_player& play, csi_parameters& params);
+
+  bool do_ech(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s.get_mode(mode_zdm))
+        param = 1;
+      else
+        return true;
+    }
+
+    board_t& b = play.board();
+
+    if (s.get_mode(mode_dcsm)) {
+      // DCSM(DATA)
+      curpos_t const x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
+      curpos_t const x2 = std::min(x1 + (curpos_t) param, b.m_width);
+      if (x1 < x2) b.line().ech(x1, x2, b.m_width, b.m_presentation_direction, false);
+    } else {
+      // DCSM(PRESENTATION)
+      bool const line_r2l = b.line().is_r2l(b.m_presentation_direction);
+      curpos_t p = b.to_presentation_position(b.cur.y, b.cur.x);
+      if (p >= b.m_width) p = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
+
+      curpos_t p1, p2;
+      if (line_r2l) {
+        p2 = p + 1;
+        p1 = std::max(p2 - (curpos_t) param, 0);
+      } else {
+        p1 = p;
+        p2 = std::min(p1 + (curpos_t) param, b.m_width);
+      }
+      if (p1 < p2) b.line().ech(p1, p2, b.m_width, b.m_presentation_direction, true);
+    }
+    return true;
+  }
+
+  bool do_ich(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s.get_mode(mode_zdm))
+        param = 1;
+      else
+        return true;
+    }
+
+    board_t& b = play.board();
+    curpos_t const width = b.m_width;
+
+    if (s.get_mode(mode_dcsm)) {
+      curpos_t const x = b.cur.x < width ? b.cur.x : s.get_mode(mode_xenl_ech) ? width - 1 : width;
+      // DCSM(DATA)
+      if (!s.get_mode(mode_hem))
+        b.line().ich(x, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, false);
+      else
+        b.line().ich(x + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, false);
+    } else {
+      // DCSM(PRESENTATION)
+      bool const line_r2l = b.line().is_r2l(b.m_presentation_direction);
+      curpos_t p = b.to_presentation_position(b.cur.y, b.cur.x);
+      if (p >= b.m_width) p = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
+      if (line_r2l == s.get_mode(mode_hem))
+        b.line().ich(p, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, true);
+      else
+        b.line().ich(p + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, true);
+    }
+    return true;
+  }
+
+  bool do_dch(tty_player& play, csi_parameters& params) {
+    tty_state& s = play.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s.get_mode(mode_zdm))
+        param = 1;
+      else
+        return true;
+    }
+
+    board_t& b = play.board();
+    curpos_t const width = b.m_width;
+
+    if (s.get_mode(mode_dcsm)) {
+      curpos_t const x = b.cur.x < width ? b.cur.x : s.get_mode(mode_xenl_ech) ? width - 1 : width;
+      // DCSM(DATA)
+      if (!s.get_mode(mode_hem))
+        b.line().dch(x, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, false);
+      else
+        b.line().dch(x + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, false);
+    } else {
+      // DCSM(PRESENTATION)
+      bool const line_r2l = b.line().is_r2l(b.m_presentation_direction);
+      curpos_t p = b.to_presentation_position(b.cur.y, b.cur.x);
+      if (p >= b.m_width) p = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
+      if (line_r2l == s.get_mode(mode_hem))
+        b.line().dch(p, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, true);
+      else
+        b.line().dch(p + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, true);
+    }
+    return true;
+  }
 
   constexpr std::uint32_t compose_bytes(byte major, byte minor) {
     return minor << 8 | major;
@@ -211,8 +315,10 @@ namespace {
       // register_cfunc(&do_hpa, ascii_back_quote);
       // register_cfunc(&do_vpa, ascii_d);
 
-      // // ECH/DCH/ICH, etc.
-      // register_cfunc(&do_ech, ascii_X);
+      // ECH/DCH/ICH, etc.
+      register_cfunc(&do_ich, ascii_at);
+      register_cfunc(&do_dch, ascii_P);
+      register_cfunc(&do_ech, ascii_X);
 
       // // implicit movement
       // register_cfunc(&do_simd, ascii_circumflex);
