@@ -9,3 +9,6 @@
 /src/impl2
 /minimal_openpt
 /mat
+
+# output files
+/src/*.seq

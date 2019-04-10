@@ -1,6 +1,7 @@
-#include "tty_observer.h"
+#include "observer.tty.hpp"
 
-using namespace contra;
+using namespace contra::ansi;
+typedef attribute_t _at;
 
 static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrflag1 const& sgrflag) {
   if (!sgrflag.off && sgrflag.on) flags |= sgrflag.bit;
@@ -20,7 +21,7 @@ static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrcolor cons
 
 static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrideogram const& capIdeogram) {
   if (!capIdeogram.reset)
-    flags |= is_ideogram_decoration_mask;
+    flags |= _at::is_ideogram_decoration_mask;
 }
 
 void termcap_sgr_type::initialize() {
@@ -94,25 +95,25 @@ void tty_observer::update_sgrflag2(
 }
 
 void tty_observer::update_ideogram_decoration(xflags_t xflagsNew, xflags_t xflagsOld, termcap_sgrideogram const& cap) {
-  if (((xflagsNew ^ xflagsOld) & is_ideogram_decoration_mask) == 0) return;
+  if (((xflagsNew ^ xflagsOld) & _at::is_ideogram_decoration_mask) == 0) return;
 
   int sgr;
-  if (xflagsNew & is_ideogram_decoration_mask) {
-    if (xflagsNew & (is_ideogram_single_rb_set | is_ideogram_double_rb_set))
-      sgr = xflagsNew & is_ideogram_single_rb_set? cap.single_rb: cap.double_rb;
-    else if (xflagsNew & (is_ideogram_single_lt_set | is_ideogram_double_lt_set))
-      sgr = xflagsNew & is_ideogram_single_lt_set? cap.single_lt: cap.double_lt;
-    else if (xflagsNew & (is_ideogram_single_lb_set | is_ideogram_double_lb_set))
-      sgr = xflagsNew & is_ideogram_single_lb_set? cap.single_lb: cap.double_lb;
-    else if (xflagsNew & (is_ideogram_single_rt_set | is_ideogram_double_rt_set))
-      sgr = xflagsNew & is_ideogram_single_rt_set? cap.single_rt: cap.double_rt;
-    else if (xflagsNew & is_ideogram_stress_set)
+  if (xflagsNew & _at::is_ideogram_decoration_mask) {
+    if (xflagsNew & (_at::is_ideogram_single_rb_set | _at::is_ideogram_double_rb_set))
+      sgr = xflagsNew & _at::is_ideogram_single_rb_set ? cap.single_rb : cap.double_rb;
+    else if (xflagsNew & (_at::is_ideogram_single_lt_set | _at::is_ideogram_double_lt_set))
+      sgr = xflagsNew & _at::is_ideogram_single_lt_set ? cap.single_lt : cap.double_lt;
+    else if (xflagsNew & (_at::is_ideogram_single_lb_set | _at::is_ideogram_double_lb_set))
+      sgr = xflagsNew & _at::is_ideogram_single_lb_set ? cap.single_lb : cap.double_lb;
+    else if (xflagsNew & (_at::is_ideogram_single_rt_set | _at::is_ideogram_double_rt_set))
+      sgr = xflagsNew & _at::is_ideogram_single_rt_set ? cap.single_rt : cap.double_rt;
+    else if (xflagsNew & _at::is_ideogram_stress_set)
       sgr = cap.stress;
     else
       mwg_assert(0, "is_ideogram_decoration_mask is wrong");
 
     if (sgr == 0
-      || (xflagsOld & is_ideogram_decoration_mask && cap.is_decoration_exclusive)
+      || (xflagsOld & _at::is_ideogram_decoration_mask && cap.is_decoration_exclusive)
     )
       sgr_put(cap.reset);
   } else
@@ -129,7 +130,7 @@ void tty_observer::update_sgrcolor(
   if (colorSpaceNew == colorSpaceOld && colorNew == colorOld) return;
 
   // sgrAnsiColor, sgrAixColor
-  if (colorSpaceNew == color_spec_indexed) {
+  if (colorSpaceNew == _at::color_space_indexed) {
     if (colorNew < 8) {
       if (sgrcolor.base) {
         // e.g \e[31m
@@ -152,20 +153,20 @@ void tty_observer::update_sgrcolor(
     }
   }
 
-  if (colorSpaceNew == color_spec_default && sgrcolor.off) {
+  if (colorSpaceNew == _at::color_space_default && sgrcolor.off) {
     sgr_put(sgrcolor.off);
     return;
   }
 
   // sgrISO8613_6Color
   if (sgrcolor.iso8613.sgr
-    && (sgrcolor.iso8613.color_specs & 1 << colorSpaceNew)
+    && (sgrcolor.iso8613.color_spaces & 1 << colorSpaceNew)
   ) {
     sgr_put(sgrcolor.iso8613.sgr);
     put(sgrcolor.iso8613.separater);
     put_unsigned(colorSpaceNew);
 
-    if (colorSpaceNew == color_spec_indexed) {
+    if (colorSpaceNew == _at::color_space_indexed) {
       if (colorNew <= sgrcolor.iso8613.max_index) {
         put(sgrcolor.iso8613.separater);
         put_unsigned(colorNew);
@@ -174,9 +175,9 @@ void tty_observer::update_sgrcolor(
     } else {
       int numberOfComponents = 0;
       switch (colorSpaceNew) {
-      case color_spec_rgb:
-      case color_spec_cmy:  numberOfComponents = 3; break;
-      case color_spec_cmyk: numberOfComponents = 4; break;
+      case _at::color_space_rgb:
+      case _at::color_space_cmy:  numberOfComponents = 3; break;
+      case _at::color_space_cmyk: numberOfComponents = 4; break;
       }
 
       // for ISO 8613-6 compatibility,
@@ -205,61 +206,50 @@ void tty_observer::update_sgrcolor(
     sgr_put(sgrcolor.off);
 }
 
-void tty_observer::apply_attr(board const& w, attribute_t newAttr) {
-  if (this->m_attr == newAttr) return;
+void tty_observer::apply_attr(attribute_t new_attr) {
+  attribute_t& old_attr = this->m_attr;
+  if (old_attr == new_attr) return;
 
-  if (newAttr == 0) {
+  if (new_attr.is_default()) {
     sgr_clear();
-    this->m_attr = 0;
-    this->m_xattr.clear();
+    old_attr.clear();
   } else {
     this->sgr_isOpen = false;
 
-    extended_attribute _xattr;
-    if (newAttr & has_extended_attribute)
-      _xattr = *w.m_xattr_data.get(newAttr);
-    else
-      _xattr.load(newAttr);
-
-    aflags_t const aremoved = ~_xattr.aflags & m_xattr.aflags;
-    xflags_t const xremoved = ~_xattr.xflags & m_xattr.xflags;
+    aflags_t const aremoved = ~new_attr.aflags & old_attr.aflags;
+    xflags_t const xremoved = ~new_attr.xflags & old_attr.xflags;
     if (aremoved & sgrcap->aflagsNotResettable
       || xremoved & sgrcap->xflagsNotResettable
     ) {
       sgr_put(0);
-      m_xattr.aflags = 0;
-      m_xattr.xflags &= non_sgr_xflags_mask;
+      old_attr.clear_sgr();
     }
 
-    update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap->cap_bold     );
-    update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap->cap_italic   );
-    update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap->cap_underline);
-    update_sgrflag2(_xattr.aflags, m_xattr.aflags, sgrcap->cap_blink    );
+    update_sgrflag2(new_attr.aflags, old_attr.aflags, sgrcap->cap_bold     );
+    update_sgrflag2(new_attr.aflags, old_attr.aflags, sgrcap->cap_italic   );
+    update_sgrflag2(new_attr.aflags, old_attr.aflags, sgrcap->cap_underline);
+    update_sgrflag2(new_attr.aflags, old_attr.aflags, sgrcap->cap_blink    );
 
-    update_sgrflag1(_xattr.aflags, m_xattr.aflags, sgrcap->cap_inverse  );
-    update_sgrflag1(_xattr.aflags, m_xattr.aflags, sgrcap->cap_invisible);
-    update_sgrflag1(_xattr.aflags, m_xattr.aflags, sgrcap->cap_strike   );
+    update_sgrflag1(new_attr.aflags, old_attr.aflags, sgrcap->cap_inverse  );
+    update_sgrflag1(new_attr.aflags, old_attr.aflags, sgrcap->cap_invisible);
+    update_sgrflag1(new_attr.aflags, old_attr.aflags, sgrcap->cap_strike   );
 
-    if ((newAttr | this->m_attr) & has_extended_attribute) {
-      update_sgrflag2(_xattr.xflags, m_xattr.xflags, sgrcap->cap_framed);
-      update_sgrflag1(_xattr.xflags, m_xattr.xflags, sgrcap->cap_proportional);
-      update_sgrflag1(_xattr.xflags, m_xattr.xflags, sgrcap->cap_overline);
-      update_ideogram_decoration(_xattr.xflags, m_xattr.xflags, sgrcap->cap_ideogram);
-    }
+    update_sgrflag2(new_attr.xflags, old_attr.xflags, sgrcap->cap_framed);
+    update_sgrflag1(new_attr.xflags, old_attr.xflags, sgrcap->cap_proportional);
+    update_sgrflag1(new_attr.xflags, old_attr.xflags, sgrcap->cap_overline);
+    update_ideogram_decoration(new_attr.xflags, old_attr.xflags, sgrcap->cap_ideogram);
 
     update_sgrcolor(
-      _xattr.fg_space(),  _xattr.fg,
-      m_xattr.fg_space(), m_xattr.fg,
+      new_attr.fg_space(), new_attr.fg_color(),
+      old_attr.fg_space(), old_attr.fg_color(),
       sgrcap->cap_fg);
 
     update_sgrcolor(
-      _xattr.bg_space(),  _xattr.bg,
-      m_xattr.bg_space(), m_xattr.bg,
+      new_attr.bg_space(), new_attr.bg_color(),
+      old_attr.bg_space(), old_attr.bg_color(),
       sgrcap->cap_bg);
 
-    this->m_attr = newAttr;
-    this->m_xattr = _xattr;
-
+    this->m_attr = new_attr;
     if (this->sgr_isOpen) put(ascii_m);
   }
 }

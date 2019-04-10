@@ -1,10 +1,20 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_TTY_OBSERVER_H
-#define CONTRA_TTY_OBSERVER_H
-#include "board.h"
+#ifndef CONTRA_ANSI_OBSERVER_TTY_HPP
+#define CONTRA_ANSI_OBSERVER_TTY_HPP
+#include "line.hpp"
 #include <cstdio>
 
 namespace contra {
+namespace ansi {
+
+  enum termcap_constants {
+    color_space_default_bit     = 1 << attribute_t::color_space_default    ,
+    color_space_transparent_bit = 1 << attribute_t::color_space_transparent,
+    color_space_rgb_bit         = 1 << attribute_t::color_space_rgb        ,
+    color_space_cmy_bit         = 1 << attribute_t::color_space_cmy        ,
+    color_space_cmyk_bit        = 1 << attribute_t::color_space_cmyk       ,
+    color_space_indexed_bit     = 1 << attribute_t::color_space_indexed    ,
+  };
 
   //-----------------------------------------------------------------------------
   //
@@ -62,11 +72,11 @@ namespace contra {
 
     // 38:5:0-255
     struct {
-      unsigned      sgr        ; //!< SGR number of ISO 8613-6 color specification
-      unsigned char color_specs; //!< supported color specs specified by bits
-      char          separater  ; //!< the separator character of ISO 8613-6 SGR arguments
-      bool          exact      ; //!< the separator character of ISO 8613-6 SGR arguments
-      unsigned      max_index  ; //!< the number of colors available through 38:5:*
+      unsigned      sgr         ; //!< SGR number of ISO 8613-6 color specification
+      unsigned char color_spaces; //!< supported color specs specified by bits
+      char          separater   ; //!< the separator character of ISO 8613-6 SGR arguments
+      bool          exact       ; //!< the separator character of ISO 8613-6 SGR arguments
+      unsigned      max_index   ; //!< the number of colors available through 38:5:*
     } iso8613;
 
     // 1,22 / 5,25 で明るさを切り替える方式
@@ -75,38 +85,38 @@ namespace contra {
   };
 
   struct termcap_sgr_type {
+    typedef attribute_t _at;
     // aflags
-    termcap_sgrflag2 cap_bold         {is_bold_set     , 1, is_faint_set           ,  2, 22};
-    termcap_sgrflag2 cap_italic       {is_italic_set   , 3, is_fraktur_set         , 20, 23};
-    termcap_sgrflag2 cap_underline    {is_underline_set, 4, is_double_underline_set, 21, 24};
-    termcap_sgrflag2 cap_blink        {is_blink_set    , 5, is_rapid_blink_set     ,  6, 25};
-    termcap_sgrflag1 cap_inverse      {is_inverse_set  , 7, 27};
-    termcap_sgrflag1 cap_invisible    {is_invisible_set, 8, 28};
-    termcap_sgrflag1 cap_strike       {is_strike_set   , 9, 29};
+    termcap_sgrflag2 cap_bold         {_at::is_bold_set     , 1, _at::is_faint_set           ,  2, 22};
+    termcap_sgrflag2 cap_italic       {_at::is_italic_set   , 3, _at::is_fraktur_set         , 20, 23};
+    termcap_sgrflag2 cap_underline    {_at::is_underline_set, 4, _at::is_double_underline_set, 21, 24};
+    termcap_sgrflag2 cap_blink        {_at::is_blink_set    , 5, _at::is_rapid_blink_set     ,  6, 25};
+    termcap_sgrflag1 cap_inverse      {_at::is_inverse_set  , 7, 27};
+    termcap_sgrflag1 cap_invisible    {_at::is_invisible_set, 8, 28};
+    termcap_sgrflag1 cap_strike       {_at::is_strike_set   , 9, 29};
 
     // xflags
-    termcap_sgrflag2 cap_framed       {is_frame_set       , 51, is_circle_set, 52, 54};
+    termcap_sgrflag2 cap_framed       {_at::is_frame_set       , 51, _at::is_circle_set, 52, 54};
 
-    termcap_sgrflag1 cap_proportional {is_proportional_set, 26, 50};
-    termcap_sgrflag1 cap_overline     {is_overline_set    , 53, 55};
+    termcap_sgrflag1 cap_proportional {_at::is_proportional_set, 26, 50};
+    termcap_sgrflag1 cap_overline     {_at::is_overline_set    , 53, 55};
 
     termcap_sgrideogram cap_ideogram;
 
     // colors
     termcap_sgrcolor cap_fg {
-      is_fg_color_set, 30, 39,  90,
-      {38, color_spec_indexed_bit | color_spec_rgb_bit, ascii_semicolon, false, 255},
+      _at::is_fg_color_set, 30, 39,  90,
+      {38, color_space_indexed_bit | color_space_rgb_bit, ascii_semicolon, false, 255},
       0, 0
     };
     termcap_sgrcolor cap_bg {
-      is_bg_color_set, 40, 49, 100,
-      {48, color_spec_indexed_bit | color_spec_rgb_bit, ascii_semicolon, false, 255},
+      _at::is_bg_color_set, 40, 49, 100,
+      {48, color_space_indexed_bit | color_space_rgb_bit, ascii_semicolon, false, 255},
       0, 0
     };
 
     aflags_t aflagsNotResettable {0};
     xflags_t xflagsNotResettable {0};
-  private:
 
   public:
     void initialize();
@@ -121,8 +131,7 @@ namespace contra {
     tty_observer(std::FILE* file, termcap_sgr_type* sgrcap):
       file(file), sgrcap(sgrcap)
     {
-      this->m_attr = 0;
-      m_xattr.clear();
+      m_attr.clear();
     }
 
     void put(char c) const {std::fputc(c, file);}
@@ -154,8 +163,7 @@ namespace contra {
       if (value) put_unsigned(value);
     }
 
-    attribute_t        m_attr {0};
-    extended_attribute m_xattr;
+    attribute_t m_attr;
     bool sgr_isOpen;
 
     void update_sgrflag1(
@@ -175,24 +183,27 @@ namespace contra {
       int colorSpaceOld, color_t colorOld,
       termcap_sgrcolor const& sgrcolor);
 
-    void apply_attr(board const& w, attribute_t newAttr);
+    void apply_attr(attribute_t newAttr);
 
   public:
     // test implementation
     // ToDo: output encoding
-    void print_screen(board& w) {
+    void print_screen(board_t const& w) {
       for (curpos_t y = 0; y < w.m_height; y++) {
-        board_cell* const line = w.cell(0, y);
+        line_t const& line = w.m_lines[y];
         curpos_t wskip = 0;
-        for (curpos_t x = 0; x < w.m_width; x++) {
-          if (line[x].character&is_wide_extension) continue;
-          if (line[x].character == 0) {
-            wskip++;
+        curpos_t const ncell = (curpos_t) line.m_cells.size();
+        for (curpos_t x = 0; x < ncell; x++) {
+          cell_t const& cell = line.m_cells[x];
+          if (cell.character.is_wide_extension()) continue;
+          if (cell.character.is_marker()) continue;
+          if (cell.character.value == ascii_nul) {
+            wskip += cell.width;
             continue;
           }
 
           if (wskip > 0) {
-            if (this->m_attr == 0 && wskip <= 4) {
+            if (m_attr.is_default() && wskip <= 4) {
               while (wskip--) put(' ');
             } else {
               put(ascii_esc);
@@ -203,15 +214,17 @@ namespace contra {
             wskip = 0;
           }
 
-          apply_attr(w, line[x].attribute);
-          put(line[x].character);
+          apply_attr(cell.attribute);
+          put(cell.character.value);
         }
 
         put('\n');
       }
+      apply_attr(attribute_t {});
     }
 
   };
-}
 
+}
+}
 #endif
