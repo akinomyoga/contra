@@ -210,6 +210,10 @@ std::vector<line_t::nested_string> const& line_t::update_strings(curpos_t width,
 
   _push(0, 0, line_r2l);
   ret[0].end = width;
+  m_strings_version = m_version;
+  m_strings_r2l = line_r2l;
+
+  if (!m_prop_enabled) return ret;
 
   for (cell_t const& cell : m_cells) {
     std::uint32_t code = cell.character.value;
@@ -245,8 +249,6 @@ std::vector<line_t::nested_string> const& line_t::update_strings(curpos_t width,
     istr = ret[istr].parent;
   }
 
-  m_strings_version = m_version;
-  m_strings_r2l = line_r2l;
   return ret;
 }
 
@@ -431,7 +433,7 @@ void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, 
   }
 }
 
-void line_t::_pres_compose(_pres_segment_t const* comp, int count, curpos_t width, bool line_r2l) {
+void line_t::compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l) {
   cell_t fill;
   fill.character = ascii_nul;
   fill.attribute = 0;
@@ -468,12 +470,12 @@ void line_t::_pres_compose(_pres_segment_t const* comp, int count, curpos_t widt
   slice_ranges_t ranges;
   auto const& strings = this->update_strings(width, line_r2l);
 
-  auto _process_segment = [&] (_pres_segment_t const& seg) {
+  auto _process_segment = [&] (line_segment_t const& seg) {
     curpos_t const p1 = seg.p1;
     curpos_t const p2 = seg.p2;
     if (p1 >= p2) return;
     switch (seg.type) {
-    case _pres_segment_slice:
+    case line_segment_slice:
       calculate_data_ranges_from_presentation_range(ranges, p1, p2, width, line_r2l);
       if (ranges.size()) {
         std::size_t istr;
@@ -499,8 +501,12 @@ void line_t::_pres_compose(_pres_segment_t const* comp, int count, curpos_t widt
         }
       }
       break;
-    case _pres_segment_fill:
+    case line_segment_fill:
       fill.character = ascii_nul;
+      cells.insert(cells.end(), p2 - p1, fill);
+      break;
+    case line_segment_space:
+      fill.character = ascii_sp;
       cells.insert(cells.end(), p2 - p1, fill);
       break;
     }

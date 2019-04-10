@@ -313,6 +313,18 @@ namespace ansi {
       || presentationDirection == presentation_direction_btrl;
   }
 
+  enum line_segment_flags {
+    line_segment_slice,
+    line_segment_fill,
+    line_segment_space,
+  };
+
+  struct line_segment_t {
+    curpos_t p1;
+    curpos_t p2;
+    int type;
+  };
+
   struct line_t {
     std::vector<cell_t> m_cells;
     line_attr_t m_lflags = {0};
@@ -348,18 +360,20 @@ namespace ansi {
   public:
     std::vector<cell_t> const& cells() const { return m_cells; }
 
-    void clear() {
+    void clear_content() {
       this->m_cells.clear();
-      m_lflags = (line_attr_t) 0;
-      m_home = -1;
-      m_limit = -1;
       m_prop_enabled = false;
       m_prop_i = 0;
       m_prop_x = 0;
-      m_version = 0;
       m_strings_cache.clear();
       m_strings_version = (std::uint32_t) -1;
       m_strings_r2l = false;
+    }
+    void clear() {
+      this->clear_content();
+      m_lflags = (line_attr_t) 0;
+      m_home = -1;
+      m_limit = -1;
     }
 
   private:
@@ -393,7 +407,7 @@ namespace ansi {
       } else
         _mono_generic_replace_cells(x, x + width, cell, count, repeat, width, implicit_move);
     }
-    void _mono_insert_cells(curpos_t x, cell_t const* cell, int count, int repeat) {
+    void _mono_replace_cells(curpos_t x1, curpos_t x2, cell_t const* cell, int count, int repeat, int implicit_move) {
       curpos_t width = 0;
       bool flag_zw = false;
       for (int i = 0; i < count; i++) {
@@ -405,9 +419,9 @@ namespace ansi {
 
       if (flag_zw) {
         convert_to_proportional();
-        _prop_generic_replace_cells(x, x, cell, count, repeat, width, 0);
+        _prop_generic_replace_cells(x1, x2, cell, count, repeat, width, implicit_move);
       } else
-        _mono_generic_replace_cells(x, x, cell, count, repeat, width, 0);
+        _mono_generic_replace_cells(x1, x2, cell, count, repeat, width, implicit_move);
     }
     void _mono_delete_cells(curpos_t x1, curpos_t x2) {
       _mono_generic_replace_cells(x1, x2, nullptr, 0, 0, 0, 0);
@@ -460,11 +474,11 @@ namespace ansi {
       curpos_t const left = pos, right = pos + width;
       _prop_generic_replace_cells(left, right, cell, count, repeat, width, implicit_move);
     }
-    void _prop_insert_cells(curpos_t pos, cell_t const* cell, int count, int repeat) {
+    void _prop_replace_cells(curpos_t x1, curpos_t x2, cell_t const* cell, int count, int repeat, int implicit_move) {
       curpos_t width = 0;
       for (int i = 0; i < count; i++) width += cell[i].width;
       width *= repeat;
-      _prop_generic_replace_cells(pos, pos, cell, count, repeat, width, 0);
+      _prop_generic_replace_cells(x1, x2, cell, count, repeat, width, implicit_move);
     }
     void _prop_delete_cells(curpos_t x1, curpos_t x2) {
       _prop_generic_replace_cells(x1, x2, nullptr, 0, 0, 0, 0);
@@ -479,15 +493,21 @@ namespace ansi {
     }
     void insert_cells(curpos_t x, cell_t const* cell, int count, int repeat) {
       if (m_prop_enabled)
-        _prop_insert_cells(x, cell, count, repeat);
+        _prop_replace_cells(x, x, cell, count, repeat, 0);
       else
-        _mono_insert_cells(x, cell, count, repeat);
+        _mono_replace_cells(x, x, cell, count, repeat, 0);
     }
     void delete_cells(curpos_t x1, curpos_t x2) {
       if (m_prop_enabled)
         _prop_delete_cells(x1, x2);
       else
         _mono_delete_cells(x1, x2);
+    }
+    void replace_cells(curpos_t x1, curpos_t x2, cell_t const* cell, int count, int repeat, int implicit_move) {
+      if (m_prop_enabled)
+        _prop_replace_cells(x1, x2, cell, count, repeat, implicit_move);
+      else
+        _mono_replace_cells(x1, x2, cell, count, repeat, implicit_move);
     }
 
   private:
@@ -621,17 +641,10 @@ namespace ansi {
       return parent;
     }
 
-  private:
-    enum _pres_segment_flags {
-      _pres_segment_slice,
-      _pres_segment_fill,
-    };
-    struct _pres_segment_t {
-      curpos_t p1;
-      curpos_t p2;
-      int type;
-    };
-    void _pres_compose(_pres_segment_t const* comp, int count, curpos_t width, bool line_r2l);
+  public:
+    /// @fn void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l);
+    /// 表示部に於ける範囲を組み合わせて新しく行の内容を再構築します。
+    void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l);
 
   public:
     void ech(curpos_t p1, curpos_t p2, curpos_t width, presentation_direction board_charpath, bool in_presentation) {
@@ -654,12 +667,12 @@ namespace ansi {
         return;
       }
 
-      _pres_segment_t comp[3] = {
-        {0, p1, _pres_segment_slice},
-        {p1, p2, _pres_segment_fill},
-        {p2, width, _pres_segment_slice},
+      line_segment_t comp[3] = {
+        {0, p1, line_segment_slice},
+        {p1, p2, line_segment_fill},
+        {p2, width, line_segment_slice},
       };
-      _pres_compose(comp, std::size(comp), width, line_r2l);
+      compose_segments(comp, std::size(comp), width, line_r2l);
     }
     void ich(curpos_t p0, curpos_t shift, curpos_t width, presentation_direction board_charpath, bool in_presentation) {
       p0 = contra::clamp(p0, 0, width);
@@ -692,20 +705,20 @@ namespace ansi {
 
       if (shift > 0) {
         curpos_t const delta = std::min(width - p0, shift);
-        _pres_segment_t comp[3] = {
-          {0, p0, _pres_segment_slice},
-          {0, delta, _pres_segment_fill},
-          {p0, width - delta, _pres_segment_slice},
+        line_segment_t comp[3] = {
+          {0, p0, line_segment_slice},
+          {0, delta, line_segment_fill},
+          {p0, width - delta, line_segment_slice},
         };
-        _pres_compose(comp, std::size(comp), width, line_r2l);
+        compose_segments(comp, std::size(comp), width, line_r2l);
       } else if (shift < 0) {
         curpos_t const delta = std::min(p0, -shift);
-        _pres_segment_t comp[3] = {
-          {delta, p0, _pres_segment_slice},
-          {0, delta, _pres_segment_fill},
-          {p0, width, _pres_segment_slice},
+        line_segment_t comp[3] = {
+          {delta, p0, line_segment_slice},
+          {0, delta, line_segment_fill},
+          {p0, width, line_segment_slice},
         };
-        _pres_compose(comp, std::size(comp), width, line_r2l);
+        compose_segments(comp, std::size(comp), width, line_r2l);
       }
     }
     void dch(curpos_t p0, curpos_t shift, curpos_t width, presentation_direction board_charpath, bool in_presentation) {
@@ -736,19 +749,19 @@ namespace ansi {
 
       if (shift > 0) {
         curpos_t const delta = std::min(width - p0, shift);
-        _pres_segment_t comp[2] = {
-          {0, p0, _pres_segment_slice},
-          {p0 + delta, width, _pres_segment_slice},
+        line_segment_t comp[2] = {
+          {0, p0, line_segment_slice},
+          {p0 + delta, width, line_segment_slice},
         };
-        _pres_compose(comp, std::size(comp), width, line_r2l);
+        compose_segments(comp, std::size(comp), width, line_r2l);
       } else if (shift < 0) {
         curpos_t const delta = std::min(p0, -shift);
-        _pres_segment_t comp[3] = {
-          {0, delta, _pres_segment_fill},
-          {0, p0 - delta, _pres_segment_slice},
-          {p0, width, _pres_segment_slice},
+        line_segment_t comp[3] = {
+          {0, delta, line_segment_fill},
+          {0, p0 - delta, line_segment_slice},
+          {p0, width, line_segment_slice},
         };
-        _pres_compose(comp, std::size(comp), width, line_r2l);
+        compose_segments(comp, std::size(comp), width, line_r2l);
       }
     }
 
@@ -854,21 +867,57 @@ namespace ansi {
       return m_lines[y].to_presentation_position(x, m_width, m_presentation_direction);
     }
 
+  private:
+    void initialize_lines(curpos_t y1, curpos_t y2) {
+      for (curpos_t y = y1; y < y2; y++) m_lines[y].clear();
+    }
+
   public:
+
+
+
     void rotate(curpos_t count) {
       if (count > 0) {
         if (count > m_height) count = m_height;
-        for (curpos_t i = 0; i < count; i++) {
-          // ToDo: 消える行を何処かに記録する?
-          m_lines[i].clear();
-        }
+        // ToDo: 消える行を何処かに記録する?
+        initialize_lines(0, count);
         m_lines.rotate(count);
       } else if (count < 0) {
         count = -count;
         if (count < m_height) count = m_height;
         m_lines.rotate(m_lines.size() - count);
-        for (curpos_t i = 0; i < count; i++)
-          m_lines[i].clear();
+        initialize_lines(0, count);
+      }
+    }
+    /// @fn void insert_lines(curpos_t y, curpos_t count);
+    /// @param[in] y 挿入する位置を指定します。
+    /// @param[in] count
+    ///   挿入する行数を指定します。
+    ///   負の数を指定した時、上方向にシフト・挿入します。
+    void insert_lines(curpos_t y, curpos_t count) {
+      if (count > 0) {
+        count = std::min(count, m_height - y);
+        if (!count) return;
+        std::move_backward(m_lines.begin() + y, m_lines.end() - count, m_lines.end());
+        initialize_lines(y, y + count);
+      } else if (count < 0) {
+        count = std::min(-count, y + 1);
+        if (!count) return;
+        std::move(m_lines.begin() + count, m_lines.begin() + y + 1, m_lines.begin());
+        initialize_lines(y + 1 - count, y + 1);
+      }
+    }
+    void delete_lines(curpos_t y, curpos_t count) {
+      if (count > 0) {
+        count = std::min(count, m_height - y);
+        if (!count) return;
+        std::move(m_lines.begin() + y + count, m_lines.end(), m_lines.begin() + y);
+        initialize_lines(m_height - count, m_height);
+      } else if (count < 0) {
+        count = std::min(-count, y + 1);
+        if (!count) return;
+        std::move_backward(m_lines.begin(), m_lines.begin() + y + 1 - count, m_lines.begin() + y + 1);
+        initialize_lines(0, count);
       }
     }
     void clear_screen() {

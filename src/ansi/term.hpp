@@ -35,6 +35,7 @@ namespace ansi {
     dec_mode    = 1, // CSI ? Ps h
     contra_mode = 2, // private mode
 
+    mode_vem  = construct_mode_spec( 7, ansi_mode,  7),
     mode_dcsm = construct_mode_spec( 9, ansi_mode,  9),
     mode_hem  = construct_mode_spec(10, ansi_mode, 10),
     mode_lnm  = construct_mode_spec(20, ansi_mode, 20),
@@ -46,6 +47,9 @@ namespace ansi {
     /// @var mode_xenl_ech
     /// 行末にカーソルがある時に ECH, ICH, DCH は行の最後の文字に作用します。
     mode_xenl_ech = construct_mode_spec(25, contra_mode, 9203),
+    /// @var mode_home_il
+    /// ICH, IL, DL の後にカーソルを SPH で設定される行頭に移動します。
+    mode_home_il  = construct_mode_spec(26, contra_mode, 9204),
   };
 
   struct tty_state {
