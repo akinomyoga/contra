@@ -42,14 +42,37 @@ namespace ansi {
     mode_grcm = construct_mode_spec(21, ansi_mode, 21),
     mode_zdm  = construct_mode_spec(22, ansi_mode, 22),
 
-    mode_simd     = construct_mode_spec(23, contra_mode, 9201),
-    mode_xenl     = construct_mode_spec(24, contra_mode, 9202),
+    // 未対応のANSIモード
+    mode_gatm = construct_mode_spec( 1, ansi_mode,  1),
+    mode_kam  = construct_mode_spec( 2, ansi_mode,  2),
+    mode_crm  = construct_mode_spec( 3, ansi_mode,  3),
+    mode_irm  = construct_mode_spec( 4, ansi_mode,  4),
+    mode_srtm = construct_mode_spec( 5, ansi_mode,  5),
+    mode_erm  = construct_mode_spec( 6, ansi_mode,  6),
+    mode_bdsm = construct_mode_spec( 8, ansi_mode,  8),
+    mode_pum  = construct_mode_spec(11, ansi_mode, 11),
+    mode_srm  = construct_mode_spec(12, ansi_mode, 12),
+    mode_feam = construct_mode_spec(13, ansi_mode, 13),
+    mode_fetm = construct_mode_spec(14, ansi_mode, 14),
+    mode_matm = construct_mode_spec(15, ansi_mode, 15),
+    mode_ttm  = construct_mode_spec(16, ansi_mode, 16),
+    mode_satm = construct_mode_spec(17, ansi_mode, 17),
+    mode_tsm  = construct_mode_spec(18, ansi_mode, 18),
+    mode_ebm  = construct_mode_spec(19, ansi_mode, 19),
+
+    // DECモード
+    mode_decawm   = construct_mode_spec(24, dec_mode, 7),
+
+    // 未対応のDECモード
+    mode_decom    = construct_mode_spec(23, dec_mode, 6),
+
+    mode_simd     = construct_mode_spec(25, contra_mode, 9201),
     /// @var mode_xenl_ech
     /// 行末にカーソルがある時に ECH, ICH, DCH は行の最後の文字に作用します。
-    mode_xenl_ech = construct_mode_spec(25, contra_mode, 9203),
+    mode_xenl_ech = construct_mode_spec(26, contra_mode, 9203),
     /// @var mode_home_il
     /// ICH, IL, DL の後にカーソルを SPH で設定される行頭に移動します。
-    mode_home_il  = construct_mode_spec(26, contra_mode, 9204),
+    mode_home_il  = construct_mode_spec(27, contra_mode, 9204),
   };
 
   struct tty_state {
@@ -86,7 +109,7 @@ namespace ansi {
       set_mode(mode_dcsm);
       set_mode(mode_grcm);
       set_mode(mode_zdm);
-      set_mode(mode_xenl);
+      set_mode(mode_decawm);
       set_mode(mode_xenl_ech);
     }
 
@@ -192,7 +215,7 @@ namespace ansi {
       // 行末を超えた時は折り返し
       // Note: xenl かつ cur.x >= 0 ならば sll + dir の位置にいる事を許容する。
       if ((cur.x - sll) * dir >= 1 &&
-        !(cur.x == sll + dir && cur.x >= 0 && m_state.get_mode(mode_xenl))) do_nel();
+        !(cur.x == sll + dir && cur.x >= 0 && m_state.get_mode(mode_decawm))) do_nel();
     }
 
     void insert_marker(std::uint32_t marker) {
@@ -225,7 +248,7 @@ namespace ansi {
     void do_bs() {
       if (m_state.get_mode(mode_simd)) {
         int limit = m_board->m_width;
-        if (!m_state.get_mode(mode_xenl)) limit--;
+        if (!m_state.get_mode(mode_decawm)) limit--;
         if (m_board->cur.x < limit)
           m_board->cur.x++;
       } else {

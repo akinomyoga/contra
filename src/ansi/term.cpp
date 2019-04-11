@@ -31,6 +31,7 @@ namespace {
     bool m_result;
 
   public:
+    csi_parameters(char32_t const* s, std::size_t n) { extract_parameters(s, n); }
     csi_parameters(sequence const& seq) {
       extract_parameters(seq.parameter(), seq.parameterSize());
     }
@@ -122,6 +123,97 @@ namespace {
       return false;
     }
   };
+
+  //---------------------------------------------------------------------------
+  // Modes
+
+  struct mode_dictionary_t {
+    std::unordered_map<std::uint32_t, mode_t> data_ansi;
+    std::unordered_map<std::uint32_t, mode_t> data_dec;
+    void init(mode_spec spec) {
+      std::uint32_t const index = (spec | mode_param_mask) >> mode_param_shift;
+      std::uint32_t const type = (spec | mode_type_mask) >> mode_type_shift;
+      switch (type) {
+      case ansi_mode:
+        data_ansi[index] = spec;
+        break;
+      case dec_mode:
+        data_dec[index] = spec;
+        break;
+      }
+    }
+  public:
+    mode_dictionary_t() {
+      // ANSI modes
+      init(mode_gatm);
+      init(mode_kam );
+      init(mode_crm );
+      init(mode_irm );
+      init(mode_srtm);
+      init(mode_erm );
+      init(mode_vem );
+      init(mode_bdsm);
+      init(mode_dcsm);
+      init(mode_hem );
+      init(mode_pum );
+      init(mode_srm );
+      init(mode_feam);
+      init(mode_fetm);
+      init(mode_matm);
+      init(mode_ttm );
+      init(mode_satm);
+      init(mode_tsm );
+      init(mode_ebm );
+      init(mode_lnm );
+      init(mode_grcm);
+      init(mode_zdm );
+    }
+
+    void set_ansi_mode(tty_state& s, csi_single_param_t param, bool value) {
+      auto const it = data_ansi.find(param);
+      if (it != data_ansi.end())
+        s.set_mode(it->second, value);
+      else
+        std::fprintf(stderr, "unknown ANSI mode %u\n", (unsigned) param);
+    }
+    void set_dec_mode(tty_state& s, csi_single_param_t param, bool value) {
+      auto const it = data_dec.find(param);
+      if (it != data_dec.end())
+        s.set_mode(it->second, value);
+      else
+        std::fprintf(stderr, "unknown DEC mode %u\n", (unsigned) param);
+    }
+  };
+  static mode_dictionary_t mode_dictionary;
+
+  bool do_sm(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
+    csi_single_param_t value;
+    while (params.read_param(value, 0))
+      mode_dictionary.set_ansi_mode(s, value, true);
+    return true;
+  }
+  bool do_rm(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
+    csi_single_param_t value;
+    while (params.read_param(value, 0))
+      mode_dictionary.set_ansi_mode(s, value, false);
+    return true;
+  }
+  bool do_decset(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
+    csi_single_param_t value;
+    while (params.read_param(value, 0))
+      mode_dictionary.set_dec_mode(s, value, true);
+    return true;
+  }
+  bool do_decrst(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
+    csi_single_param_t value;
+    while (params.read_param(value, 0))
+      mode_dictionary.set_dec_mode(s, value, false);
+    return true;
+  }
 
   //---------------------------------------------------------------------------
   // Page and line settings
@@ -994,6 +1086,10 @@ namespace {
     control_function_dictionary() {
       std::fill(std::begin(data1), std::end(data1), nullptr);
 
+      // sm
+      register_cfunc(&do_sm, ascii_h);
+      register_cfunc(&do_rm, ascii_l);
+
       // sgr
       register_cfunc(&do_sgr, ascii_m);
       register_cfunc(&do_sco, ascii_sp, ascii_e);
@@ -1051,16 +1147,34 @@ namespace {
     control_function_t* get(byte I, byte F) const {
       typedef std::unordered_map<std::uint16_t, control_function_t*>::const_iterator const_iterator;
       const_iterator const it = data2.find(compose_bytes(I, F));
-      return it != data2.end() ? it->second: nullptr;
+      return it != data2.end() ? it->second : nullptr;
     }
   };
 
   static control_function_dictionary cfunc_dict;
 
+  bool process_private_control_sequence(term_t& term, sequence const& seq) {
+    char32_t const* param = seq.parameter();
+    std::size_t len = seq.parameterSize();
+    if (len > 0 && param[0] == '?') {
+      // CSI ? ... Ft の形式
+      csi_parameters params(param + 1, len - 1);
+      if (!params) return false;
+
+      switch (seq.final()) {
+      case 'h': return do_decset(term, params);
+      case 'l': return do_decrst(term, params);
+      }
+    }
+
+    return false;
+  }
+
 }
 
   void term_t::process_control_sequence(sequence const& seq) {
     if (seq.is_private_csi()) {
+      if (process_private_control_sequence(*this, seq)) return;
       print_unrecognized_sequence(seq);
       return;
     }
