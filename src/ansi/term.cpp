@@ -33,7 +33,7 @@ namespace {
   public:
     csi_parameters(char32_t const* s, std::size_t n) { extract_parameters(s, n); }
     csi_parameters(sequence const& seq) {
-      extract_parameters(seq.parameter(), seq.parameterSize());
+      extract_parameters(seq.parameter(), seq.parameter_size());
     }
 
     // csi_parameters(std::initializer_list<csi_single_param_t> args) {
@@ -918,7 +918,7 @@ namespace {
       // DCSM(DATA)
       curpos_t const x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
       curpos_t const x2 = std::min(x1 + (curpos_t) param, b.m_width);
-      if (x1 < x2) b.line().ech(x1, x2, b.m_width, b.m_presentation_direction, false);
+      if (x1 < x2) b.line().ech(x1, x2, b.m_width, b.m_presentation_direction, b.cur.attribute, false);
     } else {
       // DCSM(PRESENTATION)
       bool const line_r2l = b.line().is_r2l(b.m_presentation_direction);
@@ -933,7 +933,7 @@ namespace {
         p1 = p;
         p2 = std::min(p1 + (curpos_t) param, b.m_width);
       }
-      if (p1 < p2) b.line().ech(p1, p2, b.m_width, b.m_presentation_direction, true);
+      if (p1 < p2) b.line().ech(p1, p2, b.m_width, b.m_presentation_direction, b.cur.attribute, true);
     }
     return true;
   }
@@ -956,9 +956,9 @@ namespace {
       curpos_t const x = b.cur.x < width ? b.cur.x : s.get_mode(mode_xenl_ech) ? width - 1 : width;
       // DCSM(DATA)
       if (!s.get_mode(mode_hem))
-        b.line().ich(x, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, false);
+        b.line().ich(x, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, b.cur.attribute, false);
       else
-        b.line().ich(x + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, false);
+        b.line().ich(x + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, b.cur.attribute, false);
       if (s.get_mode(mode_home_il)) b.cur.x = b.line_home();
     } else {
       // DCSM(PRESENTATION)
@@ -966,9 +966,9 @@ namespace {
       curpos_t p = b.to_presentation_position(b.cur.y, b.cur.x);
       if (p >= b.m_width) p = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
       if (line_r2l == s.get_mode(mode_hem))
-        b.line().ich(p, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, true);
+        b.line().ich(p, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, b.cur.attribute, true);
       else
-        b.line().ich(p + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, true);
+        b.line().ich(p + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, b.cur.attribute, true);
       b.cur.x = s.get_mode(mode_home_il) ? b.line_home() : b.to_data_position(b.cur.y, p);
     }
     return true;
@@ -992,18 +992,18 @@ namespace {
       curpos_t const x = b.cur.x < width ? b.cur.x : s.get_mode(mode_xenl_ech) ? width - 1 : width;
       // DCSM(DATA)
       if (!s.get_mode(mode_hem))
-        b.line().dch(x, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, false);
+        b.line().dch(x, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, b.cur.attribute, false);
       else
-        b.line().dch(x + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, false);
+        b.line().dch(x + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, b.cur.attribute, false);
     } else {
       // DCSM(PRESENTATION)
       bool const line_r2l = b.line().is_r2l(b.m_presentation_direction);
       curpos_t p = b.to_presentation_position(b.cur.y, b.cur.x);
       if (p >= b.m_width) p = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
       if (line_r2l == s.get_mode(mode_hem))
-        b.line().dch(p, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, true);
+        b.line().dch(p, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, b.cur.attribute, true);
       else
-        b.line().dch(p + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, true);
+        b.line().dch(p + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, b.cur.attribute, true);
     }
     return true;
   }
@@ -1013,14 +1013,16 @@ namespace {
 
   static void do_el(board_t& b, tty_state& s, csi_single_param_t param) {
     if (param != 0 && param != 1) {
-      b.line().clear_content();
+      b.line().clear_content(b.m_width, b.cur.attribute);
     } else if (s.get_mode(mode_dcsm)) {
       // DCSM(DATA)
+      cell_t fill = ascii_nul;
+      fill.attribute = b.cur.attribute;
       curpos_t const x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
       if (param == 0)
-        b.line().replace_cells(x1, b.m_width, nullptr, 0, 0, 1);
+        b.line().write_cells(x1, &fill, 1, b.m_width - x1, 1);
       else
-        b.line().replace_cells(0, x1 + 1, nullptr, 0, 0, -1);
+        b.line().write_cells(0, &fill, 1, x1 + 1, -1);
     } else {
       // DCSM(PRESENTATION)
       bool const line_r2l = b.line().is_r2l(b.m_presentation_direction);
@@ -1033,10 +1035,10 @@ namespace {
           {0, p0, line_segment_fill},
           {p0, b.m_width, line_segment_slice},
         };
-        b.line().compose_segments(segs, std::size(segs), b.m_width, line_r2l);
+        b.line().compose_segments(segs, std::size(segs), b.m_width, line_r2l, b.cur.attribute);
       } else {
         line_segment_t seg = {0, p, line_segment_slice};
-        b.line().compose_segments(&seg, 1, b.m_width, line_r2l);
+        b.line().compose_segments(&seg, 1, b.m_width, line_r2l, b.cur.attribute);
       }
     }
   }
@@ -1057,15 +1059,15 @@ namespace {
     board_t& b = term.board();
     if (param != 0 && param != 1) {
       for (line_t& line : b.m_lines)
-        line.clear_content();
+        line.clear_content(b.m_width, b.cur.attribute);
     } else {
       do_el(b, s, param);
       if (param == 0) {
         for (curpos_t y = b.cur.y + 1; y < b.m_height; y++)
-          b.m_lines[y].clear_content();
+          b.m_lines[y].clear_content(b.m_width, b.cur.attribute);
       } else {
         for (curpos_t y = 0; y < b.cur.y; y++)
-          b.m_lines[y].clear_content();
+          b.m_lines[y].clear_content(b.m_width, b.cur.attribute);
       }
     }
 
@@ -1231,7 +1233,7 @@ namespace {
 
   static bool process_private_control_sequence(term_t& term, sequence const& seq) {
     char32_t const* param = seq.parameter();
-    std::size_t len = seq.parameterSize();
+    std::size_t len = seq.parameter_size();
     if (len > 0 && param[0] == '?') {
       // CSI ? ... Ft の形式
       csi_parameters params(param + 1, len - 1);
@@ -1260,13 +1262,13 @@ namespace {
     }
 
     bool result = false;
-    std::int32_t const intermediateSize = seq.intermediateSize();
-    if (intermediateSize == 0) {
+    std::int32_t const intermediate_size = seq.intermediate_size();
+    if (intermediate_size == 0) {
       if (seq.final() == ascii_m)
         result = do_sgr(*this, params);
       else if (control_function_t* const f = cfunc_dict.get(seq.final()))
         result = f(*this, params);
-    } else if (intermediateSize == 1) {
+    } else if (intermediate_size == 1) {
       mwg_assert(seq.intermediate()[0] <= 0xFF);
       if (control_function_t* const f = cfunc_dict.get((byte) seq.intermediate()[0], seq.final()))
         result = f(*this, params);

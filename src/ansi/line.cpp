@@ -433,7 +433,7 @@ void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, 
   }
 }
 
-void line_t::compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l) {
+void line_t::compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr) {
   cell_t fill;
   fill.character = ascii_nul;
   fill.attribute = 0;
@@ -453,15 +453,18 @@ void line_t::compose_segments(line_segment_t const* comp, int count, curpos_t wi
     if (xR < x2) i2--;
     if (i1 > i2) {
       fill.character = i2 < m_cells.size() && m_cells[i2].character.value != ascii_nul ? ascii_sp : ascii_nul;
+      fill.attribute = 0;
       cells.insert(cells.end(), xR - xL, fill);
     } else {
       if (x1 < xL) {
         fill.character = m_cells[i1 - 1].character.value == ascii_nul ? ascii_nul : ascii_sp;
+        fill.attribute = m_cells[i1 - 1].attribute;
         cells.insert(cells.end(), xL - x1, fill);
       }
       cells.insert(cells.end(), m_cells.begin() + i1, m_cells.begin() + i2);
       if (xR < x2) {
         fill.character = m_cells[i2].character.value == ascii_nul ? ascii_nul : ascii_sp;
+        fill.attribute = m_cells[i2].attribute;
         cells.insert(cells.end(), x2 - xR, fill);
       }
     }
@@ -495,18 +498,24 @@ void line_t::compose_segments(line_segment_t const* comp, int count, curpos_t wi
         // 文字列終端
         istr = find_innermost_string(ranges.back().second, false, width, line_r2l);
         while (istr) {
-          mark.character = strings[istr].end_marker;
-          cells.push_back(mark);
+          if (cells.size() && cells.back().character.value == strings[istr].beg_marker) {
+            cells.pop_back();
+          } else {
+            mark.character = strings[istr].end_marker;
+            cells.push_back(mark);
+          }
           istr = strings[istr].parent;
         }
       }
       break;
     case line_segment_fill:
       fill.character = ascii_nul;
+      fill.attribute = fill_attr;
       cells.insert(cells.end(), p2 - p1, fill);
       break;
     case line_segment_space:
       fill.character = ascii_sp;
+      fill.attribute = fill_attr;
       cells.insert(cells.end(), p2 - p1, fill);
       break;
     }

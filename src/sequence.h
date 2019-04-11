@@ -49,13 +49,13 @@ namespace contra {
     char32_t const* parameter() const {
       return &m_content[0];
     }
-    std::int32_t parameterSize() const {
+    std::int32_t parameter_size() const {
       return m_intermediateStart < 0 ? m_content.size() : m_intermediateStart;
     }
     char32_t const* intermediate() const {
       return m_intermediateStart < 0 ? nullptr : &m_content[m_intermediateStart];
     }
-    std::int32_t intermediateSize() const {
+    std::int32_t intermediate_size() const {
       return m_intermediateStart < 0 ? 0: m_content.size() - m_intermediateStart;
     }
 

@@ -286,7 +286,7 @@ namespace ansi {
       if (count > 0) {
         cell_t fill;
         fill.character = ascii_nul;
-        fill.attribute = cur.attribute;
+        fill.attribute = 0;
         fill.width = 1;
         m_board->line().write_cells(cur.x, &fill, 1, count, 1);
         cur.x += count;
@@ -424,25 +424,27 @@ namespace ansi {
       print_unrecognized_sequence(seq);
     }
     void process_escape_sequence(sequence const& seq) {
-      switch (seq.final()) {
-      case ascii_7: do_decsc(*this); break;
-      case ascii_8: do_decrc(*this); break;
-      default: print_unrecognized_sequence(seq); break;
+      if (seq.parameter_size() == 0) {
+        switch (seq.final()) {
+        case ascii_7: do_decsc(*this); return;
+        case ascii_8: do_decrc(*this); return;
+        }
       }
+      print_unrecognized_sequence(seq);
     }
 
     void process_control_sequence(sequence const& seq);
 
     void process_command_string(sequence const& seq) {
-      if (seq.type() == ascii_osc && seq.parameterSize() >= 2 && seq.parameter()[0] == '0' && seq.parameter()[1] == ';') {
-        m_state.title = std::u32string(seq.parameter() + 2, (std::size_t) seq.parameterSize() - 2);
+      if (seq.type() == ascii_osc && seq.parameter_size() >= 2 && seq.parameter()[0] == '0' && seq.parameter()[1] == ';') {
+        m_state.title = std::u32string(seq.parameter() + 2, (std::size_t) seq.parameter_size() - 2);
         return;
       }
       print_unrecognized_sequence(seq);
     }
     void process_character_string(sequence const& seq) {
       if (seq.type() == ascii_k) {
-        m_state.screen_title = std::u32string(seq.parameter(), (std::size_t) seq.parameterSize());
+        m_state.screen_title = std::u32string(seq.parameter(), (std::size_t) seq.parameter_size());
         return;
       } else
         print_unrecognized_sequence(seq);

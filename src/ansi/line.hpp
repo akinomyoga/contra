@@ -363,6 +363,28 @@ namespace ansi {
   public:
     std::vector<cell_t> const& cells() const { return m_cells; }
 
+  private:
+    void _initialize_content(curpos_t width, attribute_t const& attr) {
+      if (attr.is_default()) return;
+      cell_t fill;
+      fill.character = ascii_nul;
+      fill.attribute = attr;
+      fill.width = 1;
+      this->m_cells.resize(width, fill);
+    }
+
+  public:
+    void clear() {
+      this->clear_content();
+      m_lflags = (line_attr_t) 0;
+      m_home = -1;
+      m_limit = -1;
+    }
+    void clear(curpos_t width, attribute_t const& attr) {
+      this->clear();
+      this->_initialize_content(width, attr);
+    }
+
     void clear_content() {
       this->m_cells.clear();
       m_prop_enabled = false;
@@ -371,12 +393,11 @@ namespace ansi {
       m_strings_cache.clear();
       m_strings_version = (std::uint32_t) -1;
       m_strings_r2l = false;
+      m_version++;
     }
-    void clear() {
+    void clear_content(curpos_t width, attribute_t const& attr) {
       this->clear_content();
-      m_lflags = (line_attr_t) 0;
-      m_home = -1;
-      m_limit = -1;
+      this->_initialize_content(width, attr);
     }
 
   private:
@@ -645,12 +666,12 @@ namespace ansi {
     }
 
   public:
-    /// @fn void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l);
+    /// @fn void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr);
     /// 表示部に於ける範囲を組み合わせて新しく行の内容を再構築します。
-    void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l);
+    void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr);
 
   public:
-    void ech(curpos_t p1, curpos_t p2, curpos_t width, presentation_direction board_charpath, bool in_presentation) {
+    void ech(curpos_t p1, curpos_t p2, curpos_t width, presentation_direction board_charpath, attribute_t const& fill_attr, bool in_presentation) {
       p1 = contra::clamp(p1, 0, width);
       p2 = contra::clamp(p2, 0, width);
       if (!(p1 < p2)) return;
@@ -664,7 +685,7 @@ namespace ansi {
         }
         cell_t fill;
         fill.character = ascii_nul;
-        fill.attribute = 0;
+        fill.attribute = fill_attr;
         fill.width = 1;
         write_cells(p1, &fill, 1, p2 - p1, 0);
         return;
@@ -675,9 +696,9 @@ namespace ansi {
         {p1, p2, line_segment_fill},
         {p2, width, line_segment_slice},
       };
-      compose_segments(comp, std::size(comp), width, line_r2l);
+      compose_segments(comp, std::size(comp), width, line_r2l, fill_attr);
     }
-    void ich(curpos_t p0, curpos_t shift, curpos_t width, presentation_direction board_charpath, bool in_presentation) {
+    void ich(curpos_t p0, curpos_t shift, curpos_t width, presentation_direction board_charpath, attribute_t const& fill_attr, bool in_presentation) {
       p0 = contra::clamp(p0, 0, width);
       bool const line_r2l = is_r2l(board_charpath);
       if (!in_presentation || !m_prop_enabled) {
@@ -688,7 +709,7 @@ namespace ansi {
 
         cell_t fill;
         fill.character = ascii_nul;
-        fill.attribute = 0;
+        fill.attribute = fill_attr;
         fill.width = 1;
         if (shift > 0) {
           curpos_t const delta = std::min(width - p0, shift);
@@ -713,7 +734,7 @@ namespace ansi {
           {0, delta, line_segment_fill},
           {p0, width - delta, line_segment_slice},
         };
-        compose_segments(comp, std::size(comp), width, line_r2l);
+        compose_segments(comp, std::size(comp), width, line_r2l, fill_attr);
       } else if (shift < 0) {
         curpos_t const delta = std::min(p0, -shift);
         line_segment_t comp[3] = {
@@ -721,10 +742,10 @@ namespace ansi {
           {0, delta, line_segment_fill},
           {p0, width, line_segment_slice},
         };
-        compose_segments(comp, std::size(comp), width, line_r2l);
+        compose_segments(comp, std::size(comp), width, line_r2l, fill_attr);
       }
     }
-    void dch(curpos_t p0, curpos_t shift, curpos_t width, presentation_direction board_charpath, bool in_presentation) {
+    void dch(curpos_t p0, curpos_t shift, curpos_t width, presentation_direction board_charpath, attribute_t const& fill_attr, bool in_presentation) {
       p0 = contra::clamp(p0, 0, width);
       bool const line_r2l = is_r2l(board_charpath);
       if (!in_presentation || !m_prop_enabled) {
@@ -733,16 +754,19 @@ namespace ansi {
           shift = -shift;
         }
 
+        cell_t fill;
+        fill.character = ascii_nul;
+        fill.attribute = fill_attr;
+        fill.width = 1;
         if (shift > 0) {
           curpos_t const delta = std::min(width - p0, shift);
-          if (delta) delete_cells(p0, p0 + delta);
+          if (delta) {
+            delete_cells(p0, p0 + delta);
+            insert_cells(width - delta, &fill, 1, delta);
+          }
         } else if (shift < 0) {
           curpos_t const delta = std::min(p0, -shift);
           if (delta) {
-            cell_t fill;
-            fill.character = ascii_nul;
-            fill.attribute = 0;
-            fill.width = 1;
             delete_cells(p0 - delta, p0);
             insert_cells(0, &fill, 1, delta);
           }
@@ -752,11 +776,12 @@ namespace ansi {
 
       if (shift > 0) {
         curpos_t const delta = std::min(width - p0, shift);
-        line_segment_t comp[2] = {
+        line_segment_t comp[3] = {
           {0, p0, line_segment_slice},
           {p0 + delta, width, line_segment_slice},
+          {0, delta, line_segment_fill},
         };
-        compose_segments(comp, std::size(comp), width, line_r2l);
+        compose_segments(comp, std::size(comp), width, line_r2l, fill_attr);
       } else if (shift < 0) {
         curpos_t const delta = std::min(p0, -shift);
         line_segment_t comp[3] = {
@@ -764,7 +789,7 @@ namespace ansi {
           {0, p0 - delta, line_segment_slice},
           {p0, width, line_segment_slice},
         };
-        compose_segments(comp, std::size(comp), width, line_r2l);
+        compose_segments(comp, std::size(comp), width, line_r2l, fill_attr);
       }
     }
 
@@ -872,13 +897,11 @@ namespace ansi {
 
   private:
     void initialize_lines(curpos_t y1, curpos_t y2) {
-      for (curpos_t y = y1; y < y2; y++) m_lines[y].clear();
+      for (curpos_t y = y1; y < y2; y++)
+        m_lines[y].clear(m_width, cur.attribute);
     }
 
   public:
-
-
-
     void rotate(curpos_t count) {
       if (count > 0) {
         if (count > m_height) count = m_height;

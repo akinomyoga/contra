@@ -147,7 +147,7 @@ void test_strings() {
 
     std::vector<char32_t> before, after;
     std::fprintf(stderr, "ECH before: "); _presentation(before);
-    board.line().ech(p1, p2, board.m_width, board.m_presentation_direction, true);
+    board.line().ech(p1, p2, board.m_width, board.m_presentation_direction, board.cur.attribute, true);
     std::fprintf(stderr, "ECH after : "); _presentation(after);
 
     for (int i = 0; i < board.m_width; i++)
@@ -174,7 +174,7 @@ void test_strings() {
 
     std::vector<char32_t> before, after;
     std::fprintf(stderr, "DCH before: "); _presentation(before);
-    board.line().dch(p1, shift, board.m_width, board.m_presentation_direction, true);
+    board.line().dch(p1, shift, board.m_width, board.m_presentation_direction, board.cur.attribute, true);
     std::fprintf(stderr, "DCH after : "); _presentation(after);
 
     // for (int i = 0; i < board.m_width; i++)
@@ -193,7 +193,7 @@ void test_strings() {
 
     std::vector<char32_t> before, after;
     std::fprintf(stderr, "ICH before: "); _presentation(before);
-    board.line().ich(p1, shift, board.m_width, board.m_presentation_direction, true);
+    board.line().ich(p1, shift, board.m_width, board.m_presentation_direction, board.cur.attribute, true);
     std::fprintf(stderr, "ICH after : "); _presentation(after);
 
     // for (int i = 0; i < board.m_width; i++)
