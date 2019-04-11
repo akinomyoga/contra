@@ -60,6 +60,9 @@ namespace ansi {
 
     line_attr_t lflags {0};
 
+    std::u32string title; // xterm title
+    std::u32string screen_title; // GNU screen title
+
     tty_state() {
       this->initialize_mode();
     }
@@ -385,10 +388,18 @@ namespace ansi {
     void process_control_sequence(sequence const& seq);
 
     void process_command_string(sequence const& seq) {
+      if (seq.type() == ascii_osc && seq.parameterSize() >= 2 && seq.parameter()[0] == '0' && seq.parameter()[1] == ';') {
+        m_state.title = std::u32string(seq.parameter() + 2, (std::size_t) seq.parameterSize() - 2);
+        return;
+      }
       print_unrecognized_sequence(seq);
     }
     void process_character_string(sequence const& seq) {
-      print_unrecognized_sequence(seq);
+      if (seq.type() == ascii_k) {
+        m_state.screen_title = std::u32string(seq.parameter(), (std::size_t) seq.parameterSize());
+        return;
+      } else
+        print_unrecognized_sequence(seq);
     }
 
     void process_control_character(char32_t uchar) {

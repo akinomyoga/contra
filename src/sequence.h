@@ -50,13 +50,13 @@ namespace contra {
       return &m_content[0];
     }
     std::int32_t parameterSize() const {
-      return m_intermediateStart < 0? m_content.size(): m_intermediateStart;
+      return m_intermediateStart < 0 ? m_content.size() : m_intermediateStart;
     }
     char32_t const* intermediate() const {
-      return m_intermediateStart < 0? nullptr: &m_content[m_intermediateStart];
+      return m_intermediateStart < 0 ? nullptr : &m_content[m_intermediateStart];
     }
     std::int32_t intermediateSize() const {
-      return m_intermediateStart < 0? 0: m_content.size() - m_intermediateStart;
+      return m_intermediateStart < 0 ? 0: m_content.size() - m_intermediateStart;
     }
 
   private:
@@ -89,8 +89,11 @@ namespace contra {
   };
 
   struct sequence_decoder_config {
-    bool c1_8bit_representation_enabled {true};
-    bool osc_sequence_terminated_by_bel {true};
+    bool c1_8bit_representation_enabled     = true; // 8bit C1 制御文字を有効にする。
+    bool osc_sequence_terminated_by_bel     = true; // OSC シーケンスが BEL で終わっても良い。
+    bool command_string_terminated_by_bel   = true; // 任意のコマンド列が BEL で終わっても良い。
+    bool character_string_terminated_by_bel = true; // キャラクター列 (SOS, ESC k 等) が BEL で終わっても良い。
+    bool title_definition_string_enabled    = true; // GNU Screen ESC k ... BEL
   };
 
   template<typename Processor>
@@ -179,6 +182,17 @@ namespace contra {
       }
     }
 
+    bool is_command_string_terminator(char32_t uchar) const {
+      if (uchar == ascii_st)
+        return m_config->c1_8bit_representation_enabled;
+      else if (uchar == ascii_bel) {
+        if (m_config->command_string_terminated_by_bel) return true;
+        if (m_seq.type() == ascii_osc) return m_config->osc_sequence_terminated_by_bel;
+        return false;
+      } else
+        return false;
+    }
+
     void process_char_for_command_string(char32_t uchar) {
       if (m_hasPendingESC) {
         if (uchar == ascii_backslash) {
@@ -196,9 +210,7 @@ namespace contra {
         m_seq.append(uchar);
       } else if (uchar == ascii_esc) {
         m_hasPendingESC = true;
-      } else if ((uchar == ascii_st && m_config->c1_8bit_representation_enabled)
-        || (uchar == ascii_bel && m_seq.type() == ascii_osc && m_config->osc_sequence_terminated_by_bel)
-      ) {
+      } else if (is_command_string_terminator(uchar)) {
         process_command_string();
       } else {
         process_invalid_sequence();
@@ -206,15 +218,25 @@ namespace contra {
       }
     }
 
+    bool is_character_string_terminator(char32_t uchar) const {
+      if (uchar == ascii_st)
+        return m_config->c1_8bit_representation_enabled;
+      else if (uchar == ascii_bel)
+        return m_config->character_string_terminated_by_bel;
+      else
+        return false;
+    }
+
     void process_char_for_character_string(char32_t uchar) {
       if (m_hasPendingESC) {
-        if (uchar == ascii_backslash || (uchar == ascii_st && m_config->c1_8bit_representation_enabled)) {
+        if (uchar == ascii_backslash || is_character_string_terminator(uchar)) {
           // final ST
           if (uchar == ascii_st)
             m_seq.append(ascii_esc);
           process_character_string();
           return;
-        } else if (uchar == ascii_X || (uchar == ascii_sos && m_config->c1_8bit_representation_enabled)) {
+        } else if (m_seq.type() == ascii_sos &&
+          (uchar == ascii_X || (uchar == ascii_sos && m_config->c1_8bit_representation_enabled))) {
           // invalid SOS
           process_invalid_sequence();
           if (uchar == ascii_X)
@@ -227,9 +249,9 @@ namespace contra {
         }
       }
 
-      if (uchar == ascii_esc)
+      if (uchar == ascii_esc) {
         m_hasPendingESC = true;
-      else if (uchar == ascii_st && m_config->c1_8bit_representation_enabled) {
+      } else if (is_character_string_terminator(uchar)) {
         process_character_string();
       } else if (uchar == ascii_sos && m_config->c1_8bit_representation_enabled) {
         process_invalid_sequence();
@@ -272,6 +294,9 @@ namespace contra {
           } else if (0x40 <= uchar && uchar < 0x60) {
             // <F> to call C1
             process_char_default_c1((uchar & 0x1F) | 0x80);
+          } else if (uchar == ascii_k && m_config->title_definition_string_enabled) {
+            m_seq.set_type((byte) ascii_k);
+            m_dstate = decode_character_string;
           } else {
             // <F>/<P> to complete an escape sequence
             m_seq.set_type((byte) ascii_esc);
@@ -373,6 +398,9 @@ namespace contra {
       case ascii_dcs:
       case ascii_osc:
         name = "command string";
+        break;
+      case ascii_k: // screen TITLE DEFINITION STRING
+        name = "private string";
         break;
       }
 
