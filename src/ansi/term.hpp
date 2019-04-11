@@ -75,6 +75,14 @@ namespace ansi {
     mode_home_il  = construct_mode_spec(27, contra_mode, 9204),
   };
 
+  struct tty_state;
+  class term_t;
+
+  void do_pld(term_t& term);
+  void do_plu(term_t& term);
+  void do_decsc(term_t& term);
+  void do_decrc(term_t& term);
+
   struct tty_state {
     curpos_t page_home  {-1};
     curpos_t page_limit {-1};
@@ -83,11 +91,27 @@ namespace ansi {
 
     line_attr_t lflags {0};
 
+    // OSC(0), scrTDS
     std::u32string title; // xterm title
     std::u32string screen_title; // GNU screen title
 
+    // DECSC, SCOSC
+    cursor_t m_decsc_cur;
+    bool m_decsc_decawm;
+    bool m_decsc_decom;
+    curpos_t m_scosc_x;
+    curpos_t m_scosc_y;
+
     tty_state() {
+      this->clear();
+    }
+
+    void clear() {
       this->initialize_mode();
+      this->title = U"";
+      this->screen_title = U"";
+      this->m_decsc_cur.x = -1;
+      this->m_scosc_x = -1;
     }
 
     sequence_decoder_config m_sequence_decoder_config;
@@ -149,6 +173,7 @@ namespace ansi {
     }
   };
 
+
   class term_t {
   private:
     board_t* m_board;
@@ -170,12 +195,6 @@ namespace ansi {
     board_t const& board() const { return *m_board; }
     tty_state& state() {return this->m_state;}
     tty_state const& state() const {return this->m_state;}
-
-    // void set_fg(color_t index, aflags_t colorSpace = color_spec_indexed);
-    // void reset_fg();
-    // void set_bg(color_t index, aflags_t colorSpace = color_spec_indexed);
-    // void reset_bg();
-    // void reset_attribute() {
 
   public:
     void insert_graph(char32_t u) {
@@ -405,7 +424,11 @@ namespace ansi {
       print_unrecognized_sequence(seq);
     }
     void process_escape_sequence(sequence const& seq) {
-      print_unrecognized_sequence(seq);
+      switch (seq.final()) {
+      case ascii_7: do_decsc(*this); break;
+      case ascii_8: do_decrc(*this); break;
+      default: print_unrecognized_sequence(seq); break;
+      }
     }
 
     void process_control_sequence(sequence const& seq);
@@ -438,6 +461,9 @@ namespace ansi {
       case ascii_ind: do_ind();  break;
       case ascii_nel: do_nel();  break;
       case ascii_ri:  do_ri();  break;
+
+      case ascii_pld: do_pld(*this); break;
+      case ascii_plu: do_plu(*this); break;
       }
     }
 

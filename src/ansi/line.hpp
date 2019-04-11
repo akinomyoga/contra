@@ -149,6 +149,9 @@ namespace ansi {
       sco_rotate270 = (std::uint32_t) 0x6 << sco_shift,
       sco_rotate315 = (std::uint32_t) 0x7 << sco_shift,
 
+      // bit 11: DECSCA
+      decsca_protected = (std::uint32_t) 1 << 11,
+
       // bit 12-15: SGR(ECMA-48:1986)
       is_frame_set        = (std::uint32_t) 1 << 12, // -+- SGR 51,52
       is_circle_set       = (std::uint32_t) 1 << 13, // -'
@@ -172,7 +175,7 @@ namespace ansi {
       | is_ideogram_single_rt_set | is_ideogram_double_rt_set
       | is_ideogram_stress_set,
 
-      non_sgr_xflags_mask = is_sub_set | is_sup_set | decdhl_mask | sco_mask,
+      non_sgr_xflags_mask = is_sub_set | is_sup_set | decdhl_mask | sco_mask | decsca_protected,
     };
 
     aflags_t aflags = 0;
@@ -825,7 +828,7 @@ namespace ansi {
   };
 
   struct cursor_t {
-    curpos_t x, y;
+    curpos_t x = 0, y = 0;
     attribute_t attribute;
   };
 

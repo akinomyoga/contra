@@ -123,6 +123,7 @@ namespace {
       return false;
     }
   };
+}
 
   //---------------------------------------------------------------------------
   // Modes
@@ -643,6 +644,47 @@ namespace {
   }
 
   //---------------------------------------------------------------------------
+  // Cursor save
+
+  bool do_scosc(term_t& term, csi_parameters& params) {
+    (void) params;
+    auto& s = term.state();
+    auto& b = term.board();
+    s.m_scosc_x = b.cur.x;
+    s.m_scosc_y = b.cur.y;
+    return true;
+  }
+
+  bool do_scorc(term_t& term, csi_parameters& params) {
+    (void) params;
+    auto& s = term.state();
+    auto& b = term.board();
+    if (s.m_scosc_x >= 0) {
+      b.cur.x = s.m_scosc_x;
+      b.cur.y = s.m_scosc_y;
+    }
+    return true;
+  }
+
+  void do_decsc(term_t& term) {
+    auto& s = term.state();
+    auto& b = term.board();
+    s.m_decsc_cur = b.cur;
+    s.m_decsc_decawm = s.get_mode(mode_decawm);
+    s.m_decsc_decom = s.get_mode(mode_decom);
+  }
+
+  void do_decrc(term_t& term) {
+    auto& s = term.state();
+    auto& b = term.board();
+    if (s.m_decsc_cur.x >= 0) {
+      b.cur = s.m_decsc_cur;
+      s.set_mode(mode_decawm, s.m_decsc_decawm);
+      s.set_mode(mode_decom, s.m_decsc_decom);
+    }
+  }
+
+  //---------------------------------------------------------------------------
   // SGR and other graphics
 
   static void do_sgr_iso8613_colors(board_t& b, csi_parameters& params, bool isfg) {
@@ -825,6 +867,35 @@ namespace {
     xflags_t& xflags = term.board().cur.attribute.xflags;
     xflags = (xflags & ~(xflags_t) attribute_t::sco_mask) | param << attribute_t::sco_shift;
     return true;
+  }
+
+  bool do_decsca(term_t& term, csi_parameters& params) {
+    csi_single_param_t param;
+    params.read_param(param, 0);
+    if (param > 2) return false;
+
+    xflags_t& xflags = term.board().cur.attribute.xflags;
+    if (param == 1)
+      xflags |= (xflags_t) attribute_t::decsca_protected;
+    else
+      xflags &= ~(xflags_t) attribute_t::decsca_protected;
+    return true;
+  }
+
+  void do_plu(term_t& term) {
+    xflags_t& xflags = term.board().cur.attribute.xflags;
+    if (xflags & attribute_t::is_sub_set)
+      xflags &= ~(xflags_t) attribute_t::is_sub_set;
+    else
+      xflags |= attribute_t::is_sup_set;
+  }
+
+  void do_pld(term_t& term) {
+    xflags_t& xflags = term.board().cur.attribute.xflags;
+    if (xflags & attribute_t::is_sup_set)
+      xflags &= ~(xflags_t) attribute_t::is_sup_set;
+    else
+      xflags |= attribute_t::is_sub_set;
   }
 
   //---------------------------------------------------------------------------
@@ -1093,6 +1164,7 @@ namespace {
       // sgr
       register_cfunc(&do_sgr, ascii_m);
       register_cfunc(&do_sco, ascii_sp, ascii_e);
+      register_cfunc(&do_decsca, ascii_double_quote, ascii_q);
 
       // cursor movement
       register_cfunc(&do_cuu, ascii_A);
@@ -1137,6 +1209,10 @@ namespace {
       register_cfunc(&do_sll, ascii_sp, ascii_V);
       register_cfunc(&do_sph, ascii_sp, ascii_i);
       register_cfunc(&do_spl, ascii_sp, ascii_j);
+
+      // cursor save
+      register_cfunc(&do_scosc, ascii_s);
+      register_cfunc(&do_scorc, ascii_u);
     }
 
     control_function_t* get(byte F) const {
@@ -1153,7 +1229,7 @@ namespace {
 
   static control_function_dictionary cfunc_dict;
 
-  bool process_private_control_sequence(term_t& term, sequence const& seq) {
+  static bool process_private_control_sequence(term_t& term, sequence const& seq) {
     char32_t const* param = seq.parameter();
     std::size_t len = seq.parameterSize();
     if (len > 0 && param[0] == '?') {
@@ -1169,8 +1245,6 @@ namespace {
 
     return false;
   }
-
-}
 
   void term_t::process_control_sequence(sequence const& seq) {
     if (seq.is_private_csi()) {
