@@ -327,6 +327,14 @@ namespace ansi {
     curpos_t p2;
     int type;
   };
+  // for line_t::shift_cells()
+  enum line_shift_flags {
+    line_shift_left_inclusive  = 1,
+    line_shift_right_inclusive = 2,
+    line_shift_dcsm            = 4,
+    line_shift_r2l             = 8,
+  };
+
 
   struct line_t {
     std::vector<cell_t> m_cells;
@@ -589,9 +597,10 @@ namespace ansi {
 
   private:
     curpos_t convert_position(bool toPresentationPosition, curpos_t srcX, curpos_t width, bool line_r2l) const {
-      if (!m_prop_enabled) return line_r2l ? std::max(0, width - srcX - 1) : srcX;
+      if (line_r2l) srcX = std::max(0, width - srcX - 1);
+      if (!m_prop_enabled) return srcX;
       std::vector<nested_string> const& strings = this->update_strings(width, line_r2l);
-      if (strings.empty()) return line_r2l ? std::max(0, width - srcX - 1) : srcX;
+      if (strings.empty()) return srcX;
 
       int r2l = 0;
       curpos_t x = toPresentationPosition ? 0 : srcX;
@@ -606,7 +615,7 @@ namespace ansi {
 
       if (toPresentationPosition) {
         x = srcX - x;
-        if (strings[0].r2l != r2l) x = -x;
+        if (r2l != 0) x = -x;
       }
 
       return x;
@@ -665,38 +674,37 @@ namespace ansi {
       return parent;
     }
 
+  private:
+    void _mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, bool mirror, attribute_t const& fill_attr);
+    void _prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, bool mirror, attribute_t const& fill_attr, bool dcsm);
   public:
     /// @fn void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr);
     /// 表示部に於ける範囲を組み合わせて新しく行の内容を再構築します。
-    void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr);
+    void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr, bool dcsm = false) {
+      if (!m_prop_enabled)
+        _mono_compose_segments(comp, count, width, !dcsm && line_r2l, fill_attr);
+      else
+        _prop_compose_segments(comp, count, width, line_r2l, fill_attr, dcsm);
+    }
+
+  private:
+    void _mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr);
+    void _prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr);
+  public:
+    void shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr) {
+      if (!m_prop_enabled)
+        _mono_shift_cells(p1, p2, shift, flags, width, fill_attr);
+      else
+        _prop_shift_cells(p1, p2, shift, flags, width, fill_attr);
+    }
 
   public:
     void ech(curpos_t p1, curpos_t p2, curpos_t width, presentation_direction board_charpath, attribute_t const& fill_attr, bool in_presentation) {
-      p1 = contra::clamp(p1, 0, width);
-      p2 = contra::clamp(p2, 0, width);
-      if (!(p1 < p2)) return;
-
       bool const line_r2l = is_r2l(board_charpath);
-      if (!in_presentation || !m_prop_enabled) {
-        if (in_presentation && line_r2l) {
-          p1 = width - p1;
-          p2 = width - p2;
-          std::swap(p1, p2);
-        }
-        cell_t fill;
-        fill.character = ascii_nul;
-        fill.attribute = fill_attr;
-        fill.width = 1;
-        write_cells(p1, &fill, 1, p2 - p1, 0);
-        return;
-      }
-
-      line_segment_t comp[3] = {
-        {0, p1, line_segment_slice},
-        {p1, p2, line_segment_fill},
-        {p2, width, line_segment_slice},
-      };
-      compose_segments(comp, std::size(comp), width, line_r2l, fill_attr);
+      line_shift_flags flags = (line_shift_flags) 0;
+      if (line_r2l) flags = line_shift_flags(flags | line_shift_r2l);
+      if (!in_presentation) flags = line_shift_flags(flags | line_shift_dcsm);
+      shift_cells(p1, p2, p2 - p1, flags, width, fill_attr);
     }
     void ich(curpos_t p0, curpos_t shift, curpos_t width, presentation_direction board_charpath, attribute_t const& fill_attr, bool in_presentation) {
       p0 = contra::clamp(p0, 0, width);

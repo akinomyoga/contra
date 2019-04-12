@@ -433,7 +433,121 @@ void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, 
   }
 }
 
-void line_t::compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr) {
+void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, bool mirror, attribute_t const& fill_attr) {
+  struct slice_t {
+    curpos_t p1, p2;
+    curpos_t shift;
+  };
+  std::vector<slice_t> slices;
+  slices.reserve((std::size_t) count);
+
+  curpos_t x = 0;
+  for (int i = 0; i < count; i++) {
+    curpos_t p1, p2;
+    int type;
+    if (mirror) {
+      line_segment_t const& seg = comp[width - 1 - i];
+      type = seg.type;
+      p1 = width - 1 - seg.p2;
+      p2 = width - 1 - seg.p1;
+    } else {
+      line_segment_t const& seg  = comp[i];
+      type = seg.type;
+      p1 = seg.p1;
+      p2 = seg.p2;
+    }
+    p2 = std::min({p2, width, p1 + width - x});
+
+    curpos_t const delta = p2 - p1;
+    if (delta < 0) break;
+    if (delta == 0) continue;
+
+    if (type == line_segment_slice)
+      slices.emplace_back(slice_t({p1, p2, x - p1}));
+    x += delta;
+  }
+  mwg_check(m_cells.size() <= (std::size_t) width);
+
+  cell_t fill;
+  fill.character = ascii_nul;
+  fill.attribute = 0;
+  fill.width = 1;
+  m_cells.resize(x, fill);
+  fill.attribute = fill_attr; // 後で使う
+
+  // 境界上の wide 文字をスペースに置き換える関数
+  auto _erase_wide_on_boundary = [this] (curpos_t index) {
+    if (!m_cells[index].character.is_wide_extension()) return;
+    curpos_t l = index, u = index + 1;
+    if (l > 0) l--;
+    while (l > 0 && m_cells[l].character.is_wide_extension()) l--;
+    while (u < (curpos_t) m_cells.size() && m_cells[u].character.is_wide_extension()) u++;
+    for (; l < u; l++) {
+      m_cells[l].character = ascii_sp;
+      m_cells[l].width = 1;
+    }
+  };
+
+  // 移動できる slice から順に移動する
+  auto it0 = m_cells.begin();
+  for (std::size_t i0 = 0, i = 0; i < slices.size(); i++) {
+    slice_t const& s = slices[i];
+
+    // 境界上の全角文字の処理
+    _erase_wide_on_boundary(s.p1);
+    if (s.p2 < (curpos_t) m_cells.size()) _erase_wide_on_boundary(s.p2);
+
+    if (s.shift < 0) {
+      std::move(it0 + s.p1, it0 + s.p2, it0 + s.p1 + s.shift);
+    } else if (s.shift > 0) {
+      curpos_t const dst = s.p2 + s.shift;
+      if (i + 1 < slices.size() && slices[i + 1].p1 < dst) continue;
+      if (s.p1 < s.p2) std::move_backward(it0 + s.p1, it0 + s.p2, it0 + dst);
+      for (std::size_t j = i; j-- >= i0; ) {
+        slice_t const& t = slices[j];
+        if (t.p1 < t.p2)
+          std::move_backward(it0 + t.p1, it0 + t.p2, it0 + t.p2 + t.shift);
+      }
+    }
+    i0 = i + 1;
+  }
+
+  // 余白を埋める
+  x = 0;
+  for (int i = 0; i < count; i++) {
+    curpos_t p1, p2;
+    int type;
+    if (mirror) {
+      line_segment_t const& seg = comp[width - 1 - i];
+      type = seg.type;
+      p1 = width - 1 - seg.p2;
+      p2 = width - 1 - seg.p1;
+    } else {
+      line_segment_t const& seg  = comp[i];
+      type = seg.type;
+      p1 = seg.p1;
+      p2 = seg.p2;
+    }
+    p2 = std::min({p2, width, p1 + width - x});
+
+    curpos_t const delta = p2 - p1;
+    if (delta < 0) break;
+    if (delta == 0) continue;
+
+    if (type == line_segment_fill) {
+      fill.character = ascii_nul;
+      for (curpos_t p = x, pN = x + delta; p < pN; p++) m_cells[p] = fill;
+    } else if (type == line_segment_space) {
+      fill.character = ascii_sp;
+      for (curpos_t p = x, pN = x + delta; p < pN; p++) m_cells[p] = fill;
+    }
+    x += delta;
+  }
+
+  m_version++;
+}
+
+void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr, bool dcsm) {
   cell_t fill;
   fill.character = ascii_nul;
   fill.attribute = 0;
@@ -447,25 +561,31 @@ void line_t::compose_segments(line_segment_t const* comp, int count, curpos_t wi
   auto _segment = [&,this] (curpos_t xL, curpos_t xR) {
     std::size_t i1, i2;
     curpos_t x1, x2;
-    std::tie(i1, x1) = this->_prop_glb(xL, true);
-    std::tie(i2, x2) = this->_prop_lub(xR, true);
-    if (x1 < xL) i1++;
-    if (xR < x2) i2--;
+    // Note: 境界上の wide 文字を跨がない様に lub/glb を逆に使っている
+    std::tie(i1, x1) = this->_prop_lub(xL, false);
+    std::tie(i2, x2) = this->_prop_glb(xR, false);
     if (i1 > i2) {
+      // Note: 或る wide 文字の内部にいる時にここに来る。
       fill.character = i2 < m_cells.size() && m_cells[i2].character.value != ascii_nul ? ascii_sp : ascii_nul;
       fill.attribute = 0;
       cells.insert(cells.end(), xR - xL, fill);
     } else {
-      if (x1 < xL) {
+      if (xL < x1) {
+        mwg_assert(i1 > 0);
         fill.character = m_cells[i1 - 1].character.value == ascii_nul ? ascii_nul : ascii_sp;
         fill.attribute = m_cells[i1 - 1].attribute;
-        cells.insert(cells.end(), xL - x1, fill);
+        cells.insert(cells.end(), x1 - xL, fill);
       }
       cells.insert(cells.end(), m_cells.begin() + i1, m_cells.begin() + i2);
-      if (xR < x2) {
-        fill.character = m_cells[i2].character.value == ascii_nul ? ascii_nul : ascii_sp;
-        fill.attribute = m_cells[i2].attribute;
-        cells.insert(cells.end(), x2 - xR, fill);
+      if (x2 < xR) {
+        if (i2 < m_cells.size()) {
+          fill.character = m_cells[i2].character.value == ascii_nul ? ascii_nul : ascii_sp;
+          fill.attribute = m_cells[i2].attribute;
+        } else {
+          fill.character = ascii_nul;
+          fill.attribute = 0;
+        }
+        cells.insert(cells.end(), xR - x2, fill);
       }
     }
   };
@@ -479,7 +599,11 @@ void line_t::compose_segments(line_segment_t const* comp, int count, curpos_t wi
     if (p1 >= p2) return;
     switch (seg.type) {
     case line_segment_slice:
-      calculate_data_ranges_from_presentation_range(ranges, p1, p2, width, line_r2l);
+      if (dcsm) {
+        ranges.clear();
+        ranges.emplace_back(std::make_pair(p1, p2));
+      } else
+        calculate_data_ranges_from_presentation_range(ranges, p1, p2, width, line_r2l);
       if (ranges.size()) {
         std::size_t istr;
 
@@ -530,6 +654,210 @@ void line_t::compose_segments(line_segment_t const* comp, int count, curpos_t wi
   }
 
   m_cells.swap(cells);
+  m_version++;
+  m_prop_i = 0;
+  m_prop_x = 0;
+}
+
+void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr) {
+  if (shift == 0) return;
+  p1 = contra::clamp(p1, 0, width);
+  p2 = contra::clamp(p2, 0, width);
+  if (p1 >= p2) return;
+
+  if (!(flags & line_shift_dcsm) && (flags & line_shift_r2l)) {
+    p1 = width - p1;
+    p2 = width - p2;
+    std::swap(p1, p2);
+    shift = -shift;
+  }
+
+  cell_t fill;
+  fill.character = ascii_nul;
+  fill.attribute = 0;
+  fill.width = 1;
+  m_cells.resize((std::size_t) width, fill);
+  fill.attribute = fill_attr;
+
+  auto _erase_wide_left = [this] (curpos_t p1) {
+    if (m_cells[p1].character.is_wide_extension()) {
+      curpos_t c = p1;
+      if (c > 0) c--;
+      while (c > 0 && m_cells[c].character.is_wide_extension()) c--;
+      for (; c < p1; c++) {
+        m_cells[c].character = ascii_sp;
+        m_cells[c].width = 1;
+      }
+    }
+  };
+
+  auto _erase_wide_right = [this] (curpos_t p1) {
+    while (p1 < (curpos_t) m_cells.size() && m_cells[p1].character.is_wide_extension()) {
+      m_cells[p1].character = ascii_sp;
+      m_cells[p1].width = 1;
+      p1++;
+    }
+  };
+
+  if (std::abs(shift) > p2 - p1) {
+    _erase_wide_left(p1);
+    _erase_wide_right(p2);
+    while (p1 < p2) m_cells[p1++] = fill;
+  } else if (shift > 0) {
+    _erase_wide_left(p1);
+    _erase_wide_right(p1);
+    _erase_wide_left(p2 - shift);
+    _erase_wide_right(p2);
+    auto it0 = m_cells.begin();
+    std::move_backward(it0 + p1, it0 + (p2 - shift), it0 + p2);
+    while (shift--) m_cells[p1++] = fill;
+  } else {
+    _erase_wide_left(p1);
+    _erase_wide_right(p1 - shift);
+    _erase_wide_left(p2);
+    _erase_wide_right(p2);
+    auto it0 = m_cells.begin();
+    std::move(it0 + (p1 - shift), it0 + p2, it0 + p1);
+    while (shift++) m_cells[--p2] = fill;
+  }
+
+  m_version++;
+}
+
+void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr) {
+  if (shift == 0) return;
+  p1 = contra::clamp(p1, 0, width);
+  p2 = contra::clamp(p2, 0, width);
+  if (p1 >= p2) return;
+
+  if (!(flags & line_shift_dcsm)) {
+    line_segment_t segs[4];
+    int iseg = 0;
+    if (p1 > 0)
+      segs[iseg++] = line_segment_t({0, p1, line_segment_slice});
+    if (std::abs(shift) >= p2 - p1) {
+      segs[iseg++] = line_segment_t({p1, p2, line_segment_fill});
+    } else if (shift > 0) {
+      segs[iseg++] = line_segment_t({0, shift, line_segment_fill});
+      segs[iseg++] = line_segment_t({p1, p2 - shift, line_segment_slice});
+    } else {
+      shift = -shift;
+      segs[iseg++] = line_segment_t({p1 + shift, p2, line_segment_slice});
+      segs[iseg++] = line_segment_t({0, shift, line_segment_fill});
+    }
+    if (p2 < width)
+      segs[iseg++] = line_segment_t({p2, width, line_segment_slice});
+    _prop_compose_segments(segs, iseg, width, flags & line_shift_r2l, fill_attr, false);
+    return;
+  }
+
+  if (flags & line_shift_r2l) {
+    p1 = width - p1;
+    p2 = width - p2;
+    std::swap(p1, p2);
+    shift = -shift;
+  }
+
+  cell_t fill;
+  fill.character = ascii_nul;
+  fill.attribute = 0;
+  fill.width = 1;
+
+  // 行の長さの調整
+  {
+    std::size_t i1;
+    curpos_t x1;
+    std::tie(i1, x1) = _prop_glb(width, false);
+    m_cells.resize((std::size_t) (i1 + width - x1), fill);
+    if (x1 < width && m_cells[i1].width > 1) {
+      int const w = m_cells[i1].width;
+      m_cells[i1].character = ascii_sp;
+      m_cells[i1].width = 1;
+      for (int i = 1; i < w; i++)
+        m_cells[i1 + i] = m_cells[i1];
+    }
+  }
+  fill.attribute = fill_attr;
+
+  std::size_t i1, i2;
+  curpos_t w1, w2;
+  attribute_t attr1, attr2;
+  {
+    std::tie(i1, w1) = _prop_glb(p1, flags & line_shift_left_inclusive);
+    std::tie(i2, w2) = _prop_lub(p2, flags & line_shift_right_inclusive);
+    if ((w1 = std::max(0, p1 - w1)))
+      attr1 = m_cells[i1].attribute;
+    if ((w2 = std::max(0, w2 - p2)))
+      attr1 = m_cells[i2 - 1].attribute;
+  }
+
+  std::size_t iL = 0, iR = 0;
+  curpos_t wL = 0, wR = 0;
+  attribute_t attrL, attrR;
+  curpos_t wlfill = 0, wrfill = 0;
+  if (std::abs(shift) > p2 - p1) {
+    wlfill = p2 - p1;
+  } else if (shift > 0) {
+    wlfill = shift;
+    curpos_t pL = p1, pR = p2 - shift;
+    std::tie(iL, wL) = _prop_lub(pL, !(flags & line_shift_left_inclusive));
+    std::tie(iR, wR) = _prop_glb(pR, false);
+    if ((wL = std::max(0, wL - pL)))
+      attrL = m_cells[iL - 1].attribute;
+    if ((wR = std::max(0, pR - wR)))
+      attrR = m_cells[iR].attribute;
+  } else {
+    wrfill = -shift;
+    curpos_t pL = p1 - shift, pR = p2;
+    std::tie(iL, wL) = _prop_lub(pL, false);
+    std::tie(iR, wR) = _prop_glb(pR, !(flags & line_shift_right_inclusive));
+    if ((wL = std::max(0, wL - pL)))
+      attrL = m_cells[iL - 1].attribute;
+    if ((wR = std::max(0, pR - wR)))
+      attrR = m_cells[iR].attribute;
+  }
+
+  // 範囲の確保
+  std::size_t const nwrite = w1 + wlfill + wL + (iR - iL) + wR + wrfill + w2;
+  if (nwrite > i2 - i1)
+    m_cells.insert(m_cells.begin() + i2, nwrite - (i2 - i1), fill);
+
+  // 移動
+  if (iL < iR) {
+    std::size_t const iL_new = i1 + w1 + wlfill + wL;
+    std::size_t const iR_new = iR + iL_new - iL;
+    if (iL_new < iL)
+      std::move(m_cells.begin() + iL, m_cells.begin() + iR, m_cells.begin() + iL_new);
+    else if (iL_new > iL)
+      std::move_backward(m_cells.begin() + iL, m_cells.begin() + iR, m_cells.begin() + iR_new);
+  }
+
+  // 余白の書き込み
+  std::size_t i = i1;
+  auto _write_space = [&] (curpos_t w, attribute_t const& attr) {
+    if (w <= 0) return;
+    fill.character = ascii_sp;
+    fill.attribute = attr;
+    do m_cells[i++] = fill; while (--w);
+  };
+  auto _write_fill = [&] (curpos_t w) {
+    if (w <= 0) return;
+    fill.character = ascii_nul;
+    fill.attribute = fill_attr;
+    do m_cells[i++] = fill; while (--w);
+  };
+  _write_space(w1, attr1);
+  _write_fill(wlfill);
+  _write_space(wL, attrL);
+  i += iR - iL;
+  _write_space(wR, attrR);
+  _write_fill(wrfill);
+  _write_space(w2, attr2);
+
+  // 余分な範囲の削除
+  if (i < i2)
+    m_cells.erase(m_cells.begin() + i, m_cells.begin() + i2);
+
   m_version++;
   m_prop_i = 0;
   m_prop_x = 0;

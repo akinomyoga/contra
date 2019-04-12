@@ -147,7 +147,8 @@ void test_strings() {
 
     std::vector<char32_t> before, after;
     std::fprintf(stderr, "ECH before: "); _presentation(before);
-    board.line().ech(p1, p2, board.m_width, board.m_presentation_direction, board.cur.attribute, true);
+    char ech[20]; std::sprintf(ech, "\r\x1b[9l\x1b[%dD\x1b[%dC\x1b[%dX\x1b[9h\r", board.m_width, p1, p2 - p1); term.printt(ech);
+    //board.line().ech(p1, p2, board.m_width, board.m_presentation_direction, board.cur.attribute, true);
     std::fprintf(stderr, "ECH after : "); _presentation(after);
 
     for (int i = 0; i < board.m_width; i++)

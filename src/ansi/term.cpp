@@ -132,8 +132,8 @@ namespace {
     std::unordered_map<std::uint32_t, mode_t> data_ansi;
     std::unordered_map<std::uint32_t, mode_t> data_dec;
     void init(mode_spec spec) {
-      std::uint32_t const index = (spec | mode_param_mask) >> mode_param_shift;
-      std::uint32_t const type = (spec | mode_type_mask) >> mode_type_shift;
+      std::uint32_t const index = (spec & mode_param_mask) >> mode_param_shift;
+      std::uint32_t const type = (spec & mode_type_mask) >> mode_type_shift;
       switch (type) {
       case ansi_mode:
         data_ansi[index] = spec;
