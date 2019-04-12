@@ -6,6 +6,18 @@
 #include "ansi/term.hpp"
 #include "ansi/observer.tty.hpp"
 
+// void test_data_presentation() {
+//   using namespace contra::ansi;
+//   board_t board(40, 1);
+//   term_t term(board);
+
+//   // to_presentation_position/to_data_position
+//   auto check_conversion = [&] (curpos_t xdata, curpos_t xpres) {
+//     mwg_check(board.to_data_position(0, xpres) == xdata);
+//     mwg_check(board.to_presentation_position(0, xdata) == xpres);
+//   };
+// }
+
 void test_strings() {
   using namespace contra::ansi;
 
@@ -138,36 +150,42 @@ void test_strings() {
       curpos_t const x = board.to_data_position(0, p);
       buff.push_back(board.line().char_at(x).value);
     }
+    if (board.line_r2l())
+      std::reverse(buff.begin(), buff.end());
     for (char c : buff) std::putc(c ? c : '@', stderr);
     std::putc('\n', stderr);
     // board.line().debug_dump();
   };
-  auto check_ech = [&] (const char* esc, curpos_t p1, curpos_t p2) {
+  auto check_ech = [&] (const char* esc, curpos_t p1, curpos_t count) {
     term.printt(esc);
 
     std::vector<char32_t> before, after;
     std::fprintf(stderr, "ECH before: "); _presentation(before);
-    char ech[20]; std::sprintf(ech, "\r\x1b[9l\x1b[%dD\x1b[%dC\x1b[%dX\x1b[9h\r", board.m_width, p1, p2 - p1); term.printt(ech);
-    //board.line().ech(p1, p2, board.m_width, board.m_presentation_direction, board.cur.attribute, true);
+    char ech[20]; std::sprintf(ech, "\r\x1b[9l\x1b[%dD\x1b[%dC\x1b[%dX\x1b[9h\r", board.m_width, p1, count); term.printt(ech);
     std::fprintf(stderr, "ECH after : "); _presentation(after);
 
+    curpos_t pL = p1, pR = p1 + count;
+    if (board.line_r2l()) {
+      pR = p1 + 1;
+      pL = pR - count;
+    }
     for (int i = 0; i < board.m_width; i++)
-      mwg_check((p1 <= i && i < p2) || before[i] == after [i]);
+      mwg_check(after[i] == (pL <= i && i < pR ? 0 : before[i]));
     board.line().clear();
   };
 
   // PRES a      [[[g]ij[lk]mn]dc]qr
   // DATA a      [cd[[g]ij[kl]mn]]qr
-  check_ech("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 1, 7);
+  check_ech("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 1, 6);
   // PRES ab[po[e]]        [[n]dc]qr
   // DATA ab[[e]op]        [cd[n]]qr
-  check_ech("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 5, 13);
-  check_ech("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 13, 20);
-  check_ech("ab\x1b[1]cdefgh\x1b[0]ij\r", 4, 6);
-  check_ech("ab\x1b[1]cd\x1b[1]efgh\x1b[0]ij\x1b[0]kl\r", 5, 7);
+  check_ech("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 5, 8);
+  check_ech("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 13, 7);
+  check_ech("ab\x1b[1]cdefgh\x1b[0]ij\r", 4, 2);
+  check_ech("ab\x1b[1]cd\x1b[1]efgh\x1b[0]ij\x1b[0]kl\r", 5, 2);
 
   board.m_presentation_direction = presentation_direction_rltb;
-  check_ech("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 33, 39);
+  check_ech("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 38, 6);
   board.m_presentation_direction = presentation_direction_default;
 
   auto check_dch = [&] (const char* esc, curpos_t p1, curpos_t shift) {
@@ -175,7 +193,7 @@ void test_strings() {
 
     std::vector<char32_t> before, after;
     std::fprintf(stderr, "DCH before: "); _presentation(before);
-    board.line().dch(p1, shift, board.m_width, board.m_presentation_direction, board.cur.attribute, true);
+    char ech[20]; std::sprintf(ech, "\x1b[9l\x1b[%dD\x1b[%dC\x1b[%dP\x1b[9h\r", board.m_width, p1, shift); term.printt(ech);
     std::fprintf(stderr, "DCH after : "); _presentation(after);
 
     // for (int i = 0; i < board.m_width; i++)
@@ -186,7 +204,7 @@ void test_strings() {
   check_dch("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 5, 8);
   check_dch("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 13, 7);
   board.m_presentation_direction = presentation_direction_rltb;
-  check_dch("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 33, 6);
+  check_dch("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 38, 6);
   board.m_presentation_direction = presentation_direction_default;
 
   auto check_ich = [&] (const char* esc, curpos_t p1, curpos_t shift) {
@@ -194,7 +212,7 @@ void test_strings() {
 
     std::vector<char32_t> before, after;
     std::fprintf(stderr, "ICH before: "); _presentation(before);
-    board.line().ich(p1, shift, board.m_width, board.m_presentation_direction, board.cur.attribute, true);
+    char ech[20]; std::sprintf(ech, "\x1b[9l\x1b[%dD\x1b[%dC\x1b[%d@\x1b[9h\r", board.m_width, p1, shift); term.printt(ech);
     std::fprintf(stderr, "ICH after : "); _presentation(after);
 
     // for (int i = 0; i < board.m_width; i++)
@@ -205,7 +223,7 @@ void test_strings() {
   check_ich("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 5, 8);
   check_ich("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 13, 7);
   board.m_presentation_direction = presentation_direction_rltb;
-  check_ich("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 33, 6);
+  check_ich("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 38, 6);
   board.m_presentation_direction = presentation_direction_default;
 
   // test cases from src/impl1.cpp

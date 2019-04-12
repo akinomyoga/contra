@@ -329,10 +329,11 @@ namespace ansi {
   };
   // for line_t::shift_cells()
   enum line_shift_flags {
-    line_shift_left_inclusive  = 1,
-    line_shift_right_inclusive = 2,
-    line_shift_dcsm            = 4,
-    line_shift_r2l             = 8,
+    line_shift_none            = 0x00,
+    line_shift_left_inclusive  = 0x01,
+    line_shift_right_inclusive = 0x02,
+    line_shift_dcsm            = 0x04,
+    line_shift_r2l             = 0x08,
   };
 
 
@@ -596,49 +597,24 @@ namespace ansi {
     std::vector<nested_string> const& update_strings(curpos_t width, bool line_r2l) const;
 
   private:
-    curpos_t convert_position(bool toPresentationPosition, curpos_t srcX, curpos_t width, bool line_r2l) const {
-      if (line_r2l) srcX = std::max(0, width - srcX - 1);
-      if (!m_prop_enabled) return srcX;
-      std::vector<nested_string> const& strings = this->update_strings(width, line_r2l);
-      if (strings.empty()) return srcX;
-
-      int r2l = 0;
-      curpos_t x = toPresentationPosition ? 0 : srcX;
-      for (nested_string const& range : strings) {
-        curpos_t const referenceX = toPresentationPosition ? srcX : x;
-        if (referenceX < range.begin) break;
-        if (referenceX < range.end && range.r2l != r2l) {
-          x = range.end - 1 - (x - range.begin);
-          r2l = range.r2l;
-        }
-      }
-
-      if (toPresentationPosition) {
-        x = srcX - x;
-        if (r2l != 0) x = -x;
-      }
-
-      return x;
-    }
-
-  private:
-    curpos_t _prop_to_presentation_position(curpos_t x, curpos_t width, bool line_r2l) const;
+    curpos_t convert_position(bool toPresentationPosition, curpos_t srcX, curpos_t width, bool line_r2l) const;
+    curpos_t _prop_to_presentation_position(curpos_t x, bool line_r2l) const;
   public:
     curpos_t to_data_position(curpos_t x, curpos_t width, presentation_direction board_charpath) const {
       bool const line_r2l = is_r2l(board_charpath);
       // !m_prop_enabled の時は SDS/SRS も Unicode bidi も存在しない。
-      if (!m_prop_enabled) return line_r2l ? std::max(0, width - x - 1) : x;
+      if (!m_prop_enabled) return x;
       return convert_position(false, x, width, line_r2l);
     }
     curpos_t to_presentation_position(curpos_t x, curpos_t width, presentation_direction board_charpath) const {
       bool const line_r2l = is_r2l(board_charpath);
       // !m_prop_enabled の時は SDS/SRS も Unicode bidi も存在しない。
-      if (!m_prop_enabled) return line_r2l ? std::max(0, width - x - 1) : x;
+      if (!m_prop_enabled) return x;
 
       // キャッシュがある時はそれを使った方が速いだろう。
       if (m_strings_version == m_version && m_strings_r2l == line_r2l)
         return convert_position(true, x, width, line_r2l);
-      return _prop_to_presentation_position(x, width, line_r2l);
+      return _prop_to_presentation_position(x, line_r2l);
     }
 
   public:
@@ -675,16 +651,16 @@ namespace ansi {
     }
 
   private:
-    void _mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, bool mirror, attribute_t const& fill_attr);
-    void _prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, bool mirror, attribute_t const& fill_attr, bool dcsm);
+    void _mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, attribute_t const& fill_attr);
+    void _prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, attribute_t const& fill_attr, bool line_r2l, bool dcsm);
   public:
     /// @fn void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr);
     /// 表示部に於ける範囲を組み合わせて新しく行の内容を再構築します。
     void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr, bool dcsm = false) {
       if (!m_prop_enabled)
-        _mono_compose_segments(comp, count, width, !dcsm && line_r2l, fill_attr);
+        _mono_compose_segments(comp, count, width, fill_attr);
       else
-        _prop_compose_segments(comp, count, width, line_r2l, fill_attr, dcsm);
+        _prop_compose_segments(comp, count, width, fill_attr, line_r2l, dcsm);
     }
 
   private:
@@ -696,109 +672,6 @@ namespace ansi {
         _mono_shift_cells(p1, p2, shift, flags, width, fill_attr);
       else
         _prop_shift_cells(p1, p2, shift, flags, width, fill_attr);
-    }
-
-  public:
-    void ech(curpos_t p1, curpos_t p2, curpos_t width, presentation_direction board_charpath, attribute_t const& fill_attr, bool in_presentation) {
-      bool const line_r2l = is_r2l(board_charpath);
-      line_shift_flags flags = (line_shift_flags) 0;
-      if (line_r2l) flags = line_shift_flags(flags | line_shift_r2l);
-      if (!in_presentation) flags = line_shift_flags(flags | line_shift_dcsm);
-      shift_cells(p1, p2, p2 - p1, flags, width, fill_attr);
-    }
-    void ich(curpos_t p0, curpos_t shift, curpos_t width, presentation_direction board_charpath, attribute_t const& fill_attr, bool in_presentation) {
-      p0 = contra::clamp(p0, 0, width);
-      bool const line_r2l = is_r2l(board_charpath);
-      if (!in_presentation || !m_prop_enabled) {
-        if (in_presentation && line_r2l) {
-          p0 = width - p0;
-          shift = -shift;
-        }
-
-        cell_t fill;
-        fill.character = ascii_nul;
-        fill.attribute = fill_attr;
-        fill.width = 1;
-        if (shift > 0) {
-          curpos_t const delta = std::min(width - p0, shift);
-          if (delta) {
-            delete_cells(width - delta, width);
-            insert_cells(p0, &fill, 1, delta);
-          }
-        } else if (shift < 0) {
-          curpos_t const delta = std::min(p0, -shift);
-          if (delta) {
-            insert_cells(p0, &fill, 1, delta);
-            delete_cells(0, delta);
-          }
-        }
-        return;
-      }
-
-      if (shift > 0) {
-        curpos_t const delta = std::min(width - p0, shift);
-        line_segment_t comp[3] = {
-          {0, p0, line_segment_slice},
-          {0, delta, line_segment_fill},
-          {p0, width - delta, line_segment_slice},
-        };
-        compose_segments(comp, std::size(comp), width, line_r2l, fill_attr);
-      } else if (shift < 0) {
-        curpos_t const delta = std::min(p0, -shift);
-        line_segment_t comp[3] = {
-          {delta, p0, line_segment_slice},
-          {0, delta, line_segment_fill},
-          {p0, width, line_segment_slice},
-        };
-        compose_segments(comp, std::size(comp), width, line_r2l, fill_attr);
-      }
-    }
-    void dch(curpos_t p0, curpos_t shift, curpos_t width, presentation_direction board_charpath, attribute_t const& fill_attr, bool in_presentation) {
-      p0 = contra::clamp(p0, 0, width);
-      bool const line_r2l = is_r2l(board_charpath);
-      if (!in_presentation || !m_prop_enabled) {
-        if (in_presentation && line_r2l) {
-          p0 = width - p0;
-          shift = -shift;
-        }
-
-        cell_t fill;
-        fill.character = ascii_nul;
-        fill.attribute = fill_attr;
-        fill.width = 1;
-        if (shift > 0) {
-          curpos_t const delta = std::min(width - p0, shift);
-          if (delta) {
-            delete_cells(p0, p0 + delta);
-            insert_cells(width - delta, &fill, 1, delta);
-          }
-        } else if (shift < 0) {
-          curpos_t const delta = std::min(p0, -shift);
-          if (delta) {
-            delete_cells(p0 - delta, p0);
-            insert_cells(0, &fill, 1, delta);
-          }
-        }
-        return;
-      }
-
-      if (shift > 0) {
-        curpos_t const delta = std::min(width - p0, shift);
-        line_segment_t comp[3] = {
-          {0, p0, line_segment_slice},
-          {p0 + delta, width, line_segment_slice},
-          {0, delta, line_segment_fill},
-        };
-        compose_segments(comp, std::size(comp), width, line_r2l, fill_attr);
-      } else if (shift < 0) {
-        curpos_t const delta = std::min(p0, -shift);
-        line_segment_t comp[3] = {
-          {0, delta, line_segment_fill},
-          {0, p0 - delta, line_segment_slice},
-          {p0, width, line_segment_slice},
-        };
-        compose_segments(comp, std::size(comp), width, line_r2l, fill_attr);
-      }
     }
 
   public:
@@ -894,6 +767,9 @@ namespace ansi {
     curpos_t line_limit() const {
       curpos_t const limit = line().m_limit;
       return limit < 0 ? m_width - 1 : std::min(limit, m_width - 1);
+    }
+    curpos_t line_r2l() const {
+      return line().is_r2l(m_presentation_direction);
     }
 
     curpos_t to_data_position(curpos_t y, curpos_t x) const {

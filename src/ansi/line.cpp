@@ -252,7 +252,31 @@ std::vector<line_t::nested_string> const& line_t::update_strings(curpos_t width,
   return ret;
 }
 
-curpos_t line_t::_prop_to_presentation_position(curpos_t x, curpos_t width, bool line_r2l) const {
+curpos_t line_t::convert_position(bool toPresentationPosition, curpos_t srcX, curpos_t width, bool line_r2l) const {
+  if (!m_prop_enabled) return srcX;
+  std::vector<nested_string> const& strings = this->update_strings(width, line_r2l);
+  if (strings.empty()) return srcX;
+
+  bool r2l = line_r2l;
+  curpos_t x = toPresentationPosition ? 0 : srcX;
+  for (nested_string const& range : strings) {
+    curpos_t const referenceX = toPresentationPosition ? srcX : x;
+    if (referenceX < range.begin) break;
+    if (referenceX < range.end && range.r2l != r2l) {
+      x = range.end - 1 - (x - range.begin);
+      r2l = range.r2l;
+    }
+  }
+
+  if (toPresentationPosition) {
+    x = srcX - x;
+    if (r2l != line_r2l) x = -x;
+  }
+
+  return x;
+}
+
+curpos_t line_t::_prop_to_presentation_position(curpos_t x, bool line_r2l) const {
   struct nest_t {
     curpos_t beg;
     std::uint32_t end_marker;
@@ -346,12 +370,12 @@ curpos_t line_t::_prop_to_presentation_position(curpos_t x, curpos_t width, bool
 
     // Note: 途中で見つかり更に反転範囲が全て閉じた時はその時点で確定。
     if (contains_odd_count == 0)
-      return line_r2l ? width - a : a;
+      return a;
   }
 
   while (stack.size()) _pop();
   if (!contains) a = x;
-  return line_r2l ? width - a : a;
+  return a;
 }
 
 void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, curpos_t x1, curpos_t x2, curpos_t width, bool line_r2l) const {
@@ -364,10 +388,7 @@ void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, 
   };
 
   if (!m_prop_enabled) {
-    if (line_r2l)
-      _register(width - x2, width - x1);
-    else
-      _register(x1, x2);
+    _register(x1, x2);
     return;
   }
 
@@ -376,13 +397,7 @@ void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, 
   struct elem_t { curpos_t x1, x2; bool r2l; int parent; };
   std::vector<elem_t> stack;
 
-  bool r2l = false;
-  if (line_r2l) {
-    x1 = width - x1;
-    x2 = width - x2;
-    std::swap(x1, x2);
-    r2l = line_r2l;
-  }
+  bool r2l = line_r2l;
   mwg_check(strings.size() <= std::numeric_limits<int>::max());
   for (std::size_t i = 1; i < strings.size(); i++) {
     auto const& str = strings[i];
@@ -433,7 +448,7 @@ void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, 
   }
 }
 
-void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, bool mirror, attribute_t const& fill_attr) {
+void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, attribute_t const& fill_attr) {
   struct slice_t {
     curpos_t p1, p2;
     curpos_t shift;
@@ -443,21 +458,10 @@ void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpo
 
   curpos_t x = 0;
   for (int i = 0; i < count; i++) {
-    curpos_t p1, p2;
-    int type;
-    if (mirror) {
-      line_segment_t const& seg = comp[width - 1 - i];
-      type = seg.type;
-      p1 = width - 1 - seg.p2;
-      p2 = width - 1 - seg.p1;
-    } else {
-      line_segment_t const& seg  = comp[i];
-      type = seg.type;
-      p1 = seg.p1;
-      p2 = seg.p2;
-    }
-    p2 = std::min({p2, width, p1 + width - x});
-
+    line_segment_t const& seg  = comp[i];
+    int const type = seg.type;
+    curpos_t const p1 = seg.p1;
+    curpos_t const p2 = std::min({seg.p2, width, seg.p1 + width - x});
     curpos_t const delta = p2 - p1;
     if (delta < 0) break;
     if (delta == 0) continue;
@@ -515,21 +519,10 @@ void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpo
   // 余白を埋める
   x = 0;
   for (int i = 0; i < count; i++) {
-    curpos_t p1, p2;
-    int type;
-    if (mirror) {
-      line_segment_t const& seg = comp[width - 1 - i];
-      type = seg.type;
-      p1 = width - 1 - seg.p2;
-      p2 = width - 1 - seg.p1;
-    } else {
-      line_segment_t const& seg  = comp[i];
-      type = seg.type;
-      p1 = seg.p1;
-      p2 = seg.p2;
-    }
-    p2 = std::min({p2, width, p1 + width - x});
-
+    line_segment_t const& seg  = comp[i];
+    int const type = seg.type;
+    curpos_t const p1 = seg.p1;
+    curpos_t const p2 = std::min({seg.p2, width, seg.p1 + width - x});
     curpos_t const delta = p2 - p1;
     if (delta < 0) break;
     if (delta == 0) continue;
@@ -547,7 +540,7 @@ void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpo
   m_version++;
 }
 
-void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr, bool dcsm) {
+void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, attribute_t const& fill_attr, bool line_r2l, bool dcsm) {
   cell_t fill;
   fill.character = ascii_nul;
   fill.attribute = 0;
@@ -645,13 +638,8 @@ void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpo
     }
   };
 
-  if (line_r2l) {
-    for (int i = count; i--; )
-      _process_segment(comp[i]);
-  } else {
-    for (int i = 0; i < count; i++)
-      _process_segment(comp[i]);
-  }
+  for (int i = 0; i < count; i++)
+    _process_segment(comp[i]);
 
   m_cells.swap(cells);
   m_version++;
@@ -660,17 +648,11 @@ void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpo
 }
 
 void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr) {
+  (void) flags;
   if (shift == 0) return;
   p1 = contra::clamp(p1, 0, width);
   p2 = contra::clamp(p2, 0, width);
   if (p1 >= p2) return;
-
-  if (!(flags & line_shift_dcsm) && (flags & line_shift_r2l)) {
-    p1 = width - p1;
-    p2 = width - p2;
-    std::swap(p1, p2);
-    shift = -shift;
-  }
 
   cell_t fill;
   fill.character = ascii_nul;
@@ -747,15 +729,8 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
     }
     if (p2 < width)
       segs[iseg++] = line_segment_t({p2, width, line_segment_slice});
-    _prop_compose_segments(segs, iseg, width, flags & line_shift_r2l, fill_attr, false);
+    _prop_compose_segments(segs, iseg, width, fill_attr, flags & line_shift_r2l, false);
     return;
-  }
-
-  if (flags & line_shift_r2l) {
-    p1 = width - p1;
-    p2 = width - p2;
-    std::swap(p1, p2);
-    shift = -shift;
   }
 
   cell_t fill;

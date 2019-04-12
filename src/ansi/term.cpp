@@ -913,29 +913,58 @@ namespace {
     }
 
     board_t& b = term.board();
+    line_shift_flags flags = b.line_r2l() ? line_shift_r2l : line_shift_none;
 
+    curpos_t x1;
     if (s.get_mode(mode_dcsm)) {
       // DCSM(DATA)
-      curpos_t const x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
-      curpos_t const x2 = std::min(x1 + (curpos_t) param, b.m_width);
-      if (x1 < x2) b.line().ech(x1, x2, b.m_width, b.m_presentation_direction, b.cur.attribute, false);
+      flags = line_shift_flags(flags | line_shift_dcsm);
+      x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
     } else {
       // DCSM(PRESENTATION)
-      bool const line_r2l = b.line().is_r2l(b.m_presentation_direction);
-      curpos_t p = b.to_presentation_position(b.cur.y, b.cur.x);
-      if (p >= b.m_width) p = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
-
-      curpos_t p1, p2;
-      if (line_r2l) {
-        p2 = p + 1;
-        p1 = std::max(p2 - (curpos_t) param, 0);
-      } else {
-        p1 = p;
-        p2 = std::min(p1 + (curpos_t) param, b.m_width);
-      }
-      if (p1 < p2) b.line().ech(p1, p2, b.m_width, b.m_presentation_direction, b.cur.attribute, true);
+      x1 = b.to_presentation_position(b.cur.y, b.cur.x);
+      if (x1 >= b.m_width) x1 = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
+      b.cur.x = x1;
     }
+
+    curpos_t const x2 = std::min(x1 + (curpos_t) param, b.m_width);
+    b.line().shift_cells(x1, x2, x2 - x1, flags, b.m_width, b.cur.attribute);
+
+    // カーソル位置
+    if (!s.get_mode(mode_dcsm))
+      b.cur.x = b.to_data_position(b.cur.y, x1);
+
     return true;
+  }
+
+  static void do_ich_impl(term_t& term, curpos_t shift) {
+    board_t& b = term.board();
+    tty_state const& s = term.state();
+    line_shift_flags flags = b.line_r2l() ? line_shift_r2l : line_shift_none;
+
+    curpos_t x1;
+    if (s.get_mode(mode_dcsm)) {
+      // DCSM(DATA)
+      flags = line_shift_flags(flags | line_shift_dcsm);
+      x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
+    } else {
+      // DCSM(PRESENTATION)
+      x1 = b.to_presentation_position(b.cur.y, b.cur.x);
+      if (x1 >= b.m_width) x1 = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
+    }
+
+    if (!s.get_mode(mode_hem))
+      b.line().shift_cells(x1, b.m_width, shift, flags, b.m_width, b.cur.attribute);
+    else
+      b.line().shift_cells(0, x1 + 1, -shift, flags, b.m_width, b.cur.attribute);
+
+    // カーソル位置
+    if (s.get_mode(mode_dcsm)) {
+      if (s.get_mode(mode_home_il))
+        b.cur.x = b.line_home();
+    } else {
+      b.cur.x = s.get_mode(mode_home_il) ? b.line_home() : b.to_data_position(b.cur.y, x1);
+    }
   }
 
   bool do_ich(term_t& term, csi_parameters& params) {
@@ -949,28 +978,7 @@ namespace {
         return true;
     }
 
-    board_t& b = term.board();
-    curpos_t const width = b.m_width;
-
-    if (s.get_mode(mode_dcsm)) {
-      curpos_t const x = b.cur.x < width ? b.cur.x : s.get_mode(mode_xenl_ech) ? width - 1 : width;
-      // DCSM(DATA)
-      if (!s.get_mode(mode_hem))
-        b.line().ich(x, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, b.cur.attribute, false);
-      else
-        b.line().ich(x + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, b.cur.attribute, false);
-      if (s.get_mode(mode_home_il)) b.cur.x = b.line_home();
-    } else {
-      // DCSM(PRESENTATION)
-      bool const line_r2l = b.line().is_r2l(b.m_presentation_direction);
-      curpos_t p = b.to_presentation_position(b.cur.y, b.cur.x);
-      if (p >= b.m_width) p = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
-      if (line_r2l == s.get_mode(mode_hem))
-        b.line().ich(p, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, b.cur.attribute, true);
-      else
-        b.line().ich(p + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, b.cur.attribute, true);
-      b.cur.x = s.get_mode(mode_home_il) ? b.line_home() : b.to_data_position(b.cur.y, p);
-    }
+    do_ich_impl(term, (curpos_t) param);
     return true;
   }
 
@@ -985,26 +993,7 @@ namespace {
         return true;
     }
 
-    board_t& b = term.board();
-    curpos_t const width = b.m_width;
-
-    if (s.get_mode(mode_dcsm)) {
-      curpos_t const x = b.cur.x < width ? b.cur.x : s.get_mode(mode_xenl_ech) ? width - 1 : width;
-      // DCSM(DATA)
-      if (!s.get_mode(mode_hem))
-        b.line().dch(x, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, b.cur.attribute, false);
-      else
-        b.line().dch(x + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, b.cur.attribute, false);
-    } else {
-      // DCSM(PRESENTATION)
-      bool const line_r2l = b.line().is_r2l(b.m_presentation_direction);
-      curpos_t p = b.to_presentation_position(b.cur.y, b.cur.x);
-      if (p >= b.m_width) p = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
-      if (line_r2l == s.get_mode(mode_hem))
-        b.line().dch(p, (curpos_t) param    ,  b.m_width, b.m_presentation_direction, b.cur.attribute, true);
-      else
-        b.line().dch(p + 1, -(curpos_t) param, b.m_width, b.m_presentation_direction, b.cur.attribute, true);
-    }
+    do_ich_impl(term, -(curpos_t) param);
     return true;
   }
 
