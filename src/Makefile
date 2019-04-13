@@ -11,6 +11,15 @@ ifeq ($(HOSTNAME),padparadscha)
     -I $(libmwg_dir)/include \
     -I $(libmwg_dir)/include/$(libmwg_cxxprefix) \
     -L $(libmwg_dir)/lib/$(libmwg_cxxprefix)
+  CXX := cxx
+  CXXFLAGS := -Wall -Wextra
+else ifeq ($(HOSTNAME),chatoyancy)
+  libmwg_dir := $(HOME)/opt/libmwg-20170824
+  libmwg_cxxprefix := x86_64-pc-linux-gnu-gcc-7.3.1+cxx98-debug
+  CXXFLAGS := -Wall -Wextra \
+    -I $(libmwg_dir)/include/$(libmwg_cxxprefix) \
+    -I $(libmwg_dir)/include \
+    -L $(libmwg_dir)/lib/$(libmwg_cxxprefix)
 endif
 
 objdir = ../out
@@ -56,7 +65,7 @@ impl2: $(impl2_objs)
 $(objdir)/impl2.o: impl2.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
-all: experimental/bidi
+# all: experimental/bidi
 experimental/bidi: $(objdir)/experimental/bidi.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 

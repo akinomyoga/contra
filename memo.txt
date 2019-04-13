@@ -118,23 +118,6 @@
   ToDo
 ------------------------------------------------------------------------------
 
-2019-04-12
-
-* ansi: 行末ECH後のカーソルの位置は?
-
-2019-04-11
-
-* どうも to_presentation_position の仕様を前と変えてしまった。
-  presentation position は文字進路の方向にするべきだった。
-  今は左から右という事になっている…。
-
-  各実装でちゃんと結果がどうなるか確認する必要がある。
-  - convert_position
-    これは既に修正した。と思ったが、to_data_position 側を修正していない。
-  - curpos_t line_t::_prop_to_presentation_position(curpos_t x, curpos_t width, bool line_r2l) const;
-  - void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, curpos_t x1, curpos_t x2, curpos_t width, bool line_r2l) const;
-  - というか line_r2l が関わってくる関数は全てこれが問題になる気がする。
-
 2019-04-10
 
 * どの段階で term.initialize_line(line) が適用されるべきか不明瞭である。
@@ -909,9 +892,34 @@
   Done
 ------------------------------------------------------------------------------
 
+2019-04-13
+
+* 2019-04-12 ansi: 行末ECH後のカーソルの位置は? [#D0048]
+  これは調べたやはり端末によって色々である。contra-gh に追記した。
+
+* 2019-04-11 どうも to_presentation_position の仕様を前と変えてしまった [#D0047]
+  presentation position は文字進路の方向にするべきだった。
+  今は左から右という事になっている…。
+
+  各実装でちゃんと結果がどうなるか確認する必要がある。
+  - convert_position
+    これは既に修正した。と思ったが、to_data_position 側を修正していない。
+  - curpos_t line_t::_prop_to_presentation_position(curpos_t x, curpos_t width, bool line_r2l) const;
+  - void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, curpos_t x1, curpos_t x2, curpos_t width, bool line_r2l) const;
+  - というか line_r2l が関わってくる関数は全てこれが問題になる気がする。
+
+  取り敢えず機械的に書き換えてみたが本当に大丈夫なのかは不明である。
+  一通りテストを書いておく必要がある気がする。
+  特に data における ECH, ICH, DCH は確認しておきたい。
+
+  実際にテストを少しずつ追加していたらバグが出た。
+  DCSM(PRESENTATION) に於いて正しく抽出できていない?
+  と思ったが、調べてみると ECH の後の様子は問題ない。
+  SDS(1) がちゃんと動作していない様である。
+
 2019-04-12
 
-* ansi: EL について DCSM(PRESENTATION) でも !m_prop_enabled の時は簡単に実装
+* ansi: EL について DCSM(PRESENTATION) でも !m_prop_enabled の時は簡単に実装 [#D0046]
   というか ECH ICH DCH に関しても実装が term.cpp と line.cpp に分散しているが、
   基本部分だけを line.cpp に移動して、
   細かい動作については term.cpp で指定する様にできないだろうか。
@@ -1055,7 +1063,7 @@
 
 2019-04-11
 
-* ansi: ICH ECH DCH で挿入される空白の属性
+* ansi: ICH ECH DCH で挿入される空白の属性 [#D0045]
 
   どうも ICH ECH DCH で新しく現れる空白領域には現在の属性が適用されるらしい。
   例えば DCH した時に行末に補填される空白にもちゃんと現在の背景色が適用される。

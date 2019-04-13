@@ -6,17 +6,88 @@
 #include "ansi/term.hpp"
 #include "ansi/observer.tty.hpp"
 
-// void test_data_presentation() {
-//   using namespace contra::ansi;
-//   board_t board(40, 1);
-//   term_t term(board);
+namespace contra {
+  static inline int strcmp(const char32_t* a, const char32_t* b) {
+    for (; *a && *b; a++, b++) {
+      std::uint32_t a1(*a);
+      std::uint32_t b1(*b);
+      if (a1 != b1) return a1 > b1 ? 1: -1;
+    }
+    return *a ? 1 : *b ? -1 : 0;
+  }
+}
+using namespace contra::ansi;
 
-//   // to_presentation_position/to_data_position
-//   auto check_conversion = [&] (curpos_t xdata, curpos_t xpres) {
-//     mwg_check(board.to_data_position(0, xpres) == xdata);
-//     mwg_check(board.to_presentation_position(0, xdata) == xpres);
-//   };
-// }
+std::u32string get_data_content(board_t& board) {
+  std::vector<char32_t> buff;
+  for (curpos_t x = 0; x < board.m_width; x++) {
+    //curpos_t const x = board.to_presentation_position(board.cur.y, p);
+    char32_t c = board.line().char_at(x).value;
+    buff.push_back(c == U'\0' ? U'@' : c);
+  }
+  return std::u32string(buff.begin(), buff.end());
+}
+std::u32string get_presentation_content(board_t& board) {
+  std::vector<char32_t> buff;
+  for (curpos_t p = 0; p < board.m_width; p++) {
+    curpos_t const x = board.to_data_position(board.cur.y, p);
+    char32_t c = board.line().char_at(x).value;
+    buff.push_back(c == U'\0' ? U'@' : c);
+  }
+  if (board.line_r2l())
+    std::reverse(buff.begin(), buff.end());
+  return std::u32string(buff.begin(), buff.end());
+}
+bool check_strings(const char* title, const char32_t* result, const char32_t* expected) {
+  if (contra::strcmp(result, expected) == 0) return true;
+  std::fprintf(stderr, "%s\n", title);
+  std::fprintf(stderr, "  result: ");
+  while (*result) std::putc((char) *result++, stderr);
+  std::putc('\n', stderr);
+  std::fprintf(stderr, "  expect: ");
+  while (*expected) std::putc((char) *expected++, stderr);
+  std::putc('\n', stderr);
+  std::fflush(stderr);
+  return false;
+}
+bool check_data_content(board_t& board, const char32_t* expected) {
+  std::u32string const result = get_data_content(board);
+  return check_strings("check_data_content", result.c_str(), expected);
+}
+bool check_presentation_content(board_t& board, const char32_t* expected) {
+  std::u32string const result = get_presentation_content(board);
+  return check_strings("check_presentation_content", result.c_str(), expected);
+}
+
+
+void test_insert() {
+  using namespace contra::ansi;
+  {
+    board_t board(5, 5);
+    term_t term(board);
+    term.printt("hello world!\n");
+    term.printt("hello world!\n");
+    board.debug_print(stdout);
+  }
+
+  // 全角文字の挿入と上書き
+  {
+    board_t board(5, 3);
+    term_t term(board);
+    term.printt("hello\r日\n");
+    term.printt("a日本\r全\n");
+    term.printt("a日本\ba");
+    board.debug_print(stdout);
+  }
+
+  // タブ挿入
+  {
+    board_t board(40, 1);
+    term_t term(board);
+    term.printt("日本\thello\tworld");
+    board.debug_print(stdout);
+  }
+}
 
 void test_strings() {
   using namespace contra::ansi;
@@ -145,87 +216,6 @@ void test_strings() {
   mwg_check(board.line().find_innermost_string(16, true , board.m_width, false) == 1);
   mwg_check(board.line().find_innermost_string(16, false, board.m_width, false) == 0);
 
-  auto _presentation = [&] (std::vector<char32_t>& buff) {
-    for (curpos_t p = 0; p < board.m_width; p++) {
-      curpos_t const x = board.to_data_position(0, p);
-      buff.push_back(board.line().char_at(x).value);
-    }
-    if (board.line_r2l())
-      std::reverse(buff.begin(), buff.end());
-    for (char c : buff) std::putc(c ? c : '@', stderr);
-    std::putc('\n', stderr);
-    // board.line().debug_dump();
-  };
-  auto check_ech = [&] (const char* esc, curpos_t p1, curpos_t count) {
-    term.printt(esc);
-
-    std::vector<char32_t> before, after;
-    std::fprintf(stderr, "ECH before: "); _presentation(before);
-    char ech[20]; std::sprintf(ech, "\r\x1b[9l\x1b[%dD\x1b[%dC\x1b[%dX\x1b[9h\r", board.m_width, p1, count); term.printt(ech);
-    std::fprintf(stderr, "ECH after : "); _presentation(after);
-
-    curpos_t pL = p1, pR = p1 + count;
-    if (board.line_r2l()) {
-      pR = p1 + 1;
-      pL = pR - count;
-    }
-    for (int i = 0; i < board.m_width; i++)
-      mwg_check(after[i] == (pL <= i && i < pR ? 0 : before[i]));
-    board.line().clear();
-  };
-
-  // PRES a      [[[g]ij[lk]mn]dc]qr
-  // DATA a      [cd[[g]ij[kl]mn]]qr
-  check_ech("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 1, 6);
-  // PRES ab[po[e]]        [[n]dc]qr
-  // DATA ab[[e]op]        [cd[n]]qr
-  check_ech("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 5, 8);
-  check_ech("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 13, 7);
-  check_ech("ab\x1b[1]cdefgh\x1b[0]ij\r", 4, 2);
-  check_ech("ab\x1b[1]cd\x1b[1]efgh\x1b[0]ij\x1b[0]kl\r", 5, 2);
-
-  board.m_presentation_direction = presentation_direction_rltb;
-  check_ech("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 38, 6);
-  board.m_presentation_direction = presentation_direction_default;
-
-  auto check_dch = [&] (const char* esc, curpos_t p1, curpos_t shift) {
-    term.printt(esc);
-
-    std::vector<char32_t> before, after;
-    std::fprintf(stderr, "DCH before: "); _presentation(before);
-    char ech[20]; std::sprintf(ech, "\x1b[9l\x1b[%dD\x1b[%dC\x1b[%dP\x1b[9h\r", board.m_width, p1, shift); term.printt(ech);
-    std::fprintf(stderr, "DCH after : "); _presentation(after);
-
-    // for (int i = 0; i < board.m_width; i++)
-    //   mwg_check((p1 <= i && i < p2) || before[i] == after [i]);
-    board.line().clear();
-  };
-  check_dch("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 1, 6);
-  check_dch("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 5, 8);
-  check_dch("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 13, 7);
-  board.m_presentation_direction = presentation_direction_rltb;
-  check_dch("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 38, 6);
-  board.m_presentation_direction = presentation_direction_default;
-
-  auto check_ich = [&] (const char* esc, curpos_t p1, curpos_t shift) {
-    term.printt(esc);
-
-    std::vector<char32_t> before, after;
-    std::fprintf(stderr, "ICH before: "); _presentation(before);
-    char ech[20]; std::sprintf(ech, "\x1b[9l\x1b[%dD\x1b[%dC\x1b[%d@\x1b[9h\r", board.m_width, p1, shift); term.printt(ech);
-    std::fprintf(stderr, "ICH after : "); _presentation(after);
-
-    // for (int i = 0; i < board.m_width; i++)
-    //   mwg_check((p1 <= i && i < p2) || before[i] == after [i]);
-    board.line().clear();
-  };
-  check_ich("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 1, 6);
-  check_ich("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 5, 8);
-  check_ich("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 13, 7);
-  board.m_presentation_direction = presentation_direction_rltb;
-  check_ich("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r", 38, 6);
-  board.m_presentation_direction = presentation_direction_default;
-
   // test cases from src/impl1.cpp
   // // abcd_[efgh]_ij
   // term.printt("\x1b[Habcd_\x1b[2]efgh\x1b[0]_ij");
@@ -241,33 +231,156 @@ void test_strings() {
   // tester("kl_mnop_qrst_uvw_xyz", px_result2);
 }
 
-void do_test() {
+void test_presentation() {
   using namespace contra::ansi;
-  {
-    board_t board(5, 5);
-    term_t term(board);
-    term.printt("hello world!\n");
-    term.printt("hello world!\n");
-    board.debug_print(stdout);
-  }
+  board_t board(18, 1);
+  term_t term(board);
 
-  // 全角文字の挿入と上書き
-  {
-    board_t board(5, 3);
-    term_t term(board);
-    term.printt("hello\r日\n");
-    term.printt("a日本\r全\n");
-    term.printt("a日本\ba");
-    board.debug_print(stdout);
+  term.printt("\x1b[H");
+  term.printt("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r");
+  std::vector<char32_t> buff;
+  for (curpos_t p = 0; p < board.m_width; p++) {
+    curpos_t const x = board.to_data_position(0, p);
+    curpos_t const p2 = board.to_presentation_position(0, x);
+    char32_t c = board.line().char_at(x).value;
+    buff.push_back(c == U'\0' ? U'@' : c);
+    mwg_check(p == p2, "p=%d -> x=%d -> p=%d", p, x, p2);
   }
+  std::u32string result(buff.begin(), buff.end());
+  mwg_check(result == U"abpoefhgijlkmndcqr");
+}
 
-  // タブ挿入
-  {
-    board_t board(40, 1);
-    term_t term(board);
-    term.printt("日本\thello\tworld");
-    board.debug_print(stdout);
-  }
+void test_ech() {
+  using namespace contra::ansi;
+  board_t board(20, 1);
+  term_t term(board);
+
+  // ECH ICH DCH (mono)
+  term.printt("\x1b[Habcdefghijklmnopqr");
+  term.printt("\x1b[1;3HC");
+  mwg_check(check_data_content(board, U"abCdefghijklmnopqr@@"));
+  term.printt("\x1b[H                    ");
+  term.printt("\x1b[1;3H\x1b[3X");
+  mwg_check(check_data_content(board, U"  @@@               "));
+  term.printt("\x1b[H0123456789          ");
+  term.printt("\x1b[1;3H\x1b[3P");
+  mwg_check(check_data_content(board, U"0156789          @@@"));
+  term.printt("\x1b[H0123456789          ");
+  term.printt("\x1b[1;3H\x1b[3@");
+  mwg_check(check_data_content(board, U"01@@@23456789       "));
+  board.line().clear();
+
+  // ECH ICH DCH (prop)
+  term.printt("\r\x1b[2]abcdefghijklmnopqr\x1b[0]");
+  mwg_check(check_data_content(board, U"abcdefghijklmnopqr@@"));
+  mwg_check(check_presentation_content(board, U"rqponmlkjihgfedcba@@"));
+  term.printt("\x1b[1;3f\x1b[3X");
+  mwg_check(check_data_content(board, U"ab@@@fghijklmnopqr@@"));
+  term.printt("\r\x1b[2]abcdefghijklmnopqr\x1b[0]  ");
+  term.printt("\x1b[1;3f\x1b[3P");
+  mwg_check(check_data_content(board, U"abfghijklmnopqr  @@@"));
+  term.printt("\r\x1b[2]abcdefghijklmnopqr\x1b[0]  ");
+  term.printt("\x1b[1;3f\x1b[3@");
+  mwg_check(check_data_content(board, U"ab@@@cdefghijklmnopq"));
+  board.line().clear();
+
+  // ECH ICH DCH (prop SDS を踏み潰す場合)
+  term.printt("\rab\x1b[2]cdef\x1b[1]ghijkl\x1b[0]mnop\x1b[0]qr  ");
+  mwg_check(check_presentation_content(board, U"abponmghijklfedcqr  "));
+  term.printt("\x1b[1;5f\x1b[4X");
+  mwg_check(check_data_content(board, U"abcd@@@@ijklmnopqr  "));
+  mwg_check(check_presentation_content(board, U"abdc@@@@ijklmnopqr  "));
+  term.printt("\rab\x1b[2]cdef\x1b[1]ghijkl\x1b[0]mnop\x1b[0]qr  ");
+  term.printt("\x1b[1;5f\x1b[4P");
+  mwg_check(check_data_content(board, U"abcdijklmnopqr  @@@@"));
+  mwg_check(check_presentation_content(board, U"ablkjidcmnopqr  @@@@"));
+  term.printt("\rab\x1b[2]cdef\x1b[1]ghijkl\x1b[0]mnop\x1b[0]qr  ");
+  term.printt("\x1b[1;5f\x1b[4@");
+  mwg_check(check_data_content(board, U"abcd@@@@efghijklmnop"));
+  mwg_check(check_presentation_content(board, U"abdc@@@@efghijklmnop"));
+  board.line().clear();
+
+  // ECH ICH DCH (prop !dcsm)
+  term.printt("\x1b[9l"); // DCSM(PRESENTATION)
+  term.printt("\rab\x1b[2]cdef\x1b[1]ghijkl\x1b[]mnop\x1b[]qr  ");
+  mwg_check(check_presentation_content(board, U"abponmghijklfedcqr  "));
+  term.printt("\x1b[1;5H\x1b[4X");
+  mwg_check(check_presentation_content(board, U"abpo@@@@ijklfedcqr  "));
+  term.printt("\rab\x1b[2]cdef\x1b[1]ghijkl\x1b[0]mnop\x1b[0]qr  ");
+  term.printt("\x1b[1;5H\x1b[4P");
+  mwg_check(check_presentation_content(board, U"abpoijklfedcqr  @@@@"));
+  term.printt("\rab\x1b[2]cdef\x1b[1]ghijkl\x1b[0]mnop\x1b[0]qr  ");
+  term.printt("\x1b[1;5H\x1b[4@");
+  mwg_check(check_presentation_content(board, U"abpo@@@@nmghijklfedc"));
+  term.printt("\x1b[9h"); // DCSM(DATA);
+  board.line().clear();
+
+  // ECH ICH DCH (prop !dcsm)
+  board.reset_size(40, 1);
+  term.printt("\x1b[9l"); // DCSM(PRESENTATION)
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  mwg_check(check_presentation_content(board, U"abpoefhgijlkmndcqr@@@@@@@@@@@@@@@@@@@@@@"));
+  // PRES a      [[[g]ij[lk]mn]dc]qr
+  // DATA a      [cd[[g]ij[kl]mn]]qr
+  term.printt("\x1b[1;2H\x1b[6X");
+  mwg_check(check_presentation_content(board, U"a@@@@@@gijlkmndcqr@@@@@@@@@@@@@@@@@@@@@@"));
+  // PRES ab[po[e]]        [[n]dc]qr
+  // DATA ab[[e]op]        [cd[n]]qr
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  term.printt("\x1b[1;6H\x1b[8X");
+  mwg_check(check_presentation_content(board, U"abpoe@@@@@@@@ndcqr@@@@@@@@@@@@@@@@@@@@@@"));
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  term.printt("\x1b[1;14H\x1b[7X");
+  mwg_check(check_presentation_content(board, U"abpoefhgijlkm@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  term.printt("\x1b[1;2H\x1b[6P");
+  mwg_check(check_presentation_content(board, U"agijlkmndcqr@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  term.printt("\x1b[1;6H\x1b[8P");
+  mwg_check(check_presentation_content(board, U"abpoendcqr@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  term.printt("\x1b[1;14H\x1b[7P");
+  mwg_check(check_presentation_content(board, U"abpoefhgijlkm@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  term.printt("\x1b[1;2H\x1b[6@");
+  mwg_check(check_presentation_content(board, U"a@@@@@@bpoefhgijlkmndcqr@@@@@@@@@@@@@@@@"));
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  term.printt("\x1b[1;6H\x1b[8@");
+  mwg_check(check_presentation_content(board, U"abpoe@@@@@@@@fhgijlkmndcqr@@@@@@@@@@@@@@"));
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  term.printt("\x1b[1;14H\x1b[7@");
+  mwg_check(check_presentation_content(board, U"abpoefhgijlkm@@@@@@@ndcqr@@@@@@@@@@@@@@@"));
+  term.printt("\x1b[9h"); // DCSM(DATA);
+  board.line().clear();
+
+  // ECH (prop !dcsm)
+  term.printt("\x1b[9l"); // DCSM(PRESENTATION)
+  term.printt("\r\x1b[2Kab\x1b[1]cdefgh\x1b[0]ij\r");
+  mwg_check(check_presentation_content(board, U"abcdefghij@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  term.printt("\x1b[1;5H\x1b[2X");
+  mwg_check(check_presentation_content(board, U"abcd@@ghij@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  term.printt("\r\x1b[2Kab\x1b[1]cd\x1b[1]efgh\x1b[0]ij\x1b[0]kl\r");
+  mwg_check(check_presentation_content(board, U"abcdefghijkl@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  term.printt("\x1b[1;6H\x1b[2X");
+  mwg_check(check_presentation_content(board, U"abcde@@hijkl@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  term.printt("\x1b[9h"); // DCSM(DATA);
+  board.line().clear();
+
+  // ECH ICH DCH (prop !dcsm)
+  term.printt("\x1b[9l\x1b[3 S"); // DCSM(PRESENTATION), SPD(3)
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  mwg_check(check_presentation_content(board, U"@@@@@@@@@@@@@@@@@@@@@@rqpoefhgijlkmndcba"));
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  term.printt("\x1b[1;2H\x1b[6X");
+  mwg_check(check_presentation_content(board, U"@@@@@@@@@@@@@@@@@@@@@@rqpoefhgijl@@@@@@a"));
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  term.printt("\x1b[1;2H\x1b[6P");
+  mwg_check(check_presentation_content(board, U"@@@@@@@@@@@@@@@@@@@@@@@@@@@@rqpoefhgijla"));
+  term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  term.printt("\x1b[1;2H\x1b[6@");
+  mwg_check(check_presentation_content(board, U"@@@@@@@@@@@@@@@@rqpoefhgijlkmndcb@@@@@@a"));
+  term.printt("\x1b[9h\x1b[ S"); // DCSM(DATA), SPD(0)
+  board.line().clear();
 }
 
 void test_sgr() {
@@ -296,8 +409,10 @@ void test_sgr() {
 
 int main() {
   try {
-    do_test();
+    test_insert();
     test_strings();
+    test_presentation();
+    test_ech();
     test_sgr();
   } catch(mwg::assertion_error& e) {}
   return 0;

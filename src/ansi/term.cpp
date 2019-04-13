@@ -598,6 +598,23 @@ namespace {
     return do_cup(term.board(), (curpos_t) param2 - 1, (curpos_t) param1 - 1);
   }
 
+  bool do_hvp(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
+    csi_single_param_t param1, param2;
+    params.read_param(param1, 1);
+    params.read_param(param2, 1);
+    if (s.get_mode(mode_zdm)) {
+      if (param1 == 0) param1 = 1;
+      if (param2 == 0) param2 = 1;
+    }
+
+    if (param1 == 0 || param2 == 0) return false;
+    board_t& b = term.board();
+    b.cur.y = (curpos_t) param1 - 1;
+    b.cur.x = (curpos_t) param2 - 1;
+    return true;
+  }
+
   bool do_cha(term_t& term, csi_parameters& params) {
     tty_state& s = term.state();
     csi_single_param_t param;
@@ -932,7 +949,8 @@ namespace {
 
     // カーソル位置
     if (!s.get_mode(mode_dcsm))
-      b.cur.x = b.to_data_position(b.cur.y, x1);
+      x1 = b.to_data_position(b.cur.y, x1);
+    b.cur.x = x1;
 
     return true;
   }
@@ -960,11 +978,11 @@ namespace {
 
     // カーソル位置
     if (s.get_mode(mode_dcsm)) {
-      if (s.get_mode(mode_home_il))
-        b.cur.x = b.line_home();
+      if (s.get_mode(mode_home_il)) x1 = b.line_home();
     } else {
-      b.cur.x = s.get_mode(mode_home_il) ? b.line_home() : b.to_data_position(b.cur.y, x1);
+      x1 = s.get_mode(mode_home_il) ? b.line_home() : b.to_data_position(b.cur.y, x1);
     }
+    b.cur.x = x1;
   }
 
   bool do_ich(term_t& term, csi_parameters& params) {
@@ -1174,6 +1192,7 @@ namespace {
       register_cfunc(&do_cup, ascii_H);
       register_cfunc(&do_hpa, ascii_back_quote);
       register_cfunc(&do_vpa, ascii_d);
+      register_cfunc(&do_hvp, ascii_f);
 
       // ECH/DCH/ICH, etc.
       register_cfunc(&do_ich, ascii_at);

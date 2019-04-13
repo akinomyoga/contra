@@ -575,7 +575,7 @@ namespace ansi {
       if (!m_prop_enabled) {
         if (x < 0 || (std::size_t) x >= m_cells.size()) return ascii_nul;
         while (x > 0 && m_cells[x].character.is_extension()) x--;
-        return x;
+        return m_cells[x].character;
       } else {
         std::size_t i;
         curpos_t _;
@@ -752,6 +752,15 @@ namespace ansi {
       mwg_check(width > 0 && height > 0, "width = %d, height = %d", (int) width, (int) height);
       this->cur.x = 0;
       this->cur.y = 0;
+    }
+
+  public:
+    void reset_size(curpos_t width, curpos_t height) {
+      mwg_check(width > 0 && height > 0, "negative size is passed (width = %d, height = %d).", (int) width, (int) height);
+      if (this->cur.x >= width) cur.x = width - 1;
+      if (this->cur.y >= height) cur.y = height - 1;
+      this->m_width = width;
+      this->m_height = height;
     }
 
   public:
