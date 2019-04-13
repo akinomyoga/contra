@@ -192,9 +192,9 @@ namespace ansi {
       for (curpos_t y = 0; y < w.m_height; y++) {
         line_t const& line = w.m_lines[y];
         curpos_t wskip = 0;
-        curpos_t const ncell = (curpos_t) line.m_cells.size();
+        curpos_t const ncell = (curpos_t) line.cells().size();
         for (curpos_t x = 0; x < ncell; x++) {
-          cell_t const& cell = line.m_cells[x];
+          cell_t const& cell = line.cells()[x];
           if (cell.character.is_wide_extension()) continue;
           if (cell.character.is_marker()) continue;
           if (cell.character.value == ascii_nul) {

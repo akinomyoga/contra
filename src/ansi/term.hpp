@@ -181,10 +181,10 @@ namespace ansi {
 
   public:
     void initialize_line(line_t& line) const {
-      if (line.m_lflags & line_attr_t::is_line_used) return;
-      line.m_lflags = line_attr_t::is_line_used | m_state.lflags;
-      line.m_home = m_state.line_home;
-      line.m_limit = m_state.line_limit;
+      if (line.lflags() & line_attr_t::is_line_used) return;
+      line.lflags() = line_attr_t::is_line_used | m_state.lflags;
+      line.home() = m_state.line_home;
+      line.limit() = m_state.line_limit;
     }
 
   public:

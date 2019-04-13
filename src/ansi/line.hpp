@@ -337,7 +337,8 @@ namespace ansi {
   };
 
 
-  struct line_t {
+  class line_t {
+  private:
     std::vector<cell_t> m_cells;
     line_attr_t m_lflags = {0};
     curpos_t m_home  {-1};
@@ -371,6 +372,12 @@ namespace ansi {
 
   public:
     std::vector<cell_t> const& cells() const { return m_cells; }
+    line_attr_t& lflags() { return m_lflags; }
+    line_attr_t const& lflags() const { return m_lflags; }
+    curpos_t& home() { return m_home; }
+    curpos_t const& home() const { return m_home; }
+    curpos_t& limit() { return m_limit; }
+    curpos_t const& limit() const { return m_limit; }
 
   private:
     void _initialize_content(curpos_t width, attribute_t const& attr) {
@@ -558,7 +565,6 @@ namespace ansi {
       m_version++;
     }
     void _prop_reverse(curpos_t width);
-
   public:
     void reverse(curpos_t width) {
       if (m_prop_enabled)
@@ -770,11 +776,11 @@ namespace ansi {
     curpos_t y() const { return cur.y; }
 
     curpos_t line_home() const {
-      curpos_t const home = line().m_home;
+      curpos_t const home = line().home();
       return home < 0 ? 0 : std::min(home, m_width - 1);
     }
     curpos_t line_limit() const {
-      curpos_t const limit = line().m_limit;
+      curpos_t const limit = line().limit();
       return limit < 0 ? m_width - 1 : std::min(limit, m_width - 1);
     }
     curpos_t line_r2l() const {
@@ -847,7 +853,7 @@ namespace ansi {
   public:
     void debug_print(std::FILE* file) {
       for (auto const& line : m_lines) {
-        if (line.m_lflags & line_attr_t::is_line_used) {
+        if (line.lflags() & line_attr_t::is_line_used) {
           for (auto const& cell : line.cells()) {
             if (cell.character.is_wide_extension()) continue;
             char32_t c = (char32_t) (cell.character.value & character_t::unicode_mask);

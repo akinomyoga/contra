@@ -244,7 +244,7 @@ namespace {
     if (oldRToL != newRToL && update == 2) {
       for (curpos_t y = 0, yN = b.m_height; y < yN; y++) {
         line_t& line = b.m_lines[y];
-        if (!(line.m_lflags & line_attr_t::character_path_mask))
+        if (!(line.lflags() & line_attr_t::character_path_mask))
           line.reverse(b.m_width);
       }
     }
@@ -275,15 +275,15 @@ namespace {
 
     // update line attributes
     term.initialize_line(line);
-    line.m_lflags &= ~line_attr_t::character_path_mask;
+    line.lflags() &= ~line_attr_t::character_path_mask;
     s.lflags &= ~line_attr_t::character_path_mask;
     switch (charPath) {
     case 1:
-      line.m_lflags |= line_attr_t::is_character_path_ltor;
+      line.lflags() |= line_attr_t::is_character_path_ltor;
       s.lflags |= line_attr_t::is_character_path_ltor;
       break;
     case 2:
-      line.m_lflags |= line_attr_t::is_character_path_rtol;
+      line.lflags() |= line_attr_t::is_character_path_rtol;
       s.lflags |= line_attr_t::is_character_path_rtol;
       break;
     }
@@ -318,15 +318,15 @@ namespace {
     csi_single_param_t param;
     if (params.read_param(param, 0) && param) {
       curpos_t const x = (curpos_t) param - 1;
-      line.m_home = x;
-      if (line.m_limit >= 0 && line.m_limit < x)
-        line.m_limit = x;
+      line.home() = x;
+      if (line.limit() >= 0 && line.limit() < x)
+        line.limit() = x;
 
       s.line_home = x;
       if (s.line_limit >= 0 && s.line_limit < x)
         s.line_limit = x;
     } else {
-      line.m_home = -1;
+      line.home() = -1;
       s.line_home = -1;
     }
 
@@ -341,15 +341,15 @@ namespace {
     csi_single_param_t param;
     if (params.read_param(param, 0) && param) {
       curpos_t const x = (curpos_t) param - 1;
-      line.m_limit = x;
-      if (line.m_home >= 0 && line.m_home > x)
-        line.m_home = x;
+      line.limit() = x;
+      if (line.home() >= 0 && line.home() > x)
+        line.home() = x;
 
       s.line_limit = x;
       if (s.line_home >= 0 && s.line_home > x)
         s.line_home = x;
     } else {
-      line.m_limit = -1;
+      line.limit() = -1;
       s.line_limit = -1;
     }
 
