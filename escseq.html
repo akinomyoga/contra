@@ -559,7 +559,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>---</th><td><kbd>ESC ;</kbd></td>
     <th>PLD</th><td><kbd>ESC K</kbd></td>
     <th class="markB">CSI</th><td><kbd>ESC [</kbd></td>
-    <th>(LS1R)</th><td><kbd>ESC k</kbd></td>
+    <th>(LS1R)<br/>scrTDS</th><td><kbd>ESC k</kbd></td>
     <th>-R-</th><td><kbd>ESC {</kbd></td></tr>
 <tr><th>-R-</th><td><kbd>ESC ,</kbd></td>
     <th>V5EX</th><td><kbd>ESC &lt;</kbd></td>
@@ -600,6 +600,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <tr><th>hpMemoryUnlock</th><td><kbd>ESC m</kbd></td></tr>
   </table>
 </li>
+<li>screen は ESC k をバッファーのタイトルを設定する為の私用コマンド列の開始記号 (scrTDS) に使っている。</li>
 </ul>
 
 <h4>3Ft型 登録単独制御機能</h4>
@@ -1006,18 +1007,18 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 
 <h3>制御列 (control string)</h3>
 <table class="normal center">
-<tr><th>先頭</th><th>符号化表現</th><th>名前</th></tr>
-<tr><th>OSC</th>
-  <td><kbd>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> BEL</kbd><br/>
-  <kbd>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <strong>.*</strong> ST</kbd>
+<tr><th>開始</th><th>種類</th><th>符号化表現</th><th>名前</th></tr>
+<tr><th>OSC</th><td>コマンド列</td>
+  <td><kbd>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <i>&lt;GL'&gt;</i><strong>*</strong> BEL</kbd><br/>
+  <kbd>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <i>&lt;GL'&gt;</i><strong>*</strong> ST</kbd>
   </td>
   <td>Operating System Command</td>
 </tr>
-<tr><th>DCS</th><td><kbd>DCS <strong>.*</strong> ST</kbd></td><td>Device Control String</td></tr>
-<tr><th>SOS</th><td><kbd>SOS <strong>.*</strong> ST</kbd></td> <td>Start of String</td></tr>
-<tr><th>PM</th> <td><kbd>PM <strong>.*</strong> ST</kbd></td> <td>Privacy Message</td></tr>
-<tr><th>APC</th><td><kbd>APC <strong>.*</strong> ST</kbd></td><td>Application Program Command</td>
-</tr>
+<tr><th>DCS</th>   <td>コマンド列</td>   <td><kbd>DCS <i>&lt;GL'&gt;</i><strong>*</strong> ST</kbd></td><td>Device Control String</td></tr>
+<tr><th>SOS</th>   <td>キャラクタ列</td> <td><kbd>SOS <i>&lt;U&gt;</i><strong>*</strong> ST</kbd></td> <td>Start of String</td></tr>
+<tr><th>PM</th>    <td>コマンド列</td>   <td><kbd>PM <i>&lt;GL'&gt;</i><strong>*</strong> ST</kbd></td> <td>Privacy Message</td></tr>
+<tr><th>APC</th>   <td>コマンド列</td>   <td><kbd>APC <i>&lt;GL'&gt;</i><strong>*</strong> ST</kbd></td><td>Application Program Command</td></tr>
+<tr><th>scrTDS</th><td>キャラクタ列?</td><td><kbd>ESC k <i>&lt;U&gt;</i><strong>*</strong> ST</kbd></td> <td>Title Definition String (GNU Screen)</td></tr>
 </table>
 
 <ul>
@@ -1091,8 +1092,13 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   または アプリケーションプログラムコマンド (application program command) と呼ばれる。
   用途は関連するアプリケーションプログラムの間で取り決める。
   </p>
-  <p>APC シーケンスはキャラクタ列の形式に従う。
+  <p>APC シーケンスはコマンド列の形式に従う。
   APC は 01/11 05/15 (<kbd>ESC _</kbd>) または 09/15 で表現される。
+  </p>
+</li>
+<li><dfn class="cfunc">scrTDS</dfn>: Title Definition String
+  <p>GNU screen でバッファのタイトルを設定するのに使われるキャラクタ列。
+  ST で終端する (BEL では終端しない)。
   </p>
 </li>
 </ul>
@@ -1101,12 +1107,13 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <h2>モード</h2>
 
 <table class="normal center">
-<tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>SM</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> h</kbd></td></tr>
-<tr><th>DECSET</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> h</kbd></td></tr>
-<tr><th>RM</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> l</kbd></td></tr>
-<tr><th>DECRST</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> l</kbd></td></tr>
-<tr><th>DECRQM</th> <td><kbd>CSI <i>&lt;Pm&gt;</i> $ p</kbd><br/><kbd>CSI ? <i>&lt;Pm&gt;</i> $ p</kbd></td></tr>
+<tr><th>略号</th><th>符号化表現</th><th>備考</th></tr>
+<tr><th>SM</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> h</kbd></td><td></td></tr>
+<tr><th>DECSET</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> h</kbd></td><td></td></tr>
+<tr><th>RM</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> l</kbd></td><td></td></tr>
+<tr><th>DECRST</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> l</kbd></td><td></td></tr>
+<tr><th>DECRQM</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> $ p</kbd><br/><kbd>CSI ? <i>&lt;Ps&gt;</i> $ p</kbd></td><td></td></tr>
+<tr><th>DECRPM</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ y</kbd><br/><kbd>CSI ? <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ y</kbd></td><td>(応答)</td></tr>
 </table>
 <ul>
 <li><dfn class="cfunc">SM</dfn>: SET MODE
@@ -1135,10 +1142,11 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   <li><a href="http://www.vt100.net/docs/vt510-rm/RM">VT510: RM</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECRQM</dfn>: Request Mode
+<li><dfn class="cfunc">DECRQM</dfn>: Request Mode</li>
+<li><dfn class="cfunc">DECRPM</dfn>: Report Mode
+  <p>DECRQM で現在の状態を問い合わせる。端末から DECRPM によって現在の状態を応答する。</p>
   <ul>
-  <li>互換性: vt420</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DECRQM">VT510: DECRQM</a></li>
+  <li>互換性: vt420 <a href="http://www.vt100.net/docs/vt510-rm/DECRQM">VT510: DECRQM</a> <a href="http://www.vt100.net/docs/vt510-rm/DECRQM">VT510: DECRPM</a></li>
   </ul>
 </li>
 </ul>
@@ -1177,6 +1185,8 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th><del>LNM (LF/NL)</del></th><td>20</td><td><del>Line Feed/New Line Mode</del> (廃止)</td></tr>
 <tr><th>GRCM</th> <td>21</td><td>Graphic Rendition Combination</td></tr>
 <tr><th>ZDM</th>  <td>22</td><td>Zero Default Mode (deprecated)</td></tr>
+<tr><th>DECOM</th>              <td>?6</td>  <td></td></tr>
+<tr><th>DECAWM</th>             <td>?7</td>  <td></td></tr>
 <tr><th>DECTCEM</th>            <td>?25</td>  <td></td></tr>
 <tr><th>smSendMouse</th>        <td>?1000</td><td></td></tr>
 <tr><th>smMouseMotionHilite</th><td>?1001</td><td></td></tr>
@@ -1219,8 +1229,6 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><td>2</td>     <td>x</td><td>AM/KAM</td>             <td>Keyboard Action Mode</td><td class="markB"></td><td></td></tr>
 <tr><td>4</td>     <td>x</td><td>IRM</td>                <td>Insert Mode</td><td class="markB"></td><td>@</td></tr>
 <tr><td>5</td>     <td class="markA">-</td><td>SRTM</td> <td>Status reporting transfer</td><td></td><td></td></tr>
-<tr><td>7</td>     <td>?</td><td></td>                   <td>行折返し有効</td><td>行折返し無効</td><td>X</td></tr>
-<tr><td>7</td>     <td class="markA">-</td><td>VEM</td>  <td>Vertical editing</td><td></td><td>X</td></tr>
 <tr><td>11</td>    <td class="markA">-</td><td>PUM</td>  <td>Positioning unit</td><td></td><td>X</td></tr>
 <tr><td>12</td>    <td>vx</td><td>SRM</td>               <td class="markB">Send/receive Mode</td><td>Local Echo on</td><td></td></tr>
 <tr><td>13</td>    <td class="markA">-</td><td>FEAM</td> <td>Format effector action</td><td></td><td>X</td></tr>
@@ -1394,6 +1402,24 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   <ul>
   <li><dfn class="cmode-rm">PRESENTATION</dfn> (RM): 上記の制御機能は、現在表示位置において表示部に対して実施される。</li>
   <li><dfn class="cmode-sm">DATA</dfn> (SM): 上記の制御機能は、現在データ位置においてデータ部に対して実施される。</li>
+  </ul>
+</li>
+<li>Mode ?6 <dfn class="cmode">DECOM</dfn>: Origin Mode [既定値: RM]
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECOM.html">VT510: DECOM</a>]
+    DECSTBM, DECLRMM, DECSLRM でページの範囲が制限されている時の座標原点を指定する。
+  </p>
+  <ul>
+  <li>(RM): 座標原点を画面の左上とする。</li>
+  <li>(SM): 座標原点を制限範囲の左上とする。</li>
+  </ul>
+</li>
+<li>Mode ?7 <dfn class="cmode">DECAWM</dfn>: Origin Mode [既定値: RM]
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECAWM.html">VT510: DECAWM</a>]
+    カーソルが画面の右端に丁度達した時に自動的に次の行頭に移動するかどうかを設定する。
+  </p>
+  <ul>
+  <li>(RM): 右端に留まる。</li>
+  <li>(SM): 次の行頭に移動する。</li>
   </ul>
 </li>
 <li><dfn class="cfunc">SPD</dfn>: SELECT PRESENTATION DIRECTIONS
@@ -1598,6 +1624,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   参考: <a href="https://ja.wikipedia.org/wiki/%E5%8F%8C%E6%96%B9%E5%90%91%E3%83%86%E3%82%AD%E3%82%B9%E3%83%88">双方向テキスト</a>。
   <a href="http://unicode.org/reports/tr9/">UAX #9: Unicode Bidirectional Algorithm</a>
 </li>
+<li>contra では縦書きの時は SDS(1) は上から下で SDS(2) は下から上であると解釈する。</li>
 </ul>
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
@@ -1616,6 +1643,16 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>NEL</th><td><kbd>NEL</kbd></td><td>DCSM</td>  <td>次行の行頭</td></tr>
 </table>
 <ul>
+<li>Mode 20 <dfn class="cmode">LNM</dfn><sup>廃</sup>: LINE FEED/NEW LINE MODE [既定値 LINE FEED (RM)]
+  <p>[ECMA-48 4th/E.1.3] LF, FF, VT を実行した際に行頭に移動するかどうかを設定する。
+    ECMA-48 3rd に初めて記述された時から非推奨だった。
+  </p>
+  <p><dfn class="cmode-rm">LINE FEED</dfn> (RM): 列は移動しない。</p>
+  <p><dfn class="cmode-sm">NEW LINE</dfn> (SM): 行頭に移動する。</p>
+  <ul>
+  <li>互換性: VT100, <a href="http://www.vt100.net/docs/vt510-rm/LNM.html">VT510: LNM</a>, xterm</li>
+  </ul>
+</li>
 <li><dfn class="cfunc">SP</dfn>: SPACE
   <p>[ECMA-35/6.2.3] SP は図形文字で、何も図形がないという見た目を持つ。
   現在位置を暗黙的移動によって一つ進める役割を持つと考えて良い。
@@ -1749,7 +1786,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </p>
 </li>
 <li><dfn class="cfunc">CUU</dfn>: CURSOR UP</li>
-<li><dfn class="cfunc">CUD</dfn>: Cursor Down</li>
+<li><dfn class="cfunc">CUD</dfn>: CURSOR DOWN</li>
 <li><dfn class="cfunc">CUF</dfn>: CURSOR RIGHT (vt510: Cursor Forward)</li>
 <li><dfn class="cfunc">CUB</dfn>: CURSOR LEFT (vt510: Cursor Backward)
   <p>[ECMA-48/8.3.22 CUU, 8.3.19 CUD, 8.3.18 CUB, 8.3.20 CUF]
@@ -1845,13 +1882,19 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   CUF, CUB その他の制御機能は文字単位ではなくて文字位置単位 (半角単位) で移動する。
   中途半端な位置にカーソルがある状態で文字を挿入すると、下にある全角文字が消去されてからの挿入になる。
 </li>
+<li>下にあった全角文字が消去された後に残る余白の属性は端末によって異なる。
+  mintty, RLogin, Poderosa では元々其処にあった全角文字の属性が保持される。
+  xterm では現在の属性が適用される。screen では属性は解除される。
+</li>
 </ul>
 
 <h3>位置記録</h3>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
-<tr><th>SCOSC</th><td><kbd>CSI s</kbd></td></tr>
-<tr><th>SCORC</th><td><kbd>CSI u</kbd></td></tr>
+<tr><th>SCOSC</th><td><kbd>CSI s</kbd></td><td>カーソルの位置を保存する。</td></tr>
+<tr><th>SCORC</th><td><kbd>CSI u</kbd></td><td>カーソルの位置を復元する。</td></tr>
+<tr><th>DECSC</th><td><kbd>ESC 7</kbd></td><td>カーソルの状態を保存する。</td></tr>
+<tr><th>DECRC</th><td><kbd>ESC 8</kbd></td><td>カーソルの状態を復元する。</td></tr>
 </table>
 <ul>
 <li><dfn class="cfunc">SCOSC</dfn>: SAVE CURRENT CURSOR POSITION
@@ -1868,11 +1911,28 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li><a href="http://www.vt100.net/docs/vt510-rm/SCORC">SCORC</a></li>
   </ul>
 </li>
+<li><dfn class="cfunc">DECSC</dfn>: SAVE CURSOR
+  <p>現在のカーソル状態を記録する。
+    記録される物にはカーソル位置・描画属性・文字デコード状態・DECAWM・DECOM・DECSCA状態などを含む。
+  </p>
+  <ul>
+  <li>互換性: vt510, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECSC">DECSC</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECRC</dfn>: RESTORE CURSOR
+  <p>DECSC で記録したカーソル状態を復元する。</p>
+  <ul>
+  <li>互換性: vt510, xterm</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/DECRC">DECRC</a></li>
+  </ul>
+</li>
 </ul>
 
 <h3>問い合わせ</h3>
 <table class="normal center">
 <tr><th>略号</th><th>用途</th><th>符号化表現</th><th>意味</th></tr>
+<tr><th>MW</th><td>制御</td><td><kbd>MW</kbd></td><td>メッセージ待ち表示の設定</td></tr>
 <tr><th>DSR(5)</th><td>制御</td><td><kbd>CSI 5 n</kbd></td><td rowspan="2">装置の状態を確認</td></tr>
 <tr><th>DSR</th><td>応答</td><td><kbd>CSI <i>&lt;Ps&gt;</i> n</kbd></td></tr>
 <tr><th>DSR(6)</th><td>制御</td><td><kbd>CSI 6 n</kbd></td><td rowspan="2">カーソル位置を取得</td></tr>
@@ -1880,14 +1940,36 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </table>
 
 <ul>
-<li>DSR(6)
+<li><dfn class="cfunc">MW</dfn>: MESSAGE WAITING
+  <p>[ECMA-48/8.3.35] メッセージ待ち表示 (message waiting indicator) を受信装置に設定する。
+    受信装置は例えば MW を受信したことに対応する応答として DSR を返すなどする。
+  </p>
 </li>
-<li><dfn class="cfunc">CPR</dfn>: CURSOR POSITION REPORT
+<li><dfn class="cfunc">DSR(5)</dfn>: DEVICE STATUS REPORT 5
+  <p>[ECMA-48/8.3.35] 装置の状態を問い合わせる。</p>
+</li>
+<li><dfn class="cfunc">DSR</dfn>: DEVICE STATUS REPORT [DSR(5) に対する応答]
+  <p>[ECMA-48/8.3.35] 現在の装置の状態を応答するのに使われる。
+    DSR(5) や MW に対する応答として送られる事もあれば、それとは独立に送られる事もある。
+  </p>
+  <table class="normal center">
+  <tr><th>引数</th><th>意味</th></tr>
+  <tr><td>0 (既定値)</td><td>準備完了・機能不全なし</td></tr>
+  <tr><td>1</td><td>ビジー状態・応答は再送されない</td></tr>
+  <tr><td>2</td><td>ビジー状態・後で応答を再送する</td></tr>
+  <tr><td>3</td><td>機能不全あり・応答を再送しない</td></tr>
+  <tr><td>4</td><td>機能不全あり・後で応答を再送する</td></tr>
+  </table>
+</li>
+<li><dfn class="cfunc">DSR(6)</dfn>: DEVICE STATUS REPORT 6
+  <p>[ECMA-48/8.3.35] 表示位置またはデータ位置を問い合わせる。</p>
+</li>
+<li><dfn class="cfunc">CPR</dfn>: ACTIVE POSITION REPORT (Cursor Position Report) [DSR(6) に対する応答]
   <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
   <ul>
   <li>互換性: vt100, xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/CPR">VT510: CPR</a></li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DSR-CPR">VT510: DSR-CPR</a></li>
+  <li>[<a href="http://www.vt100.net/docs/vt510-rm/CPR">VT510: CPR</a>, <a href="http://www.vt100.net/docs/vt510-rm/DSR-CPR">VT510: DSR-CPR</a>]</li>
+  <li>Poderosa は CPR ではなくて DSR(Pn;Pn) で応答する。</li>
   </ul>
 </li>
 </ul>
@@ -2203,6 +2285,16 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>VT420 <a href="http://www.vt100.net/docs/vt510-rm/ICH">VT510: ICH</a></li>
   </ul>
 </li>
+<li>互換性: 行末における ECH, DCH, ICHの振る舞いについて。
+  xenl cap 等で行末にいる時の振る舞いは端末によって異なる様だ。
+  mintty では何も起こらない。xterm, RLogin 及び screen は最後の文字を消去する。
+  更に xterm, RLogin ではカーソル位置は最後の文字に移動する。screen は移動しない。
+</li>
+<li>互換性: ECH, DCH, ICH で消去された領域 (DCH の場合は行末に挿入される領域、ICH の場合は現在位置に挿入される領域)
+  に現在の描画属性が適用されるかどうかは端末によって異なる。
+  xterm, mintty, RLogin, Poderosa では適用される。screen では適用されない。
+  但し Poderosa ではバグがあって DCH を実行すると行末の属性がそれ以降全てに適用されてしまう。
+</li>
 <li><dfn class="cfunc">DL</dfn>: DELETE LINE
   <p>[ECMA-48/8.3.32]
   現在行と、VEM に応じて前または後の <i>&lt;Pn&gt;</i> - 1 行を除去する。
@@ -2289,16 +2381,16 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <li>xterm: osc sequence, dsc sequence を列挙</li>
 <li>vt510 の頁でまだ列挙していない ASCII Control Functions を列挙、分類、version 確認</li>
 <li>
- DECAAM, DECALN, DECANM, DECARM, DECARSM, DECAUPSS, DECAWM, DECBI, DECBKM, DECCANSM,
+ DECAAM, DECALN, DECANM, DECARM, DECARSM, DECAUPSS, DECBI, DECBKM, DECCANSM,
  DECCAPSLK, DECCARA, DECCIR, DECCKD, DECCKM, DECCKSR, DECCOLM, DECCRA, DECCRTSM, DECDC,
  DECDLD, DECDMAC, DECEKBD, DECELF, DECERA, DECESKM, DECFI, DECFNK, DECFRA,
  DECHDPXM, DECHEBM, DECHEM, DECIC, DECINVM, DECIPEM, DECKBD, DECKBUM, DECKLHIM, DECKPAM,
  DECKPM, DECKPNM, DECLANS, DECLBAN, DECLFKC, DECLL, DECLRMM, DECLTOD, DECMCM, DECMSR,
- DECNAKB, DECNCSM, DECNKM, DECNRCM, DECNULM, DECNUMLK, DECOM, DECPAK, DECPCCM, DECPCTERM,
- DECPEX, DECPFF, DECPFK, DECPKA, DECPKFMR, DECRARA, DECRC, DECRLCM, DECRLM, DECRPAK,
+ DECNAKB, DECNCSM, DECNKM, DECNRCM, DECNULM, DECNUMLK, DECPAK, DECPCCM, DECPCTERM,
+ DECPEX, DECPFF, DECPFK, DECPKA, DECPKFMR, DECRARA, DECRLCM, DECRLM, DECRPAK,
  DECRPDE, DECRPFK, DECRPKT, DECRPM, DECRPSS, DECRPTUI, DECRQCRA, DECRQDE, DECRQKD,
  DECRQKT, DECRQPKFM, DECRQPSR, DECRQSS, DECRQUPSS, DECRSPS, DECRSTS, DECSACE, DECSASD,
- DECSC, DECSCA, DECSCL, DECSCLM, DECSCNM, DECSCP, DECSCPP, DECSCS, DECSDDT, DECSDPT,
+ DECSCL, DECSCLM, DECSCNM, DECSCP, DECSCPP, DECSCS, DECSDDT, DECSDPT,
  DECSED, DECSEL, DECSERA, DECSFC, DECSKCV, DECSLCK, DECSLPP, DECSLRM, DECSMBV, DECSMKR,
  DECSNLS, DECSPP, DECSPPCS, DECSPRTT, DECSR, DECSRC, DECSRFR, DECSSCLS, DECSSDT, DECSSL,
  DECST8C, DECSTBM, DECSTR, DECSTRL, DECSWBV, DECTABSR, DECTID, DECTME, DECTSR,
@@ -2336,7 +2428,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <tr><th>DECDSR</th> <td><kbd>CSI ? <i>&lt;Ps&gt;</i> n</kbd></td></tr>
 <tr><th>DECSTR</th> <td><kbd>CSI ! p</kbd></td></tr>
 <tr><th>DECSCL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> " p</kbd></td></tr>
-<tr><th>DECSCA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> q</kbd></td></tr>
+<tr><th>DECSCA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> " q</kbd></td></tr>
 <tr><th>DECSTBM</th><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> r</kbd></td></tr>
 <tr><th>XTREST</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> r</kbd></td></tr>
 <tr><th>DECCARA</th><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ r</kbd></td></tr>
@@ -2457,6 +2549,8 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <tr><th>SGR</th> <td><kbd>CSI <i>&lt;Pm&gt;</i> m</kbd></td></tr>
 <tr><th>PLD</th> <td><kbd>PLD</kbd></td></tr>
 <tr><th>PLU</th> <td><kbd>PLU</kbd></td></tr>
+<tr><th>SCO</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> SP e</kbd></td></tr>
+<tr><th>DECSCA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> " q</kbd></td></tr>
 </table>
 
 <ul>
@@ -2482,6 +2576,20 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <ul>
   <li><dfn class="cmode-rm">REPLACING</dfn> (RM): SGR が登場する度にそれまでに設定されていた属性をすべて解除する。適用したい属性は毎回指定する必要がある。</li>
   <li><dfn class="cmode-sm">CUMULATIVE</dfn> (SM): SGR をそれまでに設定されていた属性に対する変更として扱う。</li>
+  </ul>
+</li>
+<li><dfn class="cfunc">SCO</dfn>: SELECT CHARACTER ORIENTATION
+  <p>[ECMA-48/8.3.110] 以降に受信する図形文字の回転量を指定する。
+    引数は 0-7 で指定し、回転量は反時計回りに引数 x 45度となる。既定値は 0</p>
+</li>
+<li><dfn class="cfunc">DECSCA</dfn>: Select Character Protection Attribute
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECSCA">VT510: DECSCA</a>]
+    以降の文字に DECSED, DECSEL で消去できない属性を付加する。
+    引数 0 (既定値) または 2 を指定した時は DECSED, DECSEL で文字を消去できる。
+    引数 1 を指定すると消去できない。
+  </p>
+  <ul>
+  <li>互換性: VT510 のマニュアルには Level 4 mode のみで利用できると書かれている。</li>
   </ul>
 </li>
 </ul>
