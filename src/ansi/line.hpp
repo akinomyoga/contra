@@ -175,7 +175,26 @@ namespace ansi {
       | is_ideogram_single_rt_set | is_ideogram_double_rt_set
       | is_ideogram_stress_set,
 
-      non_sgr_xflags_mask = is_sub_set | is_sup_set | decdhl_mask | sco_mask | decsca_protected,
+      // bit 25,26: SPA, SSA
+      spa_protected         = (std::uint32_t) 1 << 25,
+      ssa_selected          = (std::uint32_t) 1 << 26,
+      // bit 27,28,29-30: DAQ
+      daq_guarded           = (std::uint32_t) 1 << 27,
+      daq_protected         = (std::uint32_t) 1 << 28,
+      daq_shift = 29,
+      daq_mask  = (std::uint32_t) 0x3 << daq_shift,
+      daq_character_input   = (std::uint32_t) 2  << daq_shift,
+      daq_numeric_input     = (std::uint32_t) 3  << daq_shift,
+      daq_alphabetic_input  = (std::uint32_t) 4  << daq_shift,
+      // daq_input_align_right = (std::uint32_t) 6  << daq_shift,
+      // daq_input_reversed    = (std::uint32_t) 7  << daq_shift,
+      // daq_zero_fill         = (std::uint32_t) 8  << daq_shift,
+      // daq_space_fill        = (std::uint32_t) 9  << daq_shift,
+      // daq_tabstop           = (std::uint32_t) 10 << daq_shift,
+
+      qualifier_mask = decsca_protected | spa_protected | ssa_selected | daq_mask,
+
+      non_sgr_xflags_mask = is_sub_set | is_sup_set | decdhl_mask | sco_mask | qualifier_mask,
     };
 
     aflags_t aflags = 0;
@@ -258,6 +277,12 @@ namespace ansi {
     bool is_zero_width_body() const {
       return width == 0 && !character.is_extension();
     }
+    bool is_protected() const {
+      return attribute.xflags & (attribute_t::spa_protected | attribute_t::daq_protected);
+    }
+    bool is_decsca_protected() const {
+      return attribute.xflags & attribute_t::decsca_protected;
+    }
   };
 
   typedef std::int32_t curpos_t;
@@ -318,8 +343,9 @@ namespace ansi {
 
   enum line_segment_flags {
     line_segment_slice,
-    line_segment_fill,
+    line_segment_erase,
     line_segment_space,
+    line_segment_erase_unprotected,
   };
 
   struct line_segment_t {
@@ -327,15 +353,26 @@ namespace ansi {
     curpos_t p2;
     int type;
   };
-  // for line_t::shift_cells()
-  enum line_shift_flags {
-    line_shift_none            = 0x00,
-    line_shift_left_inclusive  = 0x01,
-    line_shift_right_inclusive = 0x02,
-    line_shift_dcsm            = 0x04,
-    line_shift_r2l             = 0x08,
-  };
 
+  // for line_t::shift_cells()
+  struct line_shift_flags: contra::util::flags<std::uint32_t, line_shift_flags> {
+    using base = contra::util::flags<std::uint32_t, line_shift_flags>;
+    using def = base::def;
+
+    template<typename... Args>
+    line_shift_flags(Args&&... args): base(std::forward<Args>(args)...) {}
+
+    static constexpr def none            = 0x00;
+    static constexpr def left_inclusive  = 0x01;
+    static constexpr def right_inclusive = 0x02;
+    static constexpr def dcsm            = 0x04;
+    static constexpr def r2l             = 0x08;
+
+    /// @var line_shift_flags::erm
+    /// 消去の時 (abs(shift) >= p2 - p1 の時) に保護領域を消去しない事を表すフラグです。
+    /// シフトの場合 (abs(shift) < p2 - p1 の時) には使われません。
+    static constexpr def erm             = 0x10;
+  };
 
   class line_t {
   private:
@@ -378,6 +415,11 @@ namespace ansi {
     curpos_t const& home() const { return m_home; }
     curpos_t& limit() { return m_limit; }
     curpos_t const& limit() const { return m_limit; }
+
+    bool has_protected_cells() const {
+      return std::any_of(m_cells.begin(), m_cells.end(),
+        [] (cell_t const& cell) { return cell.is_protected(); });
+    }
 
   private:
     void _initialize_content(curpos_t width, attribute_t const& attr) {
@@ -580,13 +622,15 @@ namespace ansi {
     character_t char_at(curpos_t x) const {
       if (!m_prop_enabled) {
         if (x < 0 || (std::size_t) x >= m_cells.size()) return ascii_nul;
-        while (x > 0 && m_cells[x].character.is_extension()) x--;
+        //while (x > 0 && m_cells[x].character.is_extension()) x--;
         return m_cells[x].character;
       } else {
-        std::size_t i;
-        curpos_t _;
-        std::tie(i, _) = _prop_glb(x, false);
-        return i < m_cells.size() ? m_cells[i].character : ascii_nul;
+        std::size_t i1;
+        curpos_t x1;
+        std::tie(i1, x1) = _prop_glb(x, false);
+        if (i1 >= m_cells.size()) return ascii_nul;
+        if (x1 < x) return character_t::flag_wide_extension;
+        return m_cells[i1].character;
       }
     }
 
@@ -602,25 +646,29 @@ namespace ansi {
 
     std::vector<nested_string> const& update_strings(curpos_t width, bool line_r2l) const;
 
-  private:
-    curpos_t convert_position(bool toPresentationPosition, curpos_t srcX, curpos_t width, bool line_r2l) const;
+
+  public:
     curpos_t _prop_to_presentation_position(curpos_t x, bool line_r2l) const;
   public:
-    curpos_t to_data_position(curpos_t x, curpos_t width, presentation_direction board_charpath) const {
-      bool const line_r2l = is_r2l(board_charpath);
+    curpos_t convert_position(bool toPresentationPosition, curpos_t srcX, int edge_type, curpos_t width, bool line_r2l) const;
+    curpos_t to_data_position(curpos_t x, curpos_t width, bool line_r2l) const {
       // !m_prop_enabled の時は SDS/SRS も Unicode bidi も存在しない。
       if (!m_prop_enabled) return x;
-      return convert_position(false, x, width, line_r2l);
+      return convert_position(false, x, 0, width, line_r2l);
     }
-    curpos_t to_presentation_position(curpos_t x, curpos_t width, presentation_direction board_charpath) const {
-      bool const line_r2l = is_r2l(board_charpath);
+    curpos_t to_presentation_position(curpos_t x, curpos_t width, bool line_r2l) const {
       // !m_prop_enabled の時は SDS/SRS も Unicode bidi も存在しない。
       if (!m_prop_enabled) return x;
-
       // キャッシュがある時はそれを使った方が速いだろう。
       if (m_strings_version == m_version && m_strings_r2l == line_r2l)
-        return convert_position(true, x, width, line_r2l);
+        return convert_position(true, x, 0, width, line_r2l);
       return _prop_to_presentation_position(x, line_r2l);
+    }
+    curpos_t to_data_position(curpos_t x, curpos_t width, presentation_direction board_charpath) const {
+      return to_data_position(x, width, is_r2l(board_charpath));
+    }
+    curpos_t to_presentation_position(curpos_t x, curpos_t width, presentation_direction board_charpath) const {
+      return to_presentation_position(x, width, is_r2l(board_charpath));
     }
 
   public:
@@ -671,11 +719,14 @@ namespace ansi {
 
   private:
     void _mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr);
+    void _bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr);
     void _prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr);
   public:
     void shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr) {
       if (!m_prop_enabled)
         _mono_shift_cells(p1, p2, shift, flags, width, fill_attr);
+      else if (!(flags & line_shift_flags::dcsm))
+        _bdsm_shift_cells(p1, p2, shift, flags, width, fill_attr);
       else
         _prop_shift_cells(p1, p2, shift, flags, width, fill_attr);
     }
@@ -732,7 +783,7 @@ namespace ansi {
         } else if (code == ascii_nul) {
           std::fprintf(stderr, "\x1b[37m@\x1b[m");
         } else {
-          std::putc((char) code, stderr);
+          contra::encoding::put_u8(code, stderr);
         }
       }
       std::putc('\n', stderr);
@@ -742,6 +793,13 @@ namespace ansi {
   struct cursor_t {
     curpos_t x = 0, y = 0;
     attribute_t attribute;
+
+  public:
+    attribute_t fill_attr() const {
+      attribute_t ret;
+      ret.xflags &= ~attribute_t::qualifier_mask;
+      return ret;
+    }
   };
 
   struct board_t {
@@ -797,7 +855,7 @@ namespace ansi {
   private:
     void initialize_lines(curpos_t y1, curpos_t y2) {
       for (curpos_t y = y1; y < y2; y++)
-        m_lines[y].clear(m_width, cur.attribute);
+        m_lines[y].clear(m_width, cur.fill_attr());
     }
 
   public:

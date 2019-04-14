@@ -23,7 +23,8 @@ std::u32string get_data_content(board_t& board) {
   for (curpos_t x = 0; x < board.m_width; x++) {
     //curpos_t const x = board.to_presentation_position(board.cur.y, p);
     char32_t c = board.line().char_at(x).value;
-    buff.push_back(c == U'\0' ? U'@' : c);
+    if (!(c & character_t::flag_wide_extension))
+      buff.push_back(c == U'\0' ? U'@' : c);
   }
   return std::u32string(buff.begin(), buff.end());
 }
@@ -32,7 +33,8 @@ std::u32string get_presentation_content(board_t& board) {
   for (curpos_t p = 0; p < board.m_width; p++) {
     curpos_t const x = board.to_data_position(board.cur.y, p);
     char32_t c = board.line().char_at(x).value;
-    buff.push_back(c == U'\0' ? U'@' : c);
+    if (!(c & character_t::flag_wide_extension))
+      buff.push_back(c == U'\0' ? U'@' : c);
   }
   if (board.line_r2l())
     std::reverse(buff.begin(), buff.end());
@@ -42,10 +44,10 @@ bool check_strings(const char* title, const char32_t* result, const char32_t* ex
   if (contra::strcmp(result, expected) == 0) return true;
   std::fprintf(stderr, "%s\n", title);
   std::fprintf(stderr, "  result: ");
-  while (*result) std::putc((char) *result++, stderr);
+  while (*result) contra::encoding::put_u8(*result++, stderr);
   std::putc('\n', stderr);
   std::fprintf(stderr, "  expect: ");
-  while (*expected) std::putc((char) *expected++, stderr);
+  while (*expected) contra::encoding::put_u8(*expected++, stderr);
   std::putc('\n', stderr);
   std::fflush(stderr);
   return false;
@@ -243,11 +245,39 @@ void test_presentation() {
     curpos_t const x = board.to_data_position(0, p);
     curpos_t const p2 = board.to_presentation_position(0, x);
     char32_t c = board.line().char_at(x).value;
-    buff.push_back(c == U'\0' ? U'@' : c);
+    if (!(c & character_t::flag_wide_extension))
+      buff.push_back(c == U'\0' ? U'@' : c);
     mwg_check(p == p2, "p=%d -> x=%d -> p=%d", p, x, p2);
   }
   std::u32string result(buff.begin(), buff.end());
   mwg_check(result == U"abpoefhgijlkmndcqr");
+
+
+  bool const line_r2l = board.line_r2l();
+  term.printt("\x1b[H\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
+  mwg_check(check_presentation_content(board, U"abpoefhgijlkmndcqr"));
+  curpos_t data_positions[18][2] = {
+    {0, 1}, {1, 2}, {16, 15}, {15, 14}, {4, 5}, {5, 6},
+    {8, 7}, {7, 6}, {8, 9}, {9, 10}, {12, 11}, {11, 10},
+    {12, 13}, {13, 14}, {4, 3}, {3, 2}, {16, 17}, {17,18},
+  };
+  for (std::size_t i = 0; i < std::size(data_positions); i++) {
+    auto const ledge  = board.line().convert_position(false, i    , -1, board.m_width, line_r2l);
+    auto const redge  = board.line().convert_position(false, i + 1, +1, board.m_width, line_r2l);
+    auto const center = board.line().convert_position(false, i    ,  0, board.m_width, line_r2l);
+    mwg_check(ledge == data_positions[i][0], "to_data: i=%d result=%d expected=%d", i, ledge, data_positions[i][0]);
+    mwg_check(redge == data_positions[i][1], "to_data: i=%d result=%d expected=%d", i, redge, data_positions[i][1]);
+    mwg_check(center == std::min(data_positions[i][0], data_positions[i][1]),
+      "i=%d result=%d expected=%d", i, redge, std::min(data_positions[i][0], data_positions[i][1]));
+
+    curpos_t const p0 = data_positions[i][0];
+    curpos_t const p1 = data_positions[i][1];
+    auto const pres_edge0 = board.line().convert_position(true, p0, p0 < p1 ? -1 : +1, board.m_width, line_r2l);
+    auto const pres_edge1 = board.line().convert_position(true, p1, p0 < p1 ? +1 : -1, board.m_width, line_r2l);
+    mwg_check(pres_edge0 == (curpos_t) i    , "to_pres: in=%d out=%d expected=%d", p0, pres_edge0, i);
+    mwg_check(pres_edge1 == (curpos_t) i + 1, "to_pres: in=%d out=%d expected=%d", p1, pres_edge1, i);
+  }
+
 }
 
 void test_ech() {
@@ -383,6 +413,61 @@ void test_ech() {
   board.line().clear();
 }
 
+void test_erm() {
+  using namespace contra::ansi;
+  board_t board(20, 1);
+  term_t term(board);
+
+  // 全角
+  term.printt("\x1b[H日本語日本語日本語");
+  term.printt("\x1b[1;4H\x1b[12X");
+  mwg_check(check_presentation_content(board, U"日 @@@@@@@@@@@@ 語@@"));
+
+  // SPA-EPA (mono)
+  term.printt("\x1b[Hab\eVcdef\eWghij\eVklmn\eWopqr");
+  mwg_check(check_presentation_content(board, U"abcdefghijklmnopqr@@"));
+  term.printt("\x1b[1;2H\x1b[14X");
+  mwg_check(check_presentation_content(board, U"a@cdef@@@@klmn@pqr@@"));
+  term.printt("\x1b[H日本\eV語日\eW本\eV語日\eW本語");
+  mwg_check(check_presentation_content(board, U"日本語日本語日本語@@"));
+  term.printt("\x1b[1;4H\x1b[12X");
+  mwg_check(check_presentation_content(board, U"日 @語日@@語日@ 語@@"));
+  term.printt("\x1b[H日本\eV語日\eW本\eV語日\eW本語");
+  term.printt("\x1b[1;6H\x1b[8X");
+  mwg_check(check_presentation_content(board, U"日本語日@@語日本語@@"));
+  board.line().clear();
+
+  // SPA-EPA (prop)
+  term.printt("\x1b[Hab\eVcd\x1b[2]ef\eWgh\eVij\eWklmn\x1b[0]opqr");
+  mwg_check(check_presentation_content(board, U"abcdnmlkjihgfeopqr@@"));
+  term.printt("\x1b[H\x1b[16X");
+  mwg_check(check_presentation_content(board, U"@@cdfe@@ij@@@@@@qr@@"));
+  board.line().clear();
+
+  // SPA-EPA (prop&presentation)
+  term.printt("\x1b[9l"); // DCSM(PRESENTATION)
+  term.printt("\x1b[Hab\eVcd\x1b[2]ef\eWgh\eVij\eWklmn\x1b[0]opqr");
+  mwg_check(check_presentation_content(board, U"abcdnmlkjihgfeopqr@@"));
+  term.printt("\x1b[H\x1b[16X");
+  mwg_check(check_presentation_content(board, U"@@cdfe@@ij@@@@@@qr@@"));
+  term.printt("\x1b[Hab\eVcd\x1b[2]ef\eWgh\eVij\eWklmn\x1b[0]opqr");
+  term.printt("\x1b[1;10H\x1b[7X");
+  mwg_check(check_presentation_content(board, U"abcdnmlkjef@@i@@qr@@"));
+  term.printt("\x1b[H日本語\x1b[2]日本語\x1b[]日本語");
+  mwg_check(check_presentation_content(board, U"日本語語本日日本語@@"));
+  term.printt("\x1b[1;6H\x1b[6X");
+  mwg_check(check_presentation_content(board, U"日本 @@@@@@ 日本語@@"));
+  term.printt("\x1b[H日本\eV語\x1b[2]日本\eW語\x1b[]日本語");
+  mwg_check(check_presentation_content(board, U"日本語語本日日本語@@"));
+  term.printt("\x1b[1;6H\x1b[6X");
+  mwg_check(check_presentation_content(board, U"日本語本日@@日本語@@"));
+  term.printt("\x1b[H日本\eV語\x1b[2]日本\eW語\x1b[]日本語");
+  term.printt("\x1b[1;7H\x1b[6X");
+  mwg_check(check_presentation_content(board, U"日本語日本@@日本語@@"));
+  term.printt("\x1b[9h"); // DCSM(DATA);
+  board.line().clear();
+}
+
 void test_sgr() {
   using namespace contra::ansi;
   board_t board(20, 10);
@@ -413,6 +498,7 @@ int main() {
     test_strings();
     test_presentation();
     test_ech();
+    test_erm();
     test_sgr();
   } catch(mwg::assertion_error& e) {}
   return 0;

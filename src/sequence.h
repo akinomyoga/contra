@@ -43,7 +43,7 @@ namespace contra {
     byte final() const {return m_final;}
 
     bool is_private_csi() const {
-      return !(parameter_size() == 0 || (ascii_0 <= m_content[0] && m_content[0] <= ascii_semicolon));
+      return parameter_size() != 0 && ascii_less <= m_content[0] && m_content[0] <= ascii_question;
     }
 
     char32_t const* parameter() const {

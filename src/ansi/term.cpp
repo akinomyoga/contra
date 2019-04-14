@@ -886,19 +886,6 @@ namespace {
     return true;
   }
 
-  bool do_decsca(term_t& term, csi_parameters& params) {
-    csi_single_param_t param;
-    params.read_param(param, 0);
-    if (param > 2) return false;
-
-    xflags_t& xflags = term.board().cur.attribute.xflags;
-    if (param == 1)
-      xflags |= (xflags_t) attribute_t::decsca_protected;
-    else
-      xflags &= ~(xflags_t) attribute_t::decsca_protected;
-    return true;
-  }
-
   void do_plu(term_t& term) {
     xflags_t& xflags = term.board().cur.attribute.xflags;
     if (xflags & attribute_t::is_sub_set)
@@ -913,6 +900,32 @@ namespace {
       xflags &= ~(xflags_t) attribute_t::is_sup_set;
     else
       xflags |= attribute_t::is_sub_set;
+  }
+
+  bool do_decsca(term_t& term, csi_parameters& params) {
+    csi_single_param_t param;
+    params.read_param(param, 0);
+    if (param > 2) return false;
+
+    xflags_t& xflags = term.board().cur.attribute.xflags;
+    if (param == 1)
+      xflags |= (xflags_t) attribute_t::decsca_protected;
+    else
+      xflags &= ~(xflags_t) attribute_t::decsca_protected;
+    return true;
+  }
+
+  void do_spa(term_t& term) {
+    term.board().cur.attribute.xflags |= (xflags_t) attribute_t::spa_protected;
+  }
+  void do_epa(term_t& term) {
+    term.board().cur.attribute.xflags &= ~(xflags_t) attribute_t::spa_protected;
+  }
+  void do_ssa(term_t& term) {
+    term.board().cur.attribute.xflags |= (xflags_t) attribute_t::ssa_selected;
+  }
+  void do_esa(term_t& term) {
+    term.board().cur.attribute.xflags &= ~(xflags_t) attribute_t::ssa_selected;
   }
 
   //---------------------------------------------------------------------------
@@ -930,12 +943,13 @@ namespace {
     }
 
     board_t& b = term.board();
-    line_shift_flags flags = b.line_r2l() ? line_shift_r2l : line_shift_none;
+    line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
+    if (s.get_mode(mode_erm)) flags |= line_shift_flags::erm;
 
     curpos_t x1;
     if (s.get_mode(mode_dcsm)) {
       // DCSM(DATA)
-      flags = line_shift_flags(flags | line_shift_dcsm);
+      flags |= line_shift_flags::dcsm;
       x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
     } else {
       // DCSM(PRESENTATION)
@@ -945,7 +959,7 @@ namespace {
     }
 
     curpos_t const x2 = std::min(x1 + (curpos_t) param, b.m_width);
-    b.line().shift_cells(x1, x2, x2 - x1, flags, b.m_width, b.cur.attribute);
+    b.line().shift_cells(x1, x2, x2 - x1, flags, b.m_width, b.cur.fill_attr());
 
     // カーソル位置
     if (!s.get_mode(mode_dcsm))
@@ -958,12 +972,12 @@ namespace {
   static void do_ich_impl(term_t& term, curpos_t shift) {
     board_t& b = term.board();
     tty_state const& s = term.state();
-    line_shift_flags flags = b.line_r2l() ? line_shift_r2l : line_shift_none;
+    line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
 
     curpos_t x1;
     if (s.get_mode(mode_dcsm)) {
       // DCSM(DATA)
-      flags = line_shift_flags(flags | line_shift_dcsm);
+      flags |= line_shift_flags::dcsm;
       x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
     } else {
       // DCSM(PRESENTATION)
@@ -972,9 +986,9 @@ namespace {
     }
 
     if (!s.get_mode(mode_hem))
-      b.line().shift_cells(x1, b.m_width, shift, flags, b.m_width, b.cur.attribute);
+      b.line().shift_cells(x1, b.m_width, shift, flags, b.m_width, b.cur.fill_attr());
     else
-      b.line().shift_cells(0, x1 + 1, -shift, flags, b.m_width, b.cur.attribute);
+      b.line().shift_cells(0, x1 + 1, -shift, flags, b.m_width, b.cur.fill_attr());
 
     // カーソル位置
     if (s.get_mode(mode_dcsm)) {
@@ -1020,11 +1034,11 @@ namespace {
 
   static void do_el(board_t& b, tty_state& s, csi_single_param_t param) {
     if (param != 0 && param != 1) {
-      b.line().clear_content(b.m_width, b.cur.attribute);
+      b.line().clear_content(b.m_width, b.cur.fill_attr());
     } else if (s.get_mode(mode_dcsm)) {
       // DCSM(DATA)
       cell_t fill = ascii_nul;
-      fill.attribute = b.cur.attribute;
+      fill.attribute = b.cur.fill_attr();
       curpos_t const x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
       if (param == 0)
         b.line().write_cells(x1, &fill, 1, b.m_width - x1, 1);
@@ -1039,13 +1053,13 @@ namespace {
       if (line_r2l != (param == 1)) {
         curpos_t p0 = p + 1;
         line_segment_t segs[2] = {
-          {0, p0, line_segment_fill},
+          {0, p0, line_segment_erase},
           {p0, b.m_width, line_segment_slice},
         };
-        b.line().compose_segments(segs, std::size(segs), b.m_width, line_r2l, b.cur.attribute);
+        b.line().compose_segments(segs, std::size(segs), b.m_width, line_r2l, b.cur.fill_attr());
       } else {
         line_segment_t seg = {0, p, line_segment_slice};
-        b.line().compose_segments(&seg, 1, b.m_width, line_r2l, b.cur.attribute);
+        b.line().compose_segments(&seg, 1, b.m_width, line_r2l, b.cur.fill_attr());
       }
     }
   }
@@ -1066,15 +1080,15 @@ namespace {
     board_t& b = term.board();
     if (param != 0 && param != 1) {
       for (line_t& line : b.m_lines)
-        line.clear_content(b.m_width, b.cur.attribute);
+        line.clear_content(b.m_width, b.cur.fill_attr());
     } else {
       do_el(b, s, param);
       if (param == 0) {
         for (curpos_t y = b.cur.y + 1; y < b.m_height; y++)
-          b.m_lines[y].clear_content(b.m_width, b.cur.attribute);
+          b.m_lines[y].clear_content(b.m_width, b.cur.fill_attr());
       } else {
         for (curpos_t y = 0; y < b.cur.y; y++)
-          b.m_lines[y].clear_content(b.m_width, b.cur.attribute);
+          b.m_lines[y].clear_content(b.m_width, b.cur.fill_attr());
       }
     }
 

@@ -35,6 +35,7 @@ namespace ansi {
     dec_mode    = 1, // CSI ? Ps h
     contra_mode = 2, // private mode
 
+    mode_erm  = construct_mode_spec( 6, ansi_mode,  6),
     mode_vem  = construct_mode_spec( 7, ansi_mode,  7),
     mode_dcsm = construct_mode_spec( 9, ansi_mode,  9),
     mode_hem  = construct_mode_spec(10, ansi_mode, 10),
@@ -48,7 +49,6 @@ namespace ansi {
     mode_crm  = construct_mode_spec( 3, ansi_mode,  3),
     mode_irm  = construct_mode_spec( 4, ansi_mode,  4),
     mode_srtm = construct_mode_spec( 5, ansi_mode,  5),
-    mode_erm  = construct_mode_spec( 6, ansi_mode,  6),
     mode_bdsm = construct_mode_spec( 8, ansi_mode,  8),
     mode_pum  = construct_mode_spec(11, ansi_mode, 11),
     mode_srm  = construct_mode_spec(12, ansi_mode, 12),
@@ -82,6 +82,10 @@ namespace ansi {
   void do_plu(term_t& term);
   void do_decsc(term_t& term);
   void do_decrc(term_t& term);
+  void do_spa(term_t& term);
+  void do_epa(term_t& term);
+  void do_ssa(term_t& term);
+  void do_esa(term_t& term);
 
   struct tty_state {
     curpos_t page_home  {-1};
@@ -129,8 +133,9 @@ namespace ansi {
 
     void initialize_mode() {
       std::fill(std::begin(m_mode_flags), std::end(m_mode_flags), 0);
-      set_mode(mode_lnm);
+      set_mode(mode_erm);
       set_mode(mode_dcsm);
+      set_mode(mode_lnm);
       set_mode(mode_grcm);
       set_mode(mode_zdm);
       set_mode(mode_decawm);
@@ -466,6 +471,10 @@ namespace ansi {
 
       case ascii_pld: do_pld(*this); break;
       case ascii_plu: do_plu(*this); break;
+      case ascii_spa: do_spa(*this); break;
+      case ascii_epa: do_epa(*this); break;
+      case ascii_ssa: do_ssa(*this); break;
+      case ascii_esa: do_esa(*this); break;
       }
     }
 
