@@ -178,21 +178,21 @@ namespace ansi {
       // bit 25,26: SPA, SSA
       spa_protected         = (std::uint32_t) 1 << 25,
       ssa_selected          = (std::uint32_t) 1 << 26,
-      // bit 27,28,29-30: DAQ
+      // bit 27,28: DAQ
       daq_guarded           = (std::uint32_t) 1 << 27,
       daq_protected         = (std::uint32_t) 1 << 28,
-      daq_shift = 29,
-      daq_mask  = (std::uint32_t) 0x3 << daq_shift,
-      daq_character_input   = (std::uint32_t) 2  << daq_shift,
-      daq_numeric_input     = (std::uint32_t) 3  << daq_shift,
-      daq_alphabetic_input  = (std::uint32_t) 4  << daq_shift,
+      // daq_shift = 29,
+      // daq_mask  = (std::uint32_t) 0x3 << daq_shift,
+      // daq_character_input   = (std::uint32_t) 2  << daq_shift,
+      // daq_numeric_input     = (std::uint32_t) 3  << daq_shift,
+      // daq_alphabetic_input  = (std::uint32_t) 4  << daq_shift,
       // daq_input_align_right = (std::uint32_t) 6  << daq_shift,
       // daq_input_reversed    = (std::uint32_t) 7  << daq_shift,
       // daq_zero_fill         = (std::uint32_t) 8  << daq_shift,
       // daq_space_fill        = (std::uint32_t) 9  << daq_shift,
       // daq_tabstop           = (std::uint32_t) 10 << daq_shift,
 
-      qualifier_mask = decsca_protected | spa_protected | ssa_selected | daq_mask,
+      qualifier_mask = decsca_protected | spa_protected | ssa_selected | daq_guarded | daq_protected,
 
       non_sgr_xflags_mask = is_sub_set | is_sup_set | decdhl_mask | sco_mask | qualifier_mask,
     };
@@ -644,13 +644,27 @@ namespace ansi {
         return is_charpath_rtol(board_charpath);
     }
 
+  public:
     std::vector<nested_string> const& update_strings(curpos_t width, bool line_r2l) const;
 
-
-  public:
+  private:
     curpos_t _prop_to_presentation_position(curpos_t x, bool line_r2l) const;
   public:
+    /// @fn curpos_t convert_position(bool toPresentationPosition, curpos_t srcX, int edge_type, curpos_t width, bool line_r2l) const;
+    ///   表示位置とデータ位置の間の変換を行います。
+    /// @param[in] toPresentationPosition
+    ///   true の時データ位置から表示位置に変換します。false の時データ位置から表示位置に変換します。
+    /// @param[in] srcX
+    ///   変換元のx座標です。
+    /// @param[in] edge_type
+    ///   0 の時文字の位置として変換します。-1 の時、文字の左端として変換します。1 の時文字の右端として変換します。
+    /// @param[in] width
+    ///   画面の横幅を指定します。
+    /// @param[in] line_r2l
+    ///   その行の r2l 値を指定します。
+    ///   その行の既定の文字進路 (表示部) と文字進行 (データ部) の向きが一致しない時に true を指定します。
     curpos_t convert_position(bool toPresentationPosition, curpos_t srcX, int edge_type, curpos_t width, bool line_r2l) const;
+  public:
     curpos_t to_data_position(curpos_t x, curpos_t width, bool line_r2l) const {
       // !m_prop_enabled の時は SDS/SRS も Unicode bidi も存在しない。
       if (!m_prop_enabled) return x;
@@ -677,7 +691,7 @@ namespace ansi {
 
   public:
     /// @fn std::size_t find_innermost_string(curpos_t x, bool left, curpos_t width, bool line_r2l) const;
-    /// 指定した位置がどの入れ子文字列の属しているかを取得します。
+    /// 指定した位置がどの入れ子文字列に属しているかを取得します。
     /// @param[in] x 入れ子状態を調べるデータ位置を指定します。
     /// @param[in] left 入れ子状態を調べる位置が境界上の零幅文字の左側か右側かを指定します。
     ///   この引数が true の時に境界上の零幅文字の左側に於ける状態を取得します。

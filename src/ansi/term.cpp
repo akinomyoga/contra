@@ -947,7 +947,7 @@ namespace {
     if (s.get_mode(mode_erm)) flags |= line_shift_flags::erm;
 
     curpos_t x1;
-    if (s.get_mode(mode_dcsm)) {
+    if (s.dcsm()) {
       // DCSM(DATA)
       flags |= line_shift_flags::dcsm;
       x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
@@ -962,7 +962,7 @@ namespace {
     b.line().shift_cells(x1, x2, x2 - x1, flags, b.m_width, b.cur.fill_attr());
 
     // カーソル位置
-    if (!s.get_mode(mode_dcsm))
+    if (!s.dcsm())
       x1 = b.to_data_position(b.cur.y, x1);
     b.cur.x = x1;
 
@@ -975,7 +975,7 @@ namespace {
     line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
 
     curpos_t x1;
-    if (s.get_mode(mode_dcsm)) {
+    if (s.dcsm()) {
       // DCSM(DATA)
       flags |= line_shift_flags::dcsm;
       x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
@@ -991,7 +991,7 @@ namespace {
       b.line().shift_cells(0, x1 + 1, -shift, flags, b.m_width, b.cur.fill_attr());
 
     // カーソル位置
-    if (s.get_mode(mode_dcsm)) {
+    if (s.dcsm()) {
       if (s.get_mode(mode_home_il)) x1 = b.line_home();
     } else {
       x1 = s.get_mode(mode_home_il) ? b.line_home() : b.to_data_position(b.cur.y, x1);
@@ -1032,43 +1032,41 @@ namespace {
   //---------------------------------------------------------------------------
   // EL, IL, DL
 
-  static void do_el(board_t& b, tty_state& s, csi_single_param_t param) {
+  static void do_el(board_t& b, tty_state& s, line_t& line, csi_single_param_t param) {
     if (param != 0 && param != 1) {
-      b.line().clear_content(b.m_width, b.cur.fill_attr());
-    } else if (s.get_mode(mode_dcsm)) {
-      // DCSM(DATA)
-      cell_t fill = ascii_nul;
-      fill.attribute = b.cur.fill_attr();
-      curpos_t const x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
-      if (param == 0)
-        b.line().write_cells(x1, &fill, 1, b.m_width - x1, 1);
-      else
-        b.line().write_cells(0, &fill, 1, x1 + 1, -1);
-    } else {
-      // DCSM(PRESENTATION)
-      bool const line_r2l = b.line().is_r2l(b.m_presentation_direction);
-      curpos_t p = b.to_presentation_position(b.cur.y, b.cur.x);
-      if (p >= b.m_width) p = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
-
-      if (line_r2l != (param == 1)) {
-        curpos_t p0 = p + 1;
-        line_segment_t segs[2] = {
-          {0, p0, line_segment_erase},
-          {p0, b.m_width, line_segment_slice},
-        };
-        b.line().compose_segments(segs, std::size(segs), b.m_width, line_r2l, b.cur.fill_attr());
-      } else {
-        line_segment_t seg = {0, p, line_segment_slice};
-        b.line().compose_segments(&seg, 1, b.m_width, line_r2l, b.cur.fill_attr());
-      }
+      if (s.get_mode(mode_erm) && line.has_protected_cells()) {
+        line_shift_flags flags = line_shift_flags::erm;
+        if (line.is_r2l(b.m_presentation_direction)) flags |= line_shift_flags::r2l;
+        if (s.dcsm()) flags |= line_shift_flags::dcsm;
+        line.shift_cells(0, b.m_width, b.m_width, flags, b.m_width, b.cur.fill_attr());
+      } else
+        line.clear_content(b.m_width, b.cur.fill_attr());
+      return;
     }
+
+    line_shift_flags flags = 0;
+    if (s.get_mode(mode_erm)) flags |= line_shift_flags::erm;
+    if (line.is_r2l(b.m_presentation_direction)) flags |= line_shift_flags::r2l;
+    if (s.dcsm()) flags |= line_shift_flags::dcsm;
+
+    curpos_t x1 = b.cur.x;
+    if (!s.dcsm()) x1 = b.to_presentation_position(b.cur.y, x1);
+    if (x1 >= b.m_width) x1 = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
+
+    if (param == 0)
+      line.shift_cells(x1, b.m_width, b.m_width - x1, flags, b.m_width, b.cur.fill_attr());
+    else
+      line.shift_cells(0, x1 + 1, x1 + 1, flags, b.m_width, b.cur.fill_attr());
+
+    if (!s.dcsm()) x1 = b.to_data_position(b.cur.y, x1);
+    b.cur.x = x1;
   }
 
   bool do_el(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 0);
-    do_el(term.board(), s, param);
+    board_t& b = term.board();
+    do_el(b, term.state(), b.line(), param);
     return true;
   }
 
@@ -1078,18 +1076,27 @@ namespace {
     params.read_param(param, 0);
 
     board_t& b = term.board();
+    curpos_t y1 = 0, y2 = 0;
     if (param != 0 && param != 1) {
-      for (line_t& line : b.m_lines)
-        line.clear_content(b.m_width, b.cur.fill_attr());
+      y1 = 0;
+      y2 = b.m_height;
     } else {
-      do_el(b, s, param);
+      do_el(b, s, b.line(), param);
       if (param == 0) {
-        for (curpos_t y = b.cur.y + 1; y < b.m_height; y++)
-          b.m_lines[y].clear_content(b.m_width, b.cur.fill_attr());
+        y1 = b.cur.y + 1;
+        y2 = b.m_height;
       } else {
-        for (curpos_t y = 0; y < b.cur.y; y++)
-          b.m_lines[y].clear_content(b.m_width, b.cur.fill_attr());
+        y1 = 0;
+        y2 = b.cur.y;
       }
+    }
+
+    if (s.get_mode(mode_erm)) {
+      for (curpos_t y = y1; y < y2; y++)
+        do_el(b, s, b.m_lines[y], 2);
+    } else {
+      for (curpos_t y = y1; y < y2; y++)
+        b.m_lines[y].clear_content(b.m_width, b.cur.fill_attr());
     }
 
     return true;
@@ -1110,7 +1117,7 @@ namespace {
 
     // カーソル表示位置
     curpos_t p = 0;
-    if (!s.get_mode(mode_home_il) && !s.get_mode(mode_dcsm))
+    if (!s.get_mode(mode_home_il) && !s.dcsm())
       p = b.to_presentation_position(b.cur.y, b.cur.x);
 
     // 挿入
@@ -1120,7 +1127,7 @@ namespace {
     if (s.get_mode(mode_home_il)) {
       term.initialize_line(b.line());
       b.cur.x = b.line_home();
-    } else if (!s.get_mode(mode_dcsm))
+    } else if (!s.dcsm())
       b.cur.x = b.to_data_position(b.cur.y, p);
     return true;
   }
@@ -1140,7 +1147,7 @@ namespace {
 
     // カーソル表示位置
     curpos_t p = 0;
-    if (!s.get_mode(mode_home_il) && !s.get_mode(mode_dcsm))
+    if (!s.get_mode(mode_home_il) && !s.dcsm())
       p = b.to_presentation_position(b.cur.y, b.cur.x);
 
     // 削除
@@ -1150,7 +1157,7 @@ namespace {
     if (s.get_mode(mode_home_il)) {
       term.initialize_line(b.line());
       b.cur.x = b.line_home();
-    } else if (!s.get_mode(mode_dcsm))
+    } else if (!s.dcsm())
       b.cur.x = b.to_data_position(b.cur.y, p);
     return true;
   }

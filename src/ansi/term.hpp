@@ -37,6 +37,7 @@ namespace ansi {
 
     mode_erm  = construct_mode_spec( 6, ansi_mode,  6),
     mode_vem  = construct_mode_spec( 7, ansi_mode,  7),
+    mode_bdsm = construct_mode_spec( 8, ansi_mode,  8),
     mode_dcsm = construct_mode_spec( 9, ansi_mode,  9),
     mode_hem  = construct_mode_spec(10, ansi_mode, 10),
     mode_lnm  = construct_mode_spec(20, ansi_mode, 20),
@@ -49,7 +50,6 @@ namespace ansi {
     mode_crm  = construct_mode_spec( 3, ansi_mode,  3),
     mode_irm  = construct_mode_spec( 4, ansi_mode,  4),
     mode_srtm = construct_mode_spec( 5, ansi_mode,  5),
-    mode_bdsm = construct_mode_spec( 8, ansi_mode,  8),
     mode_pum  = construct_mode_spec(11, ansi_mode, 11),
     mode_srm  = construct_mode_spec(12, ansi_mode, 12),
     mode_feam = construct_mode_spec(13, ansi_mode, 13),
@@ -134,6 +134,7 @@ namespace ansi {
     void initialize_mode() {
       std::fill(std::begin(m_mode_flags), std::end(m_mode_flags), 0);
       set_mode(mode_erm);
+      set_mode(mode_bdsm);
       set_mode(mode_dcsm);
       set_mode(mode_lnm);
       set_mode(mode_grcm);
@@ -165,6 +166,8 @@ namespace ansi {
       else
         flags &= ~bit;
     }
+
+    bool dcsm() const { return !get_mode(mode_bdsm) || get_mode(mode_dcsm); }
 
   public:
     void do_bel() {
@@ -331,14 +334,14 @@ namespace ansi {
       m_board->cur.x = x;
     }
     void do_ind() {
-      do_generic_ff(1, true, !m_state.get_mode(mode_dcsm));
+      do_generic_ff(1, true, !m_state.dcsm());
     }
     void do_ri() {
-      do_generic_ff(-1, true, !m_state.get_mode(mode_dcsm));
+      do_generic_ff(-1, true, !m_state.dcsm());
     }
     void do_lf() {
       bool const toCallCR = m_state.get_mode(mode_lnm);
-      do_generic_ff(1, true, !toCallCR && !m_state.get_mode(mode_dcsm));
+      do_generic_ff(1, true, !toCallCR && !m_state.dcsm());
       if (toCallCR) do_cr();
     }
     void do_ff() {
@@ -383,7 +386,7 @@ namespace ansi {
         x = m_board->line_home();
       }
 
-      if (!m_state.get_mode(mode_dcsm))
+      if (!m_state.dcsm())
         x = m_board->to_data_position(m_board->cur.y, x);
 
       m_board->cur.x = x;
