@@ -1144,9 +1144,21 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </li>
 <li><dfn class="cfunc">DECRQM</dfn>: Request Mode</li>
 <li><dfn class="cfunc">DECRPM</dfn>: Report Mode
-  <p>DECRQM で現在の状態を問い合わせる。端末から DECRPM によって現在の状態を応答する。</p>
+  <p>DECRQM で現在の状態を問い合わせる。
+    一度に一つのモードについてのみ尋ねる事が可能である。
+    端末から DECRPM によって現在の状態を応答する。
+    第一引数にはモードの番号を返し、第二引数に状態を返す。
+  </p>
+  <table class="normal center">
+  <tr><th>第2引数</th><th>意味</th></tr>
+  <tr><td>0</td><td>認識できないモード</td></tr>
+  <tr><td>1</td><td>SM</td></tr>
+  <tr><td>2</td><td>RM</td></tr>
+  <tr><td>3</td><td>SM (固定)</td></tr>
+  <tr><td>4</td><td>RM (固定)</td></tr>
+  </table>
   <ul>
-  <li>互換性: vt420 <a href="http://www.vt100.net/docs/vt510-rm/DECRQM">VT510: DECRQM</a> <a href="http://www.vt100.net/docs/vt510-rm/DECRQM">VT510: DECRPM</a></li>
+  <li>互換性: vt420 <a href="http://www.vt100.net/docs/vt510-rm/DECRQM">VT510: DECRQM</a> <a href="http://www.vt100.net/docs/vt510-rm/DECRPM">VT510: DECRPM</a></li>
   </ul>
 </li>
 </ul>
@@ -1185,38 +1197,56 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th><del>LNM (LF/NL)</del></th><td>20</td><td><del>Line Feed/New Line Mode</del> (廃止)</td></tr>
 <tr><th>GRCM</th> <td>21</td><td>Graphic Rendition Combination</td></tr>
 <tr><th>ZDM</th>  <td>22</td><td>Zero Default Mode (deprecated)</td></tr>
-<tr><th>DECOM</th>              <td>?6</td>  <td></td></tr>
-<tr><th>DECAWM</th>             <td>?7</td>  <td></td></tr>
-<tr><th>DECTCEM</th>            <td>?25</td>  <td></td></tr>
-<tr><th>smSendMouse</th>        <td>?1000</td><td></td></tr>
-<tr><th>smMouseMotionHilite</th><td>?1001</td><td></td></tr>
-<tr><th>smMouseMotionCell</th>  <td>?1002</td><td></td></tr>
-<tr><th>smMouseMotionAll</th>   <td>?1003</td><td></td></tr>
-<tr><th>smSendFocus</th>        <td>?1004</td><td></td></tr>
-<tr><th>smExMouseUtf8</th>      <td>?1005</td><td></td></tr>
-<tr><th>smExMouseSgr</th>       <td>?1006</td><td></td></tr>
-<tr><th>smExMouseUrxvt</th>     <td>?1015</td><td></td></tr>
+<tr><th>wySTCURM<sup>違反</sup></th><td>32</td><td></td></tr>
+<tr><th>WYSTCURM<sup>違反</sup></th><td>33</td><td></td></tr>
+<tr><th>WYULCURM<sup>違反</sup></th><td>34</td><td></td></tr>
+</table>
+<table class="normal center">
+<tr><th>略号</th><th>Mode</th></tr>
+<tr><th>DECCKM</th>              <td>?1</td>  </tr>
+<tr><th>DECOM</th>              <td>?6</td>  </tr>
+<tr><th>DECAWM</th>             <td>?7</td>  </tr>
+<tr><th>attBLCURM</th>           <td>?12</td>  </tr>
+<tr><th>DECSCFDM (ref: all-espaces)<br/>xtCursorBlink</th><td>?13</td></tr>
+<tr><th>DECTEM (ref: all-espaces)<br/>xtCursorBlinkXOR</th><td>?14</td></tr>
+<tr><th>DECTCEM</th>            <td>?25</td>  </tr>
+<tr><th>smSendMouse</th>        <td>?1000</td></tr>
+<tr><th>smMouseMotionHilite</th><td>?1001</td></tr>
+<tr><th>smMouseMotionCell</th>  <td>?1002</td></tr>
+<tr><th>smMouseMotionAll</th>   <td>?1003</td></tr>
+<tr><th>smSendFocus</th>        <td>?1004</td></tr>
+<tr><th>smExMouseUtf8</th>      <td>?1005</td></tr>
+<tr><th>smExMouseSgr</th>       <td>?1006</td></tr>
+<tr><th>smExMouseUrxvt</th>     <td>?1015</td></tr>
+<tr><th>smBracketedPasteMode</th><td>?2004</td></tr>
 </table>
 
 <ul>
 <li>Mode 3 <dfn class="cmode">CRM</dfn>: CONTROL REPRESENTATION MODE (Show Control Character Mode) [既定値 off]
-  <p><dfn class="cmode-rm">CONTROL</dfn> (RM): 全ての制御機能を通常通りに処理する。</p>
-  <p><dfn class="cmode-sm">GRAPHIC</dfn> (SM): RM 以外の受信した全ての制御機能を実行せずに図形文字として表示する。</p>
+  <ul>
+  <li><dfn class="cmode-rm">CONTROL</dfn> (RM): 全ての制御機能を通常通りに処理する。</li>
+  <li><dfn class="cmode-sm">GRAPHIC</dfn> (SM): RM 以外の受信した全ての制御機能を実行せずに図形文字として表示する。</li>
+  </ul>
   <ul>
   <li>互換性: [ECMA-48/7.2.2], VT100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/CRM">VT510: CRM</a></li>
   </ul>
 </li>
+<li>Mode ?1 <dfn class="cmode">DECCKM</dfn>: Cursor Keys Mode
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECCKM">VT510/DECCKM</a>]
+    設定されている時、矢印キーによる入力を <kbd>ESC O A</kbd> 等の形式で送信する。
+    解除されている時、矢印キーによる入力を <kbd>ESC [ A</kbd> 等の形式で送信する。
+  </p>
+</li>
+<li>Mode ?2004 <dfn class="cmode">smBracketedPasteMode</dfn>: Bracketed Paste Mode
+  <p>[xterm] 設定されている時、貼り付けによる入力内容を <kbd>CSI 2 0 0 ~</kbd> と
+    <kbd>CSI 2 0 1 ~</kbd> で囲んでアプリケーションに送信する。
+  </p>
+</li>
 </ul>
 
 <!--...................................................................................-->
 <div class="note">以前まとめた表:
-
-<table class="normal center">
-<tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
-<tr><td><code>\e[<strong>*</strong>h</code></td><td>有効にする</td><td>O</td></tr>
-<tr><td><code>\e[<strong>*</strong>l</code></td><td>無効にする</td><td>O</td></tr>
-</table>
 <p>引数には、以下の物の中から一つ指定する。</p>
 <table class="normal center">
 <colgroup>
@@ -1647,8 +1677,10 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <p>[ECMA-48 4th/E.1.3] LF, FF, VT を実行した際に行頭に移動するかどうかを設定する。
     ECMA-48 3rd に初めて記述された時から非推奨だった。
   </p>
-  <p><dfn class="cmode-rm">LINE FEED</dfn> (RM): 列は移動しない。</p>
-  <p><dfn class="cmode-sm">NEW LINE</dfn> (SM): 行頭に移動する。</p>
+  <ul>
+  <li><dfn class="cmode-rm">LINE FEED</dfn> (RM): 列は移動しない。</li>
+  <li><dfn class="cmode-sm">NEW LINE</dfn> (SM): 行頭に移動する。</li>
+  </ul>
   <ul>
   <li>互換性: VT100, <a href="http://www.vt100.net/docs/vt510-rm/LNM.html">VT510: LNM</a>, xterm</li>
   </ul>
@@ -2510,6 +2542,8 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <tr><td>2</td>         <td>ブロック・常時表示</td></tr>
   <tr><td>3</td>         <td>下線・点滅</td></tr>
   <tr><td>4</td>         <td>下線・常時表示</td></tr>
+  <tr><td>5</td>         <td>縦線・点滅 (xterm, RLogin)</td></tr>
+  <tr><td>6</td>         <td>縦線・常時表示 (xterm, RLogin)</td></tr>
   <tr><td>5 以上</td><td>行高に対するカーソルの高さの割合を % 単位で指定する (cygwin)</td></tr>
   </table>
   <ul>
@@ -2524,13 +2558,46 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </li>
   </ul>
 </li>
-<li>Mode ?25 <dfn class="cmode">DECTCEM</dfn>: Text Cursor Enable Mode [既定値 off]
-  <!--
-  on: Show Cursor.
-  off: Hide Cursor.
-  -->
-  <p>カーソルを非表示にする。</p>
+<li>Mode 32 <dfn class="cmode">wySTCURM</dfn>: Steady Cursor Mode (Wyse)</li>
+<li>Mode 33 <dfn class="cmode">WYSTCURM</dfn>: Wyse Steady Cursor Mode (Wyse)
+  <p>[all-escapes.txt] カーソルを点滅しない</p>
   <ul>
+  <li>(RM) カーソルは点滅する。</li>
+  <li>(SM) カーソルは点滅しない。</li>
+  </ul>
+</li>
+<li>Mode 34 <dfn class="cmode">WYULCURM</dfn>: Wyse Underline Cursor Mode (Wyse), Normal Cursor Visibility (screen)
+  <p>[all-escapes.txt] カーソル形状の設定。</p>
+  <ul>
+  <li>(RM) カーソルはブロック</li>
+  <li>(SM) カーソルは下線</li>
+  <li>互換性: screen のマニュアルでは Normal Cursor Visibility と言う名前で説明されている。
+    名前から察するにカーソルの表示・非表示の様にも思われるが、
+    terminfo に <code>cnorm=\e[34h\e[?25h, cvvis=\e[34l, civis=\e[?25l</code>
+    を登録している。civis はカーソル非表示で cvvis はカーソルをよく見える様にする、
+    cnorm はカーソルを元に戻すという意味であるから、WYULCURM と同様に解釈して良い気がする。
+</li>
+  </ul>
+</li>
+<li>Mode ?12 <dfn class="cmode">attBLCURM</dfn>: Start Blinking Cursor (xterm AT&amp;T 610)</li>
+<li>Mode ?13 <dfn class="cmode">xtCursorBlink</dfn>: Enable Blinking Cursor (xterm menu) [既定値 RM]</li>
+<li>Mode ?14 <dfn class="cmode">xtCursorBlinkXOR</dfn>: Enable XOR of Blinking Cursor Sequence and Menu (xterm resource) [既定値 SM]
+  <p>[xterm] カーソルの点滅を制御する。xtCursorBlinkXOR が設定されている時、
+    attBLCURM か xtCursorBlink のどちらか一方のみが設定されている時に点滅する。
+    xtCursorBlinkXOR が解除されている時、少なくとも一方が設定されていれば点滅する。
+    xtCursorBlink はエスケープシーケンスからは制御できずメニューから制御する。
+    xtCursorBlinkXOR は xterm 起動時に指定した物に固定されている。
+  </p>
+  <ul>
+  <li>[xterm] ?12 は AT&amp;T 610 起源のようである。</li>
+  <li>互換性: RLogin の説明書には ?12 では逆にカーソルの点滅を禁止すると書かれている。</li>
+  </ul>
+</li>
+<li>Mode ?25 <dfn class="cmode">DECTCEM</dfn>: Text Cursor Enable Mode [既定値 SM]
+  <p>カーソルを表示する。</p>
+  <ul>
+  <li>(RM) カーソルは非表示。</li>
+  <li>(SM) カーソルを表示する。</li>
   <li>互換性: VT420, xterm, rxvt, cygwin-1.7.18</li>
   <li>
     <a href="http://www.vt100.net/docs/vt510-rm/DECTCEM">VT510: DECTCEM</a>
@@ -3294,128 +3361,6 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </li>
 </ul>
 
-
-<!--************************************************************************-->
-<h2>ISO/IEC 2022 関連</h2>
-
-<h3><dfn class="cfunc">ACS</dfn>: ANNOUNCER CODE STRUCTURE</h3>
-<table class="normal center">
-<tr><th>略号</th><th>Sequence</th><th>C/R</th></tr>
-<tr><th>ACS</th>
-  <td><kbd>ESC SP <i>&lt;Ft&gt;</i></kbd></td>
-  <td>1/11 2/0 <i>&lt;Ft&gt;</i></td>
-  </tr>
-</table>
-
-<p>ESC SP <i>&lt;Ft&gt;</i> の形式のシーケンスは ACS と呼ばれる。
-通信の初めに、文字コードで有効な G0 G1 G2 G3 から GL GR へのシフトの構造を伝達する為の符号である。
-<i>&lt;Ft&gt;</i> に指定する文字で構造を指定する。
-</p>
-
-<table class="normal center">
-<tr><th>符号化表現</th><th>C/R</th><th>機能</th></tr>
-<tr><td><kbd>ESC SP A</kbd></td><td>1/11 2/0 4/1 </td><td></td></tr>
-<tr><td><kbd>ESC SP B</kbd></td><td>1/11 2/0 4/2 </td><td></td></tr>
-<tr><td><kbd>ESC SP C</kbd></td><td>1/11 2/0 4/3 </td><td></td></tr>
-<tr><td><kbd>ESC SP D</kbd></td><td>1/11 2/0 4/4 </td><td></td></tr>
-<tr><td><kbd>ESC SP E</kbd></td><td>1/11 2/0 4/5 </td><td></td></tr>
-<tr><td><kbd>ESC SP F</kbd></td><td>1/11 2/0 4/6 </td><td>S7C1T</td></tr>
-<tr><td><kbd>ESC SP G</kbd></td><td>1/11 2/0 4/7 </td><td>S8C1T</td></tr>
-<tr><td><kbd>ESC SP H</kbd></td><td>1/11 2/0 4/8 </td><td></td></tr>
-<tr><td><kbd>ESC SP I</kbd></td><td>1/11 2/0 4/9 </td><td></td></tr>
-<tr><td><kbd>ESC SP J</kbd></td><td>1/11 2/0 4/10</td><td></td></tr>
-<tr><td><kbd>ESC SP K</kbd></td><td>1/11 2/0 4/11</td><td></td></tr>
-<tr><td><kbd>ESC SP L</kbd></td><td>1/11 2/0 4/12</td><td>ANSI conformance Lv1 (dpANS X3.134.1), ECMA-43 Lv1</td></tr>
-<tr><td><kbd>ESC SP M</kbd></td><td>1/11 2/0 4/13</td><td>ANSI conformance Lv2 (dpANS X3.134.1), ECMA-43 Lv2</td></tr>
-<tr><td><kbd>ESC SP N</kbd></td><td>1/11 2/0 4/14</td><td>ANSI conformance Lv3 (dpANS X3.134.1), ECMA-43 Lv3</td></tr>
-<tr><td><kbd>ESC SP O</kbd></td><td>1/11 2/0 4/15</td><td>-</td></tr>
-<tr><td><kbd>ESC SP P</kbd></td><td>1/11 2/0 5/0 </td><td></td></tr>
-<tr><td><kbd>ESC SP Q</kbd></td><td>1/11 2/0 5/1 </td><td>-</td></tr>
-<tr><td><kbd>ESC SP R</kbd></td><td>1/11 2/0 5/2 </td><td></td></tr>
-<tr><td><kbd>ESC SP S</kbd></td><td>1/11 2/0 5/3 </td><td></td></tr>
-<tr><td><kbd>ESC SP T</kbd></td><td>1/11 2/0 5/4 </td><td></td></tr>
-<tr><td><kbd>ESC SP U</kbd></td><td>1/11 2/0 5/5 </td><td></td></tr>
-<tr><td><kbd>ESC SP V</kbd></td><td>1/11 2/0 5/6 </td><td></td></tr>
-<tr><td><kbd>ESC SP W</kbd></td><td>1/11 2/0 5/7 </td><td></td></tr>
-<tr><td><kbd>ESC SP X</kbd></td><td>1/11 2/0 5/8 </td><td>-</td></tr>
-<tr><td><kbd>ESC SP Y</kbd></td><td>1/11 2/0 5/9 </td><td>-</td></tr>
-<tr><td><kbd>ESC SP Z</kbd></td><td>1/11 2/0 5/10</td><td></td></tr>
-<tr><td><kbd>ESC SP [</kbd></td><td>1/11 2/0 5/11</td><td></td></tr>
-<tr><td><kbd>ESC SP \</kbd></td><td>1/11 2/0 5/12</td><td></td></tr>
-</table>
-
-<ul>
-<li><dfn class="cfunc">S7C1T</dfn></li>
-<li><dfn class="cfunc">S8C1T</dfn></li>
-<li>対応: xterm = F, G, L, M, N; VT510 = F, G, L, M, N</li>
-<li><a href="http://www.vt100.net/docs/vt510-rm/ANSI">VT510: ANSI Conformance Level</a></li>
-<li><a href="http://www.vt100.net/docs/vt510-rm/S7C1T">VT510: S7C1T</a></li>
-<li><a href="http://www.vt100.net/docs/vt510-rm/S8C1T">VT510: S8C1T</a></li>
-<li><a href="http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-035.pdf">ECMA-35</a></li>
-</ul>
-
-<!--===================================================================================-->
-<h2>エスケープシーケンス表</h2>
-<table class="normal center">
-<tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
-<tr><td><code>\e[<strong>#;#</strong>H</code></td><td>指定した行・列へ移動する。行番号・列番号は 1 から始まる。0 は 1 と解釈</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#;#</strong>f</code></td><td>指定した行・列へ移動する。行番号・列番号は 1 から始まる。0 は 1 と解釈</td><td>O</td></tr>
-<tr><td><code>\e7</code></td><td>現在位置と描画属性を記録</td><td>O</td></tr>
-<tr><td><code>\e8</code></td><td>\e7 で設定した位置・属性に戻る</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#</strong>J</code></td>
-  <td>行の消去 (カーソルの位置は不変)
-    <ul>
-    <li>引数 0: 現在行より下にある行を全て空白で埋める。</li>
-    <li>引数 1: 現在行、及びそれより上にある行を全て空白で埋める。</li>
-    <li>引数 2: バッファ内の文字を全て空白で埋める。</li>
-    </ul>
-  </td><td>O</td>
-</tr>
-<tr><td><code>\e[<strong>#</strong>K</code></td>
-  <td>文字の消去 (カーソルの位置は不変)
-    <ul>
-    <li>引数 0: 現在の文字、及びそれより右にある文字を全て空白で埋める。</li>
-    <li>引数 1: 現在の文字、及びそれより左にある文字を全て空白で埋める。</li>
-    <li>引数 2: 行の内容を消去。</li>
-    </ul>
-  </td><td>O</td>
-</tr>
-<tr><td><code>\e*</code></td><td>全て消去</td><td>O</td></tr>
-</table>
-<p>何れも引数として 0 (省略) を指定した場合には、指定量は 1 と解釈する。</p>
-<!--
-m.コンソール入力, ESC[6n
-
-e.面クリ, ESC*
-f.面クリ, CLS 　このコマンドはバッチファイルのみに利用できる。
-g.右消す, ESC[0K
-h.右消す, ESC[K
-i.左消す, ESC[1K
-j.行消す, ESC[2K
-
--->
-
-<table class="normal center">
-<tr><th>Control</th><th>ESC Sequence</th><th>環境</th><th>略号</th><th>説明</th></tr>
-<tr><td>\x84</td><td><code>\eD</code></td><td></td><td>IND</td><td>Index: Move/scroll window up one line. カーソルを下へ移動。もし一番下にいるならば新しい行を先頭に挿入。</td></tr>
-<tr><td>\x8d</td><td><code>\eM</code></td><td></td><td>RI</td> <td>Reverse Index: Move/scroll window down one line. カーソルを上へ移動。もし一番上にいるならば新しい行を先頭に挿入。</td></tr>
-<tr><td>\x85</td><td><code>\eE</code></td><td></td><td>NEL</td><td>Next Line: Move to next line. 次の行の先頭へ移動</td></tr>
-<tr><td>\x88</td><td><code>\eH</code></td><td></td><td>HTS</td><td>Horizontal Tab Set: Tab set</td></tr>
-<tr><td>\x8E</td><td><code>\eN</code></td><td></td><td>SS2</td><td>Single Shift 2: 後述</td></tr>
-<tr><td>\x8F</td><td><code>\eO</code></td><td></td><td>SS3</td><td>Single Shift 3: 後述</td></tr>
-<tr><td>\x90</td><td><code>\eP</code></td><td></td><td>DCS</td><td></td></tr>
-<tr><td>\x96</td><td><code>\eV</code></td><td></td><td>SPA</td><td></td></tr>
-<tr><td>\x97</td><td><code>\eW</code></td><td></td><td>EPA</td><td></td></tr>
-<tr><td>\x98</td><td><code>\eX</code></td><td></td><td>SOS</td><td></td></tr>
-<tr><td>\x9A</td><td><code>\eZ</code></td><td></td><td>DECID</td><td></td></tr>
-<tr><td>\x9B</td><td><code>\e[</code></td><td></td><td>CSI</td><td></td></tr>
-<tr><td>\x9C</td><td><code>\e\\</code></td><td></td><td>ST</td><td></td></tr>
-<tr><td>\x9D</td><td><code>\e]</code></td><td></td><td>OSC</td><td></td></tr>
-<tr><td>\x9E</td><td><code>\e^</code></td><td></td><td>PM</td><td></td></tr>
-<tr><td>\x9F</td><td><code>\e_</code></td><td></td><td>APC</td><td></td></tr>
-</table>
-
-
 <h3>マウス追跡 (Mouse Tracking)</h3>
 <ul>
 <li>Mode ?1000 <dfn class="cmode">smSendMouse</dfn> Send Mouse X &amp; Y [既定値 off]
@@ -3538,6 +3483,84 @@ j.行消す, ESC[2K
   <p>互換性: xterm</p>
 </li>
 </ul>
+
+<!--************************************************************************-->
+<h2>古い物: ISO/IEC 2022 関連</h2>
+
+<h3><dfn class="cfunc">ACS</dfn>: ANNOUNCER CODE STRUCTURE</h3>
+<table class="normal center">
+<tr><th>略号</th><th>Sequence</th><th>C/R</th></tr>
+<tr><th>ACS</th>
+  <td><kbd>ESC SP <i>&lt;Ft&gt;</i></kbd></td>
+  <td>1/11 2/0 <i>&lt;Ft&gt;</i></td>
+  </tr>
+</table>
+
+<p>ESC SP <i>&lt;Ft&gt;</i> の形式のシーケンスは ACS と呼ばれる。
+通信の初めに、文字コードで有効な G0 G1 G2 G3 から GL GR へのシフトの構造を伝達する為の符号である。
+<i>&lt;Ft&gt;</i> に指定する文字で構造を指定する。
+</p>
+
+<table class="normal center">
+<tr><th>符号化表現</th><th>C/R</th><th>機能</th></tr>
+<tr><td><kbd>ESC SP A</kbd></td><td>1/11 2/0 4/1 </td><td></td></tr>
+<tr><td><kbd>ESC SP B</kbd></td><td>1/11 2/0 4/2 </td><td></td></tr>
+<tr><td><kbd>ESC SP C</kbd></td><td>1/11 2/0 4/3 </td><td></td></tr>
+<tr><td><kbd>ESC SP D</kbd></td><td>1/11 2/0 4/4 </td><td></td></tr>
+<tr><td><kbd>ESC SP E</kbd></td><td>1/11 2/0 4/5 </td><td></td></tr>
+<tr><td><kbd>ESC SP F</kbd></td><td>1/11 2/0 4/6 </td><td>S7C1T</td></tr>
+<tr><td><kbd>ESC SP G</kbd></td><td>1/11 2/0 4/7 </td><td>S8C1T</td></tr>
+<tr><td><kbd>ESC SP H</kbd></td><td>1/11 2/0 4/8 </td><td></td></tr>
+<tr><td><kbd>ESC SP I</kbd></td><td>1/11 2/0 4/9 </td><td></td></tr>
+<tr><td><kbd>ESC SP J</kbd></td><td>1/11 2/0 4/10</td><td></td></tr>
+<tr><td><kbd>ESC SP K</kbd></td><td>1/11 2/0 4/11</td><td></td></tr>
+<tr><td><kbd>ESC SP L</kbd></td><td>1/11 2/0 4/12</td><td>ANSI conformance Lv1 (dpANS X3.134.1), ECMA-43 Lv1</td></tr>
+<tr><td><kbd>ESC SP M</kbd></td><td>1/11 2/0 4/13</td><td>ANSI conformance Lv2 (dpANS X3.134.1), ECMA-43 Lv2</td></tr>
+<tr><td><kbd>ESC SP N</kbd></td><td>1/11 2/0 4/14</td><td>ANSI conformance Lv3 (dpANS X3.134.1), ECMA-43 Lv3</td></tr>
+<tr><td><kbd>ESC SP O</kbd></td><td>1/11 2/0 4/15</td><td>-</td></tr>
+<tr><td><kbd>ESC SP P</kbd></td><td>1/11 2/0 5/0 </td><td></td></tr>
+<tr><td><kbd>ESC SP Q</kbd></td><td>1/11 2/0 5/1 </td><td>-</td></tr>
+<tr><td><kbd>ESC SP R</kbd></td><td>1/11 2/0 5/2 </td><td></td></tr>
+<tr><td><kbd>ESC SP S</kbd></td><td>1/11 2/0 5/3 </td><td></td></tr>
+<tr><td><kbd>ESC SP T</kbd></td><td>1/11 2/0 5/4 </td><td></td></tr>
+<tr><td><kbd>ESC SP U</kbd></td><td>1/11 2/0 5/5 </td><td></td></tr>
+<tr><td><kbd>ESC SP V</kbd></td><td>1/11 2/0 5/6 </td><td></td></tr>
+<tr><td><kbd>ESC SP W</kbd></td><td>1/11 2/0 5/7 </td><td></td></tr>
+<tr><td><kbd>ESC SP X</kbd></td><td>1/11 2/0 5/8 </td><td>-</td></tr>
+<tr><td><kbd>ESC SP Y</kbd></td><td>1/11 2/0 5/9 </td><td>-</td></tr>
+<tr><td><kbd>ESC SP Z</kbd></td><td>1/11 2/0 5/10</td><td></td></tr>
+<tr><td><kbd>ESC SP [</kbd></td><td>1/11 2/0 5/11</td><td></td></tr>
+<tr><td><kbd>ESC SP \</kbd></td><td>1/11 2/0 5/12</td><td></td></tr>
+</table>
+
+<ul>
+<li><dfn class="cfunc">S7C1T</dfn></li>
+<li><dfn class="cfunc">S8C1T</dfn></li>
+<li>対応: xterm = F, G, L, M, N; VT510 = F, G, L, M, N</li>
+<li><a href="http://www.vt100.net/docs/vt510-rm/ANSI">VT510: ANSI Conformance Level</a></li>
+<li><a href="http://www.vt100.net/docs/vt510-rm/S7C1T">VT510: S7C1T</a></li>
+<li><a href="http://www.vt100.net/docs/vt510-rm/S8C1T">VT510: S8C1T</a></li>
+<li><a href="http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-035.pdf">ECMA-35</a></li>
+</ul>
+
+<!--===================================================================================-->
+<h2>古い物: エスケープシーケンス表</h2>
+<table class="normal center">
+<tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
+<tr><td><code>\e*</code></td><td>全て消去</td><td>O</td></tr>
+</table>
+<!--
+m.コンソール入力, ESC[6n
+
+e.面クリ, ESC*
+f.面クリ, CLS 　このコマンドはバッチファイルのみに利用できる。
+-->
+
+<table class="normal center">
+<tr><th>Control</th><th>ESC Sequence</th><th>環境</th><th>略号</th><th>説明</th></tr>
+<tr><td>\x8E</td><td><code>\eN</code></td><td></td><td>SS2</td><td>Single Shift 2: 後述</td></tr>
+<tr><td>\x8F</td><td><code>\eO</code></td><td></td><td>SS3</td><td>Single Shift 3: 後述</td></tr>
+</table>
 
 <!--===================================================================================-->
 <h2 id="section.reference">文献 (reference)</h2>
