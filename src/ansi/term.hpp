@@ -35,6 +35,8 @@ namespace ansi {
     dec_mode    = 1, // CSI ? Ps h
     contra_mode = 2, // private mode
 
+    accessor_mode = 0x800, // index
+
     mode_erm  = construct_mode_spec( 6, ansi_mode,  6),
     mode_vem  = construct_mode_spec( 7, ansi_mode,  7),
     mode_bdsm = construct_mode_spec( 8, ansi_mode,  8),
@@ -62,6 +64,16 @@ namespace ansi {
 
     // DECモード
     mode_decawm   = construct_mode_spec(24, dec_mode, 7),
+    mode_dectcem  = construct_mode_spec(29, dec_mode, 25),
+
+    // カーソルの点滅と形状 (何れも解釈がよく分からない)。
+    // フラグとしてではなく setter/getter で処理するべきかも。
+    mode_xtblcurm  = construct_mode_spec(32, dec_mode , 12),
+    resource_cursorBlink  = construct_mode_spec(33, dec_mode , 13),
+    resource_cursorBlinkXOR = construct_mode_spec(34, dec_mode , 14),
+    mode_wystcurm1 = construct_mode_spec(0 | accessor_mode, ansi_mode, 32),
+    mode_wystcurm2 = construct_mode_spec(1 | accessor_mode, ansi_mode, 33),
+    mode_wyulcurm  = construct_mode_spec(2 | accessor_mode, ansi_mode, 34),
 
     // 未対応のDECモード
     mode_decom    = construct_mode_spec(23, dec_mode, 6),
@@ -120,54 +132,112 @@ namespace ansi {
 
     sequence_decoder_config m_sequence_decoder_config;
 
-    bool vt_affected_by_lnm    {true};
-    bool vt_appending_newline  {true};
-    bool vt_using_line_tabstop {false}; // ToDo: not yet supported
+    bool vt_affected_by_lnm    { true  };
+    bool vt_appending_newline  { true  };
+    bool vt_using_line_tabstop { false }; // ToDo: not yet supported
 
-    bool ff_affected_by_lnm {true};
-    bool ff_clearing_screen {false};
-    bool ff_using_page_home {false};
+    bool ff_affected_by_lnm { true  };
+    bool ff_clearing_screen { false };
+    bool ff_using_page_home { false };
+
+    /// @var cursor_shape
+    ///   0 の時ブロックカーソル、1 の時下線、-1 の時縦線。
+    ///   2 以上の時カーソルの下線の高さを百分率で表現。
+    int m_cursor_shape;
 
   private:
-    std::uint32_t m_mode_flags[1];
+    std::uint32_t m_mode_flags[2];
 
     void initialize_mode() {
       std::fill(std::begin(m_mode_flags), std::end(m_mode_flags), 0);
-      set_mode(mode_erm);
-      set_mode(mode_bdsm);
-      set_mode(mode_dcsm);
-      set_mode(mode_lnm);
-      set_mode(mode_grcm);
-      set_mode(mode_zdm);
-      set_mode(mode_decawm);
-      set_mode(mode_xenl_ech);
+
+      // ANSI modes
+      set_mode(mode_vem,  false);
+      set_mode(mode_erm,  true );
+      set_mode(mode_bdsm, true );
+      set_mode(mode_dcsm, true );
+      set_mode(mode_hem,  false);
+      set_mode(mode_lnm,  true );
+      set_mode(mode_grcm, true );
+      set_mode(mode_zdm,  true );
+
+      // DEC modes
+      set_mode(mode_decawm   , true );
+      set_mode(mode_xtblcurm , true );
+      set_mode(resource_cursorBlink, false);
+      set_mode(resource_cursorBlinkXOR, true);
+      set_mode(mode_dectcem  , true );
+
+      set_mode(mode_xenl_ech, true);
     }
 
   public:
     bool get_mode(mode_t modeSpec) const {
-      int const index = (modeSpec & mode_index_mask) >> mode_index_shift;
-      unsigned const field = index >> 5;
-      std::uint32_t const bit = 1 << (index & 0x1F);
-      mwg_assert(field < sizeof(m_mode_flags)/sizeof(m_mode_flags[0]), "invalid modeSpec");;
+      std::uint32_t const index = (modeSpec & mode_index_mask) >> mode_index_shift;
+      if (index < (std::uint32_t) accessor_mode) {
+        unsigned const field = index >> 5;
+        std::uint32_t const bit = 1 << (index & 0x1F);
+        mwg_assert(field < sizeof(m_mode_flags) / sizeof(m_mode_flags[0]), "invalid modeSpec");;
 
-      std::uint32_t const& flags = m_mode_flags[index >> 5];
-      return (flags & bit) != 0;
+        std::uint32_t const& flags = m_mode_flags[index >> 5];
+        return (flags & bit) != 0;
+      } else {
+        // Note: 現在は暫定的にハードコーディングしているが、
+        //   将来的にはunordered_map か何かで登録できる様にする。
+        //   もしくは何らかの表からコードを自動生成する様にする。
+        switch (index & ~(std::uint32_t) accessor_mode) {
+        case 0: // Mode 32 (Set Cursor Mode (Wyse))
+          return !get_mode(mode_xtblcurm);
+        case 1: // Mode 33 WYSTCURM (Wyse Set Cursor Mode)
+          return !get_mode(resource_cursorBlink);
+        case 2: // Mode 34 WYULCURM (Wyse Underline Cursor Mode)
+          return m_cursor_shape > 0;
+        default:
+          return false;
+        }
+      }
     }
 
     void set_mode(mode_t modeSpec, bool value = true) {
-      int const index = (modeSpec & mode_index_mask) >> mode_index_shift;
-      unsigned const field = index >> 5;
-      std::uint32_t const bit = 1 << (index & 0x1F);
-      mwg_assert(field < sizeof(m_mode_flags)/sizeof(m_mode_flags[0]), "invalid modeSpec");;
+      std::uint32_t const index = (modeSpec & mode_index_mask) >> mode_index_shift;
+      if (index < accessor_mode) {
+        unsigned const field = index >> 5;
+        std::uint32_t const bit = 1 << (index & 0x1F);
+        mwg_assert(field < sizeof(m_mode_flags) / sizeof(m_mode_flags[0]), "invalid modeSpec");;
 
-      std::uint32_t& flags = m_mode_flags[index >> 5];
-      if (value)
-        flags |= bit;
-      else
-        flags &= ~bit;
+        std::uint32_t& flags = m_mode_flags[index >> 5];
+        if (value)
+          flags |= bit;
+        else
+          flags &= ~bit;
+      } else {
+        // Note: 現在は暫定的にハードコーディングしているが、
+        //   将来的にはunordered_map か何かで登録できる様にする。
+        //   もしくは何らかの表からコードを自動生成する様にする。
+        switch (index & ~(std::uint32_t) accessor_mode) {
+        case 0: set_mode(mode_xtblcurm, !value); break;
+        case 1: set_mode(resource_cursorBlink, !value); break;
+        case 2:
+          if (value) {
+            if (m_cursor_shape <= 0) m_cursor_shape = 1;
+          } else {
+            if (m_cursor_shape > 0) m_cursor_shape = 0;
+          }
+          break;
+        default: ;
+        }
+      }
     }
 
     bool dcsm() const { return !get_mode(mode_bdsm) || get_mode(mode_dcsm); }
+
+    bool is_cursor_visible() const { return get_mode(mode_dectcem); }
+    bool is_cursor_blinking() const {
+      bool const st = get_mode(mode_xtblcurm);
+      bool const mn = get_mode(resource_cursorBlink);
+      return get_mode(resource_cursorBlinkXOR) ? st != mn : st || mn;
+    }
+    int get_cursor_shape() const { return m_cursor_shape; }
 
   public:
     void do_bel() {

@@ -168,6 +168,17 @@ namespace {
       init(mode_lnm );
       init(mode_grcm);
       init(mode_zdm );
+
+      init(mode_decawm);
+      init(mode_dectcem);
+
+      // カーソル点滅・形状? (暫定)
+      init(mode_xtblcurm );
+      init(resource_cursorBlink );
+      init(resource_cursorBlinkXOR);
+      init(mode_wystcurm1);
+      init(mode_wystcurm2);
+      init(mode_wyulcurm );
     }
 
     void set_ansi_mode(tty_state& s, csi_single_param_t param, bool value) {
@@ -175,14 +186,14 @@ namespace {
       if (it != data_ansi.end())
         s.set_mode(it->second, value);
       else
-        std::fprintf(stderr, "unknown ANSI mode %u\n", (unsigned) param);
+        std::fprintf(stderr, "unrecognized ANSI mode %u\n", (unsigned) param);
     }
     void set_dec_mode(tty_state& s, csi_single_param_t param, bool value) {
       auto const it = data_dec.find(param);
       if (it != data_dec.end())
         s.set_mode(it->second, value);
       else
-        std::fprintf(stderr, "unknown DEC mode %u\n", (unsigned) param);
+        std::fprintf(stderr, "unrecognized DEC mode %u\n", (unsigned) param);
     }
   };
   static mode_dictionary_t mode_dictionary;
@@ -213,6 +224,35 @@ namespace {
     csi_single_param_t value;
     while (params.read_param(value, 0))
       mode_dictionary.set_dec_mode(s, value, false);
+    return true;
+  }
+
+  bool do_decscusr(term_t& term, csi_parameters& params) {
+    csi_single_param_t spec;
+    params.read_param(spec, 0);
+    tty_state& s = term.state();
+    auto _set = [&s] (bool blink, int shape) {
+      s.set_mode(mode_xtblcurm, blink);
+      s.m_cursor_shape = shape;
+    };
+
+    switch (spec) {
+    case 0:
+    case 1: _set(true ,  0); break;
+    case 2: _set(false,  0); break;
+    case 3: _set(true ,  1); break;
+    case 4: _set(false,  1); break;
+    case 5: _set(true , -1); break;
+    case 6: _set(false, -1); break;
+
+    default:
+      // Cygwin (mintty) percentage of cursor height
+      if (spec >= 100)
+        s.m_cursor_shape = 0; // block
+      else
+        s.m_cursor_shape = spec;
+      break;
+    }
     return true;
   }
 
@@ -1187,63 +1227,49 @@ namespace {
     control_function_dictionary() {
       std::fill(std::begin(data1), std::end(data1), nullptr);
 
-      // sm
-      register_cfunc(&do_sm, ascii_h);
-      register_cfunc(&do_rm, ascii_l);
-
-      // sgr
-      register_cfunc(&do_sgr, ascii_m);
-      register_cfunc(&do_sco, ascii_sp, ascii_e);
-      register_cfunc(&do_decsca, ascii_double_quote, ascii_q);
-
-      // cursor movement
-      register_cfunc(&do_cuu, ascii_A);
-      register_cfunc(&do_cud, ascii_B);
-      register_cfunc(&do_cuf, ascii_C);
-      register_cfunc(&do_cub, ascii_D);
-      register_cfunc(&do_hpb, ascii_j);
-      register_cfunc(&do_hpr, ascii_a);
-      register_cfunc(&do_vpb, ascii_k);
-      register_cfunc(&do_vpr, ascii_e);
-      register_cfunc(&do_cnl, ascii_E);
-      register_cfunc(&do_cpl, ascii_F);
-
-      // cursor position
-      register_cfunc(&do_cha, ascii_G);
-      register_cfunc(&do_cup, ascii_H);
-      register_cfunc(&do_hpa, ascii_back_quote);
-      register_cfunc(&do_vpa, ascii_d);
-      register_cfunc(&do_hvp, ascii_f);
-
-      // ECH/DCH/ICH, etc.
-      register_cfunc(&do_ich, ascii_at);
-      register_cfunc(&do_dch, ascii_P);
-      register_cfunc(&do_ech, ascii_X);
-      register_cfunc(&do_ed, ascii_J);
-      register_cfunc(&do_el, ascii_K);
-      register_cfunc(&do_il, ascii_L);
-      register_cfunc(&do_dl, ascii_M);
-
-      // implicit movement
       register_cfunc(&do_simd, ascii_circumflex);
 
-      // bidi strings
-      register_cfunc(&do_sds, ascii_right_bracket);
-      register_cfunc(&do_srs, ascii_left_bracket);
+      register_cfunc(&do_ich , ascii_at);
+      register_cfunc(&do_cuu , ascii_A);
+      register_cfunc(&do_cud , ascii_B);
+      register_cfunc(&do_cuf , ascii_C);
+      register_cfunc(&do_cub , ascii_D);
+      register_cfunc(&do_cnl , ascii_E);
+      register_cfunc(&do_cpl , ascii_F);
+      register_cfunc(&do_cha , ascii_G);
+      register_cfunc(&do_cup , ascii_H);
+      register_cfunc(&do_ed  , ascii_J);
+      register_cfunc(&do_el  , ascii_K);
+      register_cfunc(&do_il  , ascii_L);
+      register_cfunc(&do_dl  , ascii_M);
+      register_cfunc(&do_dch , ascii_P);
+      register_cfunc(&do_ech , ascii_X);
+      register_cfunc(&do_srs , ascii_left_bracket);
+      register_cfunc(&do_sds , ascii_right_bracket);
 
-      // presentation/line directions
-      register_cfunc(&do_spd, ascii_sp, ascii_S);
-      register_cfunc(&do_scp, ascii_sp, ascii_k);
+      register_cfunc(&do_hpa , ascii_back_quote);
+      register_cfunc(&do_hpr , ascii_a);
+      register_cfunc(&do_vpa , ascii_d);
+      register_cfunc(&do_vpr , ascii_e);
+      register_cfunc(&do_hvp , ascii_f);
+      register_cfunc(&do_sm  , ascii_h);
+      register_cfunc(&do_hpb , ascii_j);
+      register_cfunc(&do_vpb , ascii_k);
+      register_cfunc(&do_rm  , ascii_l);
+      register_cfunc(&do_sgr , ascii_m);
 
-      // line/page limits
-      register_cfunc(&do_slh, ascii_sp, ascii_U);
-      register_cfunc(&do_sll, ascii_sp, ascii_V);
-      register_cfunc(&do_sph, ascii_sp, ascii_i);
-      register_cfunc(&do_spl, ascii_sp, ascii_j);
+      register_cfunc(&do_spd , ascii_sp, ascii_S);
+      register_cfunc(&do_slh , ascii_sp, ascii_U);
+      register_cfunc(&do_sll , ascii_sp, ascii_V);
+      register_cfunc(&do_sco , ascii_sp, ascii_e);
+      register_cfunc(&do_sph , ascii_sp, ascii_i);
+      register_cfunc(&do_spl , ascii_sp, ascii_j);
+      register_cfunc(&do_scp , ascii_sp, ascii_k);
 
-      // cursor save
-      register_cfunc(&do_scosc, ascii_s);
-      register_cfunc(&do_scorc, ascii_u);
+      register_cfunc(&do_scosc   , ascii_s);
+      register_cfunc(&do_scorc   , ascii_u);
+      register_cfunc(&do_decscusr, ascii_sp, ascii_q);
+      register_cfunc(&do_decsca  , ascii_double_quote, ascii_q);
     }
 
     control_function_t* get(byte F) const {
