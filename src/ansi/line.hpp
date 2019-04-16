@@ -434,9 +434,9 @@ namespace ansi {
   public:
     void clear() {
       this->clear_content();
-      m_lflags = (line_attr_t) 0;
-      m_home = -1;
-      m_limit = -1;
+      this->m_lflags = (line_attr_t) 0;
+      this->m_home = -1;
+      this->m_limit = -1;
     }
     void clear(curpos_t width, attribute_t const& attr) {
       this->clear();
@@ -445,13 +445,13 @@ namespace ansi {
 
     void clear_content() {
       this->m_cells.clear();
-      m_prop_enabled = false;
-      m_prop_i = 0;
-      m_prop_x = 0;
-      m_strings_cache.clear();
-      m_strings_version = (std::uint32_t) -1;
-      m_strings_r2l = false;
-      m_version++;
+      this->m_prop_enabled = false;
+      this->m_prop_i = 0;
+      this->m_prop_x = 0;
+      this->m_strings_cache.clear();
+      this->m_strings_version = (std::uint32_t) -1;
+      this->m_strings_r2l = false;
+      this->m_version++;
     }
     void clear_content(curpos_t width, attribute_t const& attr) {
       this->clear_content();
@@ -463,12 +463,12 @@ namespace ansi {
       if (this->m_prop_enabled) return;
       this->m_prop_enabled = true;
       this->m_version++;
-      m_cells.erase(
+      this->m_cells.erase(
         std::remove_if(m_cells.begin(), m_cells.end(),
           [] (cell_t const& cell) { return cell.character.is_wide_extension(); }),
         m_cells.end());
-      m_prop_i = 0;
-      m_prop_x = 0;
+      this->m_prop_i = 0;
+      this->m_prop_x = 0;
     }
 
   private:

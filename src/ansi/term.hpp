@@ -63,21 +63,24 @@ namespace ansi {
     mode_ebm  = construct_mode_spec(19, ansi_mode, 19),
 
     // DECモード
+    mode_decckm   = construct_mode_spec(30, dec_mode, 1),
     mode_decawm   = construct_mode_spec(24, dec_mode, 7),
     mode_dectcem  = construct_mode_spec(29, dec_mode, 25),
 
     // カーソルの点滅と形状 (何れも解釈がよく分からない)。
     // フラグとしてではなく setter/getter で処理するべきかも。
-    mode_xtblcurm  = construct_mode_spec(32, dec_mode , 12),
-    resource_cursorBlink  = construct_mode_spec(33, dec_mode , 13),
+    mode_attCursorBlink = construct_mode_spec(32, dec_mode , 12),
+    resource_cursorBlink = construct_mode_spec(33, dec_mode , 13),
     resource_cursorBlinkXOR = construct_mode_spec(34, dec_mode , 14),
     mode_wystcurm1 = construct_mode_spec(0 | accessor_mode, ansi_mode, 32),
     mode_wystcurm2 = construct_mode_spec(1 | accessor_mode, ansi_mode, 33),
     mode_wyulcurm  = construct_mode_spec(2 | accessor_mode, ansi_mode, 34),
+    mode_bracketedPasteMode  = construct_mode_spec(28, dec_mode, 2004),
 
     // 未対応のDECモード
     mode_decom    = construct_mode_spec(23, dec_mode, 6),
 
+    // Contra original
     mode_simd     = construct_mode_spec(25, contra_mode, 9201),
     /// @var mode_xenl_ech
     /// 行末にカーソルがある時に ECH, ICH, DCH は行の最後の文字に作用します。
@@ -162,11 +165,13 @@ namespace ansi {
       set_mode(mode_zdm,  true );
 
       // DEC modes
+      set_mode(mode_decckm, false);
       set_mode(mode_decawm   , true );
-      set_mode(mode_xtblcurm , true );
+      set_mode(mode_attCursorBlink , true );
       set_mode(resource_cursorBlink, false);
       set_mode(resource_cursorBlinkXOR, true);
       set_mode(mode_dectcem  , true );
+      set_mode(mode_bracketedPasteMode, true);
 
       set_mode(mode_xenl_ech, true);
     }
@@ -187,7 +192,7 @@ namespace ansi {
         //   もしくは何らかの表からコードを自動生成する様にする。
         switch (index & ~(std::uint32_t) accessor_mode) {
         case 0: // Mode 32 (Set Cursor Mode (Wyse))
-          return !get_mode(mode_xtblcurm);
+          return !get_mode(mode_attCursorBlink);
         case 1: // Mode 33 WYSTCURM (Wyse Set Cursor Mode)
           return !get_mode(resource_cursorBlink);
         case 2: // Mode 34 WYULCURM (Wyse Underline Cursor Mode)
@@ -215,7 +220,7 @@ namespace ansi {
         //   将来的にはunordered_map か何かで登録できる様にする。
         //   もしくは何らかの表からコードを自動生成する様にする。
         switch (index & ~(std::uint32_t) accessor_mode) {
-        case 0: set_mode(mode_xtblcurm, !value); break;
+        case 0: set_mode(mode_attCursorBlink, !value); break;
         case 1: set_mode(resource_cursorBlink, !value); break;
         case 2:
           if (value) {
@@ -233,7 +238,7 @@ namespace ansi {
 
     bool is_cursor_visible() const { return get_mode(mode_dectcem); }
     bool is_cursor_blinking() const {
-      bool const st = get_mode(mode_xtblcurm);
+      bool const st = get_mode(mode_attCursorBlink);
       bool const mn = get_mode(resource_cursorBlink);
       return get_mode(resource_cursorBlinkXOR) ? st != mn : st || mn;
     }

@@ -173,7 +173,7 @@ namespace {
       init(mode_dectcem);
 
       // カーソル点滅・形状? (暫定)
-      init(mode_xtblcurm );
+      init(mode_attCursorBlink );
       init(resource_cursorBlink );
       init(resource_cursorBlinkXOR);
       init(mode_wystcurm1);
@@ -232,7 +232,7 @@ namespace {
     params.read_param(spec, 0);
     tty_state& s = term.state();
     auto _set = [&s] (bool blink, int shape) {
-      s.set_mode(mode_xtblcurm, blink);
+      s.set_mode(mode_attCursorBlink, blink);
       s.m_cursor_shape = shape;
     };
 
