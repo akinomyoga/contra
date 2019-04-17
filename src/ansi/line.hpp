@@ -831,6 +831,7 @@ namespace ansi {
       this->cur.x = 0;
       this->cur.y = 0;
     }
+    board_t(): board_t(80, 32) {}
 
   public:
     void reset_size(curpos_t width, curpos_t height) {

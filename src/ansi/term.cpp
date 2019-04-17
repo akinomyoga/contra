@@ -17,8 +17,6 @@ namespace {
 
   typedef bool control_function_t(term_t& term, csi_parameters& params);
 
-  typedef std::uint32_t csi_single_param_t;
-
   struct csi_param_type {
     csi_single_param_t value;
     bool isColon;
@@ -131,54 +129,10 @@ namespace {
   struct mode_dictionary_t {
     std::unordered_map<std::uint32_t, mode_t> data_ansi;
     std::unordered_map<std::uint32_t, mode_t> data_dec;
-    void init(mode_spec spec) {
-      std::uint32_t const index = (spec & mode_param_mask) >> mode_param_shift;
-      std::uint32_t const type = (spec & mode_type_mask) >> mode_type_shift;
-      switch (type) {
-      case ansi_mode:
-        data_ansi[index] = spec;
-        break;
-      case dec_mode:
-        data_dec[index] = spec;
-        break;
-      }
-    }
+
   public:
     mode_dictionary_t() {
-      // ANSI modes
-      init(mode_gatm);
-      init(mode_kam );
-      init(mode_crm );
-      init(mode_irm );
-      init(mode_srtm);
-      init(mode_erm );
-      init(mode_vem );
-      init(mode_bdsm);
-      init(mode_dcsm);
-      init(mode_hem );
-      init(mode_pum );
-      init(mode_srm );
-      init(mode_feam);
-      init(mode_fetm);
-      init(mode_matm);
-      init(mode_ttm );
-      init(mode_satm);
-      init(mode_tsm );
-      init(mode_ebm );
-      init(mode_lnm );
-      init(mode_grcm);
-      init(mode_zdm );
-
-      init(mode_decawm);
-      init(mode_dectcem);
-
-      // カーソル点滅・形状? (暫定)
-      init(mode_attCursorBlink );
-      init(resource_cursorBlink );
-      init(resource_cursorBlinkXOR);
-      init(mode_wystcurm1);
-      init(mode_wystcurm2);
-      init(mode_wyulcurm );
+#include "../../out/gen/term.mode_register.hpp"
     }
 
     void set_ansi_mode(tty_state& s, csi_single_param_t param, bool value) {
@@ -254,6 +208,17 @@ namespace {
       break;
     }
     return true;
+  }
+
+  void do_altscreen(term_t& term, bool value) {
+    tty_state& s = term.state();
+    board_t& b = term.board();
+    if (value != s.get_mode(mode_altscr)) {
+      s.set_mode(mode_altscr, value);
+      s.altscreen.reset_size(b.m_width, b.m_height);
+      s.altscreen.cur = b.cur;
+      std::swap(s.altscreen, b);
+    }
   }
 
   //---------------------------------------------------------------------------
@@ -1110,11 +1075,8 @@ namespace {
     return true;
   }
 
-  bool do_ed(term_t& term, csi_parameters& params) {
+  void do_ed(term_t& term, csi_single_param_t param) {
     tty_state& s = term.state();
-    csi_single_param_t param;
-    params.read_param(param, 0);
-
     board_t& b = term.board();
     curpos_t y1 = 0, y2 = 0;
     if (param != 0 && param != 1) {
@@ -1138,7 +1100,11 @@ namespace {
       for (curpos_t y = y1; y < y2; y++)
         b.m_lines[y].clear_content(b.m_width, b.cur.fill_attr());
     }
-
+  }
+  bool do_ed(term_t& term, csi_parameters& params) {
+    csi_single_param_t param;
+    params.read_param(param, 0);
+    do_ed(term, param);
     return true;
   }
 

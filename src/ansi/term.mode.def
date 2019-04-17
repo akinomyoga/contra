@@ -1,0 +1,57 @@
+# Modes
+
+flags     mode_gatm               ansi1       unsupported
+flags     mode_kam                ansi2       unsupported
+flags     mode_crm                ansi3       unsupported
+flags     mode_irm                ansi4       unsupported
+flags     mode_srtm               ansi5       unsupported
+flags     mode_erm                ansi6       true
+flags     mode_vem                ansi7       true
+flags     mode_bdsm               ansi8       true
+flags     mode_dcsm               ansi9       true
+flags     mode_hem                ansi10      false
+flags     mode_pum                ansi11      unsupported
+flags     mode_srm                ansi12      unsupported
+flags     mode_feam               ansi13      unsupported
+flags     mode_fetm               ansi14      unsupported
+flags     mode_matm               ansi15      unsupported
+flags     mode_ttm                ansi16      unsupported
+flags     mode_satm               ansi17      unsupported
+flags     mode_tsm                ansi18      unsupported
+flags     mode_ebm                ansi19      unsupported
+flags     mode_lnm                ansi20      true
+flags     mode_grcm               ansi21      true
+flags     mode_zdm                ansi22      true
+
+flags     mode_decckm             dec1        false
+flags     mode_decom              dec6        unsupported
+flags     mode_decawm             dec7        true
+
+flags     mode_bracketedPasteMode dec2004     true
+
+# Cursor style
+flags     mode_attCursorBlink     dec12       true
+flags     resource_cursorBlink    dec13       false
+flags     resource_cursorBlinkXOR dec14       true
+flags     mode_dectcem            dec25       true
+accessor  mode_wystcurm1          ansi32      -
+accessor  mode_wystcurm2          ansi33      -
+accessor  mode_wyulcurm           ansi34      -
+
+# Alternate Screen Buffers
+flags     mode_altscr             private     true
+accessor  mode_altscreen          dec47       -
+accessor  mode_altscreen_clr      dec1047     -
+accessor  mode_decsc              dec1048     -
+accessor  mode_altscreen_cur      dec1049     -
+
+#------------------------------------------------------------------------------
+# Contra original modes (inaccessible)
+
+flags     mode_simd               private     false
+
+# 行末にカーソルがある時に ECH, ICH, DCH は行の最後の文字に作用します。
+flags     mode_xenl_ech           private     true
+
+# ICH, IL, DL の後にカーソルを SPH で設定される行頭に移動します。
+flags     mode_home_il            private     false

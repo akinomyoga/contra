@@ -18,80 +18,19 @@ namespace ansi {
 
   typedef std::uint32_t mode_t;
 
-  enum mode_spec_layout {
-    mode_index_mask = 0xFFF00000u, mode_index_shift = 20,
-    mode_type_mask  = 0x000F0000u, mode_type_shift  = 16,
-    mode_param_mask = 0x0000FFFFu, mode_param_shift = 0,
-  };
-
-  constexpr mode_t construct_mode_spec(mode_t index, mode_t type, mode_t param) {
-    return type << mode_type_shift
-      | param << mode_param_shift
-      | index << mode_index_shift;
-  }
-
   enum mode_spec {
     ansi_mode   = 0, // CSI Ps h
     dec_mode    = 1, // CSI ? Ps h
     contra_mode = 2, // private mode
 
-    accessor_mode = 0x800, // index
+    accessor_flag = 0x10000,
 
-    mode_erm  = construct_mode_spec( 6, ansi_mode,  6),
-    mode_vem  = construct_mode_spec( 7, ansi_mode,  7),
-    mode_bdsm = construct_mode_spec( 8, ansi_mode,  8),
-    mode_dcsm = construct_mode_spec( 9, ansi_mode,  9),
-    mode_hem  = construct_mode_spec(10, ansi_mode, 10),
-    mode_lnm  = construct_mode_spec(20, ansi_mode, 20),
-    mode_grcm = construct_mode_spec(21, ansi_mode, 21),
-    mode_zdm  = construct_mode_spec(22, ansi_mode, 22),
-
-    // 未対応のANSIモード
-    mode_gatm = construct_mode_spec( 1, ansi_mode,  1),
-    mode_kam  = construct_mode_spec( 2, ansi_mode,  2),
-    mode_crm  = construct_mode_spec( 3, ansi_mode,  3),
-    mode_irm  = construct_mode_spec( 4, ansi_mode,  4),
-    mode_srtm = construct_mode_spec( 5, ansi_mode,  5),
-    mode_pum  = construct_mode_spec(11, ansi_mode, 11),
-    mode_srm  = construct_mode_spec(12, ansi_mode, 12),
-    mode_feam = construct_mode_spec(13, ansi_mode, 13),
-    mode_fetm = construct_mode_spec(14, ansi_mode, 14),
-    mode_matm = construct_mode_spec(15, ansi_mode, 15),
-    mode_ttm  = construct_mode_spec(16, ansi_mode, 16),
-    mode_satm = construct_mode_spec(17, ansi_mode, 17),
-    mode_tsm  = construct_mode_spec(18, ansi_mode, 18),
-    mode_ebm  = construct_mode_spec(19, ansi_mode, 19),
-
-    // DECモード
-    mode_decckm   = construct_mode_spec(30, dec_mode, 1),
-    mode_decawm   = construct_mode_spec(24, dec_mode, 7),
-    mode_dectcem  = construct_mode_spec(29, dec_mode, 25),
-
-    // カーソルの点滅と形状 (何れも解釈がよく分からない)。
-    // フラグとしてではなく setter/getter で処理するべきかも。
-    mode_attCursorBlink = construct_mode_spec(32, dec_mode , 12),
-    resource_cursorBlink = construct_mode_spec(33, dec_mode , 13),
-    resource_cursorBlinkXOR = construct_mode_spec(34, dec_mode , 14),
-    mode_wystcurm1 = construct_mode_spec(0 | accessor_mode, ansi_mode, 32),
-    mode_wystcurm2 = construct_mode_spec(1 | accessor_mode, ansi_mode, 33),
-    mode_wyulcurm  = construct_mode_spec(2 | accessor_mode, ansi_mode, 34),
-    mode_bracketedPasteMode  = construct_mode_spec(28, dec_mode, 2004),
-
-    // 未対応のDECモード
-    mode_decom    = construct_mode_spec(23, dec_mode, 6),
-
-    // Contra original
-    mode_simd     = construct_mode_spec(25, contra_mode, 9201),
-    /// @var mode_xenl_ech
-    /// 行末にカーソルがある時に ECH, ICH, DCH は行の最後の文字に作用します。
-    mode_xenl_ech = construct_mode_spec(26, contra_mode, 9203),
-    /// @var mode_home_il
-    /// ICH, IL, DL の後にカーソルを SPH で設定される行頭に移動します。
-    mode_home_il  = construct_mode_spec(27, contra_mode, 9204),
+#include "../../out/gen/term.mode_def.hpp"
   };
 
   struct tty_state;
   class term_t;
+  typedef std::uint32_t csi_single_param_t;
 
   void do_pld(term_t& term);
   void do_plu(term_t& term);
@@ -101,8 +40,12 @@ namespace ansi {
   void do_epa(term_t& term);
   void do_ssa(term_t& term);
   void do_esa(term_t& term);
+  void do_altscreen(term_t& term, bool value);
+  void do_ed(term_t& term, csi_single_param_t param);
 
   struct tty_state {
+    term_t* m_term;
+
     curpos_t page_home  {-1};
     curpos_t page_limit {-1};
     curpos_t line_home  {-1};
@@ -121,7 +64,10 @@ namespace ansi {
     curpos_t m_scosc_x;
     curpos_t m_scosc_y;
 
-    tty_state() {
+    // Alternate Screen Buffer
+    board_t altscreen;
+
+    tty_state(term_t* term): m_term(term) {
       this->clear();
     }
 
@@ -154,32 +100,13 @@ namespace ansi {
     void initialize_mode() {
       std::fill(std::begin(m_mode_flags), std::end(m_mode_flags), 0);
 
-      // ANSI modes
-      set_mode(mode_vem,  false);
-      set_mode(mode_erm,  true );
-      set_mode(mode_bdsm, true );
-      set_mode(mode_dcsm, true );
-      set_mode(mode_hem,  false);
-      set_mode(mode_lnm,  true );
-      set_mode(mode_grcm, true );
-      set_mode(mode_zdm,  true );
-
-      // DEC modes
-      set_mode(mode_decckm, false);
-      set_mode(mode_decawm   , true );
-      set_mode(mode_attCursorBlink , true );
-      set_mode(resource_cursorBlink, false);
-      set_mode(resource_cursorBlinkXOR, true);
-      set_mode(mode_dectcem  , true );
-      set_mode(mode_bracketedPasteMode, true);
-
-      set_mode(mode_xenl_ech, true);
+#include "../../out/gen/term.mode_init.hpp"
     }
 
   public:
     bool get_mode(mode_t modeSpec) const {
-      std::uint32_t const index = (modeSpec & mode_index_mask) >> mode_index_shift;
-      if (index < (std::uint32_t) accessor_mode) {
+      std::uint32_t const index = modeSpec;
+      if (!(index & accessor_flag)) {
         unsigned const field = index >> 5;
         std::uint32_t const bit = 1 << (index & 0x1F);
         mwg_assert(field < sizeof(m_mode_flags) / sizeof(m_mode_flags[0]), "invalid modeSpec");;
@@ -190,22 +117,29 @@ namespace ansi {
         // Note: 現在は暫定的にハードコーディングしているが、
         //   将来的にはunordered_map か何かで登録できる様にする。
         //   もしくは何らかの表からコードを自動生成する様にする。
-        switch (index & ~(std::uint32_t) accessor_mode) {
-        case 0: // Mode 32 (Set Cursor Mode (Wyse))
+        switch (index) {
+        case mode_wystcurm1: // Mode 32 (Set Cursor Mode (Wyse))
           return !get_mode(mode_attCursorBlink);
-        case 1: // Mode 33 WYSTCURM (Wyse Set Cursor Mode)
+        case mode_wystcurm2: // Mode 33 WYSTCURM (Wyse Set Cursor Mode)
           return !get_mode(resource_cursorBlink);
-        case 2: // Mode 34 WYULCURM (Wyse Underline Cursor Mode)
+        case mode_wyulcurm: // Mode 34 WYULCURM (Wyse Underline Cursor Mode)
           return m_cursor_shape > 0;
+        case mode_altscreen_clr: // Mode ?1047
+          return get_mode(mode_altscreen);
+        case mode_decsc: // Mode ?1048
+          return m_decsc_cur.x >= 0;
+        case mode_altscreen_cur: // Mode ?1049
+          return get_mode(mode_altscreen);
         default:
           return false;
         }
       }
     }
 
+  public:
     void set_mode(mode_t modeSpec, bool value = true) {
-      std::uint32_t const index = (modeSpec & mode_index_mask) >> mode_index_shift;
-      if (index < accessor_mode) {
+      std::uint32_t const index = modeSpec;
+      if (!(index & accessor_flag)) {
         unsigned const field = index >> 5;
         std::uint32_t const bit = 1 << (index & 0x1F);
         mwg_assert(field < sizeof(m_mode_flags) / sizeof(m_mode_flags[0]), "invalid modeSpec");;
@@ -219,14 +153,39 @@ namespace ansi {
         // Note: 現在は暫定的にハードコーディングしているが、
         //   将来的にはunordered_map か何かで登録できる様にする。
         //   もしくは何らかの表からコードを自動生成する様にする。
-        switch (index & ~(std::uint32_t) accessor_mode) {
-        case 0: set_mode(mode_attCursorBlink, !value); break;
-        case 1: set_mode(resource_cursorBlink, !value); break;
-        case 2:
+        switch (index) {
+        case mode_wystcurm1:
+          set_mode(mode_attCursorBlink, !value);
+          break;
+        case mode_wystcurm2:
+          set_mode(resource_cursorBlink, !value);
+          break;
+        case mode_wyulcurm:
           if (value) {
             if (m_cursor_shape <= 0) m_cursor_shape = 1;
           } else {
             if (m_cursor_shape > 0) m_cursor_shape = 0;
+          }
+          break;
+        case mode_altscreen:
+          do_altscreen(*m_term, value);
+          break;
+        case mode_altscreen_clr:
+          if (get_mode(mode_altscreen) != value) {
+            if (value) do_ed(*m_term, 2);
+            set_mode(mode_altscreen, value);
+          }
+          break;
+        case mode_decsc:
+          if (value)
+            do_decsc(*m_term);
+          else
+            do_decrc(*m_term);
+          break;
+        case mode_altscreen_cur:
+          if (get_mode(mode_altscreen) != value) {
+            set_mode(mode_altscreen, value);
+            set_mode(mode_decsc, value);
           }
           break;
         default: ;
@@ -260,7 +219,7 @@ namespace ansi {
   class term_t {
   private:
     board_t* m_board;
-    tty_state m_state;
+    tty_state m_state {this};
 
   public:
     void initialize_line(line_t& line) const {
