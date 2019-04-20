@@ -391,6 +391,25 @@ namespace {
     return true;
   }
 
+  bool do_decstbm(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
+    board_t& b = term.board();
+
+    csi_single_param_t param1, param2;
+    params.read_param(param1, 0);
+    params.read_param(param2, 0);
+
+    curpos_t const home = param1 == 0 ? 0 : std::min((curpos_t) param1 - 1, b.m_width);
+    curpos_t const limit = param2 == 0 ? b.m_width : std::min((curpos_t) param2, b.m_width);
+    if (home + 2 <= limit) {
+      s.decstbm_beg = home == 0 ? -1 : home;
+      s.decstbm_end = limit == b.m_width ? -1 : limit;
+    }
+    b.cur.x = 0;
+    b.cur.y = 0;
+    return true;
+  }
+
   //---------------------------------------------------------------------------
   // Strings
 
@@ -434,7 +453,7 @@ namespace {
     return do_cux_direction(vec >> do_cux_shift * (0 <= value && value < 8? value: 0) & do_cux_mask);
   }
 
-  static bool do_cux(term_t& term, csi_parameters& params, do_cux_direction direction, bool isData) {
+  static bool do_cux(term_t& term, csi_parameters& params, do_cux_direction direction, bool isData, bool check_stbm) {
     tty_state& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
@@ -472,92 +491,81 @@ namespace {
       }
       break;
     case do_cux_prec_line:
-      b.cur.y = std::max((curpos_t) 0, y - (curpos_t) param);
+      b.cur.y = std::max(y - (curpos_t) param, check_stbm ? term.scroll_begin() : (curpos_t) 0);
       break;
     case do_cux_succ_line:
-      b.cur.y = std::min(term.board().m_height - 1, y + (curpos_t) param);
+      b.cur.y = std::min(y + (curpos_t) param, (check_stbm ? term.scroll_end() : term.board().m_height) - 1);
       break;
     }
 
     return true;
   }
 
-  bool do_cuu(term_t& term, csi_parameters& params) {
-    constexpr std::uint32_t vec
-      = do_cux_vec_construct(presentation_direction_tblr, do_cux_prec_char)
-      | do_cux_vec_construct(presentation_direction_tbrl, do_cux_prec_char)
-      | do_cux_vec_construct(presentation_direction_btlr, do_cux_succ_char)
-      | do_cux_vec_construct(presentation_direction_btrl, do_cux_succ_char)
-      | do_cux_vec_construct(presentation_direction_lrtb, do_cux_prec_line)
-      | do_cux_vec_construct(presentation_direction_rltb, do_cux_prec_line)
-      | do_cux_vec_construct(presentation_direction_lrbt, do_cux_succ_line)
-      | do_cux_vec_construct(presentation_direction_rlbt, do_cux_succ_line);
+  static constexpr std::uint32_t do_cux_vec_u
+    = do_cux_vec_construct(presentation_direction_tblr, do_cux_prec_char)
+    | do_cux_vec_construct(presentation_direction_tbrl, do_cux_prec_char)
+    | do_cux_vec_construct(presentation_direction_btlr, do_cux_succ_char)
+    | do_cux_vec_construct(presentation_direction_btrl, do_cux_succ_char)
+    | do_cux_vec_construct(presentation_direction_lrtb, do_cux_prec_line)
+    | do_cux_vec_construct(presentation_direction_rltb, do_cux_prec_line)
+    | do_cux_vec_construct(presentation_direction_lrbt, do_cux_succ_line)
+    | do_cux_vec_construct(presentation_direction_rlbt, do_cux_succ_line);
+  static constexpr std::uint32_t do_cux_vec_d
+    = do_cux_vec_construct(presentation_direction_btlr, do_cux_prec_char)
+    | do_cux_vec_construct(presentation_direction_btrl, do_cux_prec_char)
+    | do_cux_vec_construct(presentation_direction_tblr, do_cux_succ_char)
+    | do_cux_vec_construct(presentation_direction_tbrl, do_cux_succ_char)
+    | do_cux_vec_construct(presentation_direction_lrbt, do_cux_prec_line)
+    | do_cux_vec_construct(presentation_direction_rlbt, do_cux_prec_line)
+    | do_cux_vec_construct(presentation_direction_lrtb, do_cux_succ_line)
+    | do_cux_vec_construct(presentation_direction_rltb, do_cux_succ_line);
+  static constexpr std::uint32_t do_cux_vec_r
+    = do_cux_vec_construct(presentation_direction_rltb, do_cux_prec_char)
+    | do_cux_vec_construct(presentation_direction_rlbt, do_cux_prec_char)
+    | do_cux_vec_construct(presentation_direction_lrtb, do_cux_succ_char)
+    | do_cux_vec_construct(presentation_direction_lrbt, do_cux_succ_char)
+    | do_cux_vec_construct(presentation_direction_tbrl, do_cux_prec_line)
+    | do_cux_vec_construct(presentation_direction_btrl, do_cux_prec_line)
+    | do_cux_vec_construct(presentation_direction_tblr, do_cux_succ_line)
+    | do_cux_vec_construct(presentation_direction_btlr, do_cux_succ_line);
+  static constexpr std::uint32_t do_cux_vec_l
+    = do_cux_vec_construct(presentation_direction_lrtb, do_cux_prec_char)
+    | do_cux_vec_construct(presentation_direction_lrbt, do_cux_prec_char)
+    | do_cux_vec_construct(presentation_direction_rltb, do_cux_succ_char)
+    | do_cux_vec_construct(presentation_direction_rlbt, do_cux_succ_char)
+    | do_cux_vec_construct(presentation_direction_tblr, do_cux_prec_line)
+    | do_cux_vec_construct(presentation_direction_btlr, do_cux_prec_line)
+    | do_cux_vec_construct(presentation_direction_tbrl, do_cux_succ_line)
+    | do_cux_vec_construct(presentation_direction_btrl, do_cux_succ_line);
 
-    return do_cux(
-      term, params,
-      do_cux_vec_select(vec, term.board().m_presentation_direction),
-      false);
+  bool do_cuu(term_t& term, csi_parameters& params) {
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_u, term.board().m_presentation_direction);
+    return do_cux(term, params, dir, false, true);
   }
   bool do_cud(term_t& term, csi_parameters& params) {
-    constexpr std::uint32_t vec
-      = do_cux_vec_construct(presentation_direction_btlr, do_cux_prec_char)
-      | do_cux_vec_construct(presentation_direction_btrl, do_cux_prec_char)
-      | do_cux_vec_construct(presentation_direction_tblr, do_cux_succ_char)
-      | do_cux_vec_construct(presentation_direction_tbrl, do_cux_succ_char)
-      | do_cux_vec_construct(presentation_direction_lrbt, do_cux_prec_line)
-      | do_cux_vec_construct(presentation_direction_rlbt, do_cux_prec_line)
-      | do_cux_vec_construct(presentation_direction_lrtb, do_cux_succ_line)
-      | do_cux_vec_construct(presentation_direction_rltb, do_cux_succ_line);
-
-    return do_cux(
-      term, params,
-      do_cux_vec_select(vec, term.board().m_presentation_direction),
-      false);
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_d, term.board().m_presentation_direction);
+    return do_cux(term, params, dir, false, true);
   }
   bool do_cuf(term_t& term, csi_parameters& params) {
-    constexpr std::uint32_t vec
-      = do_cux_vec_construct(presentation_direction_rltb, do_cux_prec_char)
-      | do_cux_vec_construct(presentation_direction_rlbt, do_cux_prec_char)
-      | do_cux_vec_construct(presentation_direction_lrtb, do_cux_succ_char)
-      | do_cux_vec_construct(presentation_direction_lrbt, do_cux_succ_char)
-      | do_cux_vec_construct(presentation_direction_tbrl, do_cux_prec_line)
-      | do_cux_vec_construct(presentation_direction_btrl, do_cux_prec_line)
-      | do_cux_vec_construct(presentation_direction_tblr, do_cux_succ_line)
-      | do_cux_vec_construct(presentation_direction_btlr, do_cux_succ_line);
-
-    return do_cux(
-      term, params,
-      do_cux_vec_select(vec, term.board().m_presentation_direction),
-      false);
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_r, term.board().m_presentation_direction);
+    return do_cux(term, params, dir, false, true);
   }
   bool do_cub(term_t& term, csi_parameters& params) {
-    constexpr std::uint32_t vec
-      = do_cux_vec_construct(presentation_direction_lrtb, do_cux_prec_char)
-      | do_cux_vec_construct(presentation_direction_lrbt, do_cux_prec_char)
-      | do_cux_vec_construct(presentation_direction_rltb, do_cux_succ_char)
-      | do_cux_vec_construct(presentation_direction_rlbt, do_cux_succ_char)
-      | do_cux_vec_construct(presentation_direction_tblr, do_cux_prec_line)
-      | do_cux_vec_construct(presentation_direction_btlr, do_cux_prec_line)
-      | do_cux_vec_construct(presentation_direction_tbrl, do_cux_succ_line)
-      | do_cux_vec_construct(presentation_direction_btrl, do_cux_succ_line);
-
-    return do_cux(
-      term, params,
-      do_cux_vec_select(vec, term.board().m_presentation_direction),
-      false);
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_l, term.board().m_presentation_direction);
+    return do_cux(term, params, dir, false, true);
   }
 
   bool do_hpb(term_t& term, csi_parameters& params) {
-    return do_cux(term, params, do_cux_prec_char, true);
+    return do_cux(term, params, do_cux_prec_char, true, false);
   }
   bool do_hpr(term_t& term, csi_parameters& params) {
-    return do_cux(term, params, do_cux_succ_char, true);
+    return do_cux(term, params, do_cux_succ_char, true, false);
   }
   bool do_vpb(term_t& term, csi_parameters& params) {
-    return do_cux(term, params, do_cux_prec_line, true);
+    return do_cux(term, params, do_cux_prec_line, true, false);
   }
   bool do_vpr(term_t& term, csi_parameters& params) {
-    return do_cux(term, params, do_cux_succ_line, true);
+    return do_cux(term, params, do_cux_succ_line, true, false);
   }
 
   static bool do_cup(board_t& b, curpos_t x, curpos_t y) {
@@ -573,7 +581,7 @@ namespace {
     if (param == 0 && s.get_mode(mode_zdm)) param = 1;
 
     board_t& b = term.board();
-    curpos_t const y = std::min(b.cur.y + (curpos_t) param, b.m_width - 1);
+    curpos_t const y = std::min(b.cur.y + (curpos_t) param, term.scroll_end() - 1);
     return do_cup(b, 0, y);
   }
 
@@ -584,7 +592,7 @@ namespace {
     if (param == 0 && s.get_mode(mode_zdm)) param = 1;
 
     board_t& b = term.board();
-    curpos_t const y = std::max(b.cur.y - (curpos_t) param, 0);
+    curpos_t const y = std::max(b.cur.y - (curpos_t) param, term.scroll_begin());
     return do_cup(b, 0, y);
   }
 
@@ -663,6 +671,74 @@ namespace {
 
     term.board().cur.y = param - 1;
     return true;
+  }
+
+  static bool do_scroll(term_t& term, csi_parameters& params, do_cux_direction direction) {
+    tty_state& s = term.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s.get_mode(mode_zdm))
+        param = 1;
+      else
+        return true;
+    }
+
+    board_t& b = term.board();
+
+    curpos_t const y = b.cur.y;
+    curpos_t shift = 0;
+    switch (direction) {
+    case do_cux_prec_char:
+      shift = -(curpos_t) param;
+      goto shift_cells;
+    case do_cux_succ_char:
+      shift = (curpos_t) param;
+      goto shift_cells;
+    shift_cells:
+      {
+        curpos_t const p = b.to_presentation_position(y, b.cur.x);
+        line_shift_flags const flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
+        b.line().shift_cells(0, b.m_width, shift, flags, b.m_width, b.cur.fill_attr());
+        b.cur.x = b.to_data_position(y, p);
+      }
+      break;
+
+    case do_cux_prec_line:
+      shift = -(curpos_t) param;
+      goto shift_lines;
+    case do_cux_succ_line:
+      shift = (curpos_t) param;
+      goto shift_lines;
+    shift_lines:
+      {
+        curpos_t const p = b.to_presentation_position(y, b.cur.x);
+        curpos_t const beg = term.scroll_begin();
+        curpos_t const end = term.scroll_end();
+        b.shift_lines(beg, end, -(curpos_t) param);
+        b.cur.x = b.to_data_position(y, p);
+      }
+      break;
+    }
+
+    return true;
+  }
+
+  bool do_su(term_t& term, csi_parameters& params) {
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_u, term.board().m_presentation_direction);
+    return do_scroll(term, params, dir);
+  }
+  bool do_sd(term_t& term, csi_parameters& params) {
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_d, term.board().m_presentation_direction);
+    return do_scroll(term, params, dir);
+  }
+  bool do_sr(term_t& term, csi_parameters& params) {
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_r, term.board().m_presentation_direction);
+    return do_scroll(term, params, dir);
+  }
+  bool do_sl(term_t& term, csi_parameters& params) {
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_l, term.board().m_presentation_direction);
+    return do_scroll(term, params, dir);
   }
 
   //---------------------------------------------------------------------------
@@ -1127,7 +1203,13 @@ namespace {
       p = b.to_presentation_position(b.cur.y, b.cur.x);
 
     // 挿入
-    b.insert_lines(b.cur.y, s.get_mode(mode_vem) ? -(curpos_t) param : (curpos_t) param);
+    if (!s.get_mode(mode_vem)) {
+      curpos_t const end = term.scroll_end();
+      b.shift_lines(b.cur.y, end, (curpos_t) param);
+    } else {
+      curpos_t const beg = term.scroll_begin();
+      b.shift_lines(beg, b.cur.y + 1, -(curpos_t) param);
+    }
 
     // カーソル位置設定
     if (s.get_mode(mode_home_il)) {
@@ -1157,7 +1239,13 @@ namespace {
       p = b.to_presentation_position(b.cur.y, b.cur.x);
 
     // 削除
-    b.delete_lines(b.cur.y, s.get_mode(mode_vem) ? -(curpos_t) param : (curpos_t) param);
+    if (!s.get_mode(mode_vem)) {
+      curpos_t const end = term.scroll_end();
+      b.shift_lines(b.cur.y, end, -(curpos_t) param);
+    } else {
+      curpos_t const beg = term.scroll_begin();
+      b.shift_lines(beg, b.cur.y + 1, (curpos_t) param);
+    }
 
     // カーソル位置設定
     if (s.get_mode(mode_home_il)) {
@@ -1209,6 +1297,8 @@ namespace {
       register_cfunc(&do_il  , ascii_L);
       register_cfunc(&do_dl  , ascii_M);
       register_cfunc(&do_dch , ascii_P);
+      register_cfunc(&do_su  , ascii_S);
+      register_cfunc(&do_sd  , ascii_T);
       register_cfunc(&do_ech , ascii_X);
       register_cfunc(&do_srs , ascii_left_bracket);
       register_cfunc(&do_sds , ascii_right_bracket);
@@ -1224,6 +1314,8 @@ namespace {
       register_cfunc(&do_rm  , ascii_l);
       register_cfunc(&do_sgr , ascii_m);
 
+      register_cfunc(&do_sl  , ascii_sp, ascii_at);
+      register_cfunc(&do_sr  , ascii_sp, ascii_A);
       register_cfunc(&do_spd , ascii_sp, ascii_S);
       register_cfunc(&do_slh , ascii_sp, ascii_U);
       register_cfunc(&do_sll , ascii_sp, ascii_V);
@@ -1232,6 +1324,7 @@ namespace {
       register_cfunc(&do_spl , ascii_sp, ascii_j);
       register_cfunc(&do_scp , ascii_sp, ascii_k);
 
+      register_cfunc(&do_decstbm , ascii_r);
       register_cfunc(&do_scosc   , ascii_s);
       register_cfunc(&do_scorc   , ascii_u);
       register_cfunc(&do_decscusr, ascii_sp, ascii_q);

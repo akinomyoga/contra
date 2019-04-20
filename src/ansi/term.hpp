@@ -67,6 +67,10 @@ namespace ansi {
     // Alternate Screen Buffer
     board_t altscreen;
 
+    // DECSTBM
+    curpos_t decstbm_beg = -1;
+    curpos_t decstbm_end = -1;
+
     tty_state(term_t* term): m_term(term) {
       this->clear();
     }
@@ -77,6 +81,13 @@ namespace ansi {
       this->screen_title = U"";
       this->m_decsc_cur.x = -1;
       this->m_scosc_x = -1;
+
+      this->page_home = -1;
+      this->page_limit = -1;
+      this->line_home = -1;
+      this->line_limit = -1;
+      this->decstbm_beg = -1;
+      this->decstbm_end = -1;
     }
 
     sequence_decoder_config m_sequence_decoder_config;
@@ -237,6 +248,15 @@ namespace ansi {
     board_t const& board() const { return *m_board; }
     tty_state& state() {return this->m_state;}
     tty_state const& state() const {return this->m_state;}
+
+    curpos_t scroll_begin() const {
+      curpos_t const b = m_state.decstbm_beg;
+      return 0 <= b && b < m_board->m_height ? b : 0;
+    }
+    curpos_t scroll_end() const {
+      curpos_t const e = m_state.decstbm_end;
+      return 0 < e && e <= m_board->m_height ? e : m_board->m_height;
+    }
 
   public:
     void insert_graph(char32_t u) {

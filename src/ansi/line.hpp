@@ -887,35 +887,29 @@ namespace ansi {
         initialize_lines(0, count);
       }
     }
-    /// @fn void insert_lines(curpos_t y, curpos_t count);
-    /// @param[in] y 挿入する位置を指定します。
-    /// @param[in] count
-    ///   挿入する行数を指定します。
-    ///   負の数を指定した時、上方向にシフト・挿入します。
-    void insert_lines(curpos_t y, curpos_t count) {
-      if (count > 0) {
-        count = std::min(count, m_height - y);
-        if (!count) return;
-        std::move_backward(m_lines.begin() + y, m_lines.end() - count, m_lines.end());
-        initialize_lines(y, y + count);
+    /// @fn void shift_lines(curpos_t y1, curpos_t y2, curpos_t count);
+    /// 指定した範囲の行を前方または後方に移動します。
+    /// @param[in] y1 範囲の開始位置を指定します。
+    /// @param[in] y1 範囲の終端位置を指定します。
+    /// @param[in] count 移動量を指定します。正の値を指定した時、
+    ///   下方向にシフトします。負の値を指定した時、上方向にシフトします。
+    void shift_lines(curpos_t y1, curpos_t y2, curpos_t count) {
+      y1 = contra::clamp(y1, 0, m_height);
+      y2 = contra::clamp(y2, 0, m_height);
+      if (y1 >= y2) return;
+
+      if (std::abs(count) >= y2 - y1) {
+        initialize_lines(y1, y2);
+      } else if (count > 0) {
+        auto const it1 = m_lines.begin() + y1;
+        auto const it2 = m_lines.begin() + y2;
+        std::move_backward(it1, it2 - count, it2);
+        initialize_lines(y1, y1 + count);
       } else if (count < 0) {
-        count = std::min(-count, y + 1);
-        if (!count) return;
-        std::move(m_lines.begin() + count, m_lines.begin() + y + 1, m_lines.begin());
-        initialize_lines(y + 1 - count, y + 1);
-      }
-    }
-    void delete_lines(curpos_t y, curpos_t count) {
-      if (count > 0) {
-        count = std::min(count, m_height - y);
-        if (!count) return;
-        std::move(m_lines.begin() + y + count, m_lines.end(), m_lines.begin() + y);
-        initialize_lines(m_height - count, m_height);
-      } else if (count < 0) {
-        count = std::min(-count, y + 1);
-        if (!count) return;
-        std::move_backward(m_lines.begin(), m_lines.begin() + y + 1 - count, m_lines.begin() + y + 1);
-        initialize_lines(0, count);
+        auto const it1 = m_lines.begin() + y1;
+        auto const it2 = m_lines.begin() + y2;
+        std::move(it1 + count, it2, it1);
+        initialize_lines(y2 - count, y2);
       }
     }
     void clear_screen() {
