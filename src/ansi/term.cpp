@@ -126,6 +126,11 @@ namespace {
   //---------------------------------------------------------------------------
   // Modes
 
+  void tty_state::initialize_mode() {
+    std::fill(std::begin(m_mode_flags), std::end(m_mode_flags), 0);
+#include "../../out/gen/term.mode_init.hpp"
+  }
+
   struct mode_dictionary_t {
     std::unordered_map<std::uint32_t, mode_t> data_ansi;
     std::unordered_map<std::uint32_t, mode_t> data_dec;
@@ -219,6 +224,13 @@ namespace {
       s.altscreen.cur = b.cur;
       std::swap(s.altscreen, b);
     }
+  }
+
+  void do_deckpam(term_t& term) {
+    term.state().set_mode(mode_decnkm, true);
+  }
+  void do_deckpnm(term_t& term) {
+    term.state().set_mode(mode_decnkm, false);
   }
 
   //---------------------------------------------------------------------------
@@ -450,20 +462,10 @@ namespace {
     return value << do_cux_shift * dir;
   }
   static do_cux_direction do_cux_vec_select(std::uint32_t vec, presentation_direction value) {
-    return do_cux_direction(vec >> do_cux_shift * (0 <= value && value < 8? value: 0) & do_cux_mask);
+    return do_cux_direction(vec >> do_cux_shift * (0 <= value && value < 8 ? value : 0) & do_cux_mask);
   }
 
-  static bool do_cux(term_t& term, csi_parameters& params, do_cux_direction direction, bool isData, bool check_stbm) {
-    tty_state& s = term.state();
-    csi_single_param_t param;
-    params.read_param(param, 1);
-    if (param == 0) {
-      if (s.get_mode(mode_zdm))
-        param = 1;
-      else
-        return true;
-    }
-
+  static void do_cux(term_t& term, csi_single_param_t param, do_cux_direction direction, bool isPresentation, bool check_stbm) {
     board_t& b = term.board();
 
     curpos_t y = b.cur.y;
@@ -471,10 +473,10 @@ namespace {
     case do_cux_prec_char:
       {
         curpos_t x = b.cur.x;
-        if (!isData)
+        if (isPresentation)
           x = b.to_presentation_position(y, x);
         x = std::max((curpos_t) 0, x - (curpos_t) param);
-        if (!isData)
+        if (isPresentation)
           x = b.to_data_position(y, x);
         b.cur.x = x;
       }
@@ -482,10 +484,10 @@ namespace {
     case do_cux_succ_char:
       {
         curpos_t x = b.cur.x;
-        if (!isData)
+        if (isPresentation)
           x = b.to_presentation_position(y, x);
         x = std::min(term.board().m_width - 1, x + (curpos_t) param);
-        if (!isData)
+        if (isPresentation)
           x = b.to_data_position(y, x);
         b.cur.x = x;
       }
@@ -497,7 +499,18 @@ namespace {
       b.cur.y = std::min(y + (curpos_t) param, (check_stbm ? term.scroll_end() : term.board().m_height) - 1);
       break;
     }
-
+  }
+  static bool do_cux(term_t& term, csi_parameters& params, do_cux_direction direction, bool isPresentation, bool check_stbm) {
+    tty_state& s = term.state();
+    csi_single_param_t param;
+    params.read_param(param, 1);
+    if (param == 0) {
+      if (s.get_mode(mode_zdm))
+        param = 1;
+      else
+        return true;
+    }
+    do_cux(term, param, direction, isPresentation, check_stbm);
     return true;
   }
 
@@ -540,33 +553,39 @@ namespace {
 
   bool do_cuu(term_t& term, csi_parameters& params) {
     do_cux_direction const dir = do_cux_vec_select(do_cux_vec_u, term.board().m_presentation_direction);
-    return do_cux(term, params, dir, false, true);
+    return do_cux(term, params, dir, true, true);
   }
   bool do_cud(term_t& term, csi_parameters& params) {
     do_cux_direction const dir = do_cux_vec_select(do_cux_vec_d, term.board().m_presentation_direction);
-    return do_cux(term, params, dir, false, true);
+    return do_cux(term, params, dir, true, true);
   }
   bool do_cuf(term_t& term, csi_parameters& params) {
     do_cux_direction const dir = do_cux_vec_select(do_cux_vec_r, term.board().m_presentation_direction);
-    return do_cux(term, params, dir, false, true);
+    return do_cux(term, params, dir, true, true);
   }
   bool do_cub(term_t& term, csi_parameters& params) {
     do_cux_direction const dir = do_cux_vec_select(do_cux_vec_l, term.board().m_presentation_direction);
-    return do_cux(term, params, dir, false, true);
+    return do_cux(term, params, dir, true, true);
   }
 
   bool do_hpb(term_t& term, csi_parameters& params) {
-    return do_cux(term, params, do_cux_prec_char, true, false);
+    return do_cux(term, params, do_cux_prec_char, false, false);
   }
   bool do_hpr(term_t& term, csi_parameters& params) {
-    return do_cux(term, params, do_cux_succ_char, true, false);
+    return do_cux(term, params, do_cux_succ_char, false, false);
   }
   bool do_vpb(term_t& term, csi_parameters& params) {
-    return do_cux(term, params, do_cux_prec_line, true, false);
+    return do_cux(term, params, do_cux_prec_line, false, false);
   }
   bool do_vpr(term_t& term, csi_parameters& params) {
-    return do_cux(term, params, do_cux_succ_line, true, false);
+    return do_cux(term, params, do_cux_succ_line, false, false);
   }
+
+  // RLogin によると ADM-3 由来の動作として上下左右に動く。
+  void do_adm3_fs(term_t& term) { do_cux(term, 1, do_cux_succ_char, false, false); }
+  void do_adm3_gs(term_t& term) { do_cux(term, 1, do_cux_prec_char, false, false); }
+  void do_adm3_rs(term_t& term) { do_cux(term, 1, do_cux_prec_char, false, false); }
+  void do_adm3_us(term_t& term) { do_cux(term, 1, do_cux_succ_char, false, false); }
 
   static bool do_cup(board_t& b, curpos_t x, curpos_t y) {
     b.cur.x = b.to_data_position(y, x);

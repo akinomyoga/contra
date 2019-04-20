@@ -21,6 +21,7 @@ else ifeq ($(HOSTNAME),chatoyancy)
 endif
 
 objdir = ../out
+gendir = ../out/gen
 
 CXXFLAGS += -std=c++17
 CPPFLAGS = -MP -MD -MF $(@:.o=.dep)
@@ -30,12 +31,15 @@ directories += $(objdir) $(objdir)/experimental $(objdir)/ansi
 -include $(wildcard $(objdir)/*.dep)
 -include $(wildcard $(objdir)/experimental/*.dep)
 -include $(wildcard $(objdir)/ansi/*.dep)
-$(objdir)/%.o: %.cpp | $(objdir)
+$(objdir)/%.o: %.cpp | $(objdir) $(gendir)/term.mode_def.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
-$(objdir)/ansi/%.o: ansi/%.cpp | $(objdir)/ansi
+$(objdir)/ansi/%.o: ansi/%.cpp | $(objdir)/ansi $(gendir)/term.mode_def.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
-$(objdir)/experimental/%.o: experimental/%.cpp | $(objdir)/experimental
+$(objdir)/experimental/%.o: experimental/%.cpp | $(objdir)/experimental $(gendir)/term.mode_def.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
+
+$(gendir)/term.mode_def.hpp: make_command.sh
+	bash make_command.sh
 
 all: impl1
 impl1_objs = \

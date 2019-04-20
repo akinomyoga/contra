@@ -26,6 +26,7 @@ flags     mode_zdm                ansi22      true
 flags     mode_decckm             dec1        false
 flags     mode_decom              dec6        unsupported
 flags     mode_decawm             dec7        true
+flags     mode_decnkm             dec66       false
 
 flags     mode_bracketedPasteMode dec2004     true
 

@@ -42,6 +42,12 @@ namespace ansi {
   void do_esa(term_t& term);
   void do_altscreen(term_t& term, bool value);
   void do_ed(term_t& term, csi_single_param_t param);
+  void do_adm3_fs(term_t& term);
+  void do_adm3_gs(term_t& term);
+  void do_adm3_rs(term_t& term);
+  void do_adm3_us(term_t& term);
+  void do_deckpam(term_t& term);
+  void do_deckpnm(term_t& term);
 
   struct tty_state {
     term_t* m_term;
@@ -108,11 +114,7 @@ namespace ansi {
   private:
     std::uint32_t m_mode_flags[2];
 
-    void initialize_mode() {
-      std::fill(std::begin(m_mode_flags), std::end(m_mode_flags), 0);
-
-#include "../../out/gen/term.mode_init.hpp"
-    }
+    void initialize_mode();
 
   public:
     bool get_mode(mode_t modeSpec) const {
@@ -490,6 +492,8 @@ namespace ansi {
         switch (seq.final()) {
         case ascii_7: do_decsc(*this); return;
         case ascii_8: do_decrc(*this); return;
+        case ascii_equals : do_deckpam(*this); return;
+        case ascii_greater: do_deckpnm(*this); return;
         }
       }
       print_unrecognized_sequence(seq);
@@ -515,16 +519,21 @@ namespace ansi {
     void process_control_character(char32_t uchar) {
       switch (uchar) {
       case ascii_bel: do_bel(); break;
-      case ascii_bs:  do_bs();  break;
-      case ascii_ht:  do_ht();  break;
-      case ascii_lf:  do_lf();  break;
-      case ascii_ff:  do_ff();  break;
-      case ascii_vt:  do_vt();  break;
-      case ascii_cr:  do_cr();  break;
+      case ascii_bs : do_bs();  break;
+      case ascii_ht : do_ht();  break;
+      case ascii_lf : do_lf();  break;
+      case ascii_ff : do_ff();  break;
+      case ascii_vt : do_vt();  break;
+      case ascii_cr : do_cr();  break;
 
-      case ascii_ind: do_ind();  break;
-      case ascii_nel: do_nel();  break;
-      case ascii_ri:  do_ri();  break;
+      case ascii_fs: do_adm3_fs(*this); break;
+      case ascii_gs: do_adm3_gs(*this); break;
+      case ascii_rs: do_adm3_rs(*this); break;
+      case ascii_us: do_adm3_us(*this); break;
+
+      case ascii_ind: do_ind(); break;
+      case ascii_nel: do_nel(); break;
+      case ascii_ri : do_ri() ; break;
 
       case ascii_pld: do_pld(*this); break;
       case ascii_plu: do_plu(*this); break;

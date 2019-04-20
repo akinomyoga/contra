@@ -208,5 +208,9 @@ int main() {
   contra::ansi::tty_observer target(stdout, &sgrcap);
   target.print_screen(b);
 
+  std::FILE* file = std::fopen("impl2-dump.txt", "w");
+  b.debug_print(file);
+  std::fclose(file);
+
   return 0;
 }

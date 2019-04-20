@@ -906,6 +906,7 @@ namespace ansi {
         std::move_backward(it1, it2 - count, it2);
         initialize_lines(y1, y1 + count);
       } else if (count < 0) {
+        count = -count;
         auto const it1 = m_lines.begin() + y1;
         auto const it2 = m_lines.begin() + y2;
         std::move(it1 + count, it2, it1);
