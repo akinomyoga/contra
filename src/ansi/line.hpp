@@ -862,15 +862,6 @@ namespace ansi {
     curpos_t x() const { return cur.x; }
     curpos_t y() const { return cur.y; }
 
-    curpos_t line_home() const {
-      curpos_t const home = line().home();
-      return home < 0 ? 0 : std::min(home, m_width - 1);
-    }
-    curpos_t line_limit() const {
-      curpos_t const limit = line().limit();
-      return limit < 0 ? m_width - 1 : std::min(limit, m_width - 1);
-    }
-
     curpos_t line_r2l(line_t const& line) const { return line.is_r2l(m_presentation_direction); }
     curpos_t line_r2l(curpos_t y) const { return line_r2l(m_lines[y]); }
     curpos_t line_r2l() const { return line_r2l(cur.y); }

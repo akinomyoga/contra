@@ -73,9 +73,11 @@ namespace ansi {
     // Alternate Screen Buffer
     board_t altscreen;
 
-    // DECSTBM
-    curpos_t decstbm_beg = -1;
-    curpos_t decstbm_end = -1;
+    // DECSTBM, DECSLRM
+    curpos_t dec_tmargin = -1;
+    curpos_t dec_bmargin = -1;
+    curpos_t dec_lmargin = -1;
+    curpos_t dec_rmargin = -1;
 
     tty_state(term_t* term): m_term(term) {
       this->clear();
@@ -92,8 +94,8 @@ namespace ansi {
       this->page_limit = -1;
       this->line_home = -1;
       this->line_limit = -1;
-      this->decstbm_beg = -1;
-      this->decstbm_end = -1;
+      this->dec_tmargin = -1;
+      this->dec_bmargin = -1;
     }
 
     sequence_decoder_config m_sequence_decoder_config;
@@ -253,20 +255,62 @@ namespace ansi {
     tty_state& state() {return this->m_state;}
     tty_state const& state() const {return this->m_state;}
 
-    curpos_t scroll_begin() const {
-      curpos_t const b = m_state.decstbm_beg;
+    curpos_t tmargin() const {
+      curpos_t const b = m_state.dec_tmargin;
       return 0 <= b && b < m_board->m_height ? b : 0;
     }
-    curpos_t scroll_end() const {
-      curpos_t const e = m_state.decstbm_end;
+    curpos_t bmargin() const {
+      curpos_t const e = m_state.dec_bmargin;
       return 0 < e && e <= m_board->m_height ? e : m_board->m_height;
+    }
+    curpos_t lmargin() const {
+      if (!m_state.get_mode(mode_declrmm)) return 0;
+      curpos_t const l = m_state.dec_lmargin;
+      return 0 <= l && l < m_board->m_width ? l : 0;
+    }
+    curpos_t rmargin() const {
+      if (!m_state.get_mode(mode_declrmm)) return m_board->m_width;
+      curpos_t const r = m_state.dec_rmargin;
+      return 0 < r && r <= m_board->m_width ? r : m_board->m_width;
+    }
+
+    curpos_t implicit_sph() const {
+      curpos_t sph = 0;
+      if (m_state.page_home > 0) sph = m_state.page_home;
+      if (m_state.dec_tmargin > sph) sph = m_state.dec_tmargin;
+      return sph;
+    }
+    curpos_t implicit_spl() const {
+      curpos_t spl = m_board->m_width;
+      if (m_state.page_limit >= 0 && m_state.page_limit < spl)
+        spl = m_state.page_limit;
+      if (m_state.dec_bmargin > 0 && m_state.dec_bmargin - 1 < spl)
+        spl = m_state.dec_bmargin - 1;
+      return spl;
+    }
+    curpos_t implicit_slh(line_t const& line) const {
+      curpos_t const width = m_board->m_width;
+      curpos_t home = line.home();
+      home = home < 0 ? 0 : std::min(home, width - 1);
+      if (m_state.get_mode(mode_declrmm))
+        home = std::max(home, std::min(m_state.dec_lmargin, width - 1));
+      return home;
+    }
+    curpos_t implicit_sll(line_t const& line) const {
+      curpos_t const width = m_board->m_width;
+      curpos_t limit = line.limit();
+      limit = limit < 0 ? width - 1 : std::min(limit, width - 1);
+      if (m_state.get_mode(mode_declrmm) && m_state.dec_rmargin > 0)
+        limit = std::min(limit, m_state.dec_rmargin - 1);
+      return limit;
     }
 
   public:
     void insert_graph(char32_t u) {
       // ToDo: 新しい行に移る時に line_limit, line_home を初期化する
       cursor_t& cur = m_board->cur;
-      initialize_line(m_board->line());
+      line_t& line = m_board->line();
+      initialize_line(line);
 
       int const char_width = m_state.c2w(u); // ToDo 文字幅
       if (char_width <= 0) {
@@ -276,8 +320,8 @@ namespace ansi {
       bool const simd = m_state.get_mode(mode_simd);
       curpos_t const dir = simd ? -1 : 1;
 
-      curpos_t slh = m_board->line_home();
-      curpos_t sll = m_board->line_limit();
+      curpos_t slh = implicit_slh(line);
+      curpos_t sll = implicit_sll(line);
       if (simd) std::swap(slh, sll);
 
       // (行頭より後でかつ) 行末に文字が入らない時は折り返し
@@ -285,7 +329,7 @@ namespace ansi {
       curpos_t const x1 = x0 + dir * (char_width - 1);
       if ((x1 - sll) * dir > 0 && (x0 - slh) * dir > 0) {
         do_nel();
-        sll = simd ? m_board->line_home() : m_board->line_limit();
+        sll = simd ? implicit_slh(m_board->line()) : implicit_sll(m_board->line());
       }
 
       curpos_t const xL = simd ? cur.x - (char_width - 1) : cur.x;
@@ -346,7 +390,7 @@ namespace ansi {
 
       // ToDo: tab stop の管理
       int const tabwidth = 8;
-      curpos_t const sll = m_board->line_limit();
+      curpos_t const sll = implicit_sll(m_board->line());
       curpos_t const xdst = std::min((cur.x + tabwidth) / tabwidth * tabwidth, sll);
       cur.x = xdst;
     }
@@ -358,8 +402,8 @@ namespace ansi {
       if (toAdjustXAsPresentationPosition)
         x = m_board->to_presentation_position(m_board->cur.y, x);
 
-      curpos_t const beg = scroll_begin();
-      curpos_t const end = scroll_end();
+      curpos_t const beg = implicit_sph();
+      curpos_t const end = implicit_spl() + 1;
       if (delta > 0) {
         if (m_board->cur.y < end) {
           if (m_board->cur.y + delta < end) {
@@ -411,7 +455,7 @@ namespace ansi {
             x = m_board->to_presentation_position(y, x);
 
           m_board->clear_screen();
-          y = std::max(m_state.page_home, 0);
+          y = std::max(implicit_sph(), 0);
 
           if (!toCallCR)
             x = m_board->to_data_position(y, x);
@@ -437,9 +481,9 @@ namespace ansi {
 
       curpos_t x;
       if (m_state.get_mode(mode_simd)) {
-        x = m_board->line_limit();
+        x = implicit_sll(line);
       } else {
-        x = m_board->line_home();
+        x = implicit_slh(line);
       }
 
       if (!m_state.dcsm())

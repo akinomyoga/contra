@@ -35,6 +35,7 @@ flags     mode_attCursorBlink     dec12       true
 flags     resource_cursorBlink    dec13       false
 flags     resource_cursorBlinkXOR dec14       true
 flags     mode_dectcem            dec25       true
+flags     mode_declrmm            dec69       false
 accessor  mode_wystcurm1          ansi32      -
 accessor  mode_wystcurm2          ansi33      -
 accessor  mode_wyulcurm           ansi34      -
