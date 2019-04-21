@@ -242,8 +242,9 @@ namespace ansi {
 
         curpos_t wskip = 0;
         curpos_t x = 0;
+        std::fprintf(file, "\x1b[%dX", w.m_width);
         for (auto const& cell : buff) {
-          std::uint32_t code = cell.character.value;
+          std::uint32_t const code = cell.character.value;
           if (code == ascii_nul) {
             wskip++;
           } else {
@@ -253,7 +254,7 @@ namespace ansi {
           }
           x += cell.width;
         }
-        std::fprintf(file, "\x1b[K");
+        if (wskip > 0) put_skip(wskip);
         if (x > 0) std::fprintf(file, "\x1b[%dD", x);
 
         put('\n');

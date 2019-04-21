@@ -137,12 +137,14 @@ namespace ansi {
           return !get_mode(resource_cursorBlink);
         case mode_wyulcurm: // Mode 34 WYULCURM (Wyse Underline Cursor Mode)
           return m_cursor_shape > 0;
+        case mode_altscreen: // Mode ?47
+          return get_mode(mode_altscr);
         case mode_altscreen_clr: // Mode ?1047
-          return get_mode(mode_altscreen);
+          return get_mode(mode_altscr);
         case mode_decsc: // Mode ?1048
           return m_decsc_cur.x >= 0;
         case mode_altscreen_cur: // Mode ?1049
-          return get_mode(mode_altscreen);
+          return get_mode(mode_altscr);
         default:
           return false;
         }
@@ -184,7 +186,7 @@ namespace ansi {
           do_altscreen(*m_term, value);
           break;
         case mode_altscreen_clr:
-          if (get_mode(mode_altscreen) != value) {
+          if (get_mode(mode_altscr) != value) {
             if (value) do_ed(*m_term, 2);
             set_mode(mode_altscreen, value);
           }
@@ -196,7 +198,7 @@ namespace ansi {
             do_decrc(*m_term);
           break;
         case mode_altscreen_cur:
-          if (get_mode(mode_altscreen) != value) {
+          if (get_mode(mode_altscr) != value) {
             set_mode(mode_altscreen, value);
             set_mode(mode_decsc, value);
           }
@@ -364,24 +366,30 @@ namespace ansi {
       if (toAdjustXAsPresentationPosition)
         x = m_board->to_presentation_position(m_board->cur.y, x);
 
+      curpos_t const beg = scroll_begin();
+      curpos_t const end = scroll_end();
       if (delta > 0) {
-        if (m_board->cur.y + delta < m_board->m_height)
-          m_board->cur.y += delta;
-        else {
-          curpos_t const y = m_board->cur.y;
-          m_board->cur.y = m_board->m_height - 1;
-          delta -= m_board->cur.y - y;
-          if (toAppendNewLine)
-            m_board->rotate(delta);
+        if (m_board->cur.y < end) {
+          if (m_board->cur.y + delta < end) {
+            m_board->cur.y += delta;
+          } else {
+            curpos_t const y = m_board->cur.y;
+            m_board->cur.y = end - 1;
+            delta -= m_board->cur.y - y;
+            if (toAppendNewLine)
+              m_board->shift_lines(beg, end, -delta);
+          }
         }
       } else {
-        if (m_board->cur.y + delta >= 0)
-          m_board->cur.y += delta;
-        else {
-          delta += m_board->cur.y;
-          m_board->cur.y = 0;
-          if (toAppendNewLine)
-            m_board->rotate(delta);
+        if (m_board->cur.y >= beg) {
+          if (m_board->cur.y + delta >= beg)
+            m_board->cur.y += delta;
+          else {
+            delta += m_board->cur.y - beg;
+            m_board->cur.y = beg;
+            if (toAppendNewLine)
+              m_board->shift_lines(beg, end, -delta);
+          }
         }
       }
 

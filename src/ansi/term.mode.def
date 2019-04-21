@@ -40,7 +40,7 @@ accessor  mode_wystcurm2          ansi33      -
 accessor  mode_wyulcurm           ansi34      -
 
 # Alternate Screen Buffers
-flags     mode_altscr             private     true
+flags     mode_altscr             private     false
 accessor  mode_altscreen          dec47       -
 accessor  mode_altscreen_clr      dec1047     -
 accessor  mode_decsc              dec1048     -

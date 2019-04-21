@@ -887,7 +887,7 @@ namespace ansi {
         m_lines[y].clear(m_width, cur.fill_attr());
     }
 
-  public:
+  private:
     void rotate(curpos_t count) {
       if (count > 0) {
         if (count > m_height) count = m_height;
@@ -901,6 +901,8 @@ namespace ansi {
         initialize_lines(0, count);
       }
     }
+
+  public:
     /// @fn void shift_lines(curpos_t y1, curpos_t y2, curpos_t count);
     /// 指定した範囲の行を前方または後方に移動します。
     /// @param[in] y1 範囲の開始位置を指定します。
@@ -910,7 +912,11 @@ namespace ansi {
     void shift_lines(curpos_t y1, curpos_t y2, curpos_t count) {
       y1 = contra::clamp(y1, 0, m_height);
       y2 = contra::clamp(y2, 0, m_height);
-      if (y1 >= y2) return;
+      if (y1 >= y2 || count == 0) return;
+      if (y1 == 0 && y2 == m_height) {
+        this->rotate(-count);
+        return;
+      }
 
       if (std::abs(count) >= y2 - y1) {
         initialize_lines(y1, y2);
@@ -919,7 +925,7 @@ namespace ansi {
         auto const it2 = m_lines.begin() + y2;
         std::move_backward(it1, it2 - count, it2);
         initialize_lines(y1, y1 + count);
-      } else if (count < 0) {
+      } else {
         count = -count;
         auto const it1 = m_lines.begin() + y1;
         auto const it2 = m_lines.begin() + y2;

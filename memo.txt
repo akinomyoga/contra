@@ -120,13 +120,21 @@
 
 2019-04-21
 
-* ansi: rotate を DECSTBM に対応する。
-  今の実装だと改行などで範囲の外に出てしまう。
-
 * ansi: clear screen で DECSTBM の原点に移動する?
   そもそも clear screen はどの様なシーケンスで実施されているのだったか。
   $ TERM=xterm infocmp | grep 2J を見ると \e[H\e[2J の様である。
   つまり原点に移動している。しかし、原点と言っても \e[H である。
+
+* 資料
+
+  DECCRA もしくは DECSLRM について
+  [端末で縦分割時のスクロールが遅い - Togetter](https://togetter.com/li/516002)
+
+  SCOSC と DECSLRM のシーケンスの区別について
+  [LeoNerd's programming thoughts: ANSI vs DEC, arbitrary scrolling in terminals](http://leonerds-code.blogspot.com/2012/03/ansi-vs-dec-arbitrary-scrolling-in.html)
+
+  端末判定について
+  [端末エミュレータマニアから見たMinEdの実装のヤバさ - Togetter](https://togetter.com/li/380509)
 
 2019-04-20
 
@@ -1072,6 +1080,24 @@
 ------------------------------------------------------------------------------
 
 2019-04-20
+
+* ansi: rotate を DECSTBM に対応する [#D0060]
+  今の実装だと改行などで範囲の外に出てしまう。
+
+  x fixed: さて、対応したつもりだがそれでも何故か文字列を入力して行って
+    改行を実行すると範囲の外に出てしまう。
+    と思ったが改行で一番下にいるかどうかの
+    判定を修正していない気がする。→修正した。
+
+  x fixed: 動かなくなった…と思ったが、
+    これは rotate の呼び出し方を反転していたのが問題だった。修正した。
+
+* altscreen が動いていない気がする… [#D0059]
+  調べるとどうも set_mode(true) しか受信されていない様である。
+  と思ったら get_mode(mode_altscreen) に対応していなくて
+  常に false が返る様になっていた。つまり、false に設定しようとしても、
+  常に既に false になっているから特別の処置は不要であると判定されていたという事。
+  修正した。altscreen は無事に動作する様になった。
 
 * impl3: 取り敢えず端末画面の内容を出力する様にしてみた [#D0058]
 

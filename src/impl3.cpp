@@ -58,10 +58,16 @@ int main() {
   contra::fd_device devIn(sess.masterfd);
 
   char buff[4096];
+  bool dirty = false;
   for (;;) {
-    if (contra::read_from_fd(sess.masterfd, &dev, buff, sizeof(buff))) continue;
-    //ioctl(sess.masterfd, TIOCSWINSZ, (char *) &winsize);
-    renderer.update();
+    if (contra::read_from_fd(sess.masterfd, &dev, buff, sizeof(buff))) {
+      dirty = true;
+      continue;
+    }
+    if (dirty) {
+      renderer.update();
+      dirty = false;
+    }
     if (contra::read_from_fd(STDIN_FILENO, &devIn, buff, sizeof(buff))) continue;
     if (contra::is_child_terminated(sess.pid)) break;
     contra::msleep(10);
