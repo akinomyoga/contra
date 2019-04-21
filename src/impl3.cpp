@@ -15,12 +15,11 @@
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
 #include "ansi/observer.tty.hpp"
+#include "ansi/enc.c2w.hpp"
 
 int main() {
   struct termios oldTermios;
   tcgetattr(STDIN_FILENO, &oldTermios);
-  contra::session sess;
-  if (!create_session(&sess, oldTermios, "/bin/bash")) return -1;
 
   struct termios termios = oldTermios;
   termios.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
@@ -33,17 +32,24 @@ int main() {
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios);
 
   contra::multicast_device dev;
-  contra::fd_device d0(STDOUT_FILENO);
-  dev.push(&d0);
 
   struct winsize winsize;
   ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &winsize);
-  contra::ansi::board_t b(winsize.ws_col, winsize.ws_row);
+  if (winsize.ws_col > 80) winsize.ws_col = 80;
+  if (winsize.ws_row > 24) winsize.ws_row = 24;
 
+  contra::session sess;
+  if (!create_session(&sess, oldTermios, "/bin/bash", winsize.ws_col, winsize.ws_row)) return -1;
+  //ioctl(sess.masterfd, TIOCSWINSZ, (char *) &winsize);
+
+  contra::ansi::board_t b(winsize.ws_col, winsize.ws_row);
   contra::ansi::term_t term(b);
   contra::tty_player_device d1(&term);
   dev.push(&d1);
 
+  contra::ansi::termcap_sgr_type sgrcap;
+  sgrcap.initialize();
+  contra::ansi::tty_observer renderer(term, stdout, &sgrcap);
   // contra::sequence_printer printer("impl2-allseq.txt");
   // contra::sequence_printer_device d2(&printer);
   // dev.push(&d2);
@@ -54,6 +60,8 @@ int main() {
   char buff[4096];
   for (;;) {
     if (contra::read_from_fd(sess.masterfd, &dev, buff, sizeof(buff))) continue;
+    //ioctl(sess.masterfd, TIOCSWINSZ, (char *) &winsize);
+    renderer.update();
     if (contra::read_from_fd(STDIN_FILENO, &devIn, buff, sizeof(buff))) continue;
     if (contra::is_child_terminated(sess.pid)) break;
     contra::msleep(10);
@@ -62,10 +70,7 @@ int main() {
   kill(sess.pid, SIGTERM);
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &oldTermios);
 
-  contra::ansi::termcap_sgr_type sgrcap;
-  sgrcap.initialize();
-  contra::ansi::tty_observer target(term, stdout, &sgrcap);
-  target.print_screen(b);
+  renderer.print_screen(b);
 
   std::FILE* file = std::fopen("impl2-dump.txt", "w");
   b.debug_print(file);

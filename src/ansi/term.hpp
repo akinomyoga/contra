@@ -547,21 +547,19 @@ namespace ansi {
   public:
     std::uint64_t printt_state = 0;
     std::vector<char32_t> printt_buff;
-    void printt(const char* text) {
-      std::size_t len = std::strlen(text);
-      printt_buff.resize(len);
+    void write(const char* data, std::size_t const size) {
+      printt_buff.resize(size);
       char32_t* const q0 = &printt_buff[0];
       char32_t* q1 = q0;
-      contra::encoding::utf8_decode(text, text + len, q1, q0 + len, printt_state);
+      contra::encoding::utf8_decode(data, data + size, q1, q0 + size, printt_state);
       for (char32_t const* q = q0; q < q1; q++)
         m_seqdecoder.process_char(*q);
     }
+    void printt(const char* text) {
+      write(text, std::strlen(text));
+    }
     void putc(char32_t uchar) {
       m_seqdecoder.process_char(uchar);
-    }
-    void write(const char* data, std::size_t size) {
-      for (std::size_t i = 0; i < size; i++)
-        m_seqdecoder.process_char(data[i]);
     }
   };
 

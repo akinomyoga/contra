@@ -6,7 +6,7 @@ flags     mode_crm                ansi3       unsupported
 flags     mode_irm                ansi4       unsupported
 flags     mode_srtm               ansi5       unsupported
 flags     mode_erm                ansi6       true
-flags     mode_vem                ansi7       true
+flags     mode_vem                ansi7       false
 flags     mode_bdsm               ansi8       true
 flags     mode_dcsm               ansi9       true
 flags     mode_hem                ansi10      false

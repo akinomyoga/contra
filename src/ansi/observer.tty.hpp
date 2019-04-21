@@ -1,8 +1,10 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
 #ifndef CONTRA_ANSI_OBSERVER_TTY_HPP
 #define CONTRA_ANSI_OBSERVER_TTY_HPP
-#include "line.hpp"
 #include <cstdio>
+#include <vector>
+#include "line.hpp"
+#include "term.hpp"
 
 namespace contra {
 namespace ansi {
@@ -125,23 +127,26 @@ namespace ansi {
   //-----------------------------------------------------------------------------
 
   struct tty_observer {
+    term_t* term;
     std::FILE* file;
     termcap_sgr_type const* sgrcap;
+    curpos_t x = 0, y = 0;
 
-    tty_observer(std::FILE* file, termcap_sgr_type* sgrcap):
-      file(file), sgrcap(sgrcap)
+    tty_observer(term_t& term, std::FILE* file, termcap_sgr_type* sgrcap):
+      term(&term), file(file), sgrcap(sgrcap)
     {
       m_attr.clear();
     }
 
-    void put(char c) const {std::fputc(c, file);}
-    void put_str(const char* s) const {
+    void put_u32(char32_t c) const { contra::encoding::put_u8(c, file); }
+    void put(char c) const { std::fputc(c, file); }
+    void put_str(const char32_t* s) const {
       while (*s) put(*s++);
     }
     void put_unsigned(unsigned value) const {
       if (value >= 10)
         put_unsigned(value/10);
-      put(ascii_0 + value % 10);
+      put((byte) (ascii_0 + value % 10));
     }
 
   private:
@@ -185,6 +190,18 @@ namespace ansi {
 
     void apply_attr(attribute_t newAttr);
 
+    void put_skip(curpos_t& wskip) {
+      if (m_attr.is_default() && wskip <= 4) {
+        while (wskip--) put(' ');
+      } else {
+        put(ascii_esc);
+        put(ascii_left_bracket);
+        put_unsigned(wskip);
+        put(ascii_C);
+      }
+      wskip = 0;
+    }
+
   public:
     // test implementation
     // ToDo: output encoding
@@ -202,18 +219,7 @@ namespace ansi {
             continue;
           }
 
-          if (wskip > 0) {
-            if (m_attr.is_default() && wskip <= 4) {
-              while (wskip--) put(' ');
-            } else {
-              put(ascii_esc);
-              put(ascii_left_bracket);
-              put_unsigned(wskip);
-              put(ascii_C);
-            }
-            wskip = 0;
-          }
-
+          if (wskip > 0) put_skip(wskip);
           apply_attr(cell.attribute);
           put(cell.character.value);
         }
@@ -223,6 +229,44 @@ namespace ansi {
       apply_attr(attribute_t {});
     }
 
+    void update() {
+      //std::fprintf(file, "\x1b[?25l");
+      if (y > 0) std::fprintf(file, "\x1b[%dA", y);
+      if (x > 0) std::fprintf(file, "\x1b[%dD", x);
+      std::vector<cell_t> buff;
+
+      board_t const& w = term->board();
+      for (curpos_t y = 0; y < w.m_height; y++) {
+        line_t const& line = w.m_lines[y];
+        line.get_cells_in_presentation(buff, w.line_r2l(line));
+
+        curpos_t wskip = 0;
+        curpos_t x = 0;
+        for (auto const& cell : buff) {
+          std::uint32_t code = cell.character.value;
+          if (code == ascii_nul) {
+            wskip++;
+          } else {
+            if (wskip > 0) put_skip(wskip);
+            apply_attr(cell.attribute);
+            put_u32(code);
+          }
+          x += cell.width;
+        }
+        std::fprintf(file, "\x1b[K");
+        if (x > 0) std::fprintf(file, "\x1b[%dD", x);
+
+        put('\n');
+      }
+      apply_attr(attribute_t {});
+
+      x = w.cur.x;
+      y = w.cur.y;
+      if (x > 0) std::fprintf(file, "\x1b[%dC", x);
+      std::fprintf(file, "\x1b[%dA", w.m_height - y);
+      //std::fprintf(file, "\x1b[?25h");
+      std::fflush(file);
+    }
   };
 
 }

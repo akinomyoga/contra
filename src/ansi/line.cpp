@@ -383,6 +383,94 @@ curpos_t line_t::_prop_to_presentation_position(curpos_t x, bool line_r2l) const
   return a;
 }
 
+void line_t::get_cells_in_presentation(std::vector<cell_t>& buff, bool line_r2l) const {
+  if (m_prop_enabled) {
+    return _prop_cells_in_presentation(buff, line_r2l);
+  } else {
+    buff.clear();
+    buff.reserve(m_cells.size());
+    for (auto const& cell : m_cells) {
+      if (cell.character.is_extension()) continue;
+      buff.push_back(cell);
+    }
+    if (line_r2l)
+      std::reverse(buff.begin(), buff.end());
+  }
+}
+void line_t::_prop_cells_in_presentation(std::vector<cell_t>& buff, bool line_r2l) const {
+  struct nest_t {
+    std::size_t beg_index;
+    std::uint32_t end_marker;
+    bool outer_r2l;
+  };
+
+  bool r2l = line_r2l;
+  std::vector<nest_t> stack;
+
+  buff.clear();
+  buff.reserve(m_cells.size());
+
+  auto _push = [&] (std::uint32_t end_marker, bool new_r2l) {
+    nest_t nest;
+    nest.beg_index = buff.size();
+    nest.end_marker = end_marker;
+    nest.outer_r2l = r2l;
+    stack.emplace_back(std::move(nest));
+    r2l = new_r2l;
+  };
+
+  auto _pop = [&] () {
+    bool const inner_r2l = r2l;
+    bool const outer_r2l = stack.back().outer_r2l;
+    if (inner_r2l != outer_r2l)
+      std::reverse(buff.begin() + stack.back().beg_index, buff.end());
+    stack.pop_back();
+  };
+
+  for (std::size_t i = 0; i < m_cells.size(); i++) {
+    cell_t const& cell = m_cells[i];
+    std::uint32_t code = cell.character.value;
+    if (cell.character.is_marker()) {
+      switch (code) {
+      case character_t::marker_sds_l2r:
+        _push(character_t::marker_sds_end, false);
+        continue;
+      case character_t::marker_sds_r2l:
+        _push(character_t::marker_sds_end, true);
+        continue;
+      case character_t::marker_srs_beg:
+        _push(character_t::marker_srs_end, !r2l);
+        continue;
+
+      case character_t::marker_sds_end:
+      case character_t::marker_srs_end:
+        while (stack.size()) {
+          bool const hit = stack.back().end_marker == code;
+          _pop();
+          if (hit) break;
+        }
+        continue;
+
+      default: break;
+      }
+    } else if (cell.character.value == ascii_nul) {
+      while (stack.size()) _pop();
+    }
+
+    if (cell.character.is_wide_extension()) continue;
+
+    if (cell.character.is_extension() && r2l) {
+      std::size_t j = buff.size();
+      while (j && buff[--j].character.is_extension());
+      buff.insert(buff.begin() + j, cell);
+    } else
+      buff.push_back(cell);
+  }
+
+  if (line_r2l)
+    std::reverse(buff.begin(), buff.end());
+}
+
 void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, curpos_t x1, curpos_t x2, curpos_t width, bool line_r2l) const {
   ret.clear();
   auto _register = [&ret] (curpos_t x1, curpos_t x2) {

@@ -38,7 +38,7 @@ $(objdir)/ansi/%.o: ansi/%.cpp | $(objdir)/ansi $(gendir)/term.mode_def.hpp
 $(objdir)/experimental/%.o: experimental/%.cpp | $(objdir)/experimental $(gendir)/term.mode_def.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
-$(gendir)/term.mode_def.hpp: make_command.sh
+$(gendir)/term.mode_def.hpp: make_command.sh ansi/term.mode.def
 	bash make_command.sh
 
 all: impl1
@@ -56,6 +56,7 @@ impl1: $(impl1_objs)
 all: impl2
 impl2_objs = \
   $(objdir)/impl2.o \
+  $(objdir)/impl.o \
   $(objdir)/ansi/observer.tty.o \
   $(objdir)/ansi/term.o \
   $(objdir)/ansi/line.o \
@@ -65,6 +66,21 @@ impl2_objs = \
 impl2: $(impl2_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 $(objdir)/impl2.o: impl2.cpp | $(objdir)
+	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
+
+all: impl3
+impl3_objs = \
+  $(objdir)/impl3.o \
+  $(objdir)/impl.o \
+  $(objdir)/ansi/observer.tty.o \
+  $(objdir)/ansi/term.o \
+  $(objdir)/ansi/line.o \
+  $(objdir)/ansi/enc.c2w.o \
+  $(objdir)/ansi/enc.utf8.o \
+  $(objdir)/contradef.o
+impl3: $(impl3_objs)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+$(objdir)/impl3.o: impl3.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
 # all: experimental/bidi

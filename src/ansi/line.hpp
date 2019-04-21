@@ -57,6 +57,9 @@ namespace ansi {
     constexpr bool is_wide_extension() const {
       return value & flag_wide_extension;
     }
+    constexpr bool is_cluster_extension() const {
+      return value & flag_cluster_extension;
+    }
     constexpr bool is_marker() const {
       return value & flag_marker;
     }
@@ -393,6 +396,7 @@ namespace ansi {
     mutable std::size_t m_prop_i;
     mutable curpos_t m_prop_x;
 
+    std::uint32_t m_id = 0;
     std::uint32_t m_version = 0;
 
     struct nested_string {
@@ -420,6 +424,10 @@ namespace ansi {
       return std::any_of(m_cells.begin(), m_cells.end(),
         [] (cell_t const& cell) { return cell.is_protected(); });
     }
+
+    std::uint32_t version() const { return this->m_version; }
+    std::uint32_t id() const { return m_id; }
+    void set_id(std::uint32_t value) { this->m_id = value; }
 
   private:
     void _initialize_content(curpos_t width, attribute_t const& attr) {
@@ -685,6 +693,11 @@ namespace ansi {
       return to_presentation_position(x, width, is_r2l(board_charpath));
     }
 
+  private:
+    void _prop_cells_in_presentation(std::vector<cell_t>& buff, bool line_r2l) const;
+  public:
+    void get_cells_in_presentation(std::vector<cell_t>& buff, bool line_r2l) const;
+
   public:
     typedef std::vector<std::pair<curpos_t, curpos_t>> slice_ranges_t;
     void calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, curpos_t x1, curpos_t x2, curpos_t width, bool line_r2l) const;
@@ -856,9 +869,10 @@ namespace ansi {
       curpos_t const limit = line().limit();
       return limit < 0 ? m_width - 1 : std::min(limit, m_width - 1);
     }
-    curpos_t line_r2l() const {
-      return line().is_r2l(m_presentation_direction);
-    }
+
+    curpos_t line_r2l(line_t const& line) const { return line.is_r2l(m_presentation_direction); }
+    curpos_t line_r2l(curpos_t y) const { return line_r2l(m_lines[y]); }
+    curpos_t line_r2l() const { return line_r2l(cur.y); }
 
     curpos_t to_data_position(curpos_t y, curpos_t x) const {
       return m_lines[y].to_data_position(x, m_width, m_presentation_direction);

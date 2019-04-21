@@ -488,7 +488,7 @@ void test_sgr() {
   termcap_sgr_type sgrcap;
   sgrcap.initialize();
 
-  tty_observer target(stdout, &sgrcap);
+  tty_observer target(term, stdout, &sgrcap);
   target.print_screen(board);
 }
 
