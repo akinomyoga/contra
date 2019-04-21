@@ -44,9 +44,9 @@ int main() {
   contra::tty_player_device d1(&term);
   dev.push(&d1);
 
-  // contra::sequence_printer printer("impl2-allseq.txt");
-  // contra::sequence_printer_device d2(&printer);
-  // dev.push(&d2);
+  contra::sequence_printer printer("impl2-allseq.txt");
+  contra::sequence_printer_device d2(&printer);
+  dev.push(&d2);
 
   contra::set_fd_nonblock(STDIN_FILENO);
   contra::fd_device devIn(sess.masterfd);

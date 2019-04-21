@@ -130,6 +130,7 @@ namespace ansi {
     term_t* term;
     std::FILE* file;
     termcap_sgr_type const* sgrcap;
+
     curpos_t x = 0, y = 0;
 
     tty_observer(term_t& term, std::FILE* file, termcap_sgr_type* sgrcap):

@@ -50,9 +50,10 @@ int main() {
   contra::ansi::termcap_sgr_type sgrcap;
   sgrcap.initialize();
   contra::ansi::tty_observer renderer(term, stdout, &sgrcap);
-  // contra::sequence_printer printer("impl2-allseq.txt");
-  // contra::sequence_printer_device d2(&printer);
-  // dev.push(&d2);
+
+  contra::sequence_printer printer("impl3-allseq.txt");
+  contra::sequence_printer_device d2(&printer);
+  dev.push(&d2);
 
   contra::set_fd_nonblock(STDIN_FILENO);
   contra::fd_device devIn(sess.masterfd);

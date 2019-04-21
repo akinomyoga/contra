@@ -407,6 +407,7 @@ namespace contra {
       std::fprintf(file, "%s: ", name);
       seq.print(file);
       std::fputc('\n', file);
+      std::fflush(file);
     }
 
     void process_invalid_sequence(sequence const& seq) {

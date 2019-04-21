@@ -346,17 +346,9 @@ namespace ansi {
 
       // ToDo: tab stop の管理
       int const tabwidth = 8;
-      curpos_t const xdst = std::min((cur.x + tabwidth - 1) / tabwidth * tabwidth, m_board->m_width - 1);
-
-      curpos_t const count = xdst - cur.x;
-      if (count > 0) {
-        cell_t fill;
-        fill.character = ascii_nul;
-        fill.attribute = 0;
-        fill.width = 1;
-        m_board->line().write_cells(cur.x, &fill, 1, count, 1);
-        cur.x += count;
-      }
+      curpos_t const sll = m_board->line_limit();
+      curpos_t const xdst = std::min((cur.x + tabwidth) / tabwidth * tabwidth, sll);
+      cur.x = xdst;
     }
 
     void do_generic_ff(int delta, bool toAppendNewLine, bool toAdjustXAsPresentationPosition) {

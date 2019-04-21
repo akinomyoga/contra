@@ -853,6 +853,7 @@ namespace ansi {
       if (this->cur.y >= height) cur.y = height - 1;
       this->m_width = width;
       this->m_height = height;
+      m_lines.resize(height);
     }
 
   public:
@@ -896,8 +897,8 @@ namespace ansi {
         m_lines.rotate(count);
       } else if (count < 0) {
         count = -count;
-        if (count < m_height) count = m_height;
-        m_lines.rotate(m_lines.size() - count);
+        if (count > m_height) count = m_height;
+        m_lines.rotate(m_height - count);
         initialize_lines(0, count);
       }
     }
