@@ -349,12 +349,20 @@ namespace ansi {
     line_segment_erase,
     line_segment_space,
     line_segment_erase_unprotected,
+    line_segment_transfer,
   };
+
+  class line_t;
 
   struct line_segment_t {
     curpos_t p1;
     curpos_t p2;
     int type;
+
+    /// @var source
+    ///   type が line_segment_transfer の時に転送元を指定します。
+    line_t* source = nullptr;
+    bool source_r2l = false;
   };
 
   // for line_t::shift_cells()
@@ -732,14 +740,14 @@ namespace ansi {
     }
 
   private:
-    void _mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, attribute_t const& fill_attr);
+    void _mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, attribute_t const& fill_attr, bool line_r2l, bool dcsm);
     void _prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, attribute_t const& fill_attr, bool line_r2l, bool dcsm);
   public:
     /// @fn void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr);
     /// 表示部に於ける範囲を組み合わせて新しく行の内容を再構築します。
-    void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attribute_t const& fill_attr, bool dcsm = false) {
+    void compose_segments(line_segment_t const* comp, int count, curpos_t width, attribute_t const& fill_attr, bool line_r2l, bool dcsm = false) {
       if (!m_prop_enabled)
-        _mono_compose_segments(comp, count, width, fill_attr);
+        _mono_compose_segments(comp, count, width, fill_attr, line_r2l, dcsm);
       else
         _prop_compose_segments(comp, count, width, fill_attr, line_r2l, dcsm);
     }
@@ -857,10 +865,13 @@ namespace ansi {
     }
 
   public:
-    line_t& line() { return m_lines[cur.y]; }
-    line_t const& line() const { return m_lines[cur.y]; }
     curpos_t x() const { return cur.x; }
     curpos_t y() const { return cur.y; }
+
+    line_t& line() { return m_lines[cur.y]; }
+    line_t const& line() const { return m_lines[cur.y]; }
+    line_t& line(curpos_t y) { return m_lines[y]; }
+    line_t const& line(curpos_t y) const { return m_lines[y]; }
 
     curpos_t line_r2l(line_t const& line) const { return line.is_r2l(m_presentation_direction); }
     curpos_t line_r2l(curpos_t y) const { return line_r2l(m_lines[y]); }

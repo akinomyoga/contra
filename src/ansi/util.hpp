@@ -85,8 +85,8 @@ namespace util {
     std::size_t size() const { return data.size(); }
     void resize(std::size_t new_size) {
       std::rotate(data.begin(), data.begin() + m_rotate, data.end());
-      data.resize(new_size);
       this->m_rotate = 0;
+      data.resize(new_size);
     }
 
     typedef indexer_iterator<T, ring_buffer, std::size_t> iterator;

@@ -711,7 +711,55 @@ namespace {
     return true;
   }
 
-  static bool do_scroll(term_t& term, csi_parameters& params, do_cux_direction direction) {
+  static void do_vertical_scroll(term_t& term, curpos_t shift, curpos_t tmargin, curpos_t bmargin, curpos_t lmargin, curpos_t rmargin, bool dcsm) {
+    board_t& b = term.board();
+    if (lmargin == 0 && rmargin == b.m_width) {
+      b.shift_lines(tmargin, bmargin, shift);
+    } else if (lmargin < rmargin) {
+      line_segment_t segs[3];
+      int iseg = 0, iseg_transfer;
+      if (0 < lmargin)
+        segs[iseg++] = line_segment_t({0, lmargin, line_segment_slice});
+      segs[iseg_transfer = iseg++] = line_segment_t({lmargin, rmargin, line_segment_transfer});
+      if (rmargin < b.m_width)
+        segs[iseg++] = line_segment_t({rmargin, b.m_width, line_segment_slice});
+
+      attribute_t const fill_attr = b.cur.fill_attr();
+      if (shift > 0) {
+        curpos_t ydst = bmargin - 1;
+        curpos_t ysrc = ydst - shift;
+        for (; tmargin <= ysrc; ydst--, ysrc--) {
+          segs[iseg_transfer].source = &b.line(ysrc);
+          segs[iseg_transfer].source_r2l = b.line_r2l(ysrc);
+          b.line(ydst).compose_segments(segs, iseg, b.m_width, fill_attr, b.line_r2l(ydst), dcsm);
+        }
+        segs[iseg_transfer].type = line_segment_erase;
+        for (; tmargin <= ydst; ydst--)
+          b.line(ydst).compose_segments(segs, iseg, b.m_width, fill_attr, b.line_r2l(ydst), dcsm);
+      } else if (shift < 0) {
+        shift = -shift;
+        curpos_t ydst = tmargin;
+        curpos_t ysrc = tmargin + shift;
+        for (; ysrc < bmargin; ydst++, ysrc++) {
+          segs[iseg_transfer].source = &b.line(ysrc);
+          segs[iseg_transfer].source_r2l = b.line_r2l(ysrc);
+          b.line(ydst).compose_segments(segs, iseg, b.m_width, fill_attr, b.line_r2l(ydst), dcsm);
+        }
+        segs[iseg_transfer].type = line_segment_erase;
+        for (; ydst < bmargin; ydst++)
+          b.line(ydst).compose_segments(segs, iseg, b.m_width, fill_attr, b.line_r2l(ydst), dcsm);
+      }
+    }
+  }
+  void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm) {
+    curpos_t const tmargin = term.tmargin();
+    curpos_t const bmargin = term.bmargin();
+    curpos_t const lmargin = term.lmargin();
+    curpos_t const rmargin = term.rmargin();
+    do_vertical_scroll(term, shift, tmargin, bmargin, lmargin, rmargin, dcsm);
+  }
+
+  static bool do_scroll(term_t& term, csi_parameters& params, do_cux_direction direction, bool dcsm = false) {
     tty_state& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
@@ -736,8 +784,15 @@ namespace {
     shift_cells:
       {
         curpos_t const p = b.to_presentation_position(y, b.cur.x);
-        line_shift_flags const flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
-        b.line().shift_cells(0, b.m_width, shift, flags, b.m_width, b.cur.fill_attr());
+        line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
+        if (dcsm) flags |= line_shift_flags::dcsm;
+        curpos_t const tmargin = term.tmargin();
+        curpos_t const bmargin = term.bmargin();
+        curpos_t const lmargin = term.lmargin();
+        curpos_t const rmargin = term.rmargin();
+        attribute_t const fill_attr = b.cur.fill_attr();
+        for (curpos_t y = tmargin; y < bmargin; y++)
+          b.line(y).shift_cells(lmargin, rmargin, shift, flags, b.m_width, fill_attr);
         b.cur.x = b.to_data_position(y, p);
       }
       break;
@@ -751,9 +806,7 @@ namespace {
     shift_lines:
       {
         curpos_t const p = b.to_presentation_position(y, b.cur.x);
-        curpos_t const beg = term.tmargin();
-        curpos_t const end = term.bmargin();
-        b.shift_lines(beg, end, -(curpos_t) param);
+        do_vertical_scroll(term, shift, dcsm);
         b.cur.x = b.to_data_position(y, p);
       }
       break;
@@ -1233,6 +1286,36 @@ namespace {
     return true;
   }
 
+  static void do_il_impl(term_t& term, curpos_t shift) {
+    board_t& b = term.board();
+    tty_state& s = term.state();
+
+    // カーソル表示位置
+    curpos_t p = 0;
+    if (!s.get_mode(mode_home_il) && !s.dcsm())
+      p = b.to_presentation_position(b.cur.y, b.cur.x);
+
+    // 挿入
+    curpos_t const beg = term.tmargin();
+    curpos_t const end = term.bmargin();
+    curpos_t const lmargin = term.lmargin();
+    curpos_t const rmargin = term.rmargin();
+    if (beg <= b.cur.y && b.cur.y < end) {
+      if (!s.get_mode(mode_vem)) {
+        do_vertical_scroll(term, shift, b.cur.y, end, lmargin, rmargin, s.dcsm());
+      } else {
+        do_vertical_scroll(term, -shift, beg, b.cur.y + 1, lmargin, rmargin, s.dcsm());
+      }
+    }
+
+    // カーソル位置設定
+    if (s.get_mode(mode_home_il)) {
+      term.initialize_line(b.line());
+      b.cur.x = term.implicit_slh(b.line());
+    } else if (!s.dcsm())
+      b.cur.x = b.to_data_position(b.cur.y, p);
+  }
+
   bool do_il(term_t& term, csi_parameters& params) {
     tty_state& s = term.state();
     csi_single_param_t param;
@@ -1243,29 +1326,7 @@ namespace {
       else
         return true;
     }
-
-    board_t& b = term.board();
-
-    // カーソル表示位置
-    curpos_t p = 0;
-    if (!s.get_mode(mode_home_il) && !s.dcsm())
-      p = b.to_presentation_position(b.cur.y, b.cur.x);
-
-    // 挿入
-    if (!s.get_mode(mode_vem)) {
-      curpos_t const end = term.bmargin();
-      b.shift_lines(b.cur.y, end, (curpos_t) param);
-    } else {
-      curpos_t const beg = term.tmargin();
-      b.shift_lines(beg, b.cur.y + 1, -(curpos_t) param);
-    }
-
-    // カーソル位置設定
-    if (s.get_mode(mode_home_il)) {
-      term.initialize_line(b.line());
-      b.cur.x = term.implicit_slh(b.line());
-    } else if (!s.dcsm())
-      b.cur.x = b.to_data_position(b.cur.y, p);
+    do_il_impl(term, (curpos_t) param);
     return true;
   }
 
@@ -1279,29 +1340,7 @@ namespace {
       else
         return true;
     }
-
-    board_t& b = term.board();
-
-    // カーソル表示位置
-    curpos_t p = 0;
-    if (!s.get_mode(mode_home_il) && !s.dcsm())
-      p = b.to_presentation_position(b.cur.y, b.cur.x);
-
-    // 削除
-    if (!s.get_mode(mode_vem)) {
-      curpos_t const end = term.bmargin();
-      b.shift_lines(b.cur.y, end, -(curpos_t) param);
-    } else {
-      curpos_t const beg = term.tmargin();
-      b.shift_lines(beg, b.cur.y + 1, (curpos_t) param);
-    }
-
-    // カーソル位置設定
-    if (s.get_mode(mode_home_il)) {
-      term.initialize_line(b.line());
-      b.cur.x = term.implicit_slh(b.line());
-    } else if (!s.dcsm())
-      b.cur.x = b.to_data_position(b.cur.y, p);
+    do_il_impl(term, -(curpos_t) param);
     return true;
   }
 

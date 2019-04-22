@@ -48,6 +48,7 @@ namespace ansi {
   void do_adm3_us(term_t& term);
   void do_deckpam(term_t& term);
   void do_deckpnm(term_t& term);
+  void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm);
 
   struct tty_state {
     term_t* m_term;
@@ -281,7 +282,7 @@ namespace ansi {
       return sph;
     }
     curpos_t implicit_spl() const {
-      curpos_t spl = m_board->m_width;
+      curpos_t spl = m_board->m_height - 1;
       if (m_state.page_limit >= 0 && m_state.page_limit < spl)
         spl = m_state.page_limit;
       if (m_state.dec_bmargin > 0 && m_state.dec_bmargin - 1 < spl)
@@ -404,27 +405,29 @@ namespace ansi {
 
       curpos_t const beg = implicit_sph();
       curpos_t const end = implicit_spl() + 1;
+      curpos_t const y = m_board->cur.y;
       if (delta > 0) {
-        if (m_board->cur.y < end) {
-          if (m_board->cur.y + delta < end) {
+        if (y < end) {
+          if (y + delta < end) {
             m_board->cur.y += delta;
           } else {
-            curpos_t const y = m_board->cur.y;
             m_board->cur.y = end - 1;
-            delta -= m_board->cur.y - y;
-            if (toAppendNewLine)
-              m_board->shift_lines(beg, end, -delta);
+            if (toAppendNewLine) {
+              delta -= m_board->cur.y - y;
+              do_vertical_scroll(*this, -delta, true);
+            }
           }
         }
       } else {
-        if (m_board->cur.y >= beg) {
-          if (m_board->cur.y + delta >= beg)
+        if (y >= beg) {
+          if (y + delta >= beg) {
             m_board->cur.y += delta;
-          else {
-            delta += m_board->cur.y - beg;
+          } else {
             m_board->cur.y = beg;
-            if (toAppendNewLine)
-              m_board->shift_lines(beg, end, -delta);
+            if (toAppendNewLine) {
+              delta += y - m_board->cur.y;
+              do_vertical_scroll(*this, -delta, true);
+            }
           }
         }
       }
