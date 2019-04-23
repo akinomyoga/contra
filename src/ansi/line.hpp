@@ -839,18 +839,18 @@ namespace ansi {
 
   struct board_t {
     contra::util::ring_buffer<line_t> m_lines;
-
     cursor_t cur;
-
     curpos_t m_width;
     curpos_t m_height;
-
+    std::uint32_t m_line_count = 0;
     presentation_direction m_presentation_direction {presentation_direction_default};
 
     board_t(curpos_t width, curpos_t height): m_lines(height), m_width(width), m_height(height) {
       mwg_check(width > 0 && height > 0, "width = %d, height = %d", (int) width, (int) height);
       this->cur.x = 0;
       this->cur.y = 0;
+      for (line_t& line : m_lines)
+        line.set_id(m_line_count++);
     }
     board_t(): board_t(80, 32) {}
 
@@ -886,8 +886,10 @@ namespace ansi {
 
   private:
     void initialize_lines(curpos_t y1, curpos_t y2) {
-      for (curpos_t y = y1; y < y2; y++)
+      for (curpos_t y = y1; y < y2; y++) {
         m_lines[y].clear(m_width, cur.fill_attr());
+        m_lines[y].set_id(m_line_count++);
+      }
     }
 
   private:
@@ -938,7 +940,10 @@ namespace ansi {
     }
     void clear_screen() {
       // ToDo: 何処かに記録する
-      for (auto& line : m_lines) line.clear();
+      for (auto& line : m_lines) {
+        line.clear();
+        line.set_id(m_line_count++);
+      }
     }
 
   public:

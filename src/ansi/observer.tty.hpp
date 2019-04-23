@@ -131,7 +131,14 @@ namespace ansi {
     std::FILE* file;
     termcap_sgr_type const* sgrcap;
 
-    curpos_t x = 0, y = 0;
+    curpos_t curx = 0, cury = 0;
+    struct line_buffer_t {
+      std::uint32_t id = (std::uint32_t) -1;
+      std::uint32_t version = 0;
+      std::vector<cell_t> content;
+      int delta;
+    };
+    std::vector<line_buffer_t> screen_buffer;
 
     tty_observer(term_t& term, std::FILE* file, termcap_sgr_type* sgrcap):
       term(&term), file(file), sgrcap(sgrcap)
@@ -230,15 +237,140 @@ namespace ansi {
       apply_attr(attribute_t {});
     }
 
+  private:
+    void put_csiseq_pn1(unsigned param, char ch) const {
+      put('\x1b');
+      put('[');
+      if (param != 1) put_unsigned(param);
+      put(ch);
+    }
+  private:
+    curpos_t x = 0, y = 0;
+    void move_to_line(curpos_t newy) {
+      curpos_t const delta = newy - y;
+      if (delta > 0) {
+        put_csiseq_pn1(delta, 'B');
+      } else if (delta < 0) {
+        put_csiseq_pn1(-delta, 'A');
+      }
+      y = newy;
+    }
+    void move_to_column(curpos_t newx) {
+      curpos_t const delta = newx - x;
+      if (delta > 0) {
+        put_csiseq_pn1(delta, 'C');
+      } else if (delta < 0) {
+        put_csiseq_pn1(-delta, 'D');
+      }
+      x = newx;
+    }
+    void move_to(curpos_t newx, curpos_t newy) {
+      move_to_line(newy);
+      move_to_column(newx);
+    }
+    void put_dl(curpos_t delta) const {
+      if (delta > 0) put_csiseq_pn1(delta, 'M');
+    }
+    void put_il(curpos_t delta) const {
+      if (delta > 0) put_csiseq_pn1(delta, 'L');
+    }
+
+    void trace_line_scroll() {
+      board_t const& w = term->board();
+
+      curpos_t const height = w.m_height;
+      curpos_t j = 0;
+      for (curpos_t i = 0; i < height; i++) {
+        screen_buffer[i].delta = height;
+        for (curpos_t k = j; k < height; k++) {
+          if (w.line(k).id() == screen_buffer[i].id) {
+            screen_buffer[i].delta = k - i;
+            j = k;
+            break;
+          }
+        }
+      }
+
+      // DL による行削除
+      int previous_shift = 0;
+      int total_shift = 0;
+      for (curpos_t i = 0; i < height; i++) {
+        if (screen_buffer[i].delta == height) continue;
+        int const new_shift = screen_buffer[i].delta - previous_shift;
+        if (new_shift < 0) {
+          move_to_line(i + new_shift + total_shift);
+          put_dl(-new_shift);
+          total_shift += new_shift;
+        }
+        previous_shift = screen_buffer[i].delta;
+      }
+      if (previous_shift > 0) {
+        move_to_line(height - previous_shift + total_shift);
+        put_dl(previous_shift);
+      }
+
+      // IL による行追加
+      previous_shift = 0;
+      for (curpos_t i = 0; i < height; i++) {
+        if (screen_buffer[i].delta == height) continue;
+        int const new_shift = screen_buffer[i].delta - previous_shift;
+        if (new_shift > 0) {
+          move_to_line(i + previous_shift);
+          put_il(new_shift);
+        }
+        previous_shift = screen_buffer[i].delta;
+      }
+
+      // screen_buffer の更新
+      previous_shift = 0;
+      for (curpos_t i = 0; i < height; i++) {
+        if (screen_buffer[i].delta == height) {
+          screen_buffer[i].delta = previous_shift;
+          continue;
+        }
+        int const new_shift = screen_buffer[i].delta - previous_shift;
+        for (curpos_t j = i + new_shift; j < i; j++)
+          screen_buffer[j].delta = height;
+        previous_shift = screen_buffer[i].delta;
+      }
+      if (previous_shift > 0) {
+        for (curpos_t j = height - previous_shift; j < height; j++)
+          screen_buffer[j].delta = height;
+      }
+      for (curpos_t i = 0; i < height; i++) {
+        curpos_t const i0 = i;
+        for (curpos_t j = i0; j <= i; j++) {
+          if (screen_buffer[j].delta == height) continue;
+          if (j + screen_buffer[j].delta >= i)
+            i = j + screen_buffer[j].delta;
+        }
+        for (curpos_t j = i; i0 <= j; j--) {
+          int const delta = screen_buffer[j].delta;
+          if (delta == height || delta == 0) continue;
+          screen_buffer[j + delta] = std::move(screen_buffer[j]);
+          screen_buffer[j].id = -1;
+        }
+      }
+
+    }
+  public:
     void update() {
       //std::fprintf(file, "\x1b[?25l");
-      if (y > 0) std::fprintf(file, "\x1b[%dA", y);
-      if (x > 0) std::fprintf(file, "\x1b[%dD", x);
       std::vector<cell_t> buff;
 
       board_t const& w = term->board();
+      screen_buffer.resize(w.m_height);
+      trace_line_scroll();
+      move_to(0, 0);
       for (curpos_t y = 0; y < w.m_height; y++) {
         line_t const& line = w.m_lines[y];
+        line_buffer_t& line_buffer = screen_buffer[y];
+        if (line_buffer.id == line.id() &&
+          line_buffer.version == line.version()) {
+          put('\n');
+          continue;
+        }
+
         line.get_cells_in_presentation(buff, w.line_r2l(line));
 
         curpos_t wskip = 0;
@@ -258,14 +390,16 @@ namespace ansi {
         if (wskip > 0) put_skip(wskip);
         if (x > 0) std::fprintf(file, "\x1b[%dD", x);
 
+        line_buffer.version = line.version();
+        line_buffer.id = line.id();
+        line_buffer.content.swap(buff);
         put('\n');
       }
       apply_attr(attribute_t {});
 
-      x = w.cur.x;
-      y = w.cur.y;
-      if (x > 0) std::fprintf(file, "\x1b[%dC", x);
-      std::fprintf(file, "\x1b[%dA", w.m_height - y);
+      x = 0;
+      y = w.m_height;
+      move_to(w.cur.x, w.cur.y);
       //std::fprintf(file, "\x1b[?25h");
       std::fflush(file);
     }

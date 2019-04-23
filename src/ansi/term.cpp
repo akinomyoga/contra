@@ -222,6 +222,7 @@ namespace {
       s.set_mode(mode_altscr, value);
       s.altscreen.reset_size(b.m_width, b.m_height);
       s.altscreen.cur = b.cur;
+      s.altscreen.m_line_count = b.m_line_count;
       std::swap(s.altscreen, b);
     }
   }
@@ -716,6 +717,7 @@ namespace {
     if (lmargin == 0 && rmargin == b.m_width) {
       b.shift_lines(tmargin, bmargin, shift);
     } else if (lmargin < rmargin) {
+      // DECSLRM が設定されている時のスクロール。行内容を切り貼りする。
       line_segment_t segs[3];
       int iseg = 0, iseg_transfer;
       if (0 < lmargin)
