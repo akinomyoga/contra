@@ -14,6 +14,7 @@
   <style type="text/css">
   table.normal>*>tr>th{background-color:#eee;}
   table.normal>*>tr>th.markB{background-color:#fee;}
+  table.normal>*>tr>th.markC{background-color:#efe;}
   dfn.cfunc{color:blue;}
   dfn.cmode{color:brown;}
   dfn.sgr{color:brown;}
@@ -43,9 +44,9 @@
 <!--===================================================================================-->
 <h2>制御機能 一般論</h2>
 
-<p>制御機能 (control functions) とは端末などでの文字列の交換(やりとり)に於いて、
+<p><dfn>制御機能</dfn> (control functions) とは端末などでの文字列の交換(やりとり)に於いて、
 通常の文字列の中に埋め込まれる特定のバイト列 (シーケンス) によって指定・実行される端末などの機能のことである。
-これらのシーケンスは、例えば以下の様な目的で使われる。
+一つ一つの制御機能には<dfn>名称</dfn> (name) と<dfn>略号</dfn> (acronym) が与えられ、それぞれ例えば以下の様な目的で使われる。
 </p>
 <ul>
 <li>"通信の開始・終了" や "文字コードの切替" などのデータのやり取り自体に関する制御</li>
@@ -63,8 +64,19 @@
 つまり、片方で或る意味を持つバイト列は他方では全く異なる意味を持つ。
 この文書では便宜のため、
 アプリケーションからの出力に使われる物を<dfn>制御</dfn>の用途のシーケンスとし、
-入力に使われる物を<dfn>応答</dfn>の用途のシーケンスと呼ぶ事にする。
+入力に使われる物を<dfn>応答</dfn> (response) の用途のシーケンスと呼ぶ事にする。
 この文書では特に制御の用途のシーケンスを中心に扱い、特に断りがなければこれを指す。
+</p>
+
+<p class="marked"><strong>※注意</strong>: この文書に於いて小文字から始まる略号はこの文書内だけで通じる便宜上の略号である事に注意する。
+  各種規格で定義される制御機能及び後述のモード・モード設定の名称と略号は、
+  一般の単語と区別する為に全て大文字で与えられる。
+  様々な端末の持つ独自の制御機能の名称は必ずしも大文字ではないが、
+  略号については全て大文字でつけられるのが普通である。
+  更に一部の制御機能には名称・略号が割り当てられていない。
+  独自モードについては名称・略号が割り当てられていない物が多くある。
+  独自モード設定については名称・略号が割り当てられている事は稀である。
+  この文書では名前の割り当てられていない制御機能・モードに対して独自の略号を与える。
 </p>
 
 <h3>関連する標準規格</h3>
@@ -117,9 +129,12 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 <tr><th>C1 制御文字</th><td><kbd><i>&lt;C1&gt;</i></kbd></td><td>制御機能の補助集合</td><td>ISO/IEC 6429 (ECMA-48)</td></tr>
 <tr><th>Unicode 制御文字</th><td><kbd><i>&lt;Cc&gt;</i></kbd></td><td>Unicode 制御機能</td><td>ISO/IEC 10646, Unicode UAXs</td></tr>
 <tr><th colspan="2">DLE シーケンス</th>
-    <td><kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Fp&gt;</i></kbd><br />
-        <kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd><br />
-        <kbd>DLE <i>&lt;C0&gt;</i></kbd></td><td>伝送の制御</td><td>ISO/IEC 1745 (ECMA-16, ECMA-37)</td></tr>
+    <td><kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd><br />
+        <kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;C0&gt;</i></kbd></td><td>伝送の制御</td><td rowspan="2">ISO/IEC 1745 (ECMA-16, ECMA-37)</td></tr>
+<tr><th colspan="2">情報メッセージ<br/>情報ブロック</th>
+    <td><kbd><strong>(</strong>SOH ...<strong>)?</strong> STX ... ETX</kbd><br/>
+        <kbd><strong>(</strong>SOH ...<strong>)?</strong> STX ... ETB</kbd><br/>
+        <kbd>SOH ... ETB</kbd></td><td>伝送</td></tr>
 <tr><th colspan="2" rowspan="2">エスケープシーケンス</th>
     <td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>文字コードの制御</td><td rowspan="2">ISO/IEC 2022</td></tr>
 <tr><td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Fp&gt;</i></kbd></td><td>私用の制御</td></tr>
@@ -167,107 +182,107 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 <table class="normal center">
 <tr><th colspan="12">C0 (ISO/IEC 646)</th><th colspan="12">C1 (ISO/IEC 6429)</th></tr>
 <tr>
-  <th>略号</th><th>C/R</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
-  <th>略号</th><th>C/R</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
-  <th>略号</th><th>C/R</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
-  <th>略号</th><th>C/R</th><th>16進</th><th>8進</th><th>CN</th><th>ES</th>
+  <th>略号</th><th>C/R</th><th>16進</th><th>8進</th><th>ES</th><th>CN</th>
+  <th>略号</th><th>C/R</th><th>16進</th><th>8進</th><th>ES</th><th>CN</th>
+  <th>略号</th><th>C/R</th><th>16進</th><th>8進</th>
+  <th>略号</th><th>C/R</th><th>16進</th><th>8進</th>
 </tr>
 <tr>
   <th>NUL</th><td>00/00</td><td>\x00</td><td>\000</td><td></td><td>^@</td>
   <th class="markB">DLE</th><td>01/00</td><td>\x10</td><td>\020</td><td></td><td>^P</td>
-  <th>(PAD)</th><td>08/00</td><td>\x80</td><td>\200</td><td></td><td>&#x2325;^@</td>
-  <th class="markB">DCS</th><td>09/00</td><td>\x90</td><td>\220</td><td></td><td>&#x2325;^P</td>
+  <th>(PAD)</th><td>08/00</td><td>\x80</td><td>\200</td>
+  <th class="markB">DCS</th><td>09/00</td><td>\x90</td><td>\220</td>
 </tr>
 <tr>
-  <th>SOH</th><td>00/01</td><td>\x01</td><td>\001</td><td></td><td>^A</td>
+  <th class="markB">SOH</th><td>00/01</td><td>\x01</td><td>\001</td><td></td><td>^A</td>
   <th>DC1<br/>(XON)</th><td>01/01</td><td>\x11</td><td>\021</td><td></td><td>^Q</td>
-  <th>(HOP)</th><td>08/01</td><td>\x81</td><td>\201</td><td></td><td>&#x2325;^A</td>
-  <th>PU1</th><td>09/01</td><td>\x91</td><td>\221</td><td></td><td>&#x2325;^Q</td>
+  <th>(HOP)</th><td>08/01</td><td>\x81</td><td>\201</td>
+  <th>PU1</th><td>09/01</td><td>\x91</td><td>\221</td>
 </tr>
 <tr>
-  <th>STX</th><td>00/02</td><td>\x02</td><td>\002</td><td></td><td>^B</td>
+  <th class="markB">STX</th><td>00/02</td><td>\x02</td><td>\002</td><td></td><td>^B</td>
   <th>DC2</th><td>01/02</td><td>\x12</td><td>\022</td><td></td><td>^R</td>
-  <th>BPH</th><td>08/02</td><td>\x82</td><td>\202</td><td></td><td>&#x2325;^B</td>
-  <th>PU2</th><td>09/02</td><td>\x92</td><td>\222</td><td></td><td>&#x2325;^R</td>
+  <th>BPH</th><td>08/02</td><td>\x82</td><td>\202</td>
+  <th>PU2</th><td>09/02</td><td>\x92</td><td>\222</td>
 </tr>
 <tr>
-  <th>ETX</th><td>00/03</td><td>\x03</td><td>\003</td><td></td><td>^C</td>
+  <th class="markC">ETX</th><td>00/03</td><td>\x03</td><td>\003</td><td></td><td>^C</td>
   <th>DC3<br/>(XOFF)</th><td>01/03</td><td>\x13</td><td>\023</td><td></td><td>^S</td>
-  <th>NBH</th><td>08/03</td><td>\x83</td><td>\203</td><td></td><td>&#x2325;^C</td>
-  <th>STS</th><td>09/03</td><td>\x93</td><td>\223</td><td></td><td>&#x2325;^S</td>
+  <th>NBH</th><td>08/03</td><td>\x83</td><td>\203</td>
+  <th>STS</th><td>09/03</td><td>\x93</td><td>\223</td>
 </tr>
 <tr>
-  <th>EOT</th><td>00/04</td><td>\x04</td><td>\004</td><td></td><td>^D</td>
+  <th class="markC">EOT</th><td>00/04</td><td>\x04</td><td>\004</td><td></td><td>^D</td>
   <th>DC4</th><td>01/04</td><td>\x14</td><td>\024</td><td></td><td>^T</td>
-  <th>IND<sup>廃</sup></th><td>08/04</td><td>\x84</td><td>\204</td><td></td><td>&#x2325;^D</td>
-  <th>CCH</th><td>09/04</td><td>\x94</td><td>\224</td><td></td><td>&#x2325;^T</td>
+  <th>IND<sup>廃</sup></th><td>08/04</td><td>\x84</td><td>\204</td>
+  <th>CCH</th><td>09/04</td><td>\x94</td><td>\224</td>
 </tr>
 <tr>
   <th>ENQ</th><td>00/05</td><td>\x05</td><td>\005</td><td></td><td>^E</td>
   <th>NAK</th><td>01/05</td><td>\x15</td><td>\025</td><td></td><td>^U</td>
-  <th>NEL</th><td>08/05</td><td>\x85</td><td>\205</td><td></td><td>&#x2325;^E</td>
-  <th>MW</th> <td>09/05</td><td>\x95</td><td>\225</td><td></td><td>&#x2325;^U</td>
+  <th>NEL</th><td>08/05</td><td>\x85</td><td>\205</td>
+  <th>MW</th> <td>09/05</td><td>\x95</td><td>\225</td>
 </tr>
 <tr>
   <th>ACK</th><td>00/06</td><td>\x06</td><td>\006</td><td></td><td>^F</td>
   <th>SYN</th><td>01/06</td><td>\x16</td><td>\026</td><td></td><td>^V</td>
-  <th>SSA</th><td>08/06</td><td>\x86</td><td>\206</td><td></td><td>&#x2325;^F</td>
-  <th>SPA</th><td>09/06</td><td>\x96</td><td>\226</td><td></td><td>&#x2325;^V</td>
+  <th>SSA</th><td>08/06</td><td>\x86</td><td>\206</td>
+  <th>SPA</th><td>09/06</td><td>\x96</td><td>\226</td>
 </tr>
 <tr>
   <th>BEL</th><td>00/07</td><td>\x07</td><td>\007</td><td>\a</td><td>^G</td>
   <th>ETB</th><td>01/07</td><td>\x17</td><td>\027</td><td></td><td>^W</td>
-  <th>ESA</th><td>08/07</td><td>\x87</td><td>\207</td><td></td><td>&#x2325;^G</td>
-  <th>EPA</th><td>09/07</td><td>\x97</td><td>\227</td><td></td><td>&#x2325;^W</td>
+  <th>ESA</th><td>08/07</td><td>\x87</td><td>\207</td>
+  <th>EPA</th><td>09/07</td><td>\x97</td><td>\227</td>
 </tr>
 
 <tr>
   <th>BS</th> <td>00/08</td><td>\x08</td><td>\010</td><td>\b</td><td>^H</td>
   <th>CAN</th><td>01/08</td><td>\x18</td><td>\030</td><td></td><td>^X</td>
-  <th>HTS</th><td>08/08</td><td>\x88</td><td>\210</td><td></td><td>&#x2325;^H</td>
-  <th class="markB">SOS</th><td>09/08</td><td>\x98</td><td>\230</td><td></td><td>&#x2325;^X</td>
+  <th>HTS</th><td>08/08</td><td>\x88</td><td>\210</td>
+  <th class="markB">SOS</th><td>09/08</td><td>\x98</td><td>\230</td>
 </tr>
 <tr>
   <th>HT</th> <td>00/09</td><td>\x09</td><td>\011</td><td>\t</td><td>^I</td>
   <th>EM</th> <td>01/09</td><td>\x19</td><td>\031</td><td></td><td>^Y</td>
-  <th>HTJ</th><td>08/09</td><td>\x89</td><td>\211</td><td></td><td>&#x2325;^I</td>
-  <th>(SGCI)</th><td>09/09</td><td>\x99</td><td>\231</td><td></td><td>&#x2325;^Y</td>
+  <th>HTJ</th><td>08/09</td><td>\x89</td><td>\211</td>
+  <th>(SGCI)</th><td>09/09</td><td>\x99</td><td>\231</td>
 </tr>
 <tr>
   <th>LF</th> <td>00/10</td><td>\x0A</td><td>\012</td><td>\n</td><td>^J</td>
   <th>SUB</th><td>01/10</td><td>\x1A</td><td>\032</td><td>\z</td><td>^Z</td>
-  <th>VTS</th><td>08/10</td><td>\x8A</td><td>\212</td><td></td><td>&#x2325;^J</td>
-  <th>SCI<br/>(DECID)</th><td>09/10</td><td>\x9A</td><td>\232</td><td></td><td>&#x2325;^Z</td>
+  <th>VTS</th><td>08/10</td><td>\x8A</td><td>\212</td>
+  <th>SCI<br/>(DECID)</th><td>09/10</td><td>\x9A</td><td>\232</td>
 </tr>
 <tr>
   <th>VT</th> <td>00/11</td><td>\x0B</td><td>\013</td><td>\v</td><td>^K</td>
   <th class="markB">ESC</th><td>01/11</td><td>\x1B</td><td>\033</td><td>\e</td><td>^[</td>
-  <th>PLD</th><td>08/11</td><td>\x8B</td><td>\213</td><td></td><td>&#x2325;^K</td>
-  <th class="markB">CSI</th><td>09/11</td><td>\x9B</td><td>\233</td><td></td><td>&#x2325;^[</td>
+  <th>PLD</th><td>08/11</td><td>\x8B</td><td>\213</td>
+  <th class="markB">CSI</th><td>09/11</td><td>\x9B</td><td>\233</td>
 </tr>
 <tr>
   <th>FF</th> <td>00/12</td><td>\x0C</td><td>\014</td><td>\f</td><td>^L</td>
   <th>FS</th> <td>01/12</td><td>\x1C</td><td>\034</td><td></td><td>^\</td>
-  <th>PLU</th><td>08/12</td><td>\x8C</td><td>\214</td><td></td><td>&#x2325;^L</td>
-  <th>ST</th><td>09/12</td><td>\x9C</td><td>\234</td><td></td><td>&#x2325;^\</td>
+  <th>PLU</th><td>08/12</td><td>\x8C</td><td>\214</td>
+  <th class="markC">ST</th><td>09/12</td><td>\x9C</td><td>\234</td>
 </tr>
 <tr>
   <th>CR</th> <td>00/13</td><td>\x0D</td><td>\015</td><td>\r</td><td>^M</td>
   <th>GS</th> <td>01/13</td><td>\x1D</td><td>\035</td><td></td><td>^]</td>
-  <th>RI</th><td>08/13</td><td>\x8D</td><td>\215</td><td></td><td>&#x2325;^M</td>
-  <th class="markB">OSC</th><td>09/13</td><td>\x9D</td><td>\235</td><td></td><td>&#x2325;^]</td>
+  <th>RI</th><td>08/13</td><td>\x8D</td><td>\215</td>
+  <th class="markB">OSC</th><td>09/13</td><td>\x9D</td><td>\235</td>
 </tr>
 <tr>
   <th>SO<br/>LS1</th> <td>00/14</td><td>\x0E</td><td>\016</td><td></td><td>^N</td>
   <th>RS</th> <td>01/14</td><td>\x1E</td><td>\036</td><td></td><td>^^</td>
-  <th>SS2</th><td>08/14</td><td>\x8E</td><td>\216</td><td></td><td>&#x2325;^N</td>
-  <th class="markB">PM</th><td>09/14</td><td>\x9E</td><td>\236</td><td></td><td>&#x2325;^^</td>
+  <th>SS2</th><td>08/14</td><td>\x8E</td><td>\216</td>
+  <th class="markB">PM</th><td>09/14</td><td>\x9E</td><td>\236</td>
 </tr>
 <tr>
   <th>SI<br/>LS0</th> <td>00/15</td><td>\x0F</td><td>\017</td><td></td><td>^O</td>
   <th>US</th><td>01/15</td><td>\x1F</td><td>\037</td><td></td><td>^_</td>
-  <th>SS3</th><td>08/15</td><td>\x8F</td><td>\217</td><td></td><td>&#x2325;^O</td>
-  <th class="markB">APC</th><td>09/15</td><td>\x9F</td><td>\237</td><td></td><td>&#x2325;^_</td>
+  <th>SS3</th><td>08/15</td><td>\x8F</td><td>\217</td>
+  <th class="markB">APC</th><td>09/15</td><td>\x9F</td><td>\237</td>
 </tr>
 
 <tr><th colspan="12">GL</th></tr>
@@ -296,6 +311,7 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
   それぞれ CSI, ESC から始まるシーケンスの事であるが、
   複数バイトからなるシーケンスの総称として用いられる事も多い。
   表中で赤色で示した物が、シーケンスの開始として用いられる制御文字である。
+  緑色で示した物は、専ら何らかのシーケンスの終端として用いられる制御文字である。
 </li>
 <li>列の項目について
   <ul>
@@ -309,9 +325,12 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
   <code class="agh-prog-cpp">0x1F &amp; 'A'</code> の様に計算されたバイトが送信される。
   それを以て <kbd>^A</kbd> の様に表記する。
   同様にして端末のキーボードで Meta と一緒に文字を入力すると、
-  bit 7 (最上位ビット) が立てられるので、C1 の文字は例えば Control+Meta+A の様にして送信できる
-  しかし、Meta に対応する caret notation は一般的にないので、
-  ここだけの表現として Meta を &#x2325; で表現する事にした。
+  bit 7 (最上位ビット) が立てられるので、C1 の文字は例えば Control+Meta+A の様にして送信できる。
+  Meta に対応する一般的な caret notation はないのでここでは省略した。
+  [Note: 敢えて C1 に対する caret notation を割り当てるならば、
+  macOS のショートカットキーを表現する caret notation で
+  Alt/Option を表現するのに &#x2325; が用いられるのに倣って、
+  Control+Meta+A を &#x2325;^A と表現しても良いかもしれない。]
   </li>
   </ul>
   <p>
@@ -1203,13 +1222,14 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </table>
 <table class="normal center">
 <tr><th>略号</th><th>Mode</th></tr>
-<tr><th>DECCKM</th>              <td>?1</td>  </tr>
-<tr><th>DECOM</th>              <td>?6</td>  </tr>
-<tr><th>DECAWM</th>             <td>?7</td>  </tr>
-<tr><th>attBLCURM</th>           <td>?12</td>  </tr>
+<tr><th>DECCKM</th>             <td>?1</td></tr>
+<tr><th>DECOM</th>              <td>?6</td></tr>
+<tr><th>DECAWM</th>             <td>?7</td></tr>
+<tr><th>attCursorBlink</th>     <td>?12</td></tr>
 <tr><th>DECSCFDM (ref: all-espaces)<br/>xtCursorBlink</th><td>?13</td></tr>
 <tr><th>DECTEM (ref: all-espaces)<br/>xtCursorBlinkXOR</th><td>?14</td></tr>
-<tr><th>DECTCEM</th>            <td>?25</td>  </tr>
+<tr><th>DECTCEM</th>            <td>?25</td></tr>
+<tr><th>smAltScreen</th>        <td>?47</td></tr>
 <tr><th>smSendMouse</th>        <td>?1000</td></tr>
 <tr><th>smMouseMotionHilite</th><td>?1001</td></tr>
 <tr><th>smMouseMotionCell</th>  <td>?1002</td></tr>
@@ -1218,6 +1238,9 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>smExMouseUtf8</th>      <td>?1005</td></tr>
 <tr><th>smExMouseSgr</th>       <td>?1006</td></tr>
 <tr><th>smExMouseUrxvt</th>     <td>?1015</td></tr>
+<tr><th>smAltScreenClear</th>   <td>?1047</td></tr>
+<tr><th>smSaveCursor</th>       <td>?1048</td></tr>
+<tr><th>smAltScreenCursor</th>  <td>?1049</td></tr>
 <tr><th>smBracketedPasteMode</th><td>?2004</td></tr>
 </table>
 
@@ -1231,17 +1254,6 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   <li>互換性: [ECMA-48/7.2.2], VT100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/CRM">VT510: CRM</a></li>
   </ul>
-</li>
-<li>Mode ?1 <dfn class="cmode">DECCKM</dfn>: Cursor Keys Mode
-  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECCKM">VT510/DECCKM</a>]
-    設定されている時、矢印キーによる入力を <kbd>ESC O A</kbd> 等の形式で送信する。
-    解除されている時、矢印キーによる入力を <kbd>ESC [ A</kbd> 等の形式で送信する。
-  </p>
-</li>
-<li>Mode ?2004 <dfn class="cmode">smBracketedPasteMode</dfn>: Bracketed Paste Mode
-  <p>[xterm] 設定されている時、貼り付けによる入力内容を <kbd>CSI 2 0 0 ~</kbd> と
-    <kbd>CSI 2 0 1 ~</kbd> で囲んでアプリケーションに送信する。
-  </p>
 </li>
 </ul>
 
@@ -1268,7 +1280,6 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><td>17</td>    <td class="markA">-</td><td>SATM</td> <td>Selected area transfer</td><td></td><td>X</td></tr>
 <tr><td>19</td>    <td class="markA">-</td><td>EBM</td>  <td>Editing boundary</td><td></td><td>X</td></tr>
 <tr><td>20</td>    <td>vx</td><td>LNM</td>       <td>Set new line mode (Automatic Newline)</td><td class="markB">Set line feed mode (Normal Linefeed)</td><td>X</td></tr>
-<tr><td>34</td>    <td>/putty</td><td></td>      <td>MakeCursorBig</td><td></td><td></td></tr>
 <tr><td>?1</td>    <td>vxr</td><td>DECCKM</td>   <td>Set cursor key to application (Application cursor key)</td><td>Set cursor key to cursor (Normal cursor key)</td><td>X</td></tr>
 <tr><td>?2</td>    <td>vx</td><td>DECANM</td>    <td>Set ANSI (versus VT52)</td><td>Set VT52 (versus ANSI)</td><td>X</td></tr>
 <tr><td>?3</td>    <td>vxr</td><td>DECCOLM</td>  <td>Set number of columns to 132</td><td class="markB">Set number of columns to 80</td><td>X</td></tr>
@@ -1516,10 +1527,12 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <h3>行とページの範囲</h3>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>SLH</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP U</kbd></td></tr>
-<tr><th>SLL</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> SP V</kbd></td></tr>
+<tr><th>SLH</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> SP U</kbd></td></tr>
+<tr><th>SLL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> SP V</kbd></td></tr>
 <tr><th>SPH</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> SP i</kbd></td></tr>
 <tr><th>SPL</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> SP j</kbd></td></tr>
+<tr><th>DECSTBM</th> <td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> r</kbd></td></tr>
+<tr><th>DECSLRM</th> <td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> s</kbd></td></tr>
 </table>
 <ul>
 <li><dfn class="cfunc">SLH</dfn>: SET LINE HOME
@@ -1574,6 +1587,52 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   <li>contra では SLH, SLL の引数を省略した時、または 0 を指定した時、既定値(行頭/行末)に戻す。</li>
   </ul>
 </li>
+<li><dfn class="cfunc">DECSTBM</dfn>: Set Top and Bottom Margins
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECSTBM">VT510/DECSTBM</a>]
+    ページのスクロール範囲を設定する。
+    第1引数に範囲の開始行の番号を指定し、第2引数に範囲の最終行の番号を指定する。
+    第1引数の既定値は1であり、第2引数の既定値は行数である。
+    スクロール範囲は2行以上なければならない。
+    スクロール範囲の設定の後に1行目1列目に移動する。
+  </p>
+  <ul>
+  <li>互換性: RLogin は1行目1列目に移動しない。xterm, screen, mintty は移動する。
+    xterm, RLogin ではカーソル移動については CUD, CUU, CPL, CNL は影響を受けるが VPB, VPR は影響を受けない。
+    mintty では VPB, VPR も影響を受けている様に見える。
+    RLogin では IL, DL, SU, SD 及び改行の類が影響を受ける。
+  </li>
+  <li>互換性: contra では CUU, CUD, SU, SD (縦書きの時は CUF, CUB, SL, SR) が影響を受ける。
+    VPB, VPR は影響を受けない。暗黙移動の範囲、LF, FF, NEL, RI, IND 等は、
+    DECSTBM の制限と SPH, SPL の制限の両方の影響を受ける。
+  </li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECSLRM</dfn>: Set Left and Right Margins
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECSLRM">VT510/DECSLRM</a>]
+    DECLRMM が設定されている時に、ページのスクロール範囲を設定する。
+    第1引数に範囲の開始列の番号を指定し、第2引数に範囲の最終列の番号を指定する。
+    第1引数の既定値は1であり、第2引数の既定値は画面の幅(列数)である。
+    スクロール範囲は2行以上なければならない。
+    スクロール範囲の設定の後に1行目1列目に移動する。
+  </p>
+  <ul>
+  <li>互換性: RLogin は IL, DL は DECSLRM の範囲内だけスクロールする。
+    xterm では IL, DL は行全体に対して作用するが、内容消去は範囲内だけ行うという動作に見える。
+    RLogin と xterm は共に ICH, DCH は範囲内で行うが ECH, EL は範囲外まで行う。
+    mintty はそもそも DECSLRM に対応していない様だ。
+  </li>
+  <li>互換性: contra では CUF, CUB, SL, SR (縦書きの時は CUU, CUD, SU, SD) が影響を受ける。
+    HPB, HPR は影響を受けない。
+    暗黙移動の範囲, CR, IL, DL, ICH は DECSLRM の制限と SPL, SLL の制限の両方の影響を受ける。
+  </li>
+  </ul>
+</li>
+<li>Mode ?69 <dfn class="cmode">DECLRMM</dfn>: Left Right Margin Mode [既定値: RM]
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECLRMM.html">VT510/DECLRMM</a>]
+    DECSLRM で設定した範囲が有効かどうかを設定する。
+  </p>
+</li>
+
 </ul>
 
 <h3>文字列 (string)</h3>
@@ -2002,6 +2061,29 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>互換性: vt100, xterm</li>
   <li>[<a href="http://www.vt100.net/docs/vt510-rm/CPR">VT510: CPR</a>, <a href="http://www.vt100.net/docs/vt510-rm/DSR-CPR">VT510: DSR-CPR</a>]</li>
   <li>Poderosa は CPR ではなくて DSR(Pn;Pn) で応答する。</li>
+  </ul>
+</li>
+</ul>
+
+<h3>スクロール</h3>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
+<tr><th>SU</th><td><kbd>CSI <i>&lt;Pn&gt;</i> S</kbd></td><td>上にスクロール</td></tr>
+<tr><th>SD</th><td><kbd>CSI <i>&lt;Pn&gt;</i> T</kbd></td><td>下にスクロール</td></tr>
+<tr><th>SL</th><td><kbd>CSI <i>&lt;Pn&gt;</i> SP @</kbd></td><td>左にスクロール</td></tr>
+<tr><th>SR</th><td><kbd>CSI <i>&lt;Pn&gt;</i> SP A</kbd></td><td>右にスクロール</td></tr>
+</table>
+<ul>
+<li><dfn class="cfunc">SU</dfn>: SCROLL UP</li>
+<li><dfn class="cfunc">SD</dfn>: SCROLL DOWN</li>
+<li><dfn class="cfunc">SL</dfn>: SCROLL LEFT</li>
+<li><dfn class="cfunc">SR</dfn>: SCROLL RIGHT
+  <p>[ECMA-48/8.3.147 SU, 8.3.113 SD, 8.3.121 SL, 8.3.135 SR]
+    表示部に於いてそれぞれ上下左右に表示内容をスクロールする。
+    引数は行数または文字位置の数を指定する。表示位置は変化しない。
+  </p>
+  <ul>
+  <li>互換性: xterm, mintty, RLogin, Poderosa では DECSTBM の影響を受ける。</li>
   </ul>
 </li>
 </ul>
@@ -2528,7 +2610,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </ul>
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-<h3>他</h3>
+<h3>カーソル制御</h3>
 <table class="normal center">
 <tr><th>略号</th>    <th>符号化表現</th></tr>
 <tr><th>DECSCUSR</th><td><kbd>CSI <i>&lt;Ps&gt;</i> SP q</kbd></td></tr>
@@ -2560,10 +2642,15 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </li>
 <li>Mode 32 <dfn class="cmode">wySTCURM</dfn>: Steady Cursor Mode (Wyse)</li>
 <li>Mode 33 <dfn class="cmode">WYSTCURM</dfn>: Wyse Steady Cursor Mode (Wyse)
-  <p>[all-escapes.txt] カーソルを点滅しない</p>
+  <p>[all-escapes.txt] カーソルを点滅しない。</p>
   <ul>
   <li>(RM) カーソルは点滅する。</li>
   <li>(SM) カーソルは点滅しない。</li>
+  </ul>
+  <ul>
+  <li>互換性: 2つある意味が分からないが、
+    取り敢えず contra では attCursorBlink, xtCursorBlink の反転と同値に実装する。
+  </li>
   </ul>
 </li>
 <li>Mode 34 <dfn class="cmode">WYULCURM</dfn>: Wyse Underline Cursor Mode (Wyse), Normal Cursor Visibility (screen)
@@ -2576,20 +2663,23 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     terminfo に <code>cnorm=\e[34h\e[?25h, cvvis=\e[34l, civis=\e[?25l</code>
     を登録している。civis はカーソル非表示で cvvis はカーソルをよく見える様にする、
     cnorm はカーソルを元に戻すという意味であるから、WYULCURM と同様に解釈して良い気がする。
-</li>
+  </li>
+  <li>互換性: PuTTY のソースコード (terminal.c (toggle_mode)) には "WYULCURM: Make cursor BIG" と書かれている。
+    つまり PuTTY はカーソルを大きくするがそれは WYULCURM の実装としてその様にしているという事。
+  </li>
   </ul>
 </li>
-<li>Mode ?12 <dfn class="cmode">attBLCURM</dfn>: Start Blinking Cursor (xterm AT&amp;T 610)</li>
+<li>Mode ?12 <dfn class="cmode">attCursorBlink</dfn>: Start Blinking Cursor (xterm AT&amp;T 610)</li>
 <li>Mode ?13 <dfn class="cmode">xtCursorBlink</dfn>: Enable Blinking Cursor (xterm menu) [既定値 RM]</li>
 <li>Mode ?14 <dfn class="cmode">xtCursorBlinkXOR</dfn>: Enable XOR of Blinking Cursor Sequence and Menu (xterm resource) [既定値 SM]
   <p>[xterm] カーソルの点滅を制御する。xtCursorBlinkXOR が設定されている時、
-    attBLCURM か xtCursorBlink のどちらか一方のみが設定されている時に点滅する。
+    attCursorBlink か xtCursorBlink のどちらか一方のみが設定されている時に点滅する。
     xtCursorBlinkXOR が解除されている時、少なくとも一方が設定されていれば点滅する。
     xtCursorBlink はエスケープシーケンスからは制御できずメニューから制御する。
     xtCursorBlinkXOR は xterm 起動時に指定した物に固定されている。
   </p>
   <ul>
-  <li>[xterm] ?12 は AT&amp;T 610 起源のようである。</li>
+  <li>[xterm] attCursorBlink は AT&amp;T 610 と括弧書きされているのでそれが起源のようである。</li>
   <li>互換性: RLogin の説明書には ?12 では逆にカーソルの点滅を禁止すると書かれている。</li>
   </ul>
 </li>
@@ -2607,6 +2697,37 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </li>
 </ul>
 
+<h3>代替画面 (Alternate Screen Buffer)</h3>
+<ul>
+<li>Mode ?47   <dfn class="cmode">smAltScreen</dfn> (xterm) [既定値 RM]
+  <ul>
+  <li>SM: 現在の画面を保存して代替画面に切り替える。代替画面は前回の代替画面の内容である。</li>
+  <li>RM: 保存した画面を復元する。</li>
+  </ul>
+</li>
+<li>Mode ?1047 <dfn class="cmode">smAltScreenClear</dfn> (xterm) [既定値 RM]
+  <ul>
+  <li>SM: 現在の画面を保存して代替画面に切り替える。代替画面の内容はクリアする。</li>
+  <li>RM: 保存した画面を復元する。</li>
+  </ul>
+</li>
+<li>Mode ?1048 <dfn class="cmode">smSaveCursor</dfn> (xterm) [既定値 RM]
+  <ul>
+  <li>SM: 現在のカーソル状態を保存 (DECSC と同様)</li>
+  <li>RM: 保存したカーソル状態を復元 (DECRC と同様)</li>
+  </ul>
+</li>
+<li>Mode ?1049 <dfn class="cmode">smAltScreenCursor</dfn> (xterm) [既定値 RM]
+  <ul>
+  <li>SM: <kbd>SM(?1047)</kbd> と <kbd>SM(?1048)</kbd> の組み合わせ。</li>
+  <li>RM: <kbd>RM(?1047)</kbd> と <kbd>RM(?1048)</kbd> の組み合わせ。</li>
+  </ul>
+</li>
+<li>xterm で確認すると ?1047 と ?1048 の現在値は ?47 と連動する。
+  xterm では ?1048 は常に設定された状態になっている。
+</li>
+</ul>
+
 <!--************************************************************************-->
 <h2>描画属性</h2>
 
@@ -2617,7 +2738,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <tr><th>PLD</th> <td><kbd>PLD</kbd></td></tr>
 <tr><th>PLU</th> <td><kbd>PLU</kbd></td></tr>
 <tr><th>SCO</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> SP e</kbd></td></tr>
-<tr><th>DECSCA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> " q</kbd></td></tr>
+<tr><th>DECSCA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> " q</kbd></td></tr><!-- " -->
 </table>
 
 <ul>
@@ -3358,6 +3479,45 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <ul>
   <li>???: 3 は反転、21 は暗い前景色、22 は既定色、17-23 はそれぞれ前景色 RBMGYCW</li>
   </ul>
+</li>
+</ul>
+
+<h2>ユーザ入力の設定</h2>
+
+<h3>ユーザ入力の設定</h3>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th></tr>
+<tr><th>DECKPAM</th> <td><kbd>ESC =</kbd></td></tr>
+<tr><th>DECKPNM</th> <td><kbd>ESC &gt;</kbd></td></tr>
+</table>
+
+<ul>
+<li>Mode ?1 <dfn class="cmode">DECCKM</dfn>: Cursor Keys Mode
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECCKM">VT510/DECCKM</a>]
+    設定されている時、矢印キーによる入力を <kbd>SS3 A</kbd> 等の形式で送信する。
+    解除されている時、矢印キーによる入力を <kbd>CSI A</kbd> 等の形式で送信する。
+  </p>
+</li>
+<li>Mode ?66 <dfn class="cmode">DECNKM</dfn>: Numeric Keypad Mode
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECNKM">VT510/DECNKM</a>]
+    設定されている時、テンキーでエスケープシーケンスを送る (DECKPAM)。
+    解除されている時、テンキーで通常の文字を送る (DECKPNM)。
+  </p>
+</li>
+<li><dfn class="cfunc">DECKPAM</dfn>: Keypad Application Mode
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECKPAM">VT510/DECKPAM</a>]
+   テンキーでエスケープシーケンスを送る。
+  </p>
+</li>
+<li><dfn class="cfunc">DECKPNM</dfn>: Keypad Numeric Mode
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECKPNM">VT510/DECKPNM</a>]
+   テンキーで通常の文字を送る。
+  </p>
+</li>
+<li>Mode ?2004 <dfn class="cmode">smBracketedPasteMode</dfn>: Bracketed Paste Mode
+  <p>[xterm] 設定されている時、貼り付けによる入力内容を <kbd>CSI 2 0 0 ~</kbd> と
+    <kbd>CSI 2 0 1 ~</kbd> で囲んでアプリケーションに送信する。
+  </p>
 </li>
 </ul>
 
