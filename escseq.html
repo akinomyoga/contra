@@ -2564,6 +2564,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <h3>問い合わせ</h3>
 <table class="normal center">
 <tr><th>略号</th><th>用途</th><th>符号化表現</th></tr>
+<tr><th>DA</th> <td>制御</td><td><kbd>CSI 0 c</kbd><br/><kbd>CSI c</kbd></td></tr>
 <tr><th>DA1</th> <td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> c</kbd></td></tr>
 <tr><th>DA1R</th><td>応答</td><td><kbd>CSI ? 6 4 ; <i>&lt;Pm&gt;</i> c</kbd></td></tr>
 <tr><th>DA2</th> <td>制御</td><td><kbd>CSI &gt; <i>&lt;Ps&gt;</i> c</kbd></td></tr>
@@ -2578,16 +2579,60 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </table>
 
 <ul>
+<li><dfn class="cfunc">DA</dfn>: Device Attributes
+  <p>[ECMA-48//8.3.24] 0 以外の引数のシーケンスは端末の識別情報を応答するのに使う。
+    具体的な引数の値と意味については今後設立される登録簿に従う (多分、未だ存在していない)。
+    引数が 0 の時、端末が識別DAを送ることを要求する。
+    引数の既定値は 0 である。
+  </p>
+  <p>互換性: 通常、端末では以下の DA1 として実装されている。</p>
+</li>
 <li><dfn class="cfunc">DA1</dfn>: Primary Device Attributes
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DA1">VT510/DA1</a>]
+    1つ目の引数は VT Level を表す 60-65 の整数である。
+    例えば VT510 Level 4 の場合には 64 である。
+    2つ目以降の引数は有効な機能のリストを表す。
+  </p>
+  <table class="normal center">
+  <tr><th>引数</th><th>機能</th></tr>
+  <tr><td>1</td><td>132列モード</td></tr>
+  <tr><td>2</td><td>プリンタ</td></tr>
+  <tr><td>4</td><td>Sixel</td></tr>
+  <tr><td>6</td><td>DECSED DECSEL DECSERA</td></tr>
+  <tr><td>7</td><td>DRCS</td></tr>
+  <tr><td>8</td><td>UDK</td></tr>
+  <tr><td>9</td><td>NRCS</td></tr>
+  <tr><td>12</td><td>Yugoslavian (SCS)</td></tr>
+  <tr><td>15</td><td>Technical character set</td></tr>
+  <tr><td>18</td><td>Windowing cap</td></tr>
+  <tr><td>21</td><td>水平スクロール</td></tr>
+  <tr><td>23</td><td>ギリシャ文字</td></tr>
+  <tr><td>24</td><td>トルコ文字</td></tr>
+  <tr><td>42</td><td>ISO Latin-2 文字セット</td></tr>
+  <tr><td>44</td><td>PCTerm</td></tr>
+  <tr><td>45</td><td>Soft key map</td></tr>
+  <tr><td>46</td><td>ASCII Emulation</td></tr>
+  </table>
   <ul>
-  <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DA1">VT510: DA1</a></li>
+  <li>互換性: VT100; xterm</li>
   </ul>
 </li>
 <li><dfn class="cfunc">DA2</dfn>: Secondary Device Attributes
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DA2">VT510/DA2</a>]
+    端末識別コード、ファームウェアバージョン、ハードウェア設定の応答 DA2R を要求する。
+  </p>
   <ul>
   <li>VT100; xterm</li>
-  <li><a href="http://www.vt100.net/docs/vt510-rm/DA2">VT510: DA2</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DA2R</dfn>:
+  <p>これに関しては <a href="https://qiita.com/kefir_/items/0bda5e55f43392420d66">DA2応答の見方 - Qiita</a> が詳しい。</p>
+  <ul>
+  <li>VT510 は <kbd>CSI &gt; 6 1 ; <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> c </kbd> の形式で応答する。
+    Ps1 は 10 または 20 であり、それぞれファームウェアバージョン 1.0 及び 2.0 に対応する。
+    Ps2 はキーボードの種類を指定し、0 が STD keyboard で 1 が PC keyboard である。</li>
+  <li>contra は取り敢えず <kbd>CSI &gt; 6 7 ; 0 c</kbd> を返す事にする。
+  </li>
   </ul>
 </li>
 <li><dfn class="cfunc">DA3</dfn>: Tertiary Device Attributes
