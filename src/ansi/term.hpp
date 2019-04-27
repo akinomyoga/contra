@@ -50,6 +50,8 @@ namespace ansi {
   void do_s7c1t(term_t& term);
   void do_s8c1t(term_t& term);
   void do_altscreen(term_t& term, bool value);
+  int do_rqm_deccolm(term_t& term);
+  void do_sm_deccolm(term_t& term, bool value);
   void do_ed(term_t& term, csi_single_param_t param);
   void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm);
   bool do_decrqss(term_t& term, char32_t const* param, std::size_t len);
@@ -87,6 +89,11 @@ namespace ansi {
     // conformance level (61-65)
     int m_decscl = 65;
 
+    // 画面サイズ
+    curpos_t cfg_decscpp_enabled = true;
+    curpos_t cfg_decscpp_min = 20;
+    curpos_t cfg_decscpp_max = 400;
+
     tty_state(term_t* term): m_term(term) {
       this->clear();
     }
@@ -102,8 +109,15 @@ namespace ansi {
       this->page_limit = -1;
       this->line_home = -1;
       this->line_limit = -1;
+      this->clear_margin();
+
+      this->m_decscl = 65;
+    }
+    void clear_margin() {
       this->dec_tmargin = -1;
       this->dec_bmargin = -1;
+      this->dec_lmargin = -1;
+      this->dec_rmargin = -1;
     }
 
     sequence_decoder_config m_sequence_decoder_config;
@@ -155,6 +169,8 @@ namespace ansi {
           return m_decsc_cur.x >= 0;
         case mode_altscreen_cur: // Mode ?1049
           return get_mode(mode_altscr);
+        case mode_deccolm:
+          return 1 & do_rqm_deccolm(*m_term);
         default:
           return false;
         }
@@ -213,6 +229,9 @@ namespace ansi {
             set_mode(mode_decsc, value);
           }
           break;
+        case mode_deccolm:
+          do_sm_deccolm(*m_term, value);
+          break;
         default: ;
         }
       }
@@ -247,7 +266,7 @@ namespace ansi {
     tty_state m_state {this};
 
     contra::idevice* m_response_target = nullptr;
-    std::vector<byte> m_response { 32 };
+    std::vector<byte> m_response;
 
   public:
     void initialize_line(line_t& line) const {
@@ -258,7 +277,9 @@ namespace ansi {
     }
 
   public:
-    term_t(contra::ansi::board_t& board): m_board(&board) {}
+    term_t(contra::ansi::board_t& board): m_board(&board) {
+      this->m_response.reserve(32);
+    }
 
     void set_response_target(contra::idevice& dev) { this->m_response_target = &dev; }
 
@@ -277,7 +298,7 @@ namespace ansi {
     }
     void response_number(unsigned value) {
       if (value >= 10)
-        response_number(value/10);
+        response_number(value / 10);
       m_response.push_back((byte) (ascii_0 + value % 10));
     }
 

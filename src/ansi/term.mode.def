@@ -47,6 +47,11 @@ accessor  mode_altscreen_clr      dec1047     -
 accessor  mode_decsc              dec1048     -
 accessor  mode_altscreen_cur      dec1049     -
 
+# Column 132
+accessor  mode_deccolm            dec3        -
+flags     mode_xtEnableColm       dec40       false
+flags     mode_decncsm            dec95       false
+
 #------------------------------------------------------------------------------
 # Contra original modes (inaccessible)
 

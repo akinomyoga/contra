@@ -571,7 +571,6 @@ void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpo
     }
     x += delta;
   }
-  mwg_check(m_cells.size() <= (std::size_t) width);
 
   cell_t fill;
   fill.character = ascii_nul;
@@ -674,6 +673,8 @@ void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpo
     x += delta;
   }
 
+  if (m_cells.size() > (std::size_t) width)
+    m_cells.resize((std::size_t) width);
   m_version++;
 }
 

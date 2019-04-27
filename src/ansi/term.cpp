@@ -234,6 +234,33 @@ namespace {
     term.state().set_mode(mode_decnkm, false);
   }
 
+  void do_sm_deccolm(term_t& term, bool value) {
+    tty_state& s = term.state();
+    if (s.get_mode(mode_xtEnableColm)) {
+      board_t& b = term.board();
+      b.reset_size(value ? 132 : 80, b.m_height);
+      if (!s.get_mode(mode_decncsm)) b.clear_screen();
+      s.clear_margin();
+    }
+  }
+  int do_rqm_deccolm(term_t& term) {
+    return term.board().m_width == 132 ? 1 : 2;
+  }
+  bool do_decscpp(term_t& term, csi_parameters& params) {
+    tty_state& s = term.state();
+    if (!s.cfg_decscpp_enabled) return true;
+
+    csi_single_param_t param;
+    params.read_param(param, 0);
+    if (param == 0) param = 80;
+    curpos_t cols = contra::clamp<curpos_t>(param, s.cfg_decscpp_min, s.cfg_decscpp_max);
+
+    board_t& b = term.board();
+    b.reset_size(cols, b.m_height);
+
+    return true;
+  }
+
   //---------------------------------------------------------------------------
   // Page and line settings
 
@@ -1512,6 +1539,7 @@ namespace {
       register_cfunc(&do_decscusr, ascii_sp, ascii_q);
       register_cfunc(&do_decscl  , ascii_double_quote, ascii_p);
       register_cfunc(&do_decsca  , ascii_double_quote, ascii_q);
+      register_cfunc(&do_decscpp , ascii_dollar, ascii_vertical_bar);
     }
 
     control_function_t* get(byte F) const {

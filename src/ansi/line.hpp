@@ -757,6 +757,10 @@ namespace ansi {
       else
         _prop_compose_segments(comp, count, width, fill_attr, line_r2l, dcsm);
     }
+    void truncate(curpos_t width, bool line_r2l, bool dcsm) {
+      line_segment_t const seg = {0, width, line_segment_slice};
+      compose_segments(&seg, 1, width, attribute_t {}, line_r2l, dcsm);
+    }
 
   private:
     void _mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr);
@@ -865,9 +869,13 @@ namespace ansi {
       mwg_check(width > 0 && height > 0, "negative size is passed (width = %d, height = %d).", (int) width, (int) height);
       if (this->cur.x >= width) cur.x = width - 1;
       if (this->cur.y >= height) cur.y = height - 1;
+      m_lines.resize(height);
+      if (this->m_width > width) {
+        for (auto& line : m_lines)
+          line.truncate(width, false, true);
+      }
       this->m_width = width;
       this->m_height = height;
-      m_lines.resize(height);
     }
 
   public:
