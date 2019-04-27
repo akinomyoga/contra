@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <vector>
+#include "ansi/enc.utf8.hpp"
 
 namespace contra {
 
@@ -63,9 +64,9 @@ namespace contra {
     void print_char(std::FILE* file, char32_t ch) const {
       const char* name = get_ascii_name(ch);
       if (name)
-        std::fprintf(file, "%s ", name);
+        std::fprintf(file, "%s", name);
       else
-        std::fprintf(file, "%c ", ch);
+        contra::encoding::put_u8(ch, file);
     }
 
   public:
@@ -74,14 +75,20 @@ namespace contra {
       case ascii_csi:
       case ascii_esc:
         print_char(file, m_type);
-        for (char32_t ch: m_content)
+        std::putc(' ', file);
+        for (char32_t ch: m_content) {
           print_char(file, ch);
-        std::fprintf(file, "%c", m_final & 0xFF);
+          std::putc(' ', file);
+        }
+        print_char(file, m_final);
         break;
       default: // command string & characater string
         print_char(file, m_type);
-        for (char32_t ch: m_content)
+        std::putc(' ', file);
+        for (char32_t ch: m_content) {
           print_char(file, ch);
+          std::putc(' ', file);
+        }
         std::fprintf(file, "ST");
         break;
       }
@@ -93,7 +100,7 @@ namespace contra {
     bool osc_sequence_terminated_by_bel     = true; // OSC シーケンスが BEL で終わっても良い。
     bool command_string_terminated_by_bel   = true; // 任意のコマンド列が BEL で終わっても良い。
     bool character_string_terminated_by_bel = true; // キャラクター列 (SOS, ESC k 等) が BEL で終わっても良い。
-    bool title_definition_string_enabled    = true; // GNU Screen ESC k ... BEL
+    bool title_definition_string_enabled    = true; // GNU Screen ESC k ... ST
   };
 
   template<typename Processor>
@@ -168,17 +175,28 @@ namespace contra {
         if (m_seq.has_intermediate()) {
           if (0x20 <= uchar && uchar <= 0x2F) {
             m_seq.append(uchar);
-          } else {
-            process_invalid_sequence();
+            return;
           }
         } else {
           if (0x20 <= uchar && uchar <= 0x3F) {
             if (uchar <= 0x2F)
               m_seq.start_intermediate();
             m_seq.append(uchar);
-          } else
-            process_invalid_sequence();
+            return;
+          }
         }
+
+        // Note: 事情はよく分からないが vttest は HT, VT, CR をその場で処理する事を要求する。
+        //   RLogin はエスケープシーケンス以外の C0 を全てその場で処理している気がする。
+        //   SI, SO に関しても文字コード制御の効果を持っている。
+        if (0 <= uchar && uchar < 0x20 && uchar != ascii_esc) {
+          m_proc->process_control_character(uchar);
+          return;
+        }
+
+        m_seq.set_final(uchar);
+        process_invalid_sequence();
+        process_char(uchar);
       }
     }
 
@@ -309,7 +327,7 @@ namespace contra {
         return;
       }
 
-      if (uchar < 0x20) {
+      if (0 <= uchar && uchar < 0x20) {
         if (uchar == ascii_esc)
           m_hasPendingESC = true;
         else

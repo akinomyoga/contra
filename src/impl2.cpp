@@ -48,7 +48,7 @@ int main() {
   contra::sequence_printer_device d2(&printer);
   dev.push(&d2);
 
-  contra::set_fd_nonblock(STDIN_FILENO);
+  bool const oldNonblock = contra::set_fd_nonblock(STDIN_FILENO, true);
   contra::fd_device devIn(sess.masterfd);
 
   char buff[4096];
@@ -60,6 +60,7 @@ int main() {
   }
 
   kill(sess.pid, SIGTERM);
+  contra::set_fd_nonblock(STDIN_FILENO, oldNonblock);
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &oldTermios);
 
   contra::ansi::termcap_sgr_type sgrcap;

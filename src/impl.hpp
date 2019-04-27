@@ -20,7 +20,7 @@ namespace contra {
   };
 
   bool read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size);
-  void set_fd_nonblock(int fd);
+  bool set_fd_nonblock(int fd, bool value);
   bool is_child_terminated(pid_t pid);
 
   struct session {

@@ -229,7 +229,7 @@ namespace ansi {
 
           if (wskip > 0) put_skip(wskip);
           apply_attr(cell.attribute);
-          put(cell.character.value);
+          put_u32(cell.character.value);
         }
 
         put('\n');
@@ -273,6 +273,9 @@ namespace ansi {
     }
     void put_il(curpos_t delta) const {
       if (delta > 0) put_csiseq_pn1(delta, 'L');
+    }
+    void put_ech(curpos_t delta) const {
+      if (delta > 0) put_csiseq_pn1(delta, 'X');
     }
 
     void trace_line_scroll() {
@@ -374,21 +377,24 @@ namespace ansi {
         line.get_cells_in_presentation(buff, w.line_r2l(line));
 
         curpos_t wskip = 0;
-        curpos_t x = 0;
-        std::fprintf(file, "\x1b[%dX", w.m_width);
+        x = 0;
         for (auto const& cell : buff) {
           std::uint32_t const code = cell.character.value;
-          if (code == ascii_nul) {
+          if (cell.attribute.is_default() && code == ascii_nul) {
             wskip++;
           } else {
-            if (wskip > 0) put_skip(wskip);
+            if (wskip > 0) {
+              apply_attr(attribute_t {});
+              for (curpos_t c = wskip; c--; ) put(' ');
+            }
             apply_attr(cell.attribute);
             put_u32(code);
+            x += wskip + cell.width;
+            wskip = 0;
           }
-          x += cell.width;
         }
-        if (wskip > 0) put_skip(wskip);
-        if (x > 0) std::fprintf(file, "\x1b[%dD", x);
+        if (x < w.m_width) put_ech(w.m_width - wskip);
+        move_to_column(0);
 
         line_buffer.version = line.version();
         line_buffer.id = line.id();
@@ -397,7 +403,6 @@ namespace ansi {
       }
       apply_attr(attribute_t {});
 
-      x = 0;
       y = w.m_height;
       move_to(w.cur.x, w.cur.y);
       //std::fprintf(file, "\x1b[?25h");

@@ -31,6 +31,8 @@ int main() {
   termios.c_cc[VTIME] = 0;
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios);
 
+  bool const oldNonblock = contra::set_fd_nonblock(STDIN_FILENO, true);
+
   contra::multicast_device dev;
 
   struct winsize winsize;
@@ -40,7 +42,6 @@ int main() {
 
   contra::session sess;
   if (!create_session(&sess, oldTermios, "/bin/bash", winsize.ws_col, winsize.ws_row)) return -1;
-  //ioctl(sess.masterfd, TIOCSWINSZ, (char *) &winsize);
 
   contra::ansi::board_t b(winsize.ws_col, winsize.ws_row);
   contra::ansi::term_t term(b);
@@ -51,30 +52,33 @@ int main() {
   sgrcap.initialize();
   contra::ansi::tty_observer renderer(term, stdout, &sgrcap);
 
-  contra::sequence_printer printer("impl3-allseq.txt");
-  contra::sequence_printer_device d2(&printer);
-  dev.push(&d2);
+  // contra::sequence_printer printer("impl3-allseq.txt");
+  // contra::sequence_printer_device d2(&printer);
+  // dev.push(&d2);
 
-  contra::set_fd_nonblock(STDIN_FILENO);
   contra::fd_device devIn(sess.masterfd);
 
   char buff[4096];
-  bool dirty = false;
   for (;;) {
-    if (contra::read_from_fd(sess.masterfd, &dev, buff, sizeof(buff))) {
-      dirty = true;
-      continue;
+    bool processed = false;
+    clock_t time0 = clock();
+    while (contra::read_from_fd(sess.masterfd, &dev, buff, sizeof(buff))) {
+      processed = true;
+      clock_t const time1 = clock();
+      clock_t const msec = (time1 - time0) * 1000 / CLOCKS_PER_SEC;
+      if (msec > 20) break;
     }
-    if (dirty) {
+    if (processed)
       renderer.update();
-      dirty = false;
-    }
+
     if (contra::read_from_fd(STDIN_FILENO, &devIn, buff, sizeof(buff))) continue;
     if (contra::is_child_terminated(sess.pid)) break;
-    contra::msleep(10);
+    if (!processed)
+      contra::msleep(10);
   }
 
   kill(sess.pid, SIGTERM);
+  contra::set_fd_nonblock(STDIN_FILENO, oldNonblock);
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &oldTermios);
 
   renderer.print_screen(b);

@@ -22,20 +22,22 @@ bool read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size)
   return true;
 }
 
-void set_fd_nonblock(int fd) {
+bool set_fd_nonblock(int fd, bool value) {
   int flags = fcntl(fd, F_GETFL, 0);
   if (flags < 0) {
     perror("sample_openpt (fcntl(0, F_GETFL))");
     exit(1);
   }
 
-  if (flags & O_NONBLOCK) return;
+  bool const old_status = flags & O_NONBLOCK;
+  if (old_status == value) return old_status;
 
-  int const result = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+  int const result = fcntl(fd, F_SETFL, flags ^ O_NONBLOCK);
   if (result < 0) {
     perror("sample_openpt (fcntl(0, F_SETFL))");
     exit(1);
   }
+  return old_status;
 }
 
 bool is_child_terminated(pid_t pid) {
