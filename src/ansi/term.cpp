@@ -1347,6 +1347,97 @@ namespace {
   }
 
   //---------------------------------------------------------------------------
+  // device attributes
+
+  void do_s7c1t(term_t& term) {
+    term.state().set_mode(mode_s7c1t, true);
+  }
+  void do_s8c1t(term_t& term) {
+    term.state().set_mode(mode_s7c1t, false);
+  }
+  bool do_decscl(term_t& term, csi_parameters& params) {
+    csi_single_param_t param, s7c1t;
+    params.read_param(param, 0);
+    params.read_param(s7c1t, 0);
+    if (param == 0) param = 65;
+
+    term.state().m_decscl = param;
+    term.state().set_mode(mode_s7c1t, param == 1);
+    return true;
+  }
+  bool do_da1(term_t& term, csi_parameters& params) {
+    csi_single_param_t param;
+    params.read_param(param, 0);
+    if (param != 0) return false;
+
+    term.response_put(ascii_csi);
+    term.response_put(ascii_question);
+    term.response_number(64);
+    term.response_put(ascii_semicolon);
+    term.response_number(21);
+    term.response_put(ascii_c);
+    term.respond();
+    return true;
+  }
+  bool do_da2(term_t& term, csi_parameters& params) {
+    csi_single_param_t param;
+    params.read_param(param, 0);
+    if (param != 0) return false;
+
+    term.response_put(ascii_csi);
+    term.response_put(ascii_greater);
+    term.response_number(67);
+    term.response_put(ascii_semicolon);
+    term.response_number(0);
+    term.response_put(ascii_c);
+    term.respond();
+    return true;
+  }
+  bool do_decrqss(term_t& term, char32_t const* param, std::size_t len) {
+    if (len == 2) {
+      auto _start = [&term] {
+        term.response_put(ascii_dcs);
+        term.response_put(ascii_0);
+        term.response_put(ascii_dollar);
+        term.response_put(ascii_r);
+      };
+      auto _end = [&term] {
+        term.response_put(ascii_st);
+      };
+
+      if (param[0] == ascii_double_quote) {
+        switch (param[1]) {
+        case ascii_p:
+          // DECSCL
+          _start();
+          term.response_number(term.state().m_decscl);
+          term.response_put(term.state().m_decscl);
+          if (term.state().get_mode(mode_s7c1t)) {
+            term.response_put(ascii_semicolon);
+            term.response_put(ascii_1);
+          }
+          term.response_put(ascii_p);
+          _end();
+          term.respond();
+          return true;
+        case ascii_q:
+          // DECSCA
+          _start();
+          if (term.board().cur.attribute.is_decsca_protected())
+            term.response_put(ascii_1);
+          term.response_put(ascii_double_quote);
+          term.response_put(ascii_q);
+          _end();
+          term.respond();
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  //---------------------------------------------------------------------------
   // dispatch
 
   constexpr std::uint32_t compose_bytes(byte major, byte minor) {
@@ -1395,6 +1486,7 @@ namespace {
 
       register_cfunc(&do_hpa , ascii_back_quote);
       register_cfunc(&do_hpr , ascii_a);
+      register_cfunc(&do_da1 , ascii_c);
       register_cfunc(&do_vpa , ascii_d);
       register_cfunc(&do_vpr , ascii_e);
       register_cfunc(&do_hvp , ascii_f);
@@ -1418,6 +1510,7 @@ namespace {
       register_cfunc(&do_decslrm_or_scosc, ascii_s);
       register_cfunc(&do_scorc   , ascii_u);
       register_cfunc(&do_decscusr, ascii_sp, ascii_q);
+      register_cfunc(&do_decscl  , ascii_double_quote, ascii_p);
       register_cfunc(&do_decsca  , ascii_double_quote, ascii_q);
     }
 
@@ -1437,15 +1530,23 @@ namespace {
 
   static bool process_private_control_sequence(term_t& term, sequence const& seq) {
     char32_t const* param = seq.parameter();
-    std::size_t len = seq.parameter_size();
-    if (len > 0 && param[0] == '?') {
-      // CSI ? ... Ft の形式
-      csi_parameters params(param + 1, len - 1);
-      if (!params) return false;
+    std::size_t const len = seq.parameter_size();
+    if (len > 0) {
+      if (param[0] == '?') {
+        // CSI ? ... Ft の形式
+        csi_parameters params(param + 1, len - 1);
+        if (!params) return false;
 
-      switch (seq.final()) {
-      case 'h': return do_decset(term, params);
-      case 'l': return do_decrst(term, params);
+        switch (seq.final()) {
+        case 'h': return do_decset(term, params);
+        case 'l': return do_decrst(term, params);
+        }
+      } else if (param[0] == '>') {
+        csi_parameters params(param + 1, len - 1);
+        if (!params) return false;
+        switch (seq.final()) {
+        case 'c': return do_da2(term, params);
+        }
       }
     }
 

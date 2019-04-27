@@ -6,6 +6,7 @@
 #include <vector>
 #include <termios.h>
 #include <stdio.h>
+#include <limits.h>
 #include "sequence.h"
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
@@ -14,10 +15,6 @@
 namespace contra {
 
   void msleep(int milliseconds);
-
-  struct idevice {
-    virtual void write(char const* data, ssize_t size) = 0;
-  };
 
   bool read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size);
   bool set_fd_nonblock(int fd, bool value);
@@ -36,7 +33,7 @@ namespace contra {
   public:
     void push(idevice* dev) {this->m_list.push_back(dev);}
 
-    virtual void write(char const* data, ssize_t size) override {
+    virtual void write(char const* data, std::size_t size) override {
       for (idevice* const dev: m_list)
         dev->write(data, size);
     }
@@ -52,10 +49,11 @@ namespace contra {
     int interval() { return m_milliseconds; }
     void set_interval(int milliseconds) { this->m_milliseconds = milliseconds; }
 
-    virtual void write(char const* data, ssize_t size) override {
+    virtual void write(char const* data, std::size_t size) override {
       const char* p = data;
       for (; size > 0; ) {
-        int const n = ::write(m_fd, p, size);
+        ssize_t const sz_write = (ssize_t) std::min<std::size_t>(size, SSIZE_MAX);
+        ssize_t const n = ::write(m_fd, p, sz_write);
         if (n > 0) {
           p += n;
           size -= n;
@@ -69,7 +67,7 @@ namespace contra {
     ansi::term_t* term;
   public:
     tty_player_device(ansi::term_t* term): term(term) {}
-    virtual void write(char const* data, ssize_t size) override {
+    virtual void write(char const* data, std::size_t size) override {
       term->write(data, size);
     }
   };
@@ -78,7 +76,7 @@ namespace contra {
     sequence_printer* printer;
   public:
     sequence_printer_device(sequence_printer* printer): printer(printer) {}
-    virtual void write(char const* data, ssize_t size) override {
+    virtual void write(char const* data, std::size_t size) override {
       printer->write(data, size);
     }
   };

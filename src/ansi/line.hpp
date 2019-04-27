@@ -265,6 +265,12 @@ namespace ansi {
       fg = 0;
       bg = 0;
     }
+
+  public:
+    constexpr bool is_decsca_protected() const {
+      return xflags & attribute_t::decsca_protected;
+    }
+
   };
 
   struct cell_t {
@@ -284,7 +290,7 @@ namespace ansi {
       return attribute.xflags & (attribute_t::spa_protected | attribute_t::daq_protected);
     }
     bool is_decsca_protected() const {
-      return attribute.xflags & attribute_t::decsca_protected;
+      return attribute.is_decsca_protected();
     }
   };
 

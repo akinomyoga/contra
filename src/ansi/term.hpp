@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <cstdlib>
+#include <cstdarg>
 #include <iterator>
 #include <algorithm>
 #include <vector>
@@ -40,15 +41,18 @@ namespace ansi {
   void do_epa(term_t& term);
   void do_ssa(term_t& term);
   void do_esa(term_t& term);
-  void do_altscreen(term_t& term, bool value);
-  void do_ed(term_t& term, csi_single_param_t param);
   void do_adm3_fs(term_t& term);
   void do_adm3_gs(term_t& term);
   void do_adm3_rs(term_t& term);
   void do_adm3_us(term_t& term);
   void do_deckpam(term_t& term);
   void do_deckpnm(term_t& term);
+  void do_s7c1t(term_t& term);
+  void do_s8c1t(term_t& term);
+  void do_altscreen(term_t& term, bool value);
+  void do_ed(term_t& term, csi_single_param_t param);
   void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm);
+  bool do_decrqss(term_t& term, char32_t const* param, std::size_t len);
 
   struct tty_state {
     term_t* m_term;
@@ -79,6 +83,9 @@ namespace ansi {
     curpos_t dec_bmargin = -1;
     curpos_t dec_lmargin = -1;
     curpos_t dec_rmargin = -1;
+
+    // conformance level (61-65)
+    int m_decscl = 65;
 
     tty_state(term_t* term): m_term(term) {
       this->clear();
@@ -239,6 +246,9 @@ namespace ansi {
     board_t* m_board;
     tty_state m_state {this};
 
+    contra::idevice* m_response_target = nullptr;
+    std::vector<byte> m_response { 32 };
+
   public:
     void initialize_line(line_t& line) const {
       if (line.lflags() & line_attr_t::is_line_used) return;
@@ -249,6 +259,27 @@ namespace ansi {
 
   public:
     term_t(contra::ansi::board_t& board): m_board(&board) {}
+
+    void set_response_target(contra::idevice& dev) { this->m_response_target = &dev; }
+
+    void respond() {
+      if (m_response_target)
+        m_response_target->write(reinterpret_cast<char const*>(&m_response[0]), m_response.size());
+      m_response.clear();
+    }
+    void response_put(byte value) {
+      if (0x80 <= value && value < 0xA0 && m_state.get_mode(mode_s7c1t)) {
+        m_response.push_back(ascii_esc);
+        m_response.push_back(value - 0x40);
+      } else {
+        m_response.push_back(value);
+      }
+    }
+    void response_number(unsigned value) {
+      if (value >= 10)
+        response_number(value/10);
+      m_response.push_back((byte) (ascii_0 + value % 10));
+    }
 
   public:
     board_t& board() { return *m_board; }
@@ -534,6 +565,7 @@ namespace ansi {
       // ToDo: 何処かにログ出力
       print_unrecognized_sequence(seq);
     }
+
     void process_escape_sequence(sequence const& seq) {
       if (seq.parameter_size() == 0) {
         switch (seq.final()) {
@@ -542,6 +574,13 @@ namespace ansi {
         case ascii_equals : do_deckpam(*this); return;
         case ascii_greater: do_deckpnm(*this); return;
         }
+      } else if (seq.parameter_size() == 1) {
+        if (seq.parameter()[0] == ascii_sp) {
+          switch (seq.final()) {
+          case ascii_F: do_s7c1t(*this); return;
+          case ascii_G: do_s8c1t(*this); return;
+          }
+        }
       }
       print_unrecognized_sequence(seq);
     }
@@ -549,9 +588,20 @@ namespace ansi {
     void process_control_sequence(sequence const& seq);
 
     void process_command_string(sequence const& seq) {
-      if (seq.type() == ascii_osc && seq.parameter_size() >= 2 && seq.parameter()[0] == '0' && seq.parameter()[1] == ';') {
-        m_state.title = std::u32string(seq.parameter() + 2, (std::size_t) seq.parameter_size() - 2);
-        return;
+      auto _check2 = [&seq] (char32_t a, char32_t b) {
+        return seq.parameter_size() >= 2 && seq.parameter()[0] == a && seq.parameter()[1] == b;
+      };
+
+      if (seq.type() == ascii_osc) {
+        if (_check2(ascii_0, ascii_semicolon)) {
+          m_state.title = std::u32string(seq.parameter() + 2, (std::size_t) seq.parameter_size() - 2);
+          return;
+        }
+      }
+      if (seq.type() == ascii_dcs) {
+        if (_check2(ascii_dollar, ascii_q)) {
+          if (do_decrqss(*this, seq.parameter() + 2, seq.parameter_size() - 2)) return;
+        }
       }
       print_unrecognized_sequence(seq);
     }

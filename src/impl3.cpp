@@ -57,6 +57,7 @@ int main() {
   // dev.push(&d2);
 
   contra::fd_device devIn(sess.masterfd);
+  term.set_response_target(devIn);
 
   char buff[4096];
   for (;;) {

@@ -57,3 +57,5 @@ flags     mode_xenl_ech           private     true
 
 # ICH, IL, DL の後にカーソルを SPH で設定される行頭に移動します。
 flags     mode_home_il            private     false
+
+flags     mode_s7c1t              private     true

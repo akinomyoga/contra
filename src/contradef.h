@@ -14,6 +14,10 @@ namespace contra {
     return value < min ? min : value > max ? max : value;
   }
 
+  struct idevice {
+    virtual void write(char const* data, std::size_t size) = 0;
+  };
+
   // discarded expression
 #define contra_unused(X) static_cast<void>(X)
 
