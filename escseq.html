@@ -2723,6 +2723,43 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </li>
 </ul>
 
+<h3>端末サイズ</h3>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th></tr>
+<tr><th>DECSCPP</th><td><kbd>CSI <i>&lt;Pn&gt;</i> $ |</kbd></td></tr>
+</table>
+<ul>
+<li><dfn class="cfunc">DECSCPP</dfn>: Select 80 or 132 Columns per Page
+  <p>[<a href="https://www.vt100.net/docs/vt510-rm/DECSCPP.html">VT510/DECSCPP</a>]
+    端末の幅を設定する。引数 (既定値 0) に 0 または 80 を指定した時に 80 列にする。
+    132 を指定した時に 132 列にする。
+  </p>
+  <ul>
+  <li>互換性: RLogin の説明書を見ると "フォントサイズ固定" の時には引数を列数と解釈する。
+    "桁数固定" の時には引数が 80 以下の時に 80 列にして、それ以外の時に 132 列にする。
+  </li>
+  </ul>
+</li>
+<li>Mode ?3 <dfn class="cmode">DECCOLM</dfn>: Select 80 or 132 Columns per Page
+  <p>[<a href="https://www.vt100.net/docs/vt510-rm/DECCOLM.html">VT510/DECCOLM</a>]
+    設定した時、端末の幅を 132 列にする。解除した時、端末の幅を 80 列にする。
+    DECSTBM, DECSLRM, DECLRMM, 及びステータス行の内容を消去する。
+    DECNCSM の設定に応じて画面の内容を消去する。
+    これの代わりに DECSCPP を用いる事が推奨されている。
+  </p>
+</li>
+<li>Mode ?40 <dfn class="cmode">xtEnableColm</dfn>:
+  <p>設定した時 DECCOLM を有効にする。解除した時、DECCOLM を無効にする。</p>
+</li>
+<li>Mode ?95 <dfn class="cmode">DECNCSM</dfn>: Set/Reset No Clearing Screen On Column Change
+  <p>[<a href="https://www.vt100.net/docs/vt510-rm/DECNCSM.html">VT510/DECNCSM</a>]
+    DECCOLM によって列数を設定した時の画面消去を抑制する。
+    設定されている時に消去は起こらない。解除されている時に消去される。
+    DECSCPP による列の変更に対しては影響を与えない。
+  </p>
+</li>
+</ul>
+
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h3>カーソル制御</h3>
 <table class="normal center">
