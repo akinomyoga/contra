@@ -241,6 +241,9 @@ namespace {
       b.reset_size(value ? 132 : 80, b.m_height);
       if (!s.get_mode(mode_decncsm)) b.clear_screen();
       s.clear_margin();
+      s.set_mode(mode_declrmm, false);
+      b.cur.x = 0;
+      b.cur.y = 0;
     }
   }
   int do_rqm_deccolm(term_t& term) {
@@ -519,10 +522,18 @@ namespace {
     switch (direction) {
     case do_cux_prec_char:
       {
+        curpos_t lmargin = 0;
+        if (check_stbm) {
+          if (is_charpath_rtol(b.m_presentation_direction))
+            lmargin = std::max((curpos_t) 0, b.m_width - term.rmargin());
+          else
+            lmargin = term.lmargin();
+        }
+
         curpos_t x = b.cur.x;
         if (isPresentation)
           x = b.to_presentation_position(y, x);
-        x = std::max(x - (curpos_t) param, check_stbm ? term.lmargin() : (curpos_t) 0);
+        x = std::max(x - (curpos_t) param, lmargin);
         if (isPresentation)
           x = b.to_data_position(y, x);
         b.cur.x = x;
@@ -530,10 +541,18 @@ namespace {
       break;
     case do_cux_succ_char:
       {
+        curpos_t rmargin = term.board().m_width;
+        if (check_stbm) {
+          if (is_charpath_rtol(b.m_presentation_direction))
+            rmargin = std::max((curpos_t) 0, b.m_width - term.lmargin());
+          else
+            rmargin = term.rmargin();
+        }
+
         curpos_t x = b.cur.x;
         if (isPresentation)
           x = b.to_presentation_position(y, x);
-        x = std::min(x + (curpos_t) param, (check_stbm ? term.rmargin() : term.board().m_width) - 1);
+        x = std::min(x + (curpos_t) param, rmargin - 1);
         if (isPresentation)
           x = b.to_data_position(y, x);
         b.cur.x = x;
@@ -616,16 +635,16 @@ namespace {
   }
 
   bool do_hpb(term_t& term, csi_parameters& params) {
-    return do_cux(term, params, do_cux_prec_char, false, false);
+    return do_cux(term, params, do_cux_prec_char, false, term.state().get_mode(mode_decom));
   }
   bool do_hpr(term_t& term, csi_parameters& params) {
-    return do_cux(term, params, do_cux_succ_char, false, false);
+    return do_cux(term, params, do_cux_succ_char, false, term.state().get_mode(mode_decom));
   }
   bool do_vpb(term_t& term, csi_parameters& params) {
-    return do_cux(term, params, do_cux_prec_line, false, false);
+    return do_cux(term, params, do_cux_prec_line, false, term.state().get_mode(mode_decom));
   }
   bool do_vpr(term_t& term, csi_parameters& params) {
-    return do_cux(term, params, do_cux_succ_line, false, false);
+    return do_cux(term, params, do_cux_succ_line, false, term.state().get_mode(mode_decom));
   }
 
   // RLogin によると ADM-3 由来の動作として上下左右に動く。
@@ -674,6 +693,11 @@ namespace {
 
     if (param1 == 0 || param2 == 0) return false;
 
+    if (s.get_mode(mode_decom)) {
+      param1 = std::min<csi_single_param_t>(param1 + term.tmargin(), term.bmargin());
+      param2 = std::min<csi_single_param_t>(param2 + term.lmargin(), term.rmargin());
+    }
+
     return do_cup(term.board(), (curpos_t) param2 - 1, (curpos_t) param1 - 1);
   }
 
@@ -688,6 +712,12 @@ namespace {
     }
 
     if (param1 == 0 || param2 == 0) return false;
+
+    if (s.get_mode(mode_decom)) {
+      param1 = std::min<csi_single_param_t>(param1 + term.tmargin(), term.bmargin());
+      param2 = std::min<csi_single_param_t>(param2 + term.lmargin(), term.rmargin());
+    }
+
     board_t& b = term.board();
     b.cur.y = (curpos_t) param1 - 1;
     b.cur.x = (curpos_t) param2 - 1;
@@ -705,6 +735,10 @@ namespace {
         return false;
     }
 
+    if (s.get_mode(mode_decom)) {
+      param = std::min<csi_single_param_t>(param + term.lmargin(), term.rmargin());
+    }
+
     board_t& b = term.board();
     return do_cup(b, param - 1, b.cur.y);
   }
@@ -720,6 +754,10 @@ namespace {
         return false;
     }
 
+    if (s.get_mode(mode_decom)) {
+      param = std::min<csi_single_param_t>(param + term.lmargin(), term.rmargin());
+    }
+
     term.board().cur.x = param - 1;
     return true;
   }
@@ -733,6 +771,10 @@ namespace {
         param = 1;
       else
         return false;
+    }
+
+    if (s.get_mode(mode_decom)) {
+      param = std::min<csi_single_param_t>(param + term.tmargin(), term.bmargin());
     }
 
     term.board().cur.y = param - 1;

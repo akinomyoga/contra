@@ -35,10 +35,12 @@ int main() {
 
   contra::multicast_device dev;
 
+  contra::ansi::curpos_t cfg_col = 80, cfg_row = 24;
+
   struct winsize winsize;
   ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &winsize);
-  if (winsize.ws_col > 80) winsize.ws_col = 80;
-  if (winsize.ws_row > 24) winsize.ws_row = 24;
+  if (winsize.ws_col > cfg_col) winsize.ws_col = cfg_col;
+  if (winsize.ws_row > cfg_row) winsize.ws_row = cfg_row;
 
   contra::session sess;
   if (!create_session(&sess, oldTermios, "/bin/bash", winsize.ws_col, winsize.ws_row)) return -1;

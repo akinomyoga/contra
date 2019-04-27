@@ -449,6 +449,8 @@ namespace ansi {
         if (m_board->cur.x < limit)
           m_board->cur.x++;
       } else {
+        if (m_board->cur.x >= m_board->m_width)
+          m_board->cur.x = m_board->m_width - 1;
         if (m_board->cur.x > 0)
           m_board->cur.x--;
       }
