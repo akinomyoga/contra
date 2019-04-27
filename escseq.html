@@ -2528,22 +2528,13 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <tr><th>略号</th><th>符号化表現</th></tr>
 <tr><th>DECSED</th><td><kbd>CSI ? <i>&lt;Ps&gt;</i> J</kbd></td></tr>
 <tr><th>DECSEL</th><td><kbd>CSI ? <i>&lt;Ps&gt;</i> K</kbd></td></tr>
-<tr><th>SU</th>     <td><kbd>CSI <i>&lt;Ps&gt;</i> S</kbd></td></tr>
-<tr><th>SD</th>     <td><kbd>CSI <i>&lt;Ps&gt;</i> T</kbd></td></tr>
 <tr><th>(IHMT)</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> T</kbd></td></tr>
-<tr><th>HPA</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> `</kbd></td></tr>
 <tr><th>REP</th>    <td><kbd>CSI <i>&lt;Pm&gt;</i> b</kbd></td></tr>
-<tr><th>VPA</th>    <td><kbd>CSI <i>&lt;Pm&gt;</i> d</kbd></td></tr>
-<tr><th>HVP</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> f</kbd></td></tr>
-<tr><th>TBC</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> g</kbd></td></tr>
 <tr><th>MC</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> i</kbd></td></tr>
 <tr><th>DECMC</th>  <td><kbd>CSI ? <i>&lt;Pm&gt;</i> i</kbd></td></tr>
-<tr><th>DSR</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> n</kbd></td></tr>
 <tr><th>DECDSR</th> <td><kbd>CSI ? <i>&lt;Ps&gt;</i> n</kbd></td></tr>
 <tr><th>DECSTR</th> <td><kbd>CSI ! p</kbd></td></tr>
-<tr><th>DECSCL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> " p</kbd></td></tr>
-<tr><th>DECSCA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> " q</kbd></td></tr>
-<tr><th>DECSTBM</th><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> r</kbd></td></tr>
+<tr><th>DECSCL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> " p</kbd></td><!-- " --></tr>
 <tr><th>XTREST</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> r</kbd></td></tr>
 <tr><th>DECCARA</th><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ r</kbd></td></tr>
 <tr><th>XTSAVE</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> s</kbd></td></tr>
@@ -2561,7 +2552,44 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <tr><th>DECRQLP</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> ' |</kbd></td></tr>
 </table>
 
-<h3>問い合わせ</h3>
+<h3>端末適合レベル</h3>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th></tr>
+<tr><th>DECSCL</th><td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> " p</kbd></td></tr><!--"-->
+<tr><th>S7C1T</th><td><kbd>ESC SP F</kbd></td></tr>
+<tr><th>S8C1T</th><td><kbd>ESC SP G</kbd></td></tr>
+</table>
+<ul>
+<li><dfn class="cfunc">DECSCL</dfn>: Select Conformance Level
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECSCL.html">VT510/DECSCL</a>]
+    端末の適合レベルを指定する。
+    <i>&lt;Ps1&gt;</i> には 61-65 の値を指定する。
+    DECTID の表を考えると 61: vt100, 62: vt200, 63: vt300, 64: vt400, 65: vt500 という対応の筈であるが、
+    実際には vt510, vt520 のマニュアルを見る限りは 61 を指定すると vt100 互換モードになり、
+    62 以上を指定するとその装置で使える全ての機能が使えるようになると思われる。
+    <i>&lt;Ps2&gt;</i> (既定値 0) には C1 制御文字を 7bit 表現で送るか 8bit 表現で送るかの設定を指定する。
+    1 を指定すると 7bit 表現になり、それ以外の時は 8bit 表現になる。
+  </p>
+</li>
+<li><dfn class="cfunc">S7C1T</dfn>: Send 7bit C1 Control Character to the Host
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/S7C1T.html">VT510/S7C1T</a>]
+    アプリケーションに C1 制御文字を 7bit 表現で送る。
+  </p>
+  <ul>
+  <li>互換性: xterm, vt510 は少なくとも対応している。</li>
+  </ul>
+</li>
+<li><dfn class="cfunc">S8C1T</dfn>: Send 8bit C1 Control Character to the Host
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/S8C1T.html">VT510/S8C1T</a>]
+    アプリケーションに C1 制御文字を 8bit 表現で送る。
+  </p>
+  <ul>
+  <li>互換性: xterm, vt510 は少なくとも対応している。</li>
+  </ul>
+</li>
+</ul>
+
+<h3>問い合わせ - 端末識別</h3>
 <table class="normal center">
 <tr><th>略号</th><th>用途</th><th>符号化表現</th></tr>
 <tr><th>DA</th> <td>制御</td><td><kbd>CSI 0 c</kbd><br/><kbd>CSI c</kbd></td></tr>
@@ -2651,6 +2679,47 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <li><a href="http://www.vt100.net/docs/vt510-rm/DECRQTSR">VT510: DECRQTSR</a></li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DD1">VT510: DDD1, DDD2, DDD3</a></li>
   </ul>
+</li>
+</ul>
+
+<h3>問い合わせ - 制御機能の状態</h3>
+<table class="normal center">
+<tr><th>略号</th><th>用途</th><th>符号化表現</th></tr>
+<tr><th>DECRQSS</th><td>制御</td><td><kbd>DCS $ q <i>&lt;Seq&gt;</i> ST</kbd></td></tr>
+<tr><th>DECRPSS</th><td>応答</td><td><kbd>DCS <i>&lt;Ps&gt;</i> $ r <i>&lt;Seq&gt;</i> ST</kbd></td></tr>
+</table>
+<ul>
+<li><dfn class="cfunc">DECRQSS</dfn>: Request Selection or Setting
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECRQSS.html">VT510/DECRQSS</a>]
+    指定したシーケンスに対応する設定について問い合わせる。
+    シーケンスは先頭の CSI を除いて Seq に指定する。
+    応答は DECRPSS を用いて行われる。
+    以下のシーケンスが使える。
+  </p>
+  <table class="normal center">
+  <tr><th><i>&lt;Seq&gt;</i></th><th>制御機能</th>
+      <th><i>&lt;Seq&gt;</i></th><th>制御機能</th>
+      <th><i>&lt;Seq&gt;</i></th><th>制御機能</th></tr>
+  <tr><td><kbd>m</kbd>   </td><td>SGR     </td> <td><kbd>$ s</kbd> </td><td>DECSPRTT</td> <td><kbd>* |</kbd> </td><td>DECSNLS </td></tr> 
+  <tr><td><kbd>p</kbd>   </td><td>DECSSL  </td> <td><kbd>$ |</kbd> </td><td>DECSCPP </td> <td><kbd>+ w</kbd> </td><td>DECSPP  </td></tr> 
+  <tr><td><kbd>r</kbd>   </td><td>DECSTBM </td> <td><kbd>$ ~</kbd> </td><td>DECSSDT </td> <td><kbd>SP p</kbd></td><td>DECSSCLS</td></tr> 
+  <tr><td><kbd>s</kbd>   </td><td>DECSLRM </td> <td><kbd>$ }</kbd> </td><td>DECSASD </td> <td><kbd>SP q</kbd></td><td>DECSCUSR</td></tr> 
+  <tr><td><kbd>t</kbd>   </td><td>DECSLPP </td> <td><kbd>( p</kbd> </td><td>DECSDPT </td> <td><kbd>SP r</kbd></td><td>DECSKCV </td></tr>
+  <tr><td><kbd>" p</kbd> </td><td>DECSCL  </td> <td><kbd>* p</kbd> </td><td>DECSPPCS</td> <td><kbd>SP t</kbd></td><td>DECSWBV </td></tr> 
+  <tr><td><kbd>" q</kbd> </td><td>DECSCA  </td> <td><kbd>* r</kbd> </td><td>DECSCS  </td> <td><kbd>SP u</kbd></td><td>DECSMBV </td></tr> 
+  <tr><td><kbd>" t</kbd> </td><td>DECSRFR </td> <td><kbd>* s</kbd> </td><td>DECSFC  </td> <td><kbd>SP v</kbd></td><td>DECSLCK </td></tr> 
+  <tr><td><kbd>" u</kbd> </td><td>DECSTRL </td> <td><kbd>* u</kbd> </td><td>DECSCP  </td> <td></td><td></td></tr> 
+  <tr><td><kbd>$ q</kbd> </td><td>DECSDDT </td> <td><kbd>* x</kbd> </td><td>DECSACE </td> <td></td><td></td></tr> 
+  </table>
+</li>
+<li><dfn class="cfunc">DECRPSS</dfn>: Report Selection or Setting
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECRPSS.html">VT510/DECRPSS</a>]
+    DECRPSS に対する応答に使われる。
+    <i>&lt;Ps&gt;</i> が 0 の時は要求が有効で、
+    <i>&lt;Seq&gt;</i> には要求された制御機能の現在の設定を再現するのに使えるシーケンスを先頭の CSI を除いて指定する。
+    <i>&lt;Ps&gt;</i> が 1 の時は要求を認識できないか応答できないことを表し、
+    <i>&lt;Seq&gt;</i> は空文字列を指定する。
+  </p>
 </li>
 </ul>
 
@@ -3739,12 +3808,8 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </table>
 
 <ul>
-<li><dfn class="cfunc">S7C1T</dfn></li>
-<li><dfn class="cfunc">S8C1T</dfn></li>
 <li>対応: xterm = F, G, L, M, N; VT510 = F, G, L, M, N</li>
 <li><a href="http://www.vt100.net/docs/vt510-rm/ANSI">VT510: ANSI Conformance Level</a></li>
-<li><a href="http://www.vt100.net/docs/vt510-rm/S7C1T">VT510: S7C1T</a></li>
-<li><a href="http://www.vt100.net/docs/vt510-rm/S8C1T">VT510: S8C1T</a></li>
 <li><a href="http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-035.pdf">ECMA-35</a></li>
 </ul>
 
