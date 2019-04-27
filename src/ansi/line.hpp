@@ -50,6 +50,10 @@ namespace ansi {
 
     constexpr character_t(): value() {}
     constexpr character_t(std::uint32_t value): value(value) {}
+    constexpr bool operator==(character_t const& rhs) const {
+      return value == rhs.value;
+    }
+    constexpr bool operator!=(character_t const& rhs) const { return !(*this == rhs); }
 
     constexpr bool is_extension() const {
       return value & (flag_wide_extension | flag_cluster_extension);
@@ -214,14 +218,18 @@ namespace ansi {
     constexpr bool operator==(attribute_t const& rhs) const {
       return aflags == rhs.aflags && xflags == rhs.xflags && fg == rhs.fg && bg == rhs.bg;
     }
+    constexpr bool operator!=(attribute_t const& rhs) const { return !(*this == rhs); }
 
   public:
     constexpr byte fg_index() const { return (aflags & fg_color_mask) >> fg_color_shift; }
     constexpr byte bg_index() const { return (aflags & bg_color_mask) >> bg_color_shift; }
     constexpr byte fg_space() const { return aflags & is_fg_color_set ? (byte) color_space_indexed : fg_index(); }
     constexpr byte bg_space() const { return aflags & is_bg_color_set ? (byte) color_space_indexed : bg_index(); }
-    constexpr byte fg_color() const { return aflags & is_fg_color_set ? fg_index() : fg; }
-    constexpr byte bg_color() const { return aflags & is_bg_color_set ? bg_index() : bg; }
+    constexpr color_t fg_color() const { return aflags & is_fg_color_set ? fg_index() : fg; }
+    constexpr color_t bg_color() const { return aflags & is_bg_color_set ? bg_index() : bg; }
+
+    constexpr bool is_fg_default() const { return fg_space() == color_space_default; }
+    constexpr bool is_bg_default() const { return bg_space() == color_space_default; }
 
   public:
     void set_fg(color_t index, std::uint32_t colorSpace = color_space_indexed) {
@@ -282,6 +290,11 @@ namespace ansi {
     constexpr cell_t(std::uint32_t c):
       character(c), attribute(0),
       width(character.is_extension() || character.is_marker() ? 0 : 1) {}
+
+    bool operator==(cell_t const& rhs) const {
+      return character == rhs.character && attribute == rhs.attribute && width == rhs.width;
+    }
+    bool operator!=(cell_t const& rhs) const { return !(*this == rhs); }
 
     bool is_zero_width_body() const {
       return width == 0 && !character.is_extension();

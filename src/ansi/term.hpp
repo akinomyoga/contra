@@ -49,9 +49,13 @@ namespace ansi {
   void do_deckpnm(term_t& term);
   void do_s7c1t(term_t& term);
   void do_s8c1t(term_t& term);
+
   void do_altscreen(term_t& term, bool value);
   int do_rqm_deccolm(term_t& term);
   void do_sm_deccolm(term_t& term, bool value);
+  int do_rqm_decscnm(term_t& term);
+  void do_sm_decscnm(term_t& term, bool value);
+
   void do_ed(term_t& term, csi_single_param_t param);
   void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm);
   bool do_decrqss(term_t& term, char32_t const* param, std::size_t len);
@@ -93,6 +97,12 @@ namespace ansi {
     curpos_t cfg_decscpp_enabled = true;
     curpos_t cfg_decscpp_min = 20;
     curpos_t cfg_decscpp_max = 400;
+
+    // 既定の前景色・背景色
+    byte m_default_fg_space = 0;
+    byte m_default_bg_space = 0;
+    color_t m_default_fg = 0;
+    color_t m_default_bg = 0;
 
     tty_state(term_t* term): m_term(term) {
       this->clear();
@@ -171,6 +181,8 @@ namespace ansi {
           return get_mode(mode_altscr);
         case mode_deccolm:
           return 1 & do_rqm_deccolm(*m_term);
+        case mode_decscnm:
+          return 1 & do_rqm_decscnm(*m_term);
         default:
           return false;
         }
@@ -231,6 +243,9 @@ namespace ansi {
           break;
         case mode_deccolm:
           do_sm_deccolm(*m_term, value);
+          break;
+        case mode_decscnm:
+          do_sm_decscnm(*m_term, value);
           break;
         default: ;
         }

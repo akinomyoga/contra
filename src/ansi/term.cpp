@@ -1136,6 +1136,18 @@ namespace {
     term.board().cur.attribute.xflags &= ~(xflags_t) attribute_t::ssa_selected;
   }
 
+  void do_sm_decscnm(term_t& term, bool value) {
+    tty_state& s = term.state();
+    if (s.get_mode(mode_decscnm_) == value) return;
+    std::swap(s.m_default_fg, s.m_default_bg);
+    std::swap(s.m_default_fg_space, s.m_default_bg_space);
+    s.set_mode(mode_decscnm_, value);
+  }
+  int do_rqm_decscnm(term_t& term) {
+    tty_state& s = term.state();
+    return s.get_mode(mode_decscnm_) ? 1 : 2;
+  }
+
   //---------------------------------------------------------------------------
   // ECH, DCH, ICH
 

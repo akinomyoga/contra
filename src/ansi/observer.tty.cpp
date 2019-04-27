@@ -54,7 +54,7 @@ void tty_observer::update_sgrflag1(
   // when the attribute is not supported by TERM
   if (!sgrflag.on) return;
 
-  if (aflagsNew&sgrflag.bit) {
+  if (aflagsNew & sgrflag.bit) {
     sgr_put(sgrflag.on);
   } else {
     sgr_put(sgrflag.off);
@@ -207,6 +207,16 @@ void tty_observer::update_sgrcolor(
 }
 
 void tty_observer::apply_attr(attribute_t new_attr) {
+  tty_state& s = term->state();
+  if (s.m_default_fg_space != attribute_t::color_space_default) {
+    if (new_attr.is_fg_default())
+      new_attr.set_fg(s.m_default_fg, s.m_default_fg_space);
+  }
+  if (s.m_default_bg_space != attribute_t::color_space_default) {
+    if (new_attr.is_bg_default())
+      new_attr.set_bg(s.m_default_bg, s.m_default_bg_space);
+  }
+
   attribute_t& old_attr = this->m_attr;
   if (old_attr == new_attr) return;
 

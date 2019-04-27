@@ -127,11 +127,11 @@ namespace ansi {
   //-----------------------------------------------------------------------------
 
   struct tty_observer {
+  private:
     term_t* term;
     std::FILE* file;
     termcap_sgr_type const* sgrcap;
 
-    curpos_t curx = 0, cury = 0;
     struct line_buffer_t {
       std::uint32_t id = (std::uint32_t) -1;
       std::uint32_t version = 0;
@@ -140,6 +140,7 @@ namespace ansi {
     };
     std::vector<line_buffer_t> screen_buffer;
 
+  public:
     tty_observer(term_t& term, std::FILE* file, termcap_sgr_type* sgrcap):
       term(&term), file(file), sgrcap(sgrcap)
     {
@@ -354,8 +355,20 @@ namespace ansi {
           screen_buffer[j].id = -1;
         }
       }
-
     }
+    void erase_until_eol() {
+      tty_state const& s = term->state();
+      board_t const& w = term->board();
+      if (x >= w.m_width) return;
+      apply_attr(attribute_t {});
+      if (s.m_default_fg_space || s.m_default_bg_space) {
+        // ToDo: 実は ECH で SGR が適用される端末では put_ech で良い。
+        for (; x < w.m_width; x++) put(' ');
+      } else {
+        put_ech(w.m_width - x);
+      }
+    }
+
   public:
     void update() {
       //std::fprintf(file, "\x1b[?25l");
@@ -376,9 +389,31 @@ namespace ansi {
 
         line.get_cells_in_presentation(buff, w.line_r2l(line));
 
+        //for (std::size_t i = 0; i < buff.size8); i++
+
         curpos_t wskip = 0;
         x = 0;
-        for (auto const& cell : buff) {
+        bool is_skipping = line_buffer.id == line.id();
+        curpos_t x1 = 0;
+        for (std::size_t i = 0; i < buff.size(); i++) {
+          auto const& cell = buff[i];
+          if (is_skipping) {
+            if (i < line_buffer.content.size()) {
+              cell_t& cell_buffer = line_buffer.content[i];
+              if (cell == cell_buffer) {
+                x1 += cell.width;
+                continue;
+              }
+            } else {
+              if (cell.character == ascii_nul && cell.attribute.is_default()) {
+                x1 += cell.width;
+                continue;
+              }
+            }
+            move_to_column(x1);
+            is_skipping = false;
+          }
+
           std::uint32_t const code = cell.character.value;
           if (cell.attribute.is_default() && code == ascii_nul) {
             wskip++;
@@ -393,7 +428,8 @@ namespace ansi {
             wskip = 0;
           }
         }
-        if (x < w.m_width) put_ech(w.m_width - wskip);
+        if (is_skipping) move_to_column(x1);
+        erase_until_eol();
         move_to_column(0);
 
         line_buffer.version = line.version();

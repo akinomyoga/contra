@@ -48,6 +48,11 @@ int main() {
   contra::tty_player_device d1(&term);
   dev.push(&d1);
 
+  term.state().m_default_fg_space = contra::ansi::attribute_t::color_space_indexed;
+  term.state().m_default_fg = 0;
+  term.state().m_default_bg_space = contra::ansi::attribute_t::color_space_indexed;
+  term.state().m_default_bg = 15;
+
   contra::ansi::termcap_sgr_type sgrcap;
   sgrcap.initialize();
   contra::ansi::tty_observer renderer(term, stdout, &sgrcap);

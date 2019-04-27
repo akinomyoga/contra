@@ -24,8 +24,10 @@ flags     mode_grcm               ansi21      true
 flags     mode_zdm                ansi22      true
 
 flags     mode_decckm             dec1        false
+flags     mode_decsclm            dec4        true
 flags     mode_decom              dec6        unsupported
 flags     mode_decawm             dec7        true
+flags     mode_decarm             dec8        true
 flags     mode_decnkm             dec66       false
 
 flags     mode_bracketedPasteMode dec2004     true
@@ -51,6 +53,10 @@ accessor  mode_altscreen_cur      dec1049     -
 accessor  mode_deccolm            dec3        -
 flags     mode_xtEnableColm       dec40       false
 flags     mode_decncsm            dec95       false
+
+# 既定の前景色・背景色の反転
+flags     mode_decscnm_           private     false
+accessor  mode_decscnm            dec5        -
 
 #------------------------------------------------------------------------------
 # Contra original modes (inaccessible)
