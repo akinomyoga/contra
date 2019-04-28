@@ -278,16 +278,27 @@ namespace ansi {
     void put_ech(curpos_t delta) const {
       if (delta > 0) put_csiseq_pn1(delta, 'X');
     }
+    void put_ich(curpos_t count) const {
+      if (count > 0) put_csiseq_pn1(count, '@');
+    }
+    void put_dch(curpos_t count) const {
+      if (count > 0) put_csiseq_pn1(count, 'P');
+    }
 
+    /*?lwiki
+     * @fn void trace_line_scroll();
+     *   行の移動を追跡し、それに応じて IL, DL を用いたスクロールを実施します。
+     *   同時に screen_buffer の内容も実施したスクロールに合わせて更新します。
+     */
     void trace_line_scroll() {
-      board_t const& w = term->board();
+      board_t const& b = term->board();
 
-      curpos_t const height = w.m_height;
+      curpos_t const height = b.m_height;
       curpos_t j = 0;
       for (curpos_t i = 0; i < height; i++) {
         screen_buffer[i].delta = height;
         for (curpos_t k = j; k < height; k++) {
-          if (w.line(k).id() == screen_buffer[i].id) {
+          if (b.line(k).id() == screen_buffer[i].id) {
             screen_buffer[i].delta = k - i;
             j = k;
             break;
@@ -351,8 +362,10 @@ namespace ansi {
         for (curpos_t j = i; i0 <= j; j--) {
           int const delta = screen_buffer[j].delta;
           if (delta == height || delta == 0) continue;
-          screen_buffer[j + delta] = std::move(screen_buffer[j]);
+          // j -> j + delta に移動して j にあった物は消去する
+          std::swap(screen_buffer[j + delta], screen_buffer[j]);
           screen_buffer[j].id = -1;
+          screen_buffer[j].content.clear();
         }
       }
     }
@@ -367,6 +380,136 @@ namespace ansi {
       } else {
         put_ech(w.m_width - x);
       }
+    }
+
+    void render_line0(std::vector<cell_t> const& new_content, std::vector<cell_t> const& old_content) {
+      contra_unused(old_content);
+      curpos_t wskip = 0;
+      x = 0;
+      for (std::size_t i = 0; i < new_content.size(); i++) {
+        cell_t const& cell = new_content[i];
+
+        std::uint32_t const code = cell.character.value;
+        if (cell.attribute.is_default() && code == ascii_nul) {
+          wskip++;
+        } else {
+          if (wskip > 0) {
+            apply_attr(attribute_t {});
+            for (curpos_t c = wskip; c--; ) put(' ');
+          }
+          apply_attr(cell.attribute);
+          put_u32(code);
+          x += wskip + cell.width;
+          wskip = 0;
+        }
+      }
+      erase_until_eol();
+    }
+    void render_line1(std::vector<cell_t> const& new_content, std::vector<cell_t> const& old_content) {
+      curpos_t wskip = 0;
+      x = 0;
+      bool is_skipping = true;
+      curpos_t x1 = 0;
+      for (std::size_t i = 0; i < new_content.size(); i++) {
+        cell_t const& cell = new_content[i];
+        if (is_skipping) {
+          if (i < old_content.size()) {
+            cell_t const& cell_buffer = old_content[i];
+            if (cell == cell_buffer) {
+              x1 += cell.width;
+              continue;
+            }
+          } else {
+            if (cell.character == ascii_nul && cell.attribute.is_default()) {
+              x1 += cell.width;
+              continue;
+            }
+          }
+          move_to_column(x1);
+          is_skipping = false;
+        }
+
+        std::uint32_t const code = cell.character.value;
+        if (cell.attribute.is_default() && code == ascii_nul) {
+          wskip++;
+        } else {
+          if (wskip > 0) {
+            apply_attr(attribute_t {});
+            for (curpos_t c = wskip; c--; ) put(' ');
+          }
+          apply_attr(cell.attribute);
+          put_u32(code);
+          x += wskip + cell.width;
+          wskip = 0;
+        }
+      }
+      if (is_skipping) move_to_column(x1);
+      erase_until_eol();
+    }
+    void render_line(std::vector<cell_t> const& new_content, std::vector<cell_t> const& old_content) {
+      // 更新の必要のある範囲を決定する
+
+      // 一致する先頭部分の長さを求める。
+      std::size_t i1 = 0;
+      curpos_t x1 = 0;
+      for (; i1 < new_content.size(); i1++) {
+        cell_t const& cell = new_content[i1];
+        if (i1 < old_content.size()) {
+          if (cell != old_content[i1]) break;
+        } else {
+          if (!(cell.character == ascii_nul && cell.attribute.is_default())) break;
+        }
+        x1 += cell.width;
+      }
+      // Note: cluster_extension や marker に違いがある時は
+      //   その前の有限幅の文字まで後退する。
+      //   (出力先の端末がどの様に零幅文字を扱うのかに依存するが、)
+      //   contra では古い marker を消す為には前の有限幅の文字を書く必要がある為。
+      while (i1 && new_content[i1].width == 0) i1--;
+
+      // 一致する末端部分のインデックスと長さを求める。
+      auto _find_upper_bound_non_empty = [] (std::vector<cell_t> const& cells, std::size_t lower_bound) {
+        std::size_t ret = cells.size();
+        while (ret > lower_bound && cells[ret - 1].character == ascii_nul && cells[ret - 1].attribute.is_default()) ret--;
+        return ret;
+      };
+      curpos_t w3 = 0;
+      std::size_t i2 = _find_upper_bound_non_empty(new_content, i1);
+      std::size_t j2 = _find_upper_bound_non_empty(old_content, i1);
+      for (; j2 > i1 && i2 > i1; j2--, i2--) {
+        cell_t const& cell = new_content[i2 - 1];
+        if (new_content[i2 - 1] != old_content[j2 - 1]) break;
+        w3 += cell.width;
+      }
+      // Note: cluster_extension や marker も本体の文字と共に再出力する。
+      //   (出力先の端末がどの様に零幅文字を扱うのかに依存するが、)
+      //   contra ではcluster_extension や marker は暗黙移動で潰される為。
+      while (i2 < new_content.size() && new_content[i2].width == 0) i2++;
+
+      // 間の部分の幅を求める。
+      curpos_t new_w2 = 0, old_w2 = 0;
+      for (std::size_t i = i1; i < i2; i++) new_w2 += new_content[i].width;
+      for (std::size_t j = i1; j < j2; j++) old_w2 += old_content[j].width;
+
+      move_to_column(x1);
+      if (new_w2 || old_w2) {
+        if (new_w2 > old_w2)
+          put_ich(new_w2 - old_w2);
+        else if (new_w2 < old_w2)
+          put_dch(old_w2 - new_w2);
+
+        for (std::size_t i = i1; i < i2; i++) {
+          cell_t const& cell = new_content[i];
+          std::uint32_t code = cell.character.value;
+          if (code == ascii_nul) code = ascii_sp;
+          apply_attr(cell.attribute);
+          put_u32(code);
+          x += cell.width;
+        }
+      }
+
+      move_to_column(x + w3);
+      erase_until_eol();
     }
 
   public:
@@ -384,58 +527,19 @@ namespace ansi {
         if (line_buffer.id == line.id() &&
           line_buffer.version == line.version()) {
           put('\n');
+          this->y++;
           continue;
         }
 
         line.get_cells_in_presentation(buff, w.line_r2l(line));
-
-        //for (std::size_t i = 0; i < buff.size8); i++
-
-        curpos_t wskip = 0;
-        x = 0;
-        bool is_skipping = line_buffer.id == line.id();
-        curpos_t x1 = 0;
-        for (std::size_t i = 0; i < buff.size(); i++) {
-          auto const& cell = buff[i];
-          if (is_skipping) {
-            if (i < line_buffer.content.size()) {
-              cell_t& cell_buffer = line_buffer.content[i];
-              if (cell == cell_buffer) {
-                x1 += cell.width;
-                continue;
-              }
-            } else {
-              if (cell.character == ascii_nul && cell.attribute.is_default()) {
-                x1 += cell.width;
-                continue;
-              }
-            }
-            move_to_column(x1);
-            is_skipping = false;
-          }
-
-          std::uint32_t const code = cell.character.value;
-          if (cell.attribute.is_default() && code == ascii_nul) {
-            wskip++;
-          } else {
-            if (wskip > 0) {
-              apply_attr(attribute_t {});
-              for (curpos_t c = wskip; c--; ) put(' ');
-            }
-            apply_attr(cell.attribute);
-            put_u32(code);
-            x += wskip + cell.width;
-            wskip = 0;
-          }
-        }
-        if (is_skipping) move_to_column(x1);
-        erase_until_eol();
-        move_to_column(0);
+        this->render_line(buff, line_buffer.content);
 
         line_buffer.version = line.version();
         line_buffer.id = line.id();
         line_buffer.content.swap(buff);
+        move_to_column(0);
         put('\n');
+        this->y++;
       }
       apply_attr(attribute_t {});
 
