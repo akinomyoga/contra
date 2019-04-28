@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <vector>
+#include <mwg/except.h>
 #include "ansi/enc.utf8.hpp"
 
 namespace contra {
@@ -160,10 +161,11 @@ namespace contra {
       if (0x30 <= uchar && uchar <= 0x7E) {
         m_seq.set_final((byte) uchar);
         process_escape_sequence();
-      } else if (0x20 <= uchar && uchar <= 0x3F) {
+      } else if (0x20 <= uchar && uchar <= 0x2F) {
         m_seq.append(uchar);
       } else {
         process_invalid_sequence();
+        process_char(uchar);
       }
     }
 
@@ -308,6 +310,7 @@ namespace contra {
           if (uchar < 0x30) {
             // <I> to start an escape sequence
             m_seq.set_type((byte) ascii_esc);
+            m_seq.append((byte) uchar);
             m_dstate = decode_escape_sequence;
           } else if (0x40 <= uchar && uchar < 0x60) {
             // <F> to call C1
