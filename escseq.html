@@ -390,6 +390,9 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 "06/13" というバイト値で表されるが、この文書では便宜上 ASCII コードで対応する文字 "m" を用いる。
 しかし、実際の実装では文字コードに依らずに 06/13 として取り扱われるべきである。
 以下にバイト値と図形文字の対応を載せる。</p>
+<p>[ECMA-48/5.4.2(b)] また数字に対応するバイト値には ZERO, ONE, ..., NINE などの名前が与えられている。
+  [ECMA-35/4.2] 但し、バイトを構成するビットの状態を ZERO, ONE で表すこともある。
+</p>
 
 <table class="normal center contra-cell-centered">
 <tr><th>略号</th><th>C/R 16進<br/>8進 10進</th>
@@ -403,7 +406,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>P</th>    <td>05/00 \x50<br/>\120 80</td><th>`</th>   <td>06/00 \x60<br/>\140  96</td><th>p</th>  <td>07/00 \x70<br/>\160 112</td></tr>
 <tr><th>!</th>    <td>02/01 \x21<br/>\041 33</td><th>1</th>   <td>03/01 \x31<br/>\061  49</td><th>A</th>  <td>04/01 \x41<br/>\101  65</td>
     <th>Q</th>    <td>05/01 \x51<br/>\121 81</td><th>a</th>   <td>06/01 \x61<br/>\141  97</td><th>q</th>  <td>07/01 \x71<br/>\161 113</td></tr>
-<tr><th>"</th>    <td>02/02 \x22<br/>\042 34</td><th>2</th>   <td>03/02 \x32<br/>\062  50</td><th>B</th>  <td>04/02 \x42<br/>\102  66</td>
+<tr><th>"</th>    <td>02/02 \x22<br/>\042 34</td><th>2</th>   <td>03/02 \x32<br/>\062  50</td><th>B</th>  <td>04/02 \x42<br/>\102  66</td><!--"-->
     <th>R</th>    <td>05/02 \x52<br/>\122 82</td><th>b</th>   <td>06/02 \x62<br/>\142  98</td><th>r</th>  <td>07/02 \x72<br/>\162 114</td></tr>
 <tr><th>#</th>    <td>02/03 \x23<br/>\043 35</td><th>3</th>   <td>03/03 \x33<br/>\063  51</td><th>C</th>  <td>04/03 \x43<br/>\103  67</td>
     <th>S</th>    <td>05/03 \x53<br/>\123 83</td><th>c</th>   <td>06/03 \x63<br/>\143  99</td><th>s</th>  <td>07/03 \x73<br/>\163 115</td></tr>
@@ -1223,13 +1226,16 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <table class="normal center">
 <tr><th>略号</th><th>Mode</th></tr>
 <tr><th>DECCKM</th>             <td>?1</td></tr>
+<tr><th>DECCOLM</th>            <td>?3</td></tr>
 <tr><th>DECOM</th>              <td>?6</td></tr>
 <tr><th>DECAWM</th>             <td>?7</td></tr>
 <tr><th>attCursorBlink</th>     <td>?12</td></tr>
 <tr><th>DECSCFDM (ref: all-espaces)<br/>xtCursorBlink</th><td>?13</td></tr>
 <tr><th>DECTEM (ref: all-espaces)<br/>xtCursorBlinkXOR</th><td>?14</td></tr>
 <tr><th>DECTCEM</th>            <td>?25</td></tr>
+<tr><th>xtEnableColm</th>       <td>?40</td></tr>
 <tr><th>smAltScreen</th>        <td>?47</td></tr>
+<tr><th>DECNCSM</th>            <td>?95</td></tr>
 <tr><th>smSendMouse</th>        <td>?1000</td></tr>
 <tr><th>smMouseMotionHilite</th><td>?1001</td></tr>
 <tr><th>smMouseMotionCell</th>  <td>?1002</td></tr>
@@ -1242,6 +1248,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>smSaveCursor</th>       <td>?1048</td></tr>
 <tr><th>smAltScreenCursor</th>  <td>?1049</td></tr>
 <tr><th>smBracketedPasteMode</th><td>?2004</td></tr>
+
 </table>
 
 <ul>
@@ -1280,14 +1287,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><td>17</td>    <td class="markA">-</td><td>SATM</td> <td>Selected area transfer</td><td></td><td>X</td></tr>
 <tr><td>19</td>    <td class="markA">-</td><td>EBM</td>  <td>Editing boundary</td><td></td><td>X</td></tr>
 <tr><td>20</td>    <td>vx</td><td>LNM</td>       <td>Set new line mode (Automatic Newline)</td><td class="markB">Set line feed mode (Normal Linefeed)</td><td>X</td></tr>
-<tr><td>?1</td>    <td>vxr</td><td>DECCKM</td>   <td>Set cursor key to application (Application cursor key)</td><td>Set cursor key to cursor (Normal cursor key)</td><td>X</td></tr>
 <tr><td>?2</td>    <td>vx</td><td>DECANM</td>    <td>Set ANSI (versus VT52)</td><td>Set VT52 (versus ANSI)</td><td>X</td></tr>
-<tr><td>?3</td>    <td>vxr</td><td>DECCOLM</td>  <td>Set number of columns to 132</td><td class="markB">Set number of columns to 80</td><td>X</td></tr>
-<tr><td>?4</td>    <td>vx</td><td>DECSCLM</td>   <td class="markB">Set smooth scrolling</td><td>Set jump scrolling</td><td>X</td></tr>
-<tr><td>?5</td>    <td>vxr</td><td>DECSCNM</td>  <td>Set reverse video on screen</td><td class="markB">Set normal video on screen</td><td>X</td></tr>
-<tr><td>?6</td>    <td>vxr</td><td>DECOM</td>    <td>Set origin to relative</td><td class="markB">Set origin to absolute</td><td>@</td></tr>
-<tr><td>?7</td>    <td>vxr</td><td>DECAWM</td>   <td>Set auto-wrap mode</td><td class="markB">Reset auto-wrap mode</td><td>@</td></tr>
-<tr><td>?8</td>    <td>vx</td><td>DECARM</td>    <td class="markB">Set auto-repeat mode</td><td>Reset auto-repeat mode</td><td>X</td></tr>
 <tr><td>?9</td>    <td>vxr</td><td>DECINLM</td>  <td>Set interlacing mode</td><td>Reset interlacing mode</td><td>X</td></tr>
 <tr><td>?10</td>   <td>rx</td><td></td>          <td>Show toolbar.</td><td>Hide toolbar.</td><td></td></tr>
 <tr><td>?12</td>   <td>x/att610</td><td></td>    <td>Start Blinking Cursor.</td><td>Stop Blinking Cursor.</td><td></td></tr>
@@ -1453,6 +1453,10 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   <li>(RM): 座標原点を画面の左上とする。</li>
   <li>(SM): 座標原点を制限範囲の左上とする。</li>
   </ul>
+  <p>互換性: RLogin では CHA, CUP, VPA, HPA, HVP の座標原点が影響を受ける。
+    RLogin では設定されている時に VPR, HPR の移動可能範囲が制限されるが FS, GS, RS, US は制限を受けない。
+    contra でもそれに準じて VPR, VPB, HPR, HPB の移動可能範囲を制限する。
+  </p>
 </li>
 <li>Mode ?7 <dfn class="cmode">DECAWM</dfn>: Origin Mode [既定値: RM]
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECAWM.html">VT510: DECAWM</a>]
@@ -1748,6 +1752,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <p>[ECMA-35/6.2.3] SP は図形文字で、何も図形がないという見た目を持つ。
   現在位置を暗黙的移動によって一つ進める役割を持つと考えて良い。
   </p>
+  <p>Note: 実際の端末の実装では現在位置にある文字を上書きしてスペースを書き込む。</p>
 </li>
 <li><dfn class="cfunc">BS</dfn>: BACKSPACE
   <p>[ECMA-48/8.3.5] 現在データ位置を現在の暗黙的移動とは逆の方向に1文字動かす。暗黙的移動の方向は SIMD で変更できる。</p>
@@ -2085,6 +2090,12 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <ul>
   <li>互換性: xterm, mintty, RLogin, Poderosa では DECSTBM の影響を受ける。</li>
   </ul>
+</li>
+<li>Mode ?4 <dfn class="cmode">DECSCLM</dfn>: Scrolling Mode [既定値: SM]
+  <p>[<a href="https://www.vt100.net/docs/vt510-rm/DECSCLM.html">VT510/DECSCLM</a>]
+    設定されている時、なめらかなスクロールを実行する。
+    解除されている時、ジャンプスクロールを実行する。
+  </p>
 </li>
 </ul>
 
@@ -2740,7 +2751,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </li>
   </ul>
 </li>
-<li>Mode ?3 <dfn class="cmode">DECCOLM</dfn>: Select 80 or 132 Columns per Page
+<li>Mode ?3 <dfn class="cmode">DECCOLM</dfn>: Select 80 or 132 Columns per Page [既定値: RM]
   <p>[<a href="https://www.vt100.net/docs/vt510-rm/DECCOLM.html">VT510/DECCOLM</a>]
     設定した時、端末の幅を 132 列にする。解除した時、端末の幅を 80 列にする。
     DECSTBM, DECSLRM, DECLRMM, 及びステータス行の内容を消去する。
@@ -2757,11 +2768,14 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     設定されている時に消去は起こらない。解除されている時に消去される。
     DECSCPP による列の変更に対しては影響を与えない。
   </p>
+  <ul>
+  <li>互換性: vt500 以降</li>
+  </ul>
 </li>
 </ul>
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-<h3>カーソル制御</h3>
+<h3>カーソル表示</h3>
 <table class="normal center">
 <tr><th>略号</th>    <th>符号化表現</th></tr>
 <tr><th>DECSCUSR</th><td><kbd>CSI <i>&lt;Ps&gt;</i> SP q</kbd></td></tr>
@@ -2848,6 +2862,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </li>
 </ul>
 
+<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h3>代替画面 (Alternate Screen Buffer)</h3>
 <ul>
 <li>Mode ?47   <dfn class="cmode">smAltScreen</dfn> (xterm) [既定値 RM]
@@ -2879,6 +2894,22 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </li>
 </ul>
 
+<h3>その他</h3>
+<ul>
+<li>Mode ?5 <dfn class="cmode">DECSCNM</dfn>: Screen Mode: Light or Dark Screen [既定値: RM]
+  <p>[<a href="https://www.vt100.net/docs/vt510-rm/DECSCNM.html">VT510/DECSCNM</a>]
+    設定されている時に前景色・背景色の既定色を反転する。
+    説明には設定されている時に明るい背景で解除されている時に暗い背景とも書かれているが、
+    xterm の実装では設定されている時に反転という実装になっている。
+  </p>
+</li>
+<li>Mode ?8 <dfn class="cmode">DECARM</dfn>: Autorepeat Mode [既定値: SM]
+  <p>[<a href="https://www.vt100.net/docs/vt510-rm/DECARM.html">VT510/DECARM</a>]
+    設定されている時、キーを 0.5 秒以上押し続けるとキーを離すまでそのキーの入力を繰り返す。
+  </p>
+</li>
+</ul>
+
 <!--************************************************************************-->
 <h2>描画属性</h2>
 
@@ -2891,7 +2922,6 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <tr><th>SCO</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> SP e</kbd></td></tr>
 <tr><th>DECSCA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> " q</kbd></td></tr><!-- " -->
 </table>
-
 <ul>
 <li><dfn class="cfunc">SGR</dfn>: SELECT GRAPHIC RENDITION (Set Graphic Rendition)
   <p><i>&lt;Pm&gt;</i> にはセミコロン ';' 区切りで複数の番号を指定する。
@@ -2932,6 +2962,75 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </ul>
 </li>
 </ul>
+
+<h3>領域</h3>
+<p>領域 (area) は DAQ, SSA, ESA, SPA, EPA によって指定された文字位置の連続する集合である。
+  それぞれの制御機能は領域の開始・終了を示す。
+  DAQ は属性化領域 (qualified area) を定義する。
+  属性化領域には様々な属性を付加する事ができる。
+  SSA, ESA は選択領域 (selected area) を定義する。
+  選択領域の内容はデータストリームの送信 (transmission)
+  または補助装置への転送 (transfer) の対象となる。
+  SPA, EPA は保護領域 (guarded area) を定義する。
+  保護領域の内容は GATM の設定に応じて送信・転送が制限される (guarded)。
+  保護領域の内容は ERM の設定に応じて消去が制限される (protected)。
+</p>
+<ul>
+<li>Note: 範囲が具体的にどの様に定義されるかは不明瞭である。例えば、
+  (a) 受信したデータの順序で開始・終了を示すのか、
+  (b) 或いはデータ部に格納されている順序で開始・終了を示すのか、
+  (c) 表示部における順序で開始・終了を示すのかが考えられる。
+  現在、contra では DECSCA と同様に属性として取り扱い、
+  これは受信データの順序で判断する事に対応する。</li>
+<li>Note: 属性化領域・選択領域・保護領域がそれぞれ入れ子になるのか、
+  また、互いに overlap できるのか等に関しても不明瞭である。
+  EA 等の機能を実装する時に overlap があると問題になる。
+  入れ子を許すとかなり実装が面倒になる。
+</li>
+</ul>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th></tr>
+<tr><th>DAQ</th><td><kbd>CSI <i>&lt;Ps&gt;</i> ; ... o</kbd></td></tr>
+<tr><th>SSA</th><td><kbd>SSA</kbd></td></tr>
+<tr><th>ESA</th><td><kbd>ESA</kbd></td></tr>
+<tr><th>SPA</th><td><kbd>SPA</kbd></td></tr>
+<tr><th>EPA</th><td><kbd>EPA</kbd></td></tr>
+</table>
+<ul>
+<li><dfn class="cfunc">DAQ</dfn>: DEFINE AREA QUALIFICATION
+  <p>[ECMA-48/8.3.25] 引数に応じて属性化領域の属性を指定する。
+    属性化領域は次の DAQ が現れた時に終了する。
+  </p>
+  <table class="normal center">
+  <tr><th>引数</th><th>意味</th></tr>
+  <tr><td>0</td><td>unprotected, unguarded</td></tr>
+  <tr><td>1</td><td>protected, guarded</td></tr>
+  <tr><td>2</td><td>図形文字入力</td></tr>
+  <tr><td>3</td><td>数値入力</td></tr>
+  <tr><td>4</td><td>アルファベット入力</td></tr>
+  <tr><td>5</td><td>入力内容の右寄せ表示</td></tr>
+  <tr><td>6</td><td>ZERO で埋める</td></tr>
+  <tr><td>7</td><td>文字タブ位置を現在行の現在表示位置に設定する。</td></tr>
+  <tr><td>8</td><td>protected, unguarded</td></tr>
+  <tr><td>9</td><td>SP で埋める。</td></tr>
+  <tr><td>10</td><td>入力内容の左寄せ表示</td></tr>
+  <tr><td>11</td><td>入力内容の文字順序の逆転</td></tr>
+  </table>
+</li>
+<li><dfn class="cfunc">SSA</dfn>: END OF GUARDED AREA</li>
+<li><dfn class="cfunc">ESA</dfn>: END OF SELECTED AREA
+  <p>[ECMA-48/8.3.138 SSA, 8.3.47 ESA] 選択領域の開始・終了を示す。
+    SDS, SRS 文字列の内部で使用した時は未定義。
+  </p>
+</li>
+<li><dfn class="cfunc">SPA</dfn>: START OF GUARDED AREA</li>
+<li><dfn class="cfunc">EPA</dfn>: END OF GUARDED AREA
+  <p>[ECMA-48/8.3.129 SPA, 8.3.46 EPA] 保護領域の開始・終了を示す。
+    SDS, SRS 文字列の内部で使用した時は未定義。
+  </p>
+</li>
+</ul>
+
 
 <h3>行に対する属性</h3>
 <table class="normal center">
