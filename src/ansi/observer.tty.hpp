@@ -131,6 +131,7 @@ namespace ansi {
     term_t* term;
     std::FILE* file;
     termcap_sgr_type const* sgrcap;
+    bool termcap_bce = false;
 
     struct line_buffer_t {
       std::uint32_t id = (std::uint32_t) -1;
@@ -139,6 +140,7 @@ namespace ansi {
       int delta;
     };
     std::vector<line_buffer_t> screen_buffer;
+    bool prev_decscnm = false;
 
   public:
     tty_observer(term_t& term, std::FILE* file, termcap_sgr_type* sgrcap):
@@ -370,82 +372,18 @@ namespace ansi {
       }
     }
     void erase_until_eol() {
-      tty_state const& s = term->state();
       board_t const& w = term->board();
       if (x >= w.m_width) return;
-      apply_attr(attribute_t {});
-      if (s.m_default_fg_space || s.m_default_bg_space) {
-        // ToDo: 実は ECH で SGR が適用される端末では put_ech で良い。
-        for (; x < w.m_width; x++) put(' ');
-      } else {
+
+      attribute_t attr;
+      apply_attr(attr);
+      if (termcap_bce || attr.is_default()) {
         put_ech(w.m_width - x);
+      } else {
+        for (; x < w.m_width; x++) put(' ');
       }
     }
 
-    void render_line0(std::vector<cell_t> const& new_content, std::vector<cell_t> const& old_content) {
-      contra_unused(old_content);
-      curpos_t wskip = 0;
-      x = 0;
-      for (std::size_t i = 0; i < new_content.size(); i++) {
-        cell_t const& cell = new_content[i];
-
-        std::uint32_t const code = cell.character.value;
-        if (cell.attribute.is_default() && code == ascii_nul) {
-          wskip++;
-        } else {
-          if (wskip > 0) {
-            apply_attr(attribute_t {});
-            for (curpos_t c = wskip; c--; ) put(' ');
-          }
-          apply_attr(cell.attribute);
-          put_u32(code);
-          x += wskip + cell.width;
-          wskip = 0;
-        }
-      }
-      erase_until_eol();
-    }
-    void render_line1(std::vector<cell_t> const& new_content, std::vector<cell_t> const& old_content) {
-      curpos_t wskip = 0;
-      x = 0;
-      bool is_skipping = true;
-      curpos_t x1 = 0;
-      for (std::size_t i = 0; i < new_content.size(); i++) {
-        cell_t const& cell = new_content[i];
-        if (is_skipping) {
-          if (i < old_content.size()) {
-            cell_t const& cell_buffer = old_content[i];
-            if (cell == cell_buffer) {
-              x1 += cell.width;
-              continue;
-            }
-          } else {
-            if (cell.character == ascii_nul && cell.attribute.is_default()) {
-              x1 += cell.width;
-              continue;
-            }
-          }
-          move_to_column(x1);
-          is_skipping = false;
-        }
-
-        std::uint32_t const code = cell.character.value;
-        if (cell.attribute.is_default() && code == ascii_nul) {
-          wskip++;
-        } else {
-          if (wskip > 0) {
-            apply_attr(attribute_t {});
-            for (curpos_t c = wskip; c--; ) put(' ');
-          }
-          apply_attr(cell.attribute);
-          put_u32(code);
-          x += wskip + cell.width;
-          wskip = 0;
-        }
-      }
-      if (is_skipping) move_to_column(x1);
-      erase_until_eol();
-    }
     void render_line(std::vector<cell_t> const& new_content, std::vector<cell_t> const& old_content) {
       // 更新の必要のある範囲を決定する
 
@@ -512,40 +450,64 @@ namespace ansi {
       erase_until_eol();
     }
 
+    void apply_default_attribute(std::vector<cell_t>& content) {
+      tty_state& s = term->state();
+      if (!s.m_default_fg_space && !s.m_default_bg_space) return;
+      for (auto& cell : content) {
+        if (s.m_default_fg_space && cell.attribute.is_fg_default())
+          cell.attribute.set_fg(s.m_default_fg, s.m_default_fg_space);
+        if (s.m_default_bg_space && cell.attribute.is_bg_default())
+          cell.attribute.set_bg(s.m_default_bg, s.m_default_bg_space);
+      }
+      board_t& b = term->board();
+      if (content.size() < (std::size_t) b.m_width && (s.m_default_fg_space || s.m_default_bg_space)) {
+        cell_t fill = ascii_nul;
+        fill.attribute.set_fg(s.m_default_fg, s.m_default_fg_space);
+        fill.attribute.set_bg(s.m_default_bg, s.m_default_bg_space);
+        fill.width = 1;
+        content.resize(b.m_width, fill);
+      }
+    }
+
   public:
     void update() {
-      //std::fprintf(file, "\x1b[?25l");
+      std::fprintf(file, "\x1b[?25l");
       std::vector<cell_t> buff;
 
-      board_t const& w = term->board();
-      screen_buffer.resize(w.m_height);
+      bool full_update = false;
+      if (prev_decscnm != term->state().get_mode(mode_decscnm)) {
+        full_update = true;
+        screen_buffer.clear();
+        prev_decscnm = !prev_decscnm;
+      }
+
+      board_t const& b = term->board();
+      screen_buffer.resize(b.m_height);
       trace_line_scroll();
       move_to(0, 0);
-      for (curpos_t y = 0; y < w.m_height; y++) {
-        line_t const& line = w.m_lines[y];
+      for (curpos_t y = 0; y < b.m_height; y++) {
+        line_t const& line = b.m_lines[y];
         line_buffer_t& line_buffer = screen_buffer[y];
-        if (line_buffer.id == line.id() &&
-          line_buffer.version == line.version()) {
-          put('\n');
-          this->y++;
-          continue;
+        if (full_update || line_buffer.id != line.id() || line_buffer.version != line.version()) {
+          line.get_cells_in_presentation(buff, b.line_r2l(line));
+          this->apply_default_attribute(buff);
+          this->render_line(buff, line_buffer.content);
+
+          line_buffer.version = line.version();
+          line_buffer.id = line.id();
+          line_buffer.content.swap(buff);
+          move_to_column(0);
         }
 
-        line.get_cells_in_presentation(buff, w.line_r2l(line));
-        this->render_line(buff, line_buffer.content);
-
-        line_buffer.version = line.version();
-        line_buffer.id = line.id();
-        line_buffer.content.swap(buff);
-        move_to_column(0);
+        if (y + 1 == b.m_height) break;
         put('\n');
         this->y++;
       }
       apply_attr(attribute_t {});
 
-      y = w.m_height;
-      move_to(w.cur.x, w.cur.y);
-      //std::fprintf(file, "\x1b[?25h");
+      move_to(b.cur.x, b.cur.y);
+      if (term->state().get_mode(mode_dectcem))
+        std::fprintf(file, "\x1b[?25h");
       std::fflush(file);
     }
   };

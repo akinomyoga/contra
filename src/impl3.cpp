@@ -59,9 +59,9 @@ int main() {
   sgrcap.initialize();
   contra::ansi::tty_observer renderer(term, stdout, &sgrcap);
 
-  // contra::sequence_printer printer("impl3-allseq.txt");
-  // contra::sequence_printer_device d2(&printer);
-  // dev.push(&d2);
+  contra::sequence_printer printer("impl3-allseq.txt");
+  contra::sequence_printer_device d2(&printer);
+  dev.push(&d2);
 
   contra::fd_device devIn(sess.masterfd);
   term.set_response_target(devIn);

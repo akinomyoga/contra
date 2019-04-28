@@ -26,7 +26,8 @@ flags     mode_zdm                ansi22      true
 flags     mode_decckm             dec1        false
 flags     mode_decsclm            dec4        true
 flags     mode_decom              dec6        false
-flags     mode_decawm             dec7        true
+flags     mode_decawm_            private     true
+accessor  mode_decawm             dec7        -
 flags     mode_decarm             dec8        true
 flags     mode_decnkm             dec66       false
 
@@ -70,3 +71,7 @@ flags     mode_xenl_ech           private     true
 flags     mode_home_il            private     false
 
 flags     mode_s7c1t              private     true
+
+# terminfo bce capability
+flags     mode_bce                private     true
+flags     mode_xenl               private     true

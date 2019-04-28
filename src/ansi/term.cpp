@@ -234,6 +234,27 @@ namespace {
     term.state().set_mode(mode_decnkm, false);
   }
 
+  void do_sm_decawm(term_t& term, bool value) {
+    tty_state& s = term.state();
+    if (s.get_mode(mode_decawm_) == value) return;
+    s.set_mode(mode_decawm_, value);
+
+    // カーソルが行末にいる時、位置を修正する。
+    if (!value) {
+      board_t& b = term.board();
+      if (s.get_mode(mode_simd)) {
+        curpos_t const slh = term.implicit_slh(b.line());
+        if (b.cur.x < slh) b.cur.x = slh;
+      } else {
+        curpos_t const sll = term.implicit_sll(b.line());
+        if (b.cur.x > sll) b.cur.x = sll;
+      }
+    }
+  }
+  int do_rqm_decawm(term_t& term) {
+    return term.state().get_mode(mode_decawm_) ? 1 : 2;
+  }
+
   void do_sm_deccolm(term_t& term, bool value) {
     tty_state& s = term.state();
     if (s.get_mode(mode_xtEnableColm)) {
@@ -784,7 +805,7 @@ namespace {
   static void do_vertical_scroll(term_t& term, curpos_t shift, curpos_t tmargin, curpos_t bmargin, curpos_t lmargin, curpos_t rmargin, bool dcsm) {
     board_t& b = term.board();
     if (lmargin == 0 && rmargin == b.m_width) {
-      b.shift_lines(tmargin, bmargin, shift);
+      b.shift_lines(tmargin, bmargin, shift, term.fill_attr());
     } else if (lmargin < rmargin) {
       // DECSLRM が設定されている時のスクロール。行内容を切り貼りする。
       line_segment_t segs[3];
@@ -795,7 +816,7 @@ namespace {
       if (rmargin < b.m_width)
         segs[iseg++] = line_segment_t({rmargin, b.m_width, line_segment_slice});
 
-      attribute_t const fill_attr = b.cur.fill_attr();
+      attribute_t const fill_attr = term.fill_attr();
       if (shift > 0) {
         curpos_t ydst = bmargin - 1;
         curpos_t ysrc = ydst - shift;
@@ -861,7 +882,7 @@ namespace {
         curpos_t const bmargin = term.bmargin();
         curpos_t const lmargin = term.lmargin();
         curpos_t const rmargin = term.rmargin();
-        attribute_t const fill_attr = b.cur.fill_attr();
+        attribute_t const fill_attr = term.fill_attr();
         for (curpos_t y = tmargin; y < bmargin; y++)
           b.line(y).shift_cells(lmargin, rmargin, shift, flags, b.m_width, fill_attr);
         b.cur.x = b.to_data_position(y, p);
@@ -1221,7 +1242,7 @@ namespace {
     }
 
     curpos_t const x2 = std::min(x1 + (curpos_t) param, b.m_width);
-    b.line().shift_cells(x1, x2, x2 - x1, flags, b.m_width, b.cur.fill_attr());
+    b.line().shift_cells(x1, x2, x2 - x1, flags, b.m_width, term.fill_attr());
 
     // カーソル位置
     if (!s.dcsm())
@@ -1252,9 +1273,9 @@ namespace {
     curpos_t const sll = term.implicit_sll(line);
 
     if (!s.get_mode(mode_hem))
-      line.shift_cells(x1, sll + 1, shift, flags, b.m_width, b.cur.fill_attr());
+      line.shift_cells(x1, sll + 1, shift, flags, b.m_width, term.fill_attr());
     else
-      line.shift_cells(slh, x1 + 1, -shift, flags, b.m_width, b.cur.fill_attr());
+      line.shift_cells(slh, x1 + 1, -shift, flags, b.m_width, term.fill_attr());
 
     // カーソル位置
     if (s.dcsm()) {
@@ -1298,15 +1319,17 @@ namespace {
   //---------------------------------------------------------------------------
   // EL, IL, DL
 
-  static void do_el(board_t& b, tty_state& s, line_t& line, csi_single_param_t param) {
+  static void do_el(term_t& term, line_t& line, csi_single_param_t param, attribute_t const& fill_attr) {
+    board_t& b = term.board();
+    tty_state& s = term.state();
     if (param != 0 && param != 1) {
       if (s.get_mode(mode_erm) && line.has_protected_cells()) {
         line_shift_flags flags = line_shift_flags::erm;
         if (line.is_r2l(b.m_presentation_direction)) flags |= line_shift_flags::r2l;
         if (s.dcsm()) flags |= line_shift_flags::dcsm;
-        line.shift_cells(0, b.m_width, b.m_width, flags, b.m_width, b.cur.fill_attr());
+        line.shift_cells(0, b.m_width, b.m_width, flags, b.m_width, fill_attr);
       } else
-        line.clear_content(b.m_width, b.cur.fill_attr());
+        line.clear_content(b.m_width, fill_attr);
       return;
     }
 
@@ -1320,9 +1343,9 @@ namespace {
     if (x1 >= b.m_width) x1 = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
 
     if (param == 0)
-      line.shift_cells(x1, b.m_width, b.m_width - x1, flags, b.m_width, b.cur.fill_attr());
+      line.shift_cells(x1, b.m_width, b.m_width - x1, flags, b.m_width, fill_attr);
     else
-      line.shift_cells(0, x1 + 1, x1 + 1, flags, b.m_width, b.cur.fill_attr());
+      line.shift_cells(0, x1 + 1, x1 + 1, flags, b.m_width, fill_attr);
 
     if (!s.dcsm()) x1 = b.to_data_position(b.cur.y, x1);
     b.cur.x = x1;
@@ -1331,20 +1354,20 @@ namespace {
   bool do_el(term_t& term, csi_parameters& params) {
     csi_single_param_t param;
     params.read_param(param, 0);
-    board_t& b = term.board();
-    do_el(b, term.state(), b.line(), param);
+    do_el(term, term.board().line(), param, term.fill_attr());
     return true;
   }
 
   void do_ed(term_t& term, csi_single_param_t param) {
     tty_state& s = term.state();
     board_t& b = term.board();
+    attribute_t const fill_attr = term.fill_attr();
     curpos_t y1 = 0, y2 = 0;
     if (param != 0 && param != 1) {
       y1 = 0;
       y2 = b.m_height;
     } else {
-      do_el(b, s, b.line(), param);
+      do_el(term, b.line(), param, fill_attr);
       if (param == 0) {
         y1 = b.cur.y + 1;
         y2 = b.m_height;
@@ -1356,10 +1379,10 @@ namespace {
 
     if (s.get_mode(mode_erm)) {
       for (curpos_t y = y1; y < y2; y++)
-        do_el(b, s, b.m_lines[y], 2);
+        do_el(term, b.m_lines[y], 2, fill_attr);
     } else {
       for (curpos_t y = y1; y < y2; y++)
-        b.m_lines[y].clear_content(b.m_width, b.cur.fill_attr());
+        b.m_lines[y].clear_content(b.m_width, fill_attr);
     }
   }
   bool do_ed(term_t& term, csi_parameters& params) {

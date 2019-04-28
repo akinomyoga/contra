@@ -55,6 +55,8 @@ namespace ansi {
   void do_sm_deccolm(term_t& term, bool value);
   int do_rqm_decscnm(term_t& term);
   void do_sm_decscnm(term_t& term, bool value);
+  int do_rqm_decawm(term_t& term);
+  void do_sm_decawm(term_t& term, bool value);
 
   void do_ed(term_t& term, csi_single_param_t param);
   void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm);
@@ -183,6 +185,8 @@ namespace ansi {
           return 1 & do_rqm_deccolm(*m_term);
         case mode_decscnm:
           return 1 & do_rqm_decscnm(*m_term);
+        case mode_decawm:
+          return 1 & do_rqm_decawm(*m_term);
         default:
           return false;
         }
@@ -246,6 +250,9 @@ namespace ansi {
           break;
         case mode_decscnm:
           do_sm_decscnm(*m_term, value);
+          break;
+        case mode_decawm:
+          do_sm_decawm(*m_term, value);
           break;
         default: ;
         }
@@ -373,6 +380,17 @@ namespace ansi {
       return limit;
     }
 
+    attribute_t fill_attr() const {
+      if (m_state.get_mode(mode_bce)) {
+        attribute_t const& src = m_board->cur.attribute;
+        attribute_t ret;
+        ret.set_bg(src.bg_space(), src.bg_color());
+        return ret;
+      } else {
+        return {};
+      }
+    }
+
   public:
     void insert_graph(char32_t u) {
       // ToDo: 新しい行に移る時に line_limit, line_home を初期化する
@@ -396,6 +414,7 @@ namespace ansi {
       curpos_t const x0 = cur.x;
       curpos_t const x1 = x0 + dir * (char_width - 1);
       if ((x1 - sll) * dir > 0 && (x0 - slh) * dir > 0) {
+        if (!m_state.get_mode(mode_decawm)) return;
         do_nel();
         sll = simd ? implicit_slh(m_board->line()) : implicit_sll(m_board->line());
       }
@@ -409,10 +428,16 @@ namespace ansi {
       m_board->line().write_cells(xL, &cell, 1, 1, dir);
       cur.x += dir * char_width;
 
-      // 行末を超えた時は折り返し
-      // Note: xenl かつ cur.x >= 0 ならば sll + dir の位置にいる事を許容する。
-      if ((cur.x - sll) * dir >= 1 &&
-        !(cur.x == sll + dir && cur.x >= 0 && m_state.get_mode(mode_decawm))) do_nel();
+      if ((cur.x - sll) * dir >= 1) {
+        if (m_state.get_mode(mode_decawm)) {
+          // 行末を超えた時は折り返し
+          // Note: xenl かつ cur.x >= 0 ならば sll + dir の位置にいる事を許容する。
+          if (cur.x < 0 || cur.x != sll + dir || !m_state.get_mode(mode_xenl))
+            do_nel();
+        } else {
+          cur.x = sll;
+        }
+      }
     }
 
     void insert_marker(std::uint32_t marker) {
@@ -449,8 +474,10 @@ namespace ansi {
         if (m_board->cur.x < limit)
           m_board->cur.x++;
       } else {
+        // Note: vttest によるとこうするのが正しいらしい。
         if (m_board->cur.x >= m_board->m_width)
           m_board->cur.x = m_board->m_width - 1;
+
         if (m_board->cur.x > 0)
           m_board->cur.x--;
       }

@@ -851,13 +851,6 @@ namespace ansi {
   struct cursor_t {
     curpos_t x = 0, y = 0;
     attribute_t attribute;
-
-  public:
-    attribute_t fill_attr() const {
-      attribute_t ret;
-      ret.xflags &= ~attribute_t::qualifier_mask;
-      return ret;
-    }
   };
 
   struct board_t {
@@ -912,25 +905,10 @@ namespace ansi {
     }
 
   private:
-    void initialize_lines(curpos_t y1, curpos_t y2) {
+    void initialize_lines(curpos_t y1, curpos_t y2, attribute_t const& fill_attr) {
       for (curpos_t y = y1; y < y2; y++) {
-        m_lines[y].clear(m_width, cur.fill_attr());
+        m_lines[y].clear(m_width, fill_attr);
         m_lines[y].set_id(m_line_count++);
-      }
-    }
-
-  private:
-    void rotate(curpos_t count) {
-      if (count > 0) {
-        if (count > m_height) count = m_height;
-        // ToDo: 消える行を何処かに記録する?
-        initialize_lines(0, count);
-        m_lines.rotate(count);
-      } else if (count < 0) {
-        count = -count;
-        if (count > m_height) count = m_height;
-        m_lines.rotate(m_height - count);
-        initialize_lines(0, count);
       }
     }
 
@@ -941,28 +919,38 @@ namespace ansi {
     /// @param[in] y1 範囲の終端位置を指定します。
     /// @param[in] count 移動量を指定します。正の値を指定した時、
     ///   下方向にシフトします。負の値を指定した時、上方向にシフトします。
-    void shift_lines(curpos_t y1, curpos_t y2, curpos_t count) {
+    void shift_lines(curpos_t y1, curpos_t y2, curpos_t count, attribute_t const& fill_attr) {
       y1 = contra::clamp(y1, 0, m_height);
       y2 = contra::clamp(y2, 0, m_height);
       if (y1 >= y2 || count == 0) return;
       if (y1 == 0 && y2 == m_height) {
-        this->rotate(-count);
+        if (count < 0) {
+          count = -count;
+          if (count > m_height) count = m_height;
+          // ToDo: 消える行を何処かに記録する?
+          initialize_lines(0, count, fill_attr);
+          m_lines.rotate(count);
+        } else if (count > 0) {
+          if (count > m_height) count = m_height;
+          m_lines.rotate(m_height - count);
+          initialize_lines(0, count, fill_attr);
+        }
         return;
       }
 
       if (std::abs(count) >= y2 - y1) {
-        initialize_lines(y1, y2);
+        initialize_lines(y1, y2, fill_attr);
       } else if (count > 0) {
         auto const it1 = m_lines.begin() + y1;
         auto const it2 = m_lines.begin() + y2;
         std::move_backward(it1, it2 - count, it2);
-        initialize_lines(y1, y1 + count);
+        initialize_lines(y1, y1 + count, fill_attr);
       } else {
         count = -count;
         auto const it1 = m_lines.begin() + y1;
         auto const it2 = m_lines.begin() + y2;
         std::move(it1 + count, it2, it1);
-        initialize_lines(y2 - count, y2);
+        initialize_lines(y2 - count, y2, fill_attr);
       }
     }
     void clear_screen() {
