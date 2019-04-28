@@ -89,6 +89,7 @@ int main() {
   contra::set_fd_nonblock(STDIN_FILENO, oldNonblock);
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &oldTermios);
 
+  std::printf("\n");
   renderer.print_screen(b);
 
   std::FILE* file = std::fopen("impl2-dump.txt", "w");

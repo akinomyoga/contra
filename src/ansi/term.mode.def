@@ -7,7 +7,7 @@ flags     mode_irm                ansi4       unsupported
 flags     mode_srtm               ansi5       unsupported
 flags     mode_erm                ansi6       true
 flags     mode_vem                ansi7       false
-flags     mode_bdsm               ansi8       true
+flags     mode_bdsm               ansi8       false
 flags     mode_dcsm               ansi9       true
 flags     mode_hem                ansi10      false
 flags     mode_pum                ansi11      unsupported
@@ -26,12 +26,15 @@ flags     mode_zdm                ansi22      true
 flags     mode_decckm             dec1        false
 flags     mode_decsclm            dec4        true
 flags     mode_decom              dec6        false
-flags     mode_decawm_            private     true
-accessor  mode_decawm             dec7        -
 flags     mode_decarm             dec8        true
 flags     mode_decnkm             dec66       false
 
 flags     mode_bracketedPasteMode dec2004     true
+
+# Implicit Movements
+flags     mode_decawm_            private     true
+accessor  mode_decawm             dec7        -
+flags     mode_xtBSBackLine       dec45       -
 
 # Cursor style
 flags     mode_attCursorBlink     dec12       true

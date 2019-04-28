@@ -641,19 +641,19 @@ namespace {
 
   bool do_cuu(term_t& term, csi_parameters& params) {
     do_cux_direction const dir = do_cux_vec_select(do_cux_vec_u, term.board().m_presentation_direction);
-    return do_cux(term, params, dir, true, true);
+    return do_cux(term, params, dir, !term.state().get_mode(mode_bdsm), true);
   }
   bool do_cud(term_t& term, csi_parameters& params) {
     do_cux_direction const dir = do_cux_vec_select(do_cux_vec_d, term.board().m_presentation_direction);
-    return do_cux(term, params, dir, true, true);
+    return do_cux(term, params, dir, !term.state().get_mode(mode_bdsm), true);
   }
   bool do_cuf(term_t& term, csi_parameters& params) {
     do_cux_direction const dir = do_cux_vec_select(do_cux_vec_r, term.board().m_presentation_direction);
-    return do_cux(term, params, dir, true, true);
+    return do_cux(term, params, dir, !term.state().get_mode(mode_bdsm), true);
   }
   bool do_cub(term_t& term, csi_parameters& params) {
     do_cux_direction const dir = do_cux_vec_select(do_cux_vec_l, term.board().m_presentation_direction);
-    return do_cux(term, params, dir, true, true);
+    return do_cux(term, params, dir, !term.state().get_mode(mode_bdsm), true);
   }
 
   bool do_hpb(term_t& term, csi_parameters& params) {
@@ -864,6 +864,7 @@ namespace {
     }
 
     board_t& b = term.board();
+    bool const isPresentation = !s.get_mode(mode_bdsm);
 
     curpos_t const y = b.cur.y;
     curpos_t shift = 0;
@@ -876,7 +877,7 @@ namespace {
       goto shift_cells;
     shift_cells:
       {
-        curpos_t const p = b.to_presentation_position(y, b.cur.x);
+        curpos_t const p = isPresentation ? b.to_presentation_position(y, b.cur.x) : -1;
         line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
         if (dcsm) flags |= line_shift_flags::dcsm;
         curpos_t const tmargin = term.tmargin();
@@ -886,7 +887,8 @@ namespace {
         attribute_t const fill_attr = term.fill_attr();
         for (curpos_t y = tmargin; y < bmargin; y++)
           b.line(y).shift_cells(lmargin, rmargin, shift, flags, b.m_width, fill_attr);
-        b.cur.x = b.to_data_position(y, p);
+        if (isPresentation)
+          b.cur.x = b.to_data_position(y, p);
       }
       break;
 
@@ -898,9 +900,10 @@ namespace {
       goto shift_lines;
     shift_lines:
       {
-        curpos_t const p = b.to_presentation_position(y, b.cur.x);
+        curpos_t const p = isPresentation ? b.to_presentation_position(y, b.cur.x) : -1;
         do_vertical_scroll(term, shift, dcsm);
-        b.cur.x = b.to_data_position(y, p);
+        if (isPresentation)
+          b.cur.x = b.to_data_position(y, p);
       }
       break;
     }

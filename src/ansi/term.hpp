@@ -260,7 +260,7 @@ namespace ansi {
       }
     }
 
-    bool dcsm() const { return !get_mode(mode_bdsm) || get_mode(mode_dcsm); }
+    bool dcsm() const { return get_mode(mode_bdsm) || get_mode(mode_dcsm); }
 
     bool is_cursor_visible() const { return get_mode(mode_dectcem); }
     bool is_cursor_blinking() const {
@@ -469,18 +469,36 @@ namespace ansi {
       m_state.do_bel();
     }
     void do_bs() {
+      // Note: mode_xenl, mode_decawm, mode_xtBSBackLine が絡んで来た時の振る舞いは適当である。
+      board_t& b = this->board();
+      line_t const& line = b.line();
+      curpos_t const slh = this->implicit_slh(line);
+      curpos_t const sll = this->implicit_sll(line);
       if (m_state.get_mode(mode_simd)) {
-        int limit = m_board->m_width;
-        if (!m_state.get_mode(mode_decawm)) limit--;
-        if (m_board->cur.x < limit)
-          m_board->cur.x++;
+        bool const on_xenl = m_state.get_mode(mode_xenl) && b.cur.x == sll + 1;
+        if (!on_xenl && b.cur.x != sll && b.cur.x < b.m_width) {
+          b.cur.x++;
+        } else if (m_state.get_mode(mode_decawm) && m_state.get_mode(mode_xtBSBackLine) && b.cur.y > 0) {
+          b.cur.y--;
+          b.cur.x = this->implicit_slh(b.line());
+          if (on_xenl) b.cur.x++;
+        }
       } else {
-        // Note: vttest によるとこうするのが正しいらしい。
-        if (m_board->cur.x >= m_board->m_width)
-          m_board->cur.x = m_board->m_width - 1;
+        // Note: vttest によるとこの様に補正するのが正しいらしい。
+        //   xterm で動作を確認すると sll+1 に居ても補正はされない様だが、
+        //   何だか一貫性が無いように思うので contra では補正を同様に行う事にする。
+        if (b.cur.x >= b.m_width) {
+          b.cur.x = b.m_width - 1;
+        } else if (m_state.get_mode(mode_xenl) && b.cur.x == sll + 1) {
+          b.cur.x = sll;
+        }
 
-        if (m_board->cur.x > 0)
-          m_board->cur.x--;
+        if (b.cur.x != slh && b.cur.x > 0) {
+          b.cur.x--;
+        } else if (m_state.get_mode(mode_decawm) && m_state.get_mode(mode_xtBSBackLine) && b.cur.y > 0) {
+          b.cur.y--;
+          b.cur.x = this->implicit_sll(b.line());
+        }
       }
     }
     void do_ht() {
@@ -551,13 +569,13 @@ namespace ansi {
         if (m_state.ff_using_page_home) {
           curpos_t x = m_board->cur.x;
           curpos_t y = m_board->cur.y;
-          if (!toCallCR)
+          if (!toCallCR && !m_state.get_mode(mode_bdsm))
             x = m_board->to_presentation_position(y, x);
 
           m_board->clear_screen();
           y = std::max(implicit_sph(), 0);
 
-          if (!toCallCR)
+          if (!toCallCR && !m_state.get_mode(mode_bdsm))
             x = m_board->to_data_position(y, x);
 
           m_board->cur.x = x;
@@ -565,14 +583,14 @@ namespace ansi {
         } else
           m_board->clear_screen();
       } else {
-        do_generic_ff(1, true, !toCallCR);
+        do_generic_ff(1, true, !toCallCR && !m_state.get_mode(mode_bdsm));
       }
 
       if (toCallCR) do_cr();
     }
     void do_vt() {
       bool const toCallCR = m_state.vt_affected_by_lnm && m_state.get_mode(mode_lnm);
-      do_generic_ff(1, m_state.vt_appending_newline, !toCallCR);
+      do_generic_ff(1, m_state.vt_appending_newline, !toCallCR && !m_state.get_mode(mode_bdsm));
       if (toCallCR) do_cr();
     }
     void do_cr() {

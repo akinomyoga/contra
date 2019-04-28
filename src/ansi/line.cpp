@@ -664,8 +664,16 @@ void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpo
           }
         }
 
-        if (p < pN)
-          std::copy(source_cells.begin() + p, source_cells.begin() + pN, m_cells.begin() + p);
+        if (p < pN) {
+          curpos_t const p1 = contra::clamp<curpos_t>(source_cells.size(), p, pN);
+          if (p < p1) std::copy(source_cells.begin() + p, source_cells.begin() + p1, m_cells.begin() + p);
+          if (p1 < pN) {
+            fill.character = ascii_nul;
+            fill.attribute = 0;
+            std::fill(m_cells.begin() + p1, m_cells.begin() + pN, fill);
+            fill.attribute = fill_attr;
+          }
+        }
       }
       break;
     case line_segment_slice: break;
