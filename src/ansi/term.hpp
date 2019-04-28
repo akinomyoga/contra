@@ -49,6 +49,7 @@ namespace ansi {
   void do_deckpnm(term_t& term);
   void do_s7c1t(term_t& term);
   void do_s8c1t(term_t& term);
+  void do_decaln(term_t& term);
 
   void do_altscreen(term_t& term, bool value);
   int do_rqm_deccolm(term_t& term);
@@ -640,11 +641,18 @@ namespace ansi {
         case ascii_greater: do_deckpnm(*this); return;
         }
       } else if (seq.parameter_size() == 1) {
-        if (seq.parameter()[0] == ascii_sp) {
+        switch (seq.parameter()[0]) {
+        case ascii_sp:
           switch (seq.final()) {
           case ascii_F: do_s7c1t(*this); return;
           case ascii_G: do_s8c1t(*this); return;
           }
+          break;
+        case ascii_number:
+          switch (seq.final()) {
+          case ascii_8: do_decaln(*this); return;
+          }
+          break;
         }
       }
       print_unrecognized_sequence(seq);

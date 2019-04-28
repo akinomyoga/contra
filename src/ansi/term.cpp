@@ -477,6 +477,7 @@ namespace {
   bool do_decslrm(term_t& term, csi_parameters& params) {
     tty_state& s = term.state();
     board_t& b = term.board();
+    if (!s.get_mode(mode_declrmm)) return true;
 
     csi_single_param_t param1, param2;
     params.read_param(param1, 0);
@@ -1390,6 +1391,21 @@ namespace {
     params.read_param(param, 0);
     do_ed(term, param);
     return true;
+  }
+  void do_decaln(term_t& term) {
+    board_t& b = term.board();
+    curpos_t const height = b.m_height;
+    curpos_t const width = b.m_width;
+    cell_t fill = ascii_E;
+    for (curpos_t y = 0; y < height; y++) {
+      line_t& line = b.line(y);
+      line.clear_content();
+      line.insert_cells(0, &fill, 1, width);
+    }
+
+    term.state().clear_margin();
+    b.cur.x = 0;
+    b.cur.y = 0;
   }
 
   static void do_il_impl(term_t& term, curpos_t shift) {
