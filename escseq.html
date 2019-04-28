@@ -610,9 +610,9 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </table>
 
 <ul>
-<li>ESC k, ESC l, ESC m には昔は LS1R, LS2R, LS3R が与えられていたが、
-  現在は LS1R, LS2R, LS3R はそれぞれ ESC ~, ESC }, ESC | を用いる。
-  ただし、互換性の為に ESC k, ESC l, ESC m を認識する事もある。
+<li><kbd>ESC k</kbd>, <kbd>ESC l</kbd>, <kbd>ESC m</kbd> には昔は LS1R, LS2R, LS3R が与えられていたが、
+  現在は LS1R, LS2R, LS3R はそれぞれ <kbd>ESC ~</kbd>, <kbd>ESC }</kbd>, <kbd>ESC |</kbd> を用いる。
+  ただし、互換性の為に <kbd>ESC k</kbd>, <kbd>ESC l</kbd>, <kbd>ESC m</kbd> を認識する事もある。
 </li>
 <li>xterm のマニュアルによると HP terminals では以下の制御機能 (略号はこの文書だけで通用) が存在するが、ISO 2022 と衝突する。
   <table class="normal center">
@@ -622,7 +622,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <tr><th>hpMemoryUnlock</th><td><kbd>ESC m</kbd></td></tr>
   </table>
 </li>
-<li>screen は ESC k をバッファーのタイトルを設定する為の私用コマンド列の開始記号 (scrTDS) に使っている。</li>
+<li>screen は <kbd>ESC k</kbd> をバッファーのタイトルを設定する為の私用コマンド列の開始記号 (scrTDS) に使っている。</li>
 </ul>
 
 <h4>3Ft型 登録単独制御機能</h4>
@@ -1234,7 +1234,9 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>DECTEM (ref: all-espaces)<br/>xtCursorBlinkXOR</th><td>?14</td></tr>
 <tr><th>DECTCEM</th>            <td>?25</td></tr>
 <tr><th>xtEnableColm</th>       <td>?40</td></tr>
+<tr><th>xtBSBackLine</th>       <td>?45</td></tr>
 <tr><th>smAltScreen</th>        <td>?47</td></tr>
+<tr><th>DECLRMM / DECVSSM</th>  <td>?69</td></tr>
 <tr><th>DECNCSM</th>            <td>?95</td></tr>
 <tr><th>smSendMouse</th>        <td>?1000</td></tr>
 <tr><th>smMouseMotionHilite</th><td>?1001</td></tr>
@@ -1436,6 +1438,13 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>SIMD</th><td><kbd>CSI <i>&lt;Ps1&gt;</i> ^</kbd></td></tr>
 </table>
 <ul>
+<li>Mode 8 <dfn class="cmode">BDSM</dfn>: BI-DIRECTIONAL SUPPORT MODE
+  <p>[ECMA-48/7.2.1] 双方向機能に対応するかどうかを指定する。</p>
+  <ul>
+  <li><dfn class="cmode-rm">EXPLICIT</dfn> (RM): DCSM の設定に従った双方向処理を実行する。</li>
+  <li><dfn class="cmode-sm">IMPLICIT</dfn> (SM): 双方向処理を行わない。全てデータ部で作用する。</li>
+  </ul>
+</li>
 <li>Mode 9 <dfn class="cmode">DCSM</dfn>: DEVICE COMPONENT SELECT MODE
   <p>[ECMA-48/7.2.3] 制御機能 CPR, CR, DCH, DL, EA, ECH, ED, EF, EL, ICH, IL, LF, NEL, RI, SLH,
   SLL, SPH, SPL が作用する対象が表示部かデータ部かを設定する。
@@ -1644,9 +1653,10 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   </li>
   </ul>
 </li>
-<li>Mode ?69 <dfn class="cmode">DECLRMM</dfn>: Left Right Margin Mode [既定値: RM]
+<li>Mode ?69 <dfn class="cmode">DECLRMM</dfn> (<dfn class="cmode">DECVSSM</dfn>): Left Right Margin Mode [既定値: RM]
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECLRMM.html">VT510/DECLRMM</a>]
     DECSLRM で設定した範囲が有効かどうかを設定する。
+    どうも vt400 では DECVSSM という名前だった様である。
   </p>
 </li>
 
@@ -1772,6 +1782,22 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <p>Note: プリンタなど一つの文字位置に複数の文字を重ね書きできる装置では SP と BS は完全に対称な役割を持つ。
   しかし、ディスプレイ端末など1つの文字位置に1つの文字しか表示できない場合、両者は対称でない。
   SP は現在位置の文字を空白に置き換えてから移動するが、BS は単に現在位置を移動するのみである。
+  </p>
+  <ul>
+  <li>xterm の振る舞いを観察すると、
+    現在位置が DECSLRM で設定した左マージン以降にあれば、その範囲内に閉じている。
+    そうでなければより前に戻る。</li>
+  <li>vttest によると現在位置が行末にいる時は、一旦最後の文字に移動してから BS が実行される。
+    RLogin の振る舞いを調べると DECSLRM の右境界で xenl 状態になっている時にも同様の補正が行われる。
+    xterm の振る舞いを調べると vttest を走らせている間は補正されるが、手動で実行すると何故か補正されない (ちゃんと調べる必要がある)。
+    contra は RLogin に倣う。
+  </li>
+  </ul>
+  <p>
+  </p>
+</li>
+<li>Mode ?45 <dfn class="cmode">xtBSBackLine</dfn>
+  <p>[xterm, RLogin] 設定されている時、行頭の BS で前の行に移動する。
   </p>
 </li>
 <li><dfn class="cfunc">LF</dfn>: LINE FEED</li>
@@ -1990,6 +2016,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   しかし xterm, screen, RLogin, mintty, Poderosa のどの実装でも全角文字は二つの文字位置を占有し、
   CUF, CUB その他の制御機能は文字単位ではなくて文字位置単位 (半角単位) で移動する。
   中途半端な位置にカーソルがある状態で文字を挿入すると、下にある全角文字が消去されてからの挿入になる。
+  但し、xterm では行末で "あ\ba" 等とすると、何故か全角文字が消去されずに左半分だけが残る (xterm #344 で確認)。
 </li>
 <li>下にあった全角文字が消去された後に残る余白の属性は端末によって異なる。
   mintty, RLogin, Poderosa では元々其処にあった全角文字の属性が保持される。
