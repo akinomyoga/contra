@@ -849,8 +849,48 @@ namespace ansi {
   };
 
   struct cursor_t {
-    curpos_t x = 0, y = 0;
+  private:
+    curpos_t m_x = 0, m_y = 0;
+    bool m_xenl = false;
+
+  public:
     attribute_t attribute;
+
+  public:
+    curpos_t x() const { return m_x; }
+    curpos_t y() const { return m_y; }
+
+    bool xenl() const { return m_xenl; }
+    void adjust_xenl() {
+      if (m_xenl) {
+        m_x--;
+        m_xenl = false;
+      }
+    }
+
+    void set_x(curpos_t x, bool xenl = false) {
+      this->m_x = x;
+      this->m_xenl = xenl;
+    }
+    void set_y(curpos_t y) {
+      this->m_y = y;
+    }
+    void set(curpos_t x, curpos_t y, bool xenl = false) {
+      this->m_x = x;
+      this->m_y = y;
+      this->m_xenl = xenl;
+    }
+    void set_xenl(bool value) {
+      this->m_xenl = value;
+    }
+    void update_x(curpos_t x) {
+      if (m_x != x) set_x(x);
+    }
+    void set_x_keeping_xenl(curpos_t x, curpos_t width, curpos_t sll) {
+      this->m_x = x;
+      if (x == sll + 1 || x == width) return;
+      this->m_xenl = false;
+    }
   };
 
   struct board_t {
@@ -863,8 +903,7 @@ namespace ansi {
 
     board_t(curpos_t width, curpos_t height): m_lines(height), m_width(width), m_height(height) {
       mwg_check(width > 0 && height > 0, "width = %d, height = %d", (int) width, (int) height);
-      this->cur.x = 0;
-      this->cur.y = 0;
+      this->cur.set(0, 0);
       for (line_t& line : m_lines)
         line.set_id(m_line_count++);
     }
@@ -873,8 +912,8 @@ namespace ansi {
   public:
     void reset_size(curpos_t width, curpos_t height) {
       mwg_check(width > 0 && height > 0, "negative size is passed (width = %d, height = %d).", (int) width, (int) height);
-      if (this->cur.x >= width) cur.x = width - 1;
-      if (this->cur.y >= height) cur.y = height - 1;
+      if (this->cur.x() >= width) cur.set_x(width - 1);
+      if (this->cur.y() >= height) cur.set_y(height - 1);
       m_lines.resize(height);
       if (this->m_width > width) {
         for (auto& line : m_lines)
@@ -885,17 +924,17 @@ namespace ansi {
     }
 
   public:
-    curpos_t x() const { return cur.x; }
-    curpos_t y() const { return cur.y; }
+    curpos_t x() const { return cur.x(); }
+    curpos_t y() const { return cur.y(); }
 
-    line_t& line() { return m_lines[cur.y]; }
-    line_t const& line() const { return m_lines[cur.y]; }
+    line_t& line() { return m_lines[cur.y()]; }
+    line_t const& line() const { return m_lines[cur.y()]; }
     line_t& line(curpos_t y) { return m_lines[y]; }
     line_t const& line(curpos_t y) const { return m_lines[y]; }
 
     curpos_t line_r2l(line_t const& line) const { return line.is_r2l(m_presentation_direction); }
     curpos_t line_r2l(curpos_t y) const { return line_r2l(m_lines[y]); }
-    curpos_t line_r2l() const { return line_r2l(cur.y); }
+    curpos_t line_r2l() const { return line_r2l(cur.y()); }
 
     curpos_t to_data_position(curpos_t y, curpos_t x) const {
       return m_lines[y].to_data_position(x, m_width, m_presentation_direction);

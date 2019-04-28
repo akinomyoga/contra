@@ -53,7 +53,7 @@ int main() {
   term.state().m_default_fg_space = contra::ansi::attribute_t::color_space_indexed;
   term.state().m_default_fg = 0;
   term.state().m_default_bg_space = contra::ansi::attribute_t::color_space_indexed;
-  term.state().m_default_bg = 15;
+  term.state().m_default_bg = 255;
 
   contra::ansi::termcap_sgr_type sgrcap;
   sgrcap.initialize();

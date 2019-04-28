@@ -83,6 +83,7 @@ namespace ansi {
     bool m_decsc_decom;
     curpos_t m_scosc_x;
     curpos_t m_scosc_y;
+    bool m_scosc_xenl;
 
     // Alternate Screen Buffer
     board_t altscreen;
@@ -115,7 +116,7 @@ namespace ansi {
       this->initialize_mode();
       this->title = U"";
       this->screen_title = U"";
-      this->m_decsc_cur.x = -1;
+      this->m_decsc_cur.set_x(-1);
       this->m_scosc_x = -1;
 
       this->page_home = -1;
@@ -179,7 +180,7 @@ namespace ansi {
         case mode_altscreen_clr: // Mode ?1047
           return get_mode(mode_altscr);
         case mode_decsc: // Mode ?1048
-          return m_decsc_cur.x >= 0;
+          return m_decsc_cur.x() >= 0;
         case mode_altscreen_cur: // Mode ?1049
           return get_mode(mode_altscr);
         case mode_deccolm:
@@ -395,8 +396,9 @@ namespace ansi {
   public:
     void insert_graph(char32_t u) {
       // ToDo: 新しい行に移る時に line_limit, line_home を初期化する
-      cursor_t& cur = m_board->cur;
-      line_t& line = m_board->line();
+      board_t& b = this->board();
+      tty_state& s = this->state();
+      line_t& line = b.line();
       initialize_line(line);
 
       int const char_width = m_state.c2w(u); // ToDo 文字幅
@@ -409,36 +411,49 @@ namespace ansi {
 
       curpos_t slh = implicit_slh(line);
       curpos_t sll = implicit_sll(line);
+      if (b.cur.x() < slh)
+        slh = 0;
+      else if (b.cur.x() > (b.cur.xenl() ? sll + 1 : sll))
+        sll = b.m_width - 1;
       if (simd) std::swap(slh, sll);
 
       // (行頭より後でかつ) 行末に文字が入らない時は折り返し
-      curpos_t const x0 = cur.x;
+      curpos_t const x0 = b.cur.x();
       curpos_t const x1 = x0 + dir * (char_width - 1);
       if ((x1 - sll) * dir > 0 && (x0 - slh) * dir > 0) {
         if (!m_state.get_mode(mode_decawm)) return;
         do_nel();
-        sll = simd ? implicit_slh(m_board->line()) : implicit_sll(m_board->line());
+        // Note: do_nel() 後に b.cur.x() in [slh, sll]
+        //   は保証されていると思って良いので、
+        //   現在位置が範囲外の時の sll の補正は不要。
+        sll = simd ? implicit_slh(b.line()) : implicit_sll(b.line());
       }
 
-      curpos_t const xL = simd ? cur.x - (char_width - 1) : cur.x;
+      curpos_t const xL = simd ? b.cur.x() - (char_width - 1) : b.cur.x();
 
       cell_t cell;
       cell.character = u;
-      cell.attribute = cur.attribute;
+      cell.attribute = b.cur.attribute;
       cell.width = char_width;
-      m_board->line().write_cells(xL, &cell, 1, 1, dir);
-      cur.x += dir * char_width;
+      b.line().write_cells(xL, &cell, 1, 1, dir);
 
-      if ((cur.x - sll) * dir >= 1) {
+      curpos_t x = b.cur.x() + dir * char_width;
+      bool xenl = false;
+      if ((x - sll) * dir >= 1) {
         if (m_state.get_mode(mode_decawm)) {
           // 行末を超えた時は折り返し
-          // Note: xenl かつ cur.x >= 0 ならば sll + dir の位置にいる事を許容する。
-          if (cur.x < 0 || cur.x != sll + dir || !m_state.get_mode(mode_xenl))
+          // Note: xenl かつ x == sll + 1 ならば の位置にいる事を許容する。
+          if (!simd && x == sll + 1 && s.get_mode(mode_xenl)) {
+            xenl = true;
+          } else {
             do_nel();
+            return;
+          }
         } else {
-          cur.x = sll;
+          x = sll;
         }
       }
+      b.cur.set_x(x, xenl);
     }
 
     void insert_marker(std::uint32_t marker) {
@@ -450,7 +465,7 @@ namespace ansi {
       cell.attribute = m_board->cur.attribute;
       cell.width = 0;
       initialize_line(m_board->line());
-      m_board->line().write_cells(m_board->cur.x, &cell, 1, 1, dir);
+      m_board->line().write_cells(m_board->cur.x(), &cell, 1, 1, dir);
     }
 
     void insert_char(char32_t u) {
@@ -472,33 +487,54 @@ namespace ansi {
       // Note: mode_xenl, mode_decawm, mode_xtBSBackLine が絡んで来た時の振る舞いは適当である。
       board_t& b = this->board();
       line_t const& line = b.line();
-      curpos_t const slh = this->implicit_slh(line);
-      curpos_t const sll = this->implicit_sll(line);
       if (m_state.get_mode(mode_simd)) {
-        bool const on_xenl = m_state.get_mode(mode_xenl) && b.cur.x == sll + 1;
-        if (!on_xenl && b.cur.x != sll && b.cur.x < b.m_width) {
-          b.cur.x++;
-        } else if (m_state.get_mode(mode_decawm) && m_state.get_mode(mode_xtBSBackLine) && b.cur.y > 0) {
-          b.cur.y--;
-          b.cur.x = this->implicit_slh(b.line());
-          if (on_xenl) b.cur.x++;
-        }
-      } else {
-        // Note: vttest によるとこの様に補正するのが正しいらしい。
-        //   xterm で動作を確認すると sll+1 に居ても補正はされない様だが、
-        //   何だか一貫性が無いように思うので contra では補正を同様に行う事にする。
-        if (b.cur.x >= b.m_width) {
-          b.cur.x = b.m_width - 1;
-        } else if (m_state.get_mode(mode_xenl) && b.cur.x == sll + 1) {
-          b.cur.x = sll;
+        bool const cap_xenl = m_state.get_mode(mode_xenl);
+        curpos_t sll = this->implicit_sll(line);
+        curpos_t x = b.cur.x(), y = b.cur.y();
+        bool xenl = false;
+        if (b.cur.xenl() || (!cap_xenl && (x == sll || x == b.m_width - 1))) {
+          if (m_state.get_mode(mode_decawm) && m_state.get_mode(mode_xtBSBackLine) && y > 0) {
+            y--;
+            x = this->implicit_slh(b.line(y));
+
+            // Note: xenl から前行に移った時は更に次の文字への移動を試みる。
+            if (b.cur.xenl())
+              sll = this->implicit_sll(b.line(y));
+            else
+              goto update;
+          } else {
+            // Note: 行末に居て前の行に戻らない時は何もしない。
+            return;
+          }
         }
 
-        if (b.cur.x != slh && b.cur.x > 0) {
-          b.cur.x--;
-        } else if (m_state.get_mode(mode_decawm) && m_state.get_mode(mode_xtBSBackLine) && b.cur.y > 0) {
-          b.cur.y--;
-          b.cur.x = this->implicit_sll(b.line());
+        mwg_assert(x < b.m_width);
+        if (x != sll && x != b.m_width - 1) {
+          x++;
+        } else if (cap_xenl) {
+          xenl = true;
+          x++;
         }
+
+      update:
+        b.cur.set(x, y, xenl);
+      } else {
+        // Note: vttest によると xenl は補正するのが正しいらしい。
+        //   しかし xterm で手動で動作を確認すると sll+1 に居ても補正ない様だ。
+        //   一方で RLogin では手動で確認すると補正される。
+        //   xterm で補正が起こる条件があるのだろうがよく分からないので、
+        //   contra では RLogin と同様に常に補正を行う事にする。
+        b.cur.adjust_xenl();
+
+        curpos_t x = b.cur.x(), y = b.cur.y();
+        curpos_t const slh = this->implicit_slh(line);
+        if (x != slh && x > 0) {
+          x--;
+        } else if (m_state.get_mode(mode_decawm) && m_state.get_mode(mode_xtBSBackLine) && y > 0) {
+          y--;
+          x = this->implicit_sll(b.line(y));
+        }
+        b.cur.set(x, y);
       }
     }
     void do_ht() {
@@ -507,28 +543,30 @@ namespace ansi {
       // ToDo: tab stop の管理
       int const tabwidth = 8;
       curpos_t const sll = implicit_sll(m_board->line());
-      curpos_t const xdst = std::min((cur.x + tabwidth) / tabwidth * tabwidth, sll);
-      cur.x = xdst;
+      curpos_t const xdst = std::min((cur.x() + tabwidth) / tabwidth * tabwidth, sll);
+      cur.set_x(xdst);
     }
 
     void do_generic_ff(int delta, bool toAppendNewLine, bool toAdjustXAsPresentationPosition) {
       if (!delta) return;
 
-      curpos_t x = m_board->cur.x;
+      board_t& b = this->board();
+      b.cur.adjust_xenl();
+      curpos_t x = b.cur.x();
       if (toAdjustXAsPresentationPosition)
-        x = m_board->to_presentation_position(m_board->cur.y, x);
+        x = b.to_presentation_position(b.cur.y(), x);
 
       curpos_t const beg = implicit_sph();
       curpos_t const end = implicit_spl() + 1;
-      curpos_t const y = m_board->cur.y;
+      curpos_t const y = b.cur.y();
       if (delta > 0) {
         if (y < end) {
           if (y + delta < end) {
-            m_board->cur.y += delta;
+            b.cur.set_y(b.cur.y() + delta);
           } else {
-            m_board->cur.y = end - 1;
+            b.cur.set_y(end - 1);
             if (toAppendNewLine) {
-              delta -= m_board->cur.y - y;
+              delta -= b.cur.y() - y;
               do_vertical_scroll(*this, -delta, true);
             }
           }
@@ -536,11 +574,11 @@ namespace ansi {
       } else {
         if (y >= beg) {
           if (y + delta >= beg) {
-            m_board->cur.y += delta;
+            b.cur.set_y(b.cur.y() + delta);
           } else {
-            m_board->cur.y = beg;
+            b.cur.set_y(beg);
             if (toAppendNewLine) {
-              delta += y - m_board->cur.y;
+              delta += y - b.cur.y();
               do_vertical_scroll(*this, -delta, true);
             }
           }
@@ -548,8 +586,8 @@ namespace ansi {
       }
 
       if (toAdjustXAsPresentationPosition)
-        x = m_board->to_data_position(m_board->cur.y, x);
-      m_board->cur.x = x;
+        x = b.to_data_position(b.cur.y(), x);
+      b.cur.set_x(x);
     }
     void do_ind() {
       do_generic_ff(1, true, !m_state.dcsm());
@@ -566,22 +604,23 @@ namespace ansi {
       bool const toCallCR = m_state.ff_affected_by_lnm && m_state.get_mode(mode_lnm);
 
       if (m_state.ff_clearing_screen) {
+        board_t& b = this->board();
         if (m_state.ff_using_page_home) {
-          curpos_t x = m_board->cur.x;
-          curpos_t y = m_board->cur.y;
+          b.cur.adjust_xenl();
+          curpos_t x = b.cur.x();
+          curpos_t y = b.cur.y();
           if (!toCallCR && !m_state.get_mode(mode_bdsm))
-            x = m_board->to_presentation_position(y, x);
+            x = b.to_presentation_position(y, x);
 
-          m_board->clear_screen();
+          b.clear_screen();
           y = std::max(implicit_sph(), 0);
 
           if (!toCallCR && !m_state.get_mode(mode_bdsm))
-            x = m_board->to_data_position(y, x);
+            x = b.to_data_position(y, x);
 
-          m_board->cur.x = x;
-          m_board->cur.y = y;
+          b.cur.set(x, y);
         } else
-          m_board->clear_screen();
+          b.clear_screen();
       } else {
         do_generic_ff(1, true, !toCallCR && !m_state.get_mode(mode_bdsm));
       }
@@ -594,20 +633,21 @@ namespace ansi {
       if (toCallCR) do_cr();
     }
     void do_cr() {
-      line_t& line = m_board->line();
+      board_t& b = this->board();
+      line_t& line = b.line();
       initialize_line(line);
 
       curpos_t x;
       if (m_state.get_mode(mode_simd)) {
-        x = implicit_sll(line);
+        x = this->implicit_sll(line);
       } else {
-        x = implicit_slh(line);
+        x = this->implicit_slh(line);
       }
 
       if (!m_state.dcsm())
-        x = m_board->to_data_position(m_board->cur.y, x);
+        x = b.to_data_position(b.cur.y(), x);
 
-      m_board->cur.x = x;
+      b.cur.set_x(x);
     }
     void do_nel() {
       // Note: 新しい行の SLH/SLL に移動したいので、

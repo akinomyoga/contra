@@ -431,10 +431,12 @@ namespace ansi {
 
       move_to_column(x1);
       if (new_w2 || old_w2) {
-        if (new_w2 > old_w2)
-          put_ich(new_w2 - old_w2);
-        else if (new_w2 < old_w2)
-          put_dch(old_w2 - new_w2);
+        if (w3) {
+          if (new_w2 > old_w2)
+            put_ich(new_w2 - old_w2);
+          else if (new_w2 < old_w2)
+            put_dch(old_w2 - new_w2);
+        }
 
         for (std::size_t i = i1; i < i2; i++) {
           cell_t const& cell = new_content[i];
@@ -505,7 +507,7 @@ namespace ansi {
       }
       apply_attr(attribute_t {});
 
-      move_to(b.cur.x, b.cur.y);
+      move_to(b.cur.x(), b.cur.y());
       if (term->state().get_mode(mode_dectcem))
         std::fprintf(file, "\x1b[?25h");
       std::fflush(file);

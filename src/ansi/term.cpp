@@ -240,16 +240,8 @@ namespace {
     s.set_mode(mode_decawm_, value);
 
     // カーソルが行末にいる時、位置を修正する。
-    if (!value) {
-      board_t& b = term.board();
-      if (s.get_mode(mode_simd)) {
-        curpos_t const slh = term.implicit_slh(b.line());
-        if (b.cur.x < slh) b.cur.x = slh;
-      } else {
-        curpos_t const sll = term.implicit_sll(b.line());
-        if (b.cur.x > sll) b.cur.x = sll;
-      }
-    }
+    if (!value)
+      term.board().cur.adjust_xenl();
   }
   int do_rqm_decawm(term_t& term) {
     return term.state().get_mode(mode_decawm_) ? 1 : 2;
@@ -263,8 +255,7 @@ namespace {
       if (!s.get_mode(mode_decncsm)) b.clear_screen();
       s.clear_margin();
       s.set_mode(mode_declrmm, false);
-      b.cur.x = 0;
-      b.cur.y = 0;
+      b.cur.set(0, 0);
     }
   }
   int do_rqm_deccolm(term_t& term) {
@@ -319,13 +310,7 @@ namespace {
     }
 
     // update position
-    b.cur.y = 0;
-    if (update == 2) {
-      b.cur.x = b.to_data_position(b.cur.y, 0);
-    } else {
-      b.cur.x = 0;
-    }
-
+    b.cur.set(update == 2 ? b.to_data_position(b.cur.y(), 0) : 0, 0);
     return true;
   }
 
@@ -363,11 +348,7 @@ namespace {
     if (oldRToL != newRToL && update == 2)
       b.line().reverse(b.m_width);
 
-    if (update == 2)
-      b.cur.x = b.to_data_position(b.cur.y, 0);
-    else
-      b.cur.x = 0;
-
+    b.cur.set_x(update == 2 ? b.to_data_position(b.cur.y(), 0) : 0);
     return true;
   }
 
@@ -468,8 +449,7 @@ namespace {
     if (home + 2 <= limit) {
       s.dec_tmargin = home == 0 ? -1 : home;
       s.dec_bmargin = limit == b.m_height ? -1 : limit;
-      b.cur.x = 0;
-      b.cur.y = 0;
+      b.cur.set(0, 0);
     }
     return true;
   }
@@ -488,8 +468,7 @@ namespace {
     if (_min + 2 <= _max) {
       s.dec_lmargin = _min == 0 ? -1 : _min;
       s.dec_rmargin = _max == b.m_width ? -1 : _max;
-      b.cur.x = 0;
-      b.cur.y = 0;
+      b.cur.set(0, 0);
     }
     return true;
   }
@@ -540,7 +519,7 @@ namespace {
   static void do_cux(term_t& term, csi_single_param_t param, do_cux_direction direction, bool isPresentation, bool check_stbm) {
     board_t& b = term.board();
 
-    curpos_t y = b.cur.y;
+    curpos_t y = b.cur.y();
     switch (direction) {
     case do_cux_prec_char:
       {
@@ -552,13 +531,13 @@ namespace {
             lmargin = term.lmargin();
         }
 
-        curpos_t x = b.cur.x;
+        curpos_t x = b.cur.x();
         if (isPresentation)
           x = b.to_presentation_position(y, x);
         x = std::max(x - (curpos_t) param, lmargin);
         if (isPresentation)
           x = b.to_data_position(y, x);
-        b.cur.x = x;
+        b.cur.update_x(x);
       }
       break;
     case do_cux_succ_char:
@@ -571,20 +550,22 @@ namespace {
             rmargin = term.rmargin();
         }
 
-        curpos_t x = b.cur.x;
+        curpos_t x = b.cur.x();
         if (isPresentation)
           x = b.to_presentation_position(y, x);
         x = std::min(x + (curpos_t) param, rmargin - 1);
         if (isPresentation)
           x = b.to_data_position(y, x);
-        b.cur.x = x;
+        b.cur.update_x(x);
       }
       break;
     case do_cux_prec_line:
-      b.cur.y = std::max(y - (curpos_t) param, check_stbm ? term.tmargin() : (curpos_t) 0);
+      b.cur.adjust_xenl();
+      b.cur.set_y(std::max(y - (curpos_t) param, check_stbm ? term.tmargin() : (curpos_t) 0));
       break;
     case do_cux_succ_line:
-      b.cur.y = std::min(y + (curpos_t) param, (check_stbm ? term.bmargin() : term.board().m_height) - 1);
+      b.cur.adjust_xenl();
+      b.cur.set_y(std::min(y + (curpos_t) param, (check_stbm ? term.bmargin() : term.board().m_height) - 1));
       break;
     }
   }
@@ -675,9 +656,12 @@ namespace {
   void do_adm3_rs(term_t& term) { do_cux(term, 1, do_cux_prec_char, false, false); }
   void do_adm3_us(term_t& term) { do_cux(term, 1, do_cux_succ_char, false, false); }
 
-  static bool do_cup(board_t& b, curpos_t x, curpos_t y) {
-    b.cur.x = b.to_data_position(y, x);
-    b.cur.y = y;
+  static bool do_cup(term_t& term, curpos_t x, curpos_t y) {
+    board_t& b = term.board();
+    tty_state const& s = term.state();
+    if (!s.get_mode(mode_bdsm))
+      x = b.to_data_position(y, x);
+    b.cur.set(x, y);
     return true;
   }
 
@@ -688,8 +672,8 @@ namespace {
     if (param == 0 && s.get_mode(mode_zdm)) param = 1;
 
     board_t& b = term.board();
-    curpos_t const y = std::min(b.cur.y + (curpos_t) param, term.bmargin() - 1);
-    return do_cup(b, 0, y);
+    curpos_t const y = std::min(b.cur.y() + (curpos_t) param, term.bmargin() - 1);
+    return do_cup(term, 0, y);
   }
 
   bool do_cpl(term_t& term, csi_parameters& params) {
@@ -699,8 +683,8 @@ namespace {
     if (param == 0 && s.get_mode(mode_zdm)) param = 1;
 
     board_t& b = term.board();
-    curpos_t const y = std::max(b.cur.y - (curpos_t) param, term.tmargin());
-    return do_cup(b, 0, y);
+    curpos_t const y = std::max(b.cur.y() - (curpos_t) param, term.tmargin());
+    return do_cup(term, 0, y);
   }
 
   bool do_cup(term_t& term, csi_parameters& params) {
@@ -720,7 +704,7 @@ namespace {
       param2 = std::min<csi_single_param_t>(param2 + term.lmargin(), term.rmargin());
     }
 
-    return do_cup(term.board(), (curpos_t) param2 - 1, (curpos_t) param1 - 1);
+    return do_cup(term, (curpos_t) param2 - 1, (curpos_t) param1 - 1);
   }
 
   bool do_hvp(term_t& term, csi_parameters& params) {
@@ -741,8 +725,7 @@ namespace {
     }
 
     board_t& b = term.board();
-    b.cur.y = (curpos_t) param1 - 1;
-    b.cur.x = (curpos_t) param2 - 1;
+    b.cur.set((curpos_t) param2 - 1, (curpos_t) param1 - 1);
     return true;
   }
 
@@ -761,8 +744,7 @@ namespace {
       param = std::min<csi_single_param_t>(param + term.lmargin(), term.rmargin());
     }
 
-    board_t& b = term.board();
-    return do_cup(b, param - 1, b.cur.y);
+    return do_cup(term, param - 1, term.board().cur.y());
   }
 
   bool do_hpa(term_t& term, csi_parameters& params) {
@@ -780,7 +762,7 @@ namespace {
       param = std::min<csi_single_param_t>(param + term.lmargin(), term.rmargin());
     }
 
-    term.board().cur.x = param - 1;
+    term.board().cur.set_x(param - 1);
     return true;
   }
 
@@ -799,7 +781,9 @@ namespace {
       param = std::min<csi_single_param_t>(param + term.tmargin(), term.bmargin());
     }
 
-    term.board().cur.y = param - 1;
+    board_t& b = term.board();
+    b.cur.adjust_xenl();
+    b.cur.set_y(param - 1);
     return true;
   }
 
@@ -866,7 +850,7 @@ namespace {
     board_t& b = term.board();
     bool const isPresentation = !s.get_mode(mode_bdsm);
 
-    curpos_t const y = b.cur.y;
+    curpos_t const y = b.cur.y();
     curpos_t shift = 0;
     switch (direction) {
     case do_cux_prec_char:
@@ -877,7 +861,7 @@ namespace {
       goto shift_cells;
     shift_cells:
       {
-        curpos_t const p = isPresentation ? b.to_presentation_position(y, b.cur.x) : -1;
+        curpos_t const p = isPresentation ? b.to_presentation_position(y, b.cur.x()) : -1;
         line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
         if (dcsm) flags |= line_shift_flags::dcsm;
         curpos_t const tmargin = term.tmargin();
@@ -888,7 +872,7 @@ namespace {
         for (curpos_t y = tmargin; y < bmargin; y++)
           b.line(y).shift_cells(lmargin, rmargin, shift, flags, b.m_width, fill_attr);
         if (isPresentation)
-          b.cur.x = b.to_data_position(y, p);
+          b.cur.set_x(b.to_data_position(y, p));
       }
       break;
 
@@ -900,10 +884,10 @@ namespace {
       goto shift_lines;
     shift_lines:
       {
-        curpos_t const p = isPresentation ? b.to_presentation_position(y, b.cur.x) : -1;
+        curpos_t const p = isPresentation ? b.to_presentation_position(y, b.cur.x()) : -1;
         do_vertical_scroll(term, shift, dcsm);
         if (isPresentation)
-          b.cur.x = b.to_data_position(y, p);
+          b.cur.set_x(b.to_data_position(y, p));
       }
       break;
     }
@@ -935,8 +919,9 @@ namespace {
     (void) params;
     auto& s = term.state();
     auto& b = term.board();
-    s.m_scosc_x = b.cur.x;
-    s.m_scosc_y = b.cur.y;
+    s.m_scosc_x = b.cur.x();
+    s.m_scosc_y = b.cur.y();
+    s.m_scosc_xenl = b.cur.xenl();
     return true;
   }
 
@@ -945,8 +930,7 @@ namespace {
     auto& s = term.state();
     auto& b = term.board();
     if (s.m_scosc_x >= 0) {
-      b.cur.x = s.m_scosc_x;
-      b.cur.y = s.m_scosc_y;
+      b.cur.set(s.m_scosc_x, s.m_scosc_y, s.m_scosc_xenl);
     }
     return true;
   }
@@ -962,7 +946,7 @@ namespace {
   void do_decrc(term_t& term) {
     auto& s = term.state();
     auto& b = term.board();
-    if (s.m_decsc_cur.x >= 0) {
+    if (s.m_decsc_cur.x() >= 0) {
       b.cur = s.m_decsc_cur;
       s.set_mode(mode_decawm, s.m_decsc_decawm);
       s.set_mode(mode_decom, s.m_decsc_decom);
@@ -1234,24 +1218,24 @@ namespace {
     if (s.get_mode(mode_erm)) flags |= line_shift_flags::erm;
 
     curpos_t x1;
+    if (s.get_mode(mode_xenl_ech)) b.cur.adjust_xenl();
     if (s.dcsm()) {
       // DCSM(DATA)
       flags |= line_shift_flags::dcsm;
-      x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
+      x1 = b.cur.x();
     } else {
       // DCSM(PRESENTATION)
-      x1 = b.to_presentation_position(b.cur.y, b.cur.x);
-      if (x1 >= b.m_width) x1 = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
-      b.cur.x = x1;
+      x1 = b.to_presentation_position(b.cur.y(), b.cur.x());
     }
+    mwg_assert(x1 <= b.m_width);
 
     curpos_t const x2 = std::min(x1 + (curpos_t) param, b.m_width);
     b.line().shift_cells(x1, x2, x2 - x1, flags, b.m_width, term.fill_attr());
 
     // カーソル位置
     if (!s.dcsm())
-      x1 = b.to_data_position(b.cur.y, x1);
-    b.cur.x = x1;
+      x1 = b.to_data_position(b.cur.y(), x1);
+    b.cur.set_x_keeping_xenl(x1, b.m_width, term.implicit_sll(b.line()));
 
     return true;
   }
@@ -1262,15 +1246,16 @@ namespace {
     line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
 
     curpos_t x1;
+    if (s.get_mode(mode_xenl_ech)) b.cur.adjust_xenl();
     if (s.dcsm()) {
       // DCSM(DATA)
       flags |= line_shift_flags::dcsm;
-      x1 = b.cur.x < b.m_width ? b.cur.x : s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
+      x1 = b.cur.x();
     } else {
       // DCSM(PRESENTATION)
-      x1 = b.to_presentation_position(b.cur.y, b.cur.x);
-      if (x1 >= b.m_width) x1 = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
+      x1 = b.to_presentation_position(b.cur.y(), b.cur.x());
     }
+    mwg_assert(x1 <= b.m_width);
 
     line_t& line = b.line();
     curpos_t const slh = term.implicit_slh(line);
@@ -1283,11 +1268,11 @@ namespace {
 
     // カーソル位置
     if (s.dcsm()) {
-      if (s.get_mode(mode_home_il)) x1 = term.implicit_slh(line);
+      if (s.get_mode(mode_home_il)) x1 = slh;
     } else {
-      x1 = s.get_mode(mode_home_il) ? term.implicit_slh(line) : b.to_data_position(b.cur.y, x1);
+      x1 = s.get_mode(mode_home_il) ? slh : b.to_data_position(b.cur.y(), x1);
     }
-    b.cur.x = x1;
+    b.cur.set_x_keeping_xenl(x1, b.m_width, sll);
   }
 
   bool do_ich(term_t& term, csi_parameters& params) {
@@ -1342,17 +1327,18 @@ namespace {
     if (line.is_r2l(b.m_presentation_direction)) flags |= line_shift_flags::r2l;
     if (s.dcsm()) flags |= line_shift_flags::dcsm;
 
-    curpos_t x1 = b.cur.x;
-    if (!s.dcsm()) x1 = b.to_presentation_position(b.cur.y, x1);
-    if (x1 >= b.m_width) x1 = s.get_mode(mode_xenl_ech) ? b.m_width - 1 : b.m_width;
+    if (s.get_mode(mode_xenl_ech)) b.cur.adjust_xenl();
+    curpos_t x1 = b.cur.x();
+    if (!s.dcsm()) x1 = b.to_presentation_position(b.cur.y(), x1);
+    mwg_assert(x1 <= b.m_width);
 
     if (param == 0)
       line.shift_cells(x1, b.m_width, b.m_width - x1, flags, b.m_width, fill_attr);
     else
       line.shift_cells(0, x1 + 1, x1 + 1, flags, b.m_width, fill_attr);
 
-    if (!s.dcsm()) x1 = b.to_data_position(b.cur.y, x1);
-    b.cur.x = x1;
+    if (!s.dcsm()) x1 = b.to_data_position(b.cur.y(), x1);
+    b.cur.set_x_keeping_xenl(x1, b.m_width, term.implicit_sll(b.line()));
   }
 
   bool do_el(term_t& term, csi_parameters& params) {
@@ -1373,11 +1359,11 @@ namespace {
     } else {
       do_el(term, b.line(), param, fill_attr);
       if (param == 0) {
-        y1 = b.cur.y + 1;
+        y1 = b.cur.y() + 1;
         y2 = b.m_height;
       } else {
         y1 = 0;
-        y2 = b.cur.y;
+        y2 = b.cur.y();
       }
     }
 
@@ -1407,8 +1393,7 @@ namespace {
     }
 
     term.state().clear_margin();
-    b.cur.x = 0;
-    b.cur.y = 0;
+    b.cur.set(0, 0);
   }
 
   static void do_il_impl(term_t& term, curpos_t shift) {
@@ -1418,27 +1403,29 @@ namespace {
     // カーソル表示位置
     curpos_t p = 0;
     if (!s.get_mode(mode_home_il) && !s.dcsm())
-      p = b.to_presentation_position(b.cur.y, b.cur.x);
+      p = b.to_presentation_position(b.cur.y(), b.cur.x());
 
     // 挿入
     curpos_t const beg = term.tmargin();
     curpos_t const end = term.bmargin();
     curpos_t const lmargin = term.lmargin();
     curpos_t const rmargin = term.rmargin();
-    if (beg <= b.cur.y && b.cur.y < end) {
+    if (beg <= b.cur.y() && b.cur.y() < end) {
       if (!s.get_mode(mode_vem)) {
-        do_vertical_scroll(term, shift, b.cur.y, end, lmargin, rmargin, s.dcsm());
+        do_vertical_scroll(term, shift, b.cur.y(), end, lmargin, rmargin, s.dcsm());
       } else {
-        do_vertical_scroll(term, -shift, beg, b.cur.y + 1, lmargin, rmargin, s.dcsm());
+        do_vertical_scroll(term, -shift, beg, b.cur.y() + 1, lmargin, rmargin, s.dcsm());
       }
     }
 
     // カーソル位置設定
     if (s.get_mode(mode_home_il)) {
       term.initialize_line(b.line());
-      b.cur.x = term.implicit_slh(b.line());
-    } else if (!s.dcsm())
-      b.cur.x = b.to_data_position(b.cur.y, p);
+      b.cur.set_x(term.implicit_slh(b.line()));
+    } else if (!s.dcsm()) {
+      curpos_t const x1 = b.to_data_position(b.cur.y(), p);
+      b.cur.set_x_keeping_xenl(x1, b.m_width, term.implicit_sll(b.line()));
+    }
   }
 
   bool do_il(term_t& term, csi_parameters& params) {
@@ -1678,6 +1665,10 @@ namespace {
   }
 
   void term_t::process_control_sequence(sequence const& seq) {
+    // check cursor state
+    board_t& b = this->board();
+    mwg_assert(b.cur.x() < b.m_width || (b.cur.x() == b.m_width && b.cur.xenl()));
+
     if (seq.is_private_csi()) {
       if (process_private_control_sequence(*this, seq)) return;
       print_unrecognized_sequence(seq);

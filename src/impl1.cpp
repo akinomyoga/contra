@@ -31,7 +31,7 @@ std::u32string get_data_content(board_t& board) {
 std::u32string get_presentation_content(board_t& board) {
   std::vector<char32_t> buff;
   for (curpos_t p = 0; p < board.m_width; p++) {
-    curpos_t const x = board.to_data_position(board.cur.y, p);
+    curpos_t const x = board.to_data_position(board.cur.y(), p);
     char32_t c = board.line().char_at(x).value;
     if (!(c & character_t::flag_wide_extension))
       buff.push_back(c == U'\0' ? U'@' : c);
