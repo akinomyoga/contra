@@ -123,6 +123,9 @@ namespace {
   };
 }
 
+
+  static void do_hvp_impl(term_t& term, curpos_t x, curpos_t y);
+
   //---------------------------------------------------------------------------
   // Modes
 
@@ -449,7 +452,7 @@ namespace {
     if (home + 2 <= limit) {
       s.dec_tmargin = home == 0 ? -1 : home;
       s.dec_bmargin = limit == b.m_height ? -1 : limit;
-      b.cur.set(0, 0);
+      do_hvp_impl(term, 0, 0);
     }
     return true;
   }
@@ -468,7 +471,7 @@ namespace {
     if (_min + 2 <= _max) {
       s.dec_lmargin = _min == 0 ? -1 : _min;
       s.dec_rmargin = _max == b.m_width ? -1 : _max;
-      b.cur.set(0, 0);
+      do_hvp_impl(term, 0, 0);
     }
     return true;
   }
@@ -707,6 +710,15 @@ namespace {
     return do_cup(term, (curpos_t) param2 - 1, (curpos_t) param1 - 1);
   }
 
+  static void do_hvp_impl(term_t& term, curpos_t x, curpos_t y) {
+    tty_state& s = term.state();
+    board_t& b = term.board();
+    if (s.get_mode(mode_decom)) {
+      x = std::min(x + term.lmargin(), term.rmargin());
+      y = std::min(y + term.tmargin(), term.bmargin());
+    }
+    b.cur.set(x, y);
+  }
   bool do_hvp(term_t& term, csi_parameters& params) {
     tty_state& s = term.state();
     csi_single_param_t param1, param2;
@@ -719,13 +731,7 @@ namespace {
 
     if (param1 == 0 || param2 == 0) return false;
 
-    if (s.get_mode(mode_decom)) {
-      param1 = std::min<csi_single_param_t>(param1 + term.tmargin(), term.bmargin());
-      param2 = std::min<csi_single_param_t>(param2 + term.lmargin(), term.rmargin());
-    }
-
-    board_t& b = term.board();
-    b.cur.set((curpos_t) param2 - 1, (curpos_t) param1 - 1);
+    do_hvp_impl(term, (curpos_t) param2 - 1, (curpos_t) param1 - 1);
     return true;
   }
 
