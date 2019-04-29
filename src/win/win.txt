@@ -1,0 +1,78 @@
+
+-------------------------------------------------------------------------------
+  Done
+-------------------------------------------------------------------------------
+
+2019-04-29
+
+* twin: キー入力を受信する方法について調べる。
+  結局の所これは Poderosa を参考にするのが良い。
+  Poderosa を自分で弄った時に色々と苦労した所である。
+  同様に処理を行えば良いのではないかという気がする。
+
+* twin: コンソールが一瞬表示されてしまう問題をどうにかする。
+  FreeConsole は効果がなかった。
+  ShowWindow(GetConsoleWindow(), SW_HIDE); は一瞬表示されてしまう。
+  そもそもアプリケーションの種類というかそういうのを指定できないのだろうか。
+
+-------------------------------------------------------------------------------
+  Done
+-------------------------------------------------------------------------------
+
+2019-04-29
+
+* twin: 取り敢えず GUI を作り始めてみるという事
+
+  段々出来てきて些末な事をやり始めている。
+  次にしなければならないのは何かというと。
+  GUI を作ることではないだろうか。
+  その後に attach detach の機能を実装するのである。
+
+  GUI は何で作るのが良いだろうか。
+  取り敢えずよく知っている Windows で作るのが良い気がする。
+  然し、よく考えてみたら Windows でスクラッチで GUI を書いたことは無いような気もする。
+
+  まあ http://www.kumei.ne.jp/c_lang/index_sdk.html の辺りを参考にすれば良いきもする。
+
+  * done: 然し、Windows で作るのだとすれば取り敢えず Cygwin 上でコンパイルできるようにしなければならない。
+    と思ったらコンパイルが通らない。libmwg を最新に更新してコンパイルし直して、
+    それから contra の Makefile に追記する。-std=c++17 でなくて -std=gnu++17 にしないと fileno がなかった。
+
+    更に posix_openpt や grantpt の類が見つからないというエラーメッセージが出る。
+    然し、それは変である。cygterm でも使っている筈だし、それに検索すると Cygwin 1.7 で既に
+    posix_openpt が実装されたと書かれている。ヘッダを検索すると stdlib.h と fcntl.h である。
+    然し、両者を include しても見つからない。
+    検索すると /usr/include/cygwin/stdlib.h に定義が見つかった。
+    そして /usr/include/stdlib.h から cygwin/stdlib.h は include している筈だ。変だ。
+    明示的に include <cygwin/stdlib.h> しても駄目だ。中を除くと __XSI_VISIBLE >= 600 でなければ見えないそうだ。
+    % そもそも __XSI_VISIBLE が定義されていない様だ。grantpt は __XSI_VISIBLE が定義されているだけで存在する筈。
+    うーん。勝手に定義してしまって良い物なのだろうか…。
+
+    cygterm を確認してみると…何と全く posix_openpt だとか openpt の類を使わずに実装されている…。
+    これは参考にならない。もしくは今後これを参考に書き直したりする必要があるかもしれない。
+
+    うーん。調べてみると <sys/features.h> に __XSI_VISIBLE 0 が定義されている…。
+    更にその中を除くとコメントに _XOPEN_SOURCE >= 600 と書かれている。
+    うーん。つまり #define _XOPEN_SOURCE 600 とか 700 とかしておけば良いという事だろうか。
+    うーん。取り敢えず通る様になった。
+
+  * done: 取り敢えず簡単なサンプルをコンパイルする。
+    と思ったら文字化けする。UNICODE にする。
+    と思ったらリンクできない。調べてみると wWinMain には対応していない疑惑。
+    少なくとも MinGW は対応していない。MinGW が fork してから
+    cygwin が更新指定しなければ今も使えないという事になる。
+    https://cat-in-136.github.io/2012/04/unicodemingw32twinmainwwinmain.html
+
+  * [保留] ダブルクリックで開くとコンソールが表示されてしまう。
+    wWinMain が使えない弊害だろうか。消す方法はあるのだろうか。
+    以下のページに依ると FreeConsole(); を呼び出せとか、ShowWindow(GetConsoleWindow(), SW_HIDE); を呼び出せとか書かれている。
+    https://forum.openframeworks.cc/t/switching-from-console-application-to-gui-application-loses-custom-icon/15279
+    https://social.msdn.microsoft.com/Forums/vstudio/en-US/16b5aff3-2aff-4434-a3d7-bc5048f66572/how-to-make-a-console-apps-window-invisible?forum=csharpgeneral
+    FreeConsole() は試してみたが何も起きない。ShowMessage に関しては一瞬だけ画面が表示される格好悪い。
+    本来は表示されない方法がある筈なのである。
+
+    或いは UNICODE でない方法で実装するべきなのだろうか。
+    と思って WinMain から起動する様にしてみた所関係なかった。
+    やはりコンソールが表示されてしまうのであった。UNICODE に戻す事にした。
+
+    取り敢えずこれは後で処理する事にする。

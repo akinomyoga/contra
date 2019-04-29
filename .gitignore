@@ -5,10 +5,14 @@
 
 # generated files
 /out
-/src/impl1
-/src/impl2
+/src/impl?
+/src/impl?.exe
 /minimal_openpt
-/mat
 
 # output files
 /src/*.seq
+/src/impl?-allseq.txt
+/src/impl?-dump.txt
+
+# private files
+/mat

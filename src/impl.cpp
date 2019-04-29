@@ -1,7 +1,11 @@
+#ifdef __CYGWIN__
+# define _XOPEN_SOURCE 600
+#endif
 #include "impl.hpp"
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>

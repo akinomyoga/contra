@@ -3,29 +3,10 @@
 all:
 .PHONY: all
 
-ifeq ($(HOSTNAME),padparadscha)
-  libmwg_dir := $(HOME)/opt/libmwg-201509
-  libmwg_cxxprefix := i686-pc-linux-gnu-gcc-6.3.1+cxx11-release
-  CXX := g++
-  CXXFLAGS := -Wall -Wextra -O2 \
-    -I $(libmwg_dir)/include/$(libmwg_cxxprefix) \
-    -I $(libmwg_dir)/include \
-    -L $(libmwg_dir)/lib/$(libmwg_cxxprefix)
-else ifeq ($(HOSTNAME),chatoyancy)
-  libmwg_dir := $(HOME)/opt/libmwg-20170824
-  libmwg_cxxprefix := x86_64-pc-linux-gnu-gcc-7.3.1+cxx98-debug
-  CXXFLAGS := -Wall -Wextra \
-    -I $(libmwg_dir)/include/$(libmwg_cxxprefix) \
-    -I $(libmwg_dir)/include \
-    -L $(libmwg_dir)/lib/$(libmwg_cxxprefix)
-endif
+include make_variables.mk
 
 objdir = ../out
 gendir = ../out/gen
-
-CXXFLAGS += -std=c++17
-CPPFLAGS = -MP -MD -MF $(@:.o=.dep)
-
 directories += $(objdir) $(objdir)/experimental $(objdir)/ansi
 
 -include $(wildcard $(objdir)/*.dep)
