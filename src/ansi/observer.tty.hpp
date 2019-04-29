@@ -287,6 +287,15 @@ namespace ansi {
       if (count > 0) put_csiseq_pn1(count, 'P');
     }
 
+    /*?lwiki @var bool is_terminal_bottom;
+     * 外側端末の一番下にいる時に `true` を設定する。
+     * 一番下にいる時には一番下の行での IL を省略できる。
+     * 一番下にいない時には DL の数と IL の数を合わせないと、
+     * 下にある内容を破壊してしまう事になる。
+     */
+    static constexpr bool is_terminal_bottom = false;
+    static constexpr bool is_terminal_fullwidth = true;
+
     /*?lwiki
      * @fn void trace_line_scroll();
      *   行の移動を追跡し、それに応じて IL, DL を用いたスクロールを実施します。
@@ -309,6 +318,9 @@ namespace ansi {
       }
 
       // DL による行削除
+#ifndef NDEBUG
+      int dbgD = 0, dbgI = 0, dbgC = 0;
+#endif
       int previous_shift = 0;
       int total_shift = 0;
       for (curpos_t i = 0; i < height; i++) {
@@ -318,12 +330,18 @@ namespace ansi {
           move_to_line(i + new_shift + total_shift);
           put_dl(-new_shift);
           total_shift += new_shift;
+#ifndef NDEBUG
+          dbgD -= new_shift;
+#endif
         }
         previous_shift = screen_buffer[i].delta;
       }
       if (previous_shift > 0) {
         move_to_line(height - previous_shift + total_shift);
         put_dl(previous_shift);
+#ifndef NDEBUG
+        dbgD += previous_shift;
+#endif
       }
 
       // IL による行追加
@@ -334,8 +352,18 @@ namespace ansi {
         if (new_shift > 0) {
           move_to_line(i + previous_shift);
           put_il(new_shift);
+#ifndef NDEBUG
+          dbgI += new_shift;
+#endif
         }
         previous_shift = screen_buffer[i].delta;
+      }
+      if (!is_terminal_bottom && previous_shift < 0) {
+        move_to_line(height + previous_shift);
+        put_il(-previous_shift);
+#ifndef NDEBUG
+        dbgI += -previous_shift;
+#endif
       }
 
       // screen_buffer の更新
@@ -346,13 +374,23 @@ namespace ansi {
           continue;
         }
         int const new_shift = screen_buffer[i].delta - previous_shift;
-        for (curpos_t j = i + new_shift; j < i; j++)
+        for (curpos_t j = i + new_shift; j < i; j++) {
           screen_buffer[j].delta = height;
+          screen_buffer[j].content.clear();
+#ifndef NDEBUG
+          dbgC++;
+#endif
+        }
         previous_shift = screen_buffer[i].delta;
       }
       if (previous_shift > 0) {
-        for (curpos_t j = height - previous_shift; j < height; j++)
+        for (curpos_t j = height - previous_shift; j < height; j++) {
           screen_buffer[j].delta = height;
+          screen_buffer[j].content.clear();
+#ifndef NDEBUG
+          dbgC++;
+#endif
+        }
       }
       for (curpos_t i = 0; i < height; i++) {
         curpos_t const i0 = i;
@@ -367,9 +405,13 @@ namespace ansi {
           // j -> j + delta に移動して j にあった物は消去する
           std::swap(screen_buffer[j + delta], screen_buffer[j]);
           screen_buffer[j].id = -1;
-          screen_buffer[j].content.clear();
+          //screen_buffer[j].content.clear();
         }
       }
+#ifndef NDEBUG
+      mwg_assert(dbgD == dbgI && dbgI == dbgC,
+        "total_delete=%d total_insert=%d clear=%d", dbgD, dbgI, dbgC);
+#endif
     }
     void erase_until_eol() {
       board_t const& w = term->board();
@@ -485,7 +527,8 @@ namespace ansi {
 
       board_t const& b = term->board();
       screen_buffer.resize(b.m_height);
-      trace_line_scroll();
+      if (is_terminal_fullwidth)
+        trace_line_scroll();
       move_to(0, 0);
       for (curpos_t y = 0; y < b.m_height; y++) {
         line_t const& line = b.m_lines[y];
