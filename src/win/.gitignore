@@ -1,4 +1,8 @@
-cygwin1.dll
-test1.exe
+# gitignore
+
+/test1.exe
 *.dep
 *.o
+
+# resources
+/cygwin1.dll

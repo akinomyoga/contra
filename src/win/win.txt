@@ -5,21 +5,103 @@
 
 2019-04-29
 
-* twin: キー入力を受信する方法について調べる。
-  結局の所これは Poderosa を参考にするのが良い。
-  Poderosa を自分で弄った時に色々と苦労した所である。
-  同様に処理を行えば良いのではないかという気がする。
+* twin: IME に関しては難題であると思ったが、実は猫でも分かるに載っていた。
+  http://www.kumei.ne.jp/c_lang/sdk3/sdk_278.htm
+
+* [保留] twin: dead-char 対応
+
+  dead-char (フランス語やスペイン語のキーボードで現れる) の仕組みがよく分からない。
+  そして dead-char を入力する時にどのような順序でメッセージが送られてくるのかもよく分からない。
+
+  ? 例えば WM_CHAR を見ていれば WM_DEADCHAR と同じ内容が見えるのだろうか。
+    それとも WM_CHAR または WM_DEADCHAR のどちらか一方だけが送られてくるのだろうか。
+
+  ? dead-char を入力しかけている状態でも WM_KEYDOWN が送られてくるのだろうか。
+
+  ? ::ToUnicode/::ToAscii に指定する keyboard state はダミーの変な物であっても、
+    ちゃんと (何処かに記録してあるキーボード状態を参照する等して) 正しく変換してくれるのだろうか。
+
+    どうも、同じ引数で2回呼び出しても結果が変わる様なので、何処かに状態が記録されている気がする。
+    (或いは勝手に keyboard state を書き換えてしまう等の事はあるのだろうか)
+    しかし、何を元に状態を更新しているのかについてはよく分からない。
+    渡した keyboard state によって内部状態を更新しているのだとしたら、
+    ダミーの keyboard state を渡している限りは dead keys は受信できない。
+
+  ? ::ToUnicode の戻り値が 3 以上の場合も存在しうるらしいが、
+    最大で幾つなのだろうか。そしてもしバッファが足りなかった場合には残りは取得できないのか。
+    https://stackoverflow.com/questions/42667205/maximum-number-of-characters-output-from-win32-tounicode-toascii
+
+  ? 更に、実際に dead-char を受信するとしても修飾キーがついていた時に、
+    1つ目の文字に修飾キーをつけるのか、
+    或いは全ての文字に修飾キーをつけるのか、というのはよく分からない。
+
 
 * twin: コンソールが一瞬表示されてしまう問題をどうにかする。
   FreeConsole は効果がなかった。
   ShowWindow(GetConsoleWindow(), SW_HIDE); は一瞬表示されてしまう。
   そもそもアプリケーションの種類というかそういうのを指定できないのだろうか。
 
+
 -------------------------------------------------------------------------------
   Done
 -------------------------------------------------------------------------------
 
 2019-04-29
+
+* twin: キー入力を受信する方法について調べる。
+  結局の所これは Poderosa を参考にするのが良い。
+  Poderosa を自分で弄った時に色々と苦労した所である。
+  同様に処理を行えば良いのではないかという気がする。
+
+  取り敢えず VS で Poderosa を開く事にする。というか重い。
+  取り敢えず問題の物が書かれているファイルは分かった。
+  TerminalControl.cs で色々処理している。
+
+  mwgSendChar, mwgSendKey, mwgSendAltKey, ProcessCmdKey 辺りから。
+  更に、遡ると、ProcessDialogKey, OnMouseWheel である。
+  うーん。何か変な物を override していた様な気もするが…。
+  他に OnKeyPress もある。OnKeyPress のコメントに IME で確定すると
+  「WM_IME_CHAR、WM_ENDCOMPOSITION、WM_CHARの順でメッセージが送られてくる。」
+  と書かれている。うーん。IME を有効にするにはどうすれば良いのだったか。
+  他に OnMouseDown, OnMouseUp, OnResize 等。
+
+  OnLostFocus で ClearIMEComposition という関数を呼び出している。
+  うーん。IME 関係の処理は WndProc 内部で実行している。
+  WM_IME_COMPOSITION, WM_IME_START_COMPOSITION,
+  WM_IME_ENDCOMPOSITION を見ている。
+
+  取り敢えずメッセージを出力する事にする。
+
+  うーん。WM_KEYDOWN を調べると。修飾キーが取れない様だ??
+  https://stackoverflow.com/questions/33051983/how-to-get-modifier-key-eventaltctrlshift
+  結局毎回 GetKeyState で自分で状態を確認するしかない様子である。
+
+  仮想キーコードから文字に翻訳するには MapVirtualKey(wParam, MAPVK_VK_TO_CHAR) という関数を用いるそうだ。
+  或いは、一旦 VSC にしてからその後で ToAscii で文字に変換する。
+  https://stackoverflow.com/questions/318777/c-sharp-how-to-translate-virtual-keycode-to-char
+  https://msdn.microsoft.com/ja-jp/windows/ms646306(v=vs.80)
+  https://stackoverflow.com/questions/3864153/on-windows-how-do-we-convert-a-virtual-key-code-to-the-shifted-character
+
+  * うーん。dead-keys はどの様に取り扱うべきなのか。
+    ToAscii ではなくて ToUnicode に変換した方が良さそう。
+    https://stackoverflow.com/questions/42667205/maximum-number-of-characters-output-from-win32-tounicode-toascii
+    然し、一度に複数の文字に decode される事もあるそうで、どうしたら良いのか分からない。
+    というか、そもそも dead-char を入力する時に dead-char が完成するまでのキーボード入力はどうなっているのかだとか色々謎。
+    もし、dead-char が完成するまでのキーイベントも全て拾っているのだとしたら、
+    dead-char を解釈してしまってはいけない気がする。それに kbstate に変な物を指定しているが、
+    この時にちゃんと dead-char を decode できるのかも謎である。という訳で dead-char に関しては今の所対応しない事にする。
+    単に無視する事にする。
+
+  * 様々のキーの組み合わせに対してどの様に動作するべきかについて整理して置く必要がある。
+
+    a 先ずアルファベットのキーに関しては:
+      (1) 修飾キーがある場合には小文字に変換して修飾を付加する。
+      (2) 修飾キーがない場合には capslock の状態を考慮に入れて変換する。
+    b それ以外の文字キー・記号キーに関しては
+      (1) Shift を考慮に入れて文字に変換し、Shift 以外の修飾を付加する。
+    c カーソルキー・関数キーの類はそのまま修飾を付加して処理する。
+
+  IME に関しては別項目で考えることにする。
 
 * twin: 取り敢えず GUI を作り始めてみるという事
 
