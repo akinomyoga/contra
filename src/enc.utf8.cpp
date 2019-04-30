@@ -1,5 +1,5 @@
 #include "enc.utf8.hpp"
-#include "../contradef.h"
+#include "contradef.hpp"
 
 namespace contra {
 namespace encoding {

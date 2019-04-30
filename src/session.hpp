@@ -8,7 +8,7 @@
 #include <memory>
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
-#include "ansi/enc.utf8.hpp"
+#include "enc.utf8.hpp"
 
 namespace contra {
 namespace term {

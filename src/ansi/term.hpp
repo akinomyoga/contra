@@ -9,10 +9,10 @@
 #include <iterator>
 #include <algorithm>
 #include <vector>
-#include "../sequence.h"
+#include "../sequence.hpp"
 #include "line.hpp"
-#include "enc.c2w.hpp"
-#include "enc.utf8.hpp"
+#include "../enc.c2w.hpp"
+#include "../enc.utf8.hpp"
 
 namespace contra {
 namespace ansi {

@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_ANSI_ENC_C2W_HPP
-#define CONTRA_ANSI_ENC_C2W_HPP
+#ifndef contra_enc_c2w_hpp
+#define contra_enc_c2w_hpp
 
 namespace contra {
 namespace encoding {

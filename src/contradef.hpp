@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_CONTRADEF_H
-#define CONTRA_CONTRADEF_H
+#ifndef contra_contradef_hpp
+#define contra_contradef_hpp
 #include <cstddef>
 #include <cstdint>
 #include <vector>

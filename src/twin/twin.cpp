@@ -14,9 +14,9 @@
 #include <memory>
 #include <functional>
 #include <mwg/except.h>
-#include "../contradef.h"
-#include "../ansi/enc.utf8.hpp"
-#include "../ansi/util.hpp"
+#include "../contradef.hpp"
+#include "../enc.utf8.hpp"
+#include "../util.hpp"
 #include "../impl.hpp"
 #include "../session.hpp"
 #include "win_messages.hpp"

@@ -34,8 +34,8 @@ impl1_objs = \
   $(objdir)/dict.o \
   $(objdir)/ansi/term.o \
   $(objdir)/ansi/line.o \
-  $(objdir)/ansi/enc.c2w.o \
-  $(objdir)/ansi/enc.utf8.o \
+  $(objdir)/enc.c2w.o \
+  $(objdir)/enc.utf8.o \
   $(objdir)/contradef.o
 impl1: $(impl1_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^
@@ -47,8 +47,8 @@ impl2_objs = \
   $(objdir)/dict.o \
   $(objdir)/ansi/term.o \
   $(objdir)/ansi/line.o \
-  $(objdir)/ansi/enc.c2w.o \
-  $(objdir)/ansi/enc.utf8.o \
+  $(objdir)/enc.c2w.o \
+  $(objdir)/enc.utf8.o \
   $(objdir)/contradef.o
 impl2: $(impl2_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^
@@ -62,8 +62,8 @@ impl3_objs = \
   $(objdir)/dict.o \
   $(objdir)/ansi/term.o \
   $(objdir)/ansi/line.o \
-  $(objdir)/ansi/enc.c2w.o \
-  $(objdir)/ansi/enc.utf8.o \
+  $(objdir)/enc.c2w.o \
+  $(objdir)/enc.utf8.o \
   $(objdir)/contradef.o
 impl3: $(impl3_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^
@@ -78,12 +78,12 @@ twin_LIBS := -lgdi32 -limm32
 twin_objs = \
   $(objdir)/twin/twin.o \
   $(objdir)/twin/win_messages.o \
-  $(objdir)/ansi/enc.utf8.o \
+  $(objdir)/enc.utf8.o \
   $(objdir)/impl.o \
   $(objdir)/dict.o \
   $(objdir)/ansi/term.o \
   $(objdir)/ansi/line.o \
-  $(objdir)/ansi/enc.c2w.o \
+  $(objdir)/enc.c2w.o \
   $(objdir)/contradef.o
 twin.exe: $(twin_objs)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(twin_LIBS)

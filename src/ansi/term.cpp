@@ -7,7 +7,7 @@
 #include <vector>
 #include <unordered_map>
 #include <mwg/except.h>
-#include "../sequence.h"
+#include "../sequence.hpp"
 
 namespace contra {
 namespace ansi {

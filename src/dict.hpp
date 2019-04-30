@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <cstdio>
 #include <mwg/except.h>
-#include "contradef.h"
-#include "ansi/enc.utf8.hpp"
+#include "contradef.hpp"
+#include "enc.utf8.hpp"
 
 namespace contra {
 namespace dict {

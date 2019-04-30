@@ -1,13 +1,13 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_SEQUENCE_H
-#define CONTRA_SEQUENCE_H
-#include "contradef.h"
+#ifndef contra_sequence_hpp
+#define contra_sequence_hpp
+#include "contradef.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <vector>
 #include <mwg/except.h>
-#include "ansi/enc.utf8.hpp"
+#include "enc.utf8.hpp"
 
 namespace contra {
 

@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_ANSI_OBSERVER_TTY_HPP
-#define CONTRA_ANSI_OBSERVER_TTY_HPP
+#ifndef contra_ttty_buffer_hpp
+#define contra_ttty_buffer_hpp
 #include <cstdio>
 #include <vector>
 #include "../ansi/line.hpp"

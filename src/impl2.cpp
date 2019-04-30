@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "impl.hpp"
-#include "sequence.h"
+#include "sequence.hpp"
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
 #include "ttty/buffer.hpp"

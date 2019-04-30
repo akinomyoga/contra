@@ -11,12 +11,12 @@
 #include <vector>
 
 #include "impl.hpp"
-#include "sequence.h"
+#include "sequence.hpp"
 #include "dict.hpp"
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
 #include "ttty/buffer.hpp"
-#include "ansi/enc.c2w.hpp"
+#include "enc.c2w.hpp"
 
 int main() {
   struct termios oldTermios;

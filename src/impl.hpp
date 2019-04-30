@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <vector>
-#include "sequence.h"
+#include "sequence.hpp"
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
 #include "ttty/buffer.hpp"

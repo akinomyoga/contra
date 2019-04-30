@@ -1,10 +1,10 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_ANSI_ENC_UTF8_HPP
-#define CONTRA_ANSI_ENC_UTF8_HPP
+#ifndef contra_enc_utf8_hpp
+#define contra_enc_utf8_hpp
 #include <cstdio>
 #include <cstdint>
 #include <vector>
-#include "../contradef.h"
+#include "contradef.hpp"
 
 namespace contra {
 namespace encoding {

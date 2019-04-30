@@ -7,13 +7,13 @@
 #include <vector>
 #include <algorithm>
 #include <tuple>
-#include "../contradef.h"
+#include "../contradef.hpp"
 #include "../dict.hpp"
-#include "util.hpp"
+#include "../util.hpp"
 
 // debugging
 #include <cstdio>
-#include "enc.utf8.hpp"
+#include "../enc.utf8.hpp"
 
 namespace contra {
 namespace ansi {
