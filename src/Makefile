@@ -5,6 +5,9 @@ all:
 
 include make_variables.mk
 
+SHELL := /bin/bash
+ostype := $(shell echo $$OSTYPE)
+
 objdir = ../out
 gendir = ../out/gen
 directories += $(objdir) $(objdir)/experimental $(objdir)/ansi
@@ -64,6 +67,8 @@ impl3: $(impl3_objs)
 $(objdir)/impl3.o: impl3.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
+ifeq ($(ostype),cygwin)
+
 all: twin
 twin_CPPFLAGS = $(CPPFLAGS) -DUNICODE -D_UNICODE
 twin_LIBS := -lgdi32 -limm32
@@ -82,6 +87,8 @@ twin.exe: $(twin_objs)
 directories += $(objdir)/twin
 $(objdir)/twin/%.o: twin/%.cpp | $(objdir)/twin
 	$(CXX) $(twin_CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+endif
 
 # all: experimental/bidi
 experimental/bidi: $(objdir)/experimental/bidi.o

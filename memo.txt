@@ -118,7 +118,80 @@
   ToDo
 ------------------------------------------------------------------------------
 
+2019-04-30
+
+* twin: 今は物凄く適当な描画しか行っていないのでちらつきが激しい。
+
+  ちゃんと描画するにはダブルバッファリングにするというのと、
+  更新を変更のあった行だけに絞るという事。
+  実のところダブルバッファリングにするだけで十分なのかもしれない。
+  全体を描画するのにそんなに時間はかかっていない様な気がするから。
+  また、端末の画面を変更しているアニメーションを表示する訳でもない。
+
+  調べると自分で Compatible bitmap を使って明示的にダブルバッファリングしている例。
+  https://qiita.com/kero_dgu/items/981706aaa7fb64daab11
+
+  然し、Windows に元から備わっているダブルバッファリングがちゃんと動くならば、
+  それを使うのが良い。と言っても前に試した時には色々調べた挙げ句結局、
+  上記の方法と同様に compatible bitmap を作った様な気もする。
+  取り敢えず試すだけ試してみる事にする。
+
+  http://home.a00.itscom.net/hatada/windows/tips/doublebuffering01.html
+  うーん。ここの説明を読むとやはり適当に Windows の機能を利用しただけでは
+  ちらつきは完全には防止できない様に書かれている…。
+  実際に試してみた。やはりちらつきを抑える事はできない。
+
+* twin: bash を exit した時に自動で閉じたいが正しい閉じ方は?
+  現在の実装だと単にアプリケーションを終了してしまっている。
+  本当は WM_CLOSE 等を呼び出して閉じるべきなのではないだろうか。
+
+* twin: ダブルクリックで起動すると一瞬で終了する。
+  多分、途中で何かのエラーが起こってそれで終了しているのだと思う。
+  ファイル等に出力しながら何処で止まっているかを探る必要がある。
+
 2019-04-29
+
+* vttest (8) の insert mode が A...A になってしまう
+  これは SM(4) を実行していた。IRM である。対応していない。
+
+* [保留] twin: ウィンドウの背景色の設定
+
+  ::SetClassLong(hWnd, GCL_HBRBACKGROUND, (LONG)CreateSolidBrush(RGB(0,0,0)));
+  等の様にして設定する事ができる様である。ちらつきを抑える為には、
+  一番大きな面積を占めている色にこれを設定しておくのが良い気がする。
+  取り敢えず WM_CREATE 辺りに置いておく事にする。
+
+* [保留] twin: dead-char 対応
+
+  dead-char (フランス語やスペイン語のキーボードで現れる) の仕組みがよく分からない。
+  そして dead-char を入力する時にどのような順序でメッセージが送られてくるのかもよく分からない。
+
+  ? 例えば WM_CHAR を見ていれば WM_DEADCHAR と同じ内容が見えるのだろうか。
+    それとも WM_CHAR または WM_DEADCHAR のどちらか一方だけが送られてくるのだろうか。
+
+  ? dead-char を入力しかけている状態でも WM_KEYDOWN が送られてくるのだろうか。
+
+  ? ::ToUnicode/::ToAscii に指定する keyboard state はダミーの変な物であっても、
+    ちゃんと (何処かに記録してあるキーボード状態を参照する等して) 正しく変換してくれるのだろうか。
+
+    どうも、同じ引数で2回呼び出しても結果が変わる様なので、何処かに状態が記録されている気がする。
+    (或いは勝手に keyboard state を書き換えてしまう等の事はあるのだろうか)
+    しかし、何を元に状態を更新しているのかについてはよく分からない。
+    渡した keyboard state によって内部状態を更新しているのだとしたら、
+    ダミーの keyboard state を渡している限りは dead keys は受信できない。
+
+  ? ::ToUnicode の戻り値が 3 以上の場合も存在しうるらしいが、
+    最大で幾つなのだろうか。そしてもしバッファが足りなかった場合には残りは取得できないのか。
+    https://stackoverflow.com/questions/42667205/maximum-number-of-characters-output-from-win32-tounicode-toascii
+
+  ? 更に、実際に dead-char を受信するとしても修飾キーがついていた時に、
+    1つ目の文字に修飾キーをつけるのか、
+    或いは全ての文字に修飾キーをつけるのか、というのはよく分からない。
+
+* [保留] twin: コンソールが一瞬表示されてしまう問題をどうにかする。
+  FreeConsole は効果がなかった。
+  ShowWindow(GetConsoleWindow(), SW_HIDE); は一瞬表示されてしまう。
+  そもそもアプリケーションの種類というかそういうのを指定できないのだろうか。
 
 2019-04-28
 
@@ -1249,13 +1322,199 @@
     但し、別の端末から受け取ったデータは翻訳する必要がある。
     これはやはり terminfo 等を参照する事にする。
 
-
 
 ------------------------------------------------------------------------------
   Done
 ------------------------------------------------------------------------------
 
+2019-04-30
+
+* twin: C-RET を押したらハングした [#D0095]
+  何かあるのだろうか…。再現性が在る事は確認した。
+  コードを確認してみると、確かにこれだと無限ループになる。修正した。
+  序に、未だ対応していないキーの送信にも対応した。
+
+* twin: 実際に端末に接続して動かしてみる事にする [#D0094]
+  また何だかつまらない事で止まっている気がする。
+  次にするべき事はもう早速端末に接続する事なのではないだろうか。
+
+  さて。termios が必要である。今までは既存の termios をそのまま使っていたが、
+  今度はゼロから作らなければならない。どの様にするのが正しいのだろうか。
+  以下のページに依ると既定値は /usr/include/termios.h にあると書かれている。
+  http://tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html
+  /usr/include/sys/termios.h の中に定義が書かれているが何が既定値かは分からない。
+  以下の様なマクロが定義されてはいたが、これが他の環境でも使えるのかは分からない。
+
+  #define TTYDEF_IFLAG    (BRKINT | ICRNL | IMAXBEL | IXON | IXANY)
+  #define TTYDEF_OFLAG    (OPOST | ONLCR)
+  #define TTYDEF_LFLAG    (ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOKE | ECHOCTL)
+  #define TTYDEF_CFLAG    (CREAD | CS8 | HUPCL)
+  #define TTYDEF_SPEED    (B9600)
+
+  https://stackoverflow.com/questions/16782715/termios-default-for-standard-terminal-session
+  を参照してみると、openpty に対して NULL を指定すれば既定の sane な termios になるそうだ。
+  取り敢えず何も設定せずに開いてみる事にする。
+
+  後、ループを合成しなければならない…。GetMessage を非同期に実行する方法はどうするのか。
+  複数スレッドで実行する方法、SetTimer/KillTimer を瞬間的に実行して無理やり GetMessage を止める方法、
+  MsgWaitForMultipleObjects を使ってチェックする方法が載っている。
+  https://stackoverflow.com/questions/10866311/getmessage-with-a-timeout
+  以下のページには PeekMessage に空の引数を指定する事でメッセージがあるかどうかチェックしている。これが良さそう。
+  http://www.sm.rim.or.jp/~shishido/mainloop.html
+  https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-peekmessagea
+
+  うーん。PeekMessage 及び GetMessage に hWnd を指定して呼び出してみた所、
+  どうやら WM_DESTROY または WM_QUIT が来ない。WM_QUIT は hWnd なしで来る様だ。
+  もしくは WM_DESTROY を受信した時点で、状態を変更しなければならないという事か。
+  調べたら WM_DESTROY は受け取れるが WM_QUIT は受け取れない。
+  従って GetMessage が失敗する事が永遠にない、という状態だった。
+  WM_DESTROY を受け取った時点で hWnd = NULL として、
+  hWnd が有効の間だけループを回すように修正した。直った。
+
+  うーん。取り敢えず起動はしている。Bash も動いている気がする。
+  しかし何も表示されない…。次に何も受信されない。
+  先ず表示されなかった理由は何かというと、BeginPaint 等をして render していると、
+  invalidate の領域だけにしか描画されないという事。
+  GetDC で得た物を使えば全体が描画される。
+
+  次に、何だか反応がないように思われたのは文字が送信されていない?
+  更に出力バッファをクリアし忘れていたのでどんどん大量に入力される様になっていた。
+
+* twin: IME に関しては難題であると思ったが、実は猫でも分かるに載っていた [#D0093]
+  http://www.kumei.ne.jp/c_lang/sdk3/sdk_278.htm
+
+  結局何だかよく分からないので Poderosa の実装を観察する。
+  どうやら WM_IME_STARTCOMPOSITION で ImmSetCompositionWindow を呼び出すだけで良い雰囲気である。
+  実際にやってみると思うように動かない。変な位置に表示される。
+  と思ったら Poderosa では基底の WndProc を呼び出していた。
+  DefWindowProc を呼び出せば良いのだった。動く様になった。
+  実はこれで完了なのではないだろうか。
+
+  所で背景色・前景色は指定できるのだろうか。。
+  もしかするとコントロールの背景色・前景色を使っているのかもしれないと思って変更してみた。
+  https://detail.chiebukuro.yahoo.co.jp/qa/question_detail/q10139369610
+  ::SetClassLong( hWnd, GCL_HBRBACKGROUND, (LONG)CreateSolidBrush( RGB(0,0,0) ) );
+  然し、やはりIMEの候補表示に使われる前景色・背景色とは関係がない様だった。
+
+  或いは、変換中の文字列を自前で描画するという様にするしかないのだろうか。
+  しかし、それはさすがに面倒である。というか本当に可能なのかもよく分からない。
+  mintty は対応していないようであるし Poderosa も対応していない気がする。
+  従って、これに関してはわざわざ自前で描画する必要もない。このままで良い。
+
+  実は、ImmSetCompositionWindow を指定するだけで動く様になってしまった気がする。簡単だった。
+
 2019-04-29
+
+* twin: キー入力を受信する方法について調べる [#D0092]
+  結局の所これは Poderosa を参考にするのが良い。
+  Poderosa を自分で弄った時に色々と苦労した所である。
+  同様に処理を行えば良いのではないかという気がする。
+
+  取り敢えず VS で Poderosa を開く事にする。というか重い。
+  取り敢えず問題の物が書かれているファイルは分かった。
+  TerminalControl.cs で色々処理している。
+
+  mwgSendChar, mwgSendKey, mwgSendAltKey, ProcessCmdKey 辺りから。
+  更に、遡ると、ProcessDialogKey, OnMouseWheel である。
+  うーん。何か変な物を override していた様な気もするが…。
+  他に OnKeyPress もある。OnKeyPress のコメントに IME で確定すると
+  「WM_IME_CHAR、WM_ENDCOMPOSITION、WM_CHARの順でメッセージが送られてくる。」
+  と書かれている。うーん。IME を有効にするにはどうすれば良いのだったか。
+  他に OnMouseDown, OnMouseUp, OnResize 等。
+
+  OnLostFocus で ClearIMEComposition という関数を呼び出している。
+  うーん。IME 関係の処理は WndProc 内部で実行している。
+  WM_IME_COMPOSITION, WM_IME_START_COMPOSITION,
+  WM_IME_ENDCOMPOSITION を見ている。
+
+  取り敢えずメッセージを出力する事にする。
+
+  うーん。WM_KEYDOWN を調べると。修飾キーが取れない様だ??
+  https://stackoverflow.com/questions/33051983/how-to-get-modifier-key-eventaltctrlshift
+  結局毎回 GetKeyState で自分で状態を確認するしかない様子である。
+
+  仮想キーコードから文字に翻訳するには MapVirtualKey(wParam, MAPVK_VK_TO_CHAR) という関数を用いるそうだ。
+  或いは、一旦 VSC にしてからその後で ToAscii で文字に変換する。
+  https://stackoverflow.com/questions/318777/c-sharp-how-to-translate-virtual-keycode-to-char
+  https://msdn.microsoft.com/ja-jp/windows/ms646306(v=vs.80)
+  https://stackoverflow.com/questions/3864153/on-windows-how-do-we-convert-a-virtual-key-code-to-the-shifted-character
+
+  * うーん。dead-keys はどの様に取り扱うべきなのか。
+    ToAscii ではなくて ToUnicode に変換した方が良さそう。
+    https://stackoverflow.com/questions/42667205/maximum-number-of-characters-output-from-win32-tounicode-toascii
+    然し、一度に複数の文字に decode される事もあるそうで、どうしたら良いのか分からない。
+    というか、そもそも dead-char を入力する時に dead-char が完成するまでのキーボード入力はどうなっているのかだとか色々謎。
+    もし、dead-char が完成するまでのキーイベントも全て拾っているのだとしたら、
+    dead-char を解釈してしまってはいけない気がする。それに kbstate に変な物を指定しているが、
+    この時にちゃんと dead-char を decode できるのかも謎である。という訳で dead-char に関しては今の所対応しない事にする。
+    単に無視する事にする。
+
+  * 様々のキーの組み合わせに対してどの様に動作するべきかについて整理して置く必要がある。
+
+    a 先ずアルファベットのキーに関しては:
+      (1) 修飾キーがある場合には小文字に変換して修飾を付加する。
+      (2) 修飾キーがない場合には capslock の状態を考慮に入れて変換する。
+    b それ以外の文字キー・記号キーに関しては
+      (1) Shift を考慮に入れて文字に変換し、Shift 以外の修飾を付加する。
+    c カーソルキー・関数キーの類はそのまま修飾を付加して処理する。
+
+  IME に関しては別項目で考えることにする。
+
+* twin: 取り敢えず GUI を作り始めてみるという事 [#D0091]
+
+  段々出来てきて些末な事をやり始めている。
+  次にしなければならないのは何かというと。
+  GUI を作ることではないだろうか。
+  その後に attach detach の機能を実装するのである。
+
+  GUI は何で作るのが良いだろうか。
+  取り敢えずよく知っている Windows で作るのが良い気がする。
+  然し、よく考えてみたら Windows でスクラッチで GUI を書いたことは無いような気もする。
+
+  まあ http://www.kumei.ne.jp/c_lang/index_sdk.html の辺りを参考にすれば良いきもする。
+
+  * done: 然し、Windows で作るのだとすれば取り敢えず Cygwin 上でコンパイルできるようにしなければならない。
+    と思ったらコンパイルが通らない。libmwg を最新に更新してコンパイルし直して、
+    それから contra の Makefile に追記する。-std=c++17 でなくて -std=gnu++17 にしないと fileno がなかった。
+
+    更に posix_openpt や grantpt の類が見つからないというエラーメッセージが出る。
+    然し、それは変である。cygterm でも使っている筈だし、それに検索すると Cygwin 1.7 で既に
+    posix_openpt が実装されたと書かれている。ヘッダを検索すると stdlib.h と fcntl.h である。
+    然し、両者を include しても見つからない。
+    検索すると /usr/include/cygwin/stdlib.h に定義が見つかった。
+    そして /usr/include/stdlib.h から cygwin/stdlib.h は include している筈だ。変だ。
+    明示的に include <cygwin/stdlib.h> しても駄目だ。中を除くと __XSI_VISIBLE >= 600 でなければ見えないそうだ。
+    % そもそも __XSI_VISIBLE が定義されていない様だ。grantpt は __XSI_VISIBLE が定義されているだけで存在する筈。
+    うーん。勝手に定義してしまって良い物なのだろうか…。
+
+    cygterm を確認してみると…何と全く posix_openpt だとか openpt の類を使わずに実装されている…。
+    これは参考にならない。もしくは今後これを参考に書き直したりする必要があるかもしれない。
+
+    うーん。調べてみると <sys/features.h> に __XSI_VISIBLE 0 が定義されている…。
+    更にその中を除くとコメントに _XOPEN_SOURCE >= 600 と書かれている。
+    うーん。つまり #define _XOPEN_SOURCE 600 とか 700 とかしておけば良いという事だろうか。
+    うーん。取り敢えず通る様になった。
+
+  * done: 取り敢えず簡単なサンプルをコンパイルする。
+    と思ったら文字化けする。UNICODE にする。
+    と思ったらリンクできない。調べてみると wWinMain には対応していない疑惑。
+    少なくとも MinGW は対応していない。MinGW が fork してから
+    cygwin が更新指定しなければ今も使えないという事になる。
+    https://cat-in-136.github.io/2012/04/unicodemingw32twinmainwwinmain.html
+
+  * [保留] ダブルクリックで開くとコンソールが表示されてしまう。
+    wWinMain が使えない弊害だろうか。消す方法はあるのだろうか。
+    以下のページに依ると FreeConsole(); を呼び出せとか、ShowWindow(GetConsoleWindow(), SW_HIDE); を呼び出せとか書かれている。
+    https://forum.openframeworks.cc/t/switching-from-console-application-to-gui-application-loses-custom-icon/15279
+    https://social.msdn.microsoft.com/Forums/vstudio/en-US/16b5aff3-2aff-4434-a3d7-bc5048f66572/how-to-make-a-console-apps-window-invisible?forum=csharpgeneral
+    FreeConsole() は試してみたが何も起きない。ShowMessage に関しては一瞬だけ画面が表示される格好悪い。
+    本来は表示されない方法がある筈なのである。
+
+    或いは UNICODE でない方法で実装するべきなのだろうか。
+    と思って WinMain から起動する様にしてみた所関係なかった。
+    やはりコンソールが表示されてしまうのであった。UNICODE に戻す事にした。
+
+    取り敢えずこれは後で処理する事にする。
 
 * vttest(2) の origin mode test が駄目 [#D0090]
   一番下に表示されると言っている行が一番上に表示されている。
