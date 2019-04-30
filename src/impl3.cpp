@@ -20,7 +20,6 @@
 int main() {
   struct termios oldTermios;
   tcgetattr(STDIN_FILENO, &oldTermios);
-
   struct termios termios = oldTermios;
   termios.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
   termios.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
@@ -30,20 +29,18 @@ int main() {
   termios.c_cc[VMIN]  = 1;
   termios.c_cc[VTIME] = 0;
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios);
-
   bool const oldNonblock = contra::set_fd_nonblock(STDIN_FILENO, true);
 
-  contra::multicast_device dev;
-
   contra::ansi::curpos_t cfg_col = 80, cfg_row = 24;
-
   struct winsize winsize;
   ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &winsize);
   if (winsize.ws_col > cfg_col) winsize.ws_col = cfg_col;
   if (winsize.ws_row > cfg_row) winsize.ws_row = cfg_row;
 
   contra::session sess;
-  if (!create_session(&sess, oldTermios, "/bin/bash", winsize.ws_col, winsize.ws_row)) return -1;
+  if (!create_session(&sess, "/bin/bash", &winsize, &oldTermios)) return -1;
+
+  contra::multicast_device dev;
 
   contra::ansi::board_t b(winsize.ws_col, winsize.ws_row);
   contra::ansi::term_t term(b);

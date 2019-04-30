@@ -17,10 +17,13 @@
 #include "ansi/observer.tty.hpp"
 
 int main() {
+  struct winsize winsize;
+  ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &winsize);
   struct termios oldTermios;
   tcgetattr(STDIN_FILENO, &oldTermios);
+
   contra::session sess;
-  if (!create_session(&sess, oldTermios, "/bin/bash")) return -1;
+  if (!create_session(&sess, "/bin/bash", &winsize, &oldTermios)) return -1;
 
   struct termios termios = oldTermios;
   termios.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
@@ -36,8 +39,6 @@ int main() {
   contra::fd_device d0(STDOUT_FILENO);
   dev.push(&d0);
 
-  struct winsize winsize;
-  ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &winsize);
   contra::ansi::board_t b(winsize.ws_col, winsize.ws_row);
 
   contra::ansi::term_t term(b);

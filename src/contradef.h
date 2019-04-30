@@ -5,12 +5,15 @@
 namespace contra {
   typedef std::uint8_t byte;
 
+  template<typename T>
+  struct identity { typedef T type; };
+
   // std::size (C++17 <iterator>)
   template<typename T, std::size_t N>
   constexpr std::size_t size(T const (&)[N]) {return N;}
 
   template<typename T>
-  constexpr T clamp(T value, T min, T max) {
+  constexpr T clamp(T value, typename identity<T>::type min, typename identity<T>::type max) {
     return value < min ? min : value > max ? max : value;
   }
 

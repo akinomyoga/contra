@@ -19,11 +19,11 @@ void msleep(int milliseconds) {
   nanosleep(&tv, NULL);
 }
 
-bool read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size) {
+std::size_t read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size) {
   ssize_t const nread = read(fdsrc, buff, size);
-  if (nread <= 0) return false;
+  if (nread <= 0) return 0;
   dst->write(buff, nread);
-  return true;
+  return nread;
 }
 
 bool set_fd_nonblock(int fd, bool value) {
@@ -54,14 +54,9 @@ bool is_child_terminated(pid_t pid) {
   return result > 0;
 }
 
-bool create_session(session* sess, struct termios& termios, const char* shell, int cols, int rows) {
+bool create_session(session* sess, const char* shell, winsize const* ws, struct termios* termios) {
   sess->pid = -1;
   sess->masterfd = -1;
-
-  struct winsize winsize;
-  ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &winsize);
-  if (cols > 0) winsize.ws_col = cols;
-  if (rows > 0) winsize.ws_row = rows;
 
   int masterfd, slavefd;
   char const* slavedevice;
@@ -77,8 +72,8 @@ bool create_session(session* sess, struct termios& termios, const char* shell, i
 
   if (pid == 0) {
     setsid();
-    tcsetattr(slavefd, TCSANOW, &termios);
-    ioctl(slavefd, TIOCSWINSZ, &winsize);
+    if (termios) tcsetattr(slavefd, TCSANOW, termios);
+    if (ws) ioctl(slavefd, TIOCSWINSZ, ws);
 
     dup2(slavefd, STDIN_FILENO);
     dup2(slavefd, STDOUT_FILENO);

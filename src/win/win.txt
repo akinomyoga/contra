@@ -51,6 +51,53 @@
 
 2019-04-30
 
+* また何だかつまらない事で止まっている気がする。
+  次にするべき事はもう早速端末に接続する事なのではないだろうか。
+
+  さて。termios が必要である。今までは既存の termios をそのまま使っていたが、
+  今度はゼロから作らなければならない。どの様にするのが正しいのだろうか。
+  以下のページに依ると既定値は /usr/include/termios.h にあると書かれている。
+  http://tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html
+  /usr/include/sys/termios.h の中に定義が書かれているが何が既定値かは分からない。
+  以下の様なマクロが定義されてはいたが、これが他の環境でも使えるのかは分からない。
+
+  #define TTYDEF_IFLAG    (BRKINT | ICRNL | IMAXBEL | IXON | IXANY)
+  #define TTYDEF_OFLAG    (OPOST | ONLCR)
+  #define TTYDEF_LFLAG    (ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOKE | ECHOCTL)
+  #define TTYDEF_CFLAG    (CREAD | CS8 | HUPCL)
+  #define TTYDEF_SPEED    (B9600)
+
+  https://stackoverflow.com/questions/16782715/termios-default-for-standard-terminal-session
+  を参照してみると、openpty に対して NULL を指定すれば既定の sane な termios になるそうだ。
+  取り敢えず何も設定せずに開いてみる事にする。
+
+  後、ループを合成しなければならない…。GetMessage を非同期に実行する方法はどうするのか。
+  複数スレッドで実行する方法、SetTimer/KillTimer を瞬間的に実行して無理やり GetMessage を止める方法、
+  MsgWaitForMultipleObjects を使ってチェックする方法が載っている。
+  https://stackoverflow.com/questions/10866311/getmessage-with-a-timeout
+  以下のページには PeekMessage に空の引数を指定する事でメッセージがあるかどうかチェックしている。これが良さそう。
+  http://www.sm.rim.or.jp/~shishido/mainloop.html
+  https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-peekmessagea
+
+  うーん。PeekMessage 及び GetMessage に hWnd を指定して呼び出してみた所、
+  どうやら WM_DESTROY または WM_QUIT が来ない。WM_QUIT は hWnd なしで来る様だ。
+  もしくは WM_DESTROY を受信した時点で、状態を変更しなければならないという事か。
+  調べたら WM_DESTROY は受け取れるが WM_QUIT は受け取れない。
+  従って GetMessage が失敗する事が永遠にない、という状態だった。
+  WM_DESTROY を受け取った時点で hWnd = NULL として、
+  hWnd が有効の間だけループを回すように修正した。直った。
+
+  うーん。取り敢えず起動はしている。Bash も動いている気がする。
+  しかし何も表示されない…。次に何も受信されない。
+  先ず表示されなかった理由は何かというと、BeginPaint 等をして render していると、
+  invalidate の領域だけにしか描画されないという事。
+  GetDC で得た物を使えば全体が描画される。
+
+  次に、何だか反応がないように思われたのは文字が送信されていない?
+  更に出力バッファをクリアし忘れていたのでどんどん大量に入力される様になっていた。
+
+2019-04-30
+
 * twin: IME に関しては難題であると思ったが、実は猫でも分かるに載っていた。
   http://www.kumei.ne.jp/c_lang/sdk3/sdk_278.htm
 

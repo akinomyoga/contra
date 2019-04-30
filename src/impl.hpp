@@ -1,12 +1,13 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
 #ifndef CONTRA_IMPL_HPP
 #define CONTRA_IMPL_HPP
-#include <cstdint>
-#include <cstdio>
-#include <vector>
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <stdio.h>
 #include <limits.h>
+#include <cstdint>
+#include <cstdio>
+#include <vector>
 #include "sequence.h"
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
@@ -16,7 +17,7 @@ namespace contra {
 
   void msleep(int milliseconds);
 
-  bool read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size);
+  std::size_t read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size);
   bool set_fd_nonblock(int fd, bool value);
   bool is_child_terminated(pid_t pid);
 
@@ -25,7 +26,7 @@ namespace contra {
     int pid;
   };
 
-  bool create_session(session* sess, struct termios& termios, const char* shell, int cols = -1, int rows = -1);
+  bool create_session(session* sess, const char* shell, winsize const* ws = NULL, struct termios* termios = NULL);
 
   class multicast_device: public idevice {
     std::vector<idevice*> m_list;

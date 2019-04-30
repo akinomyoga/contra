@@ -4,6 +4,8 @@
 #include <windows.h>
 #include <imm.h>
 
+#include <sys/ioctl.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -15,36 +17,262 @@
 #include "../contradef.h"
 #include "../ansi/enc.utf8.hpp"
 #include "../ansi/util.hpp"
+#include "../impl.hpp"
 #include "win_messages.hpp"
 
 #define _tcslen wcslen
 #define _tcscpy_s wcscpy_s
 #define _tcscpy wcscpy
 
-namespace std {
-  // template<typename Type, typename Deleter>
-  // unique_ptr(Type* pointer, Deleter&& value)
-  //   -> unique_ptr<Type, typename std::remove_reference<Deleter>::type>;
-  template<typename Type, typename Deleter>
-  unique_ptr(Type* pointer, Deleter const& value)
-    -> unique_ptr<Type, Deleter>;
+namespace contra {
+namespace term {
+
+  // contra/ttty
+  enum key_flags {
+    mask_modifier  = 0x03F00000,
+    mask_unicode   = 0x0001FFFF,
+    mask_keycode   = 0x0003FFFF,
+
+    key_base      = 0x00020000,
+    key_f1        = key_base | 1,
+    key_f2        = key_base | 2,
+    key_f3        = key_base | 3,
+    key_f4        = key_base | 4,
+    key_f5        = key_base | 5,
+    key_f6        = key_base | 6,
+    key_f7        = key_base | 7,
+    key_f8        = key_base | 8,
+    key_f9        = key_base | 9,
+    key_f10       = key_base | 10,
+    key_f11       = key_base | 11,
+    key_f12       = key_base | 12,
+    key_f13       = key_base | 13,
+    key_f14       = key_base | 14,
+    key_f15       = key_base | 15,
+    key_f16       = key_base | 16,
+    key_f17       = key_base | 17,
+    key_f18       = key_base | 18,
+    key_f19       = key_base | 19,
+    key_f20       = key_base | 20,
+    key_f21       = key_base | 21,
+    key_f22       = key_base | 22,
+    key_f23       = key_base | 23,
+    key_f24       = key_base | 24,
+    key_insert    = key_base | 31,
+    key_delete    = key_base | 32,
+    key_home      = key_base | 33,
+    key_end       = key_base | 34,
+    key_prior     = key_base | 35,
+    key_next      = key_base | 36,
+    key_begin     = key_base | 37,
+    key_left      = key_base | 38,
+    key_right     = key_base | 39,
+    key_up        = key_base | 40,
+    key_down      = key_base | 41,
+    key_kp0       = key_base | 42,
+    key_kp1       = key_base | 43,
+    key_kp2       = key_base | 44,
+    key_kp3       = key_base | 45,
+    key_kp4       = key_base | 46,
+    key_kp5       = key_base | 47,
+    key_kp6       = key_base | 48,
+    key_kp7       = key_base | 49,
+    key_kp8       = key_base | 50,
+    key_kp9       = key_base | 51,
+    key_kpdec     = key_base | 52,
+    key_kpsep     = key_base | 53,
+    key_kpmul     = key_base | 54,
+    key_kpadd     = key_base | 55,
+    key_kpsub     = key_base | 56,
+    key_kpdiv     = key_base | 57,
+
+    modifier_shift       = 0x00100000,
+    modifier_meta        = 0x00200000,
+    modifier_control     = 0x00400000,
+    modifier_super       = 0x00800000,
+    modifier_hyper       = 0x01000000,
+    modifier_alter       = 0x02000000,
+  };
+
+  void print_key(std::uint32_t key, std::FILE* file) {
+    std::uint32_t const code = key & mask_keycode;
+
+    std::ostringstream str;
+    if (key & modifier_alter) str << "A-";
+    if (key & modifier_hyper) str << "H-";
+    if (key & modifier_super) str << "s-";
+    if (key & modifier_control) str << "C-";
+    if (key & modifier_meta) str << "M-";
+    if (key & modifier_shift) str << "S-";
+    std::fprintf(file, "key: %s", str.str().c_str());
+
+    if (code < key_base) {
+      switch (code) {
+      case ascii_bs: std::fprintf(file, "BS"); break;
+      case ascii_ht: std::fprintf(file, "TAB"); break;
+      case ascii_cr: std::fprintf(file, "RET"); break;
+      case ascii_esc: std::fprintf(file, "ESC"); break;
+      case ascii_sp: std::fprintf(file, "SP"); break;
+      default:
+        contra::encoding::put_u8((char32_t) code, file);
+        break;
+      }
+      std::putc('\n', file);
+    } else {
+      static const char* table[] = {
+        NULL,
+        "f1", "f2", "f3", "f4", "f5", "f6",
+        "f7", "f8", "f9", "f10", "f11", "f12",
+        "f13", "f14", "f15", "f16", "f17", "f18",
+        "f19", "f20", "f21", "f22", "f23", "f24",
+        NULL, NULL, NULL, NULL, NULL, NULL,
+        "insert", "delete", "home", "end", "prior", "next",
+        "begin", "left", "right", "up", "down",
+        "kp0", "kp1", "kp2", "kp3", "kp4",
+        "kp5", "kp6", "kp7", "kp8", "kp9",
+        "kpdec", "kpsep", "kpmul", "kpadd", "kpsub", "kpdiv",
+      };
+      std::uint32_t const index = code - key_base;
+      const char* name = index <= std::size(table) ? table[index] : NULL;
+      if (name) {
+        std::fprintf(file, "%s\n", name);
+      } else {
+        std::fprintf(file, "unknown %08x\n", code);
+      }
+    }
+  }
+}
 }
 
 namespace contra {
 namespace twin {
 
+  using namespace contra::term;
+
+  struct terminal_session {
+  public:
+    struct winsize ws;
+    std::size_t read_buffer_size;
+
+  private:
+    bool m_initialized = false;
+    contra::session m_fds;
+    std::unique_ptr<contra::ansi::board_t> m_board;
+    std::unique_ptr<contra::ansi::term_t> m_term;
+    std::unique_ptr<contra::tty_player_device> m_dev;
+
+  public:
+    contra::ansi::board_t& board() { return *m_board; }
+    contra::ansi::board_t const& board() const { return *m_board; }
+    contra::ansi::term_t& term() { return *m_term; }
+    contra::ansi::term_t const& term() const { return *m_term; }
+
+  public:
+    bool is_initialized() const { return m_initialized; }
+
+    bool initialize() {
+      if (m_initialized) return true;
+
+      // restrict in the range from 256 bytes to 64 kbytes
+      read_buffer_size = contra::clamp(read_buffer_size, 0x100, 0x10000);
+      m_read_buffer.resize(read_buffer_size);
+
+      if (!contra::create_session(&m_fds, "/bin/bash", &ws)) return false;
+      m_board = std::make_unique<contra::ansi::board_t>(ws.ws_col, ws.ws_row);
+      m_term = std::make_unique<contra::ansi::term_t>(*m_board);
+      m_dev = std::make_unique<contra::tty_player_device>(m_term.get());
+
+      return m_initialized = true;
+    }
+
+    std::vector<char> m_read_buffer;
+    bool process() {
+      if (!m_initialized) return false;
+      return contra::read_from_fd(m_fds.masterfd, m_dev.get(), &m_read_buffer[0], m_read_buffer.size());
+    }
+    bool is_child_alive() const {
+      if (!m_initialized) return false;
+      return !contra::is_child_terminated(m_fds.pid);
+    }
+
+    void terminate() {
+      if (!m_initialized) return;
+      m_initialized = false;
+      kill(m_fds.pid, SIGTERM);
+    }
+  private:
+    int m_input_busy_wait = 10; // in msec
+    std::vector<byte> input_buffer;
+    void flush_buffer() {
+      const byte* p = &input_buffer[0];
+      std::size_t sz = input_buffer.size();
+      for (;;) {
+        ssize_t const sz_write = (ssize_t) std::min<std::size_t>(sz, SSIZE_MAX);
+        ssize_t const n = ::write(m_fds.masterfd, p, sz_write);
+        if (n > 0) {
+          if ((std::size_t) n >= sz) break;
+          p += n;
+          sz -= n;
+        } else
+          contra::msleep(m_input_busy_wait);
+      }
+      input_buffer.clear();
+    }
+    void send_key_impl(std::uint32_t key) {
+      std::uint32_t mod = key & mask_modifier;
+      std::uint32_t code = key & mask_keycode;
+
+      // 通常文字
+      if (mod == 0 && code < key_base) {
+        // Note: ESC, RET, HT はそのまま (C-[, C-m, C-i) 送信される。
+        if (code == ascii_bs) code = ascii_del;
+        contra::encoding::put_u8(code, input_buffer);
+        return;
+      }
+
+      // C0 文字および DEL
+      if (mod == modifier_control) {
+        if (code == ascii_sp || code == ascii_a ||
+          (ascii_a < code && code <= ascii_z) ||
+          (ascii_left_bracket <= code && code <= ascii_underscore)
+        ) {
+          // C-@ ... C-_
+          input_buffer.push_back(code & 0x1F);
+        } else if (code == ascii_question) {
+          // C-? → ^?
+          input_buffer.push_back(0x7F);
+        } else if (code == ascii_bs) {
+          // C-back → ^_
+          input_buffer.push_back(0x1F);
+        }
+      }
+
+      // // 修飾キー (未実装)
+      // if (mod == modifier_control && ascii_a < code && code <= ascii_z) {
+      //   input_buffer.push_back(code & 0x1F);
+      //   return;
+      // }
+    }
+  public:
+    void send_key(std::uint32_t key) {
+      send_key_impl(key);
+      flush_buffer();
+    }
+  };
+
   class font_store {
     LOGFONT log_normal;
     HFONT m_normal = NULL;
 
-    LONG width;
-    LONG height;
+    LONG m_width;
+    LONG m_height;
+
   public:
     font_store() {
-      height = 13;
-      width = 7;
-      log_normal.lfHeight = height;
-      log_normal.lfWidth  = width;
+      m_height = 13;
+      m_width = 7;
+      log_normal.lfHeight = m_height;
+      log_normal.lfWidth  = m_width;
       log_normal.lfEscapement = 0;
       log_normal.lfOrientation = 0;
       log_normal.lfWeight = FW_NORMAL;
@@ -60,6 +288,9 @@ namespace twin {
       ::_tcscpy(log_normal.lfFaceName, TEXT("MeiryoKe_Console"));
     }
 
+    LONG width() const { return m_width; }
+    LONG height() const { return m_height; }
+
     LOGFONT const& logfont_normal() { return log_normal; }
 
     HFONT normal() {
@@ -73,152 +304,120 @@ namespace twin {
     }
   };
 
+  LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
   class main_window_t {
     font_store fstore;
 
-    void render_window(HWND hWnd) {
-      PAINTSTRUCT paint;
-      LPCTSTR str = TEXT("Default Content 日本語");
-      HDC hdc = BeginPaint(hWnd, &paint);
+    terminal_session sess;
 
-      std::size_t const len = _tcslen(str);
-      mwg_check(len <= 8192);
-      std::vector<INT> progression(len, 7);
-      SelectObject(hdc, fstore.normal());
-      ExtTextOut(hdc, 1, 1, 0, NULL, str, len, &progression[0]);
-      //TextOut(hdc, 0, 0, str, _tcslen(str));
-      EndPaint(hWnd, &paint);
+    HWND hWnd = NULL;
+
+    static constexpr LPCTSTR szClassName = TEXT("Contra/twin.Main");
+
+  public:
+    HWND create_window(HINSTANCE hInstance) {
+      static bool is_window_class_registered = false;
+      if (!is_window_class_registered) {
+        is_window_class_registered = true;
+
+        WNDCLASS myProg;
+        myProg.style         = CS_HREDRAW | CS_VREDRAW;
+        myProg.lpfnWndProc   = contra::twin::WndProc;
+        myProg.cbClsExtra    = 0;
+        myProg.cbWndExtra    = 0;
+        myProg.hInstance     = hInstance;
+        myProg.hIcon         = NULL;
+        myProg.hCursor       = LoadCursor(NULL, IDC_ARROW);
+        myProg.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
+        myProg.lpszMenuName  = NULL;
+        myProg.lpszClassName = szClassName;
+        if (!RegisterClass(&myProg)) return NULL;
+      }
+
+      this->hWnd = CreateWindow(
+        szClassName,
+        TEXT("Contra/Twin"),
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        80 * 7, 30 * 13,
+        NULL,
+        NULL,
+        hInstance,
+        NULL);
+      return hWnd;
     }
 
-    enum modifier_keys {
-      mask_modifiers  = 0x03F00000,
-      mask_unicode    = 0x0001FFFF,
-      mask_keycode    = 0x0003FFFF,
+    HWND handle() const { return hWnd; }
 
-      key_base      = 0x00020000,
-      key_f1        = key_base | 1,
-      key_f2        = key_base | 2,
-      key_f3        = key_base | 3,
-      key_f4        = key_base | 4,
-      key_f5        = key_base | 5,
-      key_f6        = key_base | 6,
-      key_f7        = key_base | 7,
-      key_f8        = key_base | 8,
-      key_f9        = key_base | 9,
-      key_f10       = key_base | 10,
-      key_f11       = key_base | 11,
-      key_f12       = key_base | 12,
-      key_f13       = key_base | 13,
-      key_f14       = key_base | 14,
-      key_f15       = key_base | 15,
-      key_f16       = key_base | 16,
-      key_f17       = key_base | 17,
-      key_f18       = key_base | 18,
-      key_f19       = key_base | 19,
-      key_f20       = key_base | 20,
-      key_f21       = key_base | 21,
-      key_f22       = key_base | 22,
-      key_f23       = key_base | 23,
-      key_f24       = key_base | 24,
-      key_insert    = key_base | 31,
-      key_delete    = key_base | 32,
-      key_home      = key_base | 33,
-      key_end       = key_base | 34,
-      key_prior     = key_base | 35,
-      key_next      = key_base | 36,
-      key_begin     = key_base | 37,
-      key_left      = key_base | 38,
-      key_right     = key_base | 39,
-      key_up        = key_base | 40,
-      key_down      = key_base | 41,
-      key_kp0       = key_base | 42,
-      key_kp1       = key_base | 43,
-      key_kp2       = key_base | 44,
-      key_kp3       = key_base | 45,
-      key_kp4       = key_base | 46,
-      key_kp5       = key_base | 47,
-      key_kp6       = key_base | 48,
-      key_kp7       = key_base | 49,
-      key_kp8       = key_base | 50,
-      key_kp9       = key_base | 51,
-      key_kpdec     = key_base | 52,
-      key_kpsep     = key_base | 53,
-      key_kpmul     = key_base | 54,
-      key_kpadd     = key_base | 55,
-      key_kpsub     = key_base | 56,
-      key_kpdiv     = key_base | 57,
+  private:
+    void render_window(HDC hdc) {
+      if (!hWnd || !sess.is_initialized()) return;
 
+      auto deleter = [&] (auto p) { SelectObject(hdc, p); };
+      util::raii hOldFont((HFONT) SelectObject(hdc, fstore.normal()), deleter);
+      RECT rcClient;
+      if (::GetClientRect(hWnd, &rcClient)) {
+        util::raii hOldPen((HBRUSH) SelectObject(hdc, GetStockObject(NULL_PEN)), deleter);
+        util::raii hOldBrush((HBRUSH) SelectObject(hdc, GetStockObject(WHITE_BRUSH)), deleter);
+        Rectangle(hdc, 0, 0, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top);
+      }
 
-      mod_shift       = 0x00100000,
-      mod_meta        = 0x00200000,
-      mod_control     = 0x00400000,
-      mod_super       = 0x00800000,
-      mod_hyper       = 0x01000000,
-      mod_alter       = 0x02000000,
+      {
+        using namespace contra::ansi;
+        std::vector<cell_t> cells;
+        std::vector<TCHAR> characters;
+        std::vector<INT> progress;
 
-      mod_application = 0x04000000,
+        board_t& b = sess.board();
+
+        for (curpos_t y = 0; y < b.m_height; y++) {
+          line_t const& line = b.m_lines[y];
+          line.get_cells_in_presentation(cells, b.line_r2l(line));
+
+          characters.clear();
+          progress.clear();
+          characters.reserve(cells.size());
+          progress.reserve(cells.size());
+          for (auto const& cell : cells) {
+            std::uint32_t code = cell.character.value;
+            if (code & character_t::flag_cluster_extension)
+              code &= ~character_t::flag_cluster_extension;
+            if (code == (code & character_t::unicode_mask)) {
+              characters.push_back(code);
+              progress.push_back(cell.width * sess.ws.ws_xpixel);
+            }
+            // ToDo: その他の文字・マーカーに応じた処理。
+          }
+          if (characters.size())
+            ExtTextOut(hdc, 0, y * sess.ws.ws_ypixel, 0, NULL, &characters[0], characters.size(), &progress[0]);
+        }
+      }
+      //SelectObject(hdc, hOldFont);
+    }
+
+    enum extended_key_flags {
+      modifier_application = 0x04000000,
       toggle_capslock   = 0x100,
       toggle_numlock    = 0x200,
       toggle_scrolllock = 0x400,
     };
 
     void process_input(std::uint32_t key) {
-      std::uint32_t const code = key & mask_keycode;
-
-      std::ostringstream str;
-      if (key & mod_alter) str << "A-";
-      if (key & mod_hyper) str << "H-";
-      if (key & mod_super) str << "s-";
-      if (key & mod_control) str << "C-";
-      if (key & mod_meta) str << "M-";
-      if (key & mod_shift) str << "S-";
-      std::fprintf(stderr, "key: %s", str.str().c_str());
-
-      if (code < key_base) {
-        switch (code) {
-        case ascii_bs: std::fprintf(stderr, "BS"); break;
-        case ascii_ht: std::fprintf(stderr, "TAB"); break;
-        case ascii_cr: std::fprintf(stderr, "RET"); break;
-        case ascii_esc: std::fprintf(stderr, "ESC"); break;
-        case ascii_sp: std::fprintf(stderr, "SP"); break;
-        default:
-          contra::encoding::put_u8((char32_t) code, stderr);
-          break;
-        }
-        std::putc('\n', stderr);
-      } else {
-        static const char* table[] = {
-          NULL,
-          "f1", "f2", "f3", "f4", "f5", "f6",
-          "f7", "f8", "f9", "f10", "f11", "f12",
-          "f13", "f14", "f15", "f16", "f17", "f18",
-          "f19", "f20", "f21", "f22", "f23", "f24",
-          NULL, NULL, NULL, NULL, NULL, NULL,
-          "insert", "delete", "home", "end", "prior", "next",
-          "begin", "left", "right", "up", "down",
-          "kp0", "kp1", "kp2", "kp3", "kp4",
-          "kp5", "kp6", "kp7", "kp8", "kp9",
-          "kpdec", "kpsep", "kpmul", "kpadd", "kpsub", "kpdiv",
-        };
-        std::uint32_t const index = code - key_base;
-        const char* name = index <= std::size(table) ? table[index] : NULL;
-        if (name) {
-          std::fprintf(stderr, "%s\n", name);
-        } else {
-          std::fprintf(stderr, "unknown %08x\n", code);
-        }
-      }
+      //contra::term::print_key(key, stderr);
+      sess.send_key(key);
     }
 
     std::uint32_t get_modifiers() {
       std::uint32_t ret = 0;
-      if (GetKeyState(VK_LSHIFT) & 0x8000) ret |= mod_shift;
-      if (GetKeyState(VK_LCONTROL) & 0x8000) ret |= mod_control;
-      if (GetKeyState(VK_LMENU) & 0x8000) ret |= mod_meta;
-      if (GetKeyState(VK_RMENU) & 0x8000) ret |= mod_alter;
-      if (GetKeyState(VK_RCONTROL) & 0x8000) ret |= mod_super;
-      if (GetKeyState(VK_RSHIFT) & 0x8000) ret |= mod_hyper;
-      if (GetKeyState(VK_APPS) & 0x8000) ret |= mod_application;
+      if (GetKeyState(VK_LSHIFT) & 0x8000) ret |= modifier_shift;
+      if (GetKeyState(VK_LCONTROL) & 0x8000) ret |= modifier_control;
+      if (GetKeyState(VK_LMENU) & 0x8000) ret |= modifier_meta;
+      if (GetKeyState(VK_RMENU) & 0x8000) ret |= modifier_alter;
+      if (GetKeyState(VK_RCONTROL) & 0x8000) ret |= modifier_super;
+      if (GetKeyState(VK_RSHIFT) & 0x8000) ret |= modifier_hyper;
+      if (GetKeyState(VK_APPS) & 0x8000) ret |= modifier_application;
 
       if (GetKeyState(VK_CAPITAL) & 1) ret |= toggle_capslock;
       if (GetKeyState(VK_NUMLOCK) & 1) ret |= toggle_numlock;
@@ -227,7 +426,7 @@ namespace twin {
     }
 
     static bool is_keypad_shifted(std::uint32_t modifiers) {
-      if (modifiers & mod_shift) {
+      if (modifiers & modifier_shift) {
         for (UINT k = VK_NUMPAD0; k <= VK_NUMPAD9; k++)
           if (GetKeyState(k) & 0x8000) return true;
         if (GetKeyState(VK_DECIMAL) & 0x8000) return true;
@@ -239,17 +438,17 @@ namespace twin {
       static BYTE kbstate[256];
 
       if (ascii_A <= wParam && wParam <= ascii_Z) {
-        if (modifiers & ~mod_shift & mask_modifiers) {
+        if (modifiers & ~modifier_shift & mask_modifier) {
           wParam += ascii_a - ascii_A;
         } else {
           bool const capslock = modifiers & toggle_capslock;
-          bool const shifted = modifiers & mod_shift;
+          bool const shifted = modifiers & modifier_shift;
           if (capslock == shifted) wParam += ascii_a - ascii_A;
-          modifiers &= ~mod_shift;
+          modifiers &= ~modifier_shift;
         }
-        process_input(wParam | (modifiers & mask_modifiers));
+        process_input(wParam | (modifiers & mask_modifier));
       } else if (VK_F1 <= wParam && wParam < VK_F24) {
-        process_input((wParam -VK_F1 + key_f1) | (modifiers & mask_modifiers));
+        process_input((wParam -VK_F1 + key_f1) | (modifiers & mask_modifier));
       } else {
         std::uint32_t code = 0;
         switch (wParam) {
@@ -270,7 +469,7 @@ namespace twin {
         case VK_CLEAR:     code = key_begin;  goto keypad_function_key;
         keypad_function_key:
           if ((modifiers & toggle_numlock) && is_keypad_shifted(modifiers))
-            modifiers &= ~mod_shift;
+            modifiers &= ~modifier_shift;
           goto function_key;
         case VK_NUMPAD0:   code = key_kp0;   goto keypad_number_key;
         case VK_NUMPAD1:   code = key_kp1;   goto keypad_number_key;
@@ -284,7 +483,7 @@ namespace twin {
         case VK_NUMPAD9:   code = key_kp9;   goto keypad_number_key;
         case VK_DECIMAL:   code = key_kpdec; goto keypad_number_key;
         keypad_number_key:
-          modifiers &= ~mod_shift;
+          modifiers &= ~modifier_shift;
           goto function_key;
         case VK_MULTIPLY:  code = key_kpmul; goto function_key;
         case VK_ADD:       code = key_kpadd; goto function_key;
@@ -292,13 +491,13 @@ namespace twin {
         case VK_SUBTRACT:  code = key_kpsub; goto function_key;
         case VK_DIVIDE:    code = key_kpdiv; goto function_key;
         function_key:
-          process_input(code | (modifiers & mask_modifiers));
+          process_input(code | (modifiers & mask_modifier));
           break;
         case VK_PROCESSKEY: // IME 処理中 (無視)
           return;
         default:
           {
-            kbstate[VK_SHIFT] = modifiers & mod_shift ? 0x80 : 0x00;
+            kbstate[VK_SHIFT] = modifiers & modifier_shift ? 0x80 : 0x00;
             WCHAR buff = 0;
             int const count = ::ToUnicode(wParam, ::MapVirtualKey(wParam, MAPVK_VK_TO_VSC), kbstate, &buff, 1, 0);
             if (count == 1 || count == -1) {
@@ -308,11 +507,11 @@ namespace twin {
               UINT const unshifted = ::MapVirtualKey(wParam, MAPVK_VK_TO_CHAR);
               int const unshifted_count = (INT) unshifted < 0 ? 2 : 1;
               if (count != unshifted_count || buff != (unshifted & mask_unicode))
-                modifiers &= ~mod_shift;
+                modifiers &= ~modifier_shift;
 
-              process_input((buff & mask_unicode) | (modifiers & mask_modifiers));
+              process_input((buff & mask_unicode) | (modifiers & mask_modifier));
             } else if (UINT const code = ::MapVirtualKey(wParam, MAPVK_VK_TO_CHAR); (INT) code > 0) {
-              process_input((code & mask_unicode) | (modifiers & mask_modifiers));
+              process_input((code & mask_unicode) | (modifiers & mask_modifier));
             } else {
               std::fprintf(stderr, "key (unknown): wparam=%08x flags=%x\n", wParam, modifiers);
             }
@@ -324,7 +523,7 @@ namespace twin {
 
     void process_char(WPARAM wParam, std::uint32_t modifiers) {
       // ToDo: Process surrogate pair
-      process_input((wParam & mask_unicode) | (modifiers & mask_modifiers));
+      process_input((wParam & mask_unicode) | (modifiers & mask_modifier));
     }
 
   public:
@@ -334,10 +533,16 @@ namespace twin {
         ::SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG) CreateSolidBrush(RGB(0xFF,0xFF,0xFF)));
         return 0L;
       case WM_DESTROY:
-        ::PostQuitMessage(0);
+        //::PostQuitMessage(0);
+        this->hWnd = NULL;
         return 0L;
       case WM_PAINT:
-        this->render_window(hWnd);
+        if (this->hWnd && this->sess.is_initialized()) {
+          PAINTSTRUCT paint;
+          HDC hdc = BeginPaint(hWnd, &paint);
+          this->render_window(hdc);
+          EndPaint(hWnd, &paint);
+        }
         return 0L;
       case WM_KEYDOWN:
       case WM_SYSKEYDOWN:
@@ -376,15 +581,62 @@ namespace twin {
           return result;
         }
       default:
-        {
-          const char* name = get_window_message_name(msg);
-          if (name)
-            std::fprintf(stderr, "message: %s\n", name);
-          else
-            std::fprintf(stderr, "message: %08x\n", msg);
-        }
+        // {
+        //   const char* name = get_window_message_name(msg);
+        //   if (name)
+        //     std::fprintf(stderr, "message: %s\n", name);
+        //   else
+        //     std::fprintf(stderr, "message: %08x\n", msg);
+        // }
         return ::DefWindowProc(hWnd, msg, wParam, lParam);
       }
+    }
+
+  public:
+    int do_loop() {
+      // @@@
+      sess.ws.ws_col = 80;
+      sess.ws.ws_row = 30;
+      sess.ws.ws_xpixel = fstore.width();
+      sess.ws.ws_ypixel = fstore.height();
+      sess.read_buffer_size = 4096;
+      if (!sess.initialize()) return 2;
+
+      int exit_code;
+      MSG msg;
+      while (hWnd) {
+        bool processed = false;
+        clock_t time0 = clock();
+        while (sess.process()) {
+          processed = true;
+          clock_t const time1 = clock();
+          clock_t const msec = (time1 - time0) * 1000 / CLOCKS_PER_SEC;
+          if (msec > 20) break;
+        }
+        if (processed) {
+          HDC hdc = GetDC(hWnd);
+          render_window(hdc);
+          ReleaseDC(hWnd, hdc);
+        }
+
+        while (::PeekMessage(&msg, hWnd, 0, 0, PM_NOREMOVE)) {
+          if (!GetMessage(&msg, hWnd, 0, 0)) {
+            exit_code = msg.wParam;
+            goto exit;
+          }
+
+          TranslateMessage(&msg);
+          DispatchMessage(&msg);
+        }
+
+        // if (contra::read_from_fd(STDIN_FILENO, &devIn, buff, sizeof(buff))) continue;
+        if (!sess.is_child_alive()) break;
+        if (!processed)
+          contra::msleep(10);
+      }
+    exit:
+      sess.terminate();
+      return exit_code;
     }
   };
 
@@ -397,45 +649,15 @@ namespace twin {
 }
 
 // from http://www.kumei.ne.jp/c_lang/index_sdk.html
-TCHAR szClassName[] = TEXT("Contra/twin.Main");
 extern "C" int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPTSTR lpszCmdLine, int nCmdShow) {
   contra_unused(lpszCmdLine);
-  if (!hPreInst) {
-    WNDCLASS myProg;
-    myProg.style         = CS_HREDRAW | CS_VREDRAW;
-    myProg.lpfnWndProc   = contra::twin::WndProc;
-    myProg.cbClsExtra    = 0;
-    myProg.cbWndExtra    = 0;
-    myProg.hInstance     = hInstance;
-    myProg.hIcon         = NULL;
-    myProg.hCursor       = LoadCursor(NULL, IDC_ARROW);
-    myProg.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
-    myProg.lpszMenuName  = NULL;
-    myProg.lpszClassName = szClassName;
-    if (!RegisterClass(&myProg))
-      return FALSE;
-  }
+  contra_unused(hPreInst);
 
-  HWND hWnd = CreateWindow(szClassName,
-    TEXT("[user@host] Main"),
-    WS_OVERLAPPEDWINDOW,
-    CW_USEDEFAULT,
-    CW_USEDEFAULT,
-    80 * 7, 30 * 13,
-    NULL,
-    NULL,
-    hInstance,
-    NULL);
-
+  auto& win = contra::twin::main_window;
+  HWND const hWnd = win.create_window(hInstance);
   ::ShowWindow(hWnd, nCmdShow);
   ::UpdateWindow(hWnd);
-
-  MSG msg;
-  while (GetMessage(&msg, NULL, 0, 0)) {
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
-  }
-  return msg.wParam;
+  return win.do_loop();
 }
 
 // from https://cat-in-136.github.io/2012/04/unicodemingw32twinmainwwinmain.html
@@ -443,7 +665,7 @@ extern "C" int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPTSTR 
 int main(int argc, char** argv) {
   contra_unused(argc);
   contra_unused(argv);
-  ShowWindow(GetConsoleWindow(), SW_HIDE);
+  //ShowWindow(GetConsoleWindow(), SW_HIDE);
   HINSTANCE const hInstance = GetModuleHandle(NULL);
   int const retval = _tWinMain(hInstance, NULL, (LPTSTR) TEXT("") /* lpCmdLine is not available*/, SW_SHOW);
   return retval;
