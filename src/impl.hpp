@@ -11,7 +11,7 @@
 #include "sequence.h"
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
-#include "ansi/observer.tty.hpp"
+#include "ttty/buffer.hpp"
 
 namespace contra {
 namespace term {

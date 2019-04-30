@@ -4,7 +4,7 @@
 #include <utility>
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
-#include "ansi/observer.tty.hpp"
+#include "ttty/buffer.hpp"
 
 namespace contra {
   static inline int strcmp(const char32_t* a, const char32_t* b) {
@@ -485,11 +485,11 @@ void test_sgr() {
   term.printt("\nA\x1b[AB\x1b[BC\x1b[2DD\x1b[0CE");
   term.printt("\x1b[HA\x1b[2;2HB");
 
-  termcap_sgr_type sgrcap;
+  contra::dict::termcap_sgr_type sgrcap;
   sgrcap.initialize();
 
-  tty_observer target(term, stdout, &sgrcap);
-  target.print_screen(board);
+  contra::dict::tty_writer w(stdout, &sgrcap);
+  w.print_screen(board);
 }
 
 int main() {

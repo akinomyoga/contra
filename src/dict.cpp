@@ -1,6 +1,7 @@
-#include "observer.tty.hpp"
+#include "dict.hpp"
 
-using namespace contra::ansi;
+using namespace ::contra::dict;
+
 typedef attribute_t _at;
 
 static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrflag1 const& sgrflag) {
@@ -44,7 +45,7 @@ void termcap_sgr_type::initialize() {
 }
 
 
-void tty_observer::update_sgrflag1(
+void tty_writer::update_sgrflag1(
   aflags_t aflagsNew, aflags_t aflagsOld,
   termcap_sgrflag1 const& sgrflag
 ) {
@@ -61,7 +62,7 @@ void tty_observer::update_sgrflag1(
   }
 }
 
-void tty_observer::update_sgrflag2(
+void tty_writer::update_sgrflag2(
   aflags_t aflagsNew, aflags_t aflagsOld,
   termcap_sgrflag2 const& sgrflag
 ) {
@@ -94,7 +95,7 @@ void tty_observer::update_sgrflag2(
   }
 }
 
-void tty_observer::update_ideogram_decoration(xflags_t xflagsNew, xflags_t xflagsOld, termcap_sgrideogram const& cap) {
+void tty_writer::update_ideogram_decoration(xflags_t xflagsNew, xflags_t xflagsOld, termcap_sgrideogram const& cap) {
   if (((xflagsNew ^ xflagsOld) & _at::is_ideogram_decoration_mask) == 0) return;
 
   int sgr;
@@ -122,7 +123,7 @@ void tty_observer::update_ideogram_decoration(xflags_t xflagsNew, xflags_t xflag
   if (sgr) sgr_put(sgr);
 }
 
-void tty_observer::update_sgrcolor(
+void tty_writer::update_sgrcolor(
   int colorSpaceNew, color_t colorNew,
   int colorSpaceOld, color_t colorOld,
   termcap_sgrcolor const& sgrcolor
@@ -206,7 +207,7 @@ void tty_observer::update_sgrcolor(
     sgr_put(sgrcolor.off);
 }
 
-void tty_observer::apply_attr(attribute_t new_attr) {
+void tty_writer::apply_attr(attribute_t new_attr) {
   attribute_t& old_attr = this->m_attr;
   if (old_attr == new_attr) return;
 
@@ -252,4 +253,32 @@ void tty_observer::apply_attr(attribute_t new_attr) {
     this->m_attr = new_attr;
     if (this->sgr_isOpen) put(ascii_m);
   }
+}
+
+#include "ansi/line.hpp"
+
+using namespace ::contra::ansi;
+
+void tty_writer::print_screen(board_t const& b) {
+  for (curpos_t y = 0; y < b.m_height; y++) {
+    line_t const& line = b.m_lines[y];
+    curpos_t wskip = 0;
+    curpos_t const ncell = (curpos_t) line.cells().size();
+    for (curpos_t x = 0; x < ncell; x++) {
+      cell_t const& cell = line.cells()[x];
+      if (cell.character.is_wide_extension()) continue;
+      if (cell.character.is_marker()) continue;
+      if (cell.character.value == ascii_nul) {
+        wskip += cell.width;
+        continue;
+      }
+
+      if (wskip > 0) put_skip(wskip);
+      apply_attr(cell.attribute);
+      put_u32(cell.character.value);
+    }
+
+    put('\n');
+  }
+  apply_attr(attribute_t {});
 }

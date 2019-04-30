@@ -136,5 +136,17 @@ namespace contra {
 
   const char* get_ascii_name(char32_t value);
 
+  //---------------------------------------------------------------------------
+  // prototype/forward declaration
+
+  namespace ansi {
+    struct cell_t;
+    class line_t;
+    struct board_t;
+    class term_t;
+
+    typedef std::int32_t curpos_t;
+  }
+
 }
 #endif

@@ -129,7 +129,7 @@ namespace {
   //---------------------------------------------------------------------------
   // Modes
 
-  void tty_state::initialize_mode() {
+  void tstate_t::initialize_mode() {
     std::fill(std::begin(m_mode_flags), std::end(m_mode_flags), 0);
 #include "../../out/gen/term.mode_init.hpp"
   }
@@ -143,14 +143,14 @@ namespace {
 #include "../../out/gen/term.mode_register.hpp"
     }
 
-    void set_ansi_mode(tty_state& s, csi_single_param_t param, bool value) {
+    void set_ansi_mode(tstate_t& s, csi_single_param_t param, bool value) {
       auto const it = data_ansi.find(param);
       if (it != data_ansi.end())
         s.set_mode(it->second, value);
       else
         std::fprintf(stderr, "unrecognized ANSI mode %u\n", (unsigned) param);
     }
-    void set_dec_mode(tty_state& s, csi_single_param_t param, bool value) {
+    void set_dec_mode(tstate_t& s, csi_single_param_t param, bool value) {
       auto const it = data_dec.find(param);
       if (it != data_dec.end())
         s.set_mode(it->second, value);
@@ -161,28 +161,28 @@ namespace {
   static mode_dictionary_t mode_dictionary;
 
   bool do_sm(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t value;
     while (params.read_param(value, 0))
       mode_dictionary.set_ansi_mode(s, value, true);
     return true;
   }
   bool do_rm(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t value;
     while (params.read_param(value, 0))
       mode_dictionary.set_ansi_mode(s, value, false);
     return true;
   }
   bool do_decset(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t value;
     while (params.read_param(value, 0))
       mode_dictionary.set_dec_mode(s, value, true);
     return true;
   }
   bool do_decrst(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t value;
     while (params.read_param(value, 0))
       mode_dictionary.set_dec_mode(s, value, false);
@@ -192,7 +192,7 @@ namespace {
   bool do_decscusr(term_t& term, csi_parameters& params) {
     csi_single_param_t spec;
     params.read_param(spec, 0);
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     auto _set = [&s] (bool blink, int shape) {
       s.set_mode(mode_attCursorBlink, blink);
       s.m_cursor_shape = shape;
@@ -219,7 +219,7 @@ namespace {
   }
 
   void do_altscreen(term_t& term, bool value) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     board_t& b = term.board();
     if (value != s.get_mode(mode_altscr)) {
       s.set_mode(mode_altscr, value);
@@ -238,7 +238,7 @@ namespace {
   }
 
   void do_sm_decawm(term_t& term, bool value) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     if (s.get_mode(mode_decawm_) == value) return;
     s.set_mode(mode_decawm_, value);
 
@@ -251,7 +251,7 @@ namespace {
   }
 
   void do_sm_deccolm(term_t& term, bool value) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     if (s.get_mode(mode_xtEnableColm)) {
       board_t& b = term.board();
       b.reset_size(value ? 132 : 80, b.m_height);
@@ -265,7 +265,7 @@ namespace {
     return term.board().m_width == 132 ? 1 : 2;
   }
   bool do_decscpp(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     if (!s.cfg_decscpp_enabled) return true;
 
     csi_single_param_t param;
@@ -324,7 +324,7 @@ namespace {
     params.read_param(update, 0);
     if (charPath > 2 || update > 2) return false;
 
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     board_t& b = term.board();
     line_t& line = b.line();
 
@@ -364,7 +364,7 @@ namespace {
   }
 
   bool do_slh(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     board_t& b = term.board();
     line_t& line = b.line();
 
@@ -387,7 +387,7 @@ namespace {
   }
 
   bool do_sll(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     board_t& b = term.board();
     line_t& line = b.line();
 
@@ -410,7 +410,7 @@ namespace {
   }
 
   bool do_sph(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
 
     csi_single_param_t param;
     if (params.read_param(param, 0) && param) {
@@ -425,7 +425,7 @@ namespace {
   }
 
   bool do_spl(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
 
     csi_single_param_t param;
     if (params.read_param(param, 0) && param) {
@@ -440,7 +440,7 @@ namespace {
   }
 
   bool do_decstbm(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     board_t& b = term.board();
 
     csi_single_param_t param1, param2;
@@ -458,7 +458,7 @@ namespace {
   }
 
   bool do_decslrm(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     board_t& b = term.board();
     if (!s.get_mode(mode_declrmm)) return true;
 
@@ -573,7 +573,7 @@ namespace {
     }
   }
   static bool do_cux(term_t& term, csi_parameters& params, do_cux_direction direction, bool isPresentation, bool check_stbm) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -661,7 +661,7 @@ namespace {
 
   static bool do_cup(term_t& term, curpos_t x, curpos_t y) {
     board_t& b = term.board();
-    tty_state const& s = term.state();
+    tstate_t const& s = term.state();
     if (!s.get_mode(mode_bdsm))
       x = b.to_data_position(y, x);
     b.cur.set(x, y);
@@ -669,7 +669,7 @@ namespace {
   }
 
   bool do_cnl(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0 && s.get_mode(mode_zdm)) param = 1;
@@ -680,7 +680,7 @@ namespace {
   }
 
   bool do_cpl(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0 && s.get_mode(mode_zdm)) param = 1;
@@ -691,7 +691,7 @@ namespace {
   }
 
   bool do_cup(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param1, param2;
     params.read_param(param1, 1);
     params.read_param(param2, 1);
@@ -711,7 +711,7 @@ namespace {
   }
 
   static void do_hvp_impl(term_t& term, curpos_t x, curpos_t y) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     board_t& b = term.board();
     if (s.get_mode(mode_decom)) {
       x = std::min(x + term.lmargin(), term.rmargin());
@@ -720,7 +720,7 @@ namespace {
     b.cur.set(x, y);
   }
   bool do_hvp(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param1, param2;
     params.read_param(param1, 1);
     params.read_param(param2, 1);
@@ -736,7 +736,7 @@ namespace {
   }
 
   bool do_cha(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -754,7 +754,7 @@ namespace {
   }
 
   bool do_hpa(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -773,7 +773,7 @@ namespace {
   }
 
   bool do_vpa(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -843,7 +843,7 @@ namespace {
   }
 
   static bool do_scroll(term_t& term, csi_parameters& params, do_cux_direction direction, bool dcsm = false) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -1194,14 +1194,14 @@ namespace {
   }
 
   void do_sm_decscnm(term_t& term, bool value) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     if (s.get_mode(mode_decscnm_) == value) return;
     std::swap(s.m_default_fg, s.m_default_bg);
     std::swap(s.m_default_fg_space, s.m_default_bg_space);
     s.set_mode(mode_decscnm_, value);
   }
   int do_rqm_decscnm(term_t& term) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     return s.get_mode(mode_decscnm_) ? 1 : 2;
   }
 
@@ -1209,7 +1209,7 @@ namespace {
   // ECH, DCH, ICH
 
   bool do_ech(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -1248,7 +1248,7 @@ namespace {
 
   static void do_ich_impl(term_t& term, curpos_t shift) {
     board_t& b = term.board();
-    tty_state const& s = term.state();
+    tstate_t const& s = term.state();
     line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
 
     curpos_t x1;
@@ -1282,7 +1282,7 @@ namespace {
   }
 
   bool do_ich(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -1297,7 +1297,7 @@ namespace {
   }
 
   bool do_dch(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -1316,7 +1316,7 @@ namespace {
 
   static void do_el(term_t& term, line_t& line, csi_single_param_t param, attribute_t const& fill_attr) {
     board_t& b = term.board();
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     if (param != 0 && param != 1) {
       if (s.get_mode(mode_erm) && line.has_protected_cells()) {
         line_shift_flags flags = line_shift_flags::erm;
@@ -1355,7 +1355,7 @@ namespace {
   }
 
   void do_ed(term_t& term, csi_single_param_t param) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     board_t& b = term.board();
     attribute_t const fill_attr = term.fill_attr();
     curpos_t y1 = 0, y2 = 0;
@@ -1404,7 +1404,7 @@ namespace {
 
   static void do_il_impl(term_t& term, curpos_t shift) {
     board_t& b = term.board();
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
 
     // カーソル表示位置
     curpos_t p = 0;
@@ -1435,7 +1435,7 @@ namespace {
   }
 
   bool do_il(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
@@ -1449,7 +1449,7 @@ namespace {
   }
 
   bool do_dl(term_t& term, csi_parameters& params) {
-    tty_state& s = term.state();
+    tstate_t& s = term.state();
     csi_single_param_t param;
     params.read_param(param, 1);
     if (param == 0) {

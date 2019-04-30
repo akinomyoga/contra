@@ -10,7 +10,7 @@ ostype := $(shell echo $$OSTYPE)
 
 objdir = ../out
 gendir = ../out/gen
-directories += $(objdir) $(objdir)/experimental $(objdir)/ansi
+directories += $(objdir) $(objdir)/experimental $(objdir)/ansi $(objdir)/ttty
 
 -include $(wildcard $(objdir)/*.dep)
 -include $(wildcard $(objdir)/experimental/*.dep)
@@ -18,6 +18,8 @@ directories += $(objdir) $(objdir)/experimental $(objdir)/ansi
 $(objdir)/%.o: %.cpp | $(objdir) $(gendir)/term.mode_def.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 $(objdir)/ansi/%.o: ansi/%.cpp | $(objdir)/ansi $(gendir)/term.mode_def.hpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
+$(objdir)/ttty/%.o: ttty/%.cpp | $(objdir)/ttty $(gendir)/term.mode_def.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 $(objdir)/experimental/%.o: experimental/%.cpp | $(objdir)/experimental $(gendir)/term.mode_def.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
@@ -28,7 +30,8 @@ $(gendir)/term.mode_def.hpp: make_command.sh ansi/term.mode.def
 all: impl1
 impl1_objs = \
   $(objdir)/impl1.o \
-  $(objdir)/ansi/observer.tty.o \
+  $(objdir)/ttty/buffer.o \
+  $(objdir)/dict.o \
   $(objdir)/ansi/term.o \
   $(objdir)/ansi/line.o \
   $(objdir)/ansi/enc.c2w.o \
@@ -41,7 +44,7 @@ all: impl2
 impl2_objs = \
   $(objdir)/impl2.o \
   $(objdir)/impl.o \
-  $(objdir)/ansi/observer.tty.o \
+  $(objdir)/dict.o \
   $(objdir)/ansi/term.o \
   $(objdir)/ansi/line.o \
   $(objdir)/ansi/enc.c2w.o \
@@ -56,7 +59,7 @@ all: impl3
 impl3_objs = \
   $(objdir)/impl3.o \
   $(objdir)/impl.o \
-  $(objdir)/ansi/observer.tty.o \
+  $(objdir)/dict.o \
   $(objdir)/ansi/term.o \
   $(objdir)/ansi/line.o \
   $(objdir)/ansi/enc.c2w.o \
@@ -77,7 +80,7 @@ twin_objs = \
   $(objdir)/twin/win_messages.o \
   $(objdir)/ansi/enc.utf8.o \
   $(objdir)/impl.o \
-  $(objdir)/ansi/observer.tty.o \
+  $(objdir)/dict.o \
   $(objdir)/ansi/term.o \
   $(objdir)/ansi/line.o \
   $(objdir)/ansi/enc.c2w.o \

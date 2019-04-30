@@ -3,136 +3,20 @@
 #define CONTRA_ANSI_OBSERVER_TTY_HPP
 #include <cstdio>
 #include <vector>
-#include "line.hpp"
-#include "term.hpp"
+#include "../ansi/line.hpp"
+#include "../ansi/term.hpp"
+#include "../dict.hpp"
 
 namespace contra {
-namespace ansi {
-
-  enum termcap_constants {
-    color_space_default_bit     = 1 << attribute_t::color_space_default    ,
-    color_space_transparent_bit = 1 << attribute_t::color_space_transparent,
-    color_space_rgb_bit         = 1 << attribute_t::color_space_rgb        ,
-    color_space_cmy_bit         = 1 << attribute_t::color_space_cmy        ,
-    color_space_cmyk_bit        = 1 << attribute_t::color_space_cmyk       ,
-    color_space_indexed_bit     = 1 << attribute_t::color_space_indexed    ,
-  };
-
-  //-----------------------------------------------------------------------------
-  //
-  // SGR capabilities
-  //
-  // Note:
-  //   さすがにどの端末も SGR 0 は対応していると仮定している。
-  //   (但し、端末が SGR 自体に対応していない場合はこの限りではない。)
-  //
-
-  struct termcap_sgrflag1 {
-    aflags_t bit;
-    unsigned on;
-    unsigned off;
-  };
-
-  struct termcap_sgrflag2 {
-    aflags_t bit1;
-    unsigned on1;
-    aflags_t bit2;
-    unsigned on2;
-    unsigned off;
-  };
-
-  struct termcap_sgrideogram {
-    /*?lwiki
-     * @var bool is_decoration_exclusive;
-     *   現在のところ ideogram decorations はどれか一つだけが有効になる様に実装することにする。
-     *   (但し、将来それぞれ独立に on/off する様に変更できる余地を残すために各項目 1bit 占有している。)
-     *   但し、実際の端末では複数を有効にすることができる実装もあるだろう。
-     *   その場合には、一貫した動作をさせる為には必ず既に設定されている装飾を解除する必要がある。
-     *   この設定項目は出力先の端末で ideogram decorations が排他的かどうかを保持する。
-     */
-    // ToDo: RLogin の動作を確認する。
-    bool is_decoration_exclusive {true};
-    unsigned single_rb {60};
-    unsigned double_rb {61};
-    unsigned single_lt {62};
-    unsigned double_lt {63};
-    unsigned single_lb {66};
-    unsigned double_lb {67};
-    unsigned single_rt {68};
-    unsigned double_rt {69};
-    unsigned stress    {64};
-    unsigned reset     {65};
-  };
-
-  struct termcap_sgrcolor {
-    aflags_t bit;
-    unsigned base;
-    unsigned off;
-
-    // 90-97, 100-107
-    unsigned aixterm_color;
-
-    // 38:5:0-255
-    struct {
-      unsigned      sgr         ; //!< SGR number of ISO 8613-6 color specification
-      unsigned char color_spaces; //!< supported color specs specified by bits
-      char          separater   ; //!< the separator character of ISO 8613-6 SGR arguments
-      bool          exact       ; //!< the separator character of ISO 8613-6 SGR arguments
-      unsigned      max_index   ; //!< the number of colors available through 38:5:*
-    } iso8613;
-
-    // 1,22 / 5,25 で明るさを切り替える方式
-    unsigned high_intensity_on ;
-    unsigned high_intensity_off;
-  };
-
-  struct termcap_sgr_type {
-    typedef attribute_t _at;
-    // aflags
-    termcap_sgrflag2 cap_bold         {_at::is_bold_set     , 1, _at::is_faint_set           ,  2, 22};
-    termcap_sgrflag2 cap_italic       {_at::is_italic_set   , 3, _at::is_fraktur_set         , 20, 23};
-    termcap_sgrflag2 cap_underline    {_at::is_underline_set, 4, _at::is_double_underline_set, 21, 24};
-    termcap_sgrflag2 cap_blink        {_at::is_blink_set    , 5, _at::is_rapid_blink_set     ,  6, 25};
-    termcap_sgrflag1 cap_inverse      {_at::is_inverse_set  , 7, 27};
-    termcap_sgrflag1 cap_invisible    {_at::is_invisible_set, 8, 28};
-    termcap_sgrflag1 cap_strike       {_at::is_strike_set   , 9, 29};
-
-    // xflags
-    termcap_sgrflag2 cap_framed       {_at::is_frame_set       , 51, _at::is_circle_set, 52, 54};
-
-    termcap_sgrflag1 cap_proportional {_at::is_proportional_set, 26, 50};
-    termcap_sgrflag1 cap_overline     {_at::is_overline_set    , 53, 55};
-
-    termcap_sgrideogram cap_ideogram;
-
-    // colors
-    termcap_sgrcolor cap_fg {
-      _at::is_fg_color_set, 30, 39,  90,
-      {38, color_space_indexed_bit | color_space_rgb_bit, ascii_semicolon, false, 255},
-      0, 0
-    };
-    termcap_sgrcolor cap_bg {
-      _at::is_bg_color_set, 40, 49, 100,
-      {48, color_space_indexed_bit | color_space_rgb_bit, ascii_semicolon, false, 255},
-      0, 0
-    };
-
-    aflags_t aflagsNotResettable {0};
-    xflags_t xflagsNotResettable {0};
-
-  public:
-    void initialize();
-  };
-
-  //-----------------------------------------------------------------------------
+namespace ttty {
+  using namespace ::contra::ansi;
+  using namespace ::contra::dict;
 
   struct tty_observer {
   private:
     term_t* term;
-    std::FILE* file;
-    termcap_sgr_type const* sgrcap;
-    bool termcap_bce = false;
 
+    // 端末の状態追跡の為の変数
     struct line_buffer_t {
       std::uint32_t id = (std::uint32_t) -1;
       std::uint32_t version = 0;
@@ -142,128 +26,39 @@ namespace ansi {
     std::vector<line_buffer_t> screen_buffer;
     bool prev_decscnm = false;
 
+    tty_writer w;
+
   public:
     tty_observer(term_t& term, std::FILE* file, termcap_sgr_type* sgrcap):
-      term(&term), file(file), sgrcap(sgrcap)
-    {
-      m_attr.clear();
-    }
+      term(&term), w(file, sgrcap) {}
 
-    void put_u32(char32_t c) const { contra::encoding::put_u8(c, file); }
-    void put(char c) const { std::fputc(c, file); }
-    void put_str(const char32_t* s) const {
-      while (*s) put(*s++);
-    }
-    void put_unsigned(unsigned value) const {
-      if (value >= 10)
-        put_unsigned(value/10);
-      put((byte) (ascii_0 + value % 10));
-    }
-
-  private:
-    void sgr_clear() const {
-      put(ascii_esc);
-      put(ascii_left_bracket);
-      put(ascii_m);
-    }
-
-    void sgr_put(unsigned value) {
-      if (this->sgr_isOpen) {
-        put(ascii_semicolon);
-      } else {
-        this->sgr_isOpen = true;
-        put(ascii_esc);
-        put(ascii_left_bracket);
-      }
-
-      if (value) put_unsigned(value);
-    }
-
-    attribute_t m_attr;
-    bool sgr_isOpen;
-
-    void update_sgrflag1(
-      aflags_t aflagsNew, aflags_t aflagsOld,
-      termcap_sgrflag1 const& sgrflag);
-
-    void update_sgrflag2(
-      aflags_t aflagsNew, aflags_t aflagsOld,
-      termcap_sgrflag2 const& sgrflag);
-
-    void update_ideogram_decoration(
-      xflags_t xflagsNew, xflags_t xflagsOld,
-      termcap_sgrideogram const& cap);
-
-    void update_sgrcolor(
-      int colorSpaceNew, color_t colorNew,
-      int colorSpaceOld, color_t colorOld,
-      termcap_sgrcolor const& sgrcolor);
-
-    void apply_attr(attribute_t newAttr);
-
-    void put_skip(curpos_t& wskip) {
-      if (m_attr.is_default() && wskip <= 4) {
-        while (wskip--) put(' ');
-      } else {
-        put(ascii_esc);
-        put(ascii_left_bracket);
-        put_unsigned(wskip);
-        put(ascii_C);
-      }
-      wskip = 0;
-    }
-
-  public:
-    // test implementation
-    // ToDo: output encoding
-    void print_screen(board_t const& w) {
-      for (curpos_t y = 0; y < w.m_height; y++) {
-        line_t const& line = w.m_lines[y];
-        curpos_t wskip = 0;
-        curpos_t const ncell = (curpos_t) line.cells().size();
-        for (curpos_t x = 0; x < ncell; x++) {
-          cell_t const& cell = line.cells()[x];
-          if (cell.character.is_wide_extension()) continue;
-          if (cell.character.is_marker()) continue;
-          if (cell.character.value == ascii_nul) {
-            wskip += cell.width;
-            continue;
-          }
-
-          if (wskip > 0) put_skip(wskip);
-          apply_attr(cell.attribute);
-          put_u32(cell.character.value);
-        }
-
-        put('\n');
-      }
-      apply_attr(attribute_t {});
-    }
+    tty_writer& writer() { return w; }
+    tty_writer const& writer() const { return w; }
 
   private:
     void put_csiseq_pn1(unsigned param, char ch) const {
-      put('\x1b');
-      put('[');
-      if (param != 1) put_unsigned(param);
-      put(ch);
+      w.put(ascii_esc);
+      w.put(ascii_left_bracket);
+      if (param != 1) w.put_unsigned(param);
+      w.put(ch);
     }
   private:
     curpos_t x = 0, y = 0;
     void move_to_line(curpos_t newy) {
       curpos_t const delta = newy - y;
       if (delta > 0) {
-        put_csiseq_pn1(delta, 'B');
+        put_csiseq_pn1(delta, ascii_B);
       } else if (delta < 0) {
-        put_csiseq_pn1(-delta, 'A');
+        put_csiseq_pn1(-delta, ascii_A);
       }
       y = newy;
     }
     void move_to_column(curpos_t newx) {
       curpos_t const delta = newx - x;
       if (delta > 0) {
-        put_csiseq_pn1(delta, 'C');
+        put_csiseq_pn1(delta, ascii_C);
       } else if (delta < 0) {
-        put_csiseq_pn1(-delta, 'D');
+        put_csiseq_pn1(-delta, ascii_D);
       }
       x = newx;
     }
@@ -272,19 +67,19 @@ namespace ansi {
       move_to_column(newx);
     }
     void put_dl(curpos_t delta) const {
-      if (delta > 0) put_csiseq_pn1(delta, 'M');
+      if (delta > 0) put_csiseq_pn1(delta, ascii_M);
     }
     void put_il(curpos_t delta) const {
-      if (delta > 0) put_csiseq_pn1(delta, 'L');
+      if (delta > 0) put_csiseq_pn1(delta, ascii_L);
     }
     void put_ech(curpos_t delta) const {
-      if (delta > 0) put_csiseq_pn1(delta, 'X');
+      if (delta > 0) put_csiseq_pn1(delta, ascii_X);
     }
     void put_ich(curpos_t count) const {
-      if (count > 0) put_csiseq_pn1(count, '@');
+      if (count > 0) put_csiseq_pn1(count, ascii_at);
     }
     void put_dch(curpos_t count) const {
-      if (count > 0) put_csiseq_pn1(count, 'P');
+      if (count > 0) put_csiseq_pn1(count, ascii_P);
     }
 
     /*?lwiki @var bool is_terminal_bottom;
@@ -414,15 +209,15 @@ namespace ansi {
 #endif
     }
     void erase_until_eol() {
-      board_t const& w = term->board();
-      if (x >= w.m_width) return;
+      board_t const& b = term->board();
+      if (x >= b.m_width) return;
 
       attribute_t attr;
-      apply_attr(attr);
-      if (termcap_bce || attr.is_default()) {
-        put_ech(w.m_width - x);
+      w.apply_attr(attr);
+      if (w.termcap_bce || attr.is_default()) {
+        put_ech(b.m_width - x);
       } else {
-        for (; x < w.m_width; x++) put(' ');
+        for (; x < b.m_width; x++) w.put(' ');
       }
     }
 
@@ -484,8 +279,8 @@ namespace ansi {
           cell_t const& cell = new_content[i];
           std::uint32_t code = cell.character.value;
           if (code == ascii_nul) code = ascii_sp;
-          apply_attr(cell.attribute);
-          put_u32(code);
+          w.apply_attr(cell.attribute);
+          w.put_u32(code);
           x += cell.width;
         }
       }
@@ -495,7 +290,7 @@ namespace ansi {
     }
 
     void apply_default_attribute(std::vector<cell_t>& content) {
-      tty_state& s = term->state();
+      tstate_t& s = term->state();
       if (!s.m_default_fg_space && !s.m_default_bg_space) return;
       for (auto& cell : content) {
         if (s.m_default_fg_space && cell.attribute.is_fg_default())
@@ -515,7 +310,11 @@ namespace ansi {
 
   public:
     void update() {
-      std::fprintf(file, "\x1b[?25l");
+      w.put(ascii_esc);
+      w.put(ascii_left_bracket);
+      w.put(ascii_question);
+      w.put_unsigned(25);
+      w.put(ascii_l);
       std::vector<cell_t> buff;
 
       bool full_update = false;
@@ -545,15 +344,20 @@ namespace ansi {
         }
 
         if (y + 1 == b.m_height) break;
-        put('\n');
+        w.put('\n');
         this->y++;
       }
-      apply_attr(attribute_t {});
+      w.apply_attr(attribute_t {});
 
       move_to(b.cur.x(), b.cur.y());
-      if (term->state().get_mode(mode_dectcem))
-        std::fprintf(file, "\x1b[?25h");
-      std::fflush(file);
+      if (term->state().get_mode(mode_dectcem)) {
+        w.put(ascii_esc);
+        w.put(ascii_left_bracket);
+        w.put(ascii_question);
+        w.put_unsigned(25);
+        w.put(ascii_h);
+      }
+      w.flush();
     }
   };
 

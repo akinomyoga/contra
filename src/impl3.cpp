@@ -12,9 +12,10 @@
 
 #include "impl.hpp"
 #include "sequence.h"
+#include "dict.hpp"
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
-#include "ansi/observer.tty.hpp"
+#include "ttty/buffer.hpp"
 #include "ansi/enc.c2w.hpp"
 
 int main() {
@@ -51,9 +52,9 @@ int main() {
   term.state().m_default_bg_space = contra::ansi::attribute_t::color_space_indexed;
   term.state().m_default_bg = 255;
 
-  contra::ansi::termcap_sgr_type sgrcap;
+  contra::dict::termcap_sgr_type sgrcap;
   sgrcap.initialize();
-  contra::ansi::tty_observer renderer(term, stdout, &sgrcap);
+  contra::ttty::tty_observer renderer(term, stdout, &sgrcap);
 
   contra::sequence_printer printer("impl3-allseq.txt");
   dev.push(&printer);
@@ -85,7 +86,7 @@ int main() {
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &oldTermios);
 
   std::printf("\n");
-  renderer.print_screen(b);
+  renderer.writer().print_screen(b);
 
   std::FILE* file = std::fopen("impl2-dump.txt", "w");
   b.debug_print(file);

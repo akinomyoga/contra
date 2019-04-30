@@ -29,7 +29,7 @@ namespace ansi {
 #include "../../out/gen/term.mode_def.hpp"
   };
 
-  struct tty_state;
+  struct tstate_t;
   class term_t;
   typedef std::uint32_t csi_single_param_t;
 
@@ -63,7 +63,7 @@ namespace ansi {
   void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm);
   bool do_decrqss(term_t& term, char32_t const* param, std::size_t len);
 
-  struct tty_state {
+  struct tstate_t {
     term_t* m_term;
 
     curpos_t page_home  {-1};
@@ -108,7 +108,7 @@ namespace ansi {
     color_t m_default_fg = 0;
     color_t m_default_bg = 0;
 
-    tty_state(term_t* term): m_term(term) {
+    tstate_t(term_t* term): m_term(term) {
       this->clear();
     }
 
@@ -286,7 +286,7 @@ namespace ansi {
   class term_t: public contra::idevice {
   private:
     board_t* m_board;
-    tty_state m_state {this};
+    tstate_t m_state {this};
 
     contra::idevice* m_send_target = nullptr;
     std::vector<byte> m_send_buff;
@@ -328,8 +328,8 @@ namespace ansi {
   public:
     board_t& board() { return *m_board; }
     board_t const& board() const { return *m_board; }
-    tty_state& state() {return this->m_state;}
-    tty_state const& state() const {return this->m_state;}
+    tstate_t& state() {return this->m_state;}
+    tstate_t const& state() const {return this->m_state;}
 
     curpos_t tmargin() const {
       curpos_t const b = m_state.dec_tmargin;
@@ -396,7 +396,7 @@ namespace ansi {
     void insert_graph(char32_t u) {
       // ToDo: 新しい行に移る時に line_limit, line_home を初期化する
       board_t& b = this->board();
-      tty_state& s = this->state();
+      tstate_t& s = this->state();
       line_t& line = b.line();
       initialize_line(line);
 
@@ -485,7 +485,7 @@ namespace ansi {
     void do_bs() {
       // Note: mode_xenl, mode_decawm, mode_xtBSBackLine が絡んで来た時の振る舞いは適当である。
       board_t& b = this->board();
-      tty_state const& s = this->state();
+      tstate_t const& s = this->state();
       line_t const& line = b.line();
       if (s.get_mode(mode_simd)) {
         bool const cap_xenl = s.get_mode(mode_xenl);

@@ -14,7 +14,7 @@
 #include "sequence.h"
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
-#include "ansi/observer.tty.hpp"
+#include "ttty/buffer.hpp"
 
 int main() {
   struct winsize winsize;
@@ -62,10 +62,10 @@ int main() {
   contra::term::set_fd_nonblock(STDIN_FILENO, oldNonblock);
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &oldTermios);
 
-  contra::ansi::termcap_sgr_type sgrcap;
+  contra::dict::termcap_sgr_type sgrcap;
   sgrcap.initialize();
-  contra::ansi::tty_observer target(term, stdout, &sgrcap);
-  target.print_screen(b);
+  contra::ttty::tty_observer target(term, stdout, &sgrcap);
+  target.writer().print_screen(b);
 
   std::FILE* file = std::fopen("impl2-dump.txt", "w");
   b.debug_print(file);
