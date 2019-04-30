@@ -9,30 +9,62 @@
 #include <vector>
 #include <sstream>
 #include <iomanip>
+#include <memory>
+#include <functional>
 #include <mwg/except.h>
 #include "../contradef.h"
 #include "../ansi/enc.utf8.hpp"
+#include "../ansi/util.hpp"
 #include "win_messages.hpp"
 
 #define _tcslen wcslen
+#define _tcscpy_s wcscpy_s
+#define _tcscpy wcscpy
+
+namespace std {
+  // template<typename Type, typename Deleter>
+  // unique_ptr(Type* pointer, Deleter&& value)
+  //   -> unique_ptr<Type, typename std::remove_reference<Deleter>::type>;
+  template<typename Type, typename Deleter>
+  unique_ptr(Type* pointer, Deleter const& value)
+    -> unique_ptr<Type, Deleter>;
+}
 
 namespace contra {
 namespace twin {
 
   class font_store {
+    LOGFONT log_normal;
     HFONT m_normal = NULL;
 
+    LONG width;
+    LONG height;
   public:
-    font_store() {}
+    font_store() {
+      height = 13;
+      width = 7;
+      log_normal.lfHeight = height;
+      log_normal.lfWidth  = width;
+      log_normal.lfEscapement = 0;
+      log_normal.lfOrientation = 0;
+      log_normal.lfWeight = FW_NORMAL;
+      log_normal.lfItalic = FALSE;
+      log_normal.lfUnderline = FALSE;
+      log_normal.lfStrikeOut = FALSE;
+      log_normal.lfCharSet = DEFAULT_CHARSET;
+      log_normal.lfOutPrecision = OUT_DEFAULT_PRECIS;
+      log_normal.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+      log_normal.lfQuality = CLEARTYPE_QUALITY;
+      log_normal.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
+      //::_tcscpy_s(log_normal.lfFaceName, LF_FACESIZE, TEXT("MeiryoKe_Console"));
+      ::_tcscpy(log_normal.lfFaceName, TEXT("MeiryoKe_Console"));
+    }
+
+    LOGFONT const& logfont_normal() { return log_normal; }
 
     HFONT normal() {
-      if (!m_normal) {
-        m_normal = CreateFont(
-          13, 7, 0, 0, FW_NORMAL,
-          FALSE, FALSE, FALSE,
-          DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-          CLEARTYPE_QUALITY, FIXED_PITCH | FF_DONTCARE, TEXT("MeiryoKe_Console"));
-      }
+      if (!m_normal)
+        m_normal = CreateFontIndirect(&log_normal);
       return m_normal;
     }
 
@@ -143,16 +175,16 @@ namespace twin {
       std::fprintf(stderr, "key: %s", str.str().c_str());
 
       if (code < key_base) {
-        if (code == ascii_bs)
-          std::fprintf(stderr, "BS");
-        else if (code == ascii_ht)
-          std::fprintf(stderr, "TAB");
-        else if (code == ascii_cr)
-          std::fprintf(stderr, "RET");
-        else if (code == ascii_esc)
-          std::fprintf(stderr, "ESC");
-        else
+        switch (code) {
+        case ascii_bs: std::fprintf(stderr, "BS"); break;
+        case ascii_ht: std::fprintf(stderr, "TAB"); break;
+        case ascii_cr: std::fprintf(stderr, "RET"); break;
+        case ascii_esc: std::fprintf(stderr, "ESC"); break;
+        case ascii_sp: std::fprintf(stderr, "SP"); break;
+        default:
           contra::encoding::put_u8((char32_t) code, stderr);
+          break;
+        }
         std::putc('\n', stderr);
       } else {
         static const char* table[] = {
@@ -298,6 +330,9 @@ namespace twin {
   public:
     LRESULT process_message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       switch (msg) {
+      case WM_CREATE:
+        ::SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG) CreateSolidBrush(RGB(0xFF,0xFF,0xFF)));
+        return 0L;
       case WM_DESTROY:
         ::PostQuitMessage(0);
         return 0L;
@@ -320,6 +355,26 @@ namespace twin {
         // 余分な操作をしない様に無視
         // DEADCHAR は accent や diacritic などの入力の時に発生する。
         return 0L;
+
+      case WM_IME_STARTCOMPOSITION:
+        {
+          LRESULT const result = ::DefWindowProc(hWnd, msg, wParam, lParam);
+
+          util::raii hIMC(::ImmGetContext(hWnd), [hWnd] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
+
+          ::ImmSetCompositionFont(hIMC, const_cast<LOGFONT*>(&fstore.logfont_normal()));
+
+          RECT rcClient;
+          if (::GetClientRect(hWnd, &rcClient)) {
+            COMPOSITIONFORM form;
+            form.dwStyle = CFS_POINT;
+            form.ptCurrentPos.x = rcClient.left;
+            form.ptCurrentPos.y = rcClient.top+13;
+            ::ImmSetCompositionWindow(hIMC, &form);
+          }
+
+          return result;
+        }
       default:
         {
           const char* name = get_window_message_name(msg);
