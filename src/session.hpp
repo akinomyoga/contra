@@ -9,6 +9,7 @@
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
 #include "enc.utf8.hpp"
+#include "pty.hpp"
 
 namespace contra {
 namespace term {
@@ -132,12 +133,13 @@ namespace term {
 
   struct terminal_session {
   public:
-    struct winsize ws;
-    std::size_t read_buffer_size;
+    struct winsize init_ws;
+    struct termios* init_termios = NULL;
+    std::size_t init_read_buffer_size = 4096;
 
   private:
-    bool m_initialized = false;
-    contra::term::session m_fds;
+    contra::term::pty_session m_pty; // ユーザ入力書込先
+    contra::multicast_device m_dev;  // 受信データ書込先
     std::unique_ptr<contra::ansi::board_t> m_board;
     std::unique_ptr<contra::ansi::term_t> m_term;
 
@@ -147,44 +149,31 @@ namespace term {
     contra::ansi::term_t& term() { return *m_term; }
     contra::ansi::term_t const& term() const { return *m_term; }
 
+    contra::idevice& input_device() { return m_pty; }
+    contra::multicast_device& output_device() { return m_dev; }
+
   public:
-    bool is_initialized() const { return m_initialized; }
-
+    bool is_active() const { return m_pty.is_active(); }
     bool initialize() {
-      if (m_initialized) return true;
+      if (m_pty.is_active()) return true;
 
-      // restrict in the range from 256 bytes to 64 kbytes
-      read_buffer_size = contra::clamp(read_buffer_size, 0x100, 0x10000);
-      m_read_buffer.resize(read_buffer_size);
+      m_pty.set_read_buffer_size(init_read_buffer_size);
+      if (!m_pty.start("/bin/bash", &init_ws, init_termios)) return false;
 
-      if (!contra::term::create_session(&m_fds, "/bin/bash", &ws)) return false;
-      m_board = std::make_unique<contra::ansi::board_t>(ws.ws_col, ws.ws_row);
+      m_board = std::make_unique<contra::ansi::board_t>(init_ws.ws_col, init_ws.ws_row);
       m_term = std::make_unique<contra::ansi::term_t>(*m_board);
-
-      return m_initialized = true;
+      m_term->set_response_target(m_pty);
+      m_dev.push(m_term.get());
+      return true;
     }
-
-    std::vector<char> m_read_buffer;
-    bool process() {
-      if (!m_initialized) return false;
-      return contra::term::read_from_fd(m_fds.masterfd, m_term.get(), &m_read_buffer[0], m_read_buffer.size());
-    }
-    bool is_child_alive() const {
-      if (!m_initialized) return false;
-      return !contra::term::is_child_terminated(m_fds.pid);
-    }
-
-    void terminate() {
-      if (!m_initialized) return;
-      m_initialized = false;
-      ::kill(m_fds.pid, SIGTERM);
-    }
+    bool process() { return m_pty.read(&m_dev); }
+    bool is_alive() { return m_pty.is_alive(); }
+    void terminate() { return m_pty.terminate(); }
 
   private:
-    int m_input_wait_interval = 10; // in msec
     std::vector<byte> input_buffer;
     void put_flush() {
-      contra::term::write_to_fd(m_fds.masterfd, &input_buffer[0], input_buffer.size(), m_input_wait_interval);
+      m_pty.write(reinterpret_cast<char const*>(&input_buffer[0]), input_buffer.size());
       input_buffer.clear();
     }
     void put(byte value) {
@@ -194,8 +183,9 @@ namespace term {
       if (term().state().get_mode(ansi::mode_s7c1t)) {
         input_buffer.push_back(ascii_esc);
         input_buffer.push_back(code - 0x40);
-      } else
-        input_buffer.push_back(code);
+      } else {
+        contra::encoding::put_u8(code, input_buffer);
+      }
     }
     void put_unsigned(std::uint32_t value) {
       if (value >= 10) put_unsigned(value / 10);

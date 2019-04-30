@@ -17,7 +17,7 @@
 #include "../contradef.hpp"
 #include "../enc.utf8.hpp"
 #include "../util.hpp"
-#include "../impl.hpp"
+#include "../pty.hpp"
 #include "../session.hpp"
 #include "win_messages.hpp"
 
@@ -122,7 +122,7 @@ namespace twin {
 
   private:
     void render_window(HDC hdc) {
-      if (!hWnd || !sess.is_initialized()) return;
+      if (!hWnd || !sess.is_active()) return;
 
       auto deleter = [&] (auto p) { SelectObject(hdc, p); };
       util::raii hOldFont((HFONT) SelectObject(hdc, fstore.normal()), deleter);
@@ -155,12 +155,12 @@ namespace twin {
               code &= ~character_t::flag_cluster_extension;
             if (code == (code & character_t::unicode_mask)) {
               characters.push_back(code);
-              progress.push_back(cell.width * sess.ws.ws_xpixel);
+              progress.push_back(cell.width * sess.init_ws.ws_xpixel);
             }
             // ToDo: その他の文字・マーカーに応じた処理。
           }
           if (characters.size())
-            ExtTextOut(hdc, 0, y * sess.ws.ws_ypixel, 0, NULL, &characters[0], characters.size(), &progress[0]);
+            ExtTextOut(hdc, 0, y * sess.init_ws.ws_ypixel, 0, NULL, &characters[0], characters.size(), &progress[0]);
         }
       }
       //SelectObject(hdc, hOldFont);
@@ -306,7 +306,7 @@ namespace twin {
         this->hWnd = NULL;
         return 0L;
       case WM_PAINT:
-        if (this->hWnd && this->sess.is_initialized()) {
+        if (this->hWnd && this->sess.is_active()) {
           PAINTSTRUCT paint;
           HDC hdc = BeginPaint(hWnd, &paint);
           this->render_window(hdc);
@@ -363,11 +363,11 @@ namespace twin {
 
   public:
     int do_loop() {
-      sess.ws.ws_col = 80;
-      sess.ws.ws_row = 30;
-      sess.ws.ws_xpixel = fstore.width();
-      sess.ws.ws_ypixel = fstore.height();
-      sess.read_buffer_size = 4096;
+      sess.init_ws.ws_col = 80;
+      sess.init_ws.ws_row = 30;
+      sess.init_ws.ws_xpixel = fstore.width();
+      sess.init_ws.ws_ypixel = fstore.height();
+      sess.init_read_buffer_size = 4096;
       if (!sess.initialize()) return 2;
 
       int exit_code;
@@ -398,7 +398,7 @@ namespace twin {
         }
 
         // if (contra::read_from_fd(STDIN_FILENO, &devIn, buff, sizeof(buff))) continue;
-        if (!sess.is_child_alive()) break;
+        if (!sess.is_alive()) break;
         if (!processed)
           contra::term::msleep(10);
       }
