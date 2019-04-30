@@ -11,6 +11,7 @@
 #include <termios.h>
 
 namespace contra {
+namespace term {
 
 void msleep(int milliseconds) {
   struct timespec tv;
@@ -22,8 +23,23 @@ void msleep(int milliseconds) {
 std::size_t read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size) {
   ssize_t const nread = read(fdsrc, buff, size);
   if (nread <= 0) return 0;
-  dst->write(buff, nread);
+  dst->dev_write(buff, nread);
   return nread;
+}
+
+void write_to_fd(int fd, byte const* data, std::size_t size, int wait_interval) {
+  const byte* p = data;
+  if (!size) return;
+  for (;;) {
+    ssize_t const sz_write = (ssize_t) std::min<std::size_t>(size, SSIZE_MAX);
+    ssize_t const n = ::write(fd, p, sz_write);
+    if (n > 0) {
+      if ((std::size_t) n >= size) break;
+      p += n;
+      size -= n;
+    } else
+      msleep(wait_interval);
+  }
 }
 
 bool set_fd_nonblock(int fd, bool value) {
@@ -92,4 +108,5 @@ bool create_session(session* sess, const char* shell, winsize const* ws, struct 
   }
 }
 
+}
 }

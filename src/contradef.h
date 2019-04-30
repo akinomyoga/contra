@@ -1,28 +1,47 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
 #ifndef CONTRA_CONTRADEF_H
 #define CONTRA_CONTRADEF_H
+#include <cstddef>
 #include <cstdint>
+#include <vector>
 namespace contra {
   typedef std::uint8_t byte;
 
   template<typename T>
   struct identity { typedef T type; };
 
-  // std::size (C++17 <iterator>)
-  template<typename T, std::size_t N>
-  constexpr std::size_t size(T const (&)[N]) {return N;}
+  // // std::size (C++17 <iterator>)
+  // template<typename T, std::size_t N>
+  // constexpr std::size_t size(T const (&)[N]) {return N;}
 
   template<typename T>
   constexpr T clamp(T value, typename identity<T>::type min, typename identity<T>::type max) {
     return value < min ? min : value > max ? max : value;
   }
 
-  struct idevice {
-    virtual void write(char const* data, std::size_t size) = 0;
-  };
-
   // discarded expression
 #define contra_unused(X) static_cast<void>(X)
+
+  //---------------------------------------------------------------------------
+  // Output devices
+
+  struct idevice {
+    virtual void dev_write(char const* data, std::size_t size) = 0;
+    virtual ~idevice() {}
+  };
+
+  class multicast_device: public idevice {
+    std::vector<idevice*> m_list;
+  public:
+    void push(idevice* dev) {this->m_list.push_back(dev);}
+    virtual void dev_write(char const* data, std::size_t size) override {
+      for (idevice* const dev: m_list)
+        dev->dev_write(data, size);
+    }
+  };
+
+  //---------------------------------------------------------------------------
+  // ASCII codes
 
   enum ascii_codes {
 

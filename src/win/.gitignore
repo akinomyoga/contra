@@ -5,4 +5,4 @@
 *.o
 
 # resources
-/cygwin1.dll
+/cyg*.dll

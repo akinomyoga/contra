@@ -1566,7 +1566,7 @@ namespace {
 
     void register_cfunc(control_function_t* fp, byte F) {
       int const index = (int) F - ascii_at;
-      mwg_assert(0 <= index && index < (int) size(data1), "final byte out of range");
+      mwg_assert(0 <= index && index < (int) std::size(data1), "final byte out of range");
       mwg_assert(data1[index] == nullptr, "another function is already registered");
       data1[index] = fp;
     }
@@ -1633,7 +1633,7 @@ namespace {
 
     control_function_t* get(byte F) const {
       int const index = (int) F - ascii_at;
-      return 0 <= index && index < (int) size(data1) ? data1[index] : nullptr;
+      return 0 <= index && index < (int) std::size(data1) ? data1[index] : nullptr;
     }
 
     control_function_t* get(byte I, byte F) const {

@@ -378,7 +378,7 @@ namespace contra {
     }
   };
 
-  class sequence_printer {
+  class sequence_printer: public idevice {
     const char* fname;
     std::FILE* const file;
   public:
@@ -482,6 +482,11 @@ namespace contra {
     void write(const char* data, std::size_t size) {
       for (std::size_t i = 0; i < size; i++)
         m_seqdecoder.process_char(data[i]);
+    }
+
+  private:
+    virtual void dev_write(char const* data, std::size_t size) override {
+      this->write(data, size);
     }
   };
 }
