@@ -1,8 +1,0 @@
-# gitignore
-
-/test1.exe
-*.dep
-*.o
-
-# resources
-/cyg*.dll

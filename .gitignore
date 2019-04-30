@@ -6,7 +6,8 @@
 # generated files
 /out
 /src/impl?
-/src/impl?.exe
+/src/twin
+/src/*.exe
 /minimal_openpt
 
 # output files
@@ -16,3 +17,6 @@
 
 # private files
 /mat
+
+# resources
+/src/cyg*.dll
