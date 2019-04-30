@@ -1,13 +1,28 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef CONTRA_ANSI_UTIL_HPP
-#define CONTRA_ANSI_UTIL_HPP
+#ifndef CONTRA_UTIL_HPP
+#define CONTRA_UTIL_HPP
 #include <iterator>
 #include <vector>
 #include <cstddef>
 #include <utility>
+#include <algorithm>
 
 namespace contra {
 namespace util {
+
+  template<typename Pointer, typename Deleter>
+  struct raii {
+    Pointer pointer;
+    Deleter deleter;
+  public:
+    raii(Pointer pointer, Deleter deleter): pointer(pointer), deleter(deleter) {}
+    ~raii() { if (pointer) deleter(pointer); }
+    raii& operator=(raii const&) = delete;
+    raii& operator=(raii&&) = delete;
+    Pointer operator->() const { return pointer; }
+    Pointer get() const { return pointer; }
+    operator Pointer() const { return pointer; }
+  };
 
   template<typename T, typename Container, typename Index>
   class indexer_iterator: std::iterator<std::random_access_iterator_tag, T, Index> {

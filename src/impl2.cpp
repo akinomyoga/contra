@@ -17,10 +17,13 @@
 #include "ansi/observer.tty.hpp"
 
 int main() {
+  struct winsize winsize;
+  ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &winsize);
   struct termios oldTermios;
   tcgetattr(STDIN_FILENO, &oldTermios);
-  contra::session sess;
-  if (!create_session(&sess, oldTermios, "/bin/bash")) return -1;
+
+  contra::term::session sess;
+  if (!contra::term::create_session(&sess, "/bin/bash", &winsize, &oldTermios)) return -1;
 
   struct termios termios = oldTermios;
   termios.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
@@ -33,34 +36,30 @@ int main() {
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios);
 
   contra::multicast_device dev;
-  contra::fd_device d0(STDOUT_FILENO);
+  contra::term::fd_device d0(STDOUT_FILENO);
   dev.push(&d0);
 
-  struct winsize winsize;
-  ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &winsize);
   contra::ansi::board_t b(winsize.ws_col, winsize.ws_row);
 
   contra::ansi::term_t term(b);
-  contra::tty_player_device d1(&term);
-  dev.push(&d1);
+  dev.push(&term);
 
   contra::sequence_printer printer("impl2-allseq.txt");
-  contra::sequence_printer_device d2(&printer);
-  dev.push(&d2);
+  dev.push(&printer);
 
-  bool const oldNonblock = contra::set_fd_nonblock(STDIN_FILENO, true);
-  contra::fd_device devIn(sess.masterfd);
+  bool const oldNonblock = contra::term::set_fd_nonblock(STDIN_FILENO, true);
+  contra::term::fd_device devIn(sess.masterfd);
 
   char buff[4096];
   for (;;) {
-    if (contra::read_from_fd(sess.masterfd, &dev, buff, sizeof(buff))) continue;
-    if (contra::read_from_fd(STDIN_FILENO, &devIn, buff, sizeof(buff))) continue;
-    if (contra::is_child_terminated(sess.pid)) break;
-    contra::msleep(10);
+    if (contra::term::read_from_fd(sess.masterfd, &dev, buff, sizeof(buff))) continue;
+    if (contra::term::read_from_fd(STDIN_FILENO, &devIn, buff, sizeof(buff))) continue;
+    if (contra::term::is_child_terminated(sess.pid)) break;
+    contra::term::msleep(10);
   }
 
   kill(sess.pid, SIGTERM);
-  contra::set_fd_nonblock(STDIN_FILENO, oldNonblock);
+  contra::term::set_fd_nonblock(STDIN_FILENO, oldNonblock);
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &oldTermios);
 
   contra::ansi::termcap_sgr_type sgrcap;

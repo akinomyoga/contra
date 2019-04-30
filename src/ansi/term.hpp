@@ -283,14 +283,13 @@ namespace ansi {
     }
   };
 
-
-  class term_t {
+  class term_t: public contra::idevice {
   private:
     board_t* m_board;
     tty_state m_state {this};
 
-    contra::idevice* m_response_target = nullptr;
-    std::vector<byte> m_response;
+    contra::idevice* m_send_target = nullptr;
+    std::vector<byte> m_send_buff;
 
   public:
     void initialize_line(line_t& line) const {
@@ -302,28 +301,28 @@ namespace ansi {
 
   public:
     term_t(contra::ansi::board_t& board): m_board(&board) {
-      this->m_response.reserve(32);
+      this->m_send_buff.reserve(32);
     }
 
-    void set_response_target(contra::idevice& dev) { this->m_response_target = &dev; }
+    void set_response_target(contra::idevice& dev) { this->m_send_target = &dev; }
 
     void respond() {
-      if (m_response_target)
-        m_response_target->write(reinterpret_cast<char const*>(&m_response[0]), m_response.size());
-      m_response.clear();
+      if (m_send_target)
+        m_send_target->dev_write(reinterpret_cast<char const*>(&m_send_buff[0]), m_send_buff.size());
+      m_send_buff.clear();
     }
     void response_put(byte value) {
       if (0x80 <= value && value < 0xA0 && m_state.get_mode(mode_s7c1t)) {
-        m_response.push_back(ascii_esc);
-        m_response.push_back(value - 0x40);
+        m_send_buff.push_back(ascii_esc);
+        m_send_buff.push_back(value - 0x40);
       } else {
-        m_response.push_back(value);
+        m_send_buff.push_back(value);
       }
     }
     void response_number(unsigned value) {
       if (value >= 10)
         response_number(value / 10);
-      m_response.push_back((byte) (ascii_0 + value % 10));
+      m_send_buff.push_back((byte) (ascii_0 + value % 10));
     }
 
   public:
@@ -486,14 +485,15 @@ namespace ansi {
     void do_bs() {
       // Note: mode_xenl, mode_decawm, mode_xtBSBackLine が絡んで来た時の振る舞いは適当である。
       board_t& b = this->board();
+      tty_state const& s = this->state();
       line_t const& line = b.line();
-      if (m_state.get_mode(mode_simd)) {
-        bool const cap_xenl = m_state.get_mode(mode_xenl);
+      if (s.get_mode(mode_simd)) {
+        bool const cap_xenl = s.get_mode(mode_xenl);
         curpos_t sll = this->implicit_sll(line);
         curpos_t x = b.cur.x(), y = b.cur.y();
         bool xenl = false;
         if (b.cur.xenl() || (!cap_xenl && (x == sll || x == b.m_width - 1))) {
-          if (m_state.get_mode(mode_decawm) && m_state.get_mode(mode_xtBSBackLine) && y > 0) {
+          if (s.get_mode(mode_decawm) && s.get_mode(mode_xtBSBackLine) && y > 0) {
             y--;
             x = this->implicit_slh(b.line(y));
 
@@ -530,7 +530,7 @@ namespace ansi {
         curpos_t const slh = this->implicit_slh(line);
         if (x != slh && x > 0) {
           x--;
-        } else if (m_state.get_mode(mode_decawm) && m_state.get_mode(mode_xtBSBackLine) && y > 0) {
+        } else if (s.get_mode(mode_decawm) && s.get_mode(mode_xtBSBackLine) && y > 0) {
           y--;
           x = this->implicit_sll(b.line(y));
         }
@@ -788,6 +788,11 @@ namespace ansi {
     }
     void putc(char32_t uchar) {
       m_seqdecoder.process_char(uchar);
+    }
+
+  private:
+    virtual void dev_write(char const* data, std::size_t size) override {
+      this->write(data, size);
     }
   };
 

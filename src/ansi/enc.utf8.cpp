@@ -4,39 +4,47 @@
 namespace contra {
 namespace encoding {
 
-  bool put_u8(char32_t c, std::FILE* file) {
+  template<typename Function>
+  static bool put_u8_impl(char32_t c, Function put) {
     std::uint32_t code = c;
     if (code < 0x80) {
-      std::putc(code & 0x7F, file);
+      put(code & 0x7F);
     } else if (code < 0x0800) {
-      std::putc(0xC0 | (code >> 6  & 0x1F), file);
-      std::putc(0x80 | (code       & 0x3F), file);
+      put(0xC0 | (code >> 6  & 0x1F));
+      put(0x80 | (code       & 0x3F));
     } else if (code < 0x00010000) {
-      std::putc(0xE0 | (code >> 12 & 0x0F), file);
-      std::putc(0x80 | (code >> 6  & 0x3F), file);
-      std::putc(0x80 | (code       & 0x3F), file);
+      put(0xE0 | (code >> 12 & 0x0F));
+      put(0x80 | (code >> 6  & 0x3F));
+      put(0x80 | (code       & 0x3F));
     } else if (code < 0x00200000) {
-      std::putc(0xF0 | (code >> 18 & 0x07), file);
-      std::putc(0x80 | (code >> 12 & 0x3F), file);
-      std::putc(0x80 | (code >> 6  & 0x3F), file);
-      std::putc(0x80 | (code       & 0x3F), file);
+      put(0xF0 | (code >> 18 & 0x07));
+      put(0x80 | (code >> 12 & 0x3F));
+      put(0x80 | (code >> 6  & 0x3F));
+      put(0x80 | (code       & 0x3F));
     } else if (code < 0x04000000) {
-      std::putc(0xF8 | (code >> 24 & 0x03), file);
-      std::putc(0x80 | (code >> 18 & 0x3F), file);
-      std::putc(0x80 | (code >> 12 & 0x3F), file);
-      std::putc(0x80 | (code >> 6  & 0x3F), file);
-      std::putc(0x80 | (code       & 0x3F), file);
+      put(0xF8 | (code >> 24 & 0x03));
+      put(0x80 | (code >> 18 & 0x3F));
+      put(0x80 | (code >> 12 & 0x3F));
+      put(0x80 | (code >> 6  & 0x3F));
+      put(0x80 | (code       & 0x3F));
     } else if (code < 0x80000000) {
-      std::putc(0xF8 | (code >> 30 & 0x01), file);
-      std::putc(0x80 | (code >> 24 & 0x3F), file);
-      std::putc(0x80 | (code >> 18 & 0x3F), file);
-      std::putc(0x80 | (code >> 12 & 0x3F), file);
-      std::putc(0x80 | (code >> 6  & 0x3F), file);
-      std::putc(0x80 | (code       & 0x3F), file);
+      put(0xF8 | (code >> 30 & 0x01));
+      put(0x80 | (code >> 24 & 0x3F));
+      put(0x80 | (code >> 18 & 0x3F));
+      put(0x80 | (code >> 12 & 0x3F));
+      put(0x80 | (code >> 6  & 0x3F));
+      put(0x80 | (code       & 0x3F));
     } else {
       return false;
     }
     return true;
+  }
+
+  bool put_u8(char32_t c, std::vector<byte>& buffer) {
+    return put_u8_impl(c, [&] (byte b) { buffer.emplace_back(b); });
+  }
+  bool put_u8(char32_t c, std::FILE* file) {
+    return put_u8_impl(c, [=] (byte b) { std::putc(b, file); });
   }
 
   // ToDo: 注意: 非正規UTF-8のチェックをしていない。

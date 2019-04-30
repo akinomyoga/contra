@@ -1,12 +1,17 @@
+#ifdef __CYGWIN__
+# define _XOPEN_SOURCE 600
+#endif
 #include "impl.hpp"
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
 
 namespace contra {
+namespace term {
 
 void msleep(int milliseconds) {
   struct timespec tv;
@@ -15,11 +20,26 @@ void msleep(int milliseconds) {
   nanosleep(&tv, NULL);
 }
 
-bool read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size) {
+std::size_t read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size) {
   ssize_t const nread = read(fdsrc, buff, size);
-  if (nread <= 0) return false;
-  dst->write(buff, nread);
-  return true;
+  if (nread <= 0) return 0;
+  dst->dev_write(buff, nread);
+  return nread;
+}
+
+void write_to_fd(int fd, byte const* data, std::size_t size, int wait_interval) {
+  const byte* p = data;
+  if (!size) return;
+  for (;;) {
+    ssize_t const sz_write = (ssize_t) std::min<std::size_t>(size, SSIZE_MAX);
+    ssize_t const n = ::write(fd, p, sz_write);
+    if (n > 0) {
+      if ((std::size_t) n >= size) break;
+      p += n;
+      size -= n;
+    } else
+      msleep(wait_interval);
+  }
 }
 
 bool set_fd_nonblock(int fd, bool value) {
@@ -50,14 +70,9 @@ bool is_child_terminated(pid_t pid) {
   return result > 0;
 }
 
-bool create_session(session* sess, struct termios& termios, const char* shell, int cols, int rows) {
+bool create_session(session* sess, const char* shell, winsize const* ws, struct termios* termios) {
   sess->pid = -1;
   sess->masterfd = -1;
-
-  struct winsize winsize;
-  ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &winsize);
-  if (cols > 0) winsize.ws_col = cols;
-  if (rows > 0) winsize.ws_row = rows;
 
   int masterfd, slavefd;
   char const* slavedevice;
@@ -73,8 +88,8 @@ bool create_session(session* sess, struct termios& termios, const char* shell, i
 
   if (pid == 0) {
     setsid();
-    tcsetattr(slavefd, TCSANOW, &termios);
-    ioctl(slavefd, TIOCSWINSZ, &winsize);
+    if (termios) tcsetattr(slavefd, TCSANOW, termios);
+    if (ws) ioctl(slavefd, TIOCSWINSZ, ws);
 
     dup2(slavefd, STDIN_FILENO);
     dup2(slavefd, STDOUT_FILENO);
@@ -93,4 +108,5 @@ bool create_session(session* sess, struct termios& termios, const char* shell, i
   }
 }
 
+}
 }
