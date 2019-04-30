@@ -29,9 +29,11 @@ namespace term {
 
   // contra/ttty
   enum key_flags {
-    mask_modifier  = 0x03F00000,
     mask_unicode   = 0x0001FFFF,
     mask_keycode   = 0x0003FFFF,
+
+    _modifier_mask = 0x3F000000,
+    _modifier_shft = 24,
 
     key_base      = 0x00020000,
     key_f1        = key_base | 1,
@@ -86,12 +88,12 @@ namespace term {
     key_kpsub     = key_base | 56,
     key_kpdiv     = key_base | 57,
 
-    modifier_shift       = 0x00100000,
-    modifier_meta        = 0x00200000,
-    modifier_control     = 0x00400000,
-    modifier_super       = 0x00800000,
-    modifier_hyper       = 0x01000000,
-    modifier_alter       = 0x02000000,
+    modifier_shift       = 0x01000000,
+    modifier_meta        = 0x02000000,
+    modifier_control     = 0x04000000,
+    modifier_super       = 0x08000000,
+    modifier_hyper       = 0x10000000,
+    modifier_alter       = 0x20000000,
   };
 
   void print_key(std::uint32_t key, std::FILE* file) {
@@ -206,6 +208,7 @@ namespace twin {
     void flush_buffer() {
       const byte* p = &input_buffer[0];
       std::size_t sz = input_buffer.size();
+      if (!sz) return;
       for (;;) {
         ssize_t const sz_write = (ssize_t) std::min<std::size_t>(sz, SSIZE_MAX);
         ssize_t const n = ::write(m_fds.masterfd, p, sz_write);
@@ -218,9 +221,48 @@ namespace twin {
       }
       input_buffer.clear();
     }
+
+    void put_c1(std::uint32_t code) {
+      if (term().state().get_mode(ansi::mode_s7c1t)) {
+        input_buffer.push_back(ascii_esc);
+        input_buffer.push_back(code - 0x40);
+      } else
+        input_buffer.push_back(code);
+    }
+    void put_unsigned(std::uint32_t value) {
+      if (value >= 10) put_unsigned(value / 10);
+      input_buffer.push_back(ascii_0 + value % 10);
+    }
+    void put_modifier(std::uint32_t mod) {
+      put_unsigned(1 + ((mod & _modifier_mask) >> _modifier_shft));
+    }
+
     void send_key_impl(std::uint32_t key) {
-      std::uint32_t mod = key & mask_modifier;
+      std::uint32_t mod = key & _modifier_mask;
       std::uint32_t code = key & mask_keycode;
+
+      // テンキーの文字 (!DECNKM の時)
+      if (!term().state().get_mode(ansi::mode_decnkm)) {
+        switch (code) {
+        case key_kp0  : code = ascii_0; break;
+        case key_kp1  : code = ascii_1; break;
+        case key_kp2  : code = ascii_2; break;
+        case key_kp3  : code = ascii_3; break;
+        case key_kp4  : code = ascii_4; break;
+        case key_kp5  : code = ascii_5; break;
+        case key_kp6  : code = ascii_6; break;
+        case key_kp7  : code = ascii_7; break;
+        case key_kp8  : code = ascii_8; break;
+        case key_kp9  : code = ascii_9; break;
+        case key_kpdec: code = ascii_dot     ; break;
+        case key_kpsep: code = ascii_comma   ; break;
+        case key_kpmul: code = ascii_asterisk; break;
+        case key_kpadd: code = ascii_plus    ; break;
+        case key_kpsub: code = ascii_minus   ; break;
+        case key_kpdiv: code = ascii_slash   ; break;
+        default: ;
+        }
+      }
 
       // 通常文字
       if (mod == 0 && code < key_base) {
@@ -238,13 +280,91 @@ namespace twin {
         ) {
           // C-@ ... C-_
           input_buffer.push_back(code & 0x1F);
+          return;
         } else if (code == ascii_question) {
           // C-? → ^?
           input_buffer.push_back(0x7F);
+          return;
         } else if (code == ascii_bs) {
           // C-back → ^_
           input_buffer.push_back(0x1F);
+          return;
         }
+      }
+
+      // BS CR(RET) HT(TAB) ESC
+      // CSI <Unicode> ; <Modifier> u 形式
+      if (code < key_base) {
+        put_c1(ascii_csi);
+        put_unsigned(code);
+        if (mod) {
+          input_buffer.push_back(ascii_semicolon);
+          put_modifier(mod);
+        }
+        input_buffer.push_back(ascii_u);
+        return;
+      }
+
+      // application key mode の時修飾なしの関数キーは \eOA 等にする。
+      char a = 0;
+      switch (code) {
+      case key_f1 : a = 11; goto tilde;
+      case key_f2 : a = 12; goto tilde;
+      case key_f3 : a = 13; goto tilde;
+      case key_f4 : a = 14; goto tilde;
+      case key_f5 : a = 15; goto tilde;
+      case key_f6 : a = 17; goto tilde;
+      case key_f7 : a = 18; goto tilde;
+      case key_f8 : a = 19; goto tilde;
+      case key_f9 : a = 20; goto tilde;
+      case key_f10: a = 21; goto tilde;
+      case key_f11: a = 23; goto tilde;
+      case key_f12: a = 24; goto tilde;
+      case key_f13: a = 25; goto tilde;
+      case key_f14: a = 26; goto tilde;
+      case key_f15: a = 28; goto tilde;
+      case key_f16: a = 29; goto tilde;
+      case key_f17: a = 31; goto tilde;
+      case key_f18: a = 32; goto tilde;
+      case key_f19: a = 33; goto tilde;
+      case key_f20: a = 34; goto tilde;
+      case key_f21: a = 36; goto tilde;
+      case key_f22: a = 37; goto tilde;
+      case key_f23: a = 38; goto tilde;
+      case key_f24: a = 39; goto tilde;
+      case key_home  : a = 1; goto tilde;
+      case key_insert: a = 2; goto tilde;
+      case key_delete: a = 3; goto tilde;
+      case key_end   : a = 4; goto tilde;
+      case key_prior : a = 5; goto tilde;
+      case key_next  : a = 6; goto tilde;
+      tilde:
+        put_c1(ascii_csi);
+        put_unsigned(a);
+        if (mod) {
+          input_buffer.push_back(ascii_semicolon);
+          put_modifier(mod);
+        }
+        input_buffer.push_back(ascii_tilde);
+        break;
+      case key_up   : a = ascii_A; goto alpha;
+      case key_down : a = ascii_B; goto alpha;
+      case key_right: a = ascii_C; goto alpha;
+      case key_left : a = ascii_D; goto alpha;
+      case key_begin: a = ascii_E; goto alpha;
+      alpha:
+        if (mod) {
+          put_c1(ascii_csi);
+          input_buffer.push_back(ascii_1);
+          input_buffer.push_back(ascii_semicolon);
+          put_modifier(mod);
+        } else {
+          put_c1(term().state().get_mode(ansi::mode_decckm) ? ascii_ss3 : ascii_csi);
+        }
+        input_buffer.push_back(a);
+        break;
+      default: break;
+        input_buffer.push_back(ascii_tilde);
       }
 
       // // 修飾キー (未実装)
@@ -349,8 +469,6 @@ namespace twin {
       return hWnd;
     }
 
-    HWND handle() const { return hWnd; }
-
   private:
     void render_window(HDC hdc) {
       if (!hWnd || !sess.is_initialized()) return;
@@ -438,7 +556,7 @@ namespace twin {
       static BYTE kbstate[256];
 
       if (ascii_A <= wParam && wParam <= ascii_Z) {
-        if (modifiers & ~modifier_shift & mask_modifier) {
+        if (modifiers & ~modifier_shift & _modifier_mask) {
           wParam += ascii_a - ascii_A;
         } else {
           bool const capslock = modifiers & toggle_capslock;
@@ -446,9 +564,9 @@ namespace twin {
           if (capslock == shifted) wParam += ascii_a - ascii_A;
           modifiers &= ~modifier_shift;
         }
-        process_input(wParam | (modifiers & mask_modifier));
+        process_input(wParam | (modifiers & _modifier_mask));
       } else if (VK_F1 <= wParam && wParam < VK_F24) {
-        process_input((wParam -VK_F1 + key_f1) | (modifiers & mask_modifier));
+        process_input((wParam -VK_F1 + key_f1) | (modifiers & _modifier_mask));
       } else {
         std::uint32_t code = 0;
         switch (wParam) {
@@ -491,7 +609,7 @@ namespace twin {
         case VK_SUBTRACT:  code = key_kpsub; goto function_key;
         case VK_DIVIDE:    code = key_kpdiv; goto function_key;
         function_key:
-          process_input(code | (modifiers & mask_modifier));
+          process_input(code | (modifiers & _modifier_mask));
           break;
         case VK_PROCESSKEY: // IME 処理中 (無視)
           return;
@@ -509,11 +627,11 @@ namespace twin {
               if (count != unshifted_count || buff != (unshifted & mask_unicode))
                 modifiers &= ~modifier_shift;
 
-              process_input((buff & mask_unicode) | (modifiers & mask_modifier));
+              process_input((buff & mask_unicode) | (modifiers & _modifier_mask));
             } else if (UINT const code = ::MapVirtualKey(wParam, MAPVK_VK_TO_CHAR); (INT) code > 0) {
-              process_input((code & mask_unicode) | (modifiers & mask_modifier));
+              process_input((code & mask_unicode) | (modifiers & _modifier_mask));
             } else {
-              std::fprintf(stderr, "key (unknown): wparam=%08x flags=%x\n", wParam, modifiers);
+              //std::fprintf(stderr, "key (unknown): wparam=%08x flags=%x\n", wParam, modifiers);
             }
           }
           break;
@@ -523,7 +641,7 @@ namespace twin {
 
     void process_char(WPARAM wParam, std::uint32_t modifiers) {
       // ToDo: Process surrogate pair
-      process_input((wParam & mask_unicode) | (modifiers & mask_modifier));
+      process_input((wParam & mask_unicode) | (modifiers & _modifier_mask));
     }
 
   public:
@@ -594,7 +712,6 @@ namespace twin {
 
   public:
     int do_loop() {
-      // @@@
       sess.ws.ws_col = 80;
       sess.ws.ws_row = 30;
       sess.ws.ws_xpixel = fstore.width();
