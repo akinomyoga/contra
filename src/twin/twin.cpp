@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <vector>
 #include <sstream>
 #include <iomanip>
@@ -107,6 +108,8 @@ namespace twin {
     std::size_t m_xframe = 1;
     std::size_t m_yframe = 1;
 
+    std::size_t m_caret_underline_min_height = 2;
+    std::size_t m_caret_vertical_min_width = 2;
   public:
     std::size_t calculate_client_width() const {
       return m_xpixel * m_col + 2 * m_xframe;
@@ -263,17 +266,17 @@ namespace twin {
         ::FillRect(hdc, &rc, (HBRUSH) GetStockObject(WHITE_BRUSH));
       }
 
+      using namespace contra::ansi;
+      std::size_t const xorigin = settings.m_xframe;
+      std::size_t const yorigin = settings.m_yframe;
+      std::size_t const ypixel = settings.m_ypixel;
+      std::size_t const xpixel = settings.m_xpixel;
+      board_t const& b = sess.board();
       {
-        std::size_t const xorigin = settings.m_xframe;
-        std::size_t const yorigin = settings.m_yframe;
-        std::size_t const ypixel = settings.m_ypixel;
-        std::size_t const xpixel = settings.m_xpixel;
-        using namespace contra::ansi;
         std::vector<cell_t> cells;
         std::vector<TCHAR> characters;
         std::vector<INT> progress;
 
-        board_t& b = sess.board();
 
         for (curpos_t y = 0; y < b.m_height; y++) {
           line_t const& line = b.m_lines[y];
@@ -302,6 +305,37 @@ namespace twin {
           }
           if (characters.size())
             ExtTextOut(hdc, xoffset, yoffset, 0, NULL, &characters[0], characters.size(), &progress[0]);
+        }
+      }
+
+      // cursor
+      tstate_t const& s = sess.term().state();
+      if (s.get_mode(mode_dectcem)) {
+        std::size_t x0 = xorigin + xpixel * b.x();
+        std::size_t const y0 = yorigin + ypixel * b.y();
+
+        std::size_t size;
+        bool underline = false;
+        if (b.cur.xenl()) {
+          // 行末にいる時は設定に関係なく縦棒にする。
+          x0 -= 2;
+          size = 2;
+        } else if (s.m_cursor_shape == 0) {
+          underline = true;
+          size = 3;
+        } else if (s.m_cursor_shape < 0) {
+          size = (xpixel * std::min(100, -s.m_cursor_shape) + 99) / 100;
+        } else if (s.m_cursor_shape) {
+          underline = true;
+          size = (ypixel * std::min(100, s.m_cursor_shape) + 99) / 100;
+        }
+
+        if (underline) {
+          std::size_t const height = std::min(ypixel, std::max(size, settings.m_caret_underline_min_height));
+          ::PatBlt(hdc, x0, y0 + ypixel - height, xpixel, height, DSTINVERT);
+        } else {
+          std::size_t const width = std::min(xpixel, std::max(size, settings.m_caret_vertical_min_width));
+          ::PatBlt(hdc, x0, y0, width, ypixel, DSTINVERT);
         }
       }
     }
@@ -521,6 +555,7 @@ namespace twin {
       sess.init_ws.ws_xpixel = fstore.width();
       sess.init_ws.ws_ypixel = fstore.height();
       sess.init_read_buffer_size = 4096;
+      ::setenv("TERM", "xterm-256color", 1);
       if (!sess.initialize()) return 2;
 
       int exit_code;

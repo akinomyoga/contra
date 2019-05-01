@@ -200,18 +200,18 @@ namespace {
     };
 
     switch (spec) {
-    case 0:
-    case 1: _set(true ,  0); break;
-    case 2: _set(false,  0); break;
-    case 3: _set(true ,  1); break;
-    case 4: _set(false,  1); break;
-    case 5: _set(true , -1); break;
-    case 6: _set(false, -1); break;
+    case 0: _set(true ,   0); break;
+    case 1: _set(true , 100); break;
+    case 2: _set(false, 100); break;
+    case 3: _set(true ,   1); break;
+    case 4: _set(false,   1); break;
+    case 5: _set(true ,  -1); break;
+    case 6: _set(false,  -1); break;
 
     default:
       // Cygwin (mintty) percentage of cursor height
       if (spec >= 100)
-        s.m_cursor_shape = 0; // block
+        s.m_cursor_shape = 100; // block
       else
         s.m_cursor_shape = spec;
       break;
