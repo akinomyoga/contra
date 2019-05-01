@@ -436,7 +436,7 @@ namespace {
       b.cur.set(x, y, xenl);
     } else {
       // Note: vttest によると xenl は補正するのが正しいらしい。
-      //   しかし xterm で手動で動作を確認すると sll+1 に居ても補正ない様だ。
+      //   しかし xterm で手動で動作を確認すると sll+1 に居ても補正しない様だ。
       //   一方で RLogin では手動で確認すると補正される。
       //   xterm で補正が起こる条件があるのだろうがよく分からないので、
       //   contra では RLogin と同様に常に補正を行う事にする。
@@ -952,6 +952,10 @@ namespace {
     if (s.get_mode(mode_decom)) {
       param1 = std::min<csi_single_param_t>(param1 + term.tmargin(), term.bmargin());
       param2 = std::min<csi_single_param_t>(param2 + term.lmargin(), term.rmargin());
+    } else {
+      board_t& b = term.board();
+      param1 = std::min<csi_single_param_t>(param1, b.m_height);
+      param2 = std::min<csi_single_param_t>(param2, b.m_width);
     }
 
     return do_cup(term, (curpos_t) param2 - 1, (curpos_t) param1 - 1);
@@ -961,8 +965,11 @@ namespace {
     tstate_t& s = term.state();
     board_t& b = term.board();
     if (s.get_mode(mode_decom)) {
-      x = std::min(x + term.lmargin(), term.rmargin());
-      y = std::min(y + term.tmargin(), term.bmargin());
+      x = std::min(x + term.lmargin(), term.rmargin() - 1);
+      y = std::min(y + term.tmargin(), term.bmargin() - 1);
+    } else {
+      if (x >= b.m_width) x = b.m_width - 1;
+      if (y >= b.m_height) y = b.m_height - 1;
     }
     b.cur.set(x, y);
   }
@@ -993,11 +1000,12 @@ namespace {
         return false;
     }
 
-    if (s.get_mode(mode_decom)) {
+    board_t& b = term.board();
+    if (s.get_mode(mode_decom))
       param = std::min<csi_single_param_t>(param + term.lmargin(), term.rmargin());
-    }
-
-    return do_cup(term, param - 1, term.board().cur.y());
+    else
+      param = std::min<csi_single_param_t>(param, b.m_width);
+    return do_cup(term, param - 1, b.cur.y());
   }
 
   bool do_hpa(term_t& term, csi_parameters& params) {
@@ -1011,11 +1019,12 @@ namespace {
         return false;
     }
 
-    if (s.get_mode(mode_decom)) {
+    board_t& b = term.board();
+    if (s.get_mode(mode_decom))
       param = std::min<csi_single_param_t>(param + term.lmargin(), term.rmargin());
-    }
-
-    term.board().cur.set_x(param - 1);
+    else
+      param = std::min<csi_single_param_t>(param, b.m_width);
+    b.cur.set_x(param - 1);
     return true;
   }
 
@@ -1030,11 +1039,12 @@ namespace {
         return false;
     }
 
-    if (s.get_mode(mode_decom)) {
-      param = std::min<csi_single_param_t>(param + term.tmargin(), term.bmargin());
-    }
-
     board_t& b = term.board();
+    if (s.get_mode(mode_decom))
+      param = std::min<csi_single_param_t>(param + term.tmargin(), term.bmargin());
+    else
+      param = std::min<csi_single_param_t>(param, b.m_height);
+
     b.cur.adjust_xenl();
     b.cur.set_y(param - 1);
     return true;
@@ -1125,7 +1135,7 @@ namespace {
         for (curpos_t y = tmargin; y < bmargin; y++)
           b.line(y).shift_cells(lmargin, rmargin, shift, flags, b.m_width, fill_attr);
         if (isPresentation)
-          b.cur.set_x(b.to_data_position(y, p));
+          b.cur.update_x(b.to_data_position(y, p));
       }
       break;
 
@@ -1140,7 +1150,7 @@ namespace {
         curpos_t const p = isPresentation ? b.to_presentation_position(y, b.cur.x()) : -1;
         do_vertical_scroll(term, shift, dcsm);
         if (isPresentation)
-          b.cur.set_x(b.to_data_position(y, p));
+          b.cur.update_x(b.to_data_position(y, p));
       }
       break;
     }
@@ -1178,13 +1188,27 @@ namespace {
     return true;
   }
 
+  static void do_restore_cursor(term_t& term, curpos_t x, curpos_t y, bool xenl) {
+    board_t& b = term.board();
+    if (y >= b.m_height) y =  b.m_height - 1;
+    if (xenl) {
+      if (x >= b.m_width) {
+        x = b.m_width;
+      } else if (x != term.implicit_sll(b.line(y)) + 1) {
+        x++;
+        xenl = false;
+      }
+    } else {
+      if (x >= b.m_width) x = b.m_width - 1;
+    }
+    b.cur.set(x, y, xenl);
+  }
+
   bool do_scorc(term_t& term, csi_parameters& params) {
     (void) params;
     auto& s = term.state();
-    auto& b = term.board();
-    if (s.m_scosc_x >= 0) {
-      b.cur.set(s.m_scosc_x, s.m_scosc_y, s.m_scosc_xenl);
-    }
+    if (s.m_scosc_x >= 0)
+      do_restore_cursor(term, s.m_scosc_x, s.m_scosc_y, s.m_scosc_xenl);
     return true;
   }
 
@@ -1198,9 +1222,8 @@ namespace {
 
   void do_decrc(term_t& term) {
     auto& s = term.state();
-    auto& b = term.board();
     if (s.m_decsc_cur.x() >= 0) {
-      b.cur = s.m_decsc_cur;
+      do_restore_cursor(term, s.m_decsc_cur.x(), s.m_decsc_cur.y(), s.m_decsc_cur.xenl());
       s.set_mode(mode_decawm, s.m_decsc_decawm);
       s.set_mode(mode_decom, s.m_decsc_decom);
     }
@@ -1488,7 +1511,7 @@ namespace {
     // カーソル位置
     if (!s.dcsm())
       x1 = b.to_data_position(b.cur.y(), x1);
-    b.cur.set_x_keeping_xenl(x1, b.m_width, term.implicit_sll(b.line()));
+    b.cur.update_x(x1);
 
     return true;
   }
@@ -1525,7 +1548,7 @@ namespace {
     } else {
       x1 = s.get_mode(mode_home_il) ? slh : b.to_data_position(b.cur.y(), x1);
     }
-    b.cur.set_x_keeping_xenl(x1, b.m_width, sll);
+    b.cur.update_x(x1);
   }
 
   bool do_ich(term_t& term, csi_parameters& params) {
@@ -1591,7 +1614,7 @@ namespace {
       line.shift_cells(0, x1 + 1, x1 + 1, flags, b.m_width, fill_attr);
 
     if (!s.dcsm()) x1 = b.to_data_position(b.cur.y(), x1);
-    b.cur.set_x_keeping_xenl(x1, b.m_width, term.implicit_sll(b.line()));
+    b.cur.update_x(x1);
   }
 
   bool do_el(term_t& term, csi_parameters& params) {
@@ -1674,10 +1697,10 @@ namespace {
     // カーソル位置設定
     if (s.get_mode(mode_home_il)) {
       term.initialize_line(b.line());
-      b.cur.set_x(term.implicit_slh(b.line()));
+      b.cur.set_x(term.implicit_slh());
     } else if (!s.dcsm()) {
       curpos_t const x1 = b.to_data_position(b.cur.y(), p);
-      b.cur.set_x_keeping_xenl(x1, b.m_width, term.implicit_sll(b.line()));
+      b.cur.update_x(x1);
     }
   }
 
@@ -2003,11 +2026,15 @@ namespace {
   void term_t::process_control_sequence(sequence const& seq) {
     // check cursor state
     board_t& b = this->board();
-    mwg_assert(b.cur.x() < b.m_width || (b.cur.x() == b.m_width && b.cur.xenl()));
+    mwg_assert(b.cur.is_sane(b.m_width));
 
     if (seq.is_private_csi()) {
-      if (process_private_control_sequence(*this, seq)) return;
-      print_unrecognized_sequence(seq);
+      if (!process_private_control_sequence(*this, seq))
+        print_unrecognized_sequence(seq);
+
+      mwg_assert(b.cur.is_sane(b.m_width),
+        "cur: {x=%d, xenl=%d, width=%d} after CSI %c %c",
+        b.cur.x(), b.cur.xenl(), b.m_width, seq.parameter()[0], seq.final());
       return;
     }
 
@@ -2029,6 +2056,9 @@ namespace {
       if (control_function_t* const f = cfunc_dict.get((byte) seq.intermediate()[0], seq.final()))
         result = f(*this, params);
     }
+    mwg_assert(b.cur.is_sane(b.m_width),
+      "cur: {x=%d, xenl=%d, width=%d} after CSI %c",
+      b.cur.x(), b.cur.xenl(), b.m_width, seq.final());
 
     if (!result)
       print_unrecognized_sequence(seq);
@@ -2060,6 +2090,11 @@ namespace {
     case ascii_ssa: do_ssa(*this); break;
     case ascii_esa: do_esa(*this); break;
     }
+
+    board_t& b = board();
+    mwg_assert(b.cur.is_sane(b.m_width),
+      "cur: {x=%d, xenl=%d, width=%d} after C0/C1 %d",
+      b.cur.x(), b.cur.xenl(), b.m_width, uchar);
   }
 
   void term_t::process_escape_sequence(sequence const& seq) {

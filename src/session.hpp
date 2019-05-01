@@ -172,7 +172,7 @@ namespace term {
 
   public:
     void reset_size(std::size_t width, std::size_t height) {
-      mwg_check(width > 0 && height > 0, "negative size is passed (width = %d, height = %d).", (int) width, (int) height);
+      mwg_check(width > 0 && height > 0, "non-positive size is passed (width = %d, height = %d).", (int) width, (int) height);
       board().reset_size(width, height);
       init_ws.ws_col = width;
       init_ws.ws_row = height;

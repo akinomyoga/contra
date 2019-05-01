@@ -282,6 +282,12 @@ namespace ansi {
         limit = std::min(limit, m_state.dec_rmargin - 1);
       return limit;
     }
+    curpos_t implicit_sll() const {
+      return implicit_sll(m_board->line(m_board->cur.y()));
+    }
+    curpos_t implicit_slh() const {
+      return implicit_slh(m_board->line(m_board->cur.y()));
+    }
 
     attribute_t fill_attr() const {
       if (m_state.get_mode(mode_bce)) {
@@ -315,7 +321,12 @@ namespace ansi {
         (U'\u2066' <= u && u <= U'\u2069'))
         return insert_marker(u);
 
-      return do_insert_graph(*this, u);
+      do_insert_graph(*this, u);
+
+      board_t& b = board();
+      mwg_assert(b.cur.is_sane(b.m_width),
+        "cur: {x=%d, xenl=%d, width=%d} after Insert U+%04X",
+        b.cur.x(), b.cur.xenl(), b.m_width, u);
     }
 
   public:

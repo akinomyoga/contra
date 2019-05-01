@@ -117,6 +117,7 @@
 ------------------------------------------------------------------------------
   ToDo
 ------------------------------------------------------------------------------
+
 2019-05-01
 
 * twin/draw: 反転色部分の空白
@@ -1354,6 +1355,49 @@
 
 2019-05-01
 
+* twin: サイズ変更に対応したら以下のエラーが出た [#D0101]
+
+  mwg_assertion_failure! b.cur.x() < b.m_width || (b.cur.x() == b.m_width && b.cur.xenl())
+    @ ansi/term.cpp:2006:void contra::ansi::term_t::process_control_sequence(const contra::sequence&)
+
+  うーん。何処かで何か間違えている…。少なくともサイズを変更した時には b.cur.x() < b.m_width
+  になる様に調整をしている筈である。という事は別の箇所でカーソルを移動した時に何か間違えているという事になる。
+  カーソル移動は今は全て関数になっているのでその時にどういうスタック呼び出しになっているのかを
+  出力すれば良い。しかし、面倒である。簡単なそういう枠組みを揃えるのも良いのかもしれないが…。
+  例えば mwg/except.h で好きなフレームでそういうのを設定できる様にするなど…。
+
+  * fixed: 各シーケンスの直後に検査する様にして回してみたら意外とすぐに引っかかった。CSI S である。
+    調べると原因が分かった。to_presentation_position してから to_data_position してそれを set_x している。
+    然し、始めに右端に居た時には単に xenl を消してしまう事になる。
+    他の箇所で実行しているのと同じ様に set_x_keeping_xenl を呼び出す事にした。
+    と思ったがこの set_x_keeping_xenl というのは何だろう。
+    これは実は右端から sll に移動した時でも同様に xenl が入りっぱなしになるのではないか。
+    そしてそれは望む動作ではないのではないかという気がする。
+    set_x_keeping_xenl を呼び出している箇所を全て確認してみる事にする。
+    うーん。全て update_x に変えてしまって良い気がしてきた。直した。
+
+  * fixed: 回している内に次のエラーが発生した。CSI G である。思い切り範囲を超えている。
+    mwg_assertion_failure! b.cur.is_sane(b.m_width), "cur: {x=98, xenl=0, width=80} after CSI G"
+      @ ansi/term.cpp:2036:void contra::ansi::term_t::process_control_sequence(const contra::sequence&)
+    調べると do_cha である。これは丁度 set_x を観察していた時に hpa で修正したのと同じ問題だった。
+    これは直ぐに直した。
+
+  * ???: 次のは C0/C1 で発生している…。何か物凄い値になっている。
+    mwg_assertion_failure! board().cur.is_sane(board().m_width), "cur: {x=19, xenl=-2147292284, width=6867512} after C0/C1 4096"
+      @ ansi/term.cpp:2069:void contra::ansi::term_t::process_control_character(char32_t)
+    というか本当に実際の値なのだろうか。board() が変な値を返してはいまいか。
+    というか 4096 というのは何だろう…。コードを見たら mwg_assert に渡す引数を間違えている。
+    実際のところ受信した文字が x として表示されている。つまり 19 = 0x13 = DC3 である。変だ。
+    ascii_dc3 に対しては何も実行していない筈なのである。
+
+  * done: 更に vpa や hvp や cup 等についても DECOM でない時の振る舞いを修正した。
+
+  * 次に出たのは以下の物である。なるほど。確かに記録した位置を復元する時に問題が発生するのは道理である。修正した。
+    mwg_assertion_failure! b.cur.is_sane(b.m_width), "cur: {x=18, xenl=0, width=16} after CSI u"
+      @ ansi/term.cpp:2046:void contra::ansi::term_t::process_control_sequence(const contra::sequence&)
+
+  今の所は新しいクラッシュは発生していない。
+
 * twin: サイズを大きくできるようにしたら [#D0100]
   今度は描画に矢鱈と時間がかかる様になってしまった。
   空白やら何やらも描画しているのが悪いのである。
@@ -1800,7 +1844,7 @@
     振る舞いに関して SU,SD 等は xenl を保持する。
     CUU,CUD,VPB,VPR や VPA 等は xenl を保持しない。
     DECSC, DECRC は xenl を保持する。
-    VT は xenl を保持しない。
+    VT,FF の類は xenl を保持しない。
 
     取り敢えず実装した。今の所は問題なく動いている気がする。
 

@@ -677,10 +677,9 @@ namespace ansi {
     void update_x(curpos_t x) {
       if (m_x != x) set_x(x);
     }
-    void set_x_keeping_xenl(curpos_t x, curpos_t width, curpos_t sll) {
-      this->m_x = x;
-      if (x == sll + 1 || x == width) return;
-      this->m_xenl = false;
+
+    bool is_sane(curpos_t width) const {
+      return (0 <= m_x && m_x < width) || (m_x == width && m_xenl);
     }
   };
 
@@ -702,7 +701,7 @@ namespace ansi {
 
   public:
     void reset_size(curpos_t width, curpos_t height) {
-      mwg_check(width > 0 && height > 0, "negative size is passed (width = %d, height = %d).", (int) width, (int) height);
+      mwg_check(width > 0 && height > 0, "non-positive size is passed (width = %d, height = %d).", (int) width, (int) height);
       if (width == this->m_width && height == this->m_height) return;
       if (this->cur.x() >= width) cur.set_x(width - 1);
       if (this->cur.y() >= height) cur.set_y(height - 1);

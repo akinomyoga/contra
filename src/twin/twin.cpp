@@ -199,8 +199,8 @@ namespace twin {
       ::GetClientRect(hWnd, &rcClient);
       std::size_t const width = rcClient.right - rcClient.left;
       std::size_t const height = rcClient.bottom - rcClient.top;
-      std::size_t const new_col = (width - 2 * settings.m_xframe) / settings.m_xpixel;
-      std::size_t const new_row = (height - 2 * settings.m_yframe) / settings.m_ypixel;
+      std::size_t const new_col = std::max(1u, (width - 2 * settings.m_xframe) / settings.m_xpixel);
+      std::size_t const new_row = std::max(1u, (height - 2 * settings.m_yframe) / settings.m_ypixel);
 
       if (new_col != settings.m_col || new_row != settings.m_row) {
         settings.m_col = new_col;
