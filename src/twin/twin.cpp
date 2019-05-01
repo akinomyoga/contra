@@ -106,7 +106,7 @@ namespace twin {
       }
 
       this->hWnd = CreateWindowEx(
-        WS_EX_COMPOSITED,
+        0, //WS_EX_COMPOSITED,
         szClassName,
         TEXT("Contra/Twin"),
         WS_OVERLAPPEDWINDOW,
@@ -121,9 +121,51 @@ namespace twin {
     }
 
   private:
-    void render_window(HDC hdc) {
-      if (!hWnd || !sess.is_active()) return;
 
+    class compatible_bitmap_t {
+      LONG m_width = -1, m_height = -1;
+      HDC m_hdc = NULL;
+      HBITMAP m_bmp = NULL;
+
+      void release() {
+        if (m_hdc) {
+          ::DeleteDC(m_hdc);
+          m_hdc = NULL;
+        }
+        if (m_bmp) {
+          ::DeleteObject(m_bmp);
+          m_bmp = NULL;
+        }
+      }
+
+    public:
+      HDC hdc(HWND hWnd, HDC hdc) {
+        RECT rcClient;
+        ::GetClientRect(hWnd, &rcClient);
+        LONG const width = rcClient.right - rcClient.left;
+        LONG const height = rcClient.bottom - rcClient.top;
+        if (!m_hdc || !m_bmp || width != m_width || height != m_height) {
+          release();
+          m_bmp = ::CreateCompatibleBitmap(hdc, width, height);
+          m_hdc = ::CreateCompatibleDC(hdc);
+          ::SelectObject(m_hdc, m_bmp);
+          m_width = width;
+          m_height = height;
+        }
+        return m_hdc;
+      }
+      HBITMAP bmp() { return m_bmp; }
+      LONG width() { return m_width; }
+      LONG height() { return m_height; }
+      ~compatible_bitmap_t() {
+        release();
+      }
+    };
+
+    compatible_bitmap_t m_background;
+
+  private:
+    void paint_terminal_content(HDC hdc) {
       auto deleter = [&] (auto p) { SelectObject(hdc, p); };
       util::raii hOldFont((HFONT) SelectObject(hdc, fstore.normal()), deleter);
       RECT rcClient;
@@ -163,7 +205,14 @@ namespace twin {
             ExtTextOut(hdc, 0, y * sess.init_ws.ws_ypixel, 0, NULL, &characters[0], characters.size(), &progress[0]);
         }
       }
-      //SelectObject(hdc, hOldFont);
+    }
+
+    bool render_window(HDC hdc) {
+      if (!hWnd || !sess.is_active()) return false;
+      HDC const hdc2 = m_background.hdc(hWnd, hdc);
+      paint_terminal_content(hdc2);
+      BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc2, 0, 0, SRCCOPY);
+      return true;
     }
 
     enum extended_key_flags {
@@ -383,7 +432,8 @@ namespace twin {
         }
         if (processed) {
           HDC hdc = GetDC(hWnd);
-          render_window(hdc);
+          if (render_window(hdc))
+            ::ValidateRect(hWnd, NULL);
           ReleaseDC(hWnd, hdc);
         }
 
