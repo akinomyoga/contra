@@ -27,7 +27,7 @@ namespace term {
     return nread;
   }
 
-  bool set_fd_nonblock(int fd, bool value) {
+  bool fd_set_nonblock(int fd, bool value) {
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags < 0) {
       perror("sample_openpt (fcntl(0, F_GETFL))");
@@ -43,6 +43,9 @@ namespace term {
       exit(1);
     }
     return old_status;
+  }
+  void fd_set_winsize(int fd, struct winsize const* ws) {
+    if (ws) ioctl(fd, TIOCSWINSZ, ws);
   }
 
   void fd_device::write(char const* data, std::size_t size) const {
@@ -102,8 +105,7 @@ namespace term {
     if (pid == 0) {
       setsid();
       if (termios) tcsetattr(slavefd, TCSANOW, termios);
-      if (ws) ioctl(slavefd, TIOCSWINSZ, ws);
-
+      if (ws) fd_set_winsize(slavefd, ws);
       dup2(slavefd, STDIN_FILENO);
       dup2(slavefd, STDOUT_FILENO);
       dup2(slavefd, STDERR_FILENO);

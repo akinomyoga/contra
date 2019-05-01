@@ -30,6 +30,15 @@ namespace twin {
 
   using namespace contra::term;
 
+  template<typename XCH>
+  int xcscpy_s(XCH* dst, std::size_t sz, const XCH* src) {
+    if (!sz--) return 1;
+    char c;
+    while (sz-- && (c = *src++)) *dst++ = c;
+    *dst = '\0';
+    return 0;
+  }
+
   class font_store {
     LOGFONT log_normal;
     HFONT m_normal = NULL;
@@ -37,8 +46,15 @@ namespace twin {
     LONG m_width;
     LONG m_height;
 
+    void release() {
+      if (m_normal) {
+        ::DeleteObject(m_normal);
+        m_normal = NULL;
+      }
+    }
   public:
     font_store() {
+      // default settings
       m_height = 13;
       m_width = 7;
       log_normal.lfHeight = m_height;
@@ -54,11 +70,15 @@ namespace twin {
       log_normal.lfClipPrecision = CLIP_DEFAULT_PRECIS;
       log_normal.lfQuality = CLEARTYPE_QUALITY;
       log_normal.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-      //::_tcscpy_s(log_normal.lfFaceName, LF_FACESIZE, TEXT("MeiryoKe_Console"));
-      ::_tcscpy(log_normal.lfFaceName, TEXT("MeiryoKe_Console"));
-      //::_tcscpy(log_normal.lfFaceName, TEXT("Meiryo"));
+      xcscpy_s(log_normal.lfFaceName, LF_FACESIZE, TEXT("MeiryoKe_Console"));
     }
 
+    void set_size(LONG width, LONG height) {
+      if (m_width == width && m_height == height) return;
+      release();
+      this->m_width = width;
+      this->m_height = height;
+    }
     LONG width() const { return m_width; }
     LONG height() const { return m_height; }
 
@@ -71,23 +91,52 @@ namespace twin {
     }
 
     ~font_store() {
-      if (m_normal) ::DeleteObject(m_normal);
+      release();
     }
   };
 
   LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+  struct twin_settings {
+    std::size_t m_col = 80;
+    std::size_t m_row = 30;
+    std::size_t m_xpixel = 7;
+    std::size_t m_ypixel = 13;
+    std::size_t window_size_xadjust = 0;
+    std::size_t window_size_yadjust = 0;
+    std::size_t m_xframe = 1;
+    std::size_t m_yframe = 1;
+
+  public:
+    std::size_t calculate_client_width() const {
+      return m_xpixel * m_col + 2 * m_xframe;
+    }
+    std::size_t calculate_client_height() const {
+      return m_ypixel * m_row + 2 * m_yframe;
+    }
+    std::size_t calculate_window_width() const {
+      return calculate_client_width() + window_size_xadjust;
+    }
+    std::size_t calculate_window_height() const {
+      return calculate_client_height() + window_size_yadjust;
+    }
+
+  };
+
   class main_window_t {
+    twin_settings settings;
     font_store fstore;
 
     terminal_session sess;
 
     HWND hWnd = NULL;
 
-    static constexpr LPCTSTR szClassName = TEXT("Contra/twin.Main");
+    static constexpr LPCTSTR szClassName = TEXT("Contra.Twin.Main");
 
   public:
     HWND create_window(HINSTANCE hInstance) {
+      fstore.set_size(settings.m_xpixel, settings.m_ypixel);
+
       static bool is_window_class_registered = false;
       if (!is_window_class_registered) {
         is_window_class_registered = true;
@@ -106,6 +155,8 @@ namespace twin {
         if (!RegisterClass(&myProg)) return NULL;
       }
 
+      settings.window_size_xadjust = 2 * ::GetSystemMetrics(SM_CXSIZEFRAME);
+      settings.window_size_yadjust = 2 * ::GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYCAPTION);
       this->hWnd = CreateWindowEx(
         0, //WS_EX_COMPOSITED,
         szClassName,
@@ -113,12 +164,49 @@ namespace twin {
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
-        80 * 7, 30 * 13,
+        settings.calculate_window_width(),
+        settings.calculate_window_height(),
         NULL,
         NULL,
         hInstance,
         NULL);
       return hWnd;
+    }
+    bool m_window_size_adjusted = false;
+    void adjust_window_size_using_current_client_size() {
+      if (m_window_size_adjusted) return;
+      m_window_size_adjusted = true;
+
+      RECT rcClient;
+      ::GetClientRect(hWnd, &rcClient);
+      LONG const width = rcClient.right - rcClient.left;
+      LONG const height = rcClient.bottom - rcClient.top;
+      std::size_t const xadjust = settings.calculate_client_width() - (std::size_t) width;
+      std::size_t const yadjust = settings.calculate_client_height() - (std::size_t) height;
+      if (xadjust || yadjust) {
+        settings.window_size_xadjust += xadjust;
+        settings.window_size_yadjust += yadjust;
+        ::SetWindowPos(
+          hWnd, NULL, 0, 0,
+          settings.calculate_window_width(), settings.calculate_window_height(),
+          SWP_NOZORDER | SWP_NOMOVE);
+      }
+    }
+    void adjust_terminal_size_using_current_client_size() {
+      if (!m_window_size_adjusted) return;
+      if (!hWnd || !sess.is_active()) return;
+      RECT rcClient;
+      ::GetClientRect(hWnd, &rcClient);
+      std::size_t const width = rcClient.right - rcClient.left;
+      std::size_t const height = rcClient.bottom - rcClient.top;
+      std::size_t const new_col = (width - 2 * settings.m_xframe) / settings.m_xpixel;
+      std::size_t const new_row = (height - 2 * settings.m_yframe) / settings.m_ypixel;
+
+      if (new_col != settings.m_col || new_row != settings.m_row) {
+        settings.m_col = new_col;
+        settings.m_row = new_row;
+        sess.reset_size(new_col, new_row);
+      }
     }
 
   private:
@@ -171,12 +259,18 @@ namespace twin {
       util::raii hOldFont((HFONT) SelectObject(hdc, fstore.normal()), deleter);
       RECT rcClient;
       if (::GetClientRect(hWnd, &rcClient)) {
+        // Note: 何故か 1 pixel 大きくサイズを指定するか、
+        //   Pen にも同じ色を指定しないと右端と左端が欠けてしまう。
         util::raii hOldPen((HBRUSH) SelectObject(hdc, GetStockObject(NULL_PEN)), deleter);
         util::raii hOldBrush((HBRUSH) SelectObject(hdc, GetStockObject(WHITE_BRUSH)), deleter);
-        Rectangle(hdc, 0, 0, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top);
+        Rectangle(hdc, 0, 0, rcClient.right - rcClient.left + 1, rcClient.bottom - rcClient.top + 1);
       }
 
       {
+        std::size_t const xorigin = settings.m_xframe;
+        std::size_t const yorigin = settings.m_yframe;
+        std::size_t const ypixel = settings.m_ypixel;
+        std::size_t const xpixel = settings.m_xpixel;
         using namespace contra::ansi;
         std::vector<cell_t> cells;
         std::vector<TCHAR> characters;
@@ -188,6 +282,8 @@ namespace twin {
           line_t const& line = b.m_lines[y];
           line.get_cells_in_presentation(cells, b.line_r2l(line));
 
+          std::size_t xoffset = xorigin;
+          std::size_t yoffset = yorigin + y * ypixel;
           characters.clear();
           progress.clear();
           characters.reserve(cells.size());
@@ -196,14 +292,19 @@ namespace twin {
             std::uint32_t code = cell.character.value;
             if (code & character_t::flag_cluster_extension)
               code &= ~character_t::flag_cluster_extension;
-            if (code == (code & character_t::unicode_mask)) {
+            if (code == ascii_nul || code == ascii_sp) {
+              if (progress.size())
+                progress.back() += cell.width * xpixel;
+              else
+                xoffset += cell.width * xpixel;
+            } else if (code == (code & character_t::unicode_mask)) {
               characters.push_back(code);
-              progress.push_back(cell.width * sess.init_ws.ws_xpixel);
+              progress.push_back(cell.width * xpixel);
             }
             // ToDo: その他の文字・マーカーに応じた処理。
           }
           if (characters.size())
-            ExtTextOut(hdc, 0, y * sess.init_ws.ws_ypixel, 0, NULL, &characters[0], characters.size(), &progress[0]);
+            ExtTextOut(hdc, xoffset, yoffset, 0, NULL, &characters[0], characters.size(), &progress[0]);
         }
       }
     }
@@ -350,6 +451,11 @@ namespace twin {
       switch (msg) {
       case WM_CREATE:
         ::SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG) CreateSolidBrush(RGB(0xFF,0xFF,0xFF)));
+        this->adjust_window_size_using_current_client_size();
+        return 0L;
+      case WM_SIZE:
+        if (wParam == SIZE_RESTORED || wParam == SIZE_MAXIMIZED)
+          this->adjust_terminal_size_using_current_client_size();
         return 0L;
       case WM_DESTROY:
         //::PostQuitMessage(0);
@@ -424,7 +530,7 @@ namespace twin {
       MSG msg;
       while (hWnd) {
         bool processed = false;
-        clock_t time0 = clock();
+        clock_t const time0 = clock();
         while (sess.process()) {
           processed = true;
           clock_t const time1 = clock();

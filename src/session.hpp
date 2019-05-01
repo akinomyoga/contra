@@ -170,6 +170,15 @@ namespace term {
     bool is_alive() { return m_pty.is_alive(); }
     void terminate() { return m_pty.terminate(); }
 
+  public:
+    void reset_size(std::size_t width, std::size_t height) {
+      mwg_check(width > 0 && height > 0, "negative size is passed (width = %d, height = %d).", (int) width, (int) height);
+      board().reset_size(width, height);
+      init_ws.ws_col = width;
+      init_ws.ws_row = height;
+      m_pty.set_winsize(&init_ws);
+    }
+
   private:
     std::vector<byte> input_buffer;
     void put_flush() {

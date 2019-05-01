@@ -17,8 +17,9 @@ namespace contra {
 namespace term {
 
   void msleep(int milliseconds);
-  bool set_fd_nonblock(int fd, bool value);
+  bool fd_set_nonblock(int fd, bool value);
   std::size_t read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size);
+  void fd_set_winsize(int fd, struct winsize const* ws);
 
   class fd_device: public idevice {
   protected:
@@ -71,6 +72,10 @@ namespace term {
     bool is_alive();
 
     virtual ~pty_session() {}
+
+    void set_winsize(struct winsize* ws) {
+      fd_set_winsize(m_fd, ws);
+    }
   };
 
 }

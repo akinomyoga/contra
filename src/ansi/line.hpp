@@ -703,6 +703,7 @@ namespace ansi {
   public:
     void reset_size(curpos_t width, curpos_t height) {
       mwg_check(width > 0 && height > 0, "negative size is passed (width = %d, height = %d).", (int) width, (int) height);
+      if (width == this->m_width && height == this->m_height) return;
       if (this->cur.x() >= width) cur.set_x(width - 1);
       if (this->cur.y() >= height) cur.set_y(height - 1);
       m_lines.resize(height);

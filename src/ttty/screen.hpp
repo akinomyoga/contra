@@ -49,10 +49,10 @@ namespace ttty {
       termios.c_cc[VMIN]  = 1;
       termios.c_cc[VTIME] = 0;
       tcsetattr(fd_in, TCSAFLUSH, &termios);
-      this->old_nonblock = contra::term::set_fd_nonblock(fd_in, true);
+      this->old_nonblock = contra::term::fd_set_nonblock(fd_in, true);
     }
     void reset_terminal() {
-      contra::term::set_fd_nonblock(fd_in, this->old_nonblock);
+      contra::term::fd_set_nonblock(fd_in, this->old_nonblock);
       tcsetattr(fd_in, TCSAFLUSH, &this->old_termios);
     }
 
