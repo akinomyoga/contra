@@ -1355,6 +1355,28 @@
 
 2019-05-01
 
+* twin: カーソルの位置が分からないのはいい加減に分かりづらい [#D0103]
+
+  カーソルを表示する。表示するのである。
+  さて反転するのにはどうしたら良いのだったか。
+  反転する為の関数が存在した様な気がするが。
+  検索しても分からないので Poderosa の自分の編集した部分を探す。
+  なるほど。PatBlt という関数が存在する様だ。
+  http://wisdom.sakura.ne.jp/system/winapi/win32/win103.html
+
+  取り敢えず自分の好きな形のカーソルを表示できる様にする。
+
+* twin: 所で FillRect という関数があるという事が判明した [#D0102]
+  http://wisdom.sakura.ne.jp/system/winapi/win32/win103.html
+
+  Rectangle なる関数で縁の処理が難しいなどと言っていたが
+  初めからこの FillRect という関数を用いていれば良かったのではないか。
+  試しにこの FillRect で縁が変にならない事を確認する事にする。
+  →ちゃんと動作している。初めからその様にすれば良かったのだ。
+
+  更に、RECT を走査する関数として SetRect, SetRectEmpty, OffsetRect などなど、
+  色々な関数があるという事が分かった。
+
 * twin: サイズ変更に対応したら以下のエラーが出た [#D0101]
 
   mwg_assertion_failure! b.cur.x() < b.m_width || (b.cur.x() == b.m_width && b.cur.xenl())

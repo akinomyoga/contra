@@ -257,13 +257,10 @@ namespace twin {
     void paint_terminal_content(HDC hdc) {
       auto deleter = [&] (auto p) { SelectObject(hdc, p); };
       util::raii hOldFont((HFONT) SelectObject(hdc, fstore.normal()), deleter);
-      RECT rcClient;
-      if (::GetClientRect(hWnd, &rcClient)) {
-        // Note: 何故か 1 pixel 大きくサイズを指定するか、
-        //   Pen にも同じ色を指定しないと右端と左端が欠けてしまう。
-        util::raii hOldPen((HBRUSH) SelectObject(hdc, GetStockObject(NULL_PEN)), deleter);
-        util::raii hOldBrush((HBRUSH) SelectObject(hdc, GetStockObject(WHITE_BRUSH)), deleter);
-        Rectangle(hdc, 0, 0, rcClient.right - rcClient.left + 1, rcClient.bottom - rcClient.top + 1);
+      RECT rc;
+      if (::GetClientRect(hWnd, &rc)) {
+        ::OffsetRect(&rc, -rc.left, -rc.top);
+        ::FillRect(hdc, &rc, (HBRUSH) GetStockObject(WHITE_BRUSH));
       }
 
       {
