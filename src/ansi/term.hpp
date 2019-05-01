@@ -33,35 +33,7 @@ namespace ansi {
   class term_t;
   typedef std::uint32_t csi_single_param_t;
 
-  void do_pld(term_t& term);
-  void do_plu(term_t& term);
-  void do_decsc(term_t& term);
-  void do_decrc(term_t& term);
-  void do_spa(term_t& term);
-  void do_epa(term_t& term);
-  void do_ssa(term_t& term);
-  void do_esa(term_t& term);
-  void do_adm3_fs(term_t& term);
-  void do_adm3_gs(term_t& term);
-  void do_adm3_rs(term_t& term);
-  void do_adm3_us(term_t& term);
-  void do_deckpam(term_t& term);
-  void do_deckpnm(term_t& term);
-  void do_s7c1t(term_t& term);
-  void do_s8c1t(term_t& term);
-  void do_decaln(term_t& term);
-
-  void do_altscreen(term_t& term, bool value);
-  int do_rqm_deccolm(term_t& term);
-  void do_sm_deccolm(term_t& term, bool value);
-  int do_rqm_decscnm(term_t& term);
-  void do_sm_decscnm(term_t& term, bool value);
-  int do_rqm_decawm(term_t& term);
-  void do_sm_decawm(term_t& term, bool value);
-
-  void do_ed(term_t& term, csi_single_param_t param);
-  void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm);
-  bool do_decrqss(term_t& term, char32_t const* param, std::size_t len);
+  void do_insert_graph(term_t& term, char32_t u);
 
   struct tstate_t {
     term_t* m_term;
@@ -154,6 +126,8 @@ namespace ansi {
 
     void initialize_mode();
 
+  private:
+    bool get_mode_with_accessor(mode_t modeSpec) const;
   public:
     bool get_mode(mode_t modeSpec) const {
       std::uint32_t const index = modeSpec;
@@ -165,36 +139,12 @@ namespace ansi {
         std::uint32_t const& flags = m_mode_flags[index >> 5];
         return (flags & bit) != 0;
       } else {
-        // Note: 現在は暫定的にハードコーディングしているが、
-        //   将来的にはunordered_map か何かで登録できる様にする。
-        //   もしくは何らかの表からコードを自動生成する様にする。
-        switch (index) {
-        case mode_wystcurm1: // Mode 32 (Set Cursor Mode (Wyse))
-          return !get_mode(mode_attCursorBlink);
-        case mode_wystcurm2: // Mode 33 WYSTCURM (Wyse Set Cursor Mode)
-          return !get_mode(resource_cursorBlink);
-        case mode_wyulcurm: // Mode 34 WYULCURM (Wyse Underline Cursor Mode)
-          return m_cursor_shape > 0;
-        case mode_altscreen: // Mode ?47
-          return get_mode(mode_altscr);
-        case mode_altscreen_clr: // Mode ?1047
-          return get_mode(mode_altscr);
-        case mode_decsc: // Mode ?1048
-          return m_decsc_cur.x() >= 0;
-        case mode_altscreen_cur: // Mode ?1049
-          return get_mode(mode_altscr);
-        case mode_deccolm:
-          return 1 & do_rqm_deccolm(*m_term);
-        case mode_decscnm:
-          return 1 & do_rqm_decscnm(*m_term);
-        case mode_decawm:
-          return 1 & do_rqm_decawm(*m_term);
-        default:
-          return false;
-        }
+        return get_mode_with_accessor(modeSpec);
       }
     }
 
+  private:
+    void set_mode_with_accessor(mode_t modeSpec, bool value);
   public:
     void set_mode(mode_t modeSpec, bool value = true) {
       std::uint32_t const index = modeSpec;
@@ -209,55 +159,7 @@ namespace ansi {
         else
           flags &= ~bit;
       } else {
-        // Note: 現在は暫定的にハードコーディングしているが、
-        //   将来的にはunordered_map か何かで登録できる様にする。
-        //   もしくは何らかの表からコードを自動生成する様にする。
-        switch (index) {
-        case mode_wystcurm1:
-          set_mode(mode_attCursorBlink, !value);
-          break;
-        case mode_wystcurm2:
-          set_mode(resource_cursorBlink, !value);
-          break;
-        case mode_wyulcurm:
-          if (value) {
-            if (m_cursor_shape <= 0) m_cursor_shape = 1;
-          } else {
-            if (m_cursor_shape > 0) m_cursor_shape = 0;
-          }
-          break;
-        case mode_altscreen:
-          do_altscreen(*m_term, value);
-          break;
-        case mode_altscreen_clr:
-          if (get_mode(mode_altscr) != value) {
-            if (value) do_ed(*m_term, 2);
-            set_mode(mode_altscreen, value);
-          }
-          break;
-        case mode_decsc:
-          if (value)
-            do_decsc(*m_term);
-          else
-            do_decrc(*m_term);
-          break;
-        case mode_altscreen_cur:
-          if (get_mode(mode_altscr) != value) {
-            set_mode(mode_altscreen, value);
-            set_mode(mode_decsc, value);
-          }
-          break;
-        case mode_deccolm:
-          do_sm_deccolm(*m_term, value);
-          break;
-        case mode_decscnm:
-          do_sm_decscnm(*m_term, value);
-          break;
-        case mode_decawm:
-          do_sm_decawm(*m_term, value);
-          break;
-        default: ;
-        }
+        set_mode_with_accessor(modeSpec, value);
       }
     }
 
@@ -273,7 +175,7 @@ namespace ansi {
 
   public:
     void do_bel() {
-      std::fputc('\a', stdout);
+      //std::fputc('\a', stdout);
     }
 
   public:
@@ -304,7 +206,7 @@ namespace ansi {
       this->m_send_buff.reserve(32);
     }
 
-    void set_response_target(contra::idevice& dev) { this->m_send_target = &dev; }
+    void set_input_target(contra::idevice& dev) { this->m_send_target = &dev; }
 
     void respond() {
       if (m_send_target)
@@ -393,68 +295,6 @@ namespace ansi {
     }
 
   public:
-    void insert_graph(char32_t u) {
-      // ToDo: 新しい行に移る時に line_limit, line_home を初期化する
-      board_t& b = this->board();
-      tstate_t& s = this->state();
-      line_t& line = b.line();
-      initialize_line(line);
-
-      int const char_width = m_state.c2w(u); // ToDo 文字幅
-      if (char_width <= 0) {
-        std::exit(1); // ToDo: control chars, etc.
-      }
-
-      bool const simd = m_state.get_mode(mode_simd);
-      curpos_t const dir = simd ? -1 : 1;
-
-      curpos_t slh = implicit_slh(line);
-      curpos_t sll = implicit_sll(line);
-      if (b.cur.x() < slh)
-        slh = 0;
-      else if (b.cur.x() > (b.cur.xenl() ? sll + 1 : sll))
-        sll = b.m_width - 1;
-      if (simd) std::swap(slh, sll);
-
-      // (行頭より後でかつ) 行末に文字が入らない時は折り返し
-      curpos_t const x0 = b.cur.x();
-      curpos_t const x1 = x0 + dir * (char_width - 1);
-      if ((x1 - sll) * dir > 0 && (x0 - slh) * dir > 0) {
-        if (!m_state.get_mode(mode_decawm)) return;
-        do_nel();
-        // Note: do_nel() 後に b.cur.x() in [slh, sll]
-        //   は保証されていると思って良いので、
-        //   現在位置が範囲外の時の sll の補正は不要。
-        sll = simd ? implicit_slh(b.line()) : implicit_sll(b.line());
-      }
-
-      curpos_t const xL = simd ? b.cur.x() - (char_width - 1) : b.cur.x();
-
-      cell_t cell;
-      cell.character = u;
-      cell.attribute = b.cur.attribute;
-      cell.width = char_width;
-      b.line().write_cells(xL, &cell, 1, 1, dir);
-
-      curpos_t x = b.cur.x() + dir * char_width;
-      bool xenl = false;
-      if ((x - sll) * dir >= 1) {
-        if (m_state.get_mode(mode_decawm)) {
-          // 行末を超えた時は折り返し
-          // Note: xenl かつ x == sll + 1 ならば の位置にいる事を許容する。
-          if (!simd && x == sll + 1 && s.get_mode(mode_xenl)) {
-            xenl = true;
-          } else {
-            do_nel();
-            return;
-          }
-        } else {
-          x = sll;
-        }
-      }
-      b.cur.set_x(x, xenl);
-    }
-
     void insert_marker(std::uint32_t marker) {
       bool const simd = m_state.get_mode(mode_simd);
       curpos_t const dir = simd ? -1 : 1;
@@ -475,185 +315,12 @@ namespace ansi {
         (U'\u2066' <= u && u <= U'\u2069'))
         return insert_marker(u);
 
-      return insert_graph(u);
+      return do_insert_graph(*this, u);
     }
 
   public:
     void do_bel() {
       m_state.do_bel();
-    }
-    void do_bs() {
-      // Note: mode_xenl, mode_decawm, mode_xtBSBackLine が絡んで来た時の振る舞いは適当である。
-      board_t& b = this->board();
-      tstate_t const& s = this->state();
-      line_t const& line = b.line();
-      if (s.get_mode(mode_simd)) {
-        bool const cap_xenl = s.get_mode(mode_xenl);
-        curpos_t sll = this->implicit_sll(line);
-        curpos_t x = b.cur.x(), y = b.cur.y();
-        bool xenl = false;
-        if (b.cur.xenl() || (!cap_xenl && (x == sll || x == b.m_width - 1))) {
-          if (s.get_mode(mode_decawm) && s.get_mode(mode_xtBSBackLine) && y > 0) {
-            y--;
-            x = this->implicit_slh(b.line(y));
-
-            // Note: xenl から前行に移った時は更に次の文字への移動を試みる。
-            if (b.cur.xenl())
-              sll = this->implicit_sll(b.line(y));
-            else
-              goto update;
-          } else {
-            // Note: 行末に居て前の行に戻らない時は何もしない。
-            return;
-          }
-        }
-
-        mwg_assert(x < b.m_width);
-        if (x != sll && x != b.m_width - 1) {
-          x++;
-        } else if (cap_xenl) {
-          xenl = true;
-          x++;
-        }
-
-      update:
-        b.cur.set(x, y, xenl);
-      } else {
-        // Note: vttest によると xenl は補正するのが正しいらしい。
-        //   しかし xterm で手動で動作を確認すると sll+1 に居ても補正ない様だ。
-        //   一方で RLogin では手動で確認すると補正される。
-        //   xterm で補正が起こる条件があるのだろうがよく分からないので、
-        //   contra では RLogin と同様に常に補正を行う事にする。
-        b.cur.adjust_xenl();
-
-        curpos_t x = b.cur.x(), y = b.cur.y();
-        curpos_t const slh = this->implicit_slh(line);
-        if (x != slh && x > 0) {
-          x--;
-        } else if (s.get_mode(mode_decawm) && s.get_mode(mode_xtBSBackLine) && y > 0) {
-          y--;
-          x = this->implicit_sll(b.line(y));
-        }
-        b.cur.set(x, y);
-      }
-    }
-    void do_ht() {
-      cursor_t& cur = m_board->cur;
-
-      // ToDo: tab stop の管理
-      int const tabwidth = 8;
-      curpos_t const sll = implicit_sll(m_board->line());
-      curpos_t const xdst = std::min((cur.x() + tabwidth) / tabwidth * tabwidth, sll);
-      cur.set_x(xdst);
-    }
-
-    void do_generic_ff(int delta, bool toAppendNewLine, bool toAdjustXAsPresentationPosition) {
-      if (!delta) return;
-
-      board_t& b = this->board();
-      b.cur.adjust_xenl();
-      curpos_t x = b.cur.x();
-      if (toAdjustXAsPresentationPosition)
-        x = b.to_presentation_position(b.cur.y(), x);
-
-      curpos_t const beg = implicit_sph();
-      curpos_t const end = implicit_spl() + 1;
-      curpos_t const y = b.cur.y();
-      if (delta > 0) {
-        if (y < end) {
-          if (y + delta < end) {
-            b.cur.set_y(b.cur.y() + delta);
-          } else {
-            b.cur.set_y(end - 1);
-            if (toAppendNewLine) {
-              delta -= b.cur.y() - y;
-              do_vertical_scroll(*this, -delta, true);
-            }
-          }
-        }
-      } else {
-        if (y >= beg) {
-          if (y + delta >= beg) {
-            b.cur.set_y(b.cur.y() + delta);
-          } else {
-            b.cur.set_y(beg);
-            if (toAppendNewLine) {
-              delta += y - b.cur.y();
-              do_vertical_scroll(*this, -delta, true);
-            }
-          }
-        }
-      }
-
-      if (toAdjustXAsPresentationPosition)
-        x = b.to_data_position(b.cur.y(), x);
-      b.cur.set_x(x);
-    }
-    void do_ind() {
-      do_generic_ff(1, true, !m_state.dcsm());
-    }
-    void do_ri() {
-      do_generic_ff(-1, true, !m_state.dcsm());
-    }
-    void do_lf() {
-      bool const toCallCR = m_state.get_mode(mode_lnm);
-      do_generic_ff(1, true, !toCallCR && !m_state.dcsm());
-      if (toCallCR) do_cr();
-    }
-    void do_ff() {
-      bool const toCallCR = m_state.ff_affected_by_lnm && m_state.get_mode(mode_lnm);
-
-      if (m_state.ff_clearing_screen) {
-        board_t& b = this->board();
-        if (m_state.ff_using_page_home) {
-          b.cur.adjust_xenl();
-          curpos_t x = b.cur.x();
-          curpos_t y = b.cur.y();
-          if (!toCallCR && !m_state.get_mode(mode_bdsm))
-            x = b.to_presentation_position(y, x);
-
-          b.clear_screen();
-          y = std::max(implicit_sph(), 0);
-
-          if (!toCallCR && !m_state.get_mode(mode_bdsm))
-            x = b.to_data_position(y, x);
-
-          b.cur.set(x, y);
-        } else
-          b.clear_screen();
-      } else {
-        do_generic_ff(1, true, !toCallCR && !m_state.get_mode(mode_bdsm));
-      }
-
-      if (toCallCR) do_cr();
-    }
-    void do_vt() {
-      bool const toCallCR = m_state.vt_affected_by_lnm && m_state.get_mode(mode_lnm);
-      do_generic_ff(1, m_state.vt_appending_newline, !toCallCR && !m_state.get_mode(mode_bdsm));
-      if (toCallCR) do_cr();
-    }
-    void do_cr() {
-      board_t& b = this->board();
-      line_t& line = b.line();
-      initialize_line(line);
-
-      curpos_t x;
-      if (m_state.get_mode(mode_simd)) {
-        x = this->implicit_sll(line);
-      } else {
-        x = this->implicit_slh(line);
-      }
-
-      if (!m_state.dcsm())
-        x = b.to_data_position(b.cur.y(), x);
-
-      b.cur.set_x(x);
-    }
-    void do_nel() {
-      // Note: 新しい行の SLH/SLL に移動したいので、
-      // LF を実行した後に CR を実行する必要がある。
-      do_lf();
-      do_cr();
     }
 
   private:
@@ -662,6 +329,8 @@ namespace ansi {
     friend decoder_type;
 
     void print_unrecognized_sequence(sequence const& seq) {
+      return; //取り敢えず off
+
       const char* name = "sequence";
       switch (seq.type()) {
       case ascii_csi:
@@ -690,52 +359,10 @@ namespace ansi {
       print_unrecognized_sequence(seq);
     }
 
-    void process_escape_sequence(sequence const& seq) {
-      if (seq.parameter_size() == 0) {
-        switch (seq.final()) {
-        case ascii_7: do_decsc(*this); return;
-        case ascii_8: do_decrc(*this); return;
-        case ascii_equals : do_deckpam(*this); return;
-        case ascii_greater: do_deckpnm(*this); return;
-        }
-      } else if (seq.parameter_size() == 1) {
-        switch (seq.parameter()[0]) {
-        case ascii_sp:
-          switch (seq.final()) {
-          case ascii_F: do_s7c1t(*this); return;
-          case ascii_G: do_s8c1t(*this); return;
-          }
-          break;
-        case ascii_number:
-          switch (seq.final()) {
-          case ascii_8: do_decaln(*this); return;
-          }
-          break;
-        }
-      }
-      print_unrecognized_sequence(seq);
-    }
-
+    void process_escape_sequence(sequence const& seq);
     void process_control_sequence(sequence const& seq);
+    void process_command_string(sequence const& seq);
 
-    void process_command_string(sequence const& seq) {
-      auto _check2 = [&seq] (char32_t a, char32_t b) {
-        return seq.parameter_size() >= 2 && seq.parameter()[0] == a && seq.parameter()[1] == b;
-      };
-
-      if (seq.type() == ascii_osc) {
-        if (_check2(ascii_0, ascii_semicolon)) {
-          m_state.title = std::u32string(seq.parameter() + 2, (std::size_t) seq.parameter_size() - 2);
-          return;
-        }
-      }
-      if (seq.type() == ascii_dcs) {
-        if (_check2(ascii_dollar, ascii_q)) {
-          if (do_decrqss(*this, seq.parameter() + 2, seq.parameter_size() - 2)) return;
-        }
-      }
-      print_unrecognized_sequence(seq);
-    }
     void process_character_string(sequence const& seq) {
       if (seq.type() == ascii_k) {
         m_state.screen_title = std::u32string(seq.parameter(), (std::size_t) seq.parameter_size());
@@ -744,33 +371,7 @@ namespace ansi {
         print_unrecognized_sequence(seq);
     }
 
-    void process_control_character(char32_t uchar) {
-      switch (uchar) {
-      case ascii_bel: do_bel(); break;
-      case ascii_bs : do_bs();  break;
-      case ascii_ht : do_ht();  break;
-      case ascii_lf : do_lf();  break;
-      case ascii_ff : do_ff();  break;
-      case ascii_vt : do_vt();  break;
-      case ascii_cr : do_cr();  break;
-
-      case ascii_fs: do_adm3_fs(*this); break;
-      case ascii_gs: do_adm3_gs(*this); break;
-      case ascii_rs: do_adm3_rs(*this); break;
-      case ascii_us: do_adm3_us(*this); break;
-
-      case ascii_ind: do_ind(); break;
-      case ascii_nel: do_nel(); break;
-      case ascii_ri : do_ri() ; break;
-
-      case ascii_pld: do_pld(*this); break;
-      case ascii_plu: do_plu(*this); break;
-      case ascii_spa: do_spa(*this); break;
-      case ascii_epa: do_epa(*this); break;
-      case ascii_ssa: do_ssa(*this); break;
-      case ascii_esa: do_esa(*this); break;
-      }
-    }
+    void process_control_character(char32_t uchar);
 
   public:
     std::uint64_t printt_state = 0;
@@ -798,5 +399,4 @@ namespace ansi {
 
 }
 }
-
 #endif

@@ -12,9 +12,7 @@ objdir = ../out
 gendir = ../out/gen
 directories += $(objdir) $(objdir)/experimental $(objdir)/ansi $(objdir)/ttty
 
--include $(wildcard $(objdir)/*.dep)
--include $(wildcard $(objdir)/experimental/*.dep)
--include $(wildcard $(objdir)/ansi/*.dep)
+-include $(shell find $(objdir) -name \*.dep)
 $(objdir)/%.o: %.cpp | $(objdir) $(gendir)/term.mode_def.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 $(objdir)/ansi/%.o: ansi/%.cpp | $(objdir)/ansi $(gendir)/term.mode_def.hpp

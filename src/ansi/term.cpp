@@ -123,8 +123,9 @@ namespace {
   };
 }
 
-
   static void do_hvp_impl(term_t& term, curpos_t x, curpos_t y);
+  static void do_vertical_scroll(term_t& term, curpos_t shift, curpos_t tmargin, curpos_t bmargin, curpos_t lmargin, curpos_t rmargin, bool dcsm);
+  static void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm);
 
   //---------------------------------------------------------------------------
   // Modes
@@ -277,6 +278,252 @@ namespace {
     b.reset_size(cols, b.m_height);
 
     return true;
+  }
+
+  //---------------------------------------------------------------------------
+  // basic control functions
+
+  void do_cr(term_t& term) {
+    board_t& b = term.board();
+    tstate_t& s = term.state();
+    line_t& line = b.line();
+    term.initialize_line(line);
+
+    curpos_t x;
+    if (s.get_mode(mode_simd)) {
+      x = term.implicit_sll(line);
+    } else {
+      x = term.implicit_slh(line);
+    }
+
+    if (!s.dcsm())
+      x = b.to_data_position(b.cur.y(), x);
+
+    b.cur.set_x(x);
+  }
+
+  static void do_generic_ff(term_t& term, int delta, bool toAppendNewLine, bool toAdjustXAsPresentationPosition) {
+    if (!delta) return;
+
+    board_t& b = term.board();
+    b.cur.adjust_xenl();
+    curpos_t x = b.cur.x();
+    if (toAdjustXAsPresentationPosition)
+      x = b.to_presentation_position(b.cur.y(), x);
+
+    curpos_t const beg = term.implicit_sph();
+    curpos_t const end = term.implicit_spl() + 1;
+    curpos_t const y = b.cur.y();
+    if (delta > 0) {
+      if (y < end) {
+        if (y + delta < end) {
+          b.cur.set_y(b.cur.y() + delta);
+        } else {
+          b.cur.set_y(end - 1);
+          if (toAppendNewLine) {
+            delta -= b.cur.y() - y;
+            do_vertical_scroll(term, -delta, true);
+          }
+        }
+      }
+    } else {
+      if (y >= beg) {
+        if (y + delta >= beg) {
+          b.cur.set_y(b.cur.y() + delta);
+        } else {
+          b.cur.set_y(beg);
+          if (toAppendNewLine) {
+            delta += y - b.cur.y();
+            do_vertical_scroll(term, -delta, true);
+          }
+        }
+      }
+    }
+
+    if (toAdjustXAsPresentationPosition)
+      x = b.to_data_position(b.cur.y(), x);
+    b.cur.set_x(x);
+  }
+
+  void do_ind(term_t& term) {
+    do_generic_ff(term, 1, true, !term.state().dcsm());
+  }
+  void do_ri(term_t& term) {
+    do_generic_ff(term, -1, true, !term.state().dcsm());
+  }
+  void do_lf(term_t& term) {
+    tstate_t& s = term.state();
+    bool const toCallCR = s.get_mode(mode_lnm);
+    do_generic_ff(term, 1, true, !toCallCR && !s.dcsm());
+    if (toCallCR) do_cr(term);
+  }
+  void do_ff(term_t& term) {
+    tstate_t& s = term.state();
+    bool const toCallCR = s.ff_affected_by_lnm && s.get_mode(mode_lnm);
+
+    if (s.ff_clearing_screen) {
+      board_t& b = term.board();
+      if (s.ff_using_page_home) {
+        b.cur.adjust_xenl();
+        curpos_t x = b.cur.x();
+        curpos_t y = b.cur.y();
+        if (!toCallCR && !s.get_mode(mode_bdsm))
+          x = b.to_presentation_position(y, x);
+
+        b.clear_screen();
+        y = std::max(term.implicit_sph(), 0);
+
+        if (!toCallCR && !s.get_mode(mode_bdsm))
+          x = b.to_data_position(y, x);
+
+        b.cur.set(x, y);
+      } else
+        b.clear_screen();
+    } else {
+      do_generic_ff(term, 1, true, !toCallCR && !s.get_mode(mode_bdsm));
+    }
+
+    if (toCallCR) do_cr(term);
+  }
+  void do_vt(term_t& term) {
+    tstate_t& s = term.state();
+    bool const toCallCR = s.vt_affected_by_lnm && s.get_mode(mode_lnm);
+    do_generic_ff(term, 1, s.vt_appending_newline, !toCallCR && !s.get_mode(mode_bdsm));
+    if (toCallCR) do_cr(term);
+  }
+  void do_nel(term_t& term) {
+    // Note: 新しい行の SLH/SLL に移動したいので、
+    // LF を実行した後に CR を実行する必要がある。
+    do_lf(term);
+    do_cr(term);
+  }
+
+  void do_bs(term_t& term) {
+    // Note: mode_xenl, mode_decawm, mode_xtBSBackLine が絡んで来た時の振る舞いは適当である。
+    board_t& b = term.board();
+    tstate_t const& s = term.state();
+    line_t const& line = b.line();
+    if (s.get_mode(mode_simd)) {
+      bool const cap_xenl = s.get_mode(mode_xenl);
+      curpos_t sll = term.implicit_sll(line);
+      curpos_t x = b.cur.x(), y = b.cur.y();
+      bool xenl = false;
+      if (b.cur.xenl() || (!cap_xenl && (x == sll || x == b.m_width - 1))) {
+        if (s.get_mode(mode_decawm) && s.get_mode(mode_xtBSBackLine) && y > 0) {
+          y--;
+          x = term.implicit_slh(b.line(y));
+
+          // Note: xenl から前行に移った時は更に次の文字への移動を試みる。
+          if (b.cur.xenl())
+            sll = term.implicit_sll(b.line(y));
+          else
+            goto update;
+        } else {
+          // Note: 行末に居て前の行に戻らない時は何もしない。
+          return;
+        }
+      }
+
+      mwg_assert(x < b.m_width);
+      if (x != sll && x != b.m_width - 1) {
+        x++;
+      } else if (cap_xenl) {
+        xenl = true;
+        x++;
+      }
+
+    update:
+      b.cur.set(x, y, xenl);
+    } else {
+      // Note: vttest によると xenl は補正するのが正しいらしい。
+      //   しかし xterm で手動で動作を確認すると sll+1 に居ても補正ない様だ。
+      //   一方で RLogin では手動で確認すると補正される。
+      //   xterm で補正が起こる条件があるのだろうがよく分からないので、
+      //   contra では RLogin と同様に常に補正を行う事にする。
+      b.cur.adjust_xenl();
+
+      curpos_t x = b.cur.x(), y = b.cur.y();
+      curpos_t const slh = term.implicit_slh(line);
+      if (x != slh && x > 0) {
+        x--;
+      } else if (s.get_mode(mode_decawm) && s.get_mode(mode_xtBSBackLine) && y > 0) {
+        y--;
+        x = term.implicit_sll(b.line(y));
+      }
+      b.cur.set(x, y);
+    }
+  }
+
+  void do_ht(term_t& term) {
+    board_t& b = term.board();
+
+    // ToDo: tab stop の管理
+    int const tabwidth = 8;
+    curpos_t const sll = term.implicit_sll(b.line());
+    curpos_t const xdst = std::min((b.cur.x() + tabwidth) / tabwidth * tabwidth, sll);
+    b.cur.set_x(xdst);
+  }
+
+  void do_insert_graph(term_t& term, char32_t u) {
+    // ToDo: 新しい行に移る時に line_limit, line_home を初期化する
+    board_t& b = term.board();
+    tstate_t& s = term.state();
+    line_t& line = b.line();
+    term.initialize_line(line);
+
+    int const char_width = s.c2w(u); // ToDo 文字幅
+    if (char_width <= 0) {
+      std::exit(1); // ToDo: control chars, etc.
+    }
+
+    bool const simd = s.get_mode(mode_simd);
+    curpos_t const dir = simd ? -1 : 1;
+
+    curpos_t slh = term.implicit_slh(line);
+    curpos_t sll = term.implicit_sll(line);
+    if (b.cur.x() < slh)
+      slh = 0;
+    else if (b.cur.x() > (b.cur.xenl() ? sll + 1 : sll))
+      sll = b.m_width - 1;
+    if (simd) std::swap(slh, sll);
+
+    // (行頭より後でかつ) 行末に文字が入らない時は折り返し
+    curpos_t const x0 = b.cur.x();
+    curpos_t const x1 = x0 + dir * (char_width - 1);
+    if ((x1 - sll) * dir > 0 && (x0 - slh) * dir > 0) {
+      if (!s.get_mode(mode_decawm)) return;
+      do_nel(term);
+      // Note: do_nel() 後に b.cur.x() in [slh, sll]
+      //   は保証されていると思って良いので、
+      //   現在位置が範囲外の時の sll の補正は不要。
+      sll = simd ? term.implicit_slh(b.line()) : term.implicit_sll(b.line());
+    }
+
+    curpos_t const xL = simd ? b.cur.x() - (char_width - 1) : b.cur.x();
+
+    cell_t cell;
+    cell.character = u;
+    cell.attribute = b.cur.attribute;
+    cell.width = char_width;
+    b.line().write_cells(xL, &cell, 1, 1, dir);
+
+    curpos_t x = b.cur.x() + dir * char_width;
+    bool xenl = false;
+    if ((x - sll) * dir >= 1) {
+      if (s.get_mode(mode_decawm)) {
+        // 行末を超えた時は折り返し
+        // Note: xenl かつ x == sll + 1 ならば の位置にいる事を許容する。
+        if (!simd && x == sll + 1 && s.get_mode(mode_xenl)) {
+          xenl = true;
+        } else {
+          do_nel(term);
+          return;
+        }
+      } else {
+        x = sll;
+      }
+    }
+    b.cur.set_x(x, xenl);
   }
 
   //---------------------------------------------------------------------------
@@ -834,7 +1081,7 @@ namespace {
       }
     }
   }
-  void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm) {
+  static void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm) {
     curpos_t const tmargin = term.tmargin();
     curpos_t const bmargin = term.bmargin();
     curpos_t const lmargin = term.lmargin();
@@ -1560,6 +1807,89 @@ namespace {
     return minor << 8 | major;
   }
 
+  bool tstate_t::get_mode_with_accessor(mode_t modeSpec) const {
+    // Note: 現在は暫定的にハードコーディングしているが、
+    //   将来的にはunordered_map か何かで登録できる様にする。
+    //   もしくは何らかの表からコードを自動生成する様にする。
+    switch (modeSpec) {
+    case mode_wystcurm1: // Mode 32 (Set Cursor Mode (Wyse))
+      return !get_mode(mode_attCursorBlink);
+    case mode_wystcurm2: // Mode 33 WYSTCURM (Wyse Set Cursor Mode)
+      return !get_mode(resource_cursorBlink);
+    case mode_wyulcurm: // Mode 34 WYULCURM (Wyse Underline Cursor Mode)
+      return m_cursor_shape > 0;
+    case mode_altscreen: // Mode ?47
+      return get_mode(mode_altscr);
+    case mode_altscreen_clr: // Mode ?1047
+      return get_mode(mode_altscr);
+    case mode_decsc: // Mode ?1048
+      return m_decsc_cur.x() >= 0;
+    case mode_altscreen_cur: // Mode ?1049
+      return get_mode(mode_altscr);
+    case mode_deccolm:
+      return 1 & do_rqm_deccolm(*m_term);
+    case mode_decscnm:
+      return 1 & do_rqm_decscnm(*m_term);
+    case mode_decawm:
+      return 1 & do_rqm_decawm(*m_term);
+    default:
+      return false;
+    }
+  }
+
+  void tstate_t::set_mode_with_accessor(mode_t modeSpec, bool value) {
+    // Note: 現在は暫定的にハードコーディングしているが、
+    //   将来的にはunordered_map か何かで登録できる様にする。
+    //   もしくは何らかの表からコードを自動生成する様にする。
+    switch (modeSpec) {
+    case mode_wystcurm1:
+      set_mode(mode_attCursorBlink, !value);
+      break;
+    case mode_wystcurm2:
+      set_mode(resource_cursorBlink, !value);
+      break;
+    case mode_wyulcurm:
+      if (value) {
+        if (m_cursor_shape <= 0) m_cursor_shape = 1;
+      } else {
+        if (m_cursor_shape > 0) m_cursor_shape = 0;
+      }
+      break;
+    case mode_altscreen:
+      do_altscreen(*m_term, value);
+      break;
+    case mode_altscreen_clr:
+      if (get_mode(mode_altscr) != value) {
+        if (value) do_ed(*m_term, 2);
+        set_mode(mode_altscreen, value);
+      }
+      break;
+    case mode_decsc:
+      if (value)
+        do_decsc(*m_term);
+      else
+        do_decrc(*m_term);
+      break;
+    case mode_altscreen_cur:
+      if (get_mode(mode_altscr) != value) {
+        set_mode(mode_altscreen, value);
+        set_mode(mode_decsc, value);
+      }
+      break;
+    case mode_deccolm:
+      do_sm_deccolm(*m_term, value);
+      break;
+    case mode_decscnm:
+      do_sm_decscnm(*m_term, value);
+      break;
+    case mode_decawm:
+      do_sm_decawm(*m_term, value);
+      break;
+    default: ;
+    }
+  }
+
+
   struct control_function_dictionary {
     control_function_t* data1[63];
     std::unordered_map<std::uint16_t, control_function_t*> data2;
@@ -1702,6 +2032,79 @@ namespace {
 
     if (!result)
       print_unrecognized_sequence(seq);
+  }
+
+  void term_t::process_control_character(char32_t uchar) {
+    switch (uchar) {
+    case ascii_bel: do_bel(); break;
+    case ascii_bs : do_bs(*this);  break;
+    case ascii_ht : do_ht(*this);  break;
+    case ascii_lf : do_lf(*this);  break;
+    case ascii_ff : do_ff(*this);  break;
+    case ascii_vt : do_vt(*this);  break;
+    case ascii_cr : do_cr(*this);  break;
+
+    case ascii_fs: do_adm3_fs(*this); break;
+    case ascii_gs: do_adm3_gs(*this); break;
+    case ascii_rs: do_adm3_rs(*this); break;
+    case ascii_us: do_adm3_us(*this); break;
+
+    case ascii_ind: do_ind(*this); break;
+    case ascii_nel: do_nel(*this); break;
+    case ascii_ri : do_ri(*this) ; break;
+
+    case ascii_pld: do_pld(*this); break;
+    case ascii_plu: do_plu(*this); break;
+    case ascii_spa: do_spa(*this); break;
+    case ascii_epa: do_epa(*this); break;
+    case ascii_ssa: do_ssa(*this); break;
+    case ascii_esa: do_esa(*this); break;
+    }
+  }
+
+  void term_t::process_escape_sequence(sequence const& seq) {
+    if (seq.parameter_size() == 0) {
+      switch (seq.final()) {
+      case ascii_7: do_decsc(*this); return;
+      case ascii_8: do_decrc(*this); return;
+      case ascii_equals : do_deckpam(*this); return;
+      case ascii_greater: do_deckpnm(*this); return;
+      }
+    } else if (seq.parameter_size() == 1) {
+      switch (seq.parameter()[0]) {
+      case ascii_sp:
+        switch (seq.final()) {
+        case ascii_F: do_s7c1t(*this); return;
+        case ascii_G: do_s8c1t(*this); return;
+        }
+        break;
+      case ascii_number:
+        switch (seq.final()) {
+        case ascii_8: do_decaln(*this); return;
+        }
+        break;
+      }
+    }
+    print_unrecognized_sequence(seq);
+  }
+
+  void term_t::process_command_string(sequence const& seq) {
+    auto _check2 = [&seq] (char32_t a, char32_t b) {
+                     return seq.parameter_size() >= 2 && seq.parameter()[0] == a && seq.parameter()[1] == b;
+                   };
+
+    if (seq.type() == ascii_osc) {
+      if (_check2(ascii_0, ascii_semicolon)) {
+        m_state.title = std::u32string(seq.parameter() + 2, (std::size_t) seq.parameter_size() - 2);
+        return;
+      }
+    }
+    if (seq.type() == ascii_dcs) {
+      if (_check2(ascii_dollar, ascii_q)) {
+        if (do_decrqss(*this, seq.parameter() + 2, seq.parameter_size() - 2)) return;
+      }
+    }
+    print_unrecognized_sequence(seq);
   }
 
 }

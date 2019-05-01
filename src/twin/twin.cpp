@@ -56,6 +56,7 @@ namespace twin {
       log_normal.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
       //::_tcscpy_s(log_normal.lfFaceName, LF_FACESIZE, TEXT("MeiryoKe_Console"));
       ::_tcscpy(log_normal.lfFaceName, TEXT("MeiryoKe_Console"));
+      //::_tcscpy(log_normal.lfFaceName, TEXT("Meiryo"));
     }
 
     LONG width() const { return m_width; }

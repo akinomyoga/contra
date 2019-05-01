@@ -162,7 +162,7 @@ namespace term {
 
       m_board = std::make_unique<contra::ansi::board_t>(init_ws.ws_col, init_ws.ws_row);
       m_term = std::make_unique<contra::ansi::term_t>(*m_board);
-      m_term->set_response_target(m_pty);
+      m_term->set_input_target(m_pty);
       m_dev.push(m_term.get());
       return true;
     }
