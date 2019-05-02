@@ -136,6 +136,8 @@ namespace twin {
 
     static constexpr LPCTSTR szClassName = TEXT("Contra.Twin.Main");
 
+  private:
+    bool is_session_ready() { return hWnd && sess.is_active(); }
   public:
     HWND create_window(HINSTANCE hInstance) {
       fstore.set_size(settings.m_xpixel, settings.m_ypixel);
@@ -197,7 +199,7 @@ namespace twin {
     }
     void adjust_terminal_size_using_current_client_size() {
       if (!m_window_size_adjusted) return;
-      if (!hWnd || !sess.is_active()) return;
+      if (!is_session_ready()) return;
       RECT rcClient;
       ::GetClientRect(hWnd, &rcClient);
       std::size_t const width = rcClient.right - rcClient.left;
@@ -559,7 +561,7 @@ namespace twin {
     }
 
     bool render_window(HDC hdc) {
-      if (!hWnd || !sess.is_active()) return false;
+      if (!is_session_ready()) return false;
       HDC const hdc2 = m_background.hdc(hWnd, hdc);
       paint_terminal_content(hdc2);
       BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc2, 0, 0, SRCCOPY);
@@ -697,23 +699,49 @@ namespace twin {
       process_input((wParam & mask_unicode) | (modifiers & _modifier_mask));
     }
 
+    bool m_ime_composition_active = false;
+    void adjust_ime_composition() {
+      if (!is_session_ready()) return;
+      util::raii hIMC(::ImmGetContext(hWnd), [this] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
+
+      ::ImmSetCompositionFont(hIMC, const_cast<LOGFONT*>(&fstore.logfont_normal()));
+
+      RECT rcClient;
+      if (::GetClientRect(hWnd, &rcClient)) {
+        auto const& b = sess.term().board();
+        COMPOSITIONFORM form;
+        form.dwStyle = CFS_POINT;
+        form.ptCurrentPos.x = rcClient.left + settings.m_xframe + settings.m_xpixel * b.cur.x();
+        form.ptCurrentPos.y = rcClient.top + settings.m_yframe + settings.m_ypixel * b.cur.y();
+        ::ImmSetCompositionWindow(hIMC, &form);
+      }
+    }
+    void cancel_ime_composition() {
+      if (!is_session_ready()) return;
+      util::raii hIMC(::ImmGetContext(hWnd), [this] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
+      ::ImmNotifyIME(hIMC, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
+      m_ime_composition_active = false;
+    }
+
   public:
     LRESULT process_message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       switch (msg) {
       case WM_CREATE:
         ::SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG) CreateSolidBrush(RGB(0xFF,0xFF,0xFF)));
         this->adjust_window_size_using_current_client_size();
-        return 0L;
+        goto defproc;
       case WM_SIZE:
+        if (hWnd != this->hWnd) goto defproc;
         if (wParam == SIZE_RESTORED || wParam == SIZE_MAXIMIZED)
           this->adjust_terminal_size_using_current_client_size();
-        return 0L;
+        goto defproc;
       case WM_DESTROY:
         //::PostQuitMessage(0);
         this->hWnd = NULL;
         return 0L;
       case WM_PAINT:
         if (this->hWnd && this->sess.is_active()) {
+          if (hWnd != this->hWnd) goto defproc;
           PAINTSTRUCT paint;
           HDC hdc = BeginPaint(hWnd, &paint);
           this->render_window(hdc);
@@ -722,9 +750,11 @@ namespace twin {
         return 0L;
       case WM_KEYDOWN:
       case WM_SYSKEYDOWN:
+        if (hWnd != this->hWnd) goto defproc;
         if (process_key(wParam, get_modifiers())) return 0L;
         goto defproc;
       case WM_IME_CHAR:
+        if (hWnd != this->hWnd) goto defproc;
         process_char(wParam, get_modifiers());
         return 0L;
       case WM_CHAR:
@@ -738,26 +768,19 @@ namespace twin {
         return 0L;
 
       case WM_IME_STARTCOMPOSITION:
-        if (sess.is_active()) {
+        {
           LRESULT const result = ::DefWindowProc(hWnd, msg, wParam, lParam);
-
-          util::raii hIMC(::ImmGetContext(hWnd), [hWnd] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
-
-          ::ImmSetCompositionFont(hIMC, const_cast<LOGFONT*>(&fstore.logfont_normal()));
-
-          RECT rcClient;
-          if (::GetClientRect(hWnd, &rcClient)) {
-            auto const& b = sess.term().board();
-            COMPOSITIONFORM form;
-            form.dwStyle = CFS_POINT;
-            form.ptCurrentPos.x = rcClient.left + settings.m_xframe + settings.m_xpixel * b.cur.x();
-            form.ptCurrentPos.y = rcClient.top + settings.m_yframe + settings.m_ypixel * b.cur.y();
-            ::ImmSetCompositionWindow(hIMC, &form);
-          }
-
+          m_ime_composition_active = true;
+          this->adjust_ime_composition();
           return result;
         }
+      case WM_IME_ENDCOMPOSITION:
+        m_ime_composition_active = false;
         goto defproc;
+      case WM_KILLFOCUS:
+        this->cancel_ime_composition();
+        goto defproc;
+
       defproc:
       default:
         // {
@@ -803,10 +826,13 @@ namespace twin {
           if (render_window(hdc))
             ::ValidateRect(hWnd, NULL);
           ReleaseDC(hWnd, hdc);
+
+          if (m_ime_composition_active)
+            this->adjust_ime_composition();
         }
 
-        while (::PeekMessage(&msg, hWnd, 0, 0, PM_NOREMOVE)) {
-          if (!GetMessage(&msg, hWnd, 0, 0)) {
+        while (::PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE)) {
+          if (!GetMessage(&msg, 0, 0, 0)) {
             exit_code = msg.wParam;
             goto exit;
           }
