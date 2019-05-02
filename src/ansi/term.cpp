@@ -1262,7 +1262,7 @@ namespace {
       {
         color = 0;
 
-        int const ncomp = colorSpace == attribute_t::color_space_cmyk ? 4: 3;
+        int const ncomp = colorSpace == attribute_t::color_space_cmyk ? 4 : 3;
         csi_single_param_t comp;
         for (int i = 0; i < ncomp; i++) {
           params.read_arg(comp, true, 0);

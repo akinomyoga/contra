@@ -257,6 +257,210 @@ namespace twin {
     compatible_bitmap_t m_background;
 
   private:
+    void draw_cursor(HDC hdc) {
+      std::size_t const xorigin = settings.m_xframe;
+      std::size_t const yorigin = settings.m_yframe;
+      std::size_t const ypixel = settings.m_ypixel;
+      std::size_t const xpixel = settings.m_xpixel;
+
+      using namespace contra::ansi;
+      term_t const& term = sess.term();
+      board_t const& b = term.board();
+      tstate_t const& s = term.state();
+      if (!s.get_mode(mode_dectcem)) return;
+
+      std::size_t x0 = xorigin + xpixel * b.x();
+      std::size_t const y0 = yorigin + ypixel * b.y();
+
+      std::size_t size;
+      bool underline = false;
+      if (b.cur.xenl()) {
+        // 行末にいる時は設定に関係なく縦棒にする。
+        x0 -= 2;
+        size = 2;
+      } else if (s.m_cursor_shape == 0) {
+        underline = true;
+        size = 3;
+      } else if (s.m_cursor_shape < 0) {
+        size = (xpixel * std::min(100, -s.m_cursor_shape) + 99) / 100;
+      } else if (s.m_cursor_shape) {
+        underline = true;
+        size = (ypixel * std::min(100, s.m_cursor_shape) + 99) / 100;
+      }
+
+      if (underline) {
+        std::size_t const height = std::min(ypixel, std::max(size, settings.m_caret_underline_min_height));
+        ::PatBlt(hdc, x0, y0 + ypixel - height, xpixel, height, DSTINVERT);
+      } else {
+        std::size_t const width = std::min(xpixel, std::max(size, settings.m_caret_vertical_min_width));
+        ::PatBlt(hdc, x0, y0, width, ypixel, DSTINVERT);
+      }
+    }
+    void draw_characters(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
+      using namespace contra::ansi;
+      std::size_t const xorigin = settings.m_xframe;
+      std::size_t const yorigin = settings.m_yframe;
+      std::size_t const ypixel = settings.m_ypixel;
+      std::size_t const xpixel = settings.m_xpixel;
+      board_t const& b = sess.board();
+      tstate_t const& s = sess.term().state();
+
+      constexpr std::uint32_t flag_processed = character_t::flag_private1;
+      auto _visible = [] (std::uint32_t code, aflags_t aflags) {
+        return code != ascii_nul && code != ascii_sp
+          && character_t::is_char(code & flag_processed)
+          && !(aflags & attribute_t::is_invisible_set);
+      };
+
+      auto _color = [
+        &s, m_fg_space = (byte) attribute_t::color_space_default,
+        m_fg_color = (color_t) 0,
+        m_color = (color_t) 0
+      ] (attribute_t const& attr) mutable {
+        byte fg_space;
+        std::uint32_t fg_color;
+        if (attr.aflags & attribute_t::is_inverse_set) {
+          fg_space = attr.bg_space();
+          fg_color = attr.bg_color();
+          if (fg_space == 0) {
+            fg_space = s.m_default_bg_space;
+            fg_color = s.m_default_bg;
+          }
+        } else {
+          fg_space = attr.fg_space();
+          fg_color = attr.fg_color();
+          if (fg_space == 0) {
+            fg_space = s.m_default_fg_space;
+            fg_color = s.m_default_fg;
+          }
+        }
+
+        if (fg_space == m_fg_space && fg_color == m_fg_color) return m_color;
+
+        color_t color = 0;
+        switch (fg_space) {
+        case attribute_t::color_space_default:
+        case attribute_t::color_space_transparent:
+        default:
+          // transparent なので色はない。
+          color = 0x00000000; // black
+          break;
+        case attribute_t::color_space_indexed:
+          color = s.m_rgba256[fg_color & 0xFF];
+          break;
+        case attribute_t::color_space_rgb:
+          color = contra::dict::rgb2rgba(fg_color);
+          break;
+        case attribute_t::color_space_cmy:
+          color = contra::dict::cmy2rgba(fg_color);
+          break;
+        case attribute_t::color_space_cmyk:
+          color = contra::dict::cmyk2rgba(fg_color);
+          break;
+        }
+
+        m_fg_space = fg_space;
+        m_fg_color = fg_color;
+        m_color = color;
+        return color;
+      };
+
+      std::vector<cell_t> cells;
+      std::vector<TCHAR> characters;
+      std::vector<INT> progress;
+      for (curpos_t y = 0; y < b.m_height; y++) {
+        std::vector<cell_t>& cells = content[y];
+
+        std::size_t xoffset = xorigin;
+        std::size_t const yoffset = yorigin + y * ypixel;
+        for (std::size_t i = 0; i < cells.size(); ) {
+          auto const& cell = cells[i++];
+          auto const& attr = cell.attribute;
+          std::size_t const xoffset0 = xoffset;
+          std::size_t const cell_progress = cell.width * xpixel;
+          xoffset += cell_progress;
+          std::uint32_t code = cell.character.value;
+          code &= ~character_t::flag_cluster_extension;
+          if (!_visible(code, cell.attribute.aflags)) {
+            continue;
+          }
+
+          // 色の決定
+          color_t const fg = _color(attr);
+
+          characters.clear();
+          progress.clear();
+          characters.push_back(code);
+          progress.push_back(cell_progress);
+
+          // 同じ色を持つ文字は同時に描画してしまう。
+          for (std::size_t j = i; j < cells.size(); j++) {
+            auto const& cell2 = cells[j];
+            std::uint32_t code2 = cell2.character.value;
+            code &= ~character_t::flag_cluster_extension;
+            std::size_t const cell2_progress = cell2.width * xpixel;
+            if (!_visible(code2, cell2.attribute.aflags)) {
+              progress.back() += cell2_progress;
+            } else if (fg == _color(cell2.attribute)) {
+              characters.push_back(code2);
+              progress.push_back(cell2_progress);
+            } else {
+              progress.back() += cell2_progress;
+              continue;
+            }
+
+            if (i == j) {
+              i++;
+              xoffset += cell2_progress;
+            } else
+              cells[j].character.value |= flag_processed;
+          }
+
+          SetTextColor(hdc, contra::dict::rgba2rgb(fg));
+          ExtTextOut(hdc, xoffset0, yoffset, 0, NULL, &characters[0], characters.size(), &progress[0]);
+        }
+      }
+    }
+    void draw_characters_mono(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>> const& content) {
+      using namespace contra::ansi;
+      std::size_t const xorigin = settings.m_xframe;
+      std::size_t const yorigin = settings.m_yframe;
+      std::size_t const ypixel = settings.m_ypixel;
+      std::size_t const xpixel = settings.m_xpixel;
+      board_t const& b = sess.board();
+
+      std::vector<cell_t> cells;
+      std::vector<TCHAR> characters;
+      std::vector<INT> progress;
+      for (curpos_t y = 0; y < b.m_height; y++) {
+        std::vector<cell_t> const& cells = content[y];
+
+        std::size_t xoffset = xorigin;
+        std::size_t yoffset = yorigin + y * ypixel;
+        characters.clear();
+        progress.clear();
+        characters.reserve(cells.size());
+        progress.reserve(cells.size());
+        for (auto const& cell : cells) {
+          std::uint32_t code = cell.character.value;
+          if (code & character_t::flag_cluster_extension)
+            code &= ~character_t::flag_cluster_extension;
+          if (code == ascii_nul || code == ascii_sp) {
+            if (progress.size())
+              progress.back() += cell.width * xpixel;
+            else
+              xoffset += cell.width * xpixel;
+          } else if (code == (code & character_t::unicode_mask)) {
+            characters.push_back(code);
+            progress.push_back(cell.width * xpixel);
+          }
+          // ToDo: その他の文字・マーカーに応じた処理。
+        }
+        if (characters.size())
+          ExtTextOut(hdc, xoffset, yoffset, 0, NULL, &characters[0], characters.size(), &progress[0]);
+      }
+    }
+  private:
     void paint_terminal_content(HDC hdc) {
       auto deleter = [&] (auto p) { SelectObject(hdc, p); };
       util::raii hOldFont((HFONT) SelectObject(hdc, fstore.normal()), deleter);
@@ -266,78 +470,18 @@ namespace twin {
         ::FillRect(hdc, &rc, (HBRUSH) GetStockObject(WHITE_BRUSH));
       }
 
-      using namespace contra::ansi;
-      std::size_t const xorigin = settings.m_xframe;
-      std::size_t const yorigin = settings.m_yframe;
-      std::size_t const ypixel = settings.m_ypixel;
-      std::size_t const xpixel = settings.m_xpixel;
-      board_t const& b = sess.board();
-      {
-        std::vector<cell_t> cells;
-        std::vector<TCHAR> characters;
-        std::vector<INT> progress;
+      ::SetBkMode(hdc, TRANSPARENT);
 
-
-        for (curpos_t y = 0; y < b.m_height; y++) {
-          line_t const& line = b.m_lines[y];
-          line.get_cells_in_presentation(cells, b.line_r2l(line));
-
-          std::size_t xoffset = xorigin;
-          std::size_t yoffset = yorigin + y * ypixel;
-          characters.clear();
-          progress.clear();
-          characters.reserve(cells.size());
-          progress.reserve(cells.size());
-          for (auto const& cell : cells) {
-            std::uint32_t code = cell.character.value;
-            if (code & character_t::flag_cluster_extension)
-              code &= ~character_t::flag_cluster_extension;
-            if (code == ascii_nul || code == ascii_sp) {
-              if (progress.size())
-                progress.back() += cell.width * xpixel;
-              else
-                xoffset += cell.width * xpixel;
-            } else if (code == (code & character_t::unicode_mask)) {
-              characters.push_back(code);
-              progress.push_back(cell.width * xpixel);
-            }
-            // ToDo: その他の文字・マーカーに応じた処理。
-          }
-          if (characters.size())
-            ExtTextOut(hdc, xoffset, yoffset, 0, NULL, &characters[0], characters.size(), &progress[0]);
-        }
+      std::vector<std::vector<contra::ansi::cell_t>> content;
+      auto const& b = sess.board();
+      content.resize(b.m_height);
+      for (contra::ansi::curpos_t y = 0; y < b.m_height; y++) {
+        auto const& line = b.m_lines[y];
+        line.get_cells_in_presentation(content[y], b.line_r2l(line));
       }
-
-      // cursor
-      tstate_t const& s = sess.term().state();
-      if (s.get_mode(mode_dectcem)) {
-        std::size_t x0 = xorigin + xpixel * b.x();
-        std::size_t const y0 = yorigin + ypixel * b.y();
-
-        std::size_t size;
-        bool underline = false;
-        if (b.cur.xenl()) {
-          // 行末にいる時は設定に関係なく縦棒にする。
-          x0 -= 2;
-          size = 2;
-        } else if (s.m_cursor_shape == 0) {
-          underline = true;
-          size = 3;
-        } else if (s.m_cursor_shape < 0) {
-          size = (xpixel * std::min(100, -s.m_cursor_shape) + 99) / 100;
-        } else if (s.m_cursor_shape) {
-          underline = true;
-          size = (ypixel * std::min(100, s.m_cursor_shape) + 99) / 100;
-        }
-
-        if (underline) {
-          std::size_t const height = std::min(ypixel, std::max(size, settings.m_caret_underline_min_height));
-          ::PatBlt(hdc, x0, y0 + ypixel - height, xpixel, height, DSTINVERT);
-        } else {
-          std::size_t const width = std::min(xpixel, std::max(size, settings.m_caret_vertical_min_width));
-          ::PatBlt(hdc, x0, y0, width, ypixel, DSTINVERT);
-        }
-      }
+      //this->draw_characters_mono(hdc, content);
+      this->draw_characters(hdc, content);
+      this->draw_cursor(hdc);
     }
 
     bool render_window(HDC hdc) {

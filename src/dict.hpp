@@ -12,6 +12,39 @@ namespace dict {
   using namespace ::contra::ansi;
 
   typedef std::uint32_t color_t;
+
+  // bgra 0xAARRGGBB GDI+
+  // rgb  0x00BBGGRR 38:2, GDI (COLORREF)
+  // rgba 0xAABBGGRR       GDI (COLORREF?)
+  // cmy  0x00YYMMCC 38:3
+  // cmyk 0xKKYYMMCC 38:4
+  constexpr color_t rgb(byte r, byte g, byte b) {
+    return r | g << 8 | b << 16;
+  }
+  constexpr color_t rgba(byte r, byte g, byte b, byte a = 0xFF) {
+    return r | g << 8 | b << 16 | a << 24;
+  }
+  constexpr color_t cmy(byte c, byte m, byte y) {
+    return c | m << 8 | y << 16;
+  }
+  constexpr color_t rgba2rgb(color_t value) {
+    return 0x00FFFFFF & value;
+  }
+  constexpr color_t rgb2rgba(color_t value) {
+    return 0xFF000000 | value;
+  }
+  constexpr color_t cmy2rgba(color_t value) {
+    return 0xFF000000 | ~value;
+  }
+  constexpr color_t cmyk2rgba(color_t value) {
+    value = ~value;
+    byte const alpha = value >> 24;
+    return rgba(
+      (0xFF & value      ) * alpha / 255,
+      (0xFF & value >> 8 ) * alpha / 255,
+      (0xFF & value >> 16) * alpha / 255);
+  }
+
   typedef std::uint32_t aflags_t;
   typedef std::uint32_t xflags_t;
 
@@ -38,18 +71,18 @@ namespace dict {
        * - @const color_space_cmyk
        * - @const color_space_indexed
        */
-      is_fg_color_set            = (std::uint32_t) 1 << 16,
-      is_bg_color_set            = (std::uint32_t) 1 << 17,
-      fg_color_mask              = 0x00FF,
-      bg_color_mask              = 0xFF00,
-      fg_color_shift             = 0,
-      bg_color_shift             = 8,
-      color_space_default        = 0,
-      color_space_transparent    = 1,
-      color_space_rgb            = 2,
-      color_space_cmy            = 3,
-      color_space_cmyk           = 4,
-      color_space_indexed        = 5,
+      is_fg_indexed            = (std::uint32_t) 1 << 16,
+      is_bg_indexed            = (std::uint32_t) 1 << 17,
+      fg_color_mask            = 0x00FF,
+      bg_color_mask            = 0xFF00,
+      fg_color_shift           = 0,
+      bg_color_shift           = 8,
+      color_space_default      = 0,
+      color_space_transparent  = 1,
+      color_space_rgb          = 2,
+      color_space_cmy          = 3,
+      color_space_cmyk         = 4,
+      color_space_indexed      = 5,
 
       is_bold_set             = (std::uint32_t) 1 << 18, // -+- SGR 1,2
       is_faint_set            = (std::uint32_t) 1 << 19, // -'
@@ -162,13 +195,14 @@ namespace dict {
     }
     constexpr bool operator!=(attribute_t const& rhs) const { return !(*this == rhs); }
 
-  public:
+  private:
     constexpr byte fg_index() const { return (aflags & fg_color_mask) >> fg_color_shift; }
     constexpr byte bg_index() const { return (aflags & bg_color_mask) >> bg_color_shift; }
-    constexpr byte fg_space() const { return aflags & is_fg_color_set ? (byte) color_space_indexed : fg_index(); }
-    constexpr byte bg_space() const { return aflags & is_bg_color_set ? (byte) color_space_indexed : bg_index(); }
-    constexpr color_t fg_color() const { return aflags & is_fg_color_set ? fg_index() : fg; }
-    constexpr color_t bg_color() const { return aflags & is_bg_color_set ? bg_index() : bg; }
+  public:
+    constexpr byte fg_space() const { return aflags & is_fg_indexed ? (byte) color_space_indexed : fg_index(); }
+    constexpr byte bg_space() const { return aflags & is_bg_indexed ? (byte) color_space_indexed : bg_index(); }
+    constexpr color_t fg_color() const { return aflags & is_fg_indexed ? fg_index() : fg; }
+    constexpr color_t bg_color() const { return aflags & is_bg_indexed ? bg_index() : bg; }
 
     constexpr bool is_fg_default() const { return fg_space() == color_space_default; }
     constexpr bool is_bg_default() const { return bg_space() == color_space_default; }
@@ -176,11 +210,11 @@ namespace dict {
   public:
     void set_fg(color_t index, std::uint32_t colorSpace = color_space_indexed) {
       if (colorSpace == color_space_indexed) {
-        aflags |= is_fg_color_set;
+        aflags |= is_fg_indexed;
         aflags = (aflags & ~fg_color_mask) | index << fg_color_shift;
         fg = 0;
       } else {
-        aflags &= ~is_fg_color_set;
+        aflags &= ~is_fg_indexed;
         aflags = (aflags & ~fg_color_mask) | colorSpace << fg_color_shift;
         fg = index;
       }
@@ -190,11 +224,11 @@ namespace dict {
     }
     void set_bg(color_t index, std::uint32_t colorSpace = color_space_indexed) {
       if (colorSpace == color_space_indexed) {
-        aflags |= is_bg_color_set;
+        aflags |= is_bg_indexed;
         aflags = (aflags & ~bg_color_mask) | index << bg_color_shift;
         bg = 0;
       } else {
-        aflags &= ~is_bg_color_set;
+        aflags &= ~is_bg_indexed;
         aflags = (aflags & ~bg_color_mask) | colorSpace << bg_color_shift;
         bg = index;
       }
@@ -322,12 +356,12 @@ namespace dict {
 
     // colors
     termcap_sgrcolor cap_fg {
-      _at::is_fg_color_set, 30, 39,  90,
+      _at::is_fg_indexed, 30, 39,  90,
       { 38, color_space_indexed_bit | color_space_rgb_bit, ascii_semicolon, false, 255 },
       0, 0
     };
     termcap_sgrcolor cap_bg {
-      _at::is_bg_color_set, 40, 49, 100,
+      _at::is_bg_indexed, 40, 49, 100,
       { 48, color_space_indexed_bit | color_space_rgb_bit, ascii_semicolon, false, 255 },
       0, 0
     };

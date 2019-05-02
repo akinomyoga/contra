@@ -45,6 +45,8 @@ namespace ansi {
 
     line_attr_t lflags {0};
 
+    color_t m_rgba256[256];
+
     // OSC(0), scrTDS
     std::u32string title; // xterm title
     std::u32string screen_title; // GNU screen title
@@ -86,6 +88,8 @@ namespace ansi {
 
     void clear() {
       this->initialize_mode();
+      this->initialize_palette();
+
       this->title = U"";
       this->screen_title = U"";
       this->m_decsc_cur.set_x(-1);
@@ -104,6 +108,46 @@ namespace ansi {
       this->dec_bmargin = -1;
       this->dec_lmargin = -1;
       this->dec_rmargin = -1;
+    }
+    void initialize_palette() {
+      color_t A = 0xFF000000;
+
+      // rosaterm palette (rgba format)
+      int index = 0;
+      m_rgba256[index++] = contra::dict::rgba(0x00, 0x00, 0x00);
+      m_rgba256[index++] = contra::dict::rgba(0x80, 0x00, 0x00);
+      m_rgba256[index++] = contra::dict::rgba(0x00, 0x80, 0x00);
+      m_rgba256[index++] = contra::dict::rgba(0x80, 0x80, 0x00);
+      m_rgba256[index++] = contra::dict::rgba(0x00, 0x00, 0x80);
+      m_rgba256[index++] = contra::dict::rgba(0x80, 0x00, 0x80);
+      m_rgba256[index++] = contra::dict::rgba(0x00, 0x80, 0x80);
+      m_rgba256[index++] = contra::dict::rgba(0xC0, 0xC0, 0xC0);
+      m_rgba256[index++] = contra::dict::rgba(0x80, 0x80, 0x80);
+      m_rgba256[index++] = contra::dict::rgba(0xFF, 0x00, 0x00);
+      m_rgba256[index++] = contra::dict::rgba(0x32, 0xCD, 0x32);
+      m_rgba256[index++] = contra::dict::rgba(0xFF, 0x7D, 0x00);
+      m_rgba256[index++] = contra::dict::rgba(0x00, 0x00, 0xFF);
+      m_rgba256[index++] = contra::dict::rgba(0xFF, 0x00, 0xFF);
+      m_rgba256[index++] = contra::dict::rgba(0x40, 0xE0, 0xD0);
+      m_rgba256[index++] = contra::dict::rgba(0xFF, 0xFF, 0xFF);
+
+      // 6x6x6 cube
+      for (int r = 0; r < 6; r++) {
+        color_t const R = A | r * 51;
+        for (int g = 0; g < 6; g++) {
+          color_t const RG = R | g * 51 << 8;
+          for (int b = 0; b < 6; b++) {
+            color_t const RGB = RG | b * 51 << 24;
+            m_rgba256[index++] = RGB;
+          }
+        }
+      }
+
+      // 24 grayscale
+      for (int k = 0; k < 24; k++) {
+        color_t const K = k * 10 + 8;
+        m_rgba256[index++] = A | K << 24 | K <<16 | K;
+      }
     }
 
     sequence_decoder_config m_sequence_decoder_config;

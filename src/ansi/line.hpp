@@ -24,9 +24,11 @@ namespace ansi {
 
   struct character_t {
     enum flags {
-      unicode_mask       = 0x001FFFFF,
+      unicode_mask         = 0x001FFFFF,
       flag_acs_character   = 0x01000000, // not yet supported
       flag_embedded_object = 0x08000000, // not yet supported
+      flag_private1        = 0x02000000, // for private usage
+      flag_private2        = 0x04000000, // for private usage
 
       flag_wide_extension    = 0x10000000,
       flag_cluster_extension = 0x20000000,
@@ -60,6 +62,13 @@ namespace ansi {
     }
     constexpr bool operator!=(character_t const& rhs) const { return !(*this == rhs); }
 
+  public:
+    // global utility function
+    static constexpr bool is_char(std::uint32_t value) {
+      return !(value & ~character_t::unicode_mask);
+    }
+
+  public:
     constexpr bool is_extension() const {
       return value & (flag_wide_extension | flag_cluster_extension);
     }
@@ -72,6 +81,7 @@ namespace ansi {
     constexpr bool is_marker() const {
       return value & flag_marker;
     }
+
   };
 
   struct cell_t {

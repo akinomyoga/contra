@@ -70,9 +70,13 @@ $(objdir)/ttty.o: ttty.cpp | $(objdir)
 
 ifeq ($(ostype),cygwin)
 
-all: twin.exe
 twin_CPPFLAGS = $(CPPFLAGS) -DUNICODE -D_UNICODE
 twin_LIBS := -lgdi32 -limm32
+directories += $(objdir)/twin
+$(objdir)/twin/%.o: twin/%.cpp | $(objdir)/twin
+	$(CXX) $(twin_CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+all: twin.exe
 twin_objs = \
   $(objdir)/twin/twin.o \
   $(objdir)/twin/win_messages.o \
@@ -85,10 +89,10 @@ twin_objs = \
   $(objdir)/contradef.o
 twin.exe: $(twin_objs)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(twin_LIBS)
-directories += $(objdir)/twin
-$(objdir)/twin/%.o: twin/%.cpp | $(objdir)/twin
-	$(CXX) $(twin_CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
+all: twin/test-win1.exe
+twin/test-win1.exe: $(objdir)/twin/test-win1.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(twin_LIBS)
 endif
 
 # all: experimental/bidi
