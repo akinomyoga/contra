@@ -603,7 +603,7 @@ namespace twin {
       return false;
     }
 
-    void process_key(WPARAM wParam, std::uint32_t modifiers) {
+    bool process_key(WPARAM wParam, std::uint32_t modifiers) {
       static BYTE kbstate[256];
 
       if (ascii_A <= wParam && wParam <= ascii_Z) {
@@ -663,7 +663,7 @@ namespace twin {
           process_input(code | (modifiers & _modifier_mask));
           break;
         case VK_PROCESSKEY: // IME 処理中 (無視)
-          return;
+          return false;
         default:
           {
             kbstate[VK_SHIFT] = modifiers & modifier_shift ? 0x80 : 0x00;
@@ -683,11 +683,13 @@ namespace twin {
               process_input((code & mask_unicode) | (modifiers & _modifier_mask));
             } else {
               //std::fprintf(stderr, "key (unknown): wparam=%08x flags=%x\n", wParam, modifiers);
+              return false;
             }
           }
           break;
         }
       }
+      return true;
     }
 
     void process_char(WPARAM wParam, std::uint32_t modifiers) {
@@ -720,8 +722,8 @@ namespace twin {
         return 0L;
       case WM_KEYDOWN:
       case WM_SYSKEYDOWN:
-        process_key(wParam, get_modifiers());
-        return 0L;
+        if (process_key(wParam, get_modifiers())) return 0L;
+        goto defproc;
       case WM_IME_CHAR:
         process_char(wParam, get_modifiers());
         return 0L;
@@ -736,7 +738,7 @@ namespace twin {
         return 0L;
 
       case WM_IME_STARTCOMPOSITION:
-        {
+        if (sess.is_active()) {
           LRESULT const result = ::DefWindowProc(hWnd, msg, wParam, lParam);
 
           util::raii hIMC(::ImmGetContext(hWnd), [hWnd] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
@@ -745,15 +747,18 @@ namespace twin {
 
           RECT rcClient;
           if (::GetClientRect(hWnd, &rcClient)) {
+            auto const& b = sess.term().board();
             COMPOSITIONFORM form;
             form.dwStyle = CFS_POINT;
-            form.ptCurrentPos.x = rcClient.left;
-            form.ptCurrentPos.y = rcClient.top+13;
+            form.ptCurrentPos.x = rcClient.left + settings.m_xframe + settings.m_xpixel * b.cur.x();
+            form.ptCurrentPos.y = rcClient.top + settings.m_yframe + settings.m_ypixel * b.cur.y();
             ::ImmSetCompositionWindow(hIMC, &form);
           }
 
           return result;
         }
+        goto defproc;
+      defproc:
       default:
         // {
         //   const char* name = get_window_message_name(msg);

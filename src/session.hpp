@@ -209,6 +209,12 @@ namespace term {
       std::uint32_t mod = key & _modifier_mask;
       std::uint32_t code = key & mask_keycode;
 
+      // Meta は一律で ESC にする。
+      if (mod & modifier_meta) {
+        put(ascii_esc);
+        mod &= ~modifier_meta;
+      }
+
       // テンキーの文字 (!DECNKM の時)
       if (!term().state().get_mode(ansi::mode_decnkm)) {
         switch (code) {
