@@ -11,6 +11,55 @@
 
 namespace contra {
 namespace ansi {
+
+  void print_key(key_t key, std::FILE* file) {
+    key_t const code = key & mask_keycode;
+
+    std::ostringstream str;
+    if (key & modifier_alter) str << "A-";
+    if (key & modifier_hyper) str << "H-";
+    if (key & modifier_super) str << "s-";
+    if (key & modifier_control) str << "C-";
+    if (key & modifier_meta) str << "M-";
+    if (key & modifier_shift) str << "S-";
+    std::fprintf(file, "key: %s", str.str().c_str());
+
+    if (code < key_base) {
+      switch (code) {
+      case ascii_bs: std::fprintf(file, "BS"); break;
+      case ascii_ht: std::fprintf(file, "TAB"); break;
+      case ascii_cr: std::fprintf(file, "RET"); break;
+      case ascii_esc: std::fprintf(file, "ESC"); break;
+      case ascii_sp: std::fprintf(file, "SP"); break;
+      default:
+        contra::encoding::put_u8((char32_t) code, file);
+        break;
+      }
+      std::putc('\n', file);
+    } else {
+      static const char* table[] = {
+        NULL,
+        "f1", "f2", "f3", "f4", "f5", "f6",
+        "f7", "f8", "f9", "f10", "f11", "f12",
+        "f13", "f14", "f15", "f16", "f17", "f18",
+        "f19", "f20", "f21", "f22", "f23", "f24",
+        NULL, NULL, NULL, NULL, NULL, NULL,
+        "insert", "delete", "home", "end", "prior", "next",
+        "begin", "left", "right", "up", "down",
+        "kp0", "kp1", "kp2", "kp3", "kp4",
+        "kp5", "kp6", "kp7", "kp8", "kp9",
+        "kpdec", "kpsep", "kpmul", "kpadd", "kpsub", "kpdiv",
+      };
+      std::uint32_t const index = code - key_base;
+      const char* name = index <= std::size(table) ? table[index] : NULL;
+      if (name) {
+        std::fprintf(file, "%s\n", name);
+      } else {
+        std::fprintf(file, "unknown %08x\n", code);
+      }
+    }
+  }
+
 namespace {
 
   class csi_parameters;
@@ -1756,13 +1805,13 @@ namespace {
     params.read_param(param, 0);
     if (param != 0) return false;
 
-    term.response_put(ascii_csi);
-    term.response_put(ascii_question);
-    term.response_number(64);
-    term.response_put(ascii_semicolon);
-    term.response_number(21);
-    term.response_put(ascii_c);
-    term.respond();
+    term.input_c1(ascii_csi);
+    term.input_byte(ascii_question);
+    term.input_unsigned(64);
+    term.input_byte(ascii_semicolon);
+    term.input_unsigned(21);
+    term.input_byte(ascii_c);
+    term.input_flush();
     return true;
   }
   bool do_da2(term_t& term, csi_parameters& params) {
@@ -1770,25 +1819,25 @@ namespace {
     params.read_param(param, 0);
     if (param != 0) return false;
 
-    term.response_put(ascii_csi);
-    term.response_put(ascii_greater);
-    term.response_number(67);
-    term.response_put(ascii_semicolon);
-    term.response_number(0);
-    term.response_put(ascii_c);
-    term.respond();
+    term.input_c1(ascii_csi);
+    term.input_byte(ascii_greater);
+    term.input_unsigned(67);
+    term.input_byte(ascii_semicolon);
+    term.input_unsigned(0);
+    term.input_byte(ascii_c);
+    term.input_flush();
     return true;
   }
   bool do_decrqss(term_t& term, char32_t const* param, std::size_t len) {
     if (len == 2) {
       auto _start = [&term] {
-        term.response_put(ascii_dcs);
-        term.response_put(ascii_0);
-        term.response_put(ascii_dollar);
-        term.response_put(ascii_r);
+        term.input_c1(ascii_dcs);
+        term.input_byte(ascii_0);
+        term.input_byte(ascii_dollar);
+        term.input_byte(ascii_r);
       };
       auto _end = [&term] {
-        term.response_put(ascii_st);
+        term.input_c1(ascii_st);
       };
 
       if (param[0] == ascii_double_quote) {
@@ -1796,25 +1845,24 @@ namespace {
         case ascii_p:
           // DECSCL
           _start();
-          term.response_number(term.state().m_decscl);
-          term.response_put(term.state().m_decscl);
+          term.input_unsigned(term.state().m_decscl);
           if (term.state().get_mode(mode_s7c1t)) {
-            term.response_put(ascii_semicolon);
-            term.response_put(ascii_1);
+            term.input_byte(ascii_semicolon);
+            term.input_byte(ascii_1);
           }
-          term.response_put(ascii_p);
+          term.input_byte(ascii_p);
           _end();
-          term.respond();
+          term.input_flush();
           return true;
         case ascii_q:
           // DECSCA
           _start();
           if (term.board().cur.attribute.is_decsca_protected())
-            term.response_put(ascii_1);
-          term.response_put(ascii_double_quote);
-          term.response_put(ascii_q);
+            term.input_byte(ascii_1);
+          term.input_byte(ascii_double_quote);
+          term.input_byte(ascii_q);
           _end();
-          term.respond();
+          term.input_flush();
           return true;
         }
       }
@@ -2140,6 +2188,150 @@ namespace {
       }
     }
     print_unrecognized_sequence(seq);
+  }
+
+
+  void term_t::input_key(key_t key) {
+    key_t mod = key & _modifier_mask;
+    key_t code = key & mask_keycode;
+
+    // Meta は一律で ESC にする。
+    if (mod & modifier_meta) {
+      input_byte(ascii_esc);
+      mod &= ~modifier_meta;
+    }
+
+    // テンキーの文字 (!DECNKM の時)
+    if (!m_state.get_mode(ansi::mode_decnkm)) {
+      switch (code) {
+      case key_kp0  : code = ascii_0; break;
+      case key_kp1  : code = ascii_1; break;
+      case key_kp2  : code = ascii_2; break;
+      case key_kp3  : code = ascii_3; break;
+      case key_kp4  : code = ascii_4; break;
+      case key_kp5  : code = ascii_5; break;
+      case key_kp6  : code = ascii_6; break;
+      case key_kp7  : code = ascii_7; break;
+      case key_kp8  : code = ascii_8; break;
+      case key_kp9  : code = ascii_9; break;
+      case key_kpdec: code = ascii_dot     ; break;
+      case key_kpsep: code = ascii_comma   ; break;
+      case key_kpmul: code = ascii_asterisk; break;
+      case key_kpadd: code = ascii_plus    ; break;
+      case key_kpsub: code = ascii_minus   ; break;
+      case key_kpdiv: code = ascii_slash   ; break;
+      default: ;
+      }
+    }
+
+    // 通常文字
+    if (mod == 0 && code < key_base) {
+      // Note: ESC, RET, HT はそのまま (C-[, C-m, C-i) 送信される。
+      if (code == ascii_bs) code = ascii_del;
+      contra::encoding::put_u8(code, input_buffer);
+      input_flush();
+      return;
+    }
+
+    // C0 文字および DEL
+    if (mod == modifier_control) {
+      if (code == ascii_sp || code == ascii_a ||
+        (ascii_a < code && code <= ascii_z) ||
+        (ascii_left_bracket <= code && code <= ascii_underscore)
+      ) {
+        // C-@ ... C-_
+        input_byte(code & 0x1F);
+        input_flush();
+        return;
+      } else if (code == ascii_question) {
+        // C-? → ^? (DEL 0x7F)
+        input_byte(ascii_del);
+        input_flush();
+        return;
+      } else if (code == ascii_bs) {
+        // C-back → ^_ (US 0x1F)
+        input_byte(ascii_us);
+        input_flush();
+        return;
+      }
+    }
+
+    // BS CR(RET) HT(TAB) ESC
+    // CSI <Unicode> ; <Modifier> u 形式
+    if (code < key_base) {
+      input_c1(ascii_csi);
+      input_unsigned(code);
+      if (mod) {
+        input_byte(ascii_semicolon);
+        input_modifier(mod);
+      }
+      input_byte(ascii_u);
+      input_flush();
+      return;
+    }
+
+    // application key mode の時修飾なしの関数キーは \eOA 等にする。
+    char a = 0;
+    switch (code) {
+    case key_f1 : a = 11; goto tilde;
+    case key_f2 : a = 12; goto tilde;
+    case key_f3 : a = 13; goto tilde;
+    case key_f4 : a = 14; goto tilde;
+    case key_f5 : a = 15; goto tilde;
+    case key_f6 : a = 17; goto tilde;
+    case key_f7 : a = 18; goto tilde;
+    case key_f8 : a = 19; goto tilde;
+    case key_f9 : a = 20; goto tilde;
+    case key_f10: a = 21; goto tilde;
+    case key_f11: a = 23; goto tilde;
+    case key_f12: a = 24; goto tilde;
+    case key_f13: a = 25; goto tilde;
+    case key_f14: a = 26; goto tilde;
+    case key_f15: a = 28; goto tilde;
+    case key_f16: a = 29; goto tilde;
+    case key_f17: a = 31; goto tilde;
+    case key_f18: a = 32; goto tilde;
+    case key_f19: a = 33; goto tilde;
+    case key_f20: a = 34; goto tilde;
+    case key_f21: a = 36; goto tilde;
+    case key_f22: a = 37; goto tilde;
+    case key_f23: a = 38; goto tilde;
+    case key_f24: a = 39; goto tilde;
+    case key_home  : a = 1; goto tilde;
+    case key_insert: a = 2; goto tilde;
+    case key_delete: a = 3; goto tilde;
+    case key_end   : a = 4; goto tilde;
+    case key_prior : a = 5; goto tilde;
+    case key_next  : a = 6; goto tilde;
+    tilde:
+      input_c1(ascii_csi);
+      input_unsigned(a);
+      if (mod) {
+        input_byte(ascii_semicolon);
+        input_modifier(mod);
+      }
+      input_byte(ascii_tilde);
+      input_flush();
+      return;
+    case key_up   : a = ascii_A; goto alpha;
+    case key_down : a = ascii_B; goto alpha;
+    case key_right: a = ascii_C; goto alpha;
+    case key_left : a = ascii_D; goto alpha;
+    case key_begin: a = ascii_E; goto alpha;
+    alpha:
+      if (mod) {
+        input_c1(ascii_csi);
+        input_byte(ascii_1);
+        input_byte(ascii_semicolon);
+        input_modifier(mod);
+      } else {
+        input_c1(m_state.get_mode(ansi::mode_decckm) ? ascii_ss3 : ascii_csi);
+      }
+      input_byte(a);
+      input_flush();
+      return;
+    default: break;
+    }
   }
 
 }

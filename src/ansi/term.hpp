@@ -9,6 +9,7 @@
 #include <iterator>
 #include <algorithm>
 #include <vector>
+#include <sstream>
 #include "../sequence.hpp"
 #include "line.hpp"
 #include "../enc.c2w.hpp"
@@ -16,6 +17,78 @@
 
 namespace contra {
 namespace ansi {
+
+  typedef std::uint32_t key_t;
+
+  enum key_flags {
+    mask_unicode   = 0x0001FFFF,
+    mask_keycode   = 0x0003FFFF,
+
+    _modifier_mask = 0x3F000000,
+    _modifier_shft = 24,
+
+    key_base      = 0x00020000,
+    key_f1        = key_base | 1,
+    key_f2        = key_base | 2,
+    key_f3        = key_base | 3,
+    key_f4        = key_base | 4,
+    key_f5        = key_base | 5,
+    key_f6        = key_base | 6,
+    key_f7        = key_base | 7,
+    key_f8        = key_base | 8,
+    key_f9        = key_base | 9,
+    key_f10       = key_base | 10,
+    key_f11       = key_base | 11,
+    key_f12       = key_base | 12,
+    key_f13       = key_base | 13,
+    key_f14       = key_base | 14,
+    key_f15       = key_base | 15,
+    key_f16       = key_base | 16,
+    key_f17       = key_base | 17,
+    key_f18       = key_base | 18,
+    key_f19       = key_base | 19,
+    key_f20       = key_base | 20,
+    key_f21       = key_base | 21,
+    key_f22       = key_base | 22,
+    key_f23       = key_base | 23,
+    key_f24       = key_base | 24,
+    key_insert    = key_base | 31,
+    key_delete    = key_base | 32,
+    key_home      = key_base | 33,
+    key_end       = key_base | 34,
+    key_prior     = key_base | 35,
+    key_next      = key_base | 36,
+    key_begin     = key_base | 37,
+    key_left      = key_base | 38,
+    key_right     = key_base | 39,
+    key_up        = key_base | 40,
+    key_down      = key_base | 41,
+    key_kp0       = key_base | 42,
+    key_kp1       = key_base | 43,
+    key_kp2       = key_base | 44,
+    key_kp3       = key_base | 45,
+    key_kp4       = key_base | 46,
+    key_kp5       = key_base | 47,
+    key_kp6       = key_base | 48,
+    key_kp7       = key_base | 49,
+    key_kp8       = key_base | 50,
+    key_kp9       = key_base | 51,
+    key_kpdec     = key_base | 52,
+    key_kpsep     = key_base | 53,
+    key_kpmul     = key_base | 54,
+    key_kpadd     = key_base | 55,
+    key_kpsub     = key_base | 56,
+    key_kpdiv     = key_base | 57,
+
+    modifier_shift       = 0x01000000,
+    modifier_meta        = 0x02000000,
+    modifier_control     = 0x04000000,
+    modifier_super       = 0x08000000,
+    modifier_hyper       = 0x10000000,
+    modifier_alter       = 0x20000000,
+  };
+
+  void print_key(key_t key, std::FILE* file);
 
   typedef std::uint32_t mode_t;
 
@@ -250,27 +323,6 @@ namespace ansi {
       this->m_send_buff.reserve(32);
     }
 
-    void set_input_target(contra::idevice& dev) { this->m_send_target = &dev; }
-
-    void respond() {
-      if (m_send_target)
-        m_send_target->dev_write(reinterpret_cast<char const*>(&m_send_buff[0]), m_send_buff.size());
-      m_send_buff.clear();
-    }
-    void response_put(byte value) {
-      if (0x80 <= value && value < 0xA0 && m_state.get_mode(mode_s7c1t)) {
-        m_send_buff.push_back(ascii_esc);
-        m_send_buff.push_back(value - 0x40);
-      } else {
-        m_send_buff.push_back(value);
-      }
-    }
-    void response_number(unsigned value) {
-      if (value >= 10)
-        response_number(value / 10);
-      m_send_buff.push_back((byte) (ascii_0 + value % 10));
-    }
-
   public:
     board_t& board() { return *m_board; }
     board_t const& board() const { return *m_board; }
@@ -450,6 +502,39 @@ namespace ansi {
     virtual void dev_write(char const* data, std::size_t size) override {
       this->write(data, size);
     }
+
+  public:
+    void set_input_target(contra::idevice& dev) { this->m_send_target = &dev; }
+
+  private:
+    std::vector<byte> input_buffer;
+  public:
+    void input_flush() {
+      if (m_send_target)
+        m_send_target->dev_write(reinterpret_cast<char const*>(&input_buffer[0]), input_buffer.size());
+      input_buffer.clear();
+    }
+    void input_byte(byte value) {
+      input_buffer.push_back(value);
+    }
+    void input_c1(std::uint32_t code) {
+      if (m_state.get_mode(ansi::mode_s7c1t)) {
+        input_buffer.push_back(ascii_esc);
+        input_buffer.push_back(code - 0x40);
+      } else {
+        contra::encoding::put_u8(code, input_buffer);
+      }
+    }
+    void input_unsigned(std::uint32_t value) {
+      if (value >= 10) input_unsigned(value / 10);
+      input_buffer.push_back(ascii_0 + value % 10);
+    }
+    void input_modifier(key_t mod) {
+      input_unsigned(1 + ((mod & _modifier_mask) >> _modifier_shft));
+    }
+
+  public:
+    void input_key(key_t key);
   };
 
 }

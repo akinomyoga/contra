@@ -30,6 +30,7 @@ namespace contra {
 namespace twin {
 
   using namespace contra::term;
+  using namespace contra::ansi;
 
   template<typename XCH>
   int xcscpy_s(XCH* dst, std::size_t sz, const XCH* src) {
@@ -577,7 +578,7 @@ namespace twin {
 
     void process_input(std::uint32_t key) {
       //contra::term::print_key(key, stderr);
-      sess.send_key(key);
+      sess.term().input_key(key);
     }
 
     std::uint32_t get_modifiers() {
