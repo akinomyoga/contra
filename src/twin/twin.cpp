@@ -296,6 +296,133 @@ namespace twin {
         ::PatBlt(hdc, x0, y0, width, ypixel, DSTINVERT);
       }
     }
+
+    struct color_resolver_t {
+      using color_t = contra::dict::color_t;
+      using attribute_t = contra::dict::attribute_t;
+      using tstate_t = contra::ansi::tstate_t;
+
+      tstate_t const* s;
+      byte m_space = (byte) attribute_t::color_space_default;
+      color_t m_color = color_t(-1);
+      color_t m_rgba = 0;
+
+    public:
+      color_resolver_t(tstate_t const& s): s(&s) {}
+
+    public:
+      color_t resolve(byte space, color_t color) {
+        color_t rgba = 0;
+        switch (space) {
+        case attribute_t::color_space_default:
+        case attribute_t::color_space_transparent:
+        default:
+          // transparent なので色はない。
+          rgba = 0x00000000; // black
+          break;
+        case attribute_t::color_space_indexed:
+          rgba = s->m_rgba256[color & 0xFF];
+          break;
+        case attribute_t::color_space_rgb:
+          rgba = contra::dict::rgb2rgba(color);
+          break;
+        case attribute_t::color_space_cmy:
+          rgba = contra::dict::cmy2rgba(color);
+          break;
+        case attribute_t::color_space_cmyk:
+          rgba = contra::dict::cmyk2rgba(color);
+          break;
+        }
+
+        m_space = space;
+        m_color = color;
+        m_rgba = rgba;
+        return rgba;
+      }
+
+    private:
+      std::pair<byte, color_t> get_fg(attribute_t const& attr) {
+        byte space = attr.fg_space();
+        color_t color = attr.fg_color();
+        if (space == 0) {
+          space = s->m_default_fg_space;
+          color = s->m_default_fg_color;
+        }
+        return {space, color};
+      }
+      std::pair<byte, color_t> get_bg(attribute_t const& attr) {
+        byte space = attr.bg_space();
+        color_t color = attr.bg_color();
+        if (space == 0) {
+          space = s->m_default_bg_space;
+          color = s->m_default_bg_color;
+        }
+        return {space, color};
+      }
+    public:
+      color_t resolve_fg(attribute_t const& attr) {
+        auto [space, color] = attr.aflags & attribute_t::is_inverse_set ? get_bg(attr) : get_fg(attr);
+        if (space == m_space && color == m_color) return m_rgba;
+        return resolve(space, color);
+      }
+
+      color_t resolve_bg(attribute_t const& attr) {
+        auto [space, color] = attr.aflags & attribute_t::is_inverse_set ? get_fg(attr) : get_bg(attr);
+        if (space == m_space && color == m_color) return m_rgba;
+        return resolve(space, color);
+      }
+    };
+
+    void draw_background(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
+      using namespace contra::ansi;
+      std::size_t const xorigin = settings.m_xframe;
+      std::size_t const yorigin = settings.m_yframe;
+      std::size_t const ypixel = settings.m_ypixel;
+      std::size_t const xpixel = settings.m_xpixel;
+      board_t const& b = sess.board();
+      tstate_t const& s = sess.term().state();
+      color_resolver_t _color(s);
+
+      RECT rc;
+      if (::GetClientRect(hWnd, &rc)) {
+        ::OffsetRect(&rc, -rc.left, -rc.top);
+        color_t const bg = _color.resolve(s.m_default_bg_space, s.m_default_bg_color);
+        HBRUSH brush = ::CreateSolidBrush(contra::dict::rgba2rgb(bg));
+        ::FillRect(hdc, &rc, brush);
+        ::DeleteObject(brush);
+      }
+
+      std::size_t x = xorigin, y = yorigin;
+      std::size_t x0 = x;
+      color_t bg0 = 0;
+      auto _fill = [=, &x, &y, &x0, &bg0] () {
+        if (x0 >= x || !bg0) return;
+        RECT rc;
+        ::SetRect(&rc, x0, y, x, y + ypixel);
+        HBRUSH brush = ::CreateSolidBrush(contra::dict::rgba2rgb(bg0));
+        ::FillRect(hdc, &rc, brush);
+        ::DeleteObject(brush);
+      };
+
+      for (curpos_t iline = 0; iline < b.m_height; iline++, y += ypixel) {
+        std::vector<cell_t>& cells = content[iline];
+        x = xorigin;
+        x0 = x;
+        bg0 = 0;
+        for (std::size_t i = 0; i < cells.size(); ) {
+          auto const& cell = cells[i++];
+          color_t const bg = _color.resolve_bg(cell.attribute);
+          if (bg != bg0) {
+            _fill();
+            bg0 = bg;
+            x0 = x;
+          }
+          x += cell.width * xpixel;
+        }
+        _fill();
+      }
+    }
+
     void draw_characters(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
       std::size_t const xorigin = settings.m_xframe;
@@ -312,58 +439,7 @@ namespace twin {
           && !(aflags & attribute_t::is_invisible_set);
       };
 
-      auto _color = [
-        &s, m_fg_space = (byte) attribute_t::color_space_default,
-        m_fg_color = (color_t) 0,
-        m_color = (color_t) 0
-      ] (attribute_t const& attr) mutable {
-        byte fg_space;
-        std::uint32_t fg_color;
-        if (attr.aflags & attribute_t::is_inverse_set) {
-          fg_space = attr.bg_space();
-          fg_color = attr.bg_color();
-          if (fg_space == 0) {
-            fg_space = s.m_default_bg_space;
-            fg_color = s.m_default_bg;
-          }
-        } else {
-          fg_space = attr.fg_space();
-          fg_color = attr.fg_color();
-          if (fg_space == 0) {
-            fg_space = s.m_default_fg_space;
-            fg_color = s.m_default_fg;
-          }
-        }
-
-        if (fg_space == m_fg_space && fg_color == m_fg_color) return m_color;
-
-        color_t color = 0;
-        switch (fg_space) {
-        case attribute_t::color_space_default:
-        case attribute_t::color_space_transparent:
-        default:
-          // transparent なので色はない。
-          color = 0x00000000; // black
-          break;
-        case attribute_t::color_space_indexed:
-          color = s.m_rgba256[fg_color & 0xFF];
-          break;
-        case attribute_t::color_space_rgb:
-          color = contra::dict::rgb2rgba(fg_color);
-          break;
-        case attribute_t::color_space_cmy:
-          color = contra::dict::cmy2rgba(fg_color);
-          break;
-        case attribute_t::color_space_cmyk:
-          color = contra::dict::cmyk2rgba(fg_color);
-          break;
-        }
-
-        m_fg_space = fg_space;
-        m_fg_color = fg_color;
-        m_color = color;
-        return color;
-      };
+      color_resolver_t _color(s);
 
       std::vector<cell_t> cells;
       std::vector<TCHAR> characters;
@@ -386,7 +462,7 @@ namespace twin {
           }
 
           // 色の決定
-          color_t const fg = _color(attr);
+          color_t const fg = _color.resolve_fg(attr);
 
           characters.clear();
           progress.clear();
@@ -401,7 +477,7 @@ namespace twin {
             std::size_t const cell2_progress = cell2.width * xpixel;
             if (!_visible(code2, cell2.attribute.aflags)) {
               progress.back() += cell2_progress;
-            } else if (fg == _color(cell2.attribute)) {
+            } else if (fg == _color.resolve_fg(cell2.attribute)) {
               characters.push_back(code2);
               progress.push_back(cell2_progress);
             } else {
@@ -419,6 +495,9 @@ namespace twin {
           SetTextColor(hdc, contra::dict::rgba2rgb(fg));
           ExtTextOut(hdc, xoffset0, yoffset, 0, NULL, &characters[0], characters.size(), &progress[0]);
         }
+
+        // clear private flags
+        for (cell_t& cell : cells) cell.character.value &= ~flag_processed;
       }
     }
     void draw_characters_mono(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>> const& content) {
@@ -464,12 +543,6 @@ namespace twin {
     void paint_terminal_content(HDC hdc) {
       auto deleter = [&] (auto p) { SelectObject(hdc, p); };
       util::raii hOldFont((HFONT) SelectObject(hdc, fstore.normal()), deleter);
-      RECT rc;
-      if (::GetClientRect(hWnd, &rc)) {
-        ::OffsetRect(&rc, -rc.left, -rc.top);
-        ::FillRect(hdc, &rc, (HBRUSH) GetStockObject(WHITE_BRUSH));
-      }
-
       ::SetBkMode(hdc, TRANSPARENT);
 
       std::vector<std::vector<contra::ansi::cell_t>> content;
@@ -480,6 +553,7 @@ namespace twin {
         line.get_cells_in_presentation(content[y], b.line_r2l(line));
       }
       //this->draw_characters_mono(hdc, content);
+      this->draw_background(hdc, content);
       this->draw_characters(hdc, content);
       this->draw_cursor(hdc);
     }
@@ -701,6 +775,12 @@ namespace twin {
       sess.init_read_buffer_size = 4096;
       ::setenv("TERM", "xterm-256color", 1);
       if (!sess.initialize()) return 2;
+
+      contra::ansi::tstate_t& s = sess.term().state();
+      s.m_default_fg_space = contra::dict::attribute_t::color_space_rgb;
+      s.m_default_bg_space = contra::dict::attribute_t::color_space_rgb;
+      s.m_default_fg_color = contra::dict::rgb(0x00, 0x00, 0x00);
+      s.m_default_bg_color = contra::dict::rgb(0xFF, 0xFF, 0xFF);
 
       int exit_code;
       MSG msg;

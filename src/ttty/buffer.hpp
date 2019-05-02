@@ -294,15 +294,15 @@ namespace ttty {
       if (!s.m_default_fg_space && !s.m_default_bg_space) return;
       for (auto& cell : content) {
         if (s.m_default_fg_space && cell.attribute.is_fg_default())
-          cell.attribute.set_fg(s.m_default_fg, s.m_default_fg_space);
+          cell.attribute.set_fg(s.m_default_fg_color, s.m_default_fg_space);
         if (s.m_default_bg_space && cell.attribute.is_bg_default())
-          cell.attribute.set_bg(s.m_default_bg, s.m_default_bg_space);
+          cell.attribute.set_bg(s.m_default_bg_color, s.m_default_bg_space);
       }
       board_t& b = term->board();
       if (content.size() < (std::size_t) b.m_width && (s.m_default_fg_space || s.m_default_bg_space)) {
         cell_t fill = ascii_nul;
-        fill.attribute.set_fg(s.m_default_fg, s.m_default_fg_space);
-        fill.attribute.set_bg(s.m_default_bg, s.m_default_bg_space);
+        fill.attribute.set_fg(s.m_default_fg_color, s.m_default_fg_space);
+        fill.attribute.set_bg(s.m_default_bg_color, s.m_default_bg_space);
         fill.width = 1;
         content.resize(b.m_width, fill);
       }

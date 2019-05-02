@@ -79,8 +79,8 @@ namespace ansi {
     // 既定の前景色・背景色
     byte m_default_fg_space = 0;
     byte m_default_bg_space = 0;
-    color_t m_default_fg = 0;
-    color_t m_default_bg = 0;
+    color_t m_default_fg_color = 0;
+    color_t m_default_bg_color = 0;
 
     tstate_t(term_t* term): m_term(term) {
       this->clear();
@@ -125,7 +125,7 @@ namespace ansi {
       m_rgba256[index++] = contra::dict::rgba(0x80, 0x80, 0x80);
       m_rgba256[index++] = contra::dict::rgba(0xFF, 0x00, 0x00);
       m_rgba256[index++] = contra::dict::rgba(0x32, 0xCD, 0x32);
-      m_rgba256[index++] = contra::dict::rgba(0xFF, 0x7D, 0x00);
+      m_rgba256[index++] = contra::dict::rgba(0xFF, 0xD7, 0x00);
       m_rgba256[index++] = contra::dict::rgba(0x00, 0x00, 0xFF);
       m_rgba256[index++] = contra::dict::rgba(0xFF, 0x00, 0xFF);
       m_rgba256[index++] = contra::dict::rgba(0x40, 0xE0, 0xD0);
@@ -137,7 +137,7 @@ namespace ansi {
         for (int g = 0; g < 6; g++) {
           color_t const RG = R | g * 51 << 8;
           for (int b = 0; b < 6; b++) {
-            color_t const RGB = RG | b * 51 << 24;
+            color_t const RGB = RG | b * 51 << 16;
             m_rgba256[index++] = RGB;
           }
         }
@@ -146,7 +146,7 @@ namespace ansi {
       // 24 grayscale
       for (int k = 0; k < 24; k++) {
         color_t const K = k * 10 + 8;
-        m_rgba256[index++] = A | K << 24 | K <<16 | K;
+        m_rgba256[index++] = A | K << 16 | K << 8 | K;
       }
     }
 

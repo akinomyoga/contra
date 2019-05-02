@@ -1466,7 +1466,7 @@ namespace {
   void do_sm_decscnm(term_t& term, bool value) {
     tstate_t& s = term.state();
     if (s.get_mode(mode_decscnm_) == value) return;
-    std::swap(s.m_default_fg, s.m_default_bg);
+    std::swap(s.m_default_fg_color, s.m_default_bg_color);
     std::swap(s.m_default_fg_space, s.m_default_bg_space);
     s.set_mode(mode_decscnm_, value);
   }

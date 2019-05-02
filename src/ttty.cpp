@@ -22,9 +22,9 @@ int main() {
   if (!screen.initialize()) return 10;
 
   sess.term().state().m_default_fg_space = contra::ansi::attribute_t::color_space_indexed;
-  sess.term().state().m_default_fg = 0;
+  sess.term().state().m_default_fg_color = 0;
   sess.term().state().m_default_bg_space = contra::ansi::attribute_t::color_space_indexed;
-  sess.term().state().m_default_bg = 255;
+  sess.term().state().m_default_bg_color = 255;
 
   contra::sequence_printer printer("impl3-allseq.txt");
   sess.output_device().push(&printer);
