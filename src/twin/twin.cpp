@@ -9,11 +9,14 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <cmath>
 #include <vector>
 #include <sstream>
 #include <iomanip>
 #include <memory>
-#include <functional>
+#include <iterator>
+#include <algorithm>
+#include <numeric>
 #include <mwg/except.h>
 #include "../contradef.hpp"
 #include "../enc.utf8.hpp"
@@ -41,38 +44,120 @@ namespace twin {
     return 0;
   }
 
+  typedef std::uint32_t font_t;
+
+  enum font_flags {
+    // bit 0-3: fontface
+    font_face_mask     = 0x000F,
+    font_face_shft     = 0,
+    font_face_fraktur  = 0x000A,
+
+    // bit 4: italic
+    font_flag_italic   = 0x0010,
+
+    // bit 5-6: weight
+    font_weight_mask   = 0x0060,
+    font_weight_shft   = 4,
+    font_weight_bold   = 0x0020,
+    font_weight_faint  = 0x0040,
+    font_weight_heavy  = 0x0060,
+
+    // bit 7: small
+    font_flag_small    = 0x0080,
+
+    // bit 8-10: rotation
+    font_rotation_mask = 0x0700,
+    font_rotation_shft = 8,
+
+    // bit 12-13: DECDWL, DECDHL
+    font_decdhl_mask   = 0x3000,
+    font_decdhl_shft   = 12,
+    font_decdhl        = 0x1000,
+    font_decdwl        = 0x2000,
+
+    // 11x2x2 種類のフォントは記録する (下位6bit)。
+    font_basic_mask = font_face_mask | font_weight_bold | font_flag_italic,
+    font_basic_bits = 6,
+
+    font_cache_count = 32,
+
+    font_layout_mask        = 0xFF0000,
+    font_layout_shft        = 16,
+    font_layout_sup         = 0x010000,
+    font_layout_sub         = 0x020000,
+    font_layout_framed      = 0x040000,
+    font_layout_top_half    = 0x080000,
+    font_layout_bottom_half = 0x100000,
+  };
+
   class font_store {
-    LOGFONT log_normal;
-    HFONT m_normal = NULL;
+    LOGFONT m_logfont_normal;
+
+    HFONT m_fonts[1u << font_basic_bits];
+    std::pair<font_t, HFONT> m_cache[font_cache_count];
 
     LONG m_width;
     LONG m_height;
 
+    LPCTSTR m_fontnames[16];
+
     void release() {
-      if (m_normal) {
-        ::DeleteObject(m_normal);
-        m_normal = NULL;
+      for (auto& hfont : m_fonts) {
+        if (hfont) ::DeleteObject(hfont);
+        hfont = NULL;
+      }
+      auto const init = std::pair<font_t, HFONT>(0u, NULL);
+      for (auto& pair : m_cache) {
+        if (pair.second) ::DeleteObject(pair.second);
+        pair = init;
       }
     }
   public:
     font_store() {
+      std::fill(std::begin(m_fonts), std::end(m_fonts), (HFONT) NULL);
+      std::fill(std::begin(m_cache), std::end(m_cache), std::pair<font_t, HFONT>(0u, NULL));
+      std::fill(std::begin(m_fontnames), std::end(m_fontnames), (LPCTSTR) NULL);
+
+      // My configuration
+      m_fontnames[0] = TEXT("MeiryoKe_Console");
+      m_fontnames[1] = TEXT("MSGothic");
+      m_fontnames[2] = TEXT("MSMincho");
+      m_fontnames[3] = TEXT("HG丸ｺﾞｼｯｸM-PRO");
+      m_fontnames[4] = TEXT("HG教科書体");
+      m_fontnames[5] = TEXT("HG正楷書体-PRO");
+      m_fontnames[6] = TEXT("HG行書体");
+      m_fontnames[7] = TEXT("HG創英角ﾎﾟｯﾌﾟ体");
+      m_fontnames[8] = TEXT("HGｺﾞｼｯｸM");
+      m_fontnames[9] = TEXT("HG明朝E");
+      m_fontnames[10] = TEXT("aghtex_mathfrak");
+
+      // ゴシック系のフォント
+      //   HGｺﾞｼｯｸE
+      //   HGｺﾞｼｯｸM
+      //   HG創英角ｺﾞｼｯｸUB
+      // 明朝系のフォント
+      //   HG明朝B
+      //   HG明朝E
+      //   HG創英ﾌﾟﾚｾﾞﾝｽEB
+
       // default settings
       m_height = 13;
       m_width = 7;
-      log_normal.lfHeight = m_height;
-      log_normal.lfWidth  = m_width;
-      log_normal.lfEscapement = 0;
-      log_normal.lfOrientation = 0;
-      log_normal.lfWeight = FW_NORMAL;
-      log_normal.lfItalic = FALSE;
-      log_normal.lfUnderline = FALSE;
-      log_normal.lfStrikeOut = FALSE;
-      log_normal.lfCharSet = DEFAULT_CHARSET;
-      log_normal.lfOutPrecision = OUT_DEFAULT_PRECIS;
-      log_normal.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-      log_normal.lfQuality = CLEARTYPE_QUALITY;
-      log_normal.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-      xcscpy_s(log_normal.lfFaceName, LF_FACESIZE, TEXT("MeiryoKe_Console"));
+      m_logfont_normal.lfHeight = m_height;
+      m_logfont_normal.lfWidth  = m_width;
+      m_logfont_normal.lfEscapement = 0;
+      m_logfont_normal.lfOrientation = 0;
+      m_logfont_normal.lfWeight = FW_NORMAL;
+      m_logfont_normal.lfItalic = FALSE;
+      m_logfont_normal.lfUnderline = FALSE;
+      m_logfont_normal.lfStrikeOut = FALSE;
+      m_logfont_normal.lfCharSet = DEFAULT_CHARSET;
+      m_logfont_normal.lfOutPrecision = OUT_DEFAULT_PRECIS;
+      m_logfont_normal.lfClipPrecision = CLIP_LH_ANGLES;
+      //m_logfont_normal.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+      m_logfont_normal.lfQuality = CLEARTYPE_QUALITY;
+      m_logfont_normal.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
+      xcscpy_s(m_logfont_normal.lfFaceName, LF_FACESIZE, TEXT("MeiryoKe_Console"));
     }
 
     void set_size(LONG width, LONG height) {
@@ -80,16 +165,117 @@ namespace twin {
       release();
       this->m_width = width;
       this->m_height = height;
+      m_logfont_normal.lfWidth = width;
+      m_logfont_normal.lfHeight = height;
     }
     LONG width() const { return m_width; }
     LONG height() const { return m_height; }
 
-    LOGFONT const& logfont_normal() { return log_normal; }
+    LOGFONT const& logfont_normal() { return m_logfont_normal; }
 
     HFONT normal() {
-      if (!m_normal)
-        m_normal = CreateFontIndirect(&log_normal);
-      return m_normal;
+      return get_font(0);
+    }
+
+
+  public:
+    std::size_t small_height() const {
+      return std::max<std::size_t>(8u, std::min(m_height - 4, (m_height * 7 + 9) / 10));
+    }
+    std::size_t small_width() const {
+      return std::max<std::size_t>(4u, std::min(m_width - 4, (m_width * 8 + 9) / 10));
+    }
+
+  public:
+    LOGFONT create_logfont(font_t font) const {
+      LOGFONT logfont = m_logfont_normal;
+      if (font_t const face = (font & font_face_mask) >> font_face_shft)
+        if (LPCTSTR const fontname = m_fontnames[face])
+          xcscpy_s(logfont.lfFaceName, LF_FACESIZE, fontname);
+      if (font & font_flag_italic)
+        logfont.lfItalic = TRUE;
+
+      switch (font & font_weight_mask) {
+      case font_weight_bold: logfont.lfWeight = FW_BOLD; break;
+      case font_weight_faint: logfont.lfWeight = FW_THIN; break;
+      case font_weight_heavy: logfont.lfWeight = FW_HEAVY; break;
+      }
+
+      if (font & font_flag_small) {
+        logfont.lfHeight = small_height();
+        logfont.lfWidth = small_width();
+      }
+      if (font & font_decdhl) logfont.lfHeight *= 2;
+      if (font & font_decdwl) logfont.lfWidth *= 2;
+      if (font_t const rotation = (font & font_rotation_mask) >> font_rotation_shft) {
+        logfont.lfOrientation = 450 * rotation;
+        logfont.lfEscapement  = 450 * rotation;
+      }
+      return logfont; /* NRVO */
+    }
+
+  private:
+    HFONT create_font(font_t font) const {
+      LOGFONT const logfont = create_logfont(font);
+      return ::CreateFontIndirect(&logfont);
+    }
+
+  public:
+    HFONT get_font(font_t font) {
+      font &= ~font_layout_mask;
+
+      if (!(font & ~font_basic_mask)) {
+        // basic fonts
+        if (!m_fonts[font]) m_fonts[font] = create_font(font);
+        return m_fonts[font];
+      } else {
+        // cached fonts (先頭にある物の方が新しい)
+        for (std::size_t i = 0; i < std::size(m_cache); i++) {
+          if (m_cache[i].first == font) {
+            // 見つかった時は、見つかった物を先頭に移動して、返す。
+            HFONT const ret = m_cache[i].second;
+            std::move_backward(&m_cache[0], &m_cache[i], &m_cache[i + 1]);
+            m_cache[0] = std::make_pair(font, ret);
+            return ret;
+          }
+        }
+
+        // 見つからない時は末尾にあった物を削除して、新しく作る。
+        if (HFONT last = std::end(m_cache)[-1].second) ::DeleteObject(last);
+        std::move_backward(std::begin(m_cache), std::end(m_cache) - 1, std::end(m_cache));
+
+        HFONT const ret = create_font(font);
+        m_cache[0] = std::make_pair(font, ret);
+        return ret;
+      }
+    }
+
+    std::pair<std::size_t, std::size_t> get_displacement(font_t font) {
+      double dx = 0, dy = 0;
+      if (font & (font_layout_mask | font_decdwl | font_flag_italic)) {
+        if (font & font_layout_sup)
+          dy -= 0.2 * m_height;
+        else if (font & font_layout_sub) {
+          // Note: 下端は baseline より下なので下端に合わせれば十分。
+          dy += m_height - this->small_height();
+        }
+        if (font & (font_layout_framed | font_layout_sup | font_layout_sub)) {
+          dx += 0.5 * (m_width - this->small_width());
+          dy += 0.5 * (m_height - this->small_height());
+        }
+        if ((font & font_flag_italic) && !(font & font_rotation_mask)) {
+          std::size_t width = this->width();
+          if (font & (font_layout_framed | font_layout_sup | font_layout_sub))
+            width = this->small_width();
+          dx -= 0.2 * width;
+        }
+        if (font & (font_layout_top_half | font_layout_bottom_half)) dy *= 2;
+        if (font & font_decdwl) dx *= 2;
+        if (font & font_layout_bottom_half) dy -= m_height;
+        dx = std::round(dx);
+        dy = std::round(dy);
+      }
+      return {dx, dy};
     }
 
     ~font_store() {
@@ -102,8 +288,8 @@ namespace twin {
   struct twin_settings {
     std::size_t m_col = 80;
     std::size_t m_row = 30;
-    std::size_t m_xpixel = 7;
-    std::size_t m_ypixel = 13;
+    std::size_t m_xpixel = 14;
+    std::size_t m_ypixel = 26;
     std::size_t window_size_xadjust = 0;
     std::size_t window_size_yadjust = 0;
     std::size_t m_xframe = 1;
@@ -300,7 +486,7 @@ namespace twin {
       }
     }
 
-    struct color_resolver_t {
+    class color_resolver_t {
       using color_t = contra::dict::color_t;
       using attribute_t = contra::dict::attribute_t;
       using tstate_t = contra::ansi::tstate_t;
@@ -376,6 +562,69 @@ namespace twin {
       }
     };
 
+    class font_resolver_t {
+      using attribute_t = contra::dict::attribute_t;
+      using xflags_t = contra::dict::xflags_t;
+      using aflags_t = contra::dict::aflags_t;
+
+      aflags_t m_aflags = 0;
+      xflags_t m_xflags = 0;
+      font_t m_font = 0;
+
+    public:
+      font_t resolve_font(attribute_t const& attr) {
+        if (attr.aflags == m_aflags && attr.xflags == m_xflags) return m_font;
+
+        font_t ret = 0;
+        if (xflags_t const face = (attr.xflags & attribute_t::ansi_font_mask) >> attribute_t::ansi_font_shift)
+          ret |= font_face_mask & face << font_face_shft;
+
+        switch (attr.aflags & attribute_t::is_heavy_set) {
+        case attribute_t::is_bold_set: ret |= font_weight_bold; break;
+        case attribute_t::is_faint_set: ret |= font_weight_faint; break;
+        case attribute_t::is_heavy_set: ret |= font_weight_heavy; break;
+        }
+
+        if (attr.aflags & attribute_t::is_italic_set)
+          ret |= font_flag_italic;
+        else if (attr.aflags & attribute_t::is_fraktur_set)
+          ret = (ret & ~font_face_mask) | font_face_fraktur;
+
+        if (attr.aflags & attribute_t::is_bold_set)
+          ret |= font_weight_bold;
+        else if (attr.aflags & attribute_t::is_faint_set)
+          ret |= font_weight_faint;
+
+        if (attr.xflags & attribute_t::is_sup_set)
+          ret |= font_flag_small | font_layout_sup;
+        else if (attr.xflags & attribute_t::is_sub_set)
+          ret |= font_flag_small | font_layout_sub;
+
+        if (attr.xflags & (attribute_t::is_frame_set | attribute_t::is_circle_set))
+          ret |= font_flag_small | font_layout_framed;
+
+        if (xflags_t const sco = (attr.xflags & attribute_t::sco_mask) >> attribute_t::sco_shift)
+          ret |= font_rotation_mask & sco << font_rotation_shft;
+
+        switch (attr.xflags & attribute_t::decdhl_mask) {
+        case attribute_t::decdhl_double_width:
+          ret |= font_decdwl;
+          break;
+        case attribute_t::decdhl_top_half:
+          ret |= font_decdwl | font_decdhl | font_layout_top_half;
+          break;
+        case attribute_t::decdhl_bottom_half:
+          ret |= font_decdwl | font_decdhl | font_layout_bottom_half;
+          break;
+        }
+
+        m_aflags = attr.aflags;
+        m_xflags = attr.xflags;
+        m_font = ret;
+        return ret;
+      }
+    };
+
     void draw_background(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
       std::size_t const xorigin = settings.m_xframe;
@@ -386,9 +635,9 @@ namespace twin {
       tstate_t const& s = sess.term().state();
       color_resolver_t _color(s);
 
-      RECT rc;
-      if (::GetClientRect(hWnd, &rc)) {
-        ::OffsetRect(&rc, -rc.left, -rc.top);
+      {
+        RECT rc;
+        ::SetRect(&rc, 0, 0, m_background.width(), m_background.height());
         color_t const bg = _color.resolve(s.m_default_bg_space, s.m_default_bg_color);
         HBRUSH brush = ::CreateSolidBrush(contra::dict::rgba2rgb(bg));
         ::FillRect(hdc, &rc, brush);
@@ -426,6 +675,28 @@ namespace twin {
       }
     }
 
+    void draw_rotated_text_ext(HDC hdc, std::size_t x0, std::size_t y0, std::vector<TCHAR> const& characters, std::vector<INT> const& progress, font_t font) {
+      font_t const sco = (font & font_rotation_mask) >> font_rotation_shft;
+      double const angle = -(M_PI / 4.0) * sco;
+      std::size_t const ypixel = settings.m_ypixel;
+
+      INT const prog = std::accumulate(progress.begin(), progress.end(), (INT) 0);
+
+      // Note: 何故か知らないが Windows の TextOut の仕様か Font の仕様で
+      //   90 度に比例しないフォントだと y 方向に文字がずれている。
+      //   以下の式は色々測って調べた結果分かったフォントのずれの量である。
+      double const gdi_xshift = sco & 1 ? 1.0 : 0;
+      double const gdi_yshift = sco & 1 ? ypixel * 0.3 : 0.0;
+
+      double const x1 = 0.5 * prog + gdi_xshift;
+      double const y1 = 0.5 * ypixel + gdi_yshift;
+      double const x2 = x1 * std::cos(angle) - y1 * std::sin(angle);
+      double const y2 = x1 * std::sin(angle) + y1 * std::cos(angle);
+      int const dx = (int) std::round(x2 - x1 + gdi_xshift);
+      int const dy = (int) std::round(y2 - y1 + gdi_yshift);
+      ::ExtTextOut(hdc, x0 - dx, y0 - dy, 0, NULL, &characters[0], characters.size(), &progress[0]);
+    }
+
     void draw_characters(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
       std::size_t const xorigin = settings.m_xframe;
@@ -443,21 +714,38 @@ namespace twin {
       };
 
       color_resolver_t _color(s);
+      font_resolver_t _font;
 
-      std::vector<cell_t> cells;
       std::vector<TCHAR> characters;
       std::vector<INT> progress;
-      for (curpos_t y = 0; y < b.m_height; y++) {
-        std::vector<cell_t>& cells = content[y];
+      auto _push_char = [&characters, &progress] (std::uint32_t code, INT prog) {
+        if (code < 0x10000) {
+          characters.push_back(code);
+          progress.push_back(prog);
+        } else {
+          // surrogate pair
+          code -= 0x10000;
+          characters.push_back(0xD800 | (code >> 10 & 0x3FF));
+          progress.push_back(prog);
+          characters.push_back(0xDC00 | (code & 0x3FF));
+          progress.push_back(0);
+        }
+      };
 
-        std::size_t xoffset = xorigin;
-        std::size_t const yoffset = yorigin + y * ypixel;
+      std::size_t x = xorigin, y = yorigin;
+      for (curpos_t iline = 0; iline < b.m_height; iline++, y += ypixel) {
+        std::vector<cell_t>& cells = content[iline];
+
+        x = xorigin;
+
+        HRGN rgn1 = NULL, rgn2 = NULL;
+
         for (std::size_t i = 0; i < cells.size(); ) {
           auto const& cell = cells[i++];
           auto const& attr = cell.attribute;
-          std::size_t const xoffset0 = xoffset;
+          std::size_t const x0 = x;
           std::size_t const cell_progress = cell.width * xpixel;
-          xoffset += cell_progress;
+          x += cell_progress;
           std::uint32_t code = cell.character.value;
           code &= ~character_t::flag_cluster_extension;
           if (!_visible(code, cell.attribute.aflags)) {
@@ -466,11 +754,11 @@ namespace twin {
 
           // 色の決定
           color_t const fg = _color.resolve_fg(attr);
+          font_t const font = _font.resolve_font(attr);
 
           characters.clear();
           progress.clear();
-          characters.push_back(code);
-          progress.push_back(cell_progress);
+          _push_char(code, cell_progress);
 
           // 同じ色を持つ文字は同時に描画してしまう。
           for (std::size_t j = i; j < cells.size(); j++) {
@@ -478,11 +766,15 @@ namespace twin {
             std::uint32_t code2 = cell2.character.value;
             code &= ~character_t::flag_cluster_extension;
             std::size_t const cell2_progress = cell2.width * xpixel;
+
+            // 回転文字の場合は一つずつ書かなければならない。
+            // 零幅の cluster などだけ一緒に描画する。
+            if ((font & font_rotation_mask) && cell2_progress) break;
+
             if (!_visible(code2, cell2.attribute.aflags)) {
               progress.back() += cell2_progress;
-            } else if (fg == _color.resolve_fg(cell2.attribute)) {
-              characters.push_back(code2);
-              progress.push_back(cell2_progress);
+            } else if (fg == _color.resolve_fg(cell2.attribute) && font == _font.resolve_font(cell2.attribute)) {
+              _push_char(code2, cell2_progress);
             } else {
               progress.back() += cell2_progress;
               continue;
@@ -490,17 +782,39 @@ namespace twin {
 
             if (i == j) {
               i++;
-              xoffset += cell2_progress;
+              x += cell2_progress;
             } else
               cells[j].character.value |= flag_processed;
           }
 
-          SetTextColor(hdc, contra::dict::rgba2rgb(fg));
-          ExtTextOut(hdc, xoffset0, yoffset, 0, NULL, &characters[0], characters.size(), &progress[0]);
+          ::SetTextColor(hdc, contra::dict::rgba2rgb(fg));
+          ::SelectObject(hdc, fstore.get_font(font));
+          auto const [dx, dy] = fstore.get_displacement(font);
+
+          // DECDHL用の制限
+          if (font & font_layout_top_half) {
+            if (!rgn1) rgn1 = ::CreateRectRgn(0, 0, m_background.width(), y + ypixel);
+            ::SelectClipRgn(hdc, rgn1);
+          } else if (font & font_layout_bottom_half) {
+            if (!rgn2) rgn2 = ::CreateRectRgn(0, y, m_background.width(), m_background.height());
+            ::SelectClipRgn(hdc, rgn2);
+          }
+
+          if (font & font_rotation_mask) {
+            this->draw_rotated_text_ext(hdc, x0 + dx, y + dy, characters, progress, font);
+          } else {
+            ::ExtTextOut(hdc, x0 + dx, y + dy, 0, NULL, &characters[0], characters.size(), &progress[0]);
+          }
+
+          // DECDHL用の制限の解除
+          if (font & (font_layout_top_half | font_layout_bottom_half))
+            ::SelectClipRgn(hdc, NULL);
         }
 
         // clear private flags
         for (cell_t& cell : cells) cell.character.value &= ~flag_processed;
+        if (rgn1) ::DeleteObject(rgn1);
+        if (rgn2) ::DeleteObject(rgn2);
       }
     }
     void draw_characters_mono(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>> const& content) {
@@ -544,8 +858,6 @@ namespace twin {
     }
   private:
     void paint_terminal_content(HDC hdc) {
-      auto deleter = [&] (auto p) { SelectObject(hdc, p); };
-      util::raii hOldFont((HFONT) SelectObject(hdc, fstore.normal()), deleter);
       ::SetBkMode(hdc, TRANSPARENT);
 
       std::vector<std::vector<contra::ansi::cell_t>> content;
@@ -555,6 +867,7 @@ namespace twin {
         auto const& line = b.m_lines[y];
         line.get_cells_in_presentation(content[y], b.line_r2l(line));
       }
+
       //this->draw_characters_mono(hdc, content);
       this->draw_background(hdc, content);
       this->draw_characters(hdc, content);
@@ -705,15 +1018,23 @@ namespace twin {
       if (!is_session_ready()) return;
       util::raii hIMC(::ImmGetContext(hWnd), [this] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
 
-      ::ImmSetCompositionFont(hIMC, const_cast<LOGFONT*>(&fstore.logfont_normal()));
+      font_t const current_font = font_resolver_t().resolve_font(sess.term().board().cur.attribute) & ~font_rotation_mask;
+      auto const [dx, dy] = fstore.get_displacement(current_font);
+      contra_unused(dx);
+      LOGFONT logfont = fstore.create_logfont(current_font);
+      logfont.lfWidth = fstore.width() * (current_font & font_decdwl ? 2 : 1);
+      ::ImmSetCompositionFont(hIMC, const_cast<LOGFONT*>(&logfont));
+
 
       RECT rcClient;
       if (::GetClientRect(hWnd, &rcClient)) {
         auto const& b = sess.term().board();
         COMPOSITIONFORM form;
+        std::size_t const x0 = rcClient.left + settings.m_xframe + settings.m_xpixel * b.cur.x();
+        std::size_t const y0 = rcClient.top + settings.m_yframe + settings.m_ypixel * b.cur.y();
         form.dwStyle = CFS_POINT;
-        form.ptCurrentPos.x = rcClient.left + settings.m_xframe + settings.m_xpixel * b.cur.x();
-        form.ptCurrentPos.y = rcClient.top + settings.m_yframe + settings.m_ypixel * b.cur.y();
+        form.ptCurrentPos.x = x0;
+        form.ptCurrentPos.y = y0 + dy;
         ::ImmSetCompositionWindow(hIMC, &form);
       }
     }
@@ -797,8 +1118,8 @@ namespace twin {
 
   public:
     int do_loop() {
-      sess.init_ws.ws_col = 80;
-      sess.init_ws.ws_row = 30;
+      sess.init_ws.ws_col = settings.m_col;
+      sess.init_ws.ws_row = settings.m_row;
       sess.init_ws.ws_xpixel = fstore.width();
       sess.init_ws.ws_ypixel = fstore.height();
       sess.init_read_buffer_size = 4096;
@@ -862,10 +1183,7 @@ namespace twin {
 }
 
 // from http://www.kumei.ne.jp/c_lang/index_sdk.html
-extern "C" int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPTSTR lpszCmdLine, int nCmdShow) {
-  contra_unused(lpszCmdLine);
-  contra_unused(hPreInst);
-
+extern "C" int WINAPI _tWinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPreInst, [[maybe_unused]] LPTSTR lpszCmdLine, int nCmdShow) {
   auto& win = contra::twin::main_window;
   HWND const hWnd = win.create_window(hInstance);
   ::ShowWindow(hWnd, nCmdShow);
@@ -875,9 +1193,7 @@ extern "C" int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPTSTR 
 
 // from https://cat-in-136.github.io/2012/04/unicodemingw32twinmainwwinmain.html
 #if defined(_UNICODE) && !defined(_tWinMain)
-int main(int argc, char** argv) {
-  contra_unused(argc);
-  contra_unused(argv);
+int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
   //ShowWindow(GetConsoleWindow(), SW_HIDE);
   HINSTANCE const hInstance = GetModuleHandle(NULL);
   int const retval = _tWinMain(hInstance, NULL, (LPTSTR) TEXT("") /* lpCmdLine is not available*/, SW_SHOW);

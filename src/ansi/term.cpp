@@ -520,7 +520,8 @@ namespace {
     line_t& line = b.line();
     term.initialize_line(line);
 
-    int const char_width = s.c2w(u); // ToDo 文字幅
+    int char_width = s.c2w(u); // ToDo 文字幅
+    if (b.cur.attribute.xflags & attribute_t::decdhl_mask) char_width *= 2;
     if (char_width <= 0) {
       std::exit(1); // ToDo: control chars, etc.
     }
@@ -1442,6 +1443,12 @@ namespace {
     case 69: xflags = (xflags & ~(xflags_t) _at::is_ideogram_decoration_mask) | _at::is_ideogram_double_rt_set; break;
     case 64: xflags = (xflags & ~(xflags_t) _at::is_ideogram_decoration_mask) | _at::is_ideogram_stress_set   ; break;
     case 65: xflags = xflags & ~(xflags_t) _at::is_ideogram_decoration_mask; break;
+
+    case 6703: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_top_half; break;
+    case 6704: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_bottom_half; break;
+    case 6705: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_single_width; break;
+    case 6706: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_double_width; break;
+      // contra 拡張 (画面の横分割に対応する為には DECDWL の類を属性として提供する必要がある)
 
     default:
       std::fprintf(stderr, "unrecognized SGR value %d\n", param);

@@ -85,7 +85,8 @@ namespace dict {
       color_space_indexed      = 5,
 
       is_bold_set             = (std::uint32_t) 1 << 18, // -+- SGR 1,2
-      is_faint_set            = (std::uint32_t) 1 << 19, // -'
+      is_faint_set            = (std::uint32_t) 1 << 19, //  |
+      is_heavy_set            = (std::uint32_t) 3 << 18, // -' (contra拡張)
       is_italic_set           = (std::uint32_t) 1 << 20, // -+- SGR 3,20
       is_fraktur_set          = (std::uint32_t) 1 << 21, // -'
       is_underline_set        = (std::uint32_t) 1 << 22, // -+- SGR 4,21
@@ -176,7 +177,9 @@ namespace dict {
 
       qualifier_mask = decsca_protected | spa_protected | ssa_selected | daq_guarded | daq_protected,
 
-      non_sgr_xflags_mask = is_sub_set | is_sup_set | decdhl_mask | sco_mask | qualifier_mask,
+      // 以下に \e[m でクリアされない物を列挙する。
+      // SGR(6703)-SGR(6706) で提供している decdhl_mask については \e[m でクリアできる事にする。
+      non_sgr_xflags_mask = is_sub_set | is_sup_set | sco_mask | qualifier_mask,
     };
 
     aflags_t aflags = 0;
