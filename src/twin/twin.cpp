@@ -46,6 +46,37 @@ namespace twin {
 
   typedef std::int32_t coord_t;
 
+  struct twin_settings {
+    curpos_t m_col = 80;//@size
+    curpos_t m_row = 30;
+    coord_t m_xpixel = 7;
+    coord_t m_ypixel = 13;
+    coord_t window_size_xadjust = 0;
+    coord_t window_size_yadjust = 0;
+    coord_t m_xframe = 1;
+    coord_t m_yframe = 1;
+
+    coord_t m_caret_underline_min_height = 2;
+    coord_t m_caret_vertical_min_width = 2;
+    bool m_caret_hide_on_ime = true;
+    UINT m_caret_interval = 400;
+
+  public:
+    coord_t calculate_client_width() const {
+      return m_xpixel * m_col + 2 * m_xframe;
+    }
+    coord_t calculate_client_height() const {
+      return m_ypixel * m_row + 2 * m_yframe;
+    }
+    coord_t calculate_window_width() const {
+      return calculate_client_width() + window_size_xadjust;
+    }
+    coord_t calculate_window_height() const {
+      return calculate_client_height() + window_size_yadjust;
+    }
+
+  };
+
   typedef std::uint32_t font_t;
 
   enum font_flags {
@@ -83,13 +114,14 @@ namespace twin {
 
     font_cache_count = 32,
 
-    font_layout_mask        = 0xFF0000,
-    font_layout_shft        = 16,
-    font_layout_sup         = 0x010000,
-    font_layout_sub         = 0x020000,
-    font_layout_framed      = 0x040000,
-    font_layout_upper_half    = 0x080000,
-    font_layout_lower_half = 0x100000,
+    font_layout_mask         = 0xFF0000,
+    font_layout_shft         = 16,
+    font_layout_sup          = 0x010000,
+    font_layout_sub          = 0x020000,
+    font_layout_framed       = 0x040000,
+    font_layout_upper_half   = 0x080000,
+    font_layout_lower_half   = 0x100000,
+    font_layout_proportional = 0x200000,
   };
 
   class font_store_t {
@@ -115,22 +147,23 @@ namespace twin {
       }
     }
   public:
-    font_store_t() {
+    font_store_t(twin_settings const& settings) {
       std::fill(std::begin(m_fonts), std::end(m_fonts), (HFONT) NULL);
       std::fill(std::begin(m_cache), std::end(m_cache), std::pair<font_t, HFONT>(0u, NULL));
       std::fill(std::begin(m_fontnames), std::end(m_fontnames), (LPCTSTR) NULL);
 
-      // My configuration
-      m_fontnames[0] = TEXT("MeiryoKe_Console");
-      m_fontnames[1] = TEXT("MS Gothic");
-      m_fontnames[2] = TEXT("MS Mincho");
-      m_fontnames[3] = TEXT("HGMaruGothicMPRO"); // HG丸ｺﾞｼｯｸM-PRO
-      m_fontnames[4] = TEXT("HGKyokashotai"); // HG教科書体
-      m_fontnames[5] = TEXT("HGGyoshotai"); // HG行書体
-      m_fontnames[6] = TEXT("HGSeikaishotaiPRO"); // HG正楷書体-PRO
-      m_fontnames[7] = TEXT("HGSoeiKakupoptai"); // HG創英角ﾎﾟｯﾌﾟ体
-      m_fontnames[8] = TEXT("HGGothicM"); // HGｺﾞｼｯｸM
-      m_fontnames[9] = TEXT("HGMinchoB"); // HG明朝B
+      // My configuration@font
+      m_fontnames[0]  = TEXT("MeiryoKe_Console");
+      m_fontnames[1]  = TEXT("MS Gothic");
+      m_fontnames[2]  = TEXT("MS Mincho");
+      m_fontnames[3]  = TEXT("HGMaruGothicMPRO"); // HG丸ｺﾞｼｯｸM-PRO
+      m_fontnames[4]  = TEXT("HGKyokashotai"); // HG教科書体
+      m_fontnames[5]  = TEXT("HGGyoshotai"); // HG行書体
+      m_fontnames[6]  = TEXT("HGSeikaishotaiPRO"); // HG正楷書体-PRO
+      m_fontnames[7]  = TEXT("HGSoeiKakupoptai"); // HG創英角ﾎﾟｯﾌﾟ体
+      // m_fontnames[8]  = TEXT("HGGothicM"); // HGｺﾞｼｯｸM
+      // m_fontnames[9]  = TEXT("HGMinchoB"); // HG明朝B
+      m_fontnames[9]  = TEXT("Times New Roman"); // HG明朝B
       m_fontnames[10] = TEXT("aghtex_mathfrak");
 
       // ゴシック系のフォント
@@ -143,8 +176,8 @@ namespace twin {
       //   HG創英ﾌﾟﾚｾﾞﾝｽEB
 
       // default settings
-      m_height = 13;
-      m_width = 7;
+      m_width = settings.m_xpixel;
+      m_height = settings.m_ypixel;
       m_logfont_normal.lfHeight = m_height;
       m_logfont_normal.lfWidth  = m_width;
       m_logfont_normal.lfEscapement = 0;
@@ -159,7 +192,7 @@ namespace twin {
       //m_logfont_normal.lfClipPrecision = CLIP_DEFAULT_PRECIS;
       m_logfont_normal.lfQuality = CLEARTYPE_QUALITY;
       m_logfont_normal.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-      xcscpy_s(m_logfont_normal.lfFaceName, LF_FACESIZE, TEXT("MeiryoKe_Console"));
+      xcscpy_s(m_logfont_normal.lfFaceName, LF_FACESIZE, m_fontnames[0]);
     }
 
     void set_size(LONG width, LONG height) {
@@ -294,40 +327,9 @@ namespace twin {
 
   LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-  struct twin_settings {
-    curpos_t m_col = 80;//@size
-    curpos_t m_row = 30;
-    coord_t m_xpixel = 7;
-    coord_t m_ypixel = 13;
-    coord_t window_size_xadjust = 0;
-    coord_t window_size_yadjust = 0;
-    coord_t m_xframe = 1;
-    coord_t m_yframe = 1;
-
-    coord_t m_caret_underline_min_height = 2;
-    coord_t m_caret_vertical_min_width = 2;
-    bool m_caret_hide_on_ime = true;
-    UINT m_caret_interval = 400;
-
-  public:
-    coord_t calculate_client_width() const {
-      return m_xpixel * m_col + 2 * m_xframe;
-    }
-    coord_t calculate_client_height() const {
-      return m_ypixel * m_row + 2 * m_yframe;
-    }
-    coord_t calculate_window_width() const {
-      return calculate_client_width() + window_size_xadjust;
-    }
-    coord_t calculate_window_height() const {
-      return calculate_client_height() + window_size_yadjust;
-    }
-
-  };
-
   class twin_window_t {
     twin_settings settings;
-    font_store_t fstore;
+    font_store_t fstore { settings };
 
     terminal_session sess;
 
@@ -760,6 +762,9 @@ namespace twin {
         if (attr.xflags & (attribute_t::is_frame_set | attribute_t::is_circle_set))
           ret |= font_flag_small | font_layout_framed;
 
+        if (attr.xflags & attribute_t::is_proportional_set)
+          ret |= font_layout_proportional;
+
         if (xflags_t const sco = (attr.xflags & attribute_t::sco_mask) >> attribute_t::sco_shift)
           ret |= font_rotation_mask & sco << font_rotation_shft;
 
@@ -898,8 +903,8 @@ namespace twin {
       tstate_t const& s = sess.term().state();
 
       constexpr std::uint32_t flag_processed = character_t::flag_private1;
-      auto _visible = [] (std::uint32_t code, aflags_t aflags) {
-        return code != ascii_nul && code != ascii_sp
+      auto _visible = [] (std::uint32_t code, aflags_t aflags, bool sp_visible = false) {
+        return code != ascii_nul && (sp_visible || code != ascii_sp)
           && character_t::is_char(code & flag_processed)
           && !(aflags & attribute_t::is_invisible_set);
       };
@@ -975,11 +980,13 @@ namespace twin {
             // 零幅の cluster などだけ一緒に描画する。
             if ((font & font_rotation_mask) && cell2_progress) break;
 
-            if (!_visible(code2, cell2.attribute.aflags)) {
+            if (!_visible(code2, cell2.attribute.aflags, font & font_layout_proportional)) {
+              if (font & font_layout_proportional) break;
               progress.back() += cell2_progress;
             } else if (fg == _color.resolve_fg(cell2.attribute) && font == _font.resolve_font(cell2.attribute)) {
               _push_char(code2, cell2_progress, cell2.width, dx2);
             } else {
+              if (font & font_layout_proportional) break;
               progress.back() += cell2_progress;
               continue;
             }
@@ -1002,6 +1009,9 @@ namespace twin {
 
           if (font & font_rotation_mask) {
             this->draw_rotated_text_ext(hdc, x0 + dx, y + dy, characters, progress, font);
+          } else if (font & font_layout_proportional) {
+            // 配置を GDI に任せる
+            ::TextOut(hdc, x0 + dx, y + dy, &characters[0], characters.size());
           } else {
             ::ExtTextOut(hdc, x0 + dx, y + dy, 0, NULL, &characters[0], characters.size(), &progress[0]);
           }
