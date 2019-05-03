@@ -32,9 +32,6 @@
 namespace contra {
 namespace twin {
 
-  using namespace contra::term;
-  using namespace contra::ansi;
-
   template<typename XCH>
   int xcscpy_s(XCH* dst, std::size_t sz, const XCH* src) {
     if (!sz--) return 1;
@@ -43,6 +40,11 @@ namespace twin {
     *dst = '\0';
     return 0;
   }
+
+  using namespace contra::term;
+  using namespace contra::ansi;
+
+  typedef std::int32_t coord_t;
 
   typedef std::uint32_t font_t;
 
@@ -90,7 +92,7 @@ namespace twin {
     font_layout_lower_half = 0x100000,
   };
 
-  class font_store {
+  class font_store_t {
     LOGFONT m_logfont_normal;
 
     HFONT m_fonts[1u << font_basic_bits];
@@ -113,7 +115,7 @@ namespace twin {
       }
     }
   public:
-    font_store() {
+    font_store_t() {
       std::fill(std::begin(m_fonts), std::end(m_fonts), (HFONT) NULL);
       std::fill(std::begin(m_cache), std::end(m_cache), std::pair<font_t, HFONT>(0u, NULL));
       std::fill(std::begin(m_fontnames), std::end(m_fontnames), (LPCTSTR) NULL);
@@ -179,11 +181,11 @@ namespace twin {
 
 
   public:
-    std::size_t small_height() const {
-      return std::max<std::size_t>(8u, std::min(m_height - 4, (m_height * 7 + 9) / 10));
+    coord_t small_height() const {
+      return std::max<coord_t>(8u, std::min(m_height - 4, (m_height * 7 + 9) / 10));
     }
-    std::size_t small_width() const {
-      return std::max<std::size_t>(4u, std::min(m_width - 4, (m_width * 8 + 9) / 10));
+    coord_t small_width() const {
+      return std::max<coord_t>(4u, std::min(m_width - 4, (m_width * 8 + 9) / 10));
     }
 
   public:
@@ -250,7 +252,13 @@ namespace twin {
       }
     }
 
-    std::tuple<std::size_t, std::size_t, double> get_displacement(font_t font) {
+    /*?lwiki
+     * @fn std::tuple<coord_t, coord_t, double> get_displacement(font_t font);
+     * @return dx は描画の際の横のずれ量
+     * @return dy は描画の際の縦のずれ量
+     * @return dx2 は (文字の幅-1) に比例して増える各文字の横のずれ量
+     */
+    std::tuple<coord_t, coord_t, double> get_displacement(font_t font) {
       double dx = 0, dy = 0, dx2 = 0;
       if (font & (font_layout_mask | font_decdwl | font_flag_italic)) {
         if (font & font_layout_sup)
@@ -265,7 +273,7 @@ namespace twin {
           dy += 0.5 * (m_height - this->small_height());
         }
         if ((font & font_flag_italic) && !(font & font_rotation_mask)) {
-          std::size_t width = this->width();
+          coord_t width = this->width();
           if (font & (font_layout_framed | font_layout_sup | font_layout_sub))
             width = this->small_width();
           dx -= 0.2 * width;
@@ -279,7 +287,7 @@ namespace twin {
       return {dx, dy, dx2};
     }
 
-    ~font_store() {
+    ~font_store_t() {
       release();
     }
   };
@@ -287,37 +295,39 @@ namespace twin {
   LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
   struct twin_settings {
-    std::size_t m_col = 80;//@size
-    std::size_t m_row = 30;
-    std::size_t m_xpixel = 7;
-    std::size_t m_ypixel = 13;
-    std::size_t window_size_xadjust = 0;
-    std::size_t window_size_yadjust = 0;
-    std::size_t m_xframe = 1;
-    std::size_t m_yframe = 1;
+    curpos_t m_col = 80;//@size
+    curpos_t m_row = 30;
+    coord_t m_xpixel = 7;
+    coord_t m_ypixel = 13;
+    coord_t window_size_xadjust = 0;
+    coord_t window_size_yadjust = 0;
+    coord_t m_xframe = 1;
+    coord_t m_yframe = 1;
 
-    std::size_t m_caret_underline_min_height = 2;
-    std::size_t m_caret_vertical_min_width = 2;
+    coord_t m_caret_underline_min_height = 2;
+    coord_t m_caret_vertical_min_width = 2;
     bool m_caret_hide_on_ime = true;
+    UINT m_caret_interval = 400;
+
   public:
-    std::size_t calculate_client_width() const {
+    coord_t calculate_client_width() const {
       return m_xpixel * m_col + 2 * m_xframe;
     }
-    std::size_t calculate_client_height() const {
+    coord_t calculate_client_height() const {
       return m_ypixel * m_row + 2 * m_yframe;
     }
-    std::size_t calculate_window_width() const {
+    coord_t calculate_window_width() const {
       return calculate_client_width() + window_size_xadjust;
     }
-    std::size_t calculate_window_height() const {
+    coord_t calculate_window_height() const {
       return calculate_client_height() + window_size_yadjust;
     }
 
   };
 
-  class main_window_t {
+  class twin_window_t {
     twin_settings settings;
-    font_store fstore;
+    font_store_t fstore;
 
     terminal_session sess;
 
@@ -354,7 +364,7 @@ namespace twin {
       this->hWnd = CreateWindowEx(
         0, //WS_EX_COMPOSITED,
         szClassName,
-        TEXT("Contra/Twin"),
+        TEXT("Contra/Cygwin"),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
@@ -375,8 +385,8 @@ namespace twin {
       ::GetClientRect(hWnd, &rcClient);
       LONG const width = rcClient.right - rcClient.left;
       LONG const height = rcClient.bottom - rcClient.top;
-      std::size_t const xadjust = settings.calculate_client_width() - (std::size_t) width;
-      std::size_t const yadjust = settings.calculate_client_height() - (std::size_t) height;
+      coord_t const xadjust = settings.calculate_client_width() - (coord_t) width;
+      coord_t const yadjust = settings.calculate_client_height() - (coord_t) height;
       if (xadjust || yadjust) {
         settings.window_size_xadjust += xadjust;
         settings.window_size_yadjust += yadjust;
@@ -391,10 +401,10 @@ namespace twin {
       if (!is_session_ready()) return;
       RECT rcClient;
       ::GetClientRect(hWnd, &rcClient);
-      std::size_t const width = rcClient.right - rcClient.left;
-      std::size_t const height = rcClient.bottom - rcClient.top;
-      std::size_t const new_col = std::max(1u, (width - 2 * settings.m_xframe) / settings.m_xpixel);
-      std::size_t const new_row = std::max(1u, (height - 2 * settings.m_yframe) / settings.m_ypixel);
+      coord_t const width = rcClient.right - rcClient.left;
+      coord_t const height = rcClient.bottom - rcClient.top;
+      curpos_t const new_col = std::max(1, (width - 2 * settings.m_xframe) / settings.m_xpixel);
+      curpos_t const new_row = std::max(1, (height - 2 * settings.m_yframe) / settings.m_ypixel);
 
       if (new_col != settings.m_col || new_row != settings.m_row) {
         settings.m_col = new_col;
@@ -466,26 +476,26 @@ namespace twin {
     public:
       status_tracer_t() {}
 
-      bool is_changed(main_window_t* _this) {
+      bool is_changed(twin_window_t* _this) {
         return is_metric_changed(_this) ||
           is_content_changed(_this) ||
           is_cursor_changed(_this);
       }
-      void store(main_window_t* _this) {
+      void store(twin_window_t* _this) {
         store_metric(_this);
         store_content(_this);
         store_cursor(_this);
       }
 
     private:
-      std::size_t m_xframe = 0;
-      std::size_t m_yframe = 0;
-      std::size_t m_col = 0;
-      std::size_t m_row = 0;
-      std::size_t m_xpixel = 0;
-      std::size_t m_ypixel = 0;
+      coord_t m_xframe = 0;
+      coord_t m_yframe = 0;
+      curpos_t m_col = 0;
+      curpos_t m_row = 0;
+      coord_t m_xpixel = 0;
+      coord_t m_ypixel = 0;
     public:
-      bool is_metric_changed(main_window_t* _this) {
+      bool is_metric_changed(twin_window_t* _this) {
         twin_settings const& st = _this->settings;
         if (m_xframe != st.m_xframe) return true;
         if (m_yframe != st.m_yframe) return true;
@@ -495,7 +505,7 @@ namespace twin {
         if (m_ypixel != st.m_ypixel) return true;
         return false;
       }
-      void store_metric(main_window_t* _this) {
+      void store_metric(twin_window_t* _this) {
         twin_settings const& st = _this->settings;
         m_xframe = st.m_xframe;
         m_yframe = st.m_yframe;
@@ -512,7 +522,7 @@ namespace twin {
       };
       std::vector<line_trace_t> m_lines;
     public:
-      bool is_content_changed(main_window_t* _this) {
+      bool is_content_changed(twin_window_t* _this) {
         board_t const& b = _this->sess.term().board();
         std::size_t const height = b.m_height;
         if (height != m_lines.size()) return true;
@@ -523,7 +533,7 @@ namespace twin {
         }
         return false;
       }
-      void store_content(main_window_t* _this) {
+      void store_content(twin_window_t* _this) {
         board_t const& b = _this->sess.term().board();
         m_lines.resize(b.m_lines.size());
         for (std::size_t i = 0; i < m_lines.size(); i++) {
@@ -544,7 +554,7 @@ namespace twin {
     public:
       curpos_t cur_x() const { return m_cur_x; }
       curpos_t cur_y() const { return m_cur_y; }
-      bool is_cursor_changed(main_window_t* _this) {
+      bool is_cursor_changed(twin_window_t* _this) {
         if (m_cur_visible != _this->is_cursor_visible()) return true;
         term_t const& term = _this->sess.term();
         board_t const& b = term.board();
@@ -553,7 +563,7 @@ namespace twin {
         if (m_cur_blinking != term.state().is_cursor_blinking()) return true;
         return false;
       }
-      void store_cursor(main_window_t* _this) {
+      void store_cursor(twin_window_t* _this) {
         m_cur_visible = _this->is_cursor_visible();
         term_t const& term = _this->sess.term();
         board_t const& b = term.board();
@@ -568,8 +578,8 @@ namespace twin {
 
   private:
     static constexpr UINT cursor_timer_id = 10; // 適当
+    static constexpr UINT blinkingd_timer_id = 11; // 適当
     UINT m_cursor_timer_id = 0;
-    UINT m_cursor_interval = 400;
     int m_cursor_timer_count = 0;
 
     void unset_cursor_timer() {
@@ -579,7 +589,7 @@ namespace twin {
     void reset_cursor_timer() {
       if (!is_session_ready()) return;
       this->unset_cursor_timer();
-      m_cursor_timer_id = ::SetTimer(hWnd, cursor_timer_id, m_cursor_interval, NULL);
+      m_cursor_timer_id = ::SetTimer(hWnd, cursor_timer_id, settings.m_caret_interval, NULL);
       m_cursor_timer_count = 0;
     }
     void process_cursor_timer() {
@@ -599,15 +609,15 @@ namespace twin {
       bool const xenl = b.cur.xenl();
       int const cursor_shape = term.state().m_cursor_shape;
 
-      std::size_t const xorigin = settings.m_xframe;
-      std::size_t const yorigin = settings.m_yframe;
-      std::size_t const ypixel = settings.m_ypixel;
-      std::size_t const xpixel = settings.m_xpixel;
+      coord_t const xorigin = settings.m_xframe;
+      coord_t const yorigin = settings.m_yframe;
+      coord_t const ypixel = settings.m_ypixel;
+      coord_t const xpixel = settings.m_xpixel;
 
-      std::size_t x0 = xorigin + xpixel * x;
-      std::size_t const y0 = yorigin + ypixel * y;
+      coord_t x0 = xorigin + xpixel * x;
+      coord_t const y0 = yorigin + ypixel * y;
 
-      std::size_t size;
+      coord_t size;
       bool underline = false;
       if (xenl) {
         // 行末にいる時は設定に関係なく縦棒にする。
@@ -624,11 +634,11 @@ namespace twin {
       }
 
       if (underline) {
-        std::size_t const height = std::min(ypixel, std::max(size, settings.m_caret_underline_min_height));
-        std::size_t const x1 = x0, y1 = y0 + ypixel - height;
+        coord_t const height = std::min(ypixel, std::max(size, settings.m_caret_underline_min_height));
+        coord_t const x1 = x0, y1 = y0 + ypixel - height;
         ::PatBlt(hdc, x1, y1, xpixel, height, DSTINVERT);
       } else {
-        std::size_t const width = std::min(xpixel, std::max(size, settings.m_caret_vertical_min_width));
+        coord_t const width = std::min(xpixel, std::max(size, settings.m_caret_vertical_min_width));
         ::PatBlt(hdc, x0, y0, width, ypixel, DSTINVERT);
       }
     }
@@ -774,10 +784,10 @@ namespace twin {
 
     void draw_background(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
-      std::size_t const xorigin = settings.m_xframe;
-      std::size_t const yorigin = settings.m_yframe;
-      std::size_t const ypixel = settings.m_ypixel;
-      std::size_t const xpixel = settings.m_xpixel;
+      coord_t const xorigin = settings.m_xframe;
+      coord_t const yorigin = settings.m_yframe;
+      coord_t const ypixel = settings.m_ypixel;
+      coord_t const xpixel = settings.m_xpixel;
       board_t const& b = sess.board();
       tstate_t const& s = sess.term().state();
       color_resolver_t _color(s);
@@ -791,8 +801,8 @@ namespace twin {
         ::DeleteObject(brush);
       }
 
-      std::size_t x = xorigin, y = yorigin;
-      std::size_t x0 = x;
+      coord_t x = xorigin, y = yorigin;
+      coord_t x0 = x;
       color_t bg0 = 0;
       auto _fill = [=, &x, &y, &x0, &bg0] () {
         if (x0 >= x || !bg0) return;
@@ -822,10 +832,10 @@ namespace twin {
       }
     }
 
-    void draw_rotated_text_ext(HDC hdc, std::size_t x0, std::size_t y0, std::vector<TCHAR> const& characters, std::vector<INT> const& progress, font_t font) {
+    void draw_rotated_text_ext(HDC hdc, coord_t x0, coord_t y0, std::vector<TCHAR> const& characters, std::vector<INT> const& progress, font_t font) {
       font_t const sco = (font & font_rotation_mask) >> font_rotation_shft;
       double const angle = -(M_PI / 4.0) * sco;
-      std::size_t const ypixel = settings.m_ypixel;
+      coord_t const ypixel = settings.m_ypixel;
 
       INT const prog = std::accumulate(progress.begin(), progress.end(), (INT) 0);
 
@@ -847,7 +857,7 @@ namespace twin {
     class decdhl_region_holder_t {
       LONG width, height;
       HRGN rgn1 = NULL, rgn2 = NULL;
-      std::size_t y = 0, ypixel = 0;
+      coord_t y = 0, ypixel = 0;
       void release() {
         if (rgn1) {
           ::DeleteObject(rgn1);
@@ -863,7 +873,7 @@ namespace twin {
       ~decdhl_region_holder_t() {
         release();
       }
-      void next_line(std::size_t y, std::size_t ypixel) {
+      void next_line(coord_t y, coord_t ypixel) {
         release();
         this->y = y;
         this->ypixel = ypixel;
@@ -880,10 +890,10 @@ namespace twin {
 
     void draw_characters(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
-      std::size_t const xorigin = settings.m_xframe;
-      std::size_t const yorigin = settings.m_yframe;
-      std::size_t const ypixel = settings.m_ypixel;
-      std::size_t const xpixel = settings.m_xpixel;
+      coord_t const xorigin = settings.m_xframe;
+      coord_t const yorigin = settings.m_yframe;
+      coord_t const ypixel = settings.m_ypixel;
+      coord_t const xpixel = settings.m_xpixel;
       board_t const& b = sess.board();
       tstate_t const& s = sess.term().state();
 
@@ -897,7 +907,7 @@ namespace twin {
       color_resolver_t _color(s);
       font_resolver_t _font;
 
-      std::size_t x = xorigin, y = yorigin, x0 = xorigin;
+      coord_t x = xorigin, y = yorigin, x0 = xorigin;
       std::vector<TCHAR> characters;
       std::vector<INT> progress;
       auto _push_char = [&characters, &progress, &x0] (std::uint32_t code, INT prog, curpos_t width, double dx2) {
@@ -937,7 +947,7 @@ namespace twin {
           auto const& cell = cells[i++];
           auto const& attr = cell.attribute;
           x0 = x;
-          std::size_t const cell_progress = cell.width * xpixel;
+          coord_t const cell_progress = cell.width * xpixel;
           x += cell_progress;
           std::uint32_t code = cell.character.value;
           code &= ~character_t::flag_cluster_extension;
@@ -959,7 +969,7 @@ namespace twin {
             auto const& cell2 = cells[j];
             std::uint32_t code2 = cell2.character.value;
             code &= ~character_t::flag_cluster_extension;
-            std::size_t const cell2_progress = cell2.width * xpixel;
+            coord_t const cell2_progress = cell2.width * xpixel;
 
             // 回転文字の場合は一つずつ書かなければならない。
             // 零幅の cluster などだけ一緒に描画する。
@@ -1008,7 +1018,7 @@ namespace twin {
 
     template<typename F>
     struct decoration_horizontal_t {
-      std::size_t x0 = 0;
+      coord_t x0 = 0;
       std::uint32_t style = 0;
       F _draw;
 
@@ -1016,7 +1026,7 @@ namespace twin {
       decoration_horizontal_t(F draw): _draw(draw) {}
 
     public:
-      void update(curpos_t x, std::size_t new_style, xflags_t xflags) {
+      void update(curpos_t x, std::uint32_t new_style, xflags_t xflags) {
         if (new_style) {
           switch (xflags & attribute_t::decdhl_mask) {
           case attribute_t::decdhl_upper_half:
@@ -1075,22 +1085,22 @@ namespace twin {
 
     void draw_decoration(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
-      std::size_t const xorigin = settings.m_xframe;
-      std::size_t const yorigin = settings.m_yframe;
-      std::size_t const ypixel = settings.m_ypixel;
-      std::size_t const xpixel = settings.m_xpixel;
+      coord_t const xorigin = settings.m_xframe;
+      coord_t const yorigin = settings.m_yframe;
+      coord_t const ypixel = settings.m_ypixel;
+      coord_t const xpixel = settings.m_xpixel;
       board_t const& b = sess.board();
       tstate_t const& s = sess.term().state();
       color_resolver_t _color(s);
 
-      std::size_t x = xorigin, y = yorigin;
+      coord_t x = xorigin, y = yorigin;
 
       color_t color0 = 0;
       brush_holder_t brush;
       decdhl_region_holder_t region(m_background.width(), m_background.height());
 
-      decoration_horizontal_t dec_ul([&] (std::size_t x1, std::size_t x2, std::uint32_t style) {
-        std::size_t h = (std::size_t) std::ceil(ypixel * 0.05);
+      decoration_horizontal_t dec_ul([&] (coord_t x1, coord_t x2, std::uint32_t style) {
+        coord_t h = (coord_t) std::ceil(ypixel * 0.05);
         switch (style & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_upper_half: return;
         case attribute_t::decdhl_lower_half:
@@ -1107,10 +1117,10 @@ namespace twin {
         }
       });
 
-      decoration_horizontal_t dec_sl([&] (std::size_t x1, std::size_t x2, std::uint32_t style) {
+      decoration_horizontal_t dec_sl([&] (coord_t x1, coord_t x2, std::uint32_t style) {
         HBRUSH const hbr = brush.get_brush(color0);
         RECT rc;
-        std::size_t h = (std::size_t) std::ceil(ypixel * 0.05), y2 = y + ypixel / 2;
+        coord_t h = (coord_t) std::ceil(ypixel * 0.05), y2 = y + ypixel / 2;
         if ((style & ~attribute_t::decdhl_mask) != 2) {
           // 一重打ち消し線
           switch (style & attribute_t::decdhl_mask) {
@@ -1137,8 +1147,8 @@ namespace twin {
         ::FillRect(hdc, &rc, hbr);
       });
 
-      decoration_horizontal_t dec_ol([&] (std::size_t x1, std::size_t x2, std::uint32_t style) {
-        std::size_t h = (std::size_t) std::ceil(ypixel * 0.05);
+      decoration_horizontal_t dec_ol([&] (coord_t x1, coord_t x2, std::uint32_t style) {
+        coord_t h = (coord_t) std::ceil(ypixel * 0.05);
         switch (style & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_lower_half: return;
         case attribute_t::decdhl_upper_half:
@@ -1155,9 +1165,9 @@ namespace twin {
         }
       });
 
-      auto _draw_frame = [&] (std::size_t x1, std::size_t x2, xflags_t xflags, int lline, int rline) {
+      auto _draw_frame = [&] (coord_t x1, coord_t x2, xflags_t xflags, int lline, int rline) {
         // 上の線と下の線は dec_ul, dec_ol に任せる。
-        std::size_t w = (std::size_t) std::ceil(ypixel * 0.05);
+        coord_t w = (coord_t) std::ceil(ypixel * 0.05);
         if (xflags & attribute_t::decdhl_mask) w *= 2;
         HBRUSH const hbr = brush.get_brush(color0);
         RECT rc;
@@ -1179,9 +1189,9 @@ namespace twin {
         }
       };
 
-      auto _draw_circle = [&] (std::size_t x1, std::size_t x2, xflags_t xflags) {
-        std::size_t w = (std::size_t) std::ceil(ypixel * 0.04);
-        std::size_t y1 = y, y2 = y + ypixel;
+      auto _draw_circle = [&] (coord_t x1, coord_t x2, xflags_t xflags) {
+        coord_t w = (coord_t) std::ceil(ypixel * 0.04);
+        coord_t y1 = y, y2 = y + ypixel;
         bool is_clipped = false;
         switch (xflags & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_upper_half:
@@ -1206,7 +1216,7 @@ namespace twin {
           ::SelectClipRgn(hdc, NULL);
       };
 
-      auto _draw_stress = [&] (std::size_t x1, std::size_t x2, xflags_t xflags) {
+      auto _draw_stress = [&] (coord_t x1, coord_t x2, xflags_t xflags) {
         double w1 = ypixel * 0.15, h1 = ypixel * 0.15;
         switch (xflags & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_lower_half: return;
@@ -1218,12 +1228,12 @@ namespace twin {
           w1 *= 2.0;
           break;
         }
-        std::size_t const w = std::max<std::size_t>(4, std::ceil(w1));
-        std::size_t const h = std::max<std::size_t>(4, std::ceil(h1));
-        std::size_t const xL = (x1 + x2 - w - 1) / 2;
-        std::size_t const xR = xL + w;
-        std::size_t const yT = y - h;
-        std::size_t const yB = yT + h;
+        coord_t const w = std::max<coord_t>(4, std::ceil(w1));
+        coord_t const h = std::max<coord_t>(4, std::ceil(h1));
+        coord_t const xL = (x1 + x2 - w - 1) / 2;
+        coord_t const xR = xL + w;
+        coord_t const yT = y - h;
+        coord_t const yB = yT + h;
         ::SelectObject(hdc, ::GetStockObject(NULL_PEN));
         ::SelectObject(hdc, brush.get_brush(color0));
         ::Ellipse(hdc, xL, yT, xR + 1, yB + 1);
@@ -1241,7 +1251,7 @@ namespace twin {
           auto const& code = cell.character.value;
           auto const& aflags = cell.attribute.aflags;
           auto const& xflags = cell.attribute.xflags;
-          std::size_t const cell_width = cell.width * xpixel;
+          coord_t const cell_width = cell.width * xpixel;
           color_t const color = code != ascii_nul && !(aflags & attribute_t::is_invisible_set) ? _color.resolve_fg(cell.attribute) : 0;
           if (color != color0) {
             dec_ul.update(x, 0, (xflags_t) 0);
@@ -1300,10 +1310,10 @@ namespace twin {
 
     void draw_characters_mono(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>> const& content) {
       using namespace contra::ansi;
-      std::size_t const xorigin = settings.m_xframe;
-      std::size_t const yorigin = settings.m_yframe;
-      std::size_t const ypixel = settings.m_ypixel;
-      std::size_t const xpixel = settings.m_xpixel;
+      coord_t const xorigin = settings.m_xframe;
+      coord_t const yorigin = settings.m_yframe;
+      coord_t const ypixel = settings.m_ypixel;
+      coord_t const xpixel = settings.m_xpixel;
       board_t const& b = sess.board();
 
       std::vector<cell_t> cells;
@@ -1312,8 +1322,8 @@ namespace twin {
       for (curpos_t y = 0; y < b.m_height; y++) {
         std::vector<cell_t> const& cells = content[y];
 
-        std::size_t xoffset = xorigin;
-        std::size_t yoffset = yorigin + y * ypixel;
+        coord_t xoffset = xorigin;
+        coord_t yoffset = yorigin + y * ypixel;
         characters.clear();
         progress.clear();
         characters.reserve(cells.size());
@@ -1378,8 +1388,8 @@ namespace twin {
 
       if (!full_update) {
         // 前回のカーソル位置のセルをカーソルなしに戻す。
-        std::size_t const old_x1 = settings.m_xframe + settings.m_xpixel * m_tracer.cur_x();
-        std::size_t const old_y1 = settings.m_yframe + settings.m_ypixel * m_tracer.cur_y();
+        coord_t const old_x1 = settings.m_xframe + settings.m_xpixel * m_tracer.cur_x();
+        coord_t const old_y1 = settings.m_yframe + settings.m_ypixel * m_tracer.cur_y();
         ::BitBlt(hdc0, old_x1, old_y1, settings.m_xpixel, settings.m_ypixel, hdc1, old_x1, old_y1, SRCCOPY);
       }
       if (cursor_visible && (!cursor_blinking || !(m_cursor_timer_count & 1)))
@@ -1557,8 +1567,8 @@ namespace twin {
       if (::GetClientRect(hWnd, &rcClient)) {
         auto const& b = sess.term().board();
         COMPOSITIONFORM form;
-        std::size_t const x0 = rcClient.left + settings.m_xframe + settings.m_xpixel * b.cur.x();
-        std::size_t const y0 = rcClient.top + settings.m_yframe + settings.m_ypixel * b.cur.y();
+        coord_t const x0 = rcClient.left + settings.m_xframe + settings.m_xpixel * b.cur.x();
+        coord_t const y0 = rcClient.top + settings.m_yframe + settings.m_ypixel * b.cur.y();
         form.dwStyle = CFS_POINT;
         form.ptCurrentPos.x = x0;
         form.ptCurrentPos.y = y0 + dy;
@@ -1722,7 +1732,7 @@ namespace twin {
     }
   };
 
-  main_window_t main_window;
+  twin_window_t main_window;
 
   LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return main_window.process_message(hWnd, msg, wParam, lParam);
