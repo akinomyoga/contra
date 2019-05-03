@@ -289,8 +289,8 @@ namespace twin {
   struct twin_settings {
     std::size_t m_col = 80;//@size
     std::size_t m_row = 30;
-    std::size_t m_xpixel = 14;
-    std::size_t m_ypixel = 26;
+    std::size_t m_xpixel = 7;
+    std::size_t m_ypixel = 13;
     std::size_t window_size_xadjust = 0;
     std::size_t window_size_yadjust = 0;
     std::size_t m_xframe = 1;
@@ -404,40 +404,54 @@ namespace twin {
     }
 
   private:
-
     class compatible_bitmap_t {
       LONG m_width = -1, m_height = -1;
-      HDC m_hdc = NULL;
-      HBITMAP m_bmp = NULL;
+      struct layer_t {
+        HDC hdc = NULL;
+        HBITMAP hbmp = NULL;
+      };
+      std::vector<layer_t> m_layers;
 
       void release() {
-        if (m_hdc) {
-          ::DeleteDC(m_hdc);
-          m_hdc = NULL;
+        for (layer_t const& layer : m_layers) {
+          if (layer.hdc) ::DeleteDC(layer.hdc);
+          if (layer.hbmp) ::DeleteObject(layer.hbmp);
         }
-        if (m_bmp) {
-          ::DeleteObject(m_bmp);
-          m_bmp = NULL;
-        }
+        m_layers.clear();
       }
 
-    public:
-      HDC hdc(HWND hWnd, HDC hdc) {
+    private:
+      void check_window_size(HWND hWnd, bool* out_resized = NULL) {
         RECT rcClient;
         ::GetClientRect(hWnd, &rcClient);
         LONG const width = rcClient.right - rcClient.left;
         LONG const height = rcClient.bottom - rcClient.top;
-        if (!m_hdc || !m_bmp || width != m_width || height != m_height) {
+        bool const is_resized = width != m_width || height != m_height;
+        if (is_resized) {
           release();
-          m_bmp = ::CreateCompatibleBitmap(hdc, width, height);
-          m_hdc = ::CreateCompatibleDC(hdc);
-          ::SelectObject(m_hdc, m_bmp);
           m_width = width;
           m_height = height;
         }
-        return m_hdc;
+        if (out_resized) *out_resized = is_resized;
       }
-      HBITMAP bmp() { return m_bmp; }
+    public:
+      HDC hdc(HWND hWnd, HDC hdc, std::size_t index = 0, bool* out_resized = NULL) {
+        if (out_resized)
+          check_window_size(hWnd, out_resized);
+        if (index < m_layers.size() && m_layers[index].hdc)
+          return m_layers[index].hdc;
+
+        if (index >= m_layers.size()) m_layers.resize(index + 1);
+        layer_t& layer = m_layers[index];
+        layer.hbmp = ::CreateCompatibleBitmap(hdc, m_width, m_height);
+        layer.hdc = ::CreateCompatibleDC(hdc);
+        ::SelectObject(layer.hdc, layer.hbmp);
+        return layer.hdc;
+      }
+
+      HBITMAP bmp(std::size_t index = 0) const {
+        return index < m_layers.size() ? m_layers[index].hbmp : (HBITMAP) NULL;
+      }
       LONG width() { return m_width; }
       LONG height() { return m_height; }
       ~compatible_bitmap_t() {
@@ -448,43 +462,171 @@ namespace twin {
     compatible_bitmap_t m_background;
 
   private:
-    void draw_cursor(HDC hdc) {
+    class status_tracer_t {
+    public:
+      status_tracer_t() {}
+
+      bool is_changed(main_window_t* _this) {
+        return is_metric_changed(_this) ||
+          is_content_changed(_this) ||
+          is_cursor_changed(_this);
+      }
+      void store(main_window_t* _this) {
+        store_metric(_this);
+        store_content(_this);
+        store_cursor(_this);
+      }
+
+    private:
+      std::size_t m_xframe = 0;
+      std::size_t m_yframe = 0;
+      std::size_t m_col = 0;
+      std::size_t m_row = 0;
+      std::size_t m_xpixel = 0;
+      std::size_t m_ypixel = 0;
+    public:
+      bool is_metric_changed(main_window_t* _this) {
+        twin_settings const& st = _this->settings;
+        if (m_xframe != st.m_xframe) return true;
+        if (m_yframe != st.m_yframe) return true;
+        if (m_col != st.m_col) return true;
+        if (m_row != st.m_row) return true;
+        if (m_xpixel != st.m_xpixel) return true;
+        if (m_ypixel != st.m_ypixel) return true;
+        return false;
+      }
+      void store_metric(main_window_t* _this) {
+        twin_settings const& st = _this->settings;
+        m_xframe = st.m_xframe;
+        m_yframe = st.m_yframe;
+        m_col = st.m_col;
+        m_row = st.m_row;
+        m_xpixel = st.m_xpixel;
+        m_ypixel = st.m_ypixel;
+      }
+
+    private:
+      struct line_trace_t {
+        std::uint32_t id = (std::uint32_t) -1;
+        std::uint32_t version = 0;
+      };
+      std::vector<line_trace_t> m_lines;
+    public:
+      bool is_content_changed(main_window_t* _this) {
+        board_t const& b = _this->sess.term().board();
+        std::size_t const height = b.m_height;
+        if (height != m_lines.size()) return true;
+        for (std::size_t iline = 0; iline < height; iline++) {
+          line_t const& line = b.line(iline);
+          if (line.id() != m_lines[iline].id) return true;
+          if (line.version() != m_lines[iline].version) return true;
+        }
+        return false;
+      }
+      void store_content(main_window_t* _this) {
+        board_t const& b = _this->sess.term().board();
+        m_lines.resize(b.m_lines.size());
+        for (std::size_t i = 0; i < m_lines.size(); i++) {
+          m_lines[i].id = b.m_lines[i].id();
+          m_lines[i].version = b.m_lines[i].version();
+        }
+      }
+
+    private:
+      // todo: カーソル状態の記録
+      //   実はカーソルは毎回描画でも良いのかもしれない
+      bool m_cur_visible = false;
+      bool m_cur_blinking = true;
+      curpos_t m_cur_x = 0;
+      curpos_t m_cur_y = 0;
+      bool m_cur_xenl = false;
+      int m_cur_shape = 0;
+    public:
+      curpos_t cur_x() const { return m_cur_x; }
+      curpos_t cur_y() const { return m_cur_y; }
+      bool is_cursor_changed(main_window_t* _this) {
+        if (m_cur_visible != _this->is_cursor_visible()) return true;
+        term_t const& term = _this->sess.term();
+        board_t const& b = term.board();
+        if (m_cur_x != b.cur.x() || m_cur_y != b.cur.y() || m_cur_xenl != b.cur.xenl()) return true;
+        if (m_cur_shape != term.state().get_cursor_shape()) return true;
+        if (m_cur_blinking != term.state().is_cursor_blinking()) return true;
+        return false;
+      }
+      void store_cursor(main_window_t* _this) {
+        m_cur_visible = _this->is_cursor_visible();
+        term_t const& term = _this->sess.term();
+        board_t const& b = term.board();
+        m_cur_x = b.cur.x();
+        m_cur_y = b.cur.y();
+        m_cur_xenl = b.cur.xenl();
+        m_cur_shape = term.state().m_cursor_shape;
+      }
+    };
+
+    status_tracer_t m_tracer;
+
+  private:
+    static constexpr UINT cursor_timer_id = 10; // 適当
+    UINT m_cursor_timer_id = 0;
+    UINT m_cursor_interval = 400;
+    int m_cursor_timer_count = 0;
+
+    void unset_cursor_timer() {
+      if (m_cursor_timer_id)
+        ::KillTimer(hWnd, m_cursor_timer_id);
+    }
+    void reset_cursor_timer() {
+      if (!is_session_ready()) return;
+      this->unset_cursor_timer();
+      m_cursor_timer_id = ::SetTimer(hWnd, cursor_timer_id, m_cursor_interval, NULL);
+      m_cursor_timer_count = 0;
+    }
+    void process_cursor_timer() {
+      m_cursor_timer_count++;
+      render_window();
+    }
+    bool is_cursor_visible() const {
       if (m_ime_composition_active &&
-        settings.m_caret_hide_on_ime) return;
+        settings.m_caret_hide_on_ime) return false;
+      return sess.term().state().is_cursor_visible();
+    }
+    void draw_cursor(HDC hdc) {
+      using namespace contra::ansi;
+      term_t const& term = sess.term();
+      board_t const& b = term.board();
+      curpos_t const x = b.cur.x(), y = b.cur.y();
+      bool const xenl = b.cur.xenl();
+      int const cursor_shape = term.state().m_cursor_shape;
 
       std::size_t const xorigin = settings.m_xframe;
       std::size_t const yorigin = settings.m_yframe;
       std::size_t const ypixel = settings.m_ypixel;
       std::size_t const xpixel = settings.m_xpixel;
 
-      using namespace contra::ansi;
-      term_t const& term = sess.term();
-      board_t const& b = term.board();
-      tstate_t const& s = term.state();
-      if (!s.get_mode(mode_dectcem)) return;
-
-      std::size_t x0 = xorigin + xpixel * b.x();
-      std::size_t const y0 = yorigin + ypixel * b.y();
+      std::size_t x0 = xorigin + xpixel * x;
+      std::size_t const y0 = yorigin + ypixel * y;
 
       std::size_t size;
       bool underline = false;
-      if (b.cur.xenl()) {
+      if (xenl) {
         // 行末にいる時は設定に関係なく縦棒にする。
         x0 -= 2;
         size = 2;
-      } else if (s.m_cursor_shape == 0) {
+      } else if (cursor_shape == 0) {
         underline = true;
         size = 3;
-      } else if (s.m_cursor_shape < 0) {
-        size = (xpixel * std::min(100, -s.m_cursor_shape) + 99) / 100;
-      } else if (s.m_cursor_shape) {
+      } else if (cursor_shape < 0) {
+        size = (xpixel * std::min(100, -cursor_shape) + 99) / 100;
+      } else if (cursor_shape) {
         underline = true;
-        size = (ypixel * std::min(100, s.m_cursor_shape) + 99) / 100;
+        size = (ypixel * std::min(100, cursor_shape) + 99) / 100;
       }
 
       if (underline) {
         std::size_t const height = std::min(ypixel, std::max(size, settings.m_caret_underline_min_height));
-        ::PatBlt(hdc, x0, y0 + ypixel - height, xpixel, height, DSTINVERT);
+        std::size_t const x1 = x0, y1 = y0 + ypixel - height;
+        ::PatBlt(hdc, x1, y1, xpixel, height, DSTINVERT);
       } else {
         std::size_t const width = std::min(xpixel, std::max(size, settings.m_caret_vertical_min_width));
         ::PatBlt(hdc, x0, y0, width, ypixel, DSTINVERT);
@@ -1195,31 +1337,69 @@ namespace twin {
           ExtTextOut(hdc, xoffset, yoffset, 0, NULL, &characters[0], characters.size(), &progress[0]);
       }
     }
-  private:
-    void paint_terminal_content(HDC hdc) {
-      ::SetBkMode(hdc, TRANSPARENT);
 
-      std::vector<std::vector<contra::ansi::cell_t>> content;
-      auto const& b = sess.board();
-      content.resize(b.m_height);
-      for (contra::ansi::curpos_t y = 0; y < b.m_height; y++) {
-        auto const& line = b.m_lines[y];
-        line.get_cells_in_presentation(content[y], b.line_r2l(line));
+    // Note: background buffer として 3 枚使う。
+    //   hdc0 ... 背景+内容+カーソル
+    //   hdc1 ... 背景+内容
+    //   hdc2 ... 背景 (未実装)
+    void paint_terminal_content(HDC hdc0, bool full_update) {
+      bool const content_changed = m_tracer.is_content_changed(this);
+      bool const cursor_changed = m_tracer.is_cursor_changed(this);
+
+      if (m_tracer.is_metric_changed(this)) full_update = true;
+      HDC const hdc1 = m_background.hdc(hWnd, hdc0, 1);
+      bool const content_redraw = full_update || content_changed;
+      if (content_redraw) {
+        std::vector<std::vector<contra::ansi::cell_t>> content;
+        auto const& b = sess.board();
+        content.resize(b.m_height);
+        for (contra::ansi::curpos_t y = 0; y < b.m_height; y++) {
+          auto const& line = b.m_lines[y];
+          line.get_cells_in_presentation(content[y], b.line_r2l(line));
+        }
+
+        ::SetBkMode(hdc1, TRANSPARENT);
+        //this->draw_characters_mono(hdc1, content);
+        this->draw_background(hdc1, content);
+        this->draw_characters(hdc1, content);
+        this->draw_decoration(hdc1, content);
+
+        // ToDo: 更新のあった部分だけ転送する?
+        ::BitBlt(hdc0, 0, 0, m_background.width(), m_background.height(), hdc1, 0, 0, SRCCOPY);
       }
 
-      //this->draw_characters_mono(hdc, content);
-      this->draw_background(hdc, content);
-      this->draw_characters(hdc, content);
-      this->draw_decoration(hdc, content);
-      this->draw_cursor(hdc);
+      tstate_t const& s = sess.term().state();
+      bool const cursor_blinking = s.is_cursor_blinking();
+      bool const cursor_visible = this->is_cursor_visible();
+      if (!cursor_visible || !cursor_blinking)
+        this->unset_cursor_timer();
+      else if (content_changed || cursor_changed)
+        this->reset_cursor_timer();
+
+      if (!full_update) {
+        // 前回のカーソル位置のセルをカーソルなしに戻す。
+        std::size_t const old_x1 = settings.m_xframe + settings.m_xpixel * m_tracer.cur_x();
+        std::size_t const old_y1 = settings.m_yframe + settings.m_ypixel * m_tracer.cur_y();
+        ::BitBlt(hdc0, old_x1, old_y1, settings.m_xpixel, settings.m_ypixel, hdc1, old_x1, old_y1, SRCCOPY);
+      }
+      if (cursor_visible && (!cursor_blinking || !(m_cursor_timer_count & 1)))
+        this->draw_cursor(hdc0);
+
+      // ToDo: 二重チェックになっている気がする。もっと効率的な実装?
+      m_tracer.store(this);
     }
 
-    bool render_window(HDC hdc) {
-      if (!is_session_ready()) return false;
-      HDC const hdc2 = m_background.hdc(hWnd, hdc);
-      paint_terminal_content(hdc2);
-      BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc2, 0, 0, SRCCOPY);
-      return true;
+    void render_window() {
+      if (!is_session_ready()) return;
+      HDC hdc = GetDC(hWnd);
+      {
+        bool resized = false;
+        HDC const hdc0 = m_background.hdc(hWnd, hdc, 0, &resized);
+        paint_terminal_content(hdc0, resized);
+        BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc0, 0, 0, SRCCOPY);
+      }
+      ReleaseDC(hWnd, hdc);
+      ::ValidateRect(hWnd, NULL);
     }
 
     enum extended_key_flags {
@@ -1353,9 +1533,15 @@ namespace twin {
       process_input((wParam & mask_unicode) | (modifiers & _modifier_mask));
     }
 
+  private:
     bool m_ime_composition_active = false;
+    void start_ime_composition() {
+      this->m_ime_composition_active = true;
+      this->render_window();
+      this->adjust_ime_composition();
+    }
     void adjust_ime_composition() {
-      if (!is_session_ready()) return;
+      if (!is_session_ready() || !m_ime_composition_active) return;
       util::raii hIMC(::ImmGetContext(hWnd), [this] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
 
       font_t const current_font = font_resolver_t().resolve_font(sess.term().board().cur.attribute) & ~font_rotation_mask;
@@ -1380,10 +1566,15 @@ namespace twin {
       }
     }
     void cancel_ime_composition() {
-      if (!is_session_ready()) return;
+      if (!is_session_ready() || !m_ime_composition_active) return;
       util::raii hIMC(::ImmGetContext(hWnd), [this] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
       ::ImmNotifyIME(hIMC, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
+      this->end_ime_composition();
+    }
+    void end_ime_composition() {
+      if (!m_ime_composition_active) return;
       m_ime_composition_active = false;
+      this->render_window();
     }
 
   public:
@@ -1399,18 +1590,32 @@ namespace twin {
           this->adjust_terminal_size_using_current_client_size();
         goto defproc;
       case WM_DESTROY:
-        //::PostQuitMessage(0);
+        ::PostQuitMessage(0);
         this->hWnd = NULL;
         return 0L;
       case WM_PAINT:
-        if (this->hWnd && this->sess.is_active()) {
+        if (is_session_ready()) {
           if (hWnd != this->hWnd) goto defproc;
           PAINTSTRUCT paint;
           HDC hdc = BeginPaint(hWnd, &paint);
-          this->render_window(hdc);
+
+          bool resized = false;
+          HDC const hdc0 = m_background.hdc(hWnd, hdc, 0, &resized);
+          if (resized) {
+            // 全体を再描画して全体を転送
+            paint_terminal_content(hdc0, resized);
+            ::SelectClipRgn(hdc, NULL);
+            BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc0, 0, 0, SRCCOPY);
+          } else {
+            // 必要な領域だけ転送
+            RECT const& rc = paint.rcPaint;
+            BitBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hdc0, rc.left, rc.top, SRCCOPY);
+          }
+
           EndPaint(hWnd, &paint);
         }
         return 0L;
+
       case WM_KEYDOWN:
       case WM_SYSKEYDOWN:
         if (hWnd != this->hWnd) goto defproc;
@@ -1433,15 +1638,19 @@ namespace twin {
       case WM_IME_STARTCOMPOSITION:
         {
           LRESULT const result = ::DefWindowProc(hWnd, msg, wParam, lParam);
-          m_ime_composition_active = true;
-          this->adjust_ime_composition();
+          this->start_ime_composition();
           return result;
         }
       case WM_IME_ENDCOMPOSITION:
-        m_ime_composition_active = false;
+        this->end_ime_composition();
         goto defproc;
       case WM_KILLFOCUS:
         this->cancel_ime_composition();
+        goto defproc;
+
+      case WM_TIMER:
+        if (m_cursor_timer_id && wParam == m_cursor_timer_id)
+          process_cursor_timer();
         goto defproc;
 
       defproc:
@@ -1458,6 +1667,7 @@ namespace twin {
     }
 
   public:
+    int m_exit_code = 0;
     int do_loop() {
       sess.init_ws.ws_col = settings.m_col;
       sess.init_ws.ws_row = settings.m_row;
@@ -1475,7 +1685,6 @@ namespace twin {
       // s.m_default_fg_color = contra::dict::rgb(0xD0, 0xD0, 0xD0);//@color
       // s.m_default_bg_color = contra::dict::rgb(0x00, 0x00, 0x00);
 
-      int exit_code;
       MSG msg;
       while (hWnd) {
         bool processed = false;
@@ -1487,18 +1696,14 @@ namespace twin {
           if (msec > 20) break;
         }
         if (processed) {
-          HDC hdc = GetDC(hWnd);
-          if (render_window(hdc))
-            ::ValidateRect(hWnd, NULL);
-          ReleaseDC(hWnd, hdc);
-
+          render_window();
           if (m_ime_composition_active)
             this->adjust_ime_composition();
         }
 
         while (::PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE)) {
           if (!GetMessage(&msg, 0, 0, 0)) {
-            exit_code = msg.wParam;
+            m_exit_code = msg.wParam;
             goto exit;
           }
 
@@ -1513,7 +1718,7 @@ namespace twin {
       }
     exit:
       sess.terminate();
-      return exit_code;
+      return 0;
     }
   };
 
