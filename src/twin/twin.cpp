@@ -615,7 +615,6 @@ namespace twin {
     }
     void process_blinking_timer() {
       m_blinking_count++;
-mwg_printd("has blink %d", m_tracer.has_blinking_cells());
       if (m_tracer.has_blinking_cells())
         render_window();
     }
