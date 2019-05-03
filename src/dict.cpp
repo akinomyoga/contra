@@ -22,7 +22,7 @@ static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrcolor cons
 
 static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrideogram const& capIdeogram) {
   if (!capIdeogram.reset)
-    flags |= _at::is_ideogram_decoration_mask;
+    flags |= _at::is_ideogram_mask;
 }
 
 void termcap_sgr_type::initialize() {
@@ -96,27 +96,25 @@ void tty_writer::update_sgrflag2(
 }
 
 void tty_writer::update_ideogram_decoration(xflags_t xflagsNew, xflags_t xflagsOld, termcap_sgrideogram const& cap) {
-  if (((xflagsNew ^ xflagsOld) & _at::is_ideogram_decoration_mask) == 0) return;
+  if (((xflagsNew ^ xflagsOld) & _at::is_ideogram_mask) == 0) return;
 
-  int sgr;
-  if (xflagsNew & _at::is_ideogram_decoration_mask) {
-    if (xflagsNew & (_at::is_ideogram_single_rb_set | _at::is_ideogram_double_rb_set))
-      sgr = xflagsNew & _at::is_ideogram_single_rb_set ? cap.single_rb : cap.double_rb;
-    else if (xflagsNew & (_at::is_ideogram_single_lt_set | _at::is_ideogram_double_lt_set))
-      sgr = xflagsNew & _at::is_ideogram_single_lt_set ? cap.single_lt : cap.double_lt;
-    else if (xflagsNew & (_at::is_ideogram_single_lb_set | _at::is_ideogram_double_lb_set))
-      sgr = xflagsNew & _at::is_ideogram_single_lb_set ? cap.single_lb : cap.double_lb;
-    else if (xflagsNew & (_at::is_ideogram_single_rt_set | _at::is_ideogram_double_rt_set))
-      sgr = xflagsNew & _at::is_ideogram_single_rt_set ? cap.single_rt : cap.double_rt;
-    else if (xflagsNew & _at::is_ideogram_stress_set)
-      sgr = cap.stress;
-    else
-      mwg_assert(0, "is_ideogram_decoration_mask is wrong");
+  int sgr = 0;
+  if (xflagsNew & _at::is_ideogram_mask) {
+    switch (xflagsNew & _at::is_ideogram_mask) {
+    case _at::is_ideogram_line_single_rb: sgr = cap.single_rb; break;
+    case _at::is_ideogram_line_double_rb: sgr = cap.double_rb; break;
+    case _at::is_ideogram_line_single_lt: sgr = cap.single_lt; break;
+    case _at::is_ideogram_line_double_lt: sgr = cap.double_lt; break;
+    case _at::is_ideogram_line_single_lb: sgr = cap.single_lb; break;
+    case _at::is_ideogram_line_double_lb: sgr = cap.double_lb; break;
+    case _at::is_ideogram_line_single_rt: sgr = cap.single_rt; break;
+    case _at::is_ideogram_line_double_rt: sgr = cap.double_rt; break;
+    case _at::is_ideogram_stress: sgr = cap.stress; break;
+    default:
+      mwg_assert(0, "(xflagsNew & is_ideogram_mask) has invalid value");
+    }
 
-    if (sgr == 0
-      || (xflagsOld & _at::is_ideogram_decoration_mask && cap.is_decoration_exclusive)
-    )
-      sgr_put(cap.reset);
+    if (sgr == 0) sgr_put(cap.reset);
   } else
     sgr = cap.reset;
 

@@ -117,8 +117,8 @@ namespace dict {
       decdhl_mask         = (xflags_t) 0x3 << 6,
       decdhl_single_width = (xflags_t) 0x0 << 6,
       decdhl_double_width = (xflags_t) 0x1 << 6,
-      decdhl_upper_half     = (xflags_t) 0x2 << 6,
-      decdhl_lower_half  = (xflags_t) 0x3 << 6,
+      decdhl_upper_half   = (xflags_t) 0x2 << 6,
+      decdhl_lower_half   = (xflags_t) 0x3 << 6,
 
       // bit 8-10: SCO
       sco_shift     = 8,
@@ -141,22 +141,30 @@ namespace dict {
       is_overline_set     = (xflags_t) 1 << 14, // --- SGR 53
       is_proportional_set = (xflags_t) 1 << 15, // --- SGR 26 (deprecated)
 
-      // bit 16-24: SGR(ECMA-48:1986) ideogram decorations
-      is_ideogram_single_rb_set = (xflags_t) 1 << 16, // -+- SGR 60,61
-      is_ideogram_double_rb_set = (xflags_t) 1 << 17, // -'
-      is_ideogram_single_lt_set = (xflags_t) 1 << 18, // -+- SGR 62,63
-      is_ideogram_double_lt_set = (xflags_t) 1 << 19, // -'
-      is_ideogram_single_lb_set = (xflags_t) 1 << 20, // -+- SGR 66,67
-      is_ideogram_double_lb_set = (xflags_t) 1 << 21, // -'
-      is_ideogram_single_rt_set = (xflags_t) 1 << 22, // -+- SGR 68,69
-      is_ideogram_double_rt_set = (xflags_t) 1 << 23, // -'
-      is_ideogram_stress_set    = (xflags_t) 1 << 24, // --- SGR 64
-      is_ideogram_decoration_mask
-      = is_ideogram_single_rb_set | is_ideogram_double_rb_set
-      | is_ideogram_single_lt_set | is_ideogram_double_lt_set
-      | is_ideogram_single_lb_set | is_ideogram_double_lb_set
-      | is_ideogram_single_rt_set | is_ideogram_double_rt_set
-      | is_ideogram_stress_set,
+      // bit 16-19: SGR(ECMA-48:1986) ideogram decorations
+      is_ideogram_mask           = (xflags_t) 0xF0000,
+      is_ideogram_line           = (xflags_t) 0x80000,
+      is_ideogram_line_double    = (xflags_t) 0x10000,
+      is_ideogram_line_left      = (xflags_t) 0x20000,
+      is_ideogram_line_over      = (xflags_t) 0x40000,
+      is_ideogram_line_single_rb = is_ideogram_line | (xflags_t) 0x0 << 16, // -+- SGR 60-63
+      is_ideogram_line_double_rb = is_ideogram_line | (xflags_t) 0x1 << 16, //  |      66-69
+      is_ideogram_line_single_lt = is_ideogram_line | (xflags_t) 0x6 << 16, //  |
+      is_ideogram_line_double_lt = is_ideogram_line | (xflags_t) 0x7 << 16, //  |
+      is_ideogram_line_single_lb = is_ideogram_line | (xflags_t) 0x2 << 16, //  |
+      is_ideogram_line_double_lb = is_ideogram_line | (xflags_t) 0x3 << 16, //  |
+      is_ideogram_line_single_rt = is_ideogram_line | (xflags_t) 0x4 << 16, //  |
+      is_ideogram_line_double_rt = is_ideogram_line | (xflags_t) 0x5 << 16, // -'
+      is_ideogram_stress         = (xflags_t) 0x10000, // --- SGR 64
+
+      // bit 20-23: RLogin SGR(60-63) 左右の線
+      rlogin_ideogram_mask = (xflags_t) 0x1F << 20,
+      rlogin_single_rline  = (xflags_t) 1 << 20, // SGR 8460
+      rlogin_double_rline  = (xflags_t) 1 << 21, // SGR 8461
+      rlogin_single_lline  = (xflags_t) 1 << 22, // SGR 8462
+      rlogin_double_lline  = (xflags_t) 1 << 23, // SGR 8463
+      // bit 24: RLogin SGR(64) 二重打ち消し線
+      rlogin_double_strike = (xflags_t) 1 << 24, // SGR 8464
 
       // bit 25,26: SPA, SSA
       spa_protected         = (xflags_t) 1 << 25,
@@ -302,8 +310,6 @@ namespace dict {
      *   その場合には、一貫した動作をさせる為には必ず既に設定されている装飾を解除する必要がある。
      *   この設定項目は出力先の端末で ideogram decorations が排他的かどうかを保持する。
      */
-    // ToDo: RLogin の動作を確認する。
-    bool is_decoration_exclusive {true};
     unsigned single_rb {60};
     unsigned double_rb {61};
     unsigned single_lt {62};

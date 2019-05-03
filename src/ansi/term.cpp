@@ -1448,22 +1448,31 @@ namespace {
     case 53: xflags = xflags | _at::is_overline_set; break;
     case 55: xflags = xflags & ~(xflags_t) _at::is_overline_set; break;
 
-    case 60: xflags = (xflags & ~(xflags_t) _at::is_ideogram_decoration_mask) | _at::is_ideogram_single_rb_set; break;
-    case 61: xflags = (xflags & ~(xflags_t) _at::is_ideogram_decoration_mask) | _at::is_ideogram_double_rb_set; break;
-    case 62: xflags = (xflags & ~(xflags_t) _at::is_ideogram_decoration_mask) | _at::is_ideogram_single_lt_set; break;
-    case 63: xflags = (xflags & ~(xflags_t) _at::is_ideogram_decoration_mask) | _at::is_ideogram_double_lt_set; break;
-    case 66: xflags = (xflags & ~(xflags_t) _at::is_ideogram_decoration_mask) | _at::is_ideogram_single_lb_set; break;
-    case 67: xflags = (xflags & ~(xflags_t) _at::is_ideogram_decoration_mask) | _at::is_ideogram_double_lb_set; break;
-    case 68: xflags = (xflags & ~(xflags_t) _at::is_ideogram_decoration_mask) | _at::is_ideogram_single_rt_set; break;
-    case 69: xflags = (xflags & ~(xflags_t) _at::is_ideogram_decoration_mask) | _at::is_ideogram_double_rt_set; break;
-    case 64: xflags = (xflags & ~(xflags_t) _at::is_ideogram_decoration_mask) | _at::is_ideogram_stress_set   ; break;
-    case 65: xflags = xflags & ~(xflags_t) _at::is_ideogram_decoration_mask; break;
+    // ECMA-48:1986 SGR(60-65) 及び JIS X 0211 & ISO/IEC 6429:1992 SGR(66-69)
+    case 60: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_single_rb; break;
+    case 61: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_double_rb; break;
+    case 62: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_single_lt; break;
+    case 63: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_double_lt; break;
+    case 66: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_single_lb; break;
+    case 67: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_double_lb; break;
+    case 68: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_single_rt; break;
+    case 69: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_double_rt; break;
+    case 64: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_stress   ; break;
+    case 65: xflags = xflags & ~(xflags_t) _at::is_ideogram_mask; break;
 
+    // contra 拡張 (画面の横分割に対応する為には DECDWL の類を属性として提供する必要がある)
     case 6703: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_upper_half; break;
     case 6704: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_lower_half; break;
     case 6705: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_single_width; break;
     case 6706: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_double_width; break;
-      // contra 拡張 (画面の横分割に対応する為には DECDWL の類を属性として提供する必要がある)
+
+    // RLogin 拡張 (RLogin では 60-65 で利用できる。JIS X 0211 の記述と異なるが便利そうなので対応する)
+    case 8460: xflags = (xflags & ~(xflags_t) _at::rlogin_double_rline) | _at::rlogin_single_rline; break;
+    case 8461: xflags = (xflags & ~(xflags_t) _at::rlogin_single_rline) | _at::rlogin_double_rline; break;
+    case 8462: xflags = (xflags & ~(xflags_t) _at::rlogin_double_lline) | _at::rlogin_single_lline; break;
+    case 8463: xflags = (xflags & ~(xflags_t) _at::rlogin_single_lline) | _at::rlogin_double_lline; break;
+    case 8464: xflags = (xflags & ~(xflags_t) _at::rlogin_single_lline) | _at::rlogin_double_strike; break;
+    case 8465: xflags = xflags & ~(xflags_t) _at::rlogin_ideogram_mask; break;
 
     default:
       std::fprintf(stderr, "unrecognized SGR value %d\n", param);

@@ -120,15 +120,15 @@ namespace twin {
 
       // My configuration
       m_fontnames[0] = TEXT("MeiryoKe_Console");
-      m_fontnames[1] = TEXT("MSGothic");
-      m_fontnames[2] = TEXT("MSMincho");
-      m_fontnames[3] = TEXT("HG丸ｺﾞｼｯｸM-PRO");
-      m_fontnames[4] = TEXT("HG教科書体");
-      m_fontnames[5] = TEXT("HG正楷書体-PRO");
-      m_fontnames[6] = TEXT("HG行書体");
-      m_fontnames[7] = TEXT("HG創英角ﾎﾟｯﾌﾟ体");
-      m_fontnames[8] = TEXT("HGｺﾞｼｯｸM");
-      m_fontnames[9] = TEXT("HG明朝E");
+      m_fontnames[1] = TEXT("MS Gothic");
+      m_fontnames[2] = TEXT("MS Mincho");
+      m_fontnames[3] = TEXT("HGMaruGothicMPRO"); // HG丸ｺﾞｼｯｸM-PRO
+      m_fontnames[4] = TEXT("HGKyokashotai"); // HG教科書体
+      m_fontnames[5] = TEXT("HGGyoshotai"); // HG行書体
+      m_fontnames[6] = TEXT("HGSeikaishotaiPRO"); // HG正楷書体-PRO
+      m_fontnames[7] = TEXT("HGSoeiKakupoptai"); // HG創英角ﾎﾟｯﾌﾟ体
+      m_fontnames[8] = TEXT("HGGothicM"); // HGｺﾞｼｯｸM
+      m_fontnames[9] = TEXT("HGMinchoB"); // HG明朝B
       m_fontnames[10] = TEXT("aghtex_mathfrak");
 
       // ゴシック系のフォント
@@ -271,7 +271,7 @@ namespace twin {
           dx -= 0.2 * width;
         }
         if (font & (font_layout_upper_half | font_layout_lower_half)) dy *= 2;
-        if (font & font_decdwl) { dx *= 2; dx2 *= 2; }
+        if (font & font_decdwl) dx *= 2;
         if (font & font_layout_lower_half) dy -= m_height;
         dx = std::round(dx);
         dy = std::round(dy);
@@ -289,8 +289,8 @@ namespace twin {
   struct twin_settings {
     std::size_t m_col = 80;//@size
     std::size_t m_row = 30;
-    std::size_t m_xpixel = 8;
-    std::size_t m_ypixel = 16;
+    std::size_t m_xpixel = 14;
+    std::size_t m_ypixel = 26;
     std::size_t window_size_xadjust = 0;
     std::size_t window_size_yadjust = 0;
     std::size_t m_xframe = 1;
@@ -702,6 +702,40 @@ namespace twin {
       ::ExtTextOut(hdc, x0 - dx, y0 - dy, 0, NULL, &characters[0], characters.size(), &progress[0]);
     }
 
+    class decdhl_region_holder_t {
+      LONG width, height;
+      HRGN rgn1 = NULL, rgn2 = NULL;
+      std::size_t y = 0, ypixel = 0;
+      void release() {
+        if (rgn1) {
+          ::DeleteObject(rgn1);
+          rgn1 = NULL;
+        }
+        if (rgn2) {
+          ::DeleteObject(rgn2);
+          rgn2 = NULL;
+        }
+      }
+    public:
+      decdhl_region_holder_t(LONG width, LONG height): width(width), height(height) {}
+      ~decdhl_region_holder_t() {
+        release();
+      }
+      void next_line(std::size_t y, std::size_t ypixel) {
+        release();
+        this->y = y;
+        this->ypixel = ypixel;
+      }
+      HRGN get_upper_region() {
+        if (!rgn1) rgn1 = ::CreateRectRgn(0, 0, width, y + ypixel);
+        return rgn1;
+      }
+      HRGN get_lower_region() {
+        if (!rgn2) rgn2 = ::CreateRectRgn(0, y, width, height);
+        return rgn2;
+      }
+    };
+
     void draw_characters(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
       std::size_t const xorigin = settings.m_xframe;
@@ -748,12 +782,14 @@ namespace twin {
         }
       };
 
+      decdhl_region_holder_t region(m_background.width(), m_background.height());
+
       for (curpos_t iline = 0; iline < b.m_height; iline++, y += ypixel) {
         std::vector<cell_t>& cells = content[iline];
 
         x = xorigin;
 
-        HRGN rgn1 = NULL, rgn2 = NULL;
+        region.next_line(y, ypixel);
 
         for (std::size_t i = 0; i < cells.size(); ) {
           auto const& cell = cells[i++];
@@ -807,13 +843,10 @@ namespace twin {
           ::SelectObject(hdc, fstore.get_font(font));
 
           // DECDHL用の制限
-          if (font & font_layout_upper_half) {
-            if (!rgn1) rgn1 = ::CreateRectRgn(0, 0, m_background.width(), y + ypixel);
-            ::SelectClipRgn(hdc, rgn1);
-          } else if (font & font_layout_lower_half) {
-            if (!rgn2) rgn2 = ::CreateRectRgn(0, y, m_background.width(), m_background.height());
-            ::SelectClipRgn(hdc, rgn2);
-          }
+          if (font & font_layout_upper_half)
+            ::SelectClipRgn(hdc, region.get_upper_region());
+          else if (font & font_layout_lower_half)
+            ::SelectClipRgn(hdc, region.get_lower_region());
 
           if (font & font_rotation_mask) {
             this->draw_rotated_text_ext(hdc, x0 + dx, y + dy, characters, progress, font);
@@ -828,29 +861,29 @@ namespace twin {
 
         // clear private flags
         for (cell_t& cell : cells) cell.character.value &= ~flag_processed;
-        if (rgn1) ::DeleteObject(rgn1);
-        if (rgn2) ::DeleteObject(rgn2);
       }
     }
 
     template<typename F>
-    struct decoration_painter_t {
+    struct decoration_horizontal_t {
       std::size_t x0 = 0;
       std::uint32_t style = 0;
       F _draw;
 
     public:
-      decoration_painter_t(F draw): _draw(draw) {}
+      decoration_horizontal_t(F draw): _draw(draw) {}
 
     public:
       void update(curpos_t x, std::size_t new_style, xflags_t xflags) {
-        switch (xflags & attribute_t::decdhl_mask) {
-        case attribute_t::decdhl_upper_half:
-          new_style |= attribute_t::decdhl_upper_half;
-          break;
-        case attribute_t::decdhl_lower_half:
-          new_style |= attribute_t::decdhl_lower_half;
-          break;
+        if (new_style) {
+          switch (xflags & attribute_t::decdhl_mask) {
+          case attribute_t::decdhl_upper_half:
+            new_style |= attribute_t::decdhl_upper_half;
+            break;
+          case attribute_t::decdhl_lower_half:
+            new_style |= attribute_t::decdhl_lower_half;
+            break;
+          }
         }
         if (style != new_style) {
           if (style) _draw(x0, x, style);
@@ -912,8 +945,9 @@ namespace twin {
 
       color_t color0 = 0;
       brush_holder_t brush;
+      decdhl_region_holder_t region(m_background.width(), m_background.height());
 
-      decoration_painter_t dec_ul([&] (std::size_t x1, std::size_t x2, std::uint32_t style) {
+      decoration_horizontal_t dec_ul([&] (std::size_t x1, std::size_t x2, std::uint32_t style) {
         std::size_t h = (std::size_t) std::ceil(ypixel * 0.05);
         switch (style & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_upper_half: return;
@@ -931,20 +965,37 @@ namespace twin {
         }
       });
 
-      decoration_painter_t dec_sl([&] (std::size_t x1, std::size_t x2, std::uint32_t style) {
-        std::size_t h = (std::size_t) std::ceil(ypixel * 0.05), y2 = y + ypixel / 2;
-        switch (style & attribute_t::decdhl_mask) {
-        case attribute_t::decdhl_lower_half: return;
-        case attribute_t::decdhl_upper_half:
-          h *= 2; y2 = y + ypixel;
-          return;
-        }
+      decoration_horizontal_t dec_sl([&] (std::size_t x1, std::size_t x2, std::uint32_t style) {
+        HBRUSH const hbr = brush.get_brush(color0);
         RECT rc;
+        std::size_t h = (std::size_t) std::ceil(ypixel * 0.05), y2 = y + ypixel / 2;
+        if ((style & ~attribute_t::decdhl_mask) != 2) {
+          // 一重打ち消し線
+          switch (style & attribute_t::decdhl_mask) {
+          case attribute_t::decdhl_lower_half: return;
+          case attribute_t::decdhl_upper_half:
+            h *= 2; y2 = y + ypixel;
+            break;
+          }
+        } else {
+          // 二重打ち消し線
+          switch (style & attribute_t::decdhl_mask) {
+          case attribute_t::decdhl_lower_half:
+            h *= 2; y2 = y + h; break;
+          case attribute_t::decdhl_upper_half:
+            h *= 2; y2 = y + ypixel - h; break;
+          default:
+            ::SetRect(&rc, x1, y2 - 2 * h, x2, y2 - h);
+            ::FillRect(hdc, &rc, hbr);
+            y2 += h;
+            break;
+          }
+        }
         ::SetRect(&rc, x1, y2 - h, x2, y2);
-        ::FillRect(hdc, &rc, brush.get_brush(color0));
+        ::FillRect(hdc, &rc, hbr);
       });
 
-      decoration_painter_t dec_ol([&] (std::size_t x1, std::size_t x2, std::uint32_t style) {
+      decoration_horizontal_t dec_ol([&] (std::size_t x1, std::size_t x2, std::uint32_t style) {
         std::size_t h = (std::size_t) std::ceil(ypixel * 0.05);
         switch (style & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_lower_half: return;
@@ -962,30 +1013,55 @@ namespace twin {
         }
       });
 
-      auto _draw_frame = [&] (std::size_t x1, std::size_t x2, xflags_t xflags) {
+      auto _draw_frame = [&] (std::size_t x1, std::size_t x2, xflags_t xflags, int lline, int rline) {
         // 上の線と下の線は dec_ul, dec_ol に任せる。
         std::size_t w = (std::size_t) std::ceil(ypixel * 0.05);
         if (xflags & attribute_t::decdhl_mask) w *= 2;
         HBRUSH const hbr = brush.get_brush(color0);
         RECT rc;
-        ::SetRect(&rc, x1, y, x1 + w, y + ypixel);
-        ::FillRect(hdc, &rc, hbr);
-        ::SetRect(&rc, x2 - w, y, x2, y + ypixel);
-        ::FillRect(hdc, &rc, hbr);
+        if (lline) {
+          ::SetRect(&rc, x1, y, x1 + w, y + ypixel);
+          ::FillRect(hdc, &rc, hbr);
+          if (lline > 1) {
+            ::SetRect(&rc, x1 + 2 * w, y, x1 + 3 * w, y + ypixel);
+            ::FillRect(hdc, &rc, hbr);
+          }
+        }
+        if (rline) {
+          ::SetRect(&rc, x2 - w, y, x2, y + ypixel);
+          ::FillRect(hdc, &rc, hbr);
+          if (rline > 1) {
+            ::SetRect(&rc, x2 - 3 * w, y, x2 - 2 * w, y + ypixel);
+            ::FillRect(hdc, &rc, hbr);
+          }
+        }
       };
 
       auto _draw_circle = [&] (std::size_t x1, std::size_t x2, xflags_t xflags) {
         std::size_t w = (std::size_t) std::ceil(ypixel * 0.04);
+        std::size_t y1 = y, y2 = y + ypixel;
+        bool is_clipped = false;
         switch (xflags & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_upper_half:
-        case attribute_t::decdhl_lower_half:
+          is_clipped = true;
+          ::SelectClipRgn(hdc, region.get_upper_region());
           w *= 2;
+          y2 = y + 2 * ypixel;
+          break;
+        case attribute_t::decdhl_lower_half:
+          is_clipped = true;
+          ::SelectClipRgn(hdc, region.get_lower_region());
+          w *= 2;
+          y1 = y - ypixel;
+          y2 = y + ypixel;
           break;
         }
         ::SelectObject(hdc, brush.get_pen(color0, w));
         ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
-        ::Ellipse(hdc, x1, y, x2, y + ypixel);
+        ::Ellipse(hdc, x1, y1, x2, y2);
         ::SelectObject(hdc, ::GetStockObject(NULL_PEN));
+        if (is_clipped)
+          ::SelectClipRgn(hdc, NULL);
       };
 
       auto _draw_stress = [&] (std::size_t x1, std::size_t x2, xflags_t xflags) {
@@ -1016,6 +1092,7 @@ namespace twin {
         std::vector<cell_t>& cells = content[iline];
         x = xorigin;
         color0 = 0;
+        region.next_line(y, ypixel);
 
         for (std::size_t i = 0; i < cells.size(); ) {
           auto const& cell = cells[i++];
@@ -1031,32 +1108,42 @@ namespace twin {
           }
 
           if (color) {
+            xflags_t const ideo = xflags & attribute_t::is_ideogram_mask & ~attribute_t::is_ideogram_line_left;
+
             // 下線
-            constexpr aflags_t ul2a = attribute_t::is_double_underline_set;
-            constexpr xflags_t ul2x =
-              attribute_t::is_ideogram_double_rb_set | attribute_t::is_ideogram_double_lb_set;
-            constexpr aflags_t ul1a = attribute_t::is_underline_set;
-            constexpr xflags_t ul1x =
-              attribute_t::is_ideogram_single_rb_set | attribute_t::is_ideogram_single_lb_set |
-              attribute_t::is_frame_set;
-            dec_ul.update(x, aflags & ul2a || xflags & ul2x ? 2 : aflags & ul1a || xflags & ul1x ? 1 : 0, xflags);
+            bool const ul2 = aflags & attribute_t::is_double_underline_set ||
+              ideo == attribute_t::is_ideogram_line_double_rb;
+            bool const ul1 = aflags & attribute_t::is_underline_set ||
+              xflags & attribute_t::is_frame_set ||
+              ideo == attribute_t::is_ideogram_line_single_rb;
+            dec_ul.update(x, ul2 ? 2 : ul1 ? 1 : 0, xflags);
 
             // 上線
-            constexpr xflags_t ol2x =
-              attribute_t::is_ideogram_double_rt_set | attribute_t::is_ideogram_double_lt_set;
-            constexpr xflags_t ol1x =
-              attribute_t::is_ideogram_single_rt_set | attribute_t::is_ideogram_single_lt_set |
-              attribute_t::is_overline_set | attribute_t::is_frame_set;
-            dec_ol.update(x, xflags & ol2x ? 2 : xflags & ol1x ? 1 : 0, xflags);
+            bool const ol2 = ideo == attribute_t::is_ideogram_line_double_rt;
+            bool const ol1 = xflags & (attribute_t::is_overline_set | attribute_t::is_frame_set) ||
+              ideo == attribute_t::is_ideogram_line_single_rt;
+            dec_ol.update(x, ol2 ? 2 : ol1 ? 1 : 0, xflags);
 
             // 打ち消し線
-            dec_sl.update(x, aflags & attribute_t::is_strike_set ? 1 : 0, xflags);
+            bool const sl2 = xflags & attribute_t::rlogin_double_strike;
+            bool const sl1 = aflags & attribute_t::is_strike_set;
+            dec_sl.update(x, sl2 ? 2 : sl1 ? 1 : 0, xflags);
 
-            if (xflags & attribute_t::is_frame_set)
-              _draw_frame(x, x + cell_width, xflags);
+            // 左線・右線
+            bool const ll2 = xflags & attribute_t::rlogin_double_lline;
+            bool const ll1 = xflags & (attribute_t::is_frame_set | attribute_t::rlogin_single_lline);
+            int const ll = ll2 ? 2 : ll1 ? 1 : 0;
+            bool const rl2 = xflags & attribute_t::rlogin_double_rline;
+            bool const rl1 = xflags & (attribute_t::is_frame_set | attribute_t::rlogin_single_rline);
+            int const rl = rl2 ? 2 : rl1 ? 1 : 0;
+            _draw_frame(x, x + cell_width, xflags, ll, rl);
+
+            // 丸
             if (xflags & attribute_t::is_circle_set)
               _draw_circle(x, x + cell_width, xflags);
-            if (xflags & attribute_t::is_ideogram_stress_set)
+
+            // 圏点
+            if (ideo == attribute_t::is_ideogram_stress)
               _draw_stress(x, x + cell_width, xflags);
           }
 
