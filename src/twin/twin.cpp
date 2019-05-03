@@ -61,6 +61,7 @@ namespace twin {
     bool m_caret_hide_on_ime = true;
     UINT m_caret_interval = 400;
 
+    UINT m_blinking_interval = 200;
   public:
     coord_t calculate_client_width() const {
       return m_xpixel * m_col + 2 * m_xframe;
@@ -376,6 +377,8 @@ namespace twin {
         NULL,
         hInstance,
         NULL);
+
+      this->start_blinking_timer();
       return hWnd;
     }
     bool m_window_size_adjusted = false;
@@ -487,6 +490,7 @@ namespace twin {
         store_metric(_this);
         store_content(_this);
         store_cursor(_this);
+        store_blinking_state(_this);
       }
 
     private:
@@ -497,7 +501,7 @@ namespace twin {
       coord_t m_xpixel = 0;
       coord_t m_ypixel = 0;
     public:
-      bool is_metric_changed(twin_window_t* _this) {
+      bool is_metric_changed(twin_window_t* _this) const {
         twin_settings const& st = _this->settings;
         if (m_xframe != st.m_xframe) return true;
         if (m_yframe != st.m_yframe) return true;
@@ -521,10 +525,11 @@ namespace twin {
       struct line_trace_t {
         std::uint32_t id = (std::uint32_t) -1;
         std::uint32_t version = 0;
+        bool has_blinking = false;
       };
       std::vector<line_trace_t> m_lines;
     public:
-      bool is_content_changed(twin_window_t* _this) {
+      bool is_content_changed(twin_window_t* _this) const {
         board_t const& b = _this->sess.term().board();
         std::size_t const height = b.m_height;
         if (height != m_lines.size()) return true;
@@ -541,7 +546,24 @@ namespace twin {
         for (std::size_t i = 0; i < m_lines.size(); i++) {
           m_lines[i].id = b.m_lines[i].id();
           m_lines[i].version = b.m_lines[i].version();
+          m_lines[i].has_blinking = b.m_lines[i].has_blinking_cells();
         }
+      }
+
+    private:
+      std::uint32_t m_blinking_count = 0;
+    public:
+      bool has_blinking_cells() const {
+        for (line_trace_t const& line : m_lines)
+          if (line.has_blinking) return true;
+        return false;
+      }
+      bool is_blinking_changed(twin_window_t* _this) const {
+        if (!this->has_blinking_cells()) return false;
+        return this->m_blinking_count != _this->m_blinking_count;
+      }
+      void store_blinking_state(twin_window_t* _this) {
+        this->m_blinking_count = _this->m_blinking_count;
       }
 
     private:
@@ -556,7 +578,7 @@ namespace twin {
     public:
       curpos_t cur_x() const { return m_cur_x; }
       curpos_t cur_y() const { return m_cur_y; }
-      bool is_cursor_changed(twin_window_t* _this) {
+      bool is_cursor_changed(twin_window_t* _this) const {
         if (m_cur_visible != _this->is_cursor_visible()) return true;
         term_t const& term = _this->sess.term();
         board_t const& b = term.board();
@@ -579,10 +601,29 @@ namespace twin {
     status_tracer_t m_tracer;
 
   private:
+    static constexpr UINT blinking_timer_id = 11; // 適当
+    UINT m_blinking_timer_id = 0;
+    std::uint32_t m_blinking_count = 0;
+    void start_blinking_timer() {
+      if (m_blinking_timer_id)
+        ::KillTimer(hWnd, m_blinking_timer_id);
+      m_blinking_timer_id = ::SetTimer(hWnd, blinking_timer_id, settings.m_blinking_interval, NULL);
+    }
+    void reset_blinking_timer() {
+      if (!is_session_ready()) return;
+      start_blinking_timer();
+    }
+    void process_blinking_timer() {
+      m_blinking_count++;
+mwg_printd("has blink %d", m_tracer.has_blinking_cells());
+      if (m_tracer.has_blinking_cells())
+        render_window();
+    }
+
+  private:
     static constexpr UINT cursor_timer_id = 10; // 適当
-    static constexpr UINT blinkingd_timer_id = 11; // 適当
     UINT m_cursor_timer_id = 0;
-    int m_cursor_timer_count = 0;
+    std::uint32_t m_cursor_timer_count = 0;
 
     void unset_cursor_timer() {
       if (m_cursor_timer_id)
@@ -903,10 +944,14 @@ namespace twin {
       tstate_t const& s = sess.term().state();
 
       constexpr std::uint32_t flag_processed = character_t::flag_private1;
-      auto _visible = [] (std::uint32_t code, aflags_t aflags, bool sp_visible = false) {
+
+      aflags_t invisible_flags = attribute_t::is_invisible_set;
+      if (m_blinking_count & 1) invisible_flags |= attribute_t::is_rapid_blink_set;
+      if (m_blinking_count & 2) invisible_flags |= attribute_t::is_blink_set;
+      auto _visible = [invisible_flags] (std::uint32_t code, aflags_t aflags, bool sp_visible = false) {
         return code != ascii_nul && (sp_visible || code != ascii_sp)
           && character_t::is_char(code & flag_processed)
-          && !(aflags & attribute_t::is_invisible_set);
+          && !(aflags & invisible_flags);
       };
 
       color_resolver_t _color(s);
@@ -1368,7 +1413,8 @@ namespace twin {
 
       if (m_tracer.is_metric_changed(this)) full_update = true;
       HDC const hdc1 = m_background.hdc(hWnd, hdc0, 1);
-      bool const content_redraw = full_update || content_changed;
+      bool content_redraw = full_update || content_changed;
+      if (m_tracer.is_blinking_changed(this)) content_redraw = true;
       if (content_redraw) {
         std::vector<std::vector<contra::ansi::cell_t>> content;
         auto const& b = sess.board();
@@ -1421,6 +1467,21 @@ namespace twin {
       ReleaseDC(hWnd, hdc);
       ::ValidateRect(hWnd, NULL);
     }
+    // WM_PAINT による再描画要求
+    void redraw_window(HDC hdc, RECT const& rc) {
+      bool resized = false;
+      HDC const hdc0 = m_background.hdc(hWnd, hdc, 0, &resized);
+      if (resized) {
+        // 全体を再描画して全体を転送
+        paint_terminal_content(hdc0, resized);
+        ::SelectClipRgn(hdc, NULL);
+        BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc0, 0, 0, SRCCOPY);
+      } else {
+        // 必要な領域だけ転送
+        BitBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hdc0, rc.left, rc.top, SRCCOPY);
+      }
+    }
+
 
     enum extended_key_flags {
       modifier_application = 0x04000000,
@@ -1618,20 +1679,7 @@ namespace twin {
           if (hWnd != this->hWnd) goto defproc;
           PAINTSTRUCT paint;
           HDC hdc = BeginPaint(hWnd, &paint);
-
-          bool resized = false;
-          HDC const hdc0 = m_background.hdc(hWnd, hdc, 0, &resized);
-          if (resized) {
-            // 全体を再描画して全体を転送
-            paint_terminal_content(hdc0, resized);
-            ::SelectClipRgn(hdc, NULL);
-            BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc0, 0, 0, SRCCOPY);
-          } else {
-            // 必要な領域だけ転送
-            RECT const& rc = paint.rcPaint;
-            BitBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hdc0, rc.left, rc.top, SRCCOPY);
-          }
-
+          redraw_window(hdc, paint.rcPaint);
           EndPaint(hWnd, &paint);
         }
         return 0L;
@@ -1671,6 +1719,8 @@ namespace twin {
       case WM_TIMER:
         if (m_cursor_timer_id && wParam == m_cursor_timer_id)
           process_cursor_timer();
+        else if (m_blinking_timer_id && wParam == m_blinking_timer_id)
+          process_blinking_timer();
         goto defproc;
 
       defproc:

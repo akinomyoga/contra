@@ -257,6 +257,13 @@ namespace ansi {
     std::uint32_t id() const { return m_id; }
     void set_id(std::uint32_t value) { this->m_id = value; }
 
+    bool has_blinking_cells() const {
+      constexpr aflags_t flags = attribute_t::is_blink_set | attribute_t::is_rapid_blink_set;
+      for (cell_t const& cell : m_cells)
+        if (cell.attribute.aflags & flags) return true;
+      return false;
+    }
+
   private:
     void _initialize_content(curpos_t width, attribute_t const& attr) {
       if (attr.is_default()) return;
