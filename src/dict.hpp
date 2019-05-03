@@ -71,8 +71,8 @@ namespace dict {
        * - @const color_space_cmyk
        * - @const color_space_indexed
        */
-      is_fg_indexed            = (std::uint32_t) 1 << 16,
-      is_bg_indexed            = (std::uint32_t) 1 << 17,
+      is_fg_indexed            = (aflags_t) 1 << 16,
+      is_bg_indexed            = (aflags_t) 1 << 17,
       fg_color_mask            = 0x00FF,
       bg_color_mask            = 0xFF00,
       fg_color_shift           = 0,
@@ -84,24 +84,24 @@ namespace dict {
       color_space_cmyk         = 4,
       color_space_indexed      = 5,
 
-      is_bold_set             = (std::uint32_t) 1 << 18, // -+- SGR 1,2
-      is_faint_set            = (std::uint32_t) 1 << 19, //  |
-      is_heavy_set            = (std::uint32_t) 3 << 18, // -' (contra拡張)
-      is_italic_set           = (std::uint32_t) 1 << 20, // -+- SGR 3,20
-      is_fraktur_set          = (std::uint32_t) 1 << 21, // -'
-      is_underline_set        = (std::uint32_t) 1 << 22, // -+- SGR 4,21
-      is_double_underline_set = (std::uint32_t) 1 << 23, // -'
-      is_blink_set            = (std::uint32_t) 1 << 24, // -+- SGR 5,6
-      is_rapid_blink_set      = (std::uint32_t) 1 << 25, // -'
-      is_inverse_set          = (std::uint32_t) 1 << 26, // SGR 7
-      is_invisible_set        = (std::uint32_t) 1 << 27, // SGR 8
-      is_strike_set           = (std::uint32_t) 1 << 28, // SGR 9
+      is_bold_set             = (aflags_t) 1 << 18, // -+- SGR 1,2
+      is_faint_set            = (aflags_t) 1 << 19, //  |
+      is_heavy_set            = (aflags_t) 3 << 18, // -' (contra拡張)
+      is_italic_set           = (aflags_t) 1 << 20, // -+- SGR 3,20
+      is_fraktur_set          = (aflags_t) 1 << 21, // -'
+      is_underline_set        = (aflags_t) 1 << 22, // -+- SGR 4,21
+      is_double_underline_set = (aflags_t) 1 << 23, // -'
+      is_blink_set            = (aflags_t) 1 << 24, // -+- SGR 5,6
+      is_rapid_blink_set      = (aflags_t) 1 << 25, // -'
+      is_inverse_set          = (aflags_t) 1 << 26, // SGR 7
+      is_invisible_set        = (aflags_t) 1 << 27, // SGR 8
+      is_strike_set           = (aflags_t) 1 << 28, // SGR 9
 
-      attribute_reserved_bit1 = (std::uint32_t) 1 << 29,
-      attribute_reserved_bit2 = (std::uint32_t) 1 << 30,
+      attribute_reserved_bit1 = (aflags_t) 1 << 29,
+      attribute_reserved_bit2 = (aflags_t) 1 << 30,
 
       // only valid for attribute_t
-      has_extended_attribute  = (std::uint32_t) 1 << 31,
+      has_extended_attribute  = (aflags_t) 1 << 31,
     };
 
     enum extended_flags {
@@ -110,47 +110,47 @@ namespace dict {
       ansi_font_shift = 0,
 
       // bit 4,5: PLD, PLU
-      is_sub_set  = (std::uint32_t) 1 << 4,
-      is_sup_set  = (std::uint32_t) 1 << 5,
+      is_sub_set  = (xflags_t) 1 << 4,
+      is_sup_set  = (xflags_t) 1 << 5,
 
       // bit 6,7: DECDHL, DECDWL, DECSWL
-      decdhl_mask         = (std::uint32_t) 0x3 << 6,
-      decdhl_single_width = (std::uint32_t) 0x0 << 6,
-      decdhl_double_width = (std::uint32_t) 0x1 << 6,
-      decdhl_top_half     = (std::uint32_t) 0x2 << 6,
-      decdhl_bottom_half  = (std::uint32_t) 0x3 << 6,
+      decdhl_mask         = (xflags_t) 0x3 << 6,
+      decdhl_single_width = (xflags_t) 0x0 << 6,
+      decdhl_double_width = (xflags_t) 0x1 << 6,
+      decdhl_upper_half     = (xflags_t) 0x2 << 6,
+      decdhl_lower_half  = (xflags_t) 0x3 << 6,
 
       // bit 8-10: SCO
       sco_shift     = 8,
-      sco_mask      = (std::uint32_t) 0x7 << sco_shift,
-      sco_default   = (std::uint32_t) 0x0 << sco_shift,
-      sco_rotate45  = (std::uint32_t) 0x1 << sco_shift,
-      sco_rotate90  = (std::uint32_t) 0x2 << sco_shift,
-      sco_rotate135 = (std::uint32_t) 0x3 << sco_shift,
-      sco_rotate180 = (std::uint32_t) 0x4 << sco_shift,
-      sco_rotate225 = (std::uint32_t) 0x5 << sco_shift,
-      sco_rotate270 = (std::uint32_t) 0x6 << sco_shift,
-      sco_rotate315 = (std::uint32_t) 0x7 << sco_shift,
+      sco_mask      = (xflags_t) 0x7 << sco_shift,
+      sco_default   = (xflags_t) 0x0 << sco_shift,
+      sco_rotate45  = (xflags_t) 0x1 << sco_shift,
+      sco_rotate90  = (xflags_t) 0x2 << sco_shift,
+      sco_rotate135 = (xflags_t) 0x3 << sco_shift,
+      sco_rotate180 = (xflags_t) 0x4 << sco_shift,
+      sco_rotate225 = (xflags_t) 0x5 << sco_shift,
+      sco_rotate270 = (xflags_t) 0x6 << sco_shift,
+      sco_rotate315 = (xflags_t) 0x7 << sco_shift,
 
       // bit 11: DECSCA
-      decsca_protected = (std::uint32_t) 1 << 11,
+      decsca_protected = (xflags_t) 1 << 11,
 
       // bit 12-15: SGR(ECMA-48:1986)
-      is_frame_set        = (std::uint32_t) 1 << 12, // -+- SGR 51,52
-      is_circle_set       = (std::uint32_t) 1 << 13, // -'
-      is_overline_set     = (std::uint32_t) 1 << 14, // --- SGR 53
-      is_proportional_set = (std::uint32_t) 1 << 15, // --- SGR 26 (deprecated)
+      is_frame_set        = (xflags_t) 1 << 12, // -+- SGR 51,52
+      is_circle_set       = (xflags_t) 1 << 13, // -'
+      is_overline_set     = (xflags_t) 1 << 14, // --- SGR 53
+      is_proportional_set = (xflags_t) 1 << 15, // --- SGR 26 (deprecated)
 
       // bit 16-24: SGR(ECMA-48:1986) ideogram decorations
-      is_ideogram_single_rb_set = (std::uint32_t) 1 << 16, // -+- SGR 60,61
-      is_ideogram_double_rb_set = (std::uint32_t) 1 << 17, // -'
-      is_ideogram_single_lt_set = (std::uint32_t) 1 << 18, // -+- SGR 62,63
-      is_ideogram_double_lt_set = (std::uint32_t) 1 << 19, // -'
-      is_ideogram_single_lb_set = (std::uint32_t) 1 << 20, // -+- SGR 66,67
-      is_ideogram_double_lb_set = (std::uint32_t) 1 << 21, // -'
-      is_ideogram_single_rt_set = (std::uint32_t) 1 << 22, // -+- SGR 68,69
-      is_ideogram_double_rt_set = (std::uint32_t) 1 << 23, // -'
-      is_ideogram_stress_set    = (std::uint32_t) 1 << 24, // --- SGR 64
+      is_ideogram_single_rb_set = (xflags_t) 1 << 16, // -+- SGR 60,61
+      is_ideogram_double_rb_set = (xflags_t) 1 << 17, // -'
+      is_ideogram_single_lt_set = (xflags_t) 1 << 18, // -+- SGR 62,63
+      is_ideogram_double_lt_set = (xflags_t) 1 << 19, // -'
+      is_ideogram_single_lb_set = (xflags_t) 1 << 20, // -+- SGR 66,67
+      is_ideogram_double_lb_set = (xflags_t) 1 << 21, // -'
+      is_ideogram_single_rt_set = (xflags_t) 1 << 22, // -+- SGR 68,69
+      is_ideogram_double_rt_set = (xflags_t) 1 << 23, // -'
+      is_ideogram_stress_set    = (xflags_t) 1 << 24, // --- SGR 64
       is_ideogram_decoration_mask
       = is_ideogram_single_rb_set | is_ideogram_double_rb_set
       | is_ideogram_single_lt_set | is_ideogram_double_lt_set
@@ -159,21 +159,21 @@ namespace dict {
       | is_ideogram_stress_set,
 
       // bit 25,26: SPA, SSA
-      spa_protected         = (std::uint32_t) 1 << 25,
-      ssa_selected          = (std::uint32_t) 1 << 26,
+      spa_protected         = (xflags_t) 1 << 25,
+      ssa_selected          = (xflags_t) 1 << 26,
       // bit 27,28: DAQ
-      daq_guarded           = (std::uint32_t) 1 << 27,
-      daq_protected         = (std::uint32_t) 1 << 28,
+      daq_guarded           = (xflags_t) 1 << 27,
+      daq_protected         = (xflags_t) 1 << 28,
       // daq_shift = 29,
-      // daq_mask  = (std::uint32_t) 0x3 << daq_shift,
-      // daq_character_input   = (std::uint32_t) 2  << daq_shift,
-      // daq_numeric_input     = (std::uint32_t) 3  << daq_shift,
-      // daq_alphabetic_input  = (std::uint32_t) 4  << daq_shift,
-      // daq_input_align_right = (std::uint32_t) 6  << daq_shift,
-      // daq_input_reversed    = (std::uint32_t) 7  << daq_shift,
-      // daq_zero_fill         = (std::uint32_t) 8  << daq_shift,
-      // daq_space_fill        = (std::uint32_t) 9  << daq_shift,
-      // daq_tabstop           = (std::uint32_t) 10 << daq_shift,
+      // daq_mask  = (xflags_t) 0x3 << daq_shift,
+      // daq_character_input   = (xflags_t) 2  << daq_shift,
+      // daq_numeric_input     = (xflags_t) 3  << daq_shift,
+      // daq_alphabetic_input  = (xflags_t) 4  << daq_shift,
+      // daq_input_align_right = (xflags_t) 6  << daq_shift,
+      // daq_input_reversed    = (xflags_t) 7  << daq_shift,
+      // daq_zero_fill         = (xflags_t) 8  << daq_shift,
+      // daq_space_fill        = (xflags_t) 9  << daq_shift,
+      // daq_tabstop           = (xflags_t) 10 << daq_shift,
 
       qualifier_mask = decsca_protected | spa_protected | ssa_selected | daq_guarded | daq_protected,
 

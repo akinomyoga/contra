@@ -169,6 +169,19 @@ namespace {
       result = defaultValue;
       return false;
     }
+
+    void debug_print(std::FILE* file) const {
+      bool is_first = true;
+      for (auto const& entry : m_data) {
+        if (entry.isColon)
+          std::putc(':', file);
+        else if (!is_first)
+          std::putc(';', file);
+        if (!entry.isDefault)
+          std::fprintf(file, "%u", entry.value);
+        is_first = false;
+      }
+    }
   };
 }
 
@@ -1272,8 +1285,10 @@ namespace {
 
   void do_decrc(term_t& term) {
     auto& s = term.state();
+    auto& b = term.board();
     if (s.m_decsc_cur.x() >= 0) {
       do_restore_cursor(term, s.m_decsc_cur.x(), s.m_decsc_cur.y(), s.m_decsc_cur.xenl());
+      b.cur.attribute = s.m_decsc_cur.attribute;
       s.set_mode(mode_decawm, s.m_decsc_decawm);
       s.set_mode(mode_decom, s.m_decsc_decom);
     }
@@ -1444,8 +1459,8 @@ namespace {
     case 64: xflags = (xflags & ~(xflags_t) _at::is_ideogram_decoration_mask) | _at::is_ideogram_stress_set   ; break;
     case 65: xflags = xflags & ~(xflags_t) _at::is_ideogram_decoration_mask; break;
 
-    case 6703: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_top_half; break;
-    case 6704: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_bottom_half; break;
+    case 6703: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_upper_half; break;
+    case 6704: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_lower_half; break;
     case 6705: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_single_width; break;
     case 6706: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_double_width; break;
       // contra 拡張 (画面の横分割に対応する為には DECDWL の類を属性として提供する必要がある)
