@@ -6,6 +6,11 @@
 
 #include <sys/ioctl.h>
 
+// for getuid, getpwuid
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -70,6 +75,9 @@ namespace twin {
     UINT m_caret_interval = 400;
 
     UINT m_blinking_interval = 200;
+
+    const char* m_env_term = "xterm-256color";
+
   public:
     coord_t calculate_client_width() const {
       return m_xpixel * m_col + 2 * m_xframe;
@@ -1748,23 +1756,29 @@ namespace twin {
       std::ostringstream buff;
       buff << "exec: " << msg << " (errno=" << errno1 << ")";
       ::MessageBoxA(NULL, buff.str().c_str(), "Contra/Cygwin - exec failed", MB_OK);
-
-      // std::FILE* dbgout = std::fopen("twin-pty2.txt", "w");
-      // std::fprintf(dbgout, "PATH=%s\n", getenv("PATH"));
-      // std::fflush(dbgout);
-      // std::fclose(dbgout);
     }
-
-  public:
-    int m_exit_code = 0;
-    int do_loop() {
+    void setup_session_parameters() {
       sess.init_ws.ws_col = settings.m_col;
       sess.init_ws.ws_row = settings.m_row;
       sess.init_ws.ws_xpixel = fstore.width();
       sess.init_ws.ws_ypixel = fstore.height();
-      sess.init_read_buffer_size = 4096;
+      sess.init_read_buffer_size = 64 * 1024;
       sess.init_exec_error_handler = &exec_error_handler;
-      ::setenv("TERM", "xterm-256color", 1);
+
+      // 環境変数
+      struct passwd* pw = ::getpwuid(::getuid());
+      if (pw && pw->pw_dir)
+        sess.init_environment_variable("HOME", pw->pw_dir);
+      if (settings.m_env_term)
+        sess.init_environment_variable("TERM", settings.m_env_term);
+      std::string path = "/usr/local/bin:/usr/bin:";
+      path += std::getenv("PATH");
+      sess.init_environment_variable("PATH", path.c_str());
+    }
+  public:
+    int m_exit_code = 0;
+    int do_loop() {
+      this->setup_session_parameters();
       if (!sess.initialize()) return 2;
 
       contra::ansi::tstate_t& s = sess.term().state();

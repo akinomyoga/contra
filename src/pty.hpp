@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <vector>
+#include <unordered_map>
 #include "sequence.hpp"
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
@@ -56,6 +57,7 @@ namespace term {
     exec_error_handler_t m_exec_error_handler = NULL;
     std::uintptr_t m_exec_error_param = 0;
 
+    std::unordered_map<std::string, std::string> m_env;
   public:
     pty_session() {}
     pty_session(const char* shell, winsize const* ws = NULL, struct termios* termios = NULL) {
@@ -68,6 +70,9 @@ namespace term {
     void set_exec_error_handler(exec_error_handler_t handler, std::uintptr_t param) {
       this->m_exec_error_handler = handler;
       this->m_exec_error_param = param;
+    }
+    void set_environment_variable(const char* name, const char* value)  {
+      m_env[name] = value;
     }
     bool start(const char* shell, winsize const* ws = NULL, struct termios* termios = NULL);
 

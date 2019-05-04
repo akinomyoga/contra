@@ -112,11 +112,8 @@ namespace term {
       close(slavefd);
       close(masterfd);
 
-      // 環境変数の設定
-      std::string path = "/usr/local/bin:/usr/bin:";
-      path += std::getenv("PATH");
-      ::setenv("PATH", path.c_str(), 1);
-
+      for (auto const& pair : this->m_env)
+        ::setenv(pair.first.c_str(), pair.second.c_str(), 1);
       //execl(shell, shell, "-l", NULL);
       execl(shell, shell, NULL);
 

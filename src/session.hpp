@@ -23,6 +23,10 @@ namespace term {
 
     pty_session::exec_error_handler_t init_exec_error_handler = nullptr;
     std::uintptr_t init_exec_error_param = 0;
+  public:
+    void init_environment_variable(const char* name, const char* value) {
+      m_pty.set_environment_variable(name, value);
+    }
 
   private:
     contra::term::pty_session m_pty; // ユーザ入力書込先
@@ -38,6 +42,7 @@ namespace term {
 
     contra::idevice& input_device() { return m_pty; }
     contra::multicast_device& output_device() { return m_dev; }
+
 
   public:
     bool is_active() const { return m_pty.is_active(); }
