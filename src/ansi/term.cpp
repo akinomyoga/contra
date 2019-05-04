@@ -2221,7 +2221,6 @@ namespace {
     print_unrecognized_sequence(seq);
   }
 
-
   void term_t::input_key(key_t key) {
     key_t mod = key & _modifier_mask;
     key_t code = key & mask_keycode;
@@ -2363,6 +2362,10 @@ namespace {
       return;
     default: break;
     }
+  }
+
+  void term_t::input_mouse(key_t key, coord_t px, coord_t py, curpos_t x, curpos_t y) {
+    // Not yet implemented: do nothing
   }
 
 }

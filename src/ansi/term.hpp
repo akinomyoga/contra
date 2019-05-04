@@ -86,6 +86,30 @@ namespace ansi {
     modifier_super       = 0x08000000,
     modifier_hyper       = 0x10000000,
     modifier_alter       = 0x20000000,
+
+    // focus in/out
+    key_focus     = key_base | 58,
+    key_blur      = key_base | 59,
+
+    // mouse events
+    key_mouse1_down = key_base | 0x100,
+    key_mouse2_down = key_base | 0x200,
+    key_mouse3_down = key_base | 0x300,
+    key_mouse4_down = key_base | 0x400,
+    key_mouse5_down = key_base | 0x500,
+    key_wheel_down  = key_base | 0x600,
+    key_mouse1_up   = key_mouse1_down | 0x0800,
+    key_mouse2_up   = key_mouse2_down | 0x0800,
+    key_mouse3_up   = key_mouse3_down | 0x0800,
+    key_mouse4_up   = key_mouse4_down | 0x0800,
+    key_mouse5_up   = key_mouse5_down | 0x0800,
+    key_wheel_up    = key_wheel_down  | 0x0800,
+    key_mouse1_drag = key_mouse1_down | 0x1000,
+    key_mouse2_drag = key_mouse2_down | 0x1000,
+    key_mouse3_drag = key_mouse3_down | 0x1000,
+    key_mouse4_drag = key_mouse4_down | 0x1000,
+    key_mouse5_drag = key_mouse5_down | 0x1000,
+    key_mouse_move  = key_wheel_down  | 0x1000,
   };
 
   void print_key(key_t key, std::FILE* file);
@@ -535,6 +559,8 @@ namespace ansi {
 
   public:
     void input_key(key_t key);
+    void input_mouse(key_t key, coord_t px, coord_t py, curpos_t x, curpos_t y);
+
   };
 
 }

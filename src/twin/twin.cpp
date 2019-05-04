@@ -2,6 +2,7 @@
 #include <tchar.h>
 #include <wchar.h>
 #include <windows.h>
+#include <windowsx.h>
 #include <imm.h>
 
 #include <sys/ioctl.h>
@@ -57,8 +58,6 @@ namespace twin {
   using namespace contra::term;
   using namespace contra::ansi;
 
-  typedef std::int32_t coord_t;
-
   struct twin_settings {
     curpos_t m_col = 80;//@size
     curpos_t m_row = 30;
@@ -77,6 +76,9 @@ namespace twin {
     UINT m_blinking_interval = 200;
 
     const char* m_env_term = "xterm-256color";
+
+    bool m_debug_print_window_messages = false;
+    bool m_debug_print_unknown_key = false;
 
   public:
     coord_t calculate_client_width() const {
@@ -178,7 +180,7 @@ namespace twin {
       m_fontnames[5]  = TEXT("HGGyoshotai"); // HG行書体
       m_fontnames[6]  = TEXT("HGSeikaishotaiPRO"); // HG正楷書体-PRO
       m_fontnames[7]  = TEXT("HGSoeiKakupoptai"); // HG創英角ﾎﾟｯﾌﾟ体
-      // m_fontnames[8]  = TEXT("HGGothicM"); // HGｺﾞｼｯｸM
+      m_fontnames[8]  = TEXT("HGGothicM"); // HGｺﾞｼｯｸM
       // m_fontnames[9]  = TEXT("HGMinchoB"); // HG明朝B
       m_fontnames[9]  = TEXT("Times New Roman"); // HG明朝B
       m_fontnames[10] = TEXT("aghtex_mathfrak");
@@ -1553,10 +1555,10 @@ namespace twin {
       } else {
         std::uint32_t code = 0;
         switch (wParam) {
-        case VK_BACK:   code = ascii_bs;     goto function_key;
-        case VK_TAB:    code = ascii_ht;    goto function_key;
-        case VK_RETURN: code = ascii_cr;    goto function_key;
-        case VK_ESCAPE: code = ascii_esc;    goto function_key;
+        case VK_BACK:      code = ascii_bs;   goto function_key;
+        case VK_TAB:       code = ascii_ht;   goto function_key;
+        case VK_RETURN:    code = ascii_cr;   goto function_key;
+        case VK_ESCAPE:    code = ascii_esc;  goto function_key;
         case VK_DELETE:    code = key_delete; goto keypad_function_key;
         case VK_INSERT:    code = key_insert; goto keypad_function_key;
         case VK_PRIOR:     code = key_prior;  goto keypad_function_key;
@@ -1614,7 +1616,8 @@ namespace twin {
             } else if (UINT const code = ::MapVirtualKey(wParam, MAPVK_VK_TO_CHAR); (INT) code > 0) {
               process_input((code & mask_unicode) | (modifiers & _modifier_mask));
             } else {
-              //std::fprintf(stderr, "key (unknown): wparam=%08x flags=%x\n", wParam, modifiers);
+              if (settings.m_debug_print_unknown_key)
+                std::fprintf(stderr, "key (unknown): wparam=%08x flags=%x\n", wParam, modifiers);
               return false;
             }
           }
@@ -1627,6 +1630,12 @@ namespace twin {
     void process_char(WPARAM wParam, std::uint32_t modifiers) {
       // ToDo: Process surrogate pair
       process_input((wParam & mask_unicode) | (modifiers & _modifier_mask));
+    }
+
+    void process_mouse(key_t key, std::uint32_t modifiers, WORD x, WORD y) {
+      curpos_t const x1 = (x - settings.m_xframe) / settings.m_xpixel;
+      curpos_t const y1 = (y - settings.m_yframe) / settings.m_ypixel;
+      sess.term().input_mouse(key | (modifiers & _modifier_mask), x, y, x1, y1);
     }
 
   private:
@@ -1675,6 +1684,7 @@ namespace twin {
 
   public:
     LRESULT process_message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+      key_t key = 0;
       switch (msg) {
       case WM_CREATE:
         this->adjust_window_size_using_current_client_size();
@@ -1717,6 +1727,44 @@ namespace twin {
         // DEADCHAR は accent や diacritic などの入力の時に発生する。
         return 0L;
 
+      case WM_LBUTTONDOWN: key = key_mouse1_down; goto mouse_event;
+      case WM_MBUTTONDOWN: key = key_mouse2_down; goto mouse_event;
+      case WM_RBUTTONDOWN: key = key_mouse3_down; goto mouse_event;
+      case WM_XBUTTONDOWN:
+        key = GET_XBUTTON_WPARAM(wParam) == XBUTTON1 ? key_mouse4_down : key_mouse5_down;
+        goto mouse_event;
+      case WM_LBUTTONUP: key = key_mouse1_up; goto mouse_event;
+      case WM_MBUTTONUP: key = key_mouse2_up; goto mouse_event;
+      case WM_RBUTTONUP: key = key_mouse3_up; goto mouse_event;
+      case WM_XBUTTONUP:
+        key = GET_XBUTTON_WPARAM(wParam) == XBUTTON1 ? key_mouse4_up : key_mouse5_up;
+        goto mouse_event;
+      case WM_MOUSEMOVE:
+        {
+          constexpr WORD mouse_buttons = MK_LBUTTON | MK_MBUTTON | MK_RBUTTON | MK_XBUTTON1 | MK_XBUTTON2;
+          key = key_mouse_move;
+          WORD const kstate = GET_KEYSTATE_WPARAM(wParam);
+          if (kstate & mouse_buttons) {
+            if (kstate & MK_LBUTTON)
+              key = key_mouse1_drag;
+            else if (kstate & MK_RBUTTON)
+              key = key_mouse3_drag;
+            else if (kstate & MK_MBUTTON)
+              key = key_mouse2_drag;
+            else if (kstate & MK_XBUTTON1)
+              key = key_mouse4_drag;
+            else if (kstate & MK_XBUTTON2)
+              key = key_mouse5_drag;
+          }
+          goto mouse_event;
+        }
+      case WM_MOUSEWHEEL:
+        key = GET_WHEEL_DELTA_WPARAM(wParam) > 0 ? key_wheel_up : key_wheel_down;
+        goto mouse_event;
+      mouse_event:
+        process_mouse(key, get_modifiers(), GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        return 0L;
+
       case WM_IME_STARTCOMPOSITION:
         {
           LRESULT const result = ::DefWindowProc(hWnd, msg, wParam, lParam);
@@ -1726,8 +1774,12 @@ namespace twin {
       case WM_IME_ENDCOMPOSITION:
         this->end_ime_composition();
         goto defproc;
+      case WM_SETFOCUS:
+        this->process_input(key_focus);
+        goto defproc;
       case WM_KILLFOCUS:
         this->cancel_ime_composition();
+        this->process_input(key_blur);
         goto defproc;
 
       case WM_TIMER:
@@ -1737,15 +1789,15 @@ namespace twin {
           process_blinking_timer();
         goto defproc;
 
-      defproc:
       default:
-        // {
-        //   const char* name = get_window_message_name(msg);
-        //   if (name)
-        //     std::fprintf(stderr, "message: %s\n", name);
-        //   else
-        //     std::fprintf(stderr, "message: %08x\n", msg);
-        // }
+        if (settings.m_debug_print_window_messages) {
+          const char* name = get_window_message_name(msg);
+          if (name)
+            std::fprintf(stderr, "message: %s\n", name);
+          else
+            std::fprintf(stderr, "message: %08x\n", msg);
+        }
+      defproc:
         return ::DefWindowProc(hWnd, msg, wParam, lParam);
       }
     }

@@ -145,6 +145,7 @@ namespace contra {
     struct board_t;
     class term_t;
 
+    typedef std::int32_t coord_t;
     typedef std::int32_t curpos_t;
   }
 
