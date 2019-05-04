@@ -659,7 +659,7 @@ namespace twin {
     bool is_cursor_visible() const {
       if (m_ime_composition_active &&
         settings.m_caret_hide_on_ime) return false;
-      return sess.term().state().is_cursor_visible();
+      return sess.state().is_cursor_visible();
     }
     void draw_cursor(HDC hdc) {
       using namespace contra::ansi;
@@ -852,7 +852,7 @@ namespace twin {
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
       board_t const& b = sess.board();
-      tstate_t const& s = sess.term().state();
+      tstate_t const& s = sess.state();
       color_resolver_t _color(s);
 
       {
@@ -958,7 +958,7 @@ namespace twin {
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
       board_t const& b = sess.board();
-      tstate_t const& s = sess.term().state();
+      tstate_t const& s = sess.state();
 
       constexpr std::uint32_t flag_processed = character_t::flag_private1;
 
@@ -1162,7 +1162,7 @@ namespace twin {
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
       board_t const& b = sess.board();
-      tstate_t const& s = sess.term().state();
+      tstate_t const& s = sess.state();
       color_resolver_t _color(s);
 
       coord_t x = xorigin, y = yorigin;
@@ -1451,7 +1451,7 @@ namespace twin {
         ::BitBlt(hdc0, 0, 0, m_background.width(), m_background.height(), hdc1, 0, 0, SRCCOPY);
       }
 
-      tstate_t const& s = sess.term().state();
+      tstate_t const& s = sess.state();
       bool const cursor_blinking = s.is_cursor_blinking();
       bool const cursor_visible = this->is_cursor_visible();
       if (!cursor_visible || !cursor_blinking)
@@ -1810,10 +1810,7 @@ namespace twin {
       ::MessageBoxA(NULL, buff.str().c_str(), "Contra/Cygwin - exec failed", MB_OK);
     }
     void setup_session_parameters() {
-      sess.init_ws.ws_col = settings.m_col;
-      sess.init_ws.ws_row = settings.m_row;
-      sess.init_ws.ws_xpixel = fstore.width();
-      sess.init_ws.ws_ypixel = fstore.height();
+      sess.init_size(settings.m_col, settings.m_row, settings.m_xpixel, settings.m_ypixel);
       sess.init_read_buffer_size = 64 * 1024;
       sess.init_exec_error_handler = &exec_error_handler;
 
@@ -1833,7 +1830,7 @@ namespace twin {
       this->setup_session_parameters();
       if (!sess.initialize()) return 2;
 
-      contra::ansi::tstate_t& s = sess.term().state();
+      contra::ansi::tstate_t& s = sess.state();
       s.m_default_fg_space = contra::dict::attribute_t::color_space_rgb;
       s.m_default_bg_space = contra::dict::attribute_t::color_space_rgb;
       s.m_default_fg_color = contra::dict::rgb(0x00, 0x00, 0x00);

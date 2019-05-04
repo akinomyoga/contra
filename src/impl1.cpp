@@ -65,42 +65,39 @@ bool check_presentation_content(board_t& board, const char32_t* expected) {
 void test_insert() {
   using namespace contra::ansi;
   {
-    board_t board(5, 5);
-    term_t term(board);
+    term_t term(5, 5);
     term.printt("hello world!\n");
     term.printt("hello world!\n");
-    board.debug_print(stdout);
+    term.board().debug_print(stdout);
   }
 
   // 全角文字の挿入と上書き
   {
-    board_t board(5, 3);
-    term_t term(board);
+    term_t term(5, 3);
     term.printt("hello\r日\n");
     term.printt("a日本\r全\n");
     term.printt("a日本\ba");
-    board.debug_print(stdout);
+    term.board().debug_print(stdout);
   }
 
   // タブ挿入
   {
-    board_t board(40, 1);
-    term_t term(board);
+    term_t term(40, 1);
     term.printt("日本\thello\tworld");
-    board.debug_print(stdout);
+    term.board().debug_print(stdout);
   }
 }
 
 void test_strings() {
   using namespace contra::ansi;
 
-  board_t board(40, 1);
-  term_t term(board);
+  term_t term(40, 1);
+  board_t& b = term.board();
 
   // to_presentation_position/to_data_position
   auto check_conversion = [&] (curpos_t xdata, curpos_t xpres) {
-    mwg_check(board.to_data_position(0, xpres) == xdata);
-    mwg_check(board.to_presentation_position(0, xdata) == xpres);
+    mwg_check(b.to_data_position(0, xpres) == xdata);
+    mwg_check(b.to_presentation_position(0, xdata) == xpres);
   };
 
   // calculate_data_ranges_from_presentation_range
@@ -108,7 +105,7 @@ void test_strings() {
     line_t::slice_ranges_t ranges1;
     std::vector<curpos_t> positions;
     for (curpos_t i = x1; i < x2; i++)
-      positions.push_back(board.to_data_position(0, i));
+      positions.push_back(b.to_data_position(0, i));
     std::sort(positions.begin(), positions.end());
     for (curpos_t num : positions) {
       if (ranges1.size() && ranges1.back().second == num)
@@ -118,7 +115,7 @@ void test_strings() {
     }
 
     line_t::slice_ranges_t ranges2;
-    board.line().calculate_data_ranges_from_presentation_range(ranges2, x1,  x2, board.m_width, false);
+    b.line().calculate_data_ranges_from_presentation_range(ranges2, x1,  x2, b.m_width, false);
 
     try {
       for (std::size_t i = 0, j = 0; i < ranges1.size() && j < ranges2.size(); i++, j++) {
@@ -130,7 +127,7 @@ void test_strings() {
       }
     } catch(mwg::assertion_error&) {
       std::fprintf(stderr, "slice: ");
-      board.line().debug_dump();
+      b.line().debug_dump();
       std::fprintf(stderr, "x1=%d x2=%d\nresult: ", (int) x1, (int) x2);
       for (auto const& range : ranges2)
         std::fprintf(stderr, "%d-%d ", range.first, range.second);
@@ -146,10 +143,10 @@ void test_strings() {
   check_conversion(11, 11);
   check_conversion(13, 13);
   check_conversion(14, 14);
-  mwg_check(board.line().find_innermost_string(10, true , board.m_width, false) == 0);
-  mwg_check(board.line().find_innermost_string(10, false, board.m_width, false) == 1);
-  mwg_check(board.line().find_innermost_string(13, true,  board.m_width, false) == 1);
-  mwg_check(board.line().find_innermost_string(13, false, board.m_width, false) == 0);
+  mwg_check(b.line().find_innermost_string(10, true , b.m_width, false) == 0);
+  mwg_check(b.line().find_innermost_string(10, false, b.m_width, false) == 1);
+  mwg_check(b.line().find_innermost_string(13, true,  b.m_width, false) == 1);
+  mwg_check(b.line().find_innermost_string(13, false, b.m_width, false) == 0);
   term.printt("SDS(2)----\x1b[2]---\x1b[0]----\r");
   check_conversion(6 , 6 );
   check_conversion(7 , 7 );
@@ -173,12 +170,12 @@ void test_strings() {
   check_conversion(9, 9);
   check_conversion(10, 10);
   check_slice(0, 3);
-  mwg_check(board.line().find_innermost_string(2, true , board.m_width, false) == 0);
-  mwg_check(board.line().find_innermost_string(2, false, board.m_width, false) == 1);
-  mwg_check(board.line().find_innermost_string(5, true,  board.m_width, false) == 1);
-  mwg_check(board.line().find_innermost_string(5, false, board.m_width, false) == 2);
-  mwg_check(board.line().find_innermost_string(9, true,  board.m_width, false) == 2);
-  mwg_check(board.line().find_innermost_string(9, false, board.m_width, false) == 0);
+  mwg_check(b.line().find_innermost_string(2, true , b.m_width, false) == 0);
+  mwg_check(b.line().find_innermost_string(2, false, b.m_width, false) == 1);
+  mwg_check(b.line().find_innermost_string(5, true,  b.m_width, false) == 1);
+  mwg_check(b.line().find_innermost_string(5, false, b.m_width, false) == 2);
+  mwg_check(b.line().find_innermost_string(9, true,  b.m_width, false) == 2);
+  mwg_check(b.line().find_innermost_string(9, false, b.m_width, false) == 0);
 
   // DATA ab[cd[ef[gh]ij[kl]mn]op]qr
   //      ..[<<[..[<<]..[<<]..]<<]..
@@ -201,22 +198,22 @@ void test_strings() {
   check_slice(7, 7);
   check_slice(7, 9);
   check_slice(7, 11);
-  mwg_check(board.line().find_innermost_string( 2, true , board.m_width, false) == 0);
-  mwg_check(board.line().find_innermost_string( 2, false, board.m_width, false) == 1);
-  mwg_check(board.line().find_innermost_string( 4, true,  board.m_width, false) == 1);
-  mwg_check(board.line().find_innermost_string( 4, false, board.m_width, false) == 2);
-  mwg_check(board.line().find_innermost_string( 6, true,  board.m_width, false) == 2);
-  mwg_check(board.line().find_innermost_string( 6, false, board.m_width, false) == 3);
-  mwg_check(board.line().find_innermost_string( 8, true,  board.m_width, false) == 3);
-  mwg_check(board.line().find_innermost_string( 8, false, board.m_width, false) == 2);
-  mwg_check(board.line().find_innermost_string(10, true,  board.m_width, false) == 2);
-  mwg_check(board.line().find_innermost_string(10, false, board.m_width, false) == 4);
-  mwg_check(board.line().find_innermost_string(12, true , board.m_width, false) == 4);
-  mwg_check(board.line().find_innermost_string(12, false, board.m_width, false) == 2);
-  mwg_check(board.line().find_innermost_string(14, true , board.m_width, false) == 2);
-  mwg_check(board.line().find_innermost_string(14, false, board.m_width, false) == 1);
-  mwg_check(board.line().find_innermost_string(16, true , board.m_width, false) == 1);
-  mwg_check(board.line().find_innermost_string(16, false, board.m_width, false) == 0);
+  mwg_check(b.line().find_innermost_string( 2, true , b.m_width, false) == 0);
+  mwg_check(b.line().find_innermost_string( 2, false, b.m_width, false) == 1);
+  mwg_check(b.line().find_innermost_string( 4, true,  b.m_width, false) == 1);
+  mwg_check(b.line().find_innermost_string( 4, false, b.m_width, false) == 2);
+  mwg_check(b.line().find_innermost_string( 6, true,  b.m_width, false) == 2);
+  mwg_check(b.line().find_innermost_string( 6, false, b.m_width, false) == 3);
+  mwg_check(b.line().find_innermost_string( 8, true,  b.m_width, false) == 3);
+  mwg_check(b.line().find_innermost_string( 8, false, b.m_width, false) == 2);
+  mwg_check(b.line().find_innermost_string(10, true,  b.m_width, false) == 2);
+  mwg_check(b.line().find_innermost_string(10, false, b.m_width, false) == 4);
+  mwg_check(b.line().find_innermost_string(12, true , b.m_width, false) == 4);
+  mwg_check(b.line().find_innermost_string(12, false, b.m_width, false) == 2);
+  mwg_check(b.line().find_innermost_string(14, true , b.m_width, false) == 2);
+  mwg_check(b.line().find_innermost_string(14, false, b.m_width, false) == 1);
+  mwg_check(b.line().find_innermost_string(16, true , b.m_width, false) == 1);
+  mwg_check(b.line().find_innermost_string(16, false, b.m_width, false) == 0);
 
   // test cases from src/impl1.cpp
   // // abcd_[efgh]_ij
@@ -235,16 +232,16 @@ void test_strings() {
 
 void test_presentation() {
   using namespace contra::ansi;
-  board_t board(18, 1);
-  term_t term(board);
+  term_t term(18, 1);
+  board_t& b = term.board();
 
   term.printt("\x1b[H");
   term.printt("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r");
   std::vector<char32_t> buff;
-  for (curpos_t p = 0; p < board.m_width; p++) {
-    curpos_t const x = board.to_data_position(0, p);
-    curpos_t const p2 = board.to_presentation_position(0, x);
-    char32_t c = board.line().char_at(x).value;
+  for (curpos_t p = 0; p < b.m_width; p++) {
+    curpos_t const x = b.to_data_position(0, p);
+    curpos_t const p2 = b.to_presentation_position(0, x);
+    char32_t c = b.line().char_at(x).value;
     if (!(c & character_t::flag_wide_extension))
       buff.push_back(c == U'\0' ? U'@' : c);
     mwg_check(p == p2, "p=%d -> x=%d -> p=%d", p, x, p2);
@@ -253,18 +250,18 @@ void test_presentation() {
   mwg_check(result == U"abpoefhgijlkmndcqr");
 
 
-  bool const line_r2l = board.line_r2l();
+  bool const line_r2l = b.line_r2l();
   term.printt("\x1b[H\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
-  mwg_check(check_presentation_content(board, U"abpoefhgijlkmndcqr"));
+  mwg_check(check_presentation_content(b, U"abpoefhgijlkmndcqr"));
   curpos_t data_positions[18][2] = {
     {0, 1}, {1, 2}, {16, 15}, {15, 14}, {4, 5}, {5, 6},
     {8, 7}, {7, 6}, {8, 9}, {9, 10}, {12, 11}, {11, 10},
     {12, 13}, {13, 14}, {4, 3}, {3, 2}, {16, 17}, {17,18},
   };
   for (std::size_t i = 0; i < std::size(data_positions); i++) {
-    auto const ledge  = board.line().convert_position(false, i    , -1, board.m_width, line_r2l);
-    auto const redge  = board.line().convert_position(false, i + 1, +1, board.m_width, line_r2l);
-    auto const center = board.line().convert_position(false, i    ,  0, board.m_width, line_r2l);
+    auto const ledge  = b.line().convert_position(false, i    , -1, b.m_width, line_r2l);
+    auto const redge  = b.line().convert_position(false, i + 1, +1, b.m_width, line_r2l);
+    auto const center = b.line().convert_position(false, i    ,  0, b.m_width, line_r2l);
     mwg_check(ledge == data_positions[i][0], "to_data: i=%d result=%d expected=%d", i, ledge, data_positions[i][0]);
     mwg_check(redge == data_positions[i][1], "to_data: i=%d result=%d expected=%d", i, redge, data_positions[i][1]);
     mwg_check(center == std::min(data_positions[i][0], data_positions[i][1]),
@@ -272,8 +269,8 @@ void test_presentation() {
 
     curpos_t const p0 = data_positions[i][0];
     curpos_t const p1 = data_positions[i][1];
-    auto const pres_edge0 = board.line().convert_position(true, p0, p0 < p1 ? -1 : +1, board.m_width, line_r2l);
-    auto const pres_edge1 = board.line().convert_position(true, p1, p0 < p1 ? +1 : -1, board.m_width, line_r2l);
+    auto const pres_edge0 = b.line().convert_position(true, p0, p0 < p1 ? -1 : +1, b.m_width, line_r2l);
+    auto const pres_edge1 = b.line().convert_position(true, p1, p0 < p1 ? +1 : -1, b.m_width, line_r2l);
     mwg_check(pres_edge0 == (curpos_t) i    , "to_pres: in=%d out=%d expected=%d", p0, pres_edge0, i);
     mwg_check(pres_edge1 == (curpos_t) i + 1, "to_pres: in=%d out=%d expected=%d", p1, pres_edge1, i);
   }
@@ -282,197 +279,196 @@ void test_presentation() {
 
 void test_ech() {
   using namespace contra::ansi;
-  board_t board(20, 1);
-  term_t term(board);
+  term_t term(20, 1);
+  board_t& b = term.board();
 
   // ECH ICH DCH (mono)
   term.printt("\x1b[Habcdefghijklmnopqr");
   term.printt("\x1b[1;3HC");
-  mwg_check(check_data_content(board, U"abCdefghijklmnopqr@@"));
+  mwg_check(check_data_content(b, U"abCdefghijklmnopqr@@"));
   term.printt("\x1b[H                    ");
   term.printt("\x1b[1;3H\x1b[3X");
-  mwg_check(check_data_content(board, U"  @@@               "));
+  mwg_check(check_data_content(b, U"  @@@               "));
   term.printt("\x1b[H0123456789          ");
   term.printt("\x1b[1;3H\x1b[3P");
-  mwg_check(check_data_content(board, U"0156789          @@@"));
+  mwg_check(check_data_content(b, U"0156789          @@@"));
   term.printt("\x1b[H0123456789          ");
   term.printt("\x1b[1;3H\x1b[3@");
-  mwg_check(check_data_content(board, U"01@@@23456789       "));
-  board.line().clear();
+  mwg_check(check_data_content(b, U"01@@@23456789       "));
+  b.line().clear();
 
   // ECH ICH DCH (prop)
   term.printt("\r\x1b[2]abcdefghijklmnopqr\x1b[0]");
-  mwg_check(check_data_content(board, U"abcdefghijklmnopqr@@"));
-  mwg_check(check_presentation_content(board, U"rqponmlkjihgfedcba@@"));
+  mwg_check(check_data_content(b, U"abcdefghijklmnopqr@@"));
+  mwg_check(check_presentation_content(b, U"rqponmlkjihgfedcba@@"));
   term.printt("\x1b[1;3f\x1b[3X");
-  mwg_check(check_data_content(board, U"ab@@@fghijklmnopqr@@"));
+  mwg_check(check_data_content(b, U"ab@@@fghijklmnopqr@@"));
   term.printt("\r\x1b[2]abcdefghijklmnopqr\x1b[0]  ");
   term.printt("\x1b[1;3f\x1b[3P");
-  mwg_check(check_data_content(board, U"abfghijklmnopqr  @@@"));
+  mwg_check(check_data_content(b, U"abfghijklmnopqr  @@@"));
   term.printt("\r\x1b[2]abcdefghijklmnopqr\x1b[0]  ");
   term.printt("\x1b[1;3f\x1b[3@");
-  mwg_check(check_data_content(board, U"ab@@@cdefghijklmnopq"));
-  board.line().clear();
+  mwg_check(check_data_content(b, U"ab@@@cdefghijklmnopq"));
+  b.line().clear();
 
   // ECH ICH DCH (prop SDS を踏み潰す場合)
   term.printt("\rab\x1b[2]cdef\x1b[1]ghijkl\x1b[0]mnop\x1b[0]qr  ");
-  mwg_check(check_presentation_content(board, U"abponmghijklfedcqr  "));
+  mwg_check(check_presentation_content(b, U"abponmghijklfedcqr  "));
   term.printt("\x1b[1;5f\x1b[4X");
-  mwg_check(check_data_content(board, U"abcd@@@@ijklmnopqr  "));
-  mwg_check(check_presentation_content(board, U"abdc@@@@ijklmnopqr  "));
+  mwg_check(check_data_content(b, U"abcd@@@@ijklmnopqr  "));
+  mwg_check(check_presentation_content(b, U"abdc@@@@ijklmnopqr  "));
   term.printt("\rab\x1b[2]cdef\x1b[1]ghijkl\x1b[0]mnop\x1b[0]qr  ");
   term.printt("\x1b[1;5f\x1b[4P");
-  mwg_check(check_data_content(board, U"abcdijklmnopqr  @@@@"));
-  mwg_check(check_presentation_content(board, U"ablkjidcmnopqr  @@@@"));
+  mwg_check(check_data_content(b, U"abcdijklmnopqr  @@@@"));
+  mwg_check(check_presentation_content(b, U"ablkjidcmnopqr  @@@@"));
   term.printt("\rab\x1b[2]cdef\x1b[1]ghijkl\x1b[0]mnop\x1b[0]qr  ");
   term.printt("\x1b[1;5f\x1b[4@");
-  mwg_check(check_data_content(board, U"abcd@@@@efghijklmnop"));
-  mwg_check(check_presentation_content(board, U"abdc@@@@efghijklmnop"));
-  board.line().clear();
+  mwg_check(check_data_content(b, U"abcd@@@@efghijklmnop"));
+  mwg_check(check_presentation_content(b, U"abdc@@@@efghijklmnop"));
+  b.line().clear();
 
   // ECH ICH DCH (prop !dcsm)
   term.printt("\x1b[9l"); // DCSM(PRESENTATION)
   term.printt("\rab\x1b[2]cdef\x1b[1]ghijkl\x1b[]mnop\x1b[]qr  ");
-  mwg_check(check_presentation_content(board, U"abponmghijklfedcqr  "));
+  mwg_check(check_presentation_content(b, U"abponmghijklfedcqr  "));
   term.printt("\x1b[1;5H\x1b[4X");
-  mwg_check(check_presentation_content(board, U"abpo@@@@ijklfedcqr  "));
+  mwg_check(check_presentation_content(b, U"abpo@@@@ijklfedcqr  "));
   term.printt("\rab\x1b[2]cdef\x1b[1]ghijkl\x1b[0]mnop\x1b[0]qr  ");
   term.printt("\x1b[1;5H\x1b[4P");
-  mwg_check(check_presentation_content(board, U"abpoijklfedcqr  @@@@"));
+  mwg_check(check_presentation_content(b, U"abpoijklfedcqr  @@@@"));
   term.printt("\rab\x1b[2]cdef\x1b[1]ghijkl\x1b[0]mnop\x1b[0]qr  ");
   term.printt("\x1b[1;5H\x1b[4@");
-  mwg_check(check_presentation_content(board, U"abpo@@@@nmghijklfedc"));
+  mwg_check(check_presentation_content(b, U"abpo@@@@nmghijklfedc"));
   term.printt("\x1b[9h"); // DCSM(DATA);
-  board.line().clear();
+  b.line().clear();
 
   // ECH ICH DCH (prop !dcsm)
-  board.reset_size(40, 1);
+  b.reset_size(40, 1);
   term.printt("\x1b[9l"); // DCSM(PRESENTATION)
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
-  mwg_check(check_presentation_content(board, U"abpoefhgijlkmndcqr@@@@@@@@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"abpoefhgijlkmndcqr@@@@@@@@@@@@@@@@@@@@@@"));
   // PRES a      [[[g]ij[lk]mn]dc]qr
   // DATA a      [cd[[g]ij[kl]mn]]qr
   term.printt("\x1b[1;2H\x1b[6X");
-  mwg_check(check_presentation_content(board, U"a@@@@@@gijlkmndcqr@@@@@@@@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"a@@@@@@gijlkmndcqr@@@@@@@@@@@@@@@@@@@@@@"));
   // PRES ab[po[e]]        [[n]dc]qr
   // DATA ab[[e]op]        [cd[n]]qr
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
   term.printt("\x1b[1;6H\x1b[8X");
-  mwg_check(check_presentation_content(board, U"abpoe@@@@@@@@ndcqr@@@@@@@@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"abpoe@@@@@@@@ndcqr@@@@@@@@@@@@@@@@@@@@@@"));
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
   term.printt("\x1b[1;14H\x1b[7X");
-  mwg_check(check_presentation_content(board, U"abpoefhgijlkm@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"abpoefhgijlkm@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
   term.printt("\x1b[1;2H\x1b[6P");
-  mwg_check(check_presentation_content(board, U"agijlkmndcqr@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"agijlkmndcqr@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
   term.printt("\x1b[1;6H\x1b[8P");
-  mwg_check(check_presentation_content(board, U"abpoendcqr@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"abpoendcqr@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
   term.printt("\x1b[1;14H\x1b[7P");
-  mwg_check(check_presentation_content(board, U"abpoefhgijlkm@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"abpoefhgijlkm@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
   term.printt("\x1b[1;2H\x1b[6@");
-  mwg_check(check_presentation_content(board, U"a@@@@@@bpoefhgijlkmndcqr@@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"a@@@@@@bpoefhgijlkmndcqr@@@@@@@@@@@@@@@@"));
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
   term.printt("\x1b[1;6H\x1b[8@");
-  mwg_check(check_presentation_content(board, U"abpoe@@@@@@@@fhgijlkmndcqr@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"abpoe@@@@@@@@fhgijlkmndcqr@@@@@@@@@@@@@@"));
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
   term.printt("\x1b[1;14H\x1b[7@");
-  mwg_check(check_presentation_content(board, U"abpoefhgijlkm@@@@@@@ndcqr@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"abpoefhgijlkm@@@@@@@ndcqr@@@@@@@@@@@@@@@"));
   term.printt("\x1b[9h"); // DCSM(DATA);
-  board.line().clear();
+  b.line().clear();
 
   // ECH (prop !dcsm)
   term.printt("\x1b[9l"); // DCSM(PRESENTATION)
   term.printt("\r\x1b[2Kab\x1b[1]cdefgh\x1b[0]ij\r");
-  mwg_check(check_presentation_content(board, U"abcdefghij@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"abcdefghij@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
   term.printt("\x1b[1;5H\x1b[2X");
-  mwg_check(check_presentation_content(board, U"abcd@@ghij@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"abcd@@ghij@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
   term.printt("\r\x1b[2Kab\x1b[1]cd\x1b[1]efgh\x1b[0]ij\x1b[0]kl\r");
-  mwg_check(check_presentation_content(board, U"abcdefghijkl@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"abcdefghijkl@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
   term.printt("\x1b[1;6H\x1b[2X");
-  mwg_check(check_presentation_content(board, U"abcde@@hijkl@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
+  mwg_check(check_presentation_content(b, U"abcde@@hijkl@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
   term.printt("\x1b[9h"); // DCSM(DATA);
-  board.line().clear();
+  b.line().clear();
 
   // ECH ICH DCH (prop !dcsm)
   term.printt("\x1b[9l\x1b[3 S"); // DCSM(PRESENTATION), SPD(3)
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
-  mwg_check(check_presentation_content(board, U"@@@@@@@@@@@@@@@@@@@@@@rqpoefhgijlkmndcba"));
+  mwg_check(check_presentation_content(b, U"@@@@@@@@@@@@@@@@@@@@@@rqpoefhgijlkmndcba"));
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
   term.printt("\x1b[1;2H\x1b[6X");
-  mwg_check(check_presentation_content(board, U"@@@@@@@@@@@@@@@@@@@@@@rqpoefhgijl@@@@@@a"));
+  mwg_check(check_presentation_content(b, U"@@@@@@@@@@@@@@@@@@@@@@rqpoefhgijl@@@@@@a"));
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
   term.printt("\x1b[1;2H\x1b[6P");
-  mwg_check(check_presentation_content(board, U"@@@@@@@@@@@@@@@@@@@@@@@@@@@@rqpoefhgijla"));
+  mwg_check(check_presentation_content(b, U"@@@@@@@@@@@@@@@@@@@@@@@@@@@@rqpoefhgijla"));
   term.printt("\r\x1b[2Kab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr");
   term.printt("\x1b[1;2H\x1b[6@");
-  mwg_check(check_presentation_content(board, U"@@@@@@@@@@@@@@@@rqpoefhgijlkmndcb@@@@@@a"));
+  mwg_check(check_presentation_content(b, U"@@@@@@@@@@@@@@@@rqpoefhgijlkmndcb@@@@@@a"));
   term.printt("\x1b[9h\x1b[ S"); // DCSM(DATA), SPD(0)
-  board.line().clear();
+  b.line().clear();
 }
 
 void test_erm() {
   using namespace contra::ansi;
-  board_t board(20, 1);
-  term_t term(board);
+  term_t term(20, 1);
+  board_t& b = term.board();
 
   // 全角
   term.printt("\x1b[H日本語日本語日本語");
   term.printt("\x1b[1;4H\x1b[12X");
-  mwg_check(check_presentation_content(board, U"日 @@@@@@@@@@@@ 語@@"));
+  mwg_check(check_presentation_content(b, U"日 @@@@@@@@@@@@ 語@@"));
 
   // SPA-EPA (mono)
   term.printt("\x1b[Hab\eVcdef\eWghij\eVklmn\eWopqr");
-  mwg_check(check_presentation_content(board, U"abcdefghijklmnopqr@@"));
+  mwg_check(check_presentation_content(b, U"abcdefghijklmnopqr@@"));
   term.printt("\x1b[1;2H\x1b[14X");
-  mwg_check(check_presentation_content(board, U"a@cdef@@@@klmn@pqr@@"));
+  mwg_check(check_presentation_content(b, U"a@cdef@@@@klmn@pqr@@"));
   term.printt("\x1b[H日本\eV語日\eW本\eV語日\eW本語");
-  mwg_check(check_presentation_content(board, U"日本語日本語日本語@@"));
+  mwg_check(check_presentation_content(b, U"日本語日本語日本語@@"));
   term.printt("\x1b[1;4H\x1b[12X");
-  mwg_check(check_presentation_content(board, U"日 @語日@@語日@ 語@@"));
+  mwg_check(check_presentation_content(b, U"日 @語日@@語日@ 語@@"));
   term.printt("\x1b[H日本\eV語日\eW本\eV語日\eW本語");
   term.printt("\x1b[1;6H\x1b[8X");
-  mwg_check(check_presentation_content(board, U"日本語日@@語日本語@@"));
-  board.line().clear();
+  mwg_check(check_presentation_content(b, U"日本語日@@語日本語@@"));
+  b.line().clear();
 
   // SPA-EPA (prop)
   term.printt("\x1b[Hab\eVcd\x1b[2]ef\eWgh\eVij\eWklmn\x1b[0]opqr");
-  mwg_check(check_presentation_content(board, U"abcdnmlkjihgfeopqr@@"));
+  mwg_check(check_presentation_content(b, U"abcdnmlkjihgfeopqr@@"));
   term.printt("\x1b[H\x1b[16X");
-  mwg_check(check_presentation_content(board, U"@@cdfe@@ij@@@@@@qr@@"));
-  board.line().clear();
+  mwg_check(check_presentation_content(b, U"@@cdfe@@ij@@@@@@qr@@"));
+  b.line().clear();
 
   // SPA-EPA (prop&presentation)
   term.printt("\x1b[9l"); // DCSM(PRESENTATION)
   term.printt("\x1b[Hab\eVcd\x1b[2]ef\eWgh\eVij\eWklmn\x1b[0]opqr");
-  mwg_check(check_presentation_content(board, U"abcdnmlkjihgfeopqr@@"));
+  mwg_check(check_presentation_content(b, U"abcdnmlkjihgfeopqr@@"));
   term.printt("\x1b[H\x1b[16X");
-  mwg_check(check_presentation_content(board, U"@@cdfe@@ij@@@@@@qr@@"));
+  mwg_check(check_presentation_content(b, U"@@cdfe@@ij@@@@@@qr@@"));
   term.printt("\x1b[Hab\eVcd\x1b[2]ef\eWgh\eVij\eWklmn\x1b[0]opqr");
   term.printt("\x1b[1;10H\x1b[7X");
-  mwg_check(check_presentation_content(board, U"abcdnmlkjef@@i@@qr@@"));
+  mwg_check(check_presentation_content(b, U"abcdnmlkjef@@i@@qr@@"));
   term.printt("\x1b[H日本語\x1b[2]日本語\x1b[]日本語");
-  mwg_check(check_presentation_content(board, U"日本語語本日日本語@@"));
+  mwg_check(check_presentation_content(b, U"日本語語本日日本語@@"));
   term.printt("\x1b[1;6H\x1b[6X");
-  mwg_check(check_presentation_content(board, U"日本 @@@@@@ 日本語@@"));
+  mwg_check(check_presentation_content(b, U"日本 @@@@@@ 日本語@@"));
   term.printt("\x1b[H日本\eV語\x1b[2]日本\eW語\x1b[]日本語");
-  mwg_check(check_presentation_content(board, U"日本語語本日日本語@@"));
+  mwg_check(check_presentation_content(b, U"日本語語本日日本語@@"));
   term.printt("\x1b[1;6H\x1b[6X");
-  mwg_check(check_presentation_content(board, U"日本語本日@@日本語@@"));
+  mwg_check(check_presentation_content(b, U"日本語本日@@日本語@@"));
   term.printt("\x1b[H日本\eV語\x1b[2]日本\eW語\x1b[]日本語");
   term.printt("\x1b[1;7H\x1b[6X");
-  mwg_check(check_presentation_content(board, U"日本語日本@@日本語@@"));
+  mwg_check(check_presentation_content(b, U"日本語日本@@日本語@@"));
   term.printt("\x1b[9h"); // DCSM(DATA);
-  board.line().clear();
+  b.line().clear();
 }
 
 void test_sgr() {
   using namespace contra::ansi;
-  board_t board(20, 10);
+  term_t term(20, 10);
 
-  term_t term(board);
   term.printt("\x1b[38:5:196;4mabcdefghijklmnopqrstuvwxyz");
   term.printt("\x1b[38:5:202mabcdefghijklmnopqrstuvwxyz");
   term.printt("\x1b[38:5:220;24mabcdefghijklmnopqrstuvwxyz");
@@ -489,7 +485,7 @@ void test_sgr() {
   sgrcap.initialize();
 
   contra::dict::tty_writer w(stdout, &sgrcap);
-  w.print_screen(board);
+  w.print_screen(term.board());
 }
 
 int main() {

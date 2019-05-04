@@ -14,17 +14,19 @@ int main() {
   contra::ttty::ttty_screen screen(STDIN_FILENO, STDOUT_FILENO);
   auto& sess = screen.session();
   {
-    ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &sess.init_ws);
-    if (sess.init_ws.ws_col > cfg_col) sess.init_ws.ws_col = cfg_col;
-    if (sess.init_ws.ws_row > cfg_row) sess.init_ws.ws_row = cfg_row;
+    struct winsize ws = sess.winsize();
+    ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &ws);
+    if (ws.ws_col > cfg_col) ws.ws_col = cfg_col;
+    if (ws.ws_row > cfg_row) ws.ws_row = cfg_row;
+    sess.init_size(ws.ws_col, ws.ws_row);
     sess.init_termios = &screen.old_termios;
   }
   if (!screen.initialize()) return 10;
 
-  sess.term().state().m_default_fg_space = contra::ansi::attribute_t::color_space_indexed;
-  sess.term().state().m_default_fg_color = 0;
-  sess.term().state().m_default_bg_space = contra::ansi::attribute_t::color_space_indexed;
-  sess.term().state().m_default_bg_color = 255;
+  sess.state().m_default_fg_space = contra::ansi::attribute_t::color_space_indexed;
+  sess.state().m_default_fg_color = 0;
+  sess.state().m_default_bg_space = contra::ansi::attribute_t::color_space_indexed;
+  sess.state().m_default_bg_color = 255;
 
   contra::sequence_printer printer("impl3-allseq.txt");
   sess.output_device().push(&printer);

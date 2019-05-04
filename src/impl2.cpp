@@ -13,7 +13,7 @@ int main() {
   contra::ttty::ttty_screen screen(STDIN_FILENO, STDOUT_FILENO);
   auto& sess = screen.session();
   {
-    ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &sess.init_ws);
+    ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &sess.winsize());
     sess.init_termios = &screen.old_termios;
   }
   if (!screen.initialize()) return 10;

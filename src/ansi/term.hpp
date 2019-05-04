@@ -328,7 +328,7 @@ namespace ansi {
 
   class term_t: public contra::idevice {
   private:
-    board_t* m_board;
+    board_t m_board;
     tstate_t m_state {this};
 
     contra::idevice* m_send_target = nullptr;
@@ -343,33 +343,33 @@ namespace ansi {
     }
 
   public:
-    term_t(contra::ansi::board_t& board): m_board(&board) {
+    term_t(curpos_t width, curpos_t height): m_board(width, height) {
       this->m_send_buff.reserve(32);
     }
 
   public:
-    board_t& board() { return *m_board; }
-    board_t const& board() const { return *m_board; }
+    board_t& board() { return this->m_board; }
+    board_t const& board() const { return this->m_board; }
     tstate_t& state() {return this->m_state;}
     tstate_t const& state() const {return this->m_state;}
 
     curpos_t tmargin() const {
       curpos_t const b = m_state.dec_tmargin;
-      return 0 <= b && b < m_board->m_height ? b : 0;
+      return 0 <= b && b < m_board.m_height ? b : 0;
     }
     curpos_t bmargin() const {
       curpos_t const e = m_state.dec_bmargin;
-      return 0 < e && e <= m_board->m_height ? e : m_board->m_height;
+      return 0 < e && e <= m_board.m_height ? e : m_board.m_height;
     }
     curpos_t lmargin() const {
       if (!m_state.get_mode(mode_declrmm)) return 0;
       curpos_t const l = m_state.dec_lmargin;
-      return 0 <= l && l < m_board->m_width ? l : 0;
+      return 0 <= l && l < m_board.m_width ? l : 0;
     }
     curpos_t rmargin() const {
-      if (!m_state.get_mode(mode_declrmm)) return m_board->m_width;
+      if (!m_state.get_mode(mode_declrmm)) return m_board.m_width;
       curpos_t const r = m_state.dec_rmargin;
-      return 0 < r && r <= m_board->m_width ? r : m_board->m_width;
+      return 0 < r && r <= m_board.m_width ? r : m_board.m_width;
     }
 
     curpos_t implicit_sph() const {
@@ -379,7 +379,7 @@ namespace ansi {
       return sph;
     }
     curpos_t implicit_spl() const {
-      curpos_t spl = m_board->m_height - 1;
+      curpos_t spl = m_board.m_height - 1;
       if (m_state.page_limit >= 0 && m_state.page_limit < spl)
         spl = m_state.page_limit;
       if (m_state.dec_bmargin > 0 && m_state.dec_bmargin - 1 < spl)
@@ -387,7 +387,7 @@ namespace ansi {
       return spl;
     }
     curpos_t implicit_slh(line_t const& line) const {
-      curpos_t const width = m_board->m_width;
+      curpos_t const width = m_board.m_width;
       curpos_t home = line.home();
       home = home < 0 ? 0 : std::min(home, width - 1);
       if (m_state.get_mode(mode_declrmm))
@@ -395,7 +395,7 @@ namespace ansi {
       return home;
     }
     curpos_t implicit_sll(line_t const& line) const {
-      curpos_t const width = m_board->m_width;
+      curpos_t const width = m_board.m_width;
       curpos_t limit = line.limit();
       limit = limit < 0 ? width - 1 : std::min(limit, width - 1);
       if (m_state.get_mode(mode_declrmm) && m_state.dec_rmargin > 0)
@@ -403,15 +403,15 @@ namespace ansi {
       return limit;
     }
     curpos_t implicit_sll() const {
-      return implicit_sll(m_board->line(m_board->cur.y()));
+      return implicit_sll(m_board.line(m_board.cur.y()));
     }
     curpos_t implicit_slh() const {
-      return implicit_slh(m_board->line(m_board->cur.y()));
+      return implicit_slh(m_board.line(m_board.cur.y()));
     }
 
     attribute_t fill_attr() const {
       if (m_state.get_mode(mode_bce)) {
-        attribute_t const& src = m_board->cur.attribute;
+        attribute_t const& src = m_board.cur.attribute;
         attribute_t ret;
         ret.set_bg(src.bg_space(), src.bg_color());
         return ret;
@@ -427,10 +427,10 @@ namespace ansi {
 
       cell_t cell;
       cell.character = marker | character_t::flag_marker;
-      cell.attribute = m_board->cur.attribute;
+      cell.attribute = m_board.cur.attribute;
       cell.width = 0;
-      initialize_line(m_board->line());
-      m_board->line().write_cells(m_board->cur.x(), &cell, 1, 1, dir);
+      initialize_line(m_board.line());
+      m_board.line().write_cells(m_board.cur.x(), &cell, 1, 1, dir);
     }
 
     void insert_char(char32_t u) {

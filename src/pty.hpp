@@ -88,7 +88,7 @@ namespace term {
 
     virtual ~pty_session() {}
 
-    void set_winsize(struct winsize* ws) {
+    void set_winsize(struct winsize const* ws) {
       fd_set_winsize(m_fd, ws);
     }
   };
