@@ -87,8 +87,11 @@ twin_objs = \
   $(objdir)/ansi/line.o \
   $(objdir)/enc.c2w.o \
   $(objdir)/contradef.o
+#twin_LDFLAGS := $(LDFLAGS) -static-libgcc -static-libstdc++ -s
+#twin_LDFLAGS := $(LDFLAGS) -mwindows
+twin_LDFLAGS := $(LDFLAGS)
 twin.exe: $(twin_objs)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(twin_LIBS)
+	$(CXX) $(CXXFLAGS) $(twin_LDFLAGS) -o $@ $^ $(twin_LIBS)
 
 all: twin/test-win1.exe
 twin/test-win1.exe: $(objdir)/twin/test-win1.o

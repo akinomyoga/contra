@@ -21,6 +21,9 @@ namespace term {
     struct termios* init_termios = NULL;
     std::size_t init_read_buffer_size = 4096;
 
+    pty_session::exec_error_handler_t init_exec_error_handler = nullptr;
+    std::uintptr_t init_exec_error_param = 0;
+
   private:
     contra::term::pty_session m_pty; // ユーザ入力書込先
     contra::multicast_device m_dev;  // 受信データ書込先
@@ -42,6 +45,7 @@ namespace term {
       if (m_pty.is_active()) return true;
 
       m_pty.set_read_buffer_size(init_read_buffer_size);
+      m_pty.set_exec_error_handler(init_exec_error_handler, init_exec_error_param);
       if (!m_pty.start("/bin/bash", &init_ws, init_termios)) return false;
 
       m_board = std::make_unique<contra::ansi::board_t>(init_ws.ws_col, init_ws.ws_row);

@@ -29,6 +29,14 @@
 #define _tcscpy_s wcscpy_s
 #define _tcscpy wcscpy
 
+//#define contra_dbgout
+#ifdef contra_dbgout
+std::FILE* dbgout = NULL;
+# define dbgprintf(...) do { std::fprintf(dbgout, __VA_ARGS__); std::fflush(dbgout); } while(0)
+#else
+# define dbgprintf(...) do {} while (0)
+#endif
+
 namespace contra {
 namespace twin {
 
@@ -356,7 +364,7 @@ namespace twin {
         myProg.hInstance     = hInstance;
         myProg.hIcon         = NULL;
         myProg.hCursor       = LoadCursor(NULL, IDC_ARROW);
-        myProg.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
+        myProg.hbrBackground = (HBRUSH) ::GetStockObject(WHITE_BRUSH);
         myProg.lpszMenuName  = NULL;
         myProg.lpszClassName = szClassName;
         if (!RegisterClass(&myProg)) return NULL;
@@ -1661,7 +1669,6 @@ namespace twin {
     LRESULT process_message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       switch (msg) {
       case WM_CREATE:
-        ::SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG) CreateSolidBrush(RGB(0xFF,0xFF,0xFF)));
         this->adjust_window_size_using_current_client_size();
         goto defproc;
       case WM_SIZE:
@@ -1735,6 +1742,19 @@ namespace twin {
       }
     }
 
+  private:
+    static void exec_error_handler(int errno1, std::uintptr_t) {
+      char const* msg = std::strerror(errno1);
+      std::ostringstream buff;
+      buff << "exec: " << msg << " (errno=" << errno1 << ")";
+      ::MessageBoxA(NULL, buff.str().c_str(), "Contra/Cygwin - exec failed", MB_OK);
+
+      // std::FILE* dbgout = std::fopen("twin-pty2.txt", "w");
+      // std::fprintf(dbgout, "PATH=%s\n", getenv("PATH"));
+      // std::fflush(dbgout);
+      // std::fclose(dbgout);
+    }
+
   public:
     int m_exit_code = 0;
     int do_loop() {
@@ -1743,6 +1763,7 @@ namespace twin {
       sess.init_ws.ws_xpixel = fstore.width();
       sess.init_ws.ws_ypixel = fstore.height();
       sess.init_read_buffer_size = 4096;
+      sess.init_exec_error_handler = &exec_error_handler;
       ::setenv("TERM", "xterm-256color", 1);
       if (!sess.initialize()) return 2;
 
@@ -1811,7 +1832,10 @@ extern "C" int WINAPI _tWinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE 
 // from https://cat-in-136.github.io/2012/04/unicodemingw32twinmainwwinmain.html
 #if defined(_UNICODE) && !defined(_tWinMain)
 int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
-  //ShowWindow(GetConsoleWindow(), SW_HIDE);
+#ifdef contra_dbgout
+  dbgout = std::fopen("/home/murase/twin-debug.txt", "w");
+#endif
+  ::ShowWindow(GetConsoleWindow(), SW_HIDE);
   HINSTANCE const hInstance = GetModuleHandle(NULL);
   int const retval = _tWinMain(hInstance, NULL, (LPTSTR) TEXT("") /* lpCmdLine is not available*/, SW_SHOW);
   return retval;

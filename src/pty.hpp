@@ -43,11 +43,18 @@ namespace term {
   };
 
   class pty_session: public fd_device {
+  public:
+    typedef void (*exec_error_handler_t)(int errno_, std::uintptr_t param);
+
+  private:
     bool m_active = false;
     int slave_pid = -1;
 
     std::size_t m_read_buffer_size = 4096;
     std::vector<char> m_read_buffer;
+
+    exec_error_handler_t m_exec_error_handler = NULL;
+    std::uintptr_t m_exec_error_param = 0;
 
   public:
     pty_session() {}
@@ -58,7 +65,10 @@ namespace term {
     void set_read_buffer_size(std::size_t value) {
       m_read_buffer_size = contra::clamp(value, 0x100, 0x10000);
     }
-
+    void set_exec_error_handler(exec_error_handler_t handler, std::uintptr_t param) {
+      this->m_exec_error_handler = handler;
+      this->m_exec_error_param = param;
+    }
     bool start(const char* shell, winsize const* ws = NULL, struct termios* termios = NULL);
 
     std::size_t read(contra::idevice* dst) {

@@ -111,9 +111,20 @@ namespace term {
       dup2(slavefd, STDERR_FILENO);
       close(slavefd);
       close(masterfd);
-      //execl(shell, shell, "--norc", NULL);
+
+      // 環境変数の設定
+      std::string path = "/usr/local/bin:/usr/bin:";
+      path += std::getenv("PATH");
+      ::setenv("PATH", path.c_str(), 1);
+
+      //execl(shell, shell, "-l", NULL);
       execl(shell, shell, NULL);
-      perror("sample_openpt (exec(SHELL))");
+
+      // exec 失敗時
+      if (m_exec_error_handler)
+        m_exec_error_handler(errno, m_exec_error_param);
+      else
+        perror("contra::term (exec SHELL)");
       _exit(1);
       return false;
     } else {
