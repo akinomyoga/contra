@@ -1,6 +1,6 @@
 # Modes
 
-flags     mode_gatm               ansi1       unsupported
+flags     mode_gatm               ansi1       false
 flags     mode_kam                ansi2       unsupported
 flags     mode_crm                ansi3       unsupported
 flags     mode_irm                ansi4       unsupported

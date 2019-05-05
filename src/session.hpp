@@ -15,11 +15,11 @@
 namespace contra {
 namespace term {
 
-  using term_t = contra::ansi::term_t;
-  using tstate_t = contra::ansi::tstate_t;
-  using board_t = contra::ansi::board_t;
   using curpos_t = contra::ansi::curpos_t;
   using coord_t = contra::ansi::coord_t;
+  using board_t = contra::ansi::board_t;
+  using tstate_t = contra::ansi::tstate_t;
+  using term_t = contra::ansi::term_t;
 
   class terminal_application {
     struct winsize init_ws;
@@ -186,39 +186,155 @@ namespace term {
       return app().input_key(key);
     }
 
-    int m_drag_type = 0;
-    int m_drag_state = 0;
-    curpos_t m_drag_start_x = 0;
-    curpos_t m_drag_start_y = 0;
-    curpos_t m_drag_end_x = 0;
-    curpos_t m_drag_end_y = 0;
+    curpos_t      m_sel_beg_x = 0;
+    curpos_t      m_sel_beg_y = 0;
+    bool          m_sel_beg_online = false;
+    std::uint32_t m_sel_beg_lineid = 0;
+
+    int      m_sel_type = 0;
+    curpos_t m_sel_end_x = 0;
+    curpos_t m_sel_end_y = 0;
+
+  private:
+    void selection_clear() {
+      m_sel_type = 0;
+      for (auto& line : app().board().m_lines)
+        m_dirty |= line.clear_selection();
+    }
+
+    void selection_start(curpos_t x, curpos_t y) {
+      selection_clear();
+      m_sel_type = 0;
+      m_sel_beg_x = x;
+      m_sel_beg_y = y;
+      m_sel_beg_online = y < (curpos_t) app().board().m_lines.size();
+      if (m_sel_beg_online)
+        m_sel_beg_lineid = app().board().m_lines[y].id();
+    }
+
+    bool selection_find_start_line() {
+      using namespace contra::ansi;
+
+      auto const& lines = app().board().m_lines;
+      if (!m_sel_beg_online)
+        return m_sel_beg_y >= (curpos_t) lines.size();
+
+      if (m_sel_beg_y < (curpos_t) lines.size() &&
+        lines[m_sel_beg_y].id() == m_sel_beg_lineid)
+        return true;
+
+      for (std::size_t i = 0; i < lines.size(); i++) {
+        if (lines[i].id() == m_sel_beg_lineid) {
+          m_sel_beg_y = i;
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    bool selection_update(key_t key, curpos_t x, curpos_t y) {
+      using namespace contra::ansi;
+
+      m_sel_type = 1 | (key & _modifier_mask);
+      m_sel_end_x = x;
+      m_sel_end_y = y;
+
+      board_t& b = app().board();
+      tstate_t& s = app().state();
+
+      bool const gatm =  s.get_mode(mode_gatm);
+      bool const truncate = !(m_sel_type & modifier_shift);
+      if (!selection_find_start_line()) {
+        selection_clear();
+        return false;
+      }
+
+      // 選択範囲 (データ部での範囲に変換)
+      curpos_t x1 = m_sel_beg_x;
+      curpos_t y1 = m_sel_beg_y;
+      curpos_t x2 = m_sel_end_x;
+      curpos_t y2 = m_sel_end_y;
+      curpos_t const iN = b.m_lines.size();
+      if (y1 < iN) x1 = b.to_data_position(y1, x1);
+      if (y2 < iN) x2 = b.to_data_position(y2, x2);
+
+      if (m_sel_type & modifier_meta) {
+        // 矩形選択
+        if (y1 > y2) std::swap(y1, y2);
+        if (x1 > x2) std::swap(x1, x2);
+        if (y1 >= iN) {
+          y1 = 0; y2 = -1;
+        } else if (y2 >= iN) {
+          y2 = iN - 1;
+        }
+
+        curpos_t i = 0;
+        while (i < y1)
+          m_dirty |= b.m_lines[i++].clear_selection();
+        while (i <= y2)
+          m_dirty |= b.m_lines[i++].set_selection(x1, x2 + 1, truncate, gatm, true);
+        while (i < iN)
+          m_dirty |= b.m_lines[i++].clear_selection();
+      } else {
+        if (y1 > y2) {
+          std::swap(y1, y2);
+          std::swap(x1, x2);
+        } else if (y1 == y2 && x1 > x2) {
+          std::swap(x1, x2);
+        }
+        if (y1 >= iN) {
+          y1 = 0; y2 = -1;
+        } else if (y2 >= iN) {
+          y2 = iN - 1;
+          x2 = b.m_width + 1;
+        }
+
+        // 選択状態の更新 (前回と同じ場合は skip できたりしないか?)
+        curpos_t i = 0;
+        while (i < y1)
+          m_dirty |= b.m_lines[i++].clear_selection();
+        if (y1 == y2) {
+          m_dirty |= b.m_lines[i++].set_selection(x1, x2 + 1, truncate, gatm, true);
+        } else if (y1 < y2) {
+          m_dirty |= b.m_lines[i++].set_selection(x1, b.m_width, truncate, gatm, true);
+          while (i < y2)
+            m_dirty |= b.m_lines[i++].set_selection(0, b.m_width + 1, truncate, gatm, true);
+          m_dirty |= b.m_lines[i++].set_selection(0, x2 + 1, truncate, gatm, true);
+        }
+        while (i < iN)
+          m_dirty |= b.m_lines[i++].clear_selection();
+      }
+
+      return true;
+    }
+
+  public:
     bool m_dirty = false;
+  private:
+    int m_drag_state = 0;
+  public:
     bool input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t x, curpos_t y) {
       if (app().input_mouse(key, px, py, x, y)) return true;
 
       using namespace contra::ansi;
       switch (key & _character_mask) {
       case key_mouse1_down:
-        m_drag_type = 0;
-        m_drag_state = 0;
-        m_drag_start_x = x;
-        m_drag_start_y = y;
-        m_dirty = true;
+        m_drag_state = 1;
+        selection_start(x, y);
         return true;
       case key_mouse1_drag:
-        m_drag_type = 1 | (key & _modifier_mask);
-        m_drag_state = 1;
-        m_drag_end_x = x;
-        m_drag_end_y = y;
-        m_dirty = true;
+        if (m_drag_state) {
+          m_drag_state = 2;
+          if (!selection_update(key, x, y))
+            m_drag_state = 0;
+        }
         return true;
       case key_mouse1_up:
-        if (m_drag_state == 1) {
-          m_drag_state = 2;
-          m_drag_type = 1 | (key & _modifier_mask);
-          m_drag_end_x = x;
-          m_drag_end_y = y;
-          m_dirty = true;
+        if (m_drag_state == 2) {
+          m_drag_state = 3;
+          if (!selection_update(key, x, y))
+            m_drag_state = 0;
         }
         return true;
       }

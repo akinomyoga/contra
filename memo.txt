@@ -129,26 +129,7 @@
 
 2019-05-05
 
-* twin: 選択範囲に対応したのは良い物の
-  実は選択は見た目で行うのではなくてデータ部で行うべきなのではないか。
-  つまり、双方向対応で反転文字列等がある場合には、
-  反転を考慮に入れた上で選択範囲を決定しなければならないのではないだろうか。
-  だとすると現在の様な実装では難しい。データ部で属性を付加してしまうのが速いのではないか。
-  そうすれば line.version を加算するだけでちゃんと表示も更新される。
-
-  また、末尾の空白を選択しないだとか GRCM 等に従って
-  選択できない物を判定するだとか、そういう複雑な判定をする場合にも、
-  現状の様な位置文字ずつその場で判定する方法だと難しいのではないか。
-  それよりは全体に対して選択を計算してしまう方が計算としては楽の筈である。
-
-  所で選択に関連して SSA, ESA はどの様に処理するのが望ましいか。
-  例えば、選択されている状態にして、その状態でコピー等の操作をすると
-  コピーされるとか、そういう風に使う事ができるのではないだろうか。うーん。
-
-  そういう風に考えると実は SSA のフラグで
-  選択を管理してしまっても良いのかもしれない。
-
-  決めた。。選択範囲は SSA, ESA のフラグを使って実装する事にする。
+* カーソルを変更したい。
 
 * ansi: SLL, SLH の "それ以降の行" の解釈は変えるべきではないか
   現在は "それ以降に新しく現れた行" という事になっているので、
@@ -1581,6 +1562,117 @@
 ------------------------------------------------------------------------------
 
 2019-05-05
+
+* twin: 選択範囲に対応したのは良い物の [#D0134]
+  実は選択は見た目で行うのではなくてデータ部で行うべきなのではないか。
+  つまり、双方向対応で反転文字列等がある場合には、
+  反転を考慮に入れた上で選択範囲を決定しなければならないのではないだろうか。
+  だとすると現在の様な実装では難しい。データ部で属性を付加してしまうのが速いのではないか。
+  そうすれば line.version を加算するだけでちゃんと表示も更新される。
+
+  また、末尾の空白を選択しないだとか GRCM 等に従って
+  選択できない物を判定するだとか、そういう複雑な判定をする場合にも、
+  現状の様な位置文字ずつその場で判定する方法だと難しいのではないか。
+  それよりは全体に対して選択を計算してしまう方が計算としては楽の筈である。
+
+  所で選択に関連して SSA, ESA はどの様に処理するのが望ましいか。
+  例えば、選択されている状態にして、その状態でコピー等の操作をすると
+  コピーされるとか、そういう風に使う事ができるのではないだろうか。うーん。
+
+  そういう風に考えると実は SSA のフラグで
+  選択を管理してしまっても良いのかもしれない。
+
+  決めた。。選択範囲は SSA, ESA のフラグを使って実装する事にする。
+  * done: 先ず初めに現在の反転コードは削除する。
+
+  * done: うーん。取り敢えず行内で指定範囲を選択するコードを書くことにした。
+    然し、効率だとかを考えて色々工夫してみたが、よく考えたら実際にはもっと複雑である。
+    うーん。実装し直す事にする。
+
+    GATM, truncate_nul, trancate_sp, dcsm 等のオプションがある。
+    更に、よく考えたら全角文字の場合には範囲内に
+    完全に収まっている場合以外には選択しない。
+
+    結局以下に書いた効率の良さそうなコードは全く使えない
+    という事が分かったので、ここに残して供養とする。
+
+    | static bool mono_set_selection_simple(std::vector<cell_t>& cells, curpos_t x1, curpos_t x2) {
+    |   curpos_t const iN = m_cells.size();
+    |   curpos_t const i2 = std::min<curpos_t>(x2, iN);
+    |   curpos_t const i1 = std::min<curpos_t>(x1, i2);
+    |   curpos_t i = 0;
+    |   xflags_t dirty = 0;
+    |   while (i < i1) {
+    |     auto& a = m_cells[i++].attribute.xflags;
+    |     dirty |= a;
+    |     a &= ~attribute_t::ssa_selected;
+    |   }
+    |   while (i < i2) {
+    |     auto& a = m_cells[i++].attribute.xflags;
+    |     dirty |= ~a;
+    |     a |= attribute_t::ssa_selected;
+    |   }
+    |   while (i < iN) {
+    |     auto& a = m_cells[i++].attribute.xflags;
+    |     dirty |= a;
+    |     a &= ~attribute_t::ssa_selected;
+    |   }
+    |   return dirty & attribute_t::ssa_selected;
+    | }
+    | static bool prop_set_selection_simple(std::vector<cell_t>& cells, curpos_t x1, curpos_t x2) {
+    |   std::size_t const iN = m_cells.size();
+    |   std::size_t i = 0;
+    |   curpos_t x = 0;
+    |   xflags_t dirty = 0;
+    |   while (i < iN && x < x1) {
+    |     auto& cell = m_cells[i++];
+    |     dirty |= cell.attribute.xflags;
+    |     cell.atrribute.xflags &= ~attribute_t::ssa_selected;
+    |     x += cell.width;
+    |   }
+    |   while (i < iN && x < x2) {
+    |     auto& cell = m_cells[i++];
+    |     dirty |= ~cell.attribute.xflags;
+    |     cell.atrribute.xflags |= attribute_t::ssa_selected;
+    |     x += cell.width;
+    |   }
+    |   while (i < iN) {
+    |     auto& cell = m_cells[i++];
+    |     dirty |= cell.attribute.xflags;
+    |     cell.atrribute.xflags &= ~attribute_t::ssa_selected;
+    |     x += cell.width;
+    |   }
+    |   return dirty & attribute_t::ssa_selected;
+    | }
+    | 
+    | // GATM や末尾空白を考慮に入れなくて良い場合は効率的な実装を使う
+    | if (!trunc && gatm) {
+    |   if (!m_prop_enabled) {
+    |     if (mono_set_selection_simple(m_cells, x1, x2)) m_version++;
+    |   } else {
+    |     if (prop_set_selection_simple(m_cells, x1, x2)) m_version++;
+    |   }
+    |   return;
+    | }
+
+    まあ、何だかわからないが行の更新に関しては完成した気がする。
+    但し表示部における選択には対応していない。
+    というか表示部における選択というのはまともに実装できる物なのだろうか。
+    うーん。対応するデータ部における範囲は細切れになる。
+    そして方向文字列などの形状を保つ為には色々なマーカを追加しなければならない。
+    選択しているだけなのに変なマーカを挿入すると色々と破壊されてしまう。
+    従って選択している時には唯表示のためだけに ssa_selected を設定して、
+    実際にデータを切り出す時にはマーカなどを指定して見た目を保つ様にしなければならない。
+
+    というかその事情はデータ部でも同じなのではないか。とも思ったが、
+    普通に考えたら選択してコピーというのはデータを保って欲しい
+    (見た目ではなくて) ので、そのままで良いのである。
+    何れにしても表示部における選択は需要がない様な気がするので取り敢えずの所は実装しない事にする。
+    念の為インターフェイスとして引数に dcsm を取るようにはするが、エラーを出力して終了する。
+
+  * 更に表示部での座標から。
+
+  取り敢えず全て実装した。選択領域についてはOKである。
 
 * twin: 何だか色合いが自分のなれている物よりも濃い [#D0133]
   RLogin とは同じ位の色合いだが、うーん。

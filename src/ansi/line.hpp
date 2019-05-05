@@ -598,6 +598,10 @@ namespace ansi {
     }
 
   public:
+    bool set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool dcsm);
+    bool clear_selection() { return set_selection(0, 0, false, true, true); }
+
+  public:
     void debug_string_nest(curpos_t width, presentation_direction board_charpath) const {
       bool const line_r2l = is_r2l(board_charpath);
       auto const& strings = this->update_strings(width, line_r2l);

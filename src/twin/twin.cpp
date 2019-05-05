@@ -633,28 +633,28 @@ namespace twin {
       }
 
     private:
-      int m_drag_type = 0;
-      curpos_t m_drag_start_x = 0;
-      curpos_t m_drag_start_y = 0;
-      curpos_t m_drag_end_x = 0;
-      curpos_t m_drag_end_y = 0;
+      int m_sel_type = 0;
+      curpos_t m_sel_beg_x = 0;
+      curpos_t m_sel_beg_y = 0;
+      curpos_t m_sel_end_x = 0;
+      curpos_t m_sel_end_y = 0;
     public:
       bool is_selection_changed(twin_window_t const& win) const {
-        if (m_drag_type != win.manager.m_drag_type) return false;
-        if (m_drag_type) {
-          if (m_drag_start_x != win.manager.m_drag_start_x) return false;
-          if (m_drag_start_y != win.manager.m_drag_start_y) return false;
-          if (m_drag_end_x != win.manager.m_drag_end_x) return false;
-          if (m_drag_end_y != win.manager.m_drag_end_y) return false;
+        if (m_sel_type != win.manager.m_sel_type) return false;
+        if (m_sel_type) {
+          if (m_sel_beg_x != win.manager.m_sel_beg_x) return false;
+          if (m_sel_beg_y != win.manager.m_sel_beg_y) return false;
+          if (m_sel_end_x != win.manager.m_sel_end_x) return false;
+          if (m_sel_end_y != win.manager.m_sel_end_y) return false;
         }
         return true;
       }
       void store_selection(twin_window_t const& win) {
-        m_drag_type = win.manager.m_drag_type;
-        m_drag_start_x = win.manager.m_drag_start_x;
-        m_drag_start_y = win.manager.m_drag_start_y;
-        m_drag_end_x = win.manager.m_drag_end_x;
-        m_drag_end_y = win.manager.m_drag_end_y;
+        m_sel_type = win.manager.m_sel_type;
+        m_sel_beg_x = win.manager.m_sel_beg_x;
+        m_sel_beg_y = win.manager.m_sel_beg_y;
+        m_sel_end_x = win.manager.m_sel_end_x;
+        m_sel_end_y = win.manager.m_sel_end_y;
       }
     };
 
@@ -808,15 +808,17 @@ namespace twin {
         return {space, color};
       }
     public:
-      color_t resolve_fg(attribute_t const& attr, bool selected) {
+      color_t resolve_fg(attribute_t const& attr) {
         bool const inverse = attr.aflags & attribute_t::is_inverse_set;
+        bool const selected = attr.xflags & attribute_t::ssa_selected;
         auto [space, color] = inverse != selected ? get_bg(attr) : get_fg(attr);
         if (space == m_space && color == m_color) return m_rgba;
         return resolve(space, color);
       }
 
-      color_t resolve_bg(attribute_t const& attr, bool selected) {
+      color_t resolve_bg(attribute_t const& attr) {
         bool const inverse = attr.aflags & attribute_t::is_inverse_set;
+        bool const selected = attr.xflags & attribute_t::ssa_selected;
         auto [space, color] = inverse != selected ? get_fg(attr) : get_bg(attr);
         if (space == m_space && color == m_color) return m_rgba;
         return resolve(space, color);
@@ -890,51 +892,51 @@ namespace twin {
     };
 
     class selection_resolver_t {
-      int m_drag_type = 0;
-      curpos_t m_drag_start_x = 0;
-      curpos_t m_drag_start_y = 0;
-      curpos_t m_drag_end_x = 0;
-      curpos_t m_drag_end_y = 0;
+      int m_sel_type = 0;
+      curpos_t m_sel_beg_x = 0;
+      curpos_t m_sel_beg_y = 0;
+      curpos_t m_sel_end_x = 0;
+      curpos_t m_sel_end_y = 0;
 
       curpos_t beg, end;
 
       bool is_rectangle_selection() const {
-        return m_drag_type & modifier_meta;
+        return m_sel_type & modifier_meta;
       }
     public:
       selection_resolver_t(terminal_manager const& manager) {
-        m_drag_type    = manager.m_drag_type   ;
-        m_drag_start_x = manager.m_drag_start_x;
-        m_drag_start_y = manager.m_drag_start_y;
-        m_drag_end_x   = manager.m_drag_end_x  ;
-        m_drag_end_y   = manager.m_drag_end_y  ;
+        m_sel_type    = manager.m_sel_type   ;
+        m_sel_beg_x = manager.m_sel_beg_x;
+        m_sel_beg_y = manager.m_sel_beg_y;
+        m_sel_end_x   = manager.m_sel_end_x  ;
+        m_sel_end_y   = manager.m_sel_end_y  ;
         if (is_rectangle_selection()) {
-          if (m_drag_start_y > m_drag_end_y)
-            std::swap(m_drag_start_y, m_drag_end_y);
-          if (m_drag_start_x > m_drag_end_x)
-            std::swap(m_drag_start_x, m_drag_end_x);
+          if (m_sel_beg_y > m_sel_end_y)
+            std::swap(m_sel_beg_y, m_sel_end_y);
+          if (m_sel_beg_x > m_sel_end_x)
+            std::swap(m_sel_beg_x, m_sel_end_x);
         } else {
-          if (m_drag_start_y > m_drag_end_y) {
-            std::swap(m_drag_start_y, m_drag_end_y);
-            std::swap(m_drag_start_x, m_drag_end_x);
-          } else if (m_drag_start_y == m_drag_end_y && m_drag_start_x > m_drag_end_x) {
-            std::swap(m_drag_start_x, m_drag_end_x);
+          if (m_sel_beg_y > m_sel_end_y) {
+            std::swap(m_sel_beg_y, m_sel_end_y);
+            std::swap(m_sel_beg_x, m_sel_end_x);
+          } else if (m_sel_beg_y == m_sel_end_y && m_sel_beg_x > m_sel_end_x) {
+            std::swap(m_sel_beg_x, m_sel_end_x);
           }
         }
         beg = 0;
         end = 0;
       }
       void next_line(curpos_t iline) {
-        if (!m_drag_type) return;
-        if (iline < m_drag_start_y || m_drag_end_y < iline) {
+        if (!m_sel_type) return;
+        if (iline < m_sel_beg_y || m_sel_end_y < iline) {
           end = 0;
         } else {
           if (is_rectangle_selection()) {
-            beg = m_drag_start_x;
-            end = m_drag_end_x + 1;
+            beg = m_sel_beg_x;
+            end = m_sel_end_x + 1;
           } else {
-            beg = iline == m_drag_start_y ? m_drag_start_x : 0;
-            end = iline == m_drag_end_y ? m_drag_end_x + 1 : std::numeric_limits<curpos_t>::max();
+            beg = iline == m_sel_beg_y ? m_sel_beg_x : 0;
+            end = iline == m_sel_end_y ? m_sel_end_x + 1 : std::numeric_limits<curpos_t>::max();
           }
         }
       }
@@ -972,24 +974,20 @@ namespace twin {
         ::DeleteObject(brush);
       };
 
-      selection_resolver_t _selection(manager);
       for (curpos_t iline = 0; iline < b.m_height; iline++, y += ypixel) {
         std::vector<cell_t>& cells = content[iline];
         x = xorigin;
         x0 = x;
         bg0 = 0;
 
-        _selection.next_line(iline);
-        curpos_t cx = 0;
         for (std::size_t i = 0; i < cells.size(); ) {
           auto const& cell = cells[i++];
-          color_t const bg = _color.resolve_bg(cell.attribute, _selection.is_selected(cx));
+          color_t const bg = _color.resolve_bg(cell.attribute);
           if (bg != bg0) {
             _fill();
             bg0 = bg;
             x0 = x;
           }
-          cx += cell.width;
           x += cell.width * xpixel;
         }
         _fill();
@@ -1109,7 +1107,6 @@ namespace twin {
       };
 
       decdhl_region_holder_t region(m_background.width(), m_background.height());
-      selection_resolver_t _selection(manager);
 
       for (curpos_t iline = 0; iline < b.m_height; iline++, y += ypixel) {
         std::vector<cell_t>& cells = content[iline];
@@ -1117,31 +1114,26 @@ namespace twin {
         x = xorigin;
 
         region.next_line(y, ypixel);
-        _selection.next_line(iline);
-        curpos_t cx = 0;
 
         for (std::size_t i = 0; i < cells.size(); ) {
           auto const& cell = cells[i];
           auto const& attr = cell.attribute;
-          curpos_t cx2 = cx;
           xL = xR = x;
           coord_t const cell_progress = cell.width * xpixel;
           i++;
           x += cell_progress;
-          cx += cell.width;
           std::uint32_t code = cell.character.value;
           code &= ~character_t::flag_cluster_extension;
           if (!_visible(code, cell.attribute.aflags)) continue;
 
           // 色の決定
-          color_t const fg = _color.resolve_fg(attr, _selection.is_selected(cx2));
+          color_t const fg = _color.resolve_fg(attr);
           font_t const font = _font.resolve_font(attr);
           std::tie(dx, dy, dxW) = fstore.get_displacement(font);
 
           characters.clear();
           progress.clear();
           _push_char(code, cell_progress, cell.width);
-          cx2 = cx;
 
           // 同じ色を持つ文字は同時に描画してしまう。
           for (std::size_t j = i; j < cells.size(); j++) {
@@ -1154,10 +1146,9 @@ namespace twin {
             if ((font & font_rotation_mask) && cell2_progress) break;
 
             bool const is_cluster = code2 & character_t::flag_cluster_extension;
-            color_t const fg2 = _color.resolve_fg(cell2.attribute, _selection.is_selected(cx2));
+            color_t const fg2 = _color.resolve_fg(cell2.attribute);
             font_t const font2 = _font.resolve_font(cell2.attribute);
             code2 &= ~character_t::flag_cluster_extension;
-            cx2 += cell2.width;
             if (!_visible(code2, cell2.attribute.aflags, font & font_layout_proportional)) {
               if (font & font_layout_proportional) break;
               progress.back() += cell2_progress;
@@ -1172,7 +1163,6 @@ namespace twin {
             if (i == j) {
               i++;
               x += cell2_progress;
-              cx += cell2.width;
             } else
               cells[j].character.value |= flag_processed;
           }
@@ -1429,15 +1419,12 @@ namespace twin {
         ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
       };
 
-      selection_resolver_t _selection(manager);
       for (curpos_t iline = 0; iline < b.m_height; iline++, y += ypixel) {
         std::vector<cell_t>& cells = content[iline];
         x = xorigin;
         color0 = 0;
         region.next_line(y, ypixel);
-        _selection.next_line(iline);
 
-        curpos_t cx = 0;
         for (std::size_t i = 0; i < cells.size(); ) {
           auto const& cell = cells[i++];
           auto const& code = cell.character.value;
@@ -1447,7 +1434,7 @@ namespace twin {
           coord_t const cell_width = cell.width * xpixel;
           color_t color = 0;
           if (code != ascii_nul && !(aflags & attribute_t::is_invisible_set))
-            color = _color.resolve_fg(cell.attribute, _selection.is_selected(cx));
+            color = _color.resolve_fg(cell.attribute);
           if (color != color0) {
             dec_ul.update(x, 0, (xflags_t) 0);
             dec_sl.update(x, 0, (xflags_t) 0);
@@ -1496,7 +1483,6 @@ namespace twin {
 
           color0 = color;
           x += cell_width;
-          cx += cell.width;
         }
         dec_ul.update(x, 0, (xflags_t) 0);
         dec_sl.update(x, 0, (xflags_t) 0);

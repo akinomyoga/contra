@@ -1188,3 +1188,60 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   m_prop_i = 0;
   m_prop_x = 0;
 }
+
+bool line_t::set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool dcsm) {
+  // presentation 座標での選択にも対応する。
+  mwg_check(dcsm, "not yet implemented");
+
+  curpos_t x = 0;
+  xflags_t dirty = false;
+  auto _unset = [&dirty, &x] (cell_t& cell) {
+    dirty |= cell.attribute.xflags;
+    cell.attribute.xflags &= ~attribute_t::ssa_selected;
+    x += cell.width;
+  };
+  auto _set = [&dirty, &x] (cell_t& cell) {
+    dirty |= ~cell.attribute.xflags;
+    cell.attribute.xflags |= attribute_t::ssa_selected;
+    x += cell.width;
+  };
+  auto _guarded = [gatm] (cell_t const& cell) {
+    return !gatm && cell.attribute.xflags & (attribute_t::spa_protected | attribute_t::daq_guarded);
+  };
+  auto _truncated = [trunc] (cell_t const& cell) {
+    return trunc && (cell.character.value == ascii_nul || cell.character.value == ascii_sp);
+  };
+
+  std::size_t const iN = m_cells.size();
+  std::size_t i = 0;
+  if (x1 < x2) {
+    while (i < iN && x < x1)
+      _unset(m_cells[i++]);
+    while (i < iN && x == x1 && m_cells[i].character.is_extension())
+      _unset(m_cells[i++]);
+
+    // Note: 選択範囲の末尾空白類は選択範囲から除外する。
+    //   最後の選択されるセルを先に決めて置かなければならない。
+    std::size_t i_ = i;
+    curpos_t x_ = x;
+    std::size_t end = 0;
+    while (i_ < iN && x_ + (curpos_t) m_cells[i_].width <= x2) {
+      auto& cell = m_cells[i_++];
+      if (!_guarded(cell) && !_truncated(cell))
+        end = i_; // 最後の選択されるセル(の次の位置)
+      x_ += cell.width;
+    }
+    while (end > 0 && m_cells[end - 1].is_zero_width_body()) end--;
+
+    while (i < end) {
+      auto& cell = m_cells[i++];
+      if (_guarded(cell))
+        _unset(cell);
+      else
+        _set(cell);
+    }
+  }
+
+  while (i < iN) _unset(m_cells[i++]);
+  return dirty & attribute_t::ssa_selected;
+}
