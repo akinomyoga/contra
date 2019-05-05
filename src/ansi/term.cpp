@@ -1571,7 +1571,7 @@ namespace {
 
     board_t& b = term.board();
     line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
-    if (s.get_mode(mode_erm)) flags |= line_shift_flags::erm;
+    if (!s.get_mode(mode_erm)) flags |= line_shift_flags::erm_protect;
 
     curpos_t x1;
     if (s.get_mode(mode_xenl_ech)) b.cur.adjust_xenl();
@@ -1668,8 +1668,8 @@ namespace {
     board_t& b = term.board();
     tstate_t& s = term.state();
     if (param != 0 && param != 1) {
-      if (s.get_mode(mode_erm) && line.has_protected_cells()) {
-        line_shift_flags flags = line_shift_flags::erm;
+      if (!s.get_mode(mode_erm) && line.has_protected_cells()) {
+        line_shift_flags flags = line_shift_flags::erm_protect;
         if (line.is_r2l(b.m_presentation_direction)) flags |= line_shift_flags::r2l;
         if (s.dcsm()) flags |= line_shift_flags::dcsm;
         line.shift_cells(0, b.m_width, b.m_width, flags, b.m_width, fill_attr);
@@ -1679,7 +1679,7 @@ namespace {
     }
 
     line_shift_flags flags = 0;
-    if (s.get_mode(mode_erm)) flags |= line_shift_flags::erm;
+    if (!s.get_mode(mode_erm)) flags |= line_shift_flags::erm_protect;
     if (line.is_r2l(b.m_presentation_direction)) flags |= line_shift_flags::r2l;
     if (s.dcsm()) flags |= line_shift_flags::dcsm;
 
@@ -1723,7 +1723,7 @@ namespace {
       }
     }
 
-    if (s.get_mode(mode_erm)) {
+    if (!s.get_mode(mode_erm)) {
       for (curpos_t y = y1; y < y2; y++)
         do_el(term, b.m_lines[y], 2, fill_attr);
     } else {

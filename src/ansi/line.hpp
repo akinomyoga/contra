@@ -199,10 +199,10 @@ namespace ansi {
     static constexpr def dcsm            = 0x04;
     static constexpr def r2l             = 0x08;
 
-    /// @var line_shift_flags::erm
+    /// @var line_shift_flags::erm_protect
     /// 消去の時 (abs(shift) >= p2 - p1 の時) に保護領域を消去しない事を表すフラグです。
     /// シフトの場合 (abs(shift) < p2 - p1 の時) には使われません。
-    static constexpr def erm             = 0x10;
+    static constexpr def erm_protect             = 0x10;
   };
 
   class line_t {

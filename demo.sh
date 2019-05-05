@@ -12,17 +12,17 @@ function test-sco {
   printf '\e[?69h'
 
   printf '\e[2;3H\e[1mTest of SCO\e[m'
-  printf '\e[5;s\e[5;5H'
+  printf '\e[5;s\e[4;5H'
   printf '\e[%d eEnglish 日本語 +-*/\e[ e\n' {0..7}
   echo
   printf '\eK'
   printf '\e[%d eEnglish 日本語 +-*/\e[ e\n' {0..7}
   printf '\eL'
-  printf '\e[;s'
   echo
-  printf '\e[4m'
+  printf '\e[%d e\e[3mHello, \e[20mworld!\e[23m\e[ e\n' {0..3}
+  printf '\e[;s'
 
-  printf '\e[30;s\e[5;30H'
+  printf '\e[30;s\e[4;30H'
 
   ble/util/sprintf line '\e[%dm\e[%%d eEnglish 日本語 +-*/\e[ e\n' 6703 6704
   printf "$line" {0..7}{,}

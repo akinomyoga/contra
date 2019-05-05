@@ -1443,6 +1443,7 @@ namespace twin {
           auto const& code = cell.character.value;
           auto const& aflags = cell.attribute.aflags;
           auto const& xflags = cell.attribute.xflags;
+          if (cell.width == 0) continue;
           coord_t const cell_width = cell.width * xpixel;
           color_t color = 0;
           if (code != ascii_nul && !(aflags & attribute_t::is_invisible_set))

@@ -917,7 +917,7 @@ void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   };
 
   if (std::abs(shift) >= p2 - p1) {
-    protect = flags & line_shift_flags::erm;
+    protect = flags & line_shift_flags::erm_protect;
     _erase_wide_left(p1);
     _erase_wide_right(p2);
     if (protect) {
@@ -961,7 +961,7 @@ void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   line_segment_t segs[4];
   int iseg = 0;
 
-  if (std::abs(shift) >= p2 - p1 && (flags & line_shift_flags::erm) && has_protected_cells()) {
+  if (std::abs(shift) >= p2 - p1 && (flags & line_shift_flags::erm_protect) && has_protected_cells()) {
     // erase unprotected cells
 
     // protected な cell が端にかかっている時にはそれを消去領域に含む様に拡張
@@ -1070,7 +1070,7 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   curpos_t wlfill = 0, wrfill = 0;
   bool flag_erase_unprotected = false;
   if (std::abs(shift) >= p2 - p1) {
-    if ((flags & line_shift_flags::erm) && has_protected_cells()) {
+    if ((flags & line_shift_flags::erm_protect) && has_protected_cells()) {
       if (w1 && m_cells[i1].is_protected()) {
         p1 += m_cells[i1].width - w1;
         w1 = 0;
