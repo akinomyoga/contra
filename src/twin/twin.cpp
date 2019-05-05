@@ -1736,12 +1736,12 @@ namespace twin {
               // shift によって文字が変化していたら shift 修飾を消す。
               UINT const unshifted = ::MapVirtualKey(wParam, MAPVK_VK_TO_CHAR);
               int const unshifted_count = (INT) unshifted < 0 ? 2 : 1;
-              if (count != unshifted_count || buff != (unshifted & mask_unicode))
+              if (count != unshifted_count || buff != (unshifted & _character_mask))
                 modifiers &= ~modifier_shift;
 
-              process_input((buff & mask_unicode) | (modifiers & _modifier_mask));
+              process_input((buff & _character_mask) | (modifiers & _modifier_mask));
             } else if (UINT const code = ::MapVirtualKey(wParam, MAPVK_VK_TO_CHAR); (INT) code > 0) {
-              process_input((code & mask_unicode) | (modifiers & _modifier_mask));
+              process_input((code & _character_mask) | (modifiers & _modifier_mask));
             } else {
               if (settings.m_debug_print_unknown_key)
                 std::fprintf(stderr, "key (unknown): wparam=%08x flags=%x\n", wParam, modifiers);
@@ -1756,7 +1756,7 @@ namespace twin {
 
     void process_char(WPARAM wParam, std::uint32_t modifiers) {
       // ToDo: Process surrogate pair
-      process_input((wParam & mask_unicode) | (modifiers & _modifier_mask));
+      process_input((wParam & _character_mask) | (modifiers & _modifier_mask));
     }
 
     void process_mouse(key_t key, std::uint32_t modifiers, WORD x, WORD y) {

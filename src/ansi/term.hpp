@@ -21,64 +21,64 @@ namespace ansi {
   typedef std::uint32_t key_t;
 
   enum key_flags {
-    mask_unicode   = 0x0001FFFF,
-    mask_keycode   = 0x0003FFFF,
+    _character_mask = 0x001FFFFF,
+    _unicode_max    = 0x0010FFFF,
+    _key_base       = 0x00110000,
 
-    _modifier_mask = 0x3F000000,
-    _modifier_shft = 24,
+    _modifier_mask  = 0x3F000000,
+    _modifier_shft  = 24,
 
-    key_base      = 0x00020000,
-    key_f1        = key_base | 1,
-    key_f2        = key_base | 2,
-    key_f3        = key_base | 3,
-    key_f4        = key_base | 4,
-    key_f5        = key_base | 5,
-    key_f6        = key_base | 6,
-    key_f7        = key_base | 7,
-    key_f8        = key_base | 8,
-    key_f9        = key_base | 9,
-    key_f10       = key_base | 10,
-    key_f11       = key_base | 11,
-    key_f12       = key_base | 12,
-    key_f13       = key_base | 13,
-    key_f14       = key_base | 14,
-    key_f15       = key_base | 15,
-    key_f16       = key_base | 16,
-    key_f17       = key_base | 17,
-    key_f18       = key_base | 18,
-    key_f19       = key_base | 19,
-    key_f20       = key_base | 20,
-    key_f21       = key_base | 21,
-    key_f22       = key_base | 22,
-    key_f23       = key_base | 23,
-    key_f24       = key_base | 24,
-    key_insert    = key_base | 31,
-    key_delete    = key_base | 32,
-    key_home      = key_base | 33,
-    key_end       = key_base | 34,
-    key_prior     = key_base | 35,
-    key_next      = key_base | 36,
-    key_begin     = key_base | 37,
-    key_left      = key_base | 38,
-    key_right     = key_base | 39,
-    key_up        = key_base | 40,
-    key_down      = key_base | 41,
-    key_kp0       = key_base | 42,
-    key_kp1       = key_base | 43,
-    key_kp2       = key_base | 44,
-    key_kp3       = key_base | 45,
-    key_kp4       = key_base | 46,
-    key_kp5       = key_base | 47,
-    key_kp6       = key_base | 48,
-    key_kp7       = key_base | 49,
-    key_kp8       = key_base | 50,
-    key_kp9       = key_base | 51,
-    key_kpdec     = key_base | 52,
-    key_kpsep     = key_base | 53,
-    key_kpmul     = key_base | 54,
-    key_kpadd     = key_base | 55,
-    key_kpsub     = key_base | 56,
-    key_kpdiv     = key_base | 57,
+    key_f1        = _key_base | 1,
+    key_f2        = _key_base | 2,
+    key_f3        = _key_base | 3,
+    key_f4        = _key_base | 4,
+    key_f5        = _key_base | 5,
+    key_f6        = _key_base | 6,
+    key_f7        = _key_base | 7,
+    key_f8        = _key_base | 8,
+    key_f9        = _key_base | 9,
+    key_f10       = _key_base | 10,
+    key_f11       = _key_base | 11,
+    key_f12       = _key_base | 12,
+    key_f13       = _key_base | 13,
+    key_f14       = _key_base | 14,
+    key_f15       = _key_base | 15,
+    key_f16       = _key_base | 16,
+    key_f17       = _key_base | 17,
+    key_f18       = _key_base | 18,
+    key_f19       = _key_base | 19,
+    key_f20       = _key_base | 20,
+    key_f21       = _key_base | 21,
+    key_f22       = _key_base | 22,
+    key_f23       = _key_base | 23,
+    key_f24       = _key_base | 24,
+    key_insert    = _key_base | 31,
+    key_delete    = _key_base | 32,
+    key_home      = _key_base | 33,
+    key_end       = _key_base | 34,
+    key_prior     = _key_base | 35,
+    key_next      = _key_base | 36,
+    key_begin     = _key_base | 37,
+    key_left      = _key_base | 38,
+    key_right     = _key_base | 39,
+    key_up        = _key_base | 40,
+    key_down      = _key_base | 41,
+    key_kp0       = _key_base | 42,
+    key_kp1       = _key_base | 43,
+    key_kp2       = _key_base | 44,
+    key_kp3       = _key_base | 45,
+    key_kp4       = _key_base | 46,
+    key_kp5       = _key_base | 47,
+    key_kp6       = _key_base | 48,
+    key_kp7       = _key_base | 49,
+    key_kp8       = _key_base | 50,
+    key_kp9       = _key_base | 51,
+    key_kpdec     = _key_base | 52,
+    key_kpsep     = _key_base | 53,
+    key_kpmul     = _key_base | 54,
+    key_kpadd     = _key_base | 55,
+    key_kpsub     = _key_base | 56,
+    key_kpdiv     = _key_base | 57,
 
     modifier_shift       = 0x01000000,
     modifier_meta        = 0x02000000,
@@ -88,28 +88,42 @@ namespace ansi {
     modifier_alter       = 0x20000000,
 
     // focus in/out
-    key_focus     = key_base | 58,
-    key_blur      = key_base | 59,
+    key_focus     = _key_base | 58,
+    key_blur      = _key_base | 59,
 
     // mouse events
-    key_mouse1_down = key_base | 0x100,
-    key_mouse2_down = key_base | 0x200,
-    key_mouse3_down = key_base | 0x300,
-    key_mouse4_down = key_base | 0x400,
-    key_mouse5_down = key_base | 0x500,
-    key_wheel_down  = key_base | 0x600,
-    key_mouse1_up   = key_mouse1_down | 0x0800,
-    key_mouse2_up   = key_mouse2_down | 0x0800,
-    key_mouse3_up   = key_mouse3_down | 0x0800,
-    key_mouse4_up   = key_mouse4_down | 0x0800,
-    key_mouse5_up   = key_mouse5_down | 0x0800,
-    key_wheel_up    = key_wheel_down  | 0x0800,
-    key_mouse1_drag = key_mouse1_down | 0x1000,
-    key_mouse2_drag = key_mouse2_down | 0x1000,
-    key_mouse3_drag = key_mouse3_down | 0x1000,
-    key_mouse4_drag = key_mouse4_down | 0x1000,
-    key_mouse5_drag = key_mouse5_down | 0x1000,
-    key_mouse_move  = key_wheel_down  | 0x1000,
+    _key_mouse_button_mask = 0x0700,
+    _key_mouse1     = 0x0100,
+    _key_mouse2     = 0x0200,
+    _key_mouse3     = 0x0300,
+    _key_mouse4     = 0x0400,
+    _key_mouse5     = 0x0500,
+    _key_wheel_down = 0x0600,
+    _key_wheel_up   = 0x0700,
+
+    _key_mouse_event_mask = 0x1800,
+    _key_mouse_event_down = 0x0000,
+    _key_mouse_event_up   = 0x0800,
+    _key_mouse_event_move = 0x1000,
+
+    key_mouse1_down = _key_base | _key_mouse1 | _key_mouse_event_down,
+    key_mouse2_down = _key_base | _key_mouse2 | _key_mouse_event_down,
+    key_mouse3_down = _key_base | _key_mouse3 | _key_mouse_event_down,
+    key_mouse4_down = _key_base | _key_mouse4 | _key_mouse_event_down,
+    key_mouse5_down = _key_base | _key_mouse5 | _key_mouse_event_down,
+    key_mouse1_up   = _key_base | _key_mouse1 | _key_mouse_event_up,
+    key_mouse2_up   = _key_base | _key_mouse2 | _key_mouse_event_up,
+    key_mouse3_up   = _key_base | _key_mouse3 | _key_mouse_event_up,
+    key_mouse4_up   = _key_base | _key_mouse4 | _key_mouse_event_up,
+    key_mouse5_up   = _key_base | _key_mouse5 | _key_mouse_event_up,
+    key_mouse1_drag = _key_base | _key_mouse1 | _key_mouse_event_move,
+    key_mouse2_drag = _key_base | _key_mouse2 | _key_mouse_event_move,
+    key_mouse3_drag = _key_base | _key_mouse3 | _key_mouse_event_move,
+    key_mouse4_drag = _key_base | _key_mouse4 | _key_mouse_event_move,
+    key_mouse5_drag = _key_base | _key_mouse5 | _key_mouse_event_move,
+    key_mouse_move  = _key_base | _key_mouse_event_move,
+    key_wheel_down  = _key_base | _key_wheel_down,
+    key_wheel_up    = _key_base | _key_wheel_up,
   };
 
   void print_key(key_t key, std::FILE* file);
@@ -131,6 +145,27 @@ namespace ansi {
   typedef std::uint32_t csi_single_param_t;
 
   void do_insert_graph(term_t& term, char32_t u);
+
+  enum mouse_mode_flags {
+    mouse_report_mask   = 0xFF,
+    mouse_report_down   = 0x01,
+    mouse_report_up     = 0x02,
+    mouse_report_select = 0x04,
+    mouse_report_drag   = 0x08,
+    mouse_report_move   = 0x10,
+
+    mouse_report_xtMouseX10    = mouse_report_down,
+    mouse_report_xtMouseVt200  = mouse_report_down | mouse_report_up,
+    mouse_report_xtMouseHilite = mouse_report_down | mouse_report_select,
+    mouse_report_xtMouseButton = mouse_report_xtMouseVt200 | mouse_report_drag,
+    mouse_report_xtMouseAll    = mouse_report_xtMouseVt200 | mouse_report_drag | mouse_report_move,
+
+    mouse_sequence_mask  = 0xFF00,
+    mouse_sequence_byte  = 0x0100,
+    mouse_sequence_utf8  = 0x0200,
+    mouse_sequence_sgr   = 0x0400,
+    mouse_sequence_urxvt = 0x0800,
+  };
 
   struct tstate_t {
     term_t* m_term;
@@ -178,6 +213,8 @@ namespace ansi {
     byte m_default_bg_space = 0;
     color_t m_default_fg_color = 0;
     color_t m_default_bg_color = 0;
+
+    std::uint32_t mouse_mode = 0;
 
     tstate_t(term_t* term): m_term(term) {
       this->clear();
@@ -549,6 +586,9 @@ namespace ansi {
         contra::encoding::put_u8(code, input_buffer);
       }
     }
+    void input_uchar(char32_t u) {
+      contra::encoding::put_u8(u, input_buffer);
+    }
     void input_unsigned(std::uint32_t value) {
       if (value >= 10) input_unsigned(value / 10);
       input_buffer.push_back(ascii_0 + value % 10);
@@ -558,8 +598,8 @@ namespace ansi {
     }
 
   public:
-    void input_key(key_t key);
-    void input_mouse(key_t key, coord_t px, coord_t py, curpos_t x, curpos_t y);
+    bool input_key(key_t key);
+    bool input_mouse(key_t key, coord_t px, coord_t py, curpos_t x, curpos_t y);
 
   };
 

@@ -62,6 +62,17 @@ flags     mode_decncsm            dec95       false
 flags     mode_decscnm_           private     false
 accessor  mode_decscnm            dec5        -
 
+# Mouse report
+accessor  mode_xtMouseX10         dec9        -
+accessor  mode_xtMouseVt200       dec1000     -
+accessor  mode_xtMouseHilite      dec1001     -
+accessor  mode_xtMouseButton      dec1002     -
+accessor  mode_xtMouseAll         dec1003     -
+accessor  mode_xtExtMouseUtf8     dec1005     -
+accessor  mode_xtExtMouseSgr      dec1006     -
+accessor  mode_xtExtMouseUrxvt    dec1015     -
+flags     mode_xtSendFocus        dec1004     false
+
 #------------------------------------------------------------------------------
 # Contra original modes (inaccessible)
 
