@@ -524,7 +524,6 @@ namespace twin {
         store_metric(win);
         store_content(win, app);
         store_cursor(win, app);
-        store_selection(win);
         store_blinking_state(win);
       }
 
@@ -630,31 +629,6 @@ namespace twin {
         m_cur_y = b.cur.y();
         m_cur_xenl = b.cur.xenl();
         m_cur_shape = s.m_cursor_shape;
-      }
-
-    private:
-      int m_sel_type = 0;
-      curpos_t m_sel_beg_x = 0;
-      curpos_t m_sel_beg_y = 0;
-      curpos_t m_sel_end_x = 0;
-      curpos_t m_sel_end_y = 0;
-    public:
-      bool is_selection_changed(twin_window_t const& win) const {
-        if (m_sel_type != win.manager.m_sel_type) return false;
-        if (m_sel_type) {
-          if (m_sel_beg_x != win.manager.m_sel_beg_x) return false;
-          if (m_sel_beg_y != win.manager.m_sel_beg_y) return false;
-          if (m_sel_end_x != win.manager.m_sel_end_x) return false;
-          if (m_sel_end_y != win.manager.m_sel_end_y) return false;
-        }
-        return true;
-      }
-      void store_selection(twin_window_t const& win) {
-        m_sel_type = win.manager.m_sel_type;
-        m_sel_beg_x = win.manager.m_sel_beg_x;
-        m_sel_beg_y = win.manager.m_sel_beg_y;
-        m_sel_end_x = win.manager.m_sel_end_x;
-        m_sel_end_y = win.manager.m_sel_end_y;
       }
     };
 
@@ -889,58 +863,6 @@ namespace twin {
         m_font = ret;
         return ret;
       }
-    };
-
-    class selection_resolver_t {
-      int m_sel_type = 0;
-      curpos_t m_sel_beg_x = 0;
-      curpos_t m_sel_beg_y = 0;
-      curpos_t m_sel_end_x = 0;
-      curpos_t m_sel_end_y = 0;
-
-      curpos_t beg, end;
-
-      bool is_rectangle_selection() const {
-        return m_sel_type & modifier_meta;
-      }
-    public:
-      selection_resolver_t(terminal_manager const& manager) {
-        m_sel_type    = manager.m_sel_type   ;
-        m_sel_beg_x = manager.m_sel_beg_x;
-        m_sel_beg_y = manager.m_sel_beg_y;
-        m_sel_end_x   = manager.m_sel_end_x  ;
-        m_sel_end_y   = manager.m_sel_end_y  ;
-        if (is_rectangle_selection()) {
-          if (m_sel_beg_y > m_sel_end_y)
-            std::swap(m_sel_beg_y, m_sel_end_y);
-          if (m_sel_beg_x > m_sel_end_x)
-            std::swap(m_sel_beg_x, m_sel_end_x);
-        } else {
-          if (m_sel_beg_y > m_sel_end_y) {
-            std::swap(m_sel_beg_y, m_sel_end_y);
-            std::swap(m_sel_beg_x, m_sel_end_x);
-          } else if (m_sel_beg_y == m_sel_end_y && m_sel_beg_x > m_sel_end_x) {
-            std::swap(m_sel_beg_x, m_sel_end_x);
-          }
-        }
-        beg = 0;
-        end = 0;
-      }
-      void next_line(curpos_t iline) {
-        if (!m_sel_type) return;
-        if (iline < m_sel_beg_y || m_sel_end_y < iline) {
-          end = 0;
-        } else {
-          if (is_rectangle_selection()) {
-            beg = m_sel_beg_x;
-            end = m_sel_end_x + 1;
-          } else {
-            beg = iline == m_sel_beg_y ? m_sel_beg_x : 0;
-            end = iline == m_sel_end_y ? m_sel_end_x + 1 : std::numeric_limits<curpos_t>::max();
-          }
-        }
-      }
-      bool is_selected(curpos_t cx) const { return beg <= cx && cx < end; }
     };
 
     void draw_background(HDC hdc, terminal_application const& app, std::vector<std::vector<contra::ansi::cell_t>>& content) {
@@ -1542,7 +1464,6 @@ namespace twin {
       HDC const hdc1 = m_background.hdc(hWnd, hdc0, 1);
       bool content_redraw = full_update || content_changed;
       if (m_tracer.is_blinking_changed(*this)) content_redraw = true;
-      if (m_tracer.is_selection_changed(*this)) content_redraw = true;
       if (content_redraw) {
         std::vector<std::vector<contra::ansi::cell_t>> content;
         auto const& b = app.board();

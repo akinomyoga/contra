@@ -1243,5 +1243,6 @@ bool line_t::set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool
   }
 
   while (i < iN) _unset(m_cells[i++]);
+  if (dirty & attribute_t::ssa_selected) m_version++;
   return dirty & attribute_t::ssa_selected;
 }

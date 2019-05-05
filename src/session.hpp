@@ -186,6 +186,7 @@ namespace term {
       return app().input_key(key);
     }
 
+  private:
     curpos_t      m_sel_beg_x = 0;
     curpos_t      m_sel_beg_y = 0;
     bool          m_sel_beg_online = false;
