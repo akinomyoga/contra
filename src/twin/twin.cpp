@@ -23,6 +23,7 @@
 #include <iterator>
 #include <algorithm>
 #include <numeric>
+#include <tuple>
 #include <mwg/except.h>
 #include "../contradef.hpp"
 #include "../enc.utf8.hpp"
@@ -231,13 +232,28 @@ namespace twin {
       return get_font(0);
     }
 
-
   public:
     coord_t small_height() const {
       return std::max<coord_t>(8u, std::min(m_height - 4, (m_height * 7 + 9) / 10));
     }
     coord_t small_width() const {
       return std::max<coord_t>(4u, std::min(m_width - 4, (m_width * 8 + 9) / 10));
+    }
+
+    coord_t get_font_height(font_t font) const {
+      coord_t height = font & font_flag_small ? small_height() : m_height;
+      if (font & font_decdhl) height *= 2;
+      return height;
+    }
+    std::pair<coord_t, coord_t> get_font_size(font_t font) const {
+      coord_t width = m_width, height = m_height;
+      if (font & font_flag_small) {
+        height = small_height();
+        width = small_width();
+      }
+      if (font & font_decdhl) height *= 2;
+      if (font & font_decdwl) width *= 2;
+      return {width, height};
     }
 
   public:
@@ -306,13 +322,18 @@ namespace twin {
 
     /*?lwiki
      * @fn std::tuple<coord_t, coord_t, double> get_displacement(font_t font);
-     * @return dx は描画の際の横のずれ量
+     * @return dx は描画の際の横のずれ量(文字幅1の文字に対して)
      * @return dy は描画の際の縦のずれ量
-     * @return dx2 は (文字の幅-1) に比例して増える各文字の横のずれ量
+     * @return dxW は (文字の幅-1) に比例して増える各文字の横のずれ量
      */
     std::tuple<coord_t, coord_t, double> get_displacement(font_t font) {
-      double dx = 0, dy = 0, dx2 = 0;
+      double dx = 0, dy = 0, dxW = 0;
       if (font & (font_layout_mask | font_decdwl | font_flag_italic)) {
+        // Note: 横のずれ量は dxI + dxW * cell.width である。
+        // これを実際には幅1の時の値 dx = dxI + dxW を分離して、
+        // ずれ量 = dx + dxW * (cell.width - 1) と計算する。
+
+        double dxI = 0;
         if (font & font_layout_sup)
           dy -= 0.2 * m_height;
         else if (font & font_layout_sub) {
@@ -320,23 +341,22 @@ namespace twin {
           dy += m_height - this->small_height();
         }
         if (font & (font_layout_framed | font_layout_sup | font_layout_sub)) {
-          dx2 = 0.5 * (m_width - this->small_width());
-          dx += dx2;
+          dxW = 0.5 * (m_width - this->small_width());
           dy += 0.5 * (m_height - this->small_height());
         }
-        if ((font & font_flag_italic) && !(font & font_rotation_mask)) {
+        if (font & font_flag_italic) {
           coord_t width = this->width();
           if (font & (font_layout_framed | font_layout_sup | font_layout_sub))
             width = this->small_width();
           dx -= 0.2 * width;
         }
         if (font & (font_layout_upper_half | font_layout_lower_half)) dy *= 2;
-        if (font & font_decdwl) dx *= 2;
+        if (font & font_decdwl) dxI *= 2;
         if (font & font_layout_lower_half) dy -= m_height;
-        dx = std::round(dx);
+        dx = std::round(dxI + dxW);
         dy = std::round(dy);
       }
-      return {dx, dy, dx2};
+      return {dx, dy, dxW};
     }
 
     ~font_store_t() {
@@ -895,26 +915,28 @@ namespace twin {
       }
     }
 
-    void draw_rotated_text_ext(HDC hdc, coord_t x0, coord_t y0, std::vector<TCHAR> const& characters, std::vector<INT> const& progress, font_t font) {
+    void draw_rotated_text_ext(
+      HDC hdc, coord_t x0, coord_t y0, coord_t dx, coord_t dy, coord_t width,
+      std::vector<TCHAR> const& characters, std::vector<INT> const& progress, font_t font) {
       font_t const sco = (font & font_rotation_mask) >> font_rotation_shft;
       double const angle = -(M_PI / 4.0) * sco;
-      coord_t const ypixel = settings.m_ypixel;
-
-      INT const prog = std::accumulate(progress.begin(), progress.end(), (INT) 0);
+      coord_t const h = fstore.get_font_height(font);
 
       // Note: 何故か知らないが Windows の TextOut の仕様か Font の仕様で
       //   90 度に比例しないフォントだと y 方向に文字がずれている。
       //   以下の式は色々測って調べた結果分かったフォントのずれの量である。
       double const gdi_xshift = sco & 1 ? 1.0 : 0;
-      double const gdi_yshift = sco & 1 ? ypixel * 0.3 : 0.0;
+      double const gdi_yshift = sco & 1 ? h * 0.3 : 0.0;
 
-      double const x1 = 0.5 * prog + gdi_xshift;
-      double const y1 = 0.5 * ypixel + gdi_yshift;
-      double const x2 = x1 * std::cos(angle) - y1 * std::sin(angle);
-      double const y2 = x1 * std::sin(angle) + y1 * std::cos(angle);
-      int const dx = (int) std::round(x2 - x1 + gdi_xshift);
-      int const dy = (int) std::round(y2 - y1 + gdi_yshift);
-      ::ExtTextOut(hdc, x0 - dx, y0 - dy, 0, NULL, &characters[0], characters.size(), &progress[0]);
+      // (xc1, yc1) はGDIの回転中心(文字の左上)から見た、希望の回転中心(文字の中央)の位置
+      // (xc2, yc2) は希望の回転中心が回転後に移動する位置
+      double const xc1 = 0.5 * width + gdi_xshift - dx;
+      double const yc1 = 0.5 * h + gdi_yshift;
+      double const xc2 = xc1 * std::cos(angle) - yc1 * std::sin(angle);
+      double const yc2 = xc1 * std::sin(angle) + yc1 * std::cos(angle);
+      int const rot_dx = (int) std::round(xc2 - xc1 + gdi_xshift);
+      int const rot_dy = (int) std::round(yc2 - yc1 + gdi_yshift);
+      ::ExtTextOut(hdc, x0 + dx - rot_dx, y0 + dy - rot_dy, 0, NULL, &characters[0], characters.size(), &progress[0]);
     }
 
     class decdhl_region_holder_t {
@@ -974,17 +996,21 @@ namespace twin {
       color_resolver_t _color(s);
       font_resolver_t _font;
 
-      coord_t x = xorigin, y = yorigin, x0 = xorigin;
+      coord_t x = xorigin, y = yorigin, xL = xorigin, xR = xorigin;
+      coord_t dx = 0, dy = 0;
+      double dxW = 0.0;
       std::vector<TCHAR> characters;
       std::vector<INT> progress;
-      auto _push_char = [&characters, &progress, &x0] (std::uint32_t code, INT prog, curpos_t width, double dx2) {
+      auto _push_char = [&characters, &progress, &xR, &dx, &dxW] (std::uint32_t code, INT prog, curpos_t width) {
+        xR += prog;
+
         // 文字位置の補正
-        if (dx2 && width > 1) {
-          int const shift = dx2 * (width - 1);
+        if (dxW && width > 1) {
+          int const shift = dxW * (width - 1);
           if (progress.size())
             progress.back() += shift;
           else
-            x0 += shift;
+            dx += shift;
           prog -= shift;
         }
 
@@ -1013,7 +1039,7 @@ namespace twin {
         for (std::size_t i = 0; i < cells.size(); ) {
           auto const& cell = cells[i++];
           auto const& attr = cell.attribute;
-          x0 = x;
+          xL = xR = x;
           coord_t const cell_progress = cell.width * xpixel;
           x += cell_progress;
           std::uint32_t code = cell.character.value;
@@ -1025,11 +1051,11 @@ namespace twin {
           // 色の決定
           color_t const fg = _color.resolve_fg(attr);
           font_t const font = _font.resolve_font(attr);
-          auto const [dx, dy, dx2] = fstore.get_displacement(font);
+          std::tie(dx, dy, dxW) = fstore.get_displacement(font);
 
           characters.clear();
           progress.clear();
-          _push_char(code, cell_progress, cell.width, dx2);
+          _push_char(code, cell_progress, cell.width);
 
           // 同じ色を持つ文字は同時に描画してしまう。
           for (std::size_t j = i; j < cells.size(); j++) {
@@ -1046,7 +1072,7 @@ namespace twin {
               if (font & font_layout_proportional) break;
               progress.back() += cell2_progress;
             } else if (fg == _color.resolve_fg(cell2.attribute) && font == _font.resolve_font(cell2.attribute)) {
-              _push_char(code2, cell2_progress, cell2.width, dx2);
+              _push_char(code2, cell2_progress, cell2.width);
             } else {
               if (font & font_layout_proportional) break;
               progress.back() += cell2_progress;
@@ -1070,12 +1096,12 @@ namespace twin {
             ::SelectClipRgn(hdc, region.get_lower_region());
 
           if (font & font_rotation_mask) {
-            this->draw_rotated_text_ext(hdc, x0 + dx, y + dy, characters, progress, font);
+            this->draw_rotated_text_ext(hdc, xL, y, dx, dy, xR - xL, characters, progress, font);
           } else if (font & font_layout_proportional) {
             // 配置を GDI に任せる
-            ::TextOut(hdc, x0 + dx, y + dy, &characters[0], characters.size());
+            ::TextOut(hdc, xL + dx, y + dy, &characters[0], characters.size());
           } else {
-            ::ExtTextOut(hdc, x0 + dx, y + dy, 0, NULL, &characters[0], characters.size(), &progress[0]);
+            ::ExtTextOut(hdc, xL + dx, y + dy, 0, NULL, &characters[0], characters.size(), &progress[0]);
           }
 
           // DECDHL用の制限の解除
@@ -1649,10 +1675,10 @@ namespace twin {
       if (!is_session_ready() || !m_ime_composition_active) return;
       util::raii hIMC(::ImmGetContext(hWnd), [this] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
 
-      font_t const current_font = font_resolver_t().resolve_font(sess.term().board().cur.attribute) & ~font_rotation_mask;
-      auto const [dx, dy, dx2] = fstore.get_displacement(current_font);
+      font_t const current_font = font_resolver_t().resolve_font(sess.board().cur.attribute) & ~font_rotation_mask;
+      auto const [dx, dy, dxW] = fstore.get_displacement(current_font);
       contra_unused(dx);
-      contra_unused(dx2);
+      contra_unused(dxW);
       LOGFONT logfont = fstore.create_logfont(current_font);
       logfont.lfWidth = fstore.width() * (current_font & font_decdwl ? 2 : 1);
       ::ImmSetCompositionFont(hIMC, const_cast<LOGFONT*>(&logfont));
@@ -1775,7 +1801,8 @@ namespace twin {
         this->end_ime_composition();
         goto defproc;
       case WM_SETFOCUS:
-        this->process_input(key_focus);
+        if (sess.is_active())
+          this->process_input(key_focus);
         goto defproc;
       case WM_KILLFOCUS:
         this->cancel_ime_composition();
