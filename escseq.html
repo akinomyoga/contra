@@ -1229,6 +1229,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>DECCOLM</th>            <td>?3</td></tr>
 <tr><th>DECOM</th>              <td>?6</td></tr>
 <tr><th>DECAWM</th>             <td>?7</td></tr>
+<tr><th>xtMouseX10</th>     <td>?9</td></tr>
 <tr><th>attCursorBlink</th>     <td>?12</td></tr>
 <tr><th>DECSCFDM (ref: all-espaces)<br/>xtCursorBlink</th><td>?13</td></tr>
 <tr><th>DECTEM (ref: all-espaces)<br/>xtCursorBlinkXOR</th><td>?14</td></tr>
@@ -1238,14 +1239,14 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>smAltScreen</th>        <td>?47</td></tr>
 <tr><th>DECLRMM / DECVSSM</th>  <td>?69</td></tr>
 <tr><th>DECNCSM</th>            <td>?95</td></tr>
-<tr><th>smSendMouse</th>        <td>?1000</td></tr>
-<tr><th>smMouseMotionHilite</th><td>?1001</td></tr>
-<tr><th>smMouseMotionCell</th>  <td>?1002</td></tr>
-<tr><th>smMouseMotionAll</th>   <td>?1003</td></tr>
-<tr><th>smSendFocus</th>        <td>?1004</td></tr>
-<tr><th>smExMouseUtf8</th>      <td>?1005</td></tr>
-<tr><th>smExMouseSgr</th>       <td>?1006</td></tr>
-<tr><th>smExMouseUrxvt</th>     <td>?1015</td></tr>
+<tr><th>xtMouseVt200</th>       <td>?1000</td></tr>
+<tr><th>xtMouseHilite</th>      <td>?1001</td></tr>
+<tr><th>xtMouseButton</th>      <td>?1002</td></tr>
+<tr><th>xtMouseAll</th>         <td>?1003</td></tr>
+<tr><th>xtSendFocus</th>        <td>?1004</td></tr>
+<tr><th>xtExtMouseUtf8</th>     <td>?1005</td></tr>
+<tr><th>xtExtMouseSgr</th>      <td>?1006</td></tr>
+<tr><th>xtExtMouseUrxvt</th>    <td>?1015</td></tr>
 <tr><th>smAltScreenClear</th>   <td>?1047</td></tr>
 <tr><th>smSaveCursor</th>       <td>?1048</td></tr>
 <tr><th>smAltScreenCursor</th>  <td>?1049</td></tr>
@@ -3267,16 +3268,32 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <ul>
 <li>SGR 5 <dfn class="sgr">sgrBlink</dfn>: blinking, slowly blinking
   <p>遅い点滅。</p>
-  <p>[ECMA-48] 150/min 未満の速さで点滅させる。</p>
+  <p>[ECMA-48/8.3.117] 150/min 未満の速さで点滅させる。</p>
   <ul>
-  <li>互換性: ansi, vt100, xterm</li>
+  <li>互換性: vt100, xterm</li>
+  <li>xterm, mintty は前景の表示・非表示を切り替える。
+    RLogin は前景色と背景色を反転させて点滅を表現する。
+    contra では前者に倣う。
+  </li>
+  <li>xterm, mintty はフォーカスを失うと点滅をやめる。
+    RLogin はずっと点滅を続けている。
+    contra では後者に倣う。
+  </li>
+  <li>xterm は点灯時間の方が消滅時間よりも長い気がする。
+    mintty, RLogin は同じ長さの気がする。
+    contra では後者に倣う。
+  </li>
   </ul>
 </li>
 <li>SGR 6 <dfn class="sgr">sgrRapidBlink</dfn>: rapid blinking
   <p>速い点滅。</p>
-  <p>[ECMA-48] 150/min 以上の速さで点滅させる。</p>
+  <p>[ECMA-48/8.3.117] 150/min 以上の速さで点滅させる。</p>
   <ul>
   <li>互換性: ansi</li>
+  <li>xterm は SGR(5) と同じ速さで点滅する。
+    RLogin は2倍の速さで点滅する。
+    mintty は定数倍ではないが微妙に速く点滅する。
+  </li>
   </ul>
 </li>
 <li>SGR 25 <dfn class="sgr">sgrBlinkOff</dfn>: blinking off, steady, not blinking
@@ -3842,73 +3859,108 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 
 <h3>マウス追跡 (Mouse Tracking)</h3>
 <ul>
-<li>Mode ?1000 <dfn class="cmode">smSendMouse</dfn> Send Mouse X &amp; Y [既定値 off]
-  <!--
-    on: Send Mouse X &amp; Y on button press and release.
-    off: Don’t send Mouse X &amp; Y on button press and release.
-  -->
-  <p>端末側で発生したマウスボタンの押下・解放のイベント情報を送る。
-  マウスイベントの情報は以下のシーケンスを用いて送信される。
+<li>Mode ?9 <dfn class="cmode">xtMouseX10</dfn> Send Mouse X &amp; Y [xterm, 既定値 RM]</li>
+<li>Mode ?1000 <dfn class="cmode">xtMouseVt200</dfn> Send Mouse X &amp; Y [xterm, 既定値 RM]</li>
+<li>Mode ?1001 <dfn class="cmode">xtMouseHilite</dfn>: Use Hilite Mouse Tracking [xterm, 既定値 RM]</li>
+<li>Mode ?1002 <dfn class="cmode">xtMouseButton</dfn>: Use Cell Motion Mouse Tracking [xterm, 既定値 RM]</li>
+<li>Mode ?1003 <dfn class="cmode">xtMouseAll</dfn>: Use All Motion Mouse Tracking [xterm, 既定値 RM]
+  <p>[xterm] これらはマウスイベントの通知を制御する。
+    上記5つのモードは排他的であり、何れかを設定すると他の物は解除される。何れかの解除シーケンスを送ると全て解除される。
+    それぞれどの範囲のマウスイベントまで通知するかで異なる。
+    xtMouseX10 はマウスボタンの押下が通知される。
+    xtMouseVt200 と xtMouseHilite はマウスボタンの押下・解放が通知される。
+    xtMouseHilite の場合にはマウスボタンを押している間は選択範囲がハイライトされ、
+    ボタンが解放された時には他のモードとは異なるシーケンス (選択イベント) を通知する。
+    xtMouseButton はマウスボタンを押下している間のマウス移動も通知する。
+    xtMouseAll は更にマウスボタンが離れている時の移動も通知する。
+    マウスイベントは以下のシーケンスを用いて送信される。
+    全て解除されているとマウスイベントは通知されない。
   </p>
-
-  <table class="normal center">
-  <tr><th>略号</th>                <th>形式</th> <th>Sequence</th></tr>
-  <tr><th>smSendMouseR</th>        <td>既定</td> <td>CSI M <i>&lt;C&gt;</i> <i>&lt;C&gt;</i> <i>&lt;C&gt;</i></td></tr>
-  <tr><th>smExMouseUtf8R</th>      <td>utf-8</td><td>CSI M <i>&lt;C8&gt;</i> <i>&lt;C8&gt;</i> <i>&lt;C8&gt;</i></td></tr>
-  <tr><th>smExMouseUrxvtR</th>     <td>urxvt</td><td>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> M</td></tr>
-  <tr><th>smExMouseSgrR</th>       <td>SGR</td>  <td>CSI &lt; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> M</td></tr>
-  <tr><th>smExMouseSgrReleaseR</th><td>SGR</td>  <td>CSI &lt; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> m</td></tr>
+  <table class="normal center contra-cell-centered">
+  <caption>表: 通知されるイベントの種類</caption>
+  <tr><th>モード</th><th>押下</th><th>解放</th><th>選択</th><th>ドラッグ</th><th>移動</th></tr>
+  <tr><th>xtMouseX10</th>    <td>★</td><td>  </td><td>  </td><td>  </td><td>  </td></tr>
+  <tr><th>xtMouseVt200</th>  <td>★</td><td>★</td><td>  </td><td>  </td><td>  </td></tr>
+  <tr><th>xtMouseHilite</th><td>★</td><td>  </td><td>★</td><td>  </td><td>  </td></tr>
+  <tr><th>xtMouseButton</th> <td>★</td><td>★</td><td>  </td><td>★</td><td>  </td></tr>
+  <tr><th>xtMouseAll</th>    <td>★</td><td>★</td><td>  </td><td>★</td><td>★</td></tr>
   </table>
-
+</li>
+<li>Mode ?1005 <dfn class="cmode">xtExtMouseUtf8</dfn> Enable Extended Mouse Mode [xterm, 既定値 RM]</li>
+<li>Mode ?1006 <dfn class="cmode">xtExtMouseSgr</dfn> [xterm, 既定値 RM]</li>
+<li>Mode ?1015 <dfn class="cmode">xtExtMouseUrxvt</dfn> [urxvt, 既定値 RM]
+  <p>[xterm] これらのモードはマウスイベントの通知に使われるシーケンスの形式を変更するのに使う。
+    上記3つのモードはは排他的であり、
+    何れかを設定すると他は解除されるし、何れかを解除しようとすると全て解除される。
+    xtExtMouseUtf8 は utf-8 形式を指定する。
+    xtExtMouseUrxvt は urxvt 形式を指定する。
+    xtExtMouseSgr は SGR 形式を指定する。
+    それぞれの形式に対して以下のようなシーケンスで (選択以外の) マウスイベントが通知される。
+    xtMouseR は何れも設定されていない時に使われる既定のシーケンスである。
+  </p>
+  <table class="normal center">
+  <tr><th>略号</th>                 <th>形式</th> <th>Sequence</th></tr>
+  <tr><th>xtMouseR</th>              <td>既定</td> <td><kbd>CSI M <i>&lt;C&gt;</i> <i>&lt;C&gt;</i> <i>&lt;C&gt;</i></kbd></td></tr>
+  <tr><th>xtExtMouseUtf8R</th>       <td>utf-8</td><td><kbd>CSI M <i>&lt;C8&gt;</i> <i>&lt;C8&gt;</i> <i>&lt;C8&gt;</i></kbd></td></tr>
+  <tr><th>xtExtMouseUrxvtR</th>      <td>urxvt</td><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Pn&gt;</i> ; <i>&lt;Pn&gt;</i> M</kbd></td></tr>
+  <tr><th>xtExtMouseSgrR</th>        <td>SGR</td>  <td><kbd>CSI &lt; <i>&lt;Ps&gt;</i> ; <i>&lt;Pn&gt;</i> ; <i>&lt;Pn&gt;</i> M</kbd></td></tr>
+  <tr><th>xtExtMouseSgrReleaseR</th> <td>SGR</td>  <td><kbd>CSI &lt; <i>&lt;Ps&gt;</i> ; <i>&lt;Pn&gt;</i> ; <i>&lt;Pn&gt;</i> m</kbd></td></tr>
+  </table>
+  <p>解放イベントを通知する時、
+    xtExtMouseSgr が設定されている場合は xtExtMouseSgrReleaseR が使われ、
+    第一引数には離されたボタンに対応する値が使用される。
+    それ以外の設定の時はイベントは第一引数を 3 として通知される
+    (どのマウスボタンが離されたかを検知する手立てはない)。
+  </p>
   <ul>
-  <li>何れのシーケンスも同じ機能を持つ物であるが、歴史的な背景により複数の形式がある。
-    <ul>
-    <li>smExMouseSgr が有効になっている時には、smExMouseSgrR が用いられる。</li>
-    <li>smExMouseUrxvt が有効になっている時は、smExMouseUrxvtR が用いられる。</li>
-    <li>smExMouseUtf8 が有効になっている時は、smExMouseUtf8R が用いられる。</li>
-    <li>何も設定されていない時は smSendMouseR が用いられる。</li>
-    </ul>
-    何れのシーケンスも 3 つの整数の引数を取る。
-  </li>
-  <li>一つ目の引数 <var>B</var> はイベントの対象となるマウスボタン及び修飾キーの状態を示す。
-    マウスボタンを示す整数に、修飾キーに対応する整数を加算した物が引数の値になる。
+  <li>一つ目の引数 <var>B</var> はイベントの対象となるマウスボタン及び修飾を示す。
+    マウスボタンを示す整数に、修飾を表す整数を加算した物が引数の値になる。
     <table class="normal center">
-    <caption>マウスボタン</caption>
+    <caption>表: マウスボタン</caption>
     <tr><th>名称</th>   <th>数値</th><th>動作</th></tr>
     <tr><th>MB1</th>    <td>0</td> <td>左ボタン (button 1) が押下された時に発生</td></tr>
-    <tr><th>MB2</th>    <td>1</td> <td>右ボタン (button 2) が押下された時に発生</td></tr>
-    <tr><th>MB3</th>    <td>2</td> <td>中ボタン (button 3) が押下された時に発生</td></tr>
-    <tr><th>Release</th><td>3</td> <td>マウスボタンが全て離された時に発生</td></tr>
+    <tr><th>MB2</th>    <td>1</td> <td>中ボタン (button 2) が押下された時に発生</td></tr>
+    <tr><th>MB3</th>    <td>2</td> <td>右ボタン (button 3) が押下された時に発生</td></tr>
+    <tr><th>Release</th><td>3</td> <td>マウスボタンが離れた時・マウスボタンが離れている時のマウス移動で使用</td></tr>
     <tr><th>MB4</th>    <td>64</td><td>マウスホイールが上に回転した時に発生</td></tr>
     <tr><th>MB5</th>    <td>65</td><td>マウスホイールが下に回転した時に発生</td></tr>
     </table>
     <table class="normal center">
-    <caption>修飾</caption>
-    <tr><th>名称</th>   <th>数値</th><th>修飾キー</th></tr>
+    <caption>表: 修飾</caption>
+    <tr><th>名称</th>   <th>数値</th><th>修飾キー・説明</th></tr>
     <tr><th>Shift</th>  <td>4</td> <td>Shift</td></tr>
     <tr><th>Meta</th>   <td>8</td> <td>Meta</td></tr>
     <tr><th>Control</th><td>16</td><td>Control</td></tr>
+    <tr><th>Motion</th><td>32</td><td>マウス移動</td></tr>
     </table>
-    <p>但し、smExMouseSgr が有効になっている時は、
-    各マウスボタンが離された時にも情報が送られる。
-    その時は smExMouseSgrR の代わりに smExMouseSgrReleaseR が用いられる。
-    </p>
   </li>
-  <li>二つ目の引数 <var>X</var> はマウスポインタの横位置を表す列番号である。端末の最も左の列が 1 に対応する。</li>
-  <li>三つ目の引数 <var>Y</var> はマウスポインタの縦位置を表す行番号である。端末の一番上の行が 1 に対応する。</li>
+  <li>2つ目の引数 <var>X</var> はマウスポインタの横位置を表す列番号である。端末の最も左の列が 1 に対応する。</li>
+  <li>3つ目の引数 <var>Y</var> はマウスポインタの縦位置を表す行番号である。端末の一番上の行が 1 に対応する。</li>
   <li><i>&lt;C&gt;</i> は引数の整数値に 0x20 を加算した値をバイト値とする文字である。引数の値は最大 223 (= 0xFF-0x20) に制限される。</li>
   <li><i>&lt;C8&gt;</i> は引数の整数値に 0x20 を加算した値を文字コードと見て UTF-8 形式で符号化したバイト列である。</li>
   <li><i>&lt;Ps&gt;</i> は引数の整数値を整数リテラルで表現した /[0-9]+/ の形式の文字列である。</li>
   </ul>
-
+  <p>xtMouseHilite が設定されている時、
+    マウスボタンを離した時に解放イベントの代わりに選択イベントが発生する。
+    選択イベントは形式に応じて以下のシーケンスを用いて通知される。
+    第1引数・第2引数はマウスボタンを離した位置 (選択の終点) を表す (その他の通知の第2引数・第3引数に対応する)。
+  </p>
+  <table class="normal center">
+  <tr><th>略号</th>                 <th>形式</th> <th>Sequence</th></tr>
+  <tr><th>xtMouseHiliteR</th>        <td>既定</td> <td><kbd>CSI t <i>&lt;C&gt;</i> <i>&lt;C&gt;</i></kbd></td></tr>
+  <tr><th>xtExtMouseUtf8HiliteR</th> <td>utf-8</td><td><kbd>CSI t <i>&lt;C8&gt;</i> <i>&lt;C8&gt;</i></kbd></td></tr>
+  <tr><th>xtExtMouseUrxvtHiliteR</th><td>urxvt</td><td><kbd>CSI <i>&lt;Pn&gt;</i> ; <i>&lt;Pn&gt;</i> t</kbd></td></tr>
+  <tr><th>xtExtMouseSgrHiliteR</th>  <td>SGR</td>  <td><kbd>CSI &lt; <i>&lt;Pn&gt;</i> ; <i>&lt;Pn&gt;</i> t</kbd></td></tr>
+  </table>
   <ul>
-  <li>互換性: xterm, rxvt, rosaterm
-    <ul>
-    <li>rosaterm では、smExMouseSgr, smExMouseUrxvt, smExMouseUtf8 の順に優先される。
-      より優先順位の高い形式が off になっている時に限り、その形式が実際に働く。
-      また、smExMouseSgr が設定されている時、全てのマウスボタンが離された事を示すシーケンス (<var>B</var> = 3 | 修飾) の送信は省略される。
-    </li>
-    </ul>
+  <li>互換性: xterm, rxvt, mintty, RLogin, rosaterm</li>
+  <li>rosaterm ではそれぞれのモードを独立に on/off できるように実装してしまった。
+    複数のモードが設定されている時、xtExtMouseSgr, xtExtMouseUrxvt, xtExtMouseUtf8 の順に優先される。
+    より優先順位の高い形式が off になっている時に限り、その形式が実際に働く。
+    また、xtExtMouseSgr が設定されている時、マウスボタンが離された事を示すシーケンス (<var>B</var> = 3 | 修飾) の送信は省略される。
+  </li>
+  <li>xterm, mintty では左クリック・中クリック・右クリックが MB1, MB2, MB3 に対応する。
+    RLogin では左クリック・右クリックが MB1, MB2 に対応する。
   </li>
   <li>References
     <ul>
@@ -3917,48 +3969,10 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </li>
   </ul>
 </li>
-<li>Mode ?1005 <dfn class="cmode">smExMouseUtf8</dfn> Enable Extended Mouse Mode [既定値 off]
-  <!--
-  on: Enable Extended Mouse Mode.
-  off: Disable Extended Mouse Mode.
-  -->
-  <p>smSendMouse で送られる情報を utf-8 形式に変更する。詳細は smSendMouse を参照</p>
-  <p>互換性: xterm, rosaterm</p>
-</li>
-<li>Mode ?1006 <dfn class="cmode">smExMouseSgr</dfn> [既定値 off]
-  <p>smSendMouse で送られる情報を SGR 形式に変更する。詳細は smSendMouse を参照</p>
-  <p>互換性: rosaterm</p>
-</li>
-<li>Mode ?1015 <dfn class="cmode">smExMouseUrxvt</dfn> [既定値 off]
-  <p>smSendMouse で送られる情報の形式をを urxvt 形式に変更する。詳細は smSendMouse を参照</p>
-  <p>互換性: rosaterm</p>
-</li>
-<li>Mode ?1001 <dfn class="cmode">smMouseMotionHilite</dfn>: Use Hilite Mouse Tracking
-  <!--
-  on: Use Hilite Mouse Tracking.
-  off Don't use Cell Motion Mouse Tracking.
-  -->
-  <p>互換性: xterm</p>
-</li>
-<li>Mode ?1002 <dfn class="cmode">smMouseMotionCell</dfn>: Use Cell Motion Mouse Tracking
-  <!--
-  on: Use Cell Motion Mouse Tracking.
-  off: Don't use Cell Motion Mouse Tracking.
-  -->
-  <p>互換性: xterm</p>
-</li>
-<li>Mode ?1003 <dfn class="cmode">smMouseMotionAll</dfn>: Use All Motion Mouse Tracking
-  <!--
-  on: Use All Motion Mouse Tracking.
-  off: Don't use All Motion Mouse Tracking.
-  -->
-  <p>互換性: xterm</p>
-</li>
-<li>Mode ?1004 <dfn class="cmode">smSendFocus</dfn>: Send FocusIn/FocusOut Events
-  <!--
-  on: Send FocusIn/FocusOut events.
-  off: Don't send FocusIn/FocusOut events.
-  -->
+<li>Mode ?1004 <dfn class="cmode">xtSendFocus</dfn>: Send FocusIn/FocusOut Events [xterm]
+  <p>xterm の振る舞いを見るとフォーカスを得ると <kbd>CSI O CSI I</kbd> を送る。フォーカスを失うと <kbd>CSI O</kbd> を送る。
+    1000,1002,1003 とは独立の設定である。修飾キーによる修飾は行われない様である。
+  </p>
   <p>互換性: xterm</p>
 </li>
 </ul>
