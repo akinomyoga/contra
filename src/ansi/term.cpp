@@ -2465,7 +2465,7 @@ namespace {
     }
   }
 
-  bool term_t::input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t x, curpos_t y) {
+  bool term_t::input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t const x, curpos_t const y) {
     tstate_t const& s = this->state();
     if (!(s.mouse_mode & mouse_report_mask)) return false;
 
@@ -2502,6 +2502,8 @@ namespace {
       }
       break;
     case _key_mouse_event_move:
+      // 前回と同じ升目に居る時は送らなくて良い。
+      if (x == m_mouse_prev_x && y == m_mouse_prev_y) return true;
       if (key & _key_mouse_button_mask) {
         if (s.mouse_mode & mouse_report_drag) {
           button |= 32;
@@ -2550,6 +2552,8 @@ namespace {
         break;
       }
       input_flush();
+      m_mouse_prev_x = x;
+      m_mouse_prev_y = y;
       return true;
     }
 

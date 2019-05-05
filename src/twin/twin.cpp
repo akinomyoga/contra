@@ -1775,6 +1775,7 @@ namespace twin {
         key = GET_XBUTTON_WPARAM(wParam) == XBUTTON1 ? key_mouse4_up : key_mouse5_up;
         goto mouse_event;
       case WM_MOUSEMOVE:
+        ::SetCursor(::LoadCursor(NULL, IDC_IBEAM));
         {
           constexpr WORD mouse_buttons = MK_LBUTTON | MK_MBUTTON | MK_RBUTTON | MK_XBUTTON1 | MK_XBUTTON2;
           key = key_mouse_move;
@@ -1853,8 +1854,17 @@ namespace twin {
 
       // 環境変数
       struct passwd* pw = ::getpwuid(::getuid());
-      if (pw && pw->pw_dir)
-        sess->init_environment_variable("HOME", pw->pw_dir);
+      if (pw) {
+        if (pw->pw_name)
+          sess->init_environment_variable("USER", pw->pw_name);
+        if (pw->pw_dir)
+          sess->init_environment_variable("HOME", pw->pw_dir);
+        if (pw->pw_shell)
+          sess->init_environment_variable("SHELL", pw->pw_shell);
+      }
+      char hostname[256];
+      if (::gethostname(hostname, sizeof hostname) == 0)
+        sess->init_environment_variable("HOSTNAME", hostname);
       if (settings.m_env_term)
         sess->init_environment_variable("TERM", settings.m_env_term);
       std::string path = "/usr/local/bin:/usr/bin:";

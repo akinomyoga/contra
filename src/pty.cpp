@@ -112,8 +112,11 @@ namespace term {
       close(slavefd);
       close(masterfd);
 
-      for (auto const& pair : this->m_env)
+      for (auto const& pair : this->m_env) {
         ::setenv(pair.first.c_str(), pair.second.c_str(), 1);
+        if (pair.first == "HOME")
+          ::chdir(pair.second.c_str());
+      }
       //execl(shell, shell, "-l", NULL);
       execl(shell, shell, NULL);
 

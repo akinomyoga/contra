@@ -614,10 +614,11 @@ namespace ansi {
       input_unsigned(1 + ((mod & _modifier_mask) >> _modifier_shft));
     }
 
+  private:
+    curpos_t m_mouse_prev_x = -1, m_mouse_prev_y = -1;
   public:
     bool input_key(key_t key);
     bool input_mouse(key_t key, coord_t px, coord_t py, curpos_t x, curpos_t y);
-
   };
 
 }
