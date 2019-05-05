@@ -309,19 +309,32 @@ namespace ansi {
     void initialize_mode();
 
   private:
-    bool get_mode_with_accessor(mode_t modeSpec) const;
+    int rqm_mode_with_accessor(mode_t modeSpec) const;
   public:
     bool get_mode(mode_t modeSpec) const {
       std::uint32_t const index = modeSpec;
       if (!(index & accessor_flag)) {
         unsigned const field = index >> 5;
         std::uint32_t const bit = 1 << (index & 0x1F);
-        mwg_assert(field < sizeof(m_mode_flags) / sizeof(m_mode_flags[0]), "invalid modeSpec");;
+        mwg_assert(field < std::size(m_mode_flags), "invalid modeSpec");;
 
         std::uint32_t const& flags = m_mode_flags[index >> 5];
         return (flags & bit) != 0;
       } else {
-        return get_mode_with_accessor(modeSpec);
+        return rqm_mode_with_accessor(modeSpec) & 1;
+      }
+    }
+    int rqm_mode(mode_t modeSpec) const {
+      std::uint32_t const index = modeSpec;
+      if (!(index & accessor_flag)) {
+        unsigned const field = index >> 5;
+        std::uint32_t const bit = 1 << (index & 0x1F);
+        mwg_assert(field < std::size(m_mode_flags), "invalid modeSpec");;
+
+        std::uint32_t const& flags = m_mode_flags[index >> 5];
+        return (flags & bit) != 0 ? 1 : 2;
+      } else {
+        return rqm_mode_with_accessor(modeSpec);
       }
     }
 

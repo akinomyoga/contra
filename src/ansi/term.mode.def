@@ -19,7 +19,7 @@ flags     mode_ttm                ansi16      unsupported
 flags     mode_satm               ansi17      unsupported
 flags     mode_tsm                ansi18      unsupported
 flags     mode_ebm                ansi19      unsupported
-flags     mode_lnm                ansi20      true
+flags     mode_lnm                ansi20      false
 flags     mode_grcm               ansi21      true
 flags     mode_zdm                ansi22      true
 

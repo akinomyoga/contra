@@ -220,6 +220,14 @@ namespace {
       else
         std::fprintf(stderr, "unrecognized DEC mode %u\n", (unsigned) param);
     }
+    int rqm_ansi_mode(tstate_t& s, csi_single_param_t param) {
+      auto const it = data_ansi.find(param);
+      return it == data_ansi.end() ? 0 : s.rqm_mode(it->second);
+    }
+    int rqm_dec_mode(tstate_t& s, csi_single_param_t param) {
+      auto const it = data_dec.find(param);
+      return it == data_dec.end() ? 0 : s.rqm_mode(it->second);
+    }
   };
   static mode_dictionary_t mode_dictionary;
 
@@ -250,6 +258,33 @@ namespace {
     while (params.read_param(value, 0))
       mode_dictionary.set_dec_mode(s, value, false);
     return true;
+  }
+  static bool do_decrqm_impl(term_t& term, csi_parameters& params, bool decmode) {
+    tstate_t& s = term.state();
+    csi_single_param_t value;
+    params.read_param(value, 0);
+
+    int result;
+    if (decmode)
+      result = mode_dictionary.rqm_dec_mode(s, value);
+    else
+      result = mode_dictionary.rqm_dec_mode(s, value);
+
+    term.input_c1(ascii_csi);
+    if (decmode) term.input_byte(ascii_question);
+    term.input_unsigned(value);
+    term.input_byte(ascii_semicolon);
+    term.input_unsigned(result);
+    term.input_byte(ascii_dollar);
+    term.input_byte(ascii_y);
+
+    return true;
+  }
+  bool do_decrqm_ansi(term_t& term, csi_parameters& params) {
+    return do_decrqm_impl(term, params, false);
+  }
+  bool do_decrqm_dec(term_t& term, csi_parameters& params) {
+    return do_decrqm_impl(term, params, false);
   }
 
   bool do_decscusr(term_t& term, csi_parameters& params) {
@@ -1946,38 +1981,37 @@ namespace {
     return minor << 8 | major;
   }
 
-  bool tstate_t::get_mode_with_accessor(mode_t modeSpec) const {
+  int tstate_t::rqm_mode_with_accessor(mode_t modeSpec) const {
     // Note: 現在は暫定的にハードコーディングしているが、
     //   将来的にはunordered_map か何かで登録できる様にする。
     //   もしくは何らかの表からコードを自動生成する様にする。
     switch (modeSpec) {
     case mode_wystcurm1: // Mode 32 (Set Cursor Mode (Wyse))
-      return !get_mode(mode_attCursorBlink);
+      return !get_mode(mode_attCursorBlink) ? 1 : 2;
     case mode_wystcurm2: // Mode 33 WYSTCURM (Wyse Set Cursor Mode)
-      return !get_mode(resource_cursorBlink);
+      return !get_mode(resource_cursorBlink) ? 1 : 2;
     case mode_wyulcurm: // Mode 34 WYULCURM (Wyse Underline Cursor Mode)
-      return m_cursor_shape > 0;
+      return m_cursor_shape > 0 ? 1 : 2;
     case mode_altscreen: // Mode ?47
-      return get_mode(mode_altscr);
+      return rqm_mode(mode_altscr);
     case mode_altscreen_clr: // Mode ?1047
-      return get_mode(mode_altscr);
+      return rqm_mode(mode_altscr);
     case mode_decsc: // Mode ?1048
-      return m_decsc_cur.x() >= 0;
+      return m_decsc_cur.x() >= 0 ? 1 : 2;
     case mode_altscreen_cur: // Mode ?1049
-      return get_mode(mode_altscr);
-    case mode_deccolm: return 1 & do_rqm_deccolm(*m_term);
-    case mode_decscnm: return 1 & do_rqm_decscnm(*m_term);
-    case mode_decawm : return 1 & do_rqm_decawm(*m_term);
-    case mode_xtMouseX10     : return 1 & do_rqm_xtMouseX10(*m_term);
-    case mode_xtMouseVt200   : return 1 & do_rqm_xtMouseVt200(*m_term);
-    case mode_xtMouseHilite  : return 1 & do_rqm_xtMouseHilite(*m_term);
-    case mode_xtMouseButton  : return 1 & do_rqm_xtMouseButton(*m_term);
-    case mode_xtMouseAll     : return 1 & do_rqm_xtMouseAll(*m_term);
-    case mode_xtExtMouseUtf8 : return 1 & do_rqm_xtExtMouseUtf8(*m_term);
-    case mode_xtExtMouseSgr  : return 1 & do_rqm_xtExtMouseSgr(*m_term);
-    case mode_xtExtMouseUrxvt: return 1 & do_rqm_xtExtMouseUrxvt(*m_term);
-    default:
-      return false;
+      return rqm_mode(mode_altscr);
+    case mode_deccolm: return do_rqm_deccolm(*m_term);
+    case mode_decscnm: return do_rqm_decscnm(*m_term);
+    case mode_decawm : return do_rqm_decawm(*m_term);
+    case mode_xtMouseX10     : return do_rqm_xtMouseX10(*m_term);
+    case mode_xtMouseVt200   : return do_rqm_xtMouseVt200(*m_term);
+    case mode_xtMouseHilite  : return do_rqm_xtMouseHilite(*m_term);
+    case mode_xtMouseButton  : return do_rqm_xtMouseButton(*m_term);
+    case mode_xtMouseAll     : return do_rqm_xtMouseAll(*m_term);
+    case mode_xtExtMouseUtf8 : return do_rqm_xtExtMouseUtf8(*m_term);
+    case mode_xtExtMouseSgr  : return do_rqm_xtExtMouseSgr(*m_term);
+    case mode_xtExtMouseUrxvt: return do_rqm_xtExtMouseUrxvt(*m_term);
+    default: return 0;
     }
   }
 
@@ -2106,6 +2140,7 @@ namespace {
       register_cfunc(&do_decscl  , ascii_double_quote, ascii_p);
       register_cfunc(&do_decsca  , ascii_double_quote, ascii_q);
       register_cfunc(&do_decscpp , ascii_dollar, ascii_vertical_bar);
+      register_cfunc(&do_decrqm_ansi, ascii_dollar, ascii_p);
     }
 
     control_function_t* get(byte F) const {
@@ -2131,15 +2166,20 @@ namespace {
         csi_parameters params(param + 1, len - 1);
         if (!params) return false;
 
-        switch (seq.final()) {
-        case 'h': return do_decset(term, params);
-        case 'l': return do_decrst(term, params);
+        if (seq.intermediate_size() == 0) {
+          switch (seq.final()) {
+          case ascii_h: return do_decset(term, params);
+          case ascii_l: return do_decrst(term, params);
+          }
+        } else if (seq.intermediate_size() == 1) {
+          if (seq.intermediate()[0] == ascii_dollar && seq.final() == ascii_y)
+            return do_decrqm_dec(term, params);
         }
       } else if (param[0] == '>') {
         csi_parameters params(param + 1, len - 1);
         if (!params) return false;
         switch (seq.final()) {
-        case 'c': return do_da2(term, params);
+        case ascii_c: return do_da2(term, params);
         }
       }
     }
