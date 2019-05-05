@@ -266,12 +266,16 @@ namespace ansi {
       m_rgba256[index++] = contra::dict::rgba(0xFF, 0xFF, 0xFF);
 
       // 6x6x6 cube
+      //   xterm は i == 0 ? 0 : i * 40 + 55 という式を使っている。
+      //   RLogin は恐らく i * 51 という式を使った時と同じに見える。
+      auto _intensity = [] (int i) { return i == 0 ? 0 : i * 40 + 55; };
+      //auto _intensity = [] (int i) { return i * 51; };
       for (int r = 0; r < 6; r++) {
-        color_t const R = A | r * 51;
+        color_t const R = A | _intensity(r);
         for (int g = 0; g < 6; g++) {
-          color_t const RG = R | g * 51 << 8;
+          color_t const RG = R | _intensity(g) << 8;
           for (int b = 0; b < 6; b++) {
-            color_t const RGB = RG | b * 51 << 16;
+            color_t const RGB = RG | _intensity(b) << 16;
             m_rgba256[index++] = RGB;
           }
         }
