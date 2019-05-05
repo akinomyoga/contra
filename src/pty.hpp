@@ -43,7 +43,7 @@ namespace term {
     }
   };
 
-  class pty_session: public fd_device {
+  class pty_connection: public fd_device {
   public:
     typedef void (*exec_error_handler_t)(int errno_, std::uintptr_t param);
 
@@ -59,8 +59,8 @@ namespace term {
 
     std::unordered_map<std::string, std::string> m_env;
   public:
-    pty_session() {}
-    pty_session(const char* shell, winsize const* ws = NULL, struct termios* termios = NULL) {
+    pty_connection() {}
+    pty_connection(const char* shell, winsize const* ws = NULL, struct termios* termios = NULL) {
       start(shell, ws, termios);
     }
 
@@ -86,7 +86,7 @@ namespace term {
     bool is_active() const { return m_active; }
     bool is_alive();
 
-    virtual ~pty_session() {}
+    virtual ~pty_connection() {}
 
     void set_winsize(struct winsize const* ws) {
       fd_set_winsize(m_fd, ws);

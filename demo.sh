@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if ((!_ble_bash)); then
+  echo 'usage: source demo.sh'
+  echo '  To run this script, ble.sh (git@github.com:akinomyoga/ble.sh) is needed.'
+  exit 1
+fi
+
 printf '\e[?1049h\e[2J'
 
 function test-sco {
@@ -23,6 +29,6 @@ function test-sco {
 }
 
 test-sco
-sleep 5
+ble/util/sleep 5000
 
 printf '\e[?1049l'

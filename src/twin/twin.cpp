@@ -370,14 +370,14 @@ namespace twin {
     twin_settings settings;
     font_store_t fstore { settings };
 
-    terminal_session sess;
+    terminal_manager manager;
 
     HWND hWnd = NULL;
 
     static constexpr LPCTSTR szClassName = TEXT("Contra.Twin.Main");
 
   private:
-    bool is_session_ready() { return hWnd && sess.is_active(); }
+    bool is_session_ready() { return hWnd && manager.is_active(); }
   public:
     HWND create_window(HINSTANCE hInstance) {
       fstore.set_size(settings.m_xpixel, settings.m_ypixel);
@@ -452,7 +452,7 @@ namespace twin {
       if (new_col != settings.m_col || new_row != settings.m_row) {
         settings.m_col = new_col;
         settings.m_row = new_row;
-        sess.reset_size(new_col, new_row);
+        manager.reset_size(new_col, new_row);
       }
     }
 
@@ -519,16 +519,16 @@ namespace twin {
     public:
       status_tracer_t() {}
 
-      bool is_changed(twin_window_t* _this) {
-        return is_metric_changed(_this) ||
-          is_content_changed(_this) ||
-          is_cursor_changed(_this);
+      bool is_changed(twin_window_t const& win, terminal_application const& app) {
+        return is_metric_changed(win) ||
+          is_content_changed(win, app) ||
+          is_cursor_changed(win, app);
       }
-      void store(twin_window_t* _this) {
-        store_metric(_this);
-        store_content(_this);
-        store_cursor(_this);
-        store_blinking_state(_this);
+      void store(twin_window_t const& win, terminal_application const& app) {
+        store_metric(win);
+        store_content(win, app);
+        store_cursor(win, app);
+        store_blinking_state(win);
       }
 
     private:
@@ -539,8 +539,8 @@ namespace twin {
       coord_t m_xpixel = 0;
       coord_t m_ypixel = 0;
     public:
-      bool is_metric_changed(twin_window_t* _this) const {
-        twin_settings const& st = _this->settings;
+      bool is_metric_changed(twin_window_t const& win) const {
+        twin_settings const& st = win.settings;
         if (m_xframe != st.m_xframe) return true;
         if (m_yframe != st.m_yframe) return true;
         if (m_col != st.m_col) return true;
@@ -549,8 +549,8 @@ namespace twin {
         if (m_ypixel != st.m_ypixel) return true;
         return false;
       }
-      void store_metric(twin_window_t* _this) {
-        twin_settings const& st = _this->settings;
+      void store_metric(twin_window_t const& win) {
+        twin_settings const& st = win.settings;
         m_xframe = st.m_xframe;
         m_yframe = st.m_yframe;
         m_col = st.m_col;
@@ -567,8 +567,8 @@ namespace twin {
       };
       std::vector<line_trace_t> m_lines;
     public:
-      bool is_content_changed(twin_window_t* _this) const {
-        board_t const& b = _this->sess.term().board();
+      bool is_content_changed([[maybe_unused]] twin_window_t const& win, terminal_application const& app) const {
+        board_t const& b = app.board();
         std::size_t const height = b.m_height;
         if (height != m_lines.size()) return true;
         for (std::size_t iline = 0; iline < height; iline++) {
@@ -578,8 +578,8 @@ namespace twin {
         }
         return false;
       }
-      void store_content(twin_window_t* _this) {
-        board_t const& b = _this->sess.term().board();
+      void store_content([[maybe_unused]] twin_window_t const& win, terminal_application const& app) {
+        board_t const& b = app.board();
         m_lines.resize(b.m_lines.size());
         for (std::size_t i = 0; i < m_lines.size(); i++) {
           m_lines[i].id = b.m_lines[i].id();
@@ -596,12 +596,12 @@ namespace twin {
           if (line.has_blinking) return true;
         return false;
       }
-      bool is_blinking_changed(twin_window_t* _this) const {
+      bool is_blinking_changed(twin_window_t const& win) const {
         if (!this->has_blinking_cells()) return false;
-        return this->m_blinking_count != _this->m_blinking_count;
+        return this->m_blinking_count != win.m_blinking_count;
       }
-      void store_blinking_state(twin_window_t* _this) {
-        this->m_blinking_count = _this->m_blinking_count;
+      void store_blinking_state(twin_window_t const& win) {
+        this->m_blinking_count = win.m_blinking_count;
       }
 
     private:
@@ -616,23 +616,23 @@ namespace twin {
     public:
       curpos_t cur_x() const { return m_cur_x; }
       curpos_t cur_y() const { return m_cur_y; }
-      bool is_cursor_changed(twin_window_t* _this) const {
-        if (m_cur_visible != _this->is_cursor_visible()) return true;
-        term_t const& term = _this->sess.term();
-        board_t const& b = term.board();
+      bool is_cursor_changed(twin_window_t const& win, terminal_application const& app) const {
+        if (m_cur_visible != win.is_cursor_visible(app)) return true;
+        board_t const& b = app.board();
+        tstate_t const& s = app.state();
         if (m_cur_x != b.cur.x() || m_cur_y != b.cur.y() || m_cur_xenl != b.cur.xenl()) return true;
-        if (m_cur_shape != term.state().get_cursor_shape()) return true;
-        if (m_cur_blinking != term.state().is_cursor_blinking()) return true;
+        if (m_cur_shape != s.get_cursor_shape()) return true;
+        if (m_cur_blinking != s.is_cursor_blinking()) return true;
         return false;
       }
-      void store_cursor(twin_window_t* _this) {
-        m_cur_visible = _this->is_cursor_visible();
-        term_t const& term = _this->sess.term();
-        board_t const& b = term.board();
+      void store_cursor(twin_window_t const& win, terminal_application const& app) {
+        m_cur_visible = win.is_cursor_visible(app);
+        board_t const& b = app.board();
+        tstate_t const& s = app.state();
         m_cur_x = b.cur.x();
         m_cur_y = b.cur.y();
         m_cur_xenl = b.cur.xenl();
-        m_cur_shape = term.state().m_cursor_shape;
+        m_cur_shape = s.m_cursor_shape;
       }
     };
 
@@ -676,14 +676,14 @@ namespace twin {
       m_cursor_timer_count++;
       render_window();
     }
-    bool is_cursor_visible() const {
+    bool is_cursor_visible(terminal_application const& app) const {
       if (m_ime_composition_active &&
         settings.m_caret_hide_on_ime) return false;
-      return sess.state().is_cursor_visible();
+      return app.state().is_cursor_visible();
     }
-    void draw_cursor(HDC hdc) {
+    void draw_cursor(HDC hdc, terminal_application const& app) {
       using namespace contra::ansi;
-      term_t const& term = sess.term();
+      term_t const& term = app.term();
       board_t const& b = term.board();
       curpos_t const x = b.cur.x(), y = b.cur.y();
       bool const xenl = b.cur.xenl();
@@ -865,14 +865,14 @@ namespace twin {
       }
     };
 
-    void draw_background(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
+    void draw_background(HDC hdc, terminal_application const& app, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
       coord_t const xorigin = settings.m_xframe;
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      board_t const& b = sess.board();
-      tstate_t const& s = sess.state();
+      board_t const& b = app.board();
+      tstate_t const& s = app.state();
       color_resolver_t _color(s);
 
       {
@@ -973,14 +973,14 @@ namespace twin {
       }
     };
 
-    void draw_characters(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
+    void draw_characters(HDC hdc, terminal_application const& app, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
       coord_t const xorigin = settings.m_xframe;
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      board_t const& b = sess.board();
-      tstate_t const& s = sess.state();
+      board_t const& b = app.board();
+      tstate_t const& s = app.state();
 
       constexpr std::uint32_t flag_processed = character_t::flag_private1;
 
@@ -1181,14 +1181,14 @@ namespace twin {
       }
     };
 
-    void draw_decoration(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
+    void draw_decoration(HDC hdc, terminal_application const& app, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
       coord_t const xorigin = settings.m_xframe;
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      board_t const& b = sess.board();
-      tstate_t const& s = sess.state();
+      board_t const& b = app.board();
+      tstate_t const& s = app.state();
       color_resolver_t _color(s);
 
       coord_t x = xorigin, y = yorigin;
@@ -1406,13 +1406,13 @@ namespace twin {
       }
     }
 
-    void draw_characters_mono(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>> const& content) {
+    void draw_characters_mono(HDC hdc, terminal_application const& app, std::vector<std::vector<contra::ansi::cell_t>> const& content) {
       using namespace contra::ansi;
       coord_t const xorigin = settings.m_xframe;
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      board_t const& b = sess.board();
+      board_t const& b = app.board();
 
       std::vector<cell_t> cells;
       std::vector<TCHAR> characters;
@@ -1450,17 +1450,17 @@ namespace twin {
     //   hdc0 ... 背景+内容+カーソル
     //   hdc1 ... 背景+内容
     //   hdc2 ... 背景 (未実装)
-    void paint_terminal_content(HDC hdc0, bool full_update) {
-      bool const content_changed = m_tracer.is_content_changed(this);
-      bool const cursor_changed = m_tracer.is_cursor_changed(this);
+    void paint_terminal_content(HDC hdc0, terminal_application const& app, bool full_update) {
+      bool const content_changed = m_tracer.is_content_changed(*this, app);
+      bool const cursor_changed = m_tracer.is_cursor_changed(*this, app);
 
-      if (m_tracer.is_metric_changed(this)) full_update = true;
+      if (m_tracer.is_metric_changed(*this)) full_update = true;
       HDC const hdc1 = m_background.hdc(hWnd, hdc0, 1);
       bool content_redraw = full_update || content_changed;
-      if (m_tracer.is_blinking_changed(this)) content_redraw = true;
+      if (m_tracer.is_blinking_changed(*this)) content_redraw = true;
       if (content_redraw) {
         std::vector<std::vector<contra::ansi::cell_t>> content;
-        auto const& b = sess.board();
+        auto const& b = app.board();
         content.resize(b.m_height);
         for (contra::ansi::curpos_t y = 0; y < b.m_height; y++) {
           auto const& line = b.m_lines[y];
@@ -1468,18 +1468,18 @@ namespace twin {
         }
 
         ::SetBkMode(hdc1, TRANSPARENT);
-        //this->draw_characters_mono(hdc1, content);
-        this->draw_background(hdc1, content);
-        this->draw_characters(hdc1, content);
-        this->draw_decoration(hdc1, content);
+        //this->draw_characters_mono(hdc1, app, content);
+        this->draw_background(hdc1, app, content);
+        this->draw_characters(hdc1, app, content);
+        this->draw_decoration(hdc1, app, content);
 
         // ToDo: 更新のあった部分だけ転送する?
         ::BitBlt(hdc0, 0, 0, m_background.width(), m_background.height(), hdc1, 0, 0, SRCCOPY);
       }
 
-      tstate_t const& s = sess.state();
+      tstate_t const& s = app.state();
       bool const cursor_blinking = s.is_cursor_blinking();
-      bool const cursor_visible = this->is_cursor_visible();
+      bool const cursor_visible = this->is_cursor_visible(app);
       if (!cursor_visible || !cursor_blinking)
         this->unset_cursor_timer();
       else if (content_changed || cursor_changed)
@@ -1492,10 +1492,10 @@ namespace twin {
         ::BitBlt(hdc0, old_x1, old_y1, settings.m_xpixel, settings.m_ypixel, hdc1, old_x1, old_y1, SRCCOPY);
       }
       if (cursor_visible && (!cursor_blinking || !(m_cursor_timer_count & 1)))
-        this->draw_cursor(hdc0);
+        this->draw_cursor(hdc0, app);
 
       // ToDo: 二重チェックになっている気がする。もっと効率的な実装?
-      m_tracer.store(this);
+      m_tracer.store(*this, app);
     }
 
     void render_window() {
@@ -1504,7 +1504,7 @@ namespace twin {
       {
         bool resized = false;
         HDC const hdc0 = m_background.hdc(hWnd, hdc, 0, &resized);
-        paint_terminal_content(hdc0, resized);
+        paint_terminal_content(hdc0, manager.app(), resized);
         BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc0, 0, 0, SRCCOPY);
       }
       ReleaseDC(hWnd, hdc);
@@ -1516,7 +1516,7 @@ namespace twin {
       HDC const hdc0 = m_background.hdc(hWnd, hdc, 0, &resized);
       if (resized) {
         // 全体を再描画して全体を転送
-        paint_terminal_content(hdc0, resized);
+        paint_terminal_content(hdc0, manager.app(), resized);
         ::SelectClipRgn(hdc, NULL);
         BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc0, 0, 0, SRCCOPY);
       } else {
@@ -1535,7 +1535,7 @@ namespace twin {
 
     void process_input(std::uint32_t key) {
       //contra::term::print_key(key, stderr);
-      sess.term().input_key(key);
+      manager.input_key(key);
     }
 
     std::uint32_t get_modifiers() {
@@ -1661,7 +1661,7 @@ namespace twin {
     void process_mouse(key_t key, std::uint32_t modifiers, WORD x, WORD y) {
       curpos_t const x1 = (x - settings.m_xframe) / settings.m_xpixel;
       curpos_t const y1 = (y - settings.m_yframe) / settings.m_ypixel;
-      sess.term().input_mouse(key | (modifiers & _modifier_mask), x, y, x1, y1);
+      manager.input_mouse(key | (modifiers & _modifier_mask), x, y, x1, y1);
     }
 
   private:
@@ -1675,7 +1675,7 @@ namespace twin {
       if (!is_session_ready() || !m_ime_composition_active) return;
       util::raii hIMC(::ImmGetContext(hWnd), [this] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
 
-      font_t const current_font = font_resolver_t().resolve_font(sess.board().cur.attribute) & ~font_rotation_mask;
+      font_t const current_font = font_resolver_t().resolve_font(manager.app().board().cur.attribute) & ~font_rotation_mask;
       auto const [dx, dy, dxW] = fstore.get_displacement(current_font);
       contra_unused(dx);
       contra_unused(dxW);
@@ -1686,7 +1686,7 @@ namespace twin {
 
       RECT rcClient;
       if (::GetClientRect(hWnd, &rcClient)) {
-        auto const& b = sess.term().board();
+        auto const& b = manager.app().board();
         COMPOSITIONFORM form;
         coord_t const x0 = rcClient.left + settings.m_xframe + settings.m_xpixel * b.cur.x();
         coord_t const y0 = rcClient.top + settings.m_yframe + settings.m_ypixel * b.cur.y();
@@ -1801,7 +1801,7 @@ namespace twin {
         this->end_ime_composition();
         goto defproc;
       case WM_SETFOCUS:
-        if (sess.is_active())
+        if (is_session_ready())
           this->process_input(key_focus);
         goto defproc;
       case WM_KILLFOCUS:
@@ -1836,28 +1836,25 @@ namespace twin {
       buff << "exec: " << msg << " (errno=" << errno1 << ")";
       ::MessageBoxA(NULL, buff.str().c_str(), "Contra/Cygwin - exec failed", MB_OK);
     }
-    void setup_session_parameters() {
-      sess.init_size(settings.m_col, settings.m_row, settings.m_xpixel, settings.m_ypixel);
-      sess.init_read_buffer_size = 64 * 1024;
-      sess.init_exec_error_handler = &exec_error_handler;
+    bool setup_session() {
+      auto sess = std::make_shared<terminal_session>();
+      sess->init_size(settings.m_col, settings.m_row, settings.m_xpixel, settings.m_ypixel);
+      sess->init_read_buffer_size = 64 * 1024;
+      sess->init_exec_error_handler = &exec_error_handler;
 
       // 環境変数
       struct passwd* pw = ::getpwuid(::getuid());
       if (pw && pw->pw_dir)
-        sess.init_environment_variable("HOME", pw->pw_dir);
+        sess->init_environment_variable("HOME", pw->pw_dir);
       if (settings.m_env_term)
-        sess.init_environment_variable("TERM", settings.m_env_term);
+        sess->init_environment_variable("TERM", settings.m_env_term);
       std::string path = "/usr/local/bin:/usr/bin:";
       path += std::getenv("PATH");
-      sess.init_environment_variable("PATH", path.c_str());
-    }
-  public:
-    int m_exit_code = 0;
-    int do_loop() {
-      this->setup_session_parameters();
-      if (!sess.initialize()) return 2;
+      sess->init_environment_variable("PATH", path.c_str());
 
-      contra::ansi::tstate_t& s = sess.state();
+      if (!sess->initialize()) return false;
+
+      contra::ansi::tstate_t& s = sess->state();
       s.m_default_fg_space = contra::dict::attribute_t::color_space_rgb;
       s.m_default_bg_space = contra::dict::attribute_t::color_space_rgb;
       s.m_default_fg_color = contra::dict::rgb(0x00, 0x00, 0x00);
@@ -1865,16 +1862,17 @@ namespace twin {
       // s.m_default_fg_color = contra::dict::rgb(0xD0, 0xD0, 0xD0);//@color
       // s.m_default_bg_color = contra::dict::rgb(0x00, 0x00, 0x00);
 
+      manager.add_app(std::move(sess));
+      return true;
+    }
+  public:
+    int m_exit_code = 0;
+    int do_loop() {
+      if (!this->setup_session()) return 2;
+
       MSG msg;
       while (hWnd) {
-        bool processed = false;
-        clock_t const time0 = clock();
-        while (sess.process()) {
-          processed = true;
-          clock_t const time1 = clock();
-          clock_t const msec = (time1 - time0) * 1000 / CLOCKS_PER_SEC;
-          if (msec > 20) break;
-        }
+        bool processed = manager.do_events();
         if (processed) {
           render_window();
           if (m_ime_composition_active)
@@ -1882,6 +1880,7 @@ namespace twin {
         }
 
         while (::PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE)) {
+          processed = true;
           if (!GetMessage(&msg, 0, 0, 0)) {
             m_exit_code = msg.wParam;
             goto exit;
@@ -1892,12 +1891,12 @@ namespace twin {
         }
 
         // if (contra::read_from_fd(STDIN_FILENO, &devIn, buff, sizeof(buff))) continue;
-        if (!sess.is_alive()) break;
+        if (!manager.is_alive()) break;
         if (!processed)
           contra::term::msleep(10);
       }
     exit:
-      sess.terminate();
+      manager.terminate();
       return 0;
     }
   };

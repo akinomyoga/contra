@@ -64,7 +64,7 @@ namespace term {
     }
   }
 
-  bool pty_session::is_alive() {
+  bool pty_connection::is_alive() {
     if (!m_active) return false;
 
     int status;
@@ -80,7 +80,7 @@ namespace term {
       return m_active = false;
   }
 
-  bool pty_session::start(const char* shell, winsize const* ws, struct termios* termios) {
+  bool pty_connection::start(const char* shell, winsize const* ws, struct termios* termios) {
     if (m_active) return true;
 
     // restrict in the range from 256 bytes to 64 kbytes
@@ -133,7 +133,7 @@ namespace term {
     }
   }
 
-  void pty_session::terminate() {
+  void pty_connection::terminate() {
     if (m_active) {
       m_active = false;
       ::kill(slave_pid, SIGTERM);

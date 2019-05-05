@@ -1974,6 +1974,7 @@ namespace {
       break;
     case mode_altscreen_cur:
       if (get_mode(mode_altscr) != value) {
+        if (value) do_ed(*m_term, 2);
         set_mode(mode_altscreen, value);
         set_mode(mode_decsc, value);
       }
