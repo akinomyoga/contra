@@ -19,6 +19,9 @@ function test-sco {
   printf '\e[%d eEnglish 日本語 +-*/\e[ e\n' {0..7}
   printf '\eL'
   printf '\e[;s'
+  echo
+  printf '\e[4m'
+
   printf '\e[30;s\e[5;30H'
 
   ble/util/sprintf line '\e[%dm\e[%%d eEnglish 日本語 +-*/\e[ e\n' 6703 6704
@@ -29,6 +32,6 @@ function test-sco {
 }
 
 test-sco
-ble/util/sleep 5000
+ble/util/msleep 5000
 
 printf '\e[?1049l'

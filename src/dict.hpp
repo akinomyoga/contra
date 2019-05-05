@@ -97,8 +97,8 @@ namespace dict {
       is_invisible_set        = (aflags_t) 1 << 27, // SGR 8
       is_strike_set           = (aflags_t) 1 << 28, // SGR 9
 
-      attribute_reserved_bit1 = (aflags_t) 1 << 29,
-      attribute_reserved_bit2 = (aflags_t) 1 << 30,
+      aflags_reserved_bit1    = (aflags_t) 1 << 29,
+      aflags_reserved_bit2    = (aflags_t) 1 << 30,
 
       // only valid for attribute_t
       has_extended_attribute  = (aflags_t) 1 << 31,
@@ -182,6 +182,11 @@ namespace dict {
       // daq_zero_fill         = (xflags_t) 8  << daq_shift,
       // daq_space_fill        = (xflags_t) 9  << daq_shift,
       // daq_tabstop           = (xflags_t) 10 << daq_shift,
+
+
+      xflags_reserverd_bit1 = (xflags_t) 1 << 29,
+      xflags_reserverd_bit2 = (xflags_t) 1 << 30,
+      xflags_reserverd_bit3 = (xflags_t) 1 << 31,
 
       qualifier_mask = decsca_protected | spa_protected | ssa_selected | daq_guarded | daq_protected,
 

@@ -161,6 +161,7 @@ namespace term {
         auto const msec = std::chrono::duration_cast<std::chrono::milliseconds>(time1 - time0);
         if (msec.count() > 20) break;
       }
+      if (processed) m_dirty = true;
       return processed;
     }
 
@@ -184,8 +185,42 @@ namespace term {
     void input_key(key_t key) {
       app().input_key(key);
     }
-    void input_mouse(key_t key, coord_t px, coord_t py, curpos_t x, curpos_t y) {
-      app().input_mouse(key, px, py, x, y);
+
+    int m_drag_type = 0;
+    int m_drag_state = 0;
+    curpos_t m_drag_start_x = 0;
+    curpos_t m_drag_start_y = 0;
+    curpos_t m_drag_end_x = 0;
+    curpos_t m_drag_end_y = 0;
+    bool m_dirty = false;
+    void input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t x, curpos_t y) {
+      using namespace contra::ansi;
+      switch (key & mask_keycode) {
+      case key_mouse1_down:
+        m_drag_type = 0;
+        m_drag_state = 0;
+        m_drag_start_x = x;
+        m_drag_start_y = y;
+        m_dirty = true;
+        break;
+      case key_mouse1_drag:
+        m_drag_type = 1 | (key & _modifier_mask);
+        m_drag_state = 1;
+        m_drag_end_x = x;
+        m_drag_end_y = y;
+        m_dirty = true;
+        break;
+      case key_mouse1_up:
+        if (m_drag_state == 1) {
+          m_drag_state = 2;
+          m_drag_type = 1 | (key & _modifier_mask);
+          m_drag_end_x = x;
+          m_drag_end_y = y;
+          m_dirty = true;
+        }
+        break;
+      }
+      //app().input_mouse(key, px, py, x, y);
     }
     void reset_size(std::size_t width, std::size_t height) {
       app().reset_size(width, height);

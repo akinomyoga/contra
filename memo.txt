@@ -1754,6 +1754,15 @@
 
   (1) done: #D0125 先ずは board_t を term_t のメンバに昇格する。
   (2) done: #D0128 terminal_manager クラスをもう準備してしまおうか。
+  (3) さて。マウス操作は terminal_manager の上で実装すれば良い。
+
+    先ず選択操作に関して。
+    選択範囲はどの様に表現されるだろうか。
+    これは terminal_manager の提供する始点と終点を用いて
+    twin_window_t 側で描画する事にすれば良い。
+    カーソルを描画する前に描画する。
+
+    描画はともかくとして選択の開始点及び終点を記録する様にする。
 
 * twin: terminal_manager 導入 [#D0128]
 
