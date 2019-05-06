@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include "term_target.h"
-#include <mwg/defs.h>
+#include "defs.hpp"
 
 inline void SequenceArgument::clear(){
   this->type=0;
@@ -12,7 +12,7 @@ inline void SequenceArgument::clear(){
   this->arg=0;
   args.clear();
 }
-inline bool SequenceArgument::csi_push(mwg::byte c){
+inline bool SequenceArgument::csi_push(contra1::byte c){
   if(' '<=c&&c<'@'){
     if('0'<=c&&c<='9'){
       this->arg=this->arg*10+(c-'0');
@@ -38,7 +38,7 @@ inline bool SequenceArgument::csi_push(mwg::byte c){
     return true;
   }
 }
-inline bool SequenceArgument::apc_push(mwg::byte c){
+inline bool SequenceArgument::apc_push(contra1::byte c){
   if(this->mode==ESC){
     if(c=='\\')
       return true;
@@ -56,7 +56,7 @@ inline bool SequenceArgument::apc_push(mwg::byte c){
     this->text+=(char)c;
   return false;
 }
-inline bool SequenceArgument::osc_push(mwg::byte c){
+inline bool SequenceArgument::osc_push(contra1::byte c){
   if(this->mode==0){
     if('0'<=c&&c<='9'){
       this->type=this->type*10+(c-'0');
@@ -64,7 +64,7 @@ inline bool SequenceArgument::osc_push(mwg::byte c){
     }
 
     this->mode=1;
-    
+
     if(c==';')
       return false;
   }
@@ -84,7 +84,7 @@ inline bool SequenceArgument::osc_push(mwg::byte c){
     this->mode=ESC;
   else
     this->text+=(char)c;
-  
+
   return false;
 }
 
@@ -116,11 +116,11 @@ private:
   };
 
 public:
-  void consume(const mwg::byte* begin,const mwg::byte* end){
+  void consume(const contra1::byte* begin,const contra1::byte* end){
     int mode=this->mode;
 
-    for(const mwg::byte* p=begin;p<end;p++){
-      mwg::byte c=*p;
+    for(const contra1::byte* p=begin;p<end;p++){
+      contra1::byte c=*p;
       switch(mode){
       case Normal:
         if((c&0x7F)>=0x20){
@@ -237,8 +237,8 @@ public:
     this->mode=mode;
   }
 
-private:  
-  void ProcessSingleEscape(mwg::byte c){
+private:
+  void ProcessSingleEscape(contra1::byte c){
     // this->target->single_escape(c);
   }
   bool ProcessCSISequence(){
@@ -285,7 +285,7 @@ public:
   virtual bool process_function(ControlCodes func,SequenceArgument const& arg){
     std::printf("[escseq: %d]",(int)func);
   }
-  virtual void putc(mwg::byte data){
+  virtual void putc(contra1::byte data){
     std::putchar((char)data);
   }
   virtual void flush(){
@@ -296,7 +296,7 @@ public:
 int main(){
   DebugTarget t;
   InputDecoder reader(&t);
-  const mwg::byte* text=(const mwg::byte*)"\33[1;31mhello world\33[m\n";
+  const contra1::byte* text=(const contra1::byte*)"\33[1;31mhello world\33[m\n";
   reader.consume(text,text+std::strlen((const char*)text));
   return 0;
 }

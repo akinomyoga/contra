@@ -1,42 +1,41 @@
-// -*- mode:C++ -*-
-#pragma once
-#ifndef CONTRA_CATTR_H
-#define CONTRA_CATTR_H
-#include <mwg/defs.h>
+// -*- mode: c++ -*-
+#ifndef contra_cattr_h
+#define contra_cattr_h
+#include "defs.hpp"
 
 struct char_attr{
   // 8
-  mwg::u4t bold      :1;
-  mwg::u4t faint     :1;
-  mwg::u4t style     :2; // none, italic, fraktur
-  mwg::u4t underline :2; // none, single, double
-  mwg::u4t blink     :2; // none, slow, rapid
+  contra1::u4t bold      :1;
+  contra1::u4t faint     :1;
+  contra1::u4t style     :2; // none, italic, fraktur
+  contra1::u4t underline :2; // none, single, double
+  contra1::u4t blink     :2; // none, slow, rapid
 
   // 9
-  mwg::u4t nega      :1;
-  mwg::u4t invis     :1;
-  mwg::u4t strike    :1;
-  mwg::u4t font      :4; // default, font1-font9
-  mwg::u4t frame     :2; // none, frame, circle
+  contra1::u4t nega      :1;
+  contra1::u4t invis     :1;
+  contra1::u4t strike    :1;
+  contra1::u4t font      :4; // default, font1-font9
+  contra1::u4t frame     :2; // none, frame, circle
 
   // 8
-  mwg::u4t overline  :1;
-  mwg::u4t cjk_rline :3; // none, single under, double under, single over, double over
-  mwg::u4t cjk_lline :3; // none, single over, double over, single under, double under
-  mwg::u4t cjk_stress:1;
+  contra1::u4t overline  :1;
+  contra1::u4t cjk_rline :3; // none, single under, double under, single over, double over
+  contra1::u4t cjk_lline :3; // none, single over, double over, single under, double under
+  contra1::u4t cjk_stress:1;
 };
 
 struct char_color{
-  mwg::byte r;
-  mwg::byte g;
-  mwg::byte b;
-  mwg::byte type; // 0: default, 1: 16 color, 2: 256 color, 3: rgb color
+  contra1::byte r;
+  contra1::byte g;
+  contra1::byte b;
+  contra1::byte type; // 0: default, 1: 16 color, 2: 256 color, 3: rgb color
 };
 
 struct char_value{
-  mwg::u4t val;
-  mwg::u1t width;
-  mwg::u1t acs;
+  contra1::u4t val;
+  contra1::u1t width;
+  contra1::u1t acs;
 };
 
 enum char_attr_values{

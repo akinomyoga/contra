@@ -1,7 +1,9 @@
 #include <cstdlib>
+#include <cassert>
 #include <unistd.h>
-#include <mwg/except.h>
+//#include <mwg/except.h>
 #include "term_target.h"
+#include "defs.hpp"
 
 ITarget* CreateNcursesInstance(int fd,const char* TERM=nullptr);
 
@@ -10,11 +12,11 @@ class NcursesOutput:public ITarget{
 public:
   NcursesOutput(int fd,const char* TERM){
     this->fd=fd;
-    mwg_assert(TERM!=nullptr&&::isatty(fd));
+    assert(TERM!=nullptr&&::isatty(fd));
   }
 private:
   bool process_SGR(SequenceArgument const& arg){
-    if(args.size()==0){
+    if(arg.size()==0){
       this->putc('\33');
       this->putc('[');
       this->putc('m');
@@ -27,9 +29,9 @@ public:
     TTC_SGR:
       return process_SGR(arg);
     }
-    break;
+    return false;
   }
-  virtual void putc(mwg::byte data){
+  virtual void putc(contra1::byte data){
     //■TODO キャッシュ
     ::write(fd,&data,1);
   }

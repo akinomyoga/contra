@@ -4,7 +4,7 @@
 #define CONTRA_TERM_TARGET_H
 #include <vector>
 #include <string>
-#include <mwg/defs.h>
+#include "defs.hpp"
 
 class InputDecoder;
 
@@ -19,17 +19,19 @@ public:
     this->clear();
   }
 
+  std::size_t size() const { return args.size(); }
+
 private:
   friend class InputDecoder;
   bool process_meta_characters_flag;
 
   void clear();
   /// \returns whether the sequence is terminated or not.
-  bool csi_push(mwg::byte c);
+  bool csi_push(contra1::byte c);
   /// \returns whether the sequence is terminated or not.
-  bool apc_push(mwg::byte c);
+  bool apc_push(contra1::byte c);
   /// \returns whether the sequence is terminated or not.
-  bool osc_push(mwg::byte c);
+  bool osc_push(contra1::byte c);
 };
 
 enum ControlCodes{
@@ -73,7 +75,7 @@ enum ControlCodes{
   // MC,DECMC,
 
   // DSR,DECDSR,
-  
+
   // DECSTR,DECSCL,
 
   // DECSTBM,
@@ -82,18 +84,18 @@ enum ControlCodes{
   // ANSI_SYS_SaveCursor,
   // DECSLPP,
   // DECEFR,DECELR,DECSLE,
-  
+
   // DECREQTPARM,
   // DECSACE,
   // DECFRA,
   // DECERA,DECSERA,
-  
+
 };
 
 class ITarget{
 public:
   virtual bool process_function(ControlCodes func,SequenceArgument const& arg)=0;
-  virtual void putc(mwg::byte data)=0;
+  virtual void putc(contra1::byte data)=0;
   virtual void flush()=0;
 };
 
