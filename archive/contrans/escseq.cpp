@@ -1,19 +1,54 @@
-#include <hash_map>
+#include <unordered_map>
+#include <string.h>
 
 #include "cls.h"
 #include "escseq.h"
 
+#ifdef use_mbstring
+# include <mbstring.h>
+# include <mbctype.h>
+#endif
 
 namespace mwg{
 namespace console{
 //******************************************************************************
 
+  byte* enc_mbsinc(byte* data) {
+#ifdef use_mbstring
+    return _mbsinc(data);
+#else
+    // UTF-8
+    if (*data < 0xC0) return data + 1;
+    if (*data < 0xE0) return data + 2;
+    if (*data < 0xF0) return data + 3;
+    if (*data < 0xF8) return data + 4;
+    if (*data < 0xFC) return data + 5;
+#endif
+  }
+
+  int enc_isleadbyte(int value) {
+#ifdef use_mbstring
+    return isleadbyte(value);
+#else
+    // UTF-8
+    return (0 <= value && value < 0x80) || (0xC2 <= value && value < 0xF8 && value != 0xE0 && value != 0xF0);
+#endif
+  }
+
+  int enc_stricmp(const char* s1, const char* s2) {
+#ifdef use_mbstring
+    return _stricmp(s1, s2);
+#else
+    return strcasecmp(s1, s2);
+#endif
+  }
+
 //==============================================================================
 //		Handlers
 //==============================================================================
 typedef bool (*handler_t)(int argc,int* argv);
-stdext::hash_map<byte,handler_t> handlers;
-typedef stdext::hash_map<byte,handler_t> handlers_t;
+std::unordered_map<byte,handler_t> handlers;
+typedef std::unordered_map<byte,handler_t> handlers_t;
 void init_handlers(){
   struct h{
     static bool exec_m(int argc,int* argv){

@@ -3,9 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <mbstring.h>
-#include <mbctype.h>
+#include <cstring>
 
 #include <vector>
 #include <string>
@@ -13,6 +11,10 @@
 namespace mwg{
 namespace console{
   typedef unsigned char byte;
+
+  byte* enc_mbsinc(byte* data);
+  int enc_isleadbyte(int value);
+  int enc_stricmp(const char* s1, const char* s2);
 
   template<typename F>
   void foreach_char(FILE* istr,const F& f){
@@ -44,7 +46,7 @@ namespace console{
           if(!next())break;
 
           // 単一文字
-          if(!isleadbyte(buff[0])){
+          if(!enc_isleadbyte(buff[0])){
             f(buff,p-buff);
             continue;
           }
@@ -53,7 +55,7 @@ namespace console{
           byte* mbnext;
           do{
             if(!next())break;
-            mbnext=_mbsinc(buff);
+            mbnext = enc_mbsinc(buff);
           }while(p<mbnext);
 
           f(buff,p-buff);
@@ -68,9 +70,9 @@ namespace console{
   template<typename F>
   void foreach_char(const char* str,const F& f){
     byte* p =reinterpret_cast<byte*>(const_cast<char*>(str));
-    byte* pM=p+strlen(str);
+    byte* pM = p + std::strlen(str);
     while(p<pM){
-      byte* np=_mbsinc(p);
+      byte* np = enc_mbsinc(p);
       f(p,np-p);
       p=np;
     }

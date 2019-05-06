@@ -37,10 +37,10 @@ public:
       if(argv[i][0]=='-'||argv[i][0]=='/'){
         // option
         char* a=&argv[i][1];
-        if(_stricmp(a,"?")==0||_stricmp(a,"help")==0){
+        if(enc_stricmp(a,"?")==0||enc_stricmp(a,"help")==0){
           print_help();
           return false;
-        }else if(_stricmp(a,"e`")==0){
+        }else if(enc_stricmp(a,"e`")==0){
           extesc=true;
         }else{
           // TODO:
