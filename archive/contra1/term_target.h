@@ -8,14 +8,14 @@
 
 class InputDecoder;
 
-struct SequenceArgument{
+struct SequenceArgument {
   int type;
   int mode;
   int arg;
   std::vector<int> args;
   std::string text;
 public:
-  SequenceArgument(){
+  SequenceArgument() {
     this->clear();
   }
 
@@ -34,19 +34,19 @@ private:
   bool osc_push(contra1::byte c);
 };
 
-enum ControlCodes{
-  BEL=0x07,
-  ESC=0x1b,
+enum ControlCodes {
+  BEL = 0x07,
+  ESC = 0x1b,
 
-  DCS=0x90,
-  SOS=0x98,
-  CSI=0x9b,
-  ST =0x9c,
-  OSC=0x9d,
-  PM =0x9e,
-  APC=0x9f,
+  DCS = 0x90,
+  SOS = 0x98,
+  CSI = 0x9b,
+  ST  = 0x9c,
+  OSC = 0x9d,
+  PM  = 0x9e,
+  APC = 0x9f,
 
-  TCC_NUL=0x100,
+  TCC_NUL = 0x100,
   // terminal control functions
   TCC_CUU, // CSI, cursor up
   TCC_CUD, // CSI, cursor down
@@ -92,11 +92,11 @@ enum ControlCodes{
 
 };
 
-class ITarget{
+class ITarget {
 public:
-  virtual bool process_function(ControlCodes func,SequenceArgument const& arg)=0;
-  virtual void putc(contra1::byte data)=0;
-  virtual void flush()=0;
+  virtual bool process_function(ControlCodes func,SequenceArgument const& arg) = 0;
+  virtual void putc(contra1::byte data) = 0;
+  virtual void flush() = 0;
 };
 
 #endif
