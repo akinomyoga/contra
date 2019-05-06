@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <hash_map>
+#include <unordered_map>
 
 #include "cls.h"
 
@@ -240,7 +240,7 @@ namespace con{
 		COORD curs;
 		DWORD attr;
 	};
-	typedef stdext::hash_map<int,conspos_t> posstore_t;
+	typedef std::unordered_map<int,conspos_t> posstore_t;
 	posstore_t posstore;
 
 	void store_pos(int id,HCON hCon){
