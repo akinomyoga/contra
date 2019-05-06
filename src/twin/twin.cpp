@@ -5,13 +5,6 @@
 #include <windowsx.h>
 #include <imm.h>
 
-#include <sys/ioctl.h>
-
-// for getuid, getpwuid
-#include <unistd.h>
-#include <sys/types.h>
-#include <pwd.h>
-
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -30,7 +23,7 @@
 #include "../enc.utf8.hpp"
 #include "../util.hpp"
 #include "../pty.hpp"
-#include "../session.hpp"
+#include "../manager.hpp"
 #include "win_messages.hpp"
 
 #define _tcslen wcslen
@@ -1847,31 +1840,15 @@ namespace twin {
       ::MessageBoxA(NULL, buff.str().c_str(), "Contra/Cygwin - exec failed", MB_OK);
     }
     bool setup_session() {
-      auto sess = std::make_shared<terminal_session>();
-      sess->init_size(settings.m_col, settings.m_row, settings.m_xpixel, settings.m_ypixel);
-      sess->init_read_buffer_size = 64 * 1024;
-      sess->init_exec_error_handler = &exec_error_handler;
-
-      // 環境変数
-      struct passwd* pw = ::getpwuid(::getuid());
-      if (pw) {
-        if (pw->pw_name)
-          sess->init_environment_variable("USER", pw->pw_name);
-        if (pw->pw_dir)
-          sess->init_environment_variable("HOME", pw->pw_dir);
-        if (pw->pw_shell)
-          sess->init_environment_variable("SHELL", pw->pw_shell);
-      }
-      char hostname[256];
-      if (::gethostname(hostname, sizeof hostname) == 0)
-        sess->init_environment_variable("HOSTNAME", hostname);
-      if (settings.m_env_term)
-        sess->init_environment_variable("TERM", settings.m_env_term);
-      std::string path = "/usr/local/bin:/usr/bin:";
-      path += std::getenv("PATH");
-      sess->init_environment_variable("PATH", path.c_str());
-
-      if (!sess->initialize()) return false;
+      terminal_session_parameters params;
+      params.col = settings.m_col;
+      params.row = settings.m_row;
+      params.xpixel = settings.m_xpixel;
+      params.ypixel = settings.m_ypixel;
+      params.exec_error_handler = &exec_error_handler;
+      params.env_term = settings.m_env_term;
+      std::unique_ptr<terminal_application> sess = contra::term::create_terminal_session(params);
+      if (!sess) return false;
 
       contra::ansi::tstate_t& s = sess->state();
       s.m_default_fg_space = contra::dict::attribute_t::color_space_rgb;
@@ -1880,7 +1857,6 @@ namespace twin {
       s.m_default_bg_color = contra::dict::rgb(0xFF, 0xFF, 0xFF);
       // s.m_default_fg_color = contra::dict::rgb(0xD0, 0xD0, 0xD0);//@color
       // s.m_default_bg_color = contra::dict::rgb(0x00, 0x00, 0x00);
-
       manager.add_app(std::move(sess));
       return true;
     }
@@ -1910,7 +1886,6 @@ namespace twin {
           DispatchMessage(&msg);
         }
 
-        // if (contra::read_from_fd(STDIN_FILENO, &devIn, buff, sizeof(buff))) continue;
         if (!manager.is_alive()) break;
         if (!processed)
           contra::term::msleep(10);

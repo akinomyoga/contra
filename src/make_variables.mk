@@ -26,8 +26,9 @@
 #   CXXFLAGS := -Wall -Wextra -I ../ext
 # endif
 
-CXXFLAGS := -Wall -Wextra -I ../ext
+CXXFLAGS := -Wall -Wextra
+CXXFLAGS += -g
+# CXXFLAGS += -O3 -s
 
-CXXFLAGS += -std=gnu++17
 default_CPPFLAGS = -MP -MD -MF $(@:.o=.dep)
 CPPFLAGS = $(default_CPPFLAGS)

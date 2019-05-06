@@ -1,14 +1,27 @@
 #ifdef __CYGWIN__
 # define _XOPEN_SOURCE 600
 #endif
-#include "pty.hpp"
+#include <stdio.h>
+#include <limits.h>
+#include <stdlib.h>
+
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
+#include <pwd.h> /* for getuid, getpwuid */
+
+#include <cstdint>
+#include <cstdio>
+#include <unordered_map>
+#include <vector>
+#include <string>
+
+#include "pty.hpp"
+#include "contradef.hpp"
+#include "manager.hpp"
 
 namespace contra {
 namespace term {
@@ -63,6 +76,53 @@ namespace term {
         msleep(m_write_interval);
     }
   }
+
+  class pty_connection: public fd_device {
+  private:
+    bool m_active = false;
+    int slave_pid = -1;
+
+    std::size_t m_read_buffer_size = 4096;
+    std::vector<char> m_read_buffer;
+
+    exec_error_handler_t m_exec_error_handler = NULL;
+    std::uintptr_t m_exec_error_param = 0;
+
+    std::unordered_map<std::string, std::string> m_env;
+  public:
+    pty_connection() {}
+    pty_connection(const char* shell, winsize const* ws = NULL, struct termios* termios = NULL) {
+      start(shell, ws, termios);
+    }
+
+    void set_read_buffer_size(std::size_t value) {
+      m_read_buffer_size = contra::clamp(value, 0x100, 0x10000);
+    }
+    void set_exec_error_handler(exec_error_handler_t handler, std::uintptr_t param) {
+      this->m_exec_error_handler = handler;
+      this->m_exec_error_param = param;
+    }
+    void set_environment_variable(const char* name, const char* value)  {
+      m_env[name] = value;
+    }
+    bool start(const char* shell, winsize const* ws = NULL, struct termios* termios = NULL);
+
+    std::size_t read(contra::idevice* dst) {
+      if (!m_active) return 0;
+      return read_from_fd(m_fd, dst, &m_read_buffer[0], m_read_buffer.size());
+    }
+
+    void terminate();
+
+    bool is_active() const { return m_active; }
+    bool is_alive();
+
+    virtual ~pty_connection() {}
+
+    void set_winsize(struct winsize const* ws) {
+      fd_set_winsize(m_fd, ws);
+    }
+  };
 
   bool pty_connection::is_alive() {
     if (!m_active) return false;
@@ -141,6 +201,109 @@ namespace term {
       m_active = false;
       ::kill(slave_pid, SIGTERM);
     }
+  }
+
+  // contra/ttty
+  class terminal_session: public terminal_application {
+    typedef terminal_application base;
+  public:
+    struct termios* init_termios = NULL;
+    std::size_t init_read_buffer_size = 4096;
+
+    exec_error_handler_t init_exec_error_handler = nullptr;
+    std::uintptr_t init_exec_error_param = 0;
+  public:
+    void init_environment_variable(const char* name, const char* value) {
+      m_pty.set_environment_variable(name, value);
+    }
+
+  private:
+    contra::term::pty_connection m_pty; // ユーザ入力書込先
+    contra::multicast_device m_dev;  // 受信データ書込先
+  public:
+    contra::idevice& input_device() { return m_pty; }
+    contra::multicast_device& output_device() { return m_dev; }
+
+  private:
+    std::unique_ptr<contra::term::fd_device> m_dev_tee;
+  public:
+    // これはテストの為に受信したデータをその儘画面に流すための設定。
+    void setup_fd_tee(int fd) {
+      if (m_dev_tee) return;
+      m_dev_tee = std::make_unique<contra::term::fd_device>(fd);
+      m_dev.push(m_dev_tee.get());
+    }
+
+  private:
+    std::unique_ptr<contra::sequence_printer> m_dev_seq;
+  public:
+    // これはテストの為に受信したシーケンスをファイルに出力する設定。
+    void setup_sequence_log(const char* fname) {
+      if (m_dev_seq) return;
+      m_dev_seq = std::make_unique<contra::sequence_printer>(fname);
+      m_dev.push(m_dev_seq.get());
+    }
+
+  public:
+    bool initialize() {
+      if (m_pty.is_active()) return true;
+
+      if (!base::initialize()) return false;
+
+      m_pty.set_read_buffer_size(init_read_buffer_size);
+      m_pty.set_exec_error_handler(init_exec_error_handler, init_exec_error_param);
+      if (!m_pty.start("/bin/bash", &base::winsize(), init_termios)) return false;
+
+      base::term().set_input_device(m_pty);
+      m_dev.push(&base::term());
+      return true;
+    }
+    virtual bool process() override { return m_pty.read(&m_dev); }
+    virtual bool is_active() const override { return m_pty.is_active(); }
+    virtual bool is_alive() override { return m_pty.is_alive(); }
+    virtual void terminate() override { return m_pty.terminate(); }
+
+  public:
+    virtual void reset_size(std::size_t width, std::size_t height) override {
+      base::reset_size(width, height);
+      m_pty.set_winsize(&base::winsize());
+    }
+  };
+
+  std::unique_ptr<terminal_application> create_terminal_session(terminal_session_parameters const& params) {
+    auto sess = std::make_unique<terminal_session>();
+    sess->init_size(params.col, params.row, params.xpixel, params.ypixel);
+    sess->init_read_buffer_size = 64 * 1024;
+    sess->init_exec_error_handler = params.exec_error_handler;
+    if (params.termios) sess->init_termios = params.termios;
+
+    // 環境変数
+    struct passwd* pw = ::getpwuid(::getuid());
+    if (pw) {
+      if (pw->pw_name)
+        sess->init_environment_variable("USER", pw->pw_name);
+      if (pw->pw_dir)
+        sess->init_environment_variable("HOME", pw->pw_dir);
+      if (pw->pw_shell)
+        sess->init_environment_variable("SHELL", pw->pw_shell);
+    }
+    char hostname[256];
+    if (::gethostname(hostname, sizeof hostname) == 0)
+      sess->init_environment_variable("HOSTNAME", hostname);
+    if (params.env_term)
+      sess->init_environment_variable("TERM", params.env_term);
+    std::string path = "/usr/local/bin:/usr/bin:/bin";
+    path += std::getenv("PATH");
+    sess->init_environment_variable("PATH", path.c_str());
+
+    if (!sess->initialize()) sess.reset();
+
+    if (params.dbg_fd_tee)
+      sess->setup_fd_tee(params.dbg_fd_tee);
+    if (params.dbg_sequence_logfile)
+      sess->setup_sequence_log(params.dbg_sequence_logfile);
+
+    return sess;
   }
 
 }

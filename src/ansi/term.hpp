@@ -582,7 +582,8 @@ namespace ansi {
     }
 
   public:
-    void set_input_target(contra::idevice& dev) { this->m_send_target = &dev; }
+    void set_input_device(contra::idevice& dev) { this->m_send_target = &dev; }
+    contra::idevice& input_device() const { return *this->m_send_target; }
 
   private:
     std::vector<byte> input_buffer;

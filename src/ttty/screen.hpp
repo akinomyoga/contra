@@ -11,7 +11,7 @@
 #include <fcntl.h>
 
 #include "../pty.hpp"
-#include "../session.hpp"
+#include "../manager.hpp"
 #include "../dict.hpp"
 #include "buffer.hpp"
 
@@ -25,20 +25,19 @@ namespace ttty {
     int old_nonblock;
 
     contra::dict::termcap_sgr_type sgrcap;
-
-    contra::term::terminal_session sess;
-
     std::unique_ptr<contra::ttty::tty_observer> renderer;
 
+  private:
+    contra::term::terminal_manager m_manager;
   public:
-    contra::term::terminal_session& session() { return sess; }
-    contra::term::terminal_session const& session() const { return sess; }
+    contra::term::terminal_manager& manager() { return m_manager; }
+    contra::term::terminal_manager const& manager() const { return m_manager; }
 
   public:
     ttty_screen(int fd_in, int fd_out): fd_in(fd_in), fd_out(fd_out) {}
 
   private:
-    void setup_terminal() {
+    void setup_tty() {
       tcgetattr(fd_in, &this->old_termios);
       struct termios termios = this->old_termios;
       termios.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
@@ -51,47 +50,44 @@ namespace ttty {
       tcsetattr(fd_in, TCSAFLUSH, &termios);
       this->old_nonblock = contra::term::fd_set_nonblock(fd_in, true);
     }
-    void reset_terminal() {
+
+    void reset_tty() {
       contra::term::fd_set_nonblock(fd_in, this->old_nonblock);
       tcsetattr(fd_in, TCSAFLUSH, &this->old_termios);
     }
 
   public:
-    bool initialize() {
-      setup_terminal();
+    bool initialize(contra::term::terminal_session_parameters const& params) {
+      setup_tty();
 
-      if (!sess.initialize()) return false;
+      std::unique_ptr<contra::term::terminal_application> sess = contra::term::create_terminal_session(params);
+      if (!sess) return false;
+      m_manager.add_app(std::move(sess));
 
       sgrcap.initialize();
-      renderer = std::make_unique<contra::ttty::tty_observer>(sess.term(), stdout, &sgrcap);
+      renderer = std::make_unique<contra::ttty::tty_observer>(sess->term(), stdout, &sgrcap);
       return true;
     }
 
     void do_loop(bool render_to_stdout = true) {
       char buff[4096];
       for (;;) {
-        bool processed = false;
-        clock_t time0 = clock();
-        while (sess.process()) {
-          processed = true;
-          clock_t const time1 = clock();
-          clock_t const msec = (time1 - time0) * 1000 / CLOCKS_PER_SEC;
-          if (msec > 20) break;
-        }
-        if (processed && render_to_stdout)
+        bool processed = m_manager.do_events();
+        if (m_manager.m_dirty && render_to_stdout)
           renderer->update();
 
-        if (contra::term::read_from_fd(fd_in, &sess.input_device(), buff, sizeof(buff))) continue;
-        if (!sess.is_alive()) break;
+        // ToDo: 本来はここはキー入力に変換してから m_manager に渡すべき。
+        if (contra::term::read_from_fd(fd_in, &m_manager.app().term().input_device(), buff, sizeof(buff))) continue;
+        if (!m_manager.is_alive()) break;
         if (!processed)
           contra::term::msleep(10);
       }
 
-      sess.terminate();
+      m_manager.terminate();
     }
 
     void finalize() {
-      this->reset_terminal();
+      this->reset_tty();
     }
   };
 

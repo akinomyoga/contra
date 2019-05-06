@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef contra_session_hpp
-#define contra_session_hpp
+#ifndef contra_manager_hpp
+#define contra_manager_hpp
 #include <cstdint>
 #include <cstdio>
 #include <sstream>
@@ -10,7 +10,8 @@
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
 #include "enc.utf8.hpp"
-#include "pty.hpp"
+
+#include <sys/ioctl.h> /* for struct winsize */
 
 namespace contra {
 namespace term {
@@ -76,54 +77,6 @@ namespace term {
       this->board().reset_size(width, height);
     }
 
-  };
-
-  // contra/ttty
-  class terminal_session: public terminal_application {
-    typedef terminal_application base;
-  public:
-    struct termios* init_termios = NULL;
-    std::size_t init_read_buffer_size = 4096;
-
-    pty_connection::exec_error_handler_t init_exec_error_handler = nullptr;
-    std::uintptr_t init_exec_error_param = 0;
-  public:
-    void init_environment_variable(const char* name, const char* value) {
-      m_pty.set_environment_variable(name, value);
-    }
-
-  private:
-    contra::term::pty_connection m_pty; // ユーザ入力書込先
-    contra::multicast_device m_dev;  // 受信データ書込先
-
-  public:
-    contra::idevice& input_device() { return m_pty; }
-    contra::multicast_device& output_device() { return m_dev; }
-
-  public:
-    bool initialize() {
-      if (m_pty.is_active()) return true;
-
-      if (!base::initialize()) return false;
-
-      m_pty.set_read_buffer_size(init_read_buffer_size);
-      m_pty.set_exec_error_handler(init_exec_error_handler, init_exec_error_param);
-      if (!m_pty.start("/bin/bash", &base::winsize(), init_termios)) return false;
-
-      base::term().set_input_target(m_pty);
-      m_dev.push(&base::term());
-      return true;
-    }
-    virtual bool process() override { return m_pty.read(&m_dev); }
-    virtual bool is_active() const override { return m_pty.is_active(); }
-    virtual bool is_alive() override { return m_pty.is_alive(); }
-    virtual void terminate() override { return m_pty.terminate(); }
-
-  public:
-    virtual void reset_size(std::size_t width, std::size_t height) override {
-      base::reset_size(width, height);
-      m_pty.set_winsize(&base::winsize());
-    }
   };
 
   class terminal_manager {
