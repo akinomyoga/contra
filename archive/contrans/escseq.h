@@ -1,5 +1,5 @@
-#ifndef ESCSEQ_H
-#define ESCSEQ_H
+#ifndef contrans_escseq_h
+#define contrans_escseq_h
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,8 +8,8 @@
 #include <vector>
 #include <string>
 
-namespace mwg{
-namespace console{
+namespace mwg {
+namespace console {
   typedef unsigned char byte;
 
   byte* enc_mbsinc(byte* data);
@@ -17,7 +17,7 @@ namespace console{
   int enc_stricmp(const char* s1, const char* s2);
 
   template<typename F>
-  void foreach_char(FILE* istr,const F& f){
+  void foreach_char(FILE* istr, const F& f) {
     class E{
       const F& f;
       FILE* istr;
@@ -25,56 +25,56 @@ namespace console{
       byte *const bufM;
       byte* p;
     private:
-      void clear(){
-        p=buff;
+      void clear() {
+        p = buff;
       }
-      bool next(){
-        int c=fgetc(istr);
-        if(c==EOF)return false;
-        *p++=c;
+      bool next() {
+        int c = fgetc(istr);
+        if (c == EOF) return false;
+        *p++ = c;
         return true;
       }
     public:
-      E(FILE* istr,const F& f)
-        :f(f),istr(istr),
+      E(FILE* istr, const F& f):
+        f(f), istr(istr),
         buff(new byte[MB_CUR_MAX]),
-        bufM(buff+MB_CUR_MAX)
+        bufM(buff + MB_CUR_MAX)
       {
-        while(true){
+        while(true) {
           clear();
 
-          if(!next())break;
+          if (!next()) break;
 
           // 単一文字
-          if(!enc_isleadbyte(buff[0])){
-            f(buff,p-buff);
+          if (!enc_isleadbyte(buff[0])) {
+            f(buff, p - buff);
             continue;
           }
 
           // マルチバイト文字
           byte* mbnext;
-          do{
-            if(!next())break;
+          do {
+            if (!next()) break;
             mbnext = enc_mbsinc(buff);
-          }while(p<mbnext);
+          } while (p < mbnext);
 
-          f(buff,p-buff);
+          f(buff, p - buff);
         }
       }
-      ~E(){
+      ~E() {
         delete[] buff;
       }
-    } e(istr,f);
+    } e(istr, f);
   }
 
   template<typename F>
-  void foreach_char(const char* str,const F& f){
-    byte* p =reinterpret_cast<byte*>(const_cast<char*>(str));
+  void foreach_char(const char* str,const F& f) {
+    byte* p = reinterpret_cast<byte*>(const_cast<char*>(str));
     byte* pM = p + std::strlen(str);
-    while(p<pM){
+    while (p < pM) {
       byte* np = enc_mbsinc(p);
-      f(p,np-p);
-      p=np;
+      f(p, np - p);
+      p = np;
     }
   }
 
@@ -83,7 +83,7 @@ namespace console{
   //==============================================================================
   //		Writer
   //==============================================================================
-  class Writer{
+  class Writer {
     FILE* ostr;
 
     std::string sequence;  // 現在のエスケープシーケンス
@@ -100,31 +100,30 @@ namespace console{
     static bool def_is_esc1(byte c);
 
   public:
-    void operator()(byte* s,int n) const;
+    void operator()(byte* s, int n) const;
   private:
-    void write(byte* s,int n);
-    void print(byte* s,int n) const;
+    void write(byte* s, int n);
+    void print(byte* s, int n) const;
   private:
-    bool add_arg(byte* s,int n);
+    bool add_arg(byte* s, int n);
     void trans_arg();
   private:
-    bool exec_seq(byte* s,int n);
-    void clear_seq(bool successed=true);
+    bool exec_seq(byte* s, int n);
+    void clear_seq(bool successed = true);
   };
 
-  void fprint(FILE* ostr,FILE* istr);
-  void fprint(FILE* ostr,const char* str);
+  void fprint(FILE* ostr, FILE* istr);
+  void fprint(FILE* ostr, const char* str);
 
   //==============================================================================
   //		Initializer
   //==============================================================================
-  class Init{
+  class Init {
   public:
     Init();
     ~Init();
   };
 }
 }
-
 
 #endif
