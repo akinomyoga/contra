@@ -93,12 +93,12 @@ void init_handlers(){
 		}
 	};
 
-	// ƒNƒŠƒA
+	// ã‚¯ãƒªã‚¢
 	handlers['J']=&h::exec_J;
 	handlers['K']=&h::exec_K;
 	handlers['k']=&h::exec_K;
 
-	// ƒJ[ƒ\ƒ‹ˆÚ“®
+	// ã‚«ãƒ¼ã‚½ãƒ«ç§»å‹•
 	handlers['A']=&h::exec_A;
 	handlers['B']=&h::exec_B;
 	handlers['C']=&h::exec_C;
@@ -108,7 +108,7 @@ void init_handlers(){
 	handlers['s']=&h::exec_s;
 	handlers['u']=&h::exec_u;
 
-	// ‘¼
+	// ä»–
 	handlers['m']=&h::exec_m;
 	handlers['p']=&h::exec_p;
 }
@@ -123,10 +123,10 @@ bool Writer::def_is_esc1(byte c){
 	return c=='\x1b';
 }
 //------------------------------------------------------------------------------
-// ƒƒCƒ“ƒ‹[ƒv
+// ãƒ¡ã‚¤ãƒ³ãƒ«ãƒ¼ãƒ—
 inline void Writer::write(byte* s,int n){
 	switch(mode){
-		// ESC Sequence ‚ÌŠJn
+		// ESC Sequence ã®é–‹å§‹
 		case 0:
 			if(n==1&&is_esc1(s[0])){
 				mode=1;
@@ -145,7 +145,7 @@ inline void Writer::write(byte* s,int n){
 				print(s,n);
 			}
 			break;
-		// ˆø”“Ç‚İæ‚èEÀs
+		// å¼•æ•°èª­ã¿å–ã‚Šãƒ»å®Ÿè¡Œ
 		case 2:{
 			if(add_arg(s,n))break;
 			mode=0;
@@ -158,7 +158,7 @@ inline void Writer::write(byte* s,int n){
 inline void Writer::print(byte* s,int n) const{
 	while(n--)fputc(*s++,ostr);
 }
-// ESC ˆø”
+// ESC å¼•æ•°
 inline bool Writer::add_arg(byte* s,int n){
 	if(n!=1)return false;
 
@@ -176,7 +176,7 @@ inline void Writer::trans_arg(){
 	args.push_back(i);
 	argbuff.clear();
 }
-// ESC SEQ Š®—¹
+// ESC SEQ å®Œäº†
 inline bool Writer::exec_seq(byte* s,int n){
 	bool suc=false;
 	if(n==1){
@@ -198,7 +198,7 @@ inline void Writer::clear_seq(bool successed){
 }
 //------------------------------------------------------------------------------
 void Writer::operator()(byte* s,int n) const{
-	const_cast<Writer*>(this)->write(s,n);		
+	const_cast<Writer*>(this)->write(s,n);
 }
 
 //==============================================================================

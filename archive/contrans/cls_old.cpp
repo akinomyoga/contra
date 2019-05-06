@@ -3,7 +3,7 @@
 //		cls.cpp
 //==============================================================================
 
-/* Standard error macro for reporting API errors */ 
+/* Standard error macro for reporting API errors */
 #define PERR(bSuccess, api) do{                         \
 	if(!(bSuccess))                                     \
 		printf("con: %s:Error %d from %s on line %d\n", \
@@ -12,35 +12,35 @@
 
 namespace con{
 	//==========================================================================
-	// ‰æ–Ê‚ÌÁ‹
+	// ç”»é¢ã®æ¶ˆå»
 	//==========================================================================
 	void cls(HCON hCon){
 		HANDLE hConsole=(HANDLE)hCon;
 
-		COORD coordScreen = { 0, 0 };    /* here's where we'll home the cursor */ 
+		COORD coordScreen = { 0, 0 };    /* here's where we'll home the cursor */
 		BOOL bSuccess;
 		DWORD cCharsWritten;
-		CONSOLE_SCREEN_BUFFER_INFO csbi; /* to get buffer info */ 
-		DWORD dwConSize;                 /* number of character cells in the current buffer */ 
+		CONSOLE_SCREEN_BUFFER_INFO csbi; /* to get buffer info */
+		DWORD dwConSize;                 /* number of character cells in the current buffer */
 
-		/* get the number of character cells in the current buffer */ 
+		/* get the number of character cells in the current buffer */
 		bSuccess = GetConsoleScreenBufferInfo( hConsole, &csbi );
 		PERR( bSuccess, "GetConsoleScreenBufferInfo" );
 		dwConSize = csbi.dwSize.X * csbi.dwSize.Y;
 
-		/* fill the entire screen with blanks */ 
+		/* fill the entire screen with blanks */
 		bSuccess = FillConsoleOutputCharacter(hConsole, (TCHAR)' ', dwConSize, coordScreen, &cCharsWritten );
 		PERR( bSuccess, "FillConsoleOutputCharacter" );
 
-		/* get the current text attribute */ 
+		/* get the current text attribute */
 		//bSuccess = GetConsoleScreenBufferInfo( hConsole, &csbi );
 		//PERR( bSuccess, "ConsoleScreenBufferInfo" );
 
-		/* now set the buffer's attributes accordingly */ 
+		/* now set the buffer's attributes accordingly */
 		bSuccess = FillConsoleOutputAttribute(hConsole,csbi.wAttributes,dwConSize, coordScreen, &cCharsWritten );
 		PERR( bSuccess, "FillConsoleOutputAttribute" );
 
-		/* put the cursor at (0, 0) */ 
+		/* put the cursor at (0, 0) */
 		bSuccess = SetConsoleCursorPosition( hConsole, coordScreen );
 		PERR( bSuccess, "SetConsoleCursorPosition" );
 		return;
@@ -58,7 +58,7 @@ namespace con{
 		CALL_STDERR( FillConsoleOutputCharacter, (hConsole,(TCHAR)' ',      len,coord0,&dummy) );
 		CALL_STDERR( FillConsoleOutputAttribute, (hConsole,csbi.wAttributes,len,coord0,&dummy) );
 
-		// TODO: ƒJ[ƒ\ƒ‹‚ÌˆÊ’u‚Í‚Ç‚¤‚·‚é‚Ì‚ªˆê”Ê“I‚È‚Ì‚©?
+		// TODO: ã‚«ãƒ¼ã‚½ãƒ«ã®ä½ç½®ã¯ã©ã†ã™ã‚‹ã®ãŒä¸€èˆ¬çš„ãªã®ã‹?
 	}
 
 	void cls_a(HCON hCon){
@@ -73,11 +73,11 @@ namespace con{
 		CALL_STDERR( FillConsoleOutputCharacter, (hConsole,(TCHAR)' ',      total-cursor,csbi.dwCursorPosition,&dummy) );
 		CALL_STDERR( FillConsoleOutputAttribute, (hConsole,csbi.wAttributes,total-cursor,csbi.dwCursorPosition,&dummy) );
 
-		// TODO: ƒJ[ƒ\ƒ‹‚ÌˆÊ’u‚Í‚Ç‚¤‚·‚é‚Ì‚ªˆê”Ê“I‚È‚Ì‚©?
+		// TODO: ã‚«ãƒ¼ã‚½ãƒ«ã®ä½ç½®ã¯ã©ã†ã™ã‚‹ã®ãŒä¸€èˆ¬çš„ãªã®ã‹?
 	}
 
 	//==========================================================================
-	// s‚ÌÁ‹
+	// è¡Œã®æ¶ˆå»
 	//==========================================================================
 	void cls_line(HCON hCon){
 		HANDLE hConsole=(HANDLE)hCon;
@@ -105,7 +105,7 @@ namespace con{
 		CALL_STDERR( FillConsoleOutputCharacter, (hConsole,(TCHAR)' ',      len,coord0,&dummy) );
 		CALL_STDERR( FillConsoleOutputAttribute, (hConsole,csbi.wAttributes,len,coord0,&dummy) );
 
-		// TODO: ƒJ[ƒ\ƒ‹‚ÌˆÊ’u‚Í‚Ç‚¤‚·‚é‚Ì‚ªˆê”Ê“I‚È‚Ì‚©?
+		// TODO: ã‚«ãƒ¼ã‚½ãƒ«ã®ä½ç½®ã¯ã©ã†ã™ã‚‹ã®ãŒä¸€èˆ¬çš„ãªã®ã‹?
 	}
 	void cls_line_a(HCON hCon){
 		HANDLE hConsole=(HANDLE)hCon;
@@ -118,7 +118,7 @@ namespace con{
 		CALL_STDERR( FillConsoleOutputCharacter, (hConsole,(TCHAR)' ',      len,csbi.dwCursorPosition,&dummy) );
 		CALL_STDERR( FillConsoleOutputAttribute, (hConsole,csbi.wAttributes,len,csbi.dwCursorPosition,&dummy) );
 
-		// TODO: ƒJ[ƒ\ƒ‹‚ÌˆÊ’u‚Í‚Ç‚¤‚·‚é‚Ì‚ªˆê”Ê“I‚È‚Ì‚©?
+		// TODO: ã‚«ãƒ¼ã‚½ãƒ«ã®ä½ç½®ã¯ã©ã†ã™ã‚‹ã®ãŒä¸€èˆ¬çš„ãªã®ã‹?
 	}
 
 }
@@ -179,7 +179,7 @@ void work(FILE* ostr){
 	int mode=0;
 	foreach_char(stdin,[&,ostr](byte* s,int n){
 		switch(mode){
-			// ESC Sequence ‚ÌŠJn
+			// ESC Sequence ã®é–‹å§‹
 			case 0:
 				if(n==1&&s[0]=='\x1b'){
 					mode=1;
@@ -195,18 +195,17 @@ void work(FILE* ostr){
 					fputc('\x1b',ostr);
 					goto print;
 				}
-			// ˆø”“Ç‚İæ‚èEÀs
+			// å¼•æ•°èª­ã¿å–ã‚Šãƒ»å®Ÿè¡Œ
 			case 2:{
 				if(args.add(s,n))return;
 				mode=0;
 				if(args.exec(s,n))return;
 				goto print;
 			}
-			// ’Êí•¶š‚Ìo—Í
+			// é€šå¸¸æ–‡å­—ã®å‡ºåŠ›
 			print:
 				while(n--)fputc(*s++,ostr);
 				break;
 		}
 	});
 }
-

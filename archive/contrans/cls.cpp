@@ -81,7 +81,7 @@ namespace con{
 	};
 
 	//==========================================================================
-	// ‰Šú‰»
+	// åˆæœŸåŒ–
 	//==========================================================================
 	HANDLE gethandle(HCON hCon=0){
 		return hCon?(HANDLE)hCon: GetStdHandle(STD_OUTPUT_HANDLE);
@@ -98,7 +98,7 @@ namespace con{
 	}
 
 	//==========================================================================
-	// ‰æ–Ê‚ÌÁ‹
+	// ç”»é¢ã®æ¶ˆå»
 	//==========================================================================
 	void cls(HCON hCon){
 		Csbi info(gethandle(hCon));
@@ -111,17 +111,17 @@ namespace con{
 		Csbi info(gethandle(hCon));
 		COORD coordA={0};
 		info.ClearRange(coordA,info.Cursor());
-		// TODO: ƒJ[ƒ\ƒ‹‚ÌˆÊ’u‚Í‚Ç‚¤‚·‚é‚Ì‚ªˆê”Ê“I‚È‚Ì‚©?
+		// TODO: ã‚«ãƒ¼ã‚½ãƒ«ã®ä½ç½®ã¯ã©ã†ã™ã‚‹ã®ãŒä¸€èˆ¬çš„ãªã®ã‹?
 	}
 	void cls_a(HCON hCon){
 		Csbi info(gethandle(hCon));
 		COORD coordZ={-1};
 		info.ClearRange(info.Cursor(),coordZ);
-		// TODO: ƒJ[ƒ\ƒ‹‚ÌˆÊ’u‚Í‚Ç‚¤‚·‚é‚Ì‚ªˆê”Ê“I‚È‚Ì‚©?
+		// TODO: ã‚«ãƒ¼ã‚½ãƒ«ã®ä½ç½®ã¯ã©ã†ã™ã‚‹ã®ãŒä¸€èˆ¬çš„ãªã®ã‹?
 	}
 
 	//==========================================================================
-	// s‚ÌÁ‹
+	// è¡Œã®æ¶ˆå»
 	//==========================================================================
 	void cls_line(HCON hCon){
 		Csbi info(gethandle(hCon));
@@ -134,17 +134,17 @@ namespace con{
 		Csbi info(gethandle(hCon));
 		COORD coord0={0,                info.Cursor().Y};
 		info.ClearRange(coord0,info.Cursor());
-		// TODO: ƒJ[ƒ\ƒ‹‚ÌˆÊ’u‚Í‚Ç‚¤‚·‚é‚Ì‚ªˆê”Ê“I‚È‚Ì‚©?
+		// TODO: ã‚«ãƒ¼ã‚½ãƒ«ã®ä½ç½®ã¯ã©ã†ã™ã‚‹ã®ãŒä¸€èˆ¬çš„ãªã®ã‹?
 	}
 	void cls_line_a(HCON hCon){
 		Csbi info(gethandle(hCon));
 		COORD coord1={info.BufSize().X, info.Cursor().Y};
 		info.ClearRange(info.Cursor(),coord1);
-		// TODO: ƒJ[ƒ\ƒ‹‚ÌˆÊ’u‚Í‚Ç‚¤‚·‚é‚Ì‚ªˆê”Ê“I‚È‚Ì‚©?
+		// TODO: ã‚«ãƒ¼ã‚½ãƒ«ã®ä½ç½®ã¯ã©ã†ã™ã‚‹ã®ãŒä¸€èˆ¬çš„ãªã®ã‹?
 	}
 
 	//==========================================================================
-	// F‚Ìİ’è
+	// è‰²ã®è¨­å®š
 	//==========================================================================
 	void set_color(int argc,int* argv,HCON hCon){
 		Csbi info(gethandle(hCon));
@@ -170,33 +170,33 @@ namespace con{
 					info.SetAttr((a&B_MASK)>>4|(a&F_MASK)<<4);
 					break;
 				}
-				// ‘OŒiF
+				// å‰æ™¯è‰²
 				case 8:
-				case 16:info.SetForeground(info.GetAttr()>>4);break; // ”ñ•\¦
-				case 30:info.SetForeground(h|C_Black);break; // •š
+				case 16:info.SetForeground(info.GetAttr()>>4);break; // éè¡¨ç¤º
+				case 30:info.SetForeground(h|C_Black);break; // é»’å­—
 				case 17:
-				case 31:info.SetForeground(h|C_Red);break; // Ôš
+				case 31:info.SetForeground(h|C_Red);break; // èµ¤å­—
 				case 20:
-				case 32:info.SetForeground(h|C_Green);break; // —Îš
+				case 32:info.SetForeground(h|C_Green);break; // ç·‘å­—
 				case 21:
-				case 33:info.SetForeground(h|C_Yellow);break; // ‰©š
+				case 33:info.SetForeground(h|C_Yellow);break; // é»„å­—
 				case 18:
-				case 34:info.SetForeground(h|C_Blue);break; // Âš
+				case 34:info.SetForeground(h|C_Blue);break; // é’å­—
 				case 19:
-				case 35:info.SetForeground(h|C_Magenta);break; // ‡š
+				case 35:info.SetForeground(h|C_Magenta);break; // ç´«å­—
 				case 22:
-				case 36:info.SetForeground(h|C_Cyan);break; // …š
+				case 36:info.SetForeground(h|C_Cyan);break; // æ°´å­—
 				case 23:
-				case 37:info.SetForeground(h|C_White);break; // ”’š
-				// ”wŒiF
-				case 40:info.SetBackground(h|C_Black);break; // •’n
-				case 41:info.SetBackground(h|C_Red);break; // Ô’n
-				case 42:info.SetBackground(h|C_Green);break; // —Î’n
-				case 43:info.SetBackground(h|C_Yellow);break; // ‰©’n
-				case 44:info.SetBackground(h|C_Blue);break; // Â’n
-				case 45:info.SetBackground(h|C_Magenta);break; // ‡’n
-				case 46:info.SetBackground(h|C_Cyan);break; // …’n
-				case 47:info.SetBackground(h|C_White);break; // ”’’n
+				case 37:info.SetForeground(h|C_White);break; // ç™½å­—
+				// èƒŒæ™¯è‰²
+				case 40:info.SetBackground(h|C_Black);break; // é»’åœ°
+				case 41:info.SetBackground(h|C_Red);break; // èµ¤åœ°
+				case 42:info.SetBackground(h|C_Green);break; // ç·‘åœ°
+				case 43:info.SetBackground(h|C_Yellow);break; // é»„åœ°
+				case 44:info.SetBackground(h|C_Blue);break; // é’åœ°
+				case 45:info.SetBackground(h|C_Magenta);break; // ç´«åœ°
+				case 46:info.SetBackground(h|C_Cyan);break; // æ°´åœ°
+				case 47:info.SetBackground(h|C_White);break; // ç™½åœ°
 			}
 
 			h=0;
@@ -204,7 +204,7 @@ namespace con{
 	}
 
 	//==========================================================================
-	// ƒJ[ƒ\ƒ‹ˆÚ“®
+	// ã‚«ãƒ¼ã‚½ãƒ«ç§»å‹•
 	//==========================================================================
 	void set_pos(int x,int y,HCON hCon){
 		Csbi info(gethandle(hCon));
@@ -258,7 +258,7 @@ namespace con{
 	}
 
 	//==========================================================================
-	// ‰‰‘t pause/play/piano
+	// æ¼”å¥ pause/play/piano
 	//==========================================================================
 	inline double herz(int note){
 		return 440*pow(2.0,double(note-69)/12);
@@ -275,7 +275,7 @@ namespace con{
 
 			int time=argv[0];
 
-			// ü”g”•\
+			// å‘¨æ³¢æ•°è¡¨
 			int n=argc-1;
 			int* hz=(int*)calloc(n,sizeof(int));
 			for(int i=0;i<n;i++)hz[i]=int(0.5+herz(argv[i+1]));

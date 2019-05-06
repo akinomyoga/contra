@@ -130,7 +130,7 @@ void play_music(){
 	play(0.50,B-2,D-1,G  );
 	play(0.50,B-2,D-1,B  );
 
-	// ::C 60 ;        ;       
+	// ::C 60 ;        ;
 	// C   61 ; C-1 49 ; C-2 37
 	// D   63 ; D-1 51 ; D-2 39
 	// E   64 ; E-1 52 ; E-2 40
@@ -154,7 +154,7 @@ int main(){
 	}
 	printf("\n");
 #undef BK
-	
+
 	play_music();
 
 	return 0;

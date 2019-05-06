@@ -27,7 +27,7 @@ void print_help(){
 
 class Arguments{
 public:
-	bool extesc; // ` ‚à ESC ‚Æ‚µ‚Äˆµ‚¤‚©
+	bool extesc; // ` ã‚‚ ESC ã¨ã—ã¦æ‰±ã†ã‹
 public:
 	Arguments(){
 		extesc=false;

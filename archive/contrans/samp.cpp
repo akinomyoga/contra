@@ -19,7 +19,7 @@ void beeps(){
 }
 
 void color(const char* letter){
-	// ç ìx A
+	// ÂΩ©Â∫¶ A
 	printf("\33[1;41;1;31m%s\33[m",letter);
 	printf("\33[1;43;1;31m%s\33[m",letter);
 	printf("\33[1;43;1;33m%s\33[m",letter);
@@ -76,7 +76,7 @@ void color(const char* letter){
 	printf("\33[3;45;3;31m%s\33[m",letter);
 	printf("\n");
 
-	// ç ìx B
+	// ÂΩ©Â∫¶ B
 	char w='7';
 	char b='0';
 	for(int i=0;i<6;i++){
@@ -90,7 +90,7 @@ void color(const char* letter){
 		printf("\n");
 	}
 
-	// ç ìx C
+	// ÂΩ©Â∫¶ C
 	printf("\33[1;47;1;37m%s\33[m",letter);
 	printf("\33[1;47;3;37m%s\33[m",letter);
 	printf("\33[3;47;3;37m%s\33[m",letter);
@@ -105,10 +105,10 @@ int main(){
 	printf("\33[1;17;4mHello World!\33[m\n");
 	printf("\33[40;1;37;4mHello World!\33[m\n");
 
-	color("·e");
-	//color("·∑");
-	//color("·◊");
-	//color("‚I");
+	color("Áñá");
+	//color("Áõ•");
+	//color("Áûπ");
+	//color("Á§´");
 	/*
 	printf(
 		"\33[240;60p"

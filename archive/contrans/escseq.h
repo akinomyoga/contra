@@ -43,13 +43,13 @@ namespace console{
 
 					if(!next())break;
 
-					// ’Pˆê•¶š
+					// å˜ä¸€æ–‡å­—
 					if(!isleadbyte(buff[0])){
 						f(buff,p-buff);
 						continue;
 					}
 
-					// ƒ}ƒ‹ƒ`ƒoƒCƒg•¶š
+					// ãƒãƒ«ãƒãƒã‚¤ãƒˆæ–‡å­—
 					byte* mbnext;
 					do{
 						if(!next())break;
@@ -84,13 +84,13 @@ namespace console{
 	class Writer{
 		FILE* ostr;
 
-		std::string sequence;  // Œ»İ‚ÌƒGƒXƒP[ƒvƒV[ƒPƒ“ƒX
-		std::string argbuff;   // ˆø”ƒoƒbƒtƒ@
-		std::vector<int> args; // ˆø”
+		std::string sequence;  // ç¾åœ¨ã®ã‚¨ã‚¹ã‚±ãƒ¼ãƒ—ã‚·ãƒ¼ã‚±ãƒ³ã‚¹
+		std::string argbuff;   // å¼•æ•°ãƒãƒƒãƒ•ã‚¡
+		std::vector<int> args; // å¼•æ•°
 
 		int mode;
 
-	// ‰Šú‰»
+	// åˆæœŸåŒ–
 	public:
 		bool (*is_esc1)(byte);
 		Writer(FILE* ostr);
