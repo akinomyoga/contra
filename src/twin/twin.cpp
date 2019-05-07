@@ -71,6 +71,7 @@ namespace twin {
     UINT m_blinking_interval = 200;
 
     const char* m_env_term = "xterm-256color";
+    const char* m_env_shell = nullptr;
 
     bool m_debug_print_window_messages = false;
     bool m_debug_print_unknown_key = false;
@@ -1846,7 +1847,8 @@ namespace twin {
       params.xpixel = settings.m_xpixel;
       params.ypixel = settings.m_ypixel;
       params.exec_error_handler = &exec_error_handler;
-      params.env_term = settings.m_env_term;
+      params.env["TERM"] = settings.m_env_term;
+      params.shell = settings.m_env_shell;
       std::unique_ptr<terminal_application> sess = contra::term::create_terminal_session(params);
       if (!sess) return false;
 

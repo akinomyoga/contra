@@ -57,7 +57,7 @@ namespace ttty {
     }
 
   public:
-    bool initialize(contra::term::terminal_session_parameters const& params) {
+    bool initialize(contra::term::terminal_session_parameters& params) {
       setup_tty();
 
       std::unique_ptr<contra::term::terminal_application> sess = contra::term::create_terminal_session(params);
@@ -65,7 +65,7 @@ namespace ttty {
       m_manager.add_app(std::move(sess));
 
       sgrcap.initialize();
-      renderer = std::make_unique<contra::ttty::tty_observer>(sess->term(), stdout, &sgrcap);
+      renderer = std::make_unique<contra::ttty::tty_observer>(m_manager.app().term(), stdout, &sgrcap);
       return true;
     }
 

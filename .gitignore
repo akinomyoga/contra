@@ -6,11 +6,12 @@
 # generated files
 /out
 /src/impl?
-/src/twin/*.exe
 /src/twin/*.lnk
-/src/*.exe
 /src/*.lnk
 /minimal_openpt
+
+*.exe
+*.stackdump
 
 # output files
 /src/*.seq

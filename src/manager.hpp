@@ -11,8 +11,6 @@
 #include "ansi/term.hpp"
 #include "enc.utf8.hpp"
 
-#include <sys/ioctl.h> /* for struct winsize */
-
 namespace contra {
 namespace term {
 
@@ -23,18 +21,22 @@ namespace term {
   using term_t = contra::ansi::term_t;
 
   class terminal_application {
-    struct winsize init_ws;
+    curpos_t m_width = 80, m_height = 24;
+    coord_t m_xpixel = 13, m_ypixel = 7;
   public:
-    void init_size(curpos_t width, curpos_t height) {
-      init_ws.ws_col = width;
-      init_ws.ws_row = height;
+    curpos_t width() const { return m_width; }
+    curpos_t height() const { return m_height; }
+    curpos_t xpixel() const { return m_xpixel; }
+    curpos_t ypixel() const { return m_ypixel; }
+    void set_size(curpos_t width, curpos_t height) {
+      m_width = width;
+      m_height = height;
     }
-    void init_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
-      init_size(width, height);
-      init_ws.ws_xpixel = xpixel;
-      init_ws.ws_ypixel = ypixel;
+    void set_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
+      set_size(width, height);
+      this->m_xpixel = xpixel;
+      this->m_ypixel = ypixel;
     }
-    struct winsize const& winsize() const { return init_ws; }
 
   private:
     std::unique_ptr<contra::ansi::term_t> m_term;
@@ -48,13 +50,13 @@ namespace term {
 
   public:
     terminal_application() {
-      init_size(80, 24, 13, 7);
+      set_size(80, 24, 13, 7);
     }
     virtual ~terminal_application() {}
 
     bool initialize() {
       if (m_term) return true;
-      m_term = std::make_unique<contra::ansi::term_t>(init_ws.ws_col, init_ws.ws_row);
+      m_term = std::make_unique<contra::ansi::term_t>(m_width, m_height);
       return true;
     }
 
@@ -71,12 +73,15 @@ namespace term {
     virtual bool input_mouse(key_t key, coord_t px, coord_t py, curpos_t x, curpos_t y) {
       return m_term->input_mouse(key, px, py, x, y);
     }
-    virtual void reset_size(std::size_t width, std::size_t height) {
-      mwg_check(width > 0 && height > 0, "non-positive size is passed (width = %d, height = %d).", (int) width, (int) height);
-      this->init_size(width, height);
+    virtual void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
+      mwg_assert(width > 0 && height > 0 && xpixel > 0 && ypixel > 0,
+        "non-positive size is passed (width = %d, height = %d, xpixel = %d, ypixel = %d).", (int) width, (int) height, (int) xpixel, (int) ypixel);
+      this->set_size(width, height, xpixel, ypixel);
       this->board().reset_size(width, height);
     }
-
+    virtual void reset_size(curpos_t width, curpos_t height) {
+      reset_size(width, height, this->m_xpixel, this->m_ypixel);
+    }
   };
 
   class terminal_manager {

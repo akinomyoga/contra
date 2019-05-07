@@ -81,142 +81,119 @@ namespace term {
   private:
     bool m_active = false;
     int slave_pid = -1;
-
-    std::size_t m_read_buffer_size = 4096;
     std::vector<char> m_read_buffer;
-
-    exec_error_handler_t m_exec_error_handler = NULL;
-    std::uintptr_t m_exec_error_param = 0;
-
-    std::unordered_map<std::string, std::string> m_env;
   public:
     pty_connection() {}
-    pty_connection(const char* shell, winsize const* ws = NULL, struct termios* termios = NULL) {
-      start(shell, ws, termios);
+    pty_connection(terminal_session_parameters const& params) {
+      start(params);
     }
 
-    void set_read_buffer_size(std::size_t value) {
-      m_read_buffer_size = contra::clamp(value, 0x100, 0x10000);
+    bool start(terminal_session_parameters const& params) {
+      if (m_active) return true;
+
+      // restrict in the range from 256 bytes to 64 kbytes
+      m_read_buffer.resize(contra::clamp(params.fd_read_buffer_size, 0x100, 0x10000));
+
+      this->slave_pid = -1;
+      this->m_fd = -1;
+      this->m_active = false;
+
+      int masterfd, slavefd;
+      char const* slavedevice;
+      if ((masterfd = ::posix_openpt(O_RDWR | O_NOCTTY | O_NONBLOCK)) < 0
+        || ::grantpt(masterfd) < 0
+        || ::unlockpt(masterfd) < 0
+        || (slavedevice = ::ptsname(masterfd)) == NULL
+        || (slavefd = ::open(slavedevice, O_RDWR | O_NOCTTY)) < 0)
+        return false;
+
+      pid_t const pid = ::fork();
+      if (pid < 0) return false;
+
+      if (pid == 0) {
+        setsid();
+        if (params.termios) tcsetattr(slavefd, TCSANOW, params.termios);
+        {
+          struct winsize ws;
+          ws.ws_col = params.col;
+          ws.ws_row = params.row;
+          ws.ws_xpixel = params.xpixel;
+          ws.ws_ypixel = params.ypixel;
+          fd_set_winsize(slavefd, &ws);
+        }
+        dup2(slavefd, STDIN_FILENO);
+        dup2(slavefd, STDOUT_FILENO);
+        dup2(slavefd, STDERR_FILENO);
+        close(slavefd);
+        close(masterfd);
+
+        for (auto const& pair : params.env) {
+          ::setenv(pair.first.c_str(), pair.second.c_str(), 1);
+          if (pair.first == "HOME")
+            ::chdir(pair.second.c_str());
+        }
+        //execl(shell, shell, "-l", NULL);
+        execl(params.shell, params.shell, NULL);
+
+        // exec 失敗時
+        if (params.exec_error_handler)
+          params.exec_error_handler(errno, params.exec_error_param);
+        else
+          perror("contra::term (exec SHELL)");
+        _exit(1);
+        return false;
+      } else {
+        close(slavefd);
+        this->slave_pid = pid;
+        this->m_fd = masterfd;
+        this->m_active = true;
+        return true;
+      }
     }
-    void set_exec_error_handler(exec_error_handler_t handler, std::uintptr_t param) {
-      this->m_exec_error_handler = handler;
-      this->m_exec_error_param = param;
+
+    bool is_active() const { return m_active; }
+
+    void set_winsize(curpos_t col, curpos_t row, curpos_t xpixel, curpos_t ypixel) {
+      struct winsize ws;
+      ws.ws_col = col;
+      ws.ws_row = row;
+      ws.ws_xpixel = xpixel;
+      ws.ws_ypixel = ypixel;
+      fd_set_winsize(m_fd, &ws);
     }
-    void set_environment_variable(const char* name, const char* value)  {
-      m_env[name] = value;
-    }
-    bool start(const char* shell, winsize const* ws = NULL, struct termios* termios = NULL);
 
     std::size_t read(contra::idevice* dst) {
       if (!m_active) return 0;
       return read_from_fd(m_fd, dst, &m_read_buffer[0], m_read_buffer.size());
     }
 
-    void terminate();
+    bool is_alive() {
+      if (!m_active) return false;
 
-    bool is_active() const { return m_active; }
-    bool is_alive();
+      int status;
+      pid_t const result = waitpid(slave_pid, &status, WNOHANG);
+      if (result < 0) {
+        perror("sample_openpt (waitpid)");
+        exit(1);
+      }
 
-    virtual ~pty_connection() {}
+      if (result == 0)
+        return true;
+      else
+        return m_active = false;
+    }
 
-    void set_winsize(struct winsize const* ws) {
-      fd_set_winsize(m_fd, ws);
+    void terminate() {
+      // ToDo: 間違って新しく生成した別のプロセスを殺したりしないのか?
+      if (m_active) {
+        m_active = false;
+        ::kill(slave_pid, SIGTERM);
+      }
     }
   };
 
-  bool pty_connection::is_alive() {
-    if (!m_active) return false;
-
-    int status;
-    pid_t const result = waitpid(slave_pid, &status, WNOHANG);
-    if (result < 0) {
-      perror("sample_openpt (waitpid)");
-      exit(1);
-    }
-
-    if (result == 0)
-      return true;
-    else
-      return m_active = false;
-  }
-
-  bool pty_connection::start(const char* shell, winsize const* ws, struct termios* termios) {
-    if (m_active) return true;
-
-    // restrict in the range from 256 bytes to 64 kbytes
-    m_read_buffer.resize(m_read_buffer_size);
-
-    this->slave_pid = -1;
-    this->m_fd = -1;
-    this->m_active = false;
-
-    int masterfd, slavefd;
-    char const* slavedevice;
-    if ((masterfd = posix_openpt(O_RDWR | O_NOCTTY | O_NONBLOCK)) < 0
-      || grantpt(masterfd) < 0
-      || unlockpt(masterfd) < 0
-      || (slavedevice = ptsname(masterfd)) == NULL
-      || (slavefd = open(slavedevice, O_RDWR | O_NOCTTY)) < 0)
-      return false;
-
-    pid_t const pid = fork();
-    if (pid < 0) return false;
-
-    if (pid == 0) {
-      setsid();
-      if (termios) tcsetattr(slavefd, TCSANOW, termios);
-      if (ws) fd_set_winsize(slavefd, ws);
-      dup2(slavefd, STDIN_FILENO);
-      dup2(slavefd, STDOUT_FILENO);
-      dup2(slavefd, STDERR_FILENO);
-      close(slavefd);
-      close(masterfd);
-
-      for (auto const& pair : this->m_env) {
-        ::setenv(pair.first.c_str(), pair.second.c_str(), 1);
-        if (pair.first == "HOME")
-          ::chdir(pair.second.c_str());
-      }
-      //execl(shell, shell, "-l", NULL);
-      execl(shell, shell, NULL);
-
-      // exec 失敗時
-      if (m_exec_error_handler)
-        m_exec_error_handler(errno, m_exec_error_param);
-      else
-        perror("contra::term (exec SHELL)");
-      _exit(1);
-      return false;
-    } else {
-      close(slavefd);
-      this->slave_pid = pid;
-      this->m_fd = masterfd;
-      this->m_active = true;
-      return true;
-    }
-  }
-
-  void pty_connection::terminate() {
-    if (m_active) {
-      m_active = false;
-      ::kill(slave_pid, SIGTERM);
-    }
-  }
-
-  // contra/ttty
   class terminal_session: public terminal_application {
     typedef terminal_application base;
-  public:
-    struct termios* init_termios = NULL;
-    std::size_t init_read_buffer_size = 4096;
-
-    exec_error_handler_t init_exec_error_handler = nullptr;
-    std::uintptr_t init_exec_error_param = 0;
-  public:
-    void init_environment_variable(const char* name, const char* value) {
-      m_pty.set_environment_variable(name, value);
-    }
-
   private:
     contra::term::pty_connection m_pty; // ユーザ入力書込先
     contra::multicast_device m_dev;  // 受信データ書込先
@@ -245,17 +222,23 @@ namespace term {
     }
 
   public:
-    bool initialize() {
+    bool initialize(terminal_session_parameters const& params) {
       if (m_pty.is_active()) return true;
 
       if (!base::initialize()) return false;
+      base::set_size(params.col, params.row, params.xpixel, params.ypixel);
 
-      m_pty.set_read_buffer_size(init_read_buffer_size);
-      m_pty.set_exec_error_handler(init_exec_error_handler, init_exec_error_param);
-      if (!m_pty.start("/bin/bash", &base::winsize(), init_termios)) return false;
+      if (!m_pty.start(params)) return false;
 
       base::term().set_input_device(m_pty);
       m_dev.push(&base::term());
+
+      // for diagnostics
+      if (params.dbg_fd_tee)
+        setup_fd_tee(params.dbg_fd_tee);
+      if (params.dbg_sequence_logfile)
+        setup_sequence_log(params.dbg_sequence_logfile);
+
       return true;
     }
     virtual bool process() override { return m_pty.read(&m_dev); }
@@ -264,44 +247,46 @@ namespace term {
     virtual void terminate() override { return m_pty.terminate(); }
 
   public:
-    virtual void reset_size(std::size_t width, std::size_t height) override {
-      base::reset_size(width, height);
-      m_pty.set_winsize(&base::winsize());
+    virtual void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) override {
+      base::reset_size(width, height, xpixel, ypixel);
+      m_pty.set_winsize(width, height, xpixel, ypixel);
     }
   };
 
-  std::unique_ptr<terminal_application> create_terminal_session(terminal_session_parameters const& params) {
-    auto sess = std::make_unique<terminal_session>();
-    sess->init_size(params.col, params.row, params.xpixel, params.ypixel);
-    sess->init_read_buffer_size = 64 * 1024;
-    sess->init_exec_error_handler = params.exec_error_handler;
-    if (params.termios) sess->init_termios = params.termios;
+  std::unique_ptr<terminal_application> create_terminal_session(terminal_session_parameters& params) {
+    // buffer size の設定
+    params.fd_read_buffer_size = 64 * 1024;
 
-    // 環境変数
+    // 環境変数の設定
     struct passwd* pw = ::getpwuid(::getuid());
     if (pw) {
       if (pw->pw_name)
-        sess->init_environment_variable("USER", pw->pw_name);
+        params.env["USER"] = pw->pw_name;
       if (pw->pw_dir)
-        sess->init_environment_variable("HOME", pw->pw_dir);
-      if (pw->pw_shell)
-        sess->init_environment_variable("SHELL", pw->pw_shell);
+        params.env["HOME"] = pw->pw_dir;
+      if (pw->pw_shell) {
+        params.env["SHELL"] = pw->pw_shell;
+        if (!params.shell) params.shell = pw->pw_shell;
+      }
     }
+    if (!params.shell) params.shell = "/bin/sh";
+
+    if (params.env.find("TERM") == params.env.end())
+      params.env["TERM"] = "xterm-256color";
+
+    std::string path = "/usr/local/bin:/usr/bin:/bin";
+    if (char const* original_path = std::getenv("PATH"); original_path && *original_path) {
+      path += ":";
+      path += original_path;
+    }
+    params.env["PATH"] = std::move(path);
+
     char hostname[256];
     if (::gethostname(hostname, sizeof hostname) == 0)
-      sess->init_environment_variable("HOSTNAME", hostname);
-    if (params.env_term)
-      sess->init_environment_variable("TERM", params.env_term);
-    std::string path = "/usr/local/bin:/usr/bin:/bin";
-    path += std::getenv("PATH");
-    sess->init_environment_variable("PATH", path.c_str());
+      params.env["HOSTNAME"] = hostname;
 
-    if (!sess->initialize()) sess.reset();
-
-    if (params.dbg_fd_tee)
-      sess->setup_fd_tee(params.dbg_fd_tee);
-    if (params.dbg_sequence_logfile)
-      sess->setup_sequence_log(params.dbg_sequence_logfile);
+    auto sess = std::make_unique<terminal_session>();
+    if (!sess->initialize(params)) sess.reset();
 
     return sess;
   }

@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
+#include <string>
 #include "contradef.hpp"
 #include "manager.hpp"
 
@@ -43,14 +45,17 @@ namespace term {
   struct terminal_session_parameters {
     curpos_t col = 80, row = 24, xpixel = 7, ypixel = 13;
     exec_error_handler_t exec_error_handler = nullptr;
-    const char* env_term = "xterm-256color";
+    std::uintptr_t exec_error_param = 0u;
     struct termios* termios = nullptr;
+    std::unordered_map<std::string, std::string> env;
+    const char* shell = nullptr;
+    std::size_t fd_read_buffer_size = 4096;
 
     int dbg_fd_tee = -1;
     const char* dbg_sequence_logfile = nullptr;
   };
 
-  std::unique_ptr<terminal_application> create_terminal_session(terminal_session_parameters const& params);
+  std::unique_ptr<terminal_application> create_terminal_session(terminal_session_parameters& params);
 
 }
 }
