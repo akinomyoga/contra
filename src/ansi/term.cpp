@@ -624,6 +624,119 @@ namespace {
     b.cur.set_x(x, xenl);
   }
 
+  void do_insert_graphs(term_t& term, char32_t const* beg, char32_t const* end) {
+    if (beg + 1 == end) return do_insert_graph(term, *beg);
+
+    board_t& b = term.board();
+    tstate_t& s = term.state();
+
+    // initialize configuration
+    bool const simd = s.get_mode(mode_simd);
+    curpos_t const dir = simd ? -1 : 1;
+    bool const decawm = s.get_mode(mode_decawm);
+    bool const cap_xenl = s.get_mode(mode_xenl);
+    int const width_multiplier = b.cur.attribute.xflags & attribute_t::decdhl_mask ? 2 : 1;
+
+    curpos_t x = b.cur.x();
+
+    // current line and range
+    line_t* line = &b.line();
+    term.initialize_line(*line);
+    curpos_t slh = term.implicit_slh(*line);
+    curpos_t sll = term.implicit_sll(*line);
+    if (x < slh)
+      slh = 0;
+    else if (x > (b.cur.xenl() ? sll + 1 : sll))
+      sll = b.m_width - 1;
+    if (simd) std::swap(slh, sll);
+
+    auto _next_line = [&] () {
+      do_nel(term);
+      x = b.cur.x();
+      line = &b.line();
+      term.initialize_line(*line);
+
+      // Note: do_nel() 後に b.cur.x() in [slh, sll]
+      //   は保証されていると思って良いので、
+      //   現在位置が範囲外の時の sll の補正は不要。
+      slh = term.implicit_slh(*line);
+      sll = term.implicit_sll(*line);
+      if (simd) std::swap(slh, sll);
+    };
+
+    cell_t cell;
+    cell.character = ascii_nul;
+    cell.attribute = b.cur.attribute;
+    cell.width = 1;
+
+    static std::vector<cell_t> buffer;
+    mwg_assert(buffer.empty());
+    curpos_t xwrite = 0;
+    auto _write = [&] () {
+      if (simd) std::reverse(buffer.begin(), buffer.end());
+      line->write_cells(xwrite, &buffer[0], buffer.size(), 1, dir);
+      buffer.clear();
+    };
+
+    while (beg < end) {
+      char32_t const u = *beg++;
+
+      int const char_width = s.c2w(u) * width_multiplier;
+      mwg_assert(char_width > 0); // ToDo: control chars, etc.
+
+      // (行頭より後でかつ) 行末に文字が入らない時は折り返し
+      curpos_t const x0 = x;
+      curpos_t const x1 = x0 + dir * (char_width - 1);
+      if ((x1 - sll) * dir > 0 && (x0 - slh) * dir > 0) {
+        if (buffer.size()) _write();
+
+        // Note: !decawm の時は以降の文字も全部入らないので抜ける。
+        //   現在は文字幅が有限である事を要求しているので。
+        //   但し、零幅の文字を考慮に入れる時にはここは修正する必要がある。
+        //   もしくは零幅の文字の時には insert_graphs は使わない。
+        mwg_assert(char_width > 0);
+        if (!decawm) break;
+
+        _next_line();
+      }
+
+      // 文字は取り敢えず buffer に登録する
+      if (simd)
+        xwrite = std::max(0, x - (char_width - 1));
+      else if (buffer.empty())
+        xwrite = x;
+      cell.character = u;
+      cell.width = char_width;
+      buffer.emplace_back(cell);
+      x += dir * char_width;
+    }
+
+    // Note: buffer.size() == 0 なのは何も書いていないか改行した直後で、
+    //   その時にはデータを書き込む必要はないし、
+    //   また x も動かないか改行した時に設定されている筈。
+    if (buffer.size()) {
+      _write();
+
+      bool xenl = false;
+      if ((x - sll) * dir >= 1) {
+        if (decawm) {
+          // 行末を超えた時は折り返し
+          // Note: xenl かつ x == sll + 1 ならば の位置にいる事を許容する。
+          if (!simd && x == sll + 1 && cap_xenl) {
+            xenl = true;
+          } else {
+            do_nel(term);
+            return;
+          }
+        } else {
+          x = sll;
+        }
+      }
+      b.cur.set_x(x, xenl);
+    }
+  }
+
+
   //---------------------------------------------------------------------------
   // Page and line settings
 
@@ -2189,16 +2302,20 @@ namespace {
 
   void term_t::process_control_sequence(sequence const& seq) {
     // check cursor state
+#ifndef NDEBUG
     board_t& b = this->board();
     mwg_assert(b.cur.is_sane(b.m_width));
+#endif
 
     if (seq.is_private_csi()) {
       if (!process_private_control_sequence(*this, seq))
         print_unrecognized_sequence(seq);
 
+#ifndef NDEBUG
       mwg_assert(b.cur.is_sane(b.m_width),
         "cur: {x=%d, xenl=%d, width=%d} after CSI %c %c",
         b.cur.x(), b.cur.xenl(), b.m_width, seq.parameter()[0], seq.final());
+#endif
       return;
     }
 
@@ -2255,10 +2372,12 @@ namespace {
     case ascii_esa: do_esa(*this); break;
     }
 
+#ifndef NDEBUG
     board_t& b = board();
     mwg_assert(b.cur.is_sane(b.m_width),
       "cur: {x=%d, xenl=%d, width=%d} after C0/C1 %d",
       b.cur.x(), b.cur.xenl(), b.m_width, uchar);
+#endif
   }
 
   void term_t::process_escape_sequence(sequence const& seq) {

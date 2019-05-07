@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstdarg>
+#include <climits>
 #include <iterator>
 #include <algorithm>
 #include <vector>
@@ -145,6 +146,7 @@ namespace ansi {
   typedef std::uint32_t csi_single_param_t;
 
   void do_insert_graph(term_t& term, char32_t u);
+  void do_insert_graphs(term_t& term, char32_t const* beg, char32_t const* end);
 
   enum mouse_mode_flags {
     mouse_report_mask   = 0xFF,
@@ -314,9 +316,8 @@ namespace ansi {
     bool get_mode(mode_t modeSpec) const {
       std::uint32_t const index = modeSpec;
       if (!(index & accessor_flag)) {
-        unsigned const field = index >> 5;
         std::uint32_t const bit = 1 << (index & 0x1F);
-        mwg_assert(field < std::size(m_mode_flags), "invalid modeSpec");;
+        mwg_assert(index < CHAR_BIT * sizeof m_mode_flags, "invalid modeSpec");;
 
         std::uint32_t const& flags = m_mode_flags[index >> 5];
         return (flags & bit) != 0;
@@ -327,9 +328,8 @@ namespace ansi {
     int rqm_mode(mode_t modeSpec) const {
       std::uint32_t const index = modeSpec;
       if (!(index & accessor_flag)) {
-        unsigned const field = index >> 5;
         std::uint32_t const bit = 1 << (index & 0x1F);
-        mwg_assert(field < std::size(m_mode_flags), "invalid modeSpec");;
+        mwg_assert(index < CHAR_BIT * sizeof m_mode_flags, "invalid modeSpec");;
 
         std::uint32_t const& flags = m_mode_flags[index >> 5];
         return (flags & bit) != 0 ? 1 : 2;
@@ -344,9 +344,8 @@ namespace ansi {
     void set_mode(mode_t modeSpec, bool value = true) {
       std::uint32_t const index = modeSpec;
       if (!(index & accessor_flag)) {
-        unsigned const field = index >> 5;
         std::uint32_t const bit = 1 << (index & 0x1F);
-        mwg_assert(field < sizeof(m_mode_flags) / sizeof(m_mode_flags[0]), "invalid modeSpec");;
+        mwg_assert(index < CHAR_BIT * sizeof m_mode_flags, "invalid modeSpec");;
 
         std::uint32_t& flags = m_mode_flags[index >> 5];
         if (value)
@@ -487,20 +486,44 @@ namespace ansi {
       m_board.line().write_cells(m_board.cur.x(), &cell, 1, 1, dir);
     }
 
+    static constexpr bool is_marker(char32_t u) {
+      // Unicode bidi formatting characters
+      return (U'\u202A' <= u && u <= U'\u202E') ||
+        (U'\u2066' <= u && u <= U'\u2069');
+    }
+
     void insert_char(char32_t u) {
       u &= character_t::unicode_mask;
 
-      // Unicode bidi formatting characters
-      if ((U'\u202A' <= u && u <= U'\u202E') ||
-        (U'\u2066' <= u && u <= U'\u2069'))
+      if (is_marker(u))
         return insert_marker(u);
 
       do_insert_graph(*this, u);
 
+#ifndef NDEBUG
       board_t& b = board();
       mwg_assert(b.cur.is_sane(b.m_width),
         "cur: {x=%d, xenl=%d, width=%d} after Insert U+%04X",
         b.cur.x(), b.cur.xenl(), b.m_width, u);
+#endif
+    }
+    void insert_chars(char32_t const* beg, char32_t const* end) {
+      while (beg < end) {
+        if (!is_marker(*beg)) {
+          char32_t const* graph_beg = beg;
+          do beg++; while (beg != end && !is_marker(*beg));
+          char32_t const* graph_end = beg;
+          do_insert_graphs(*this, graph_beg, graph_end);
+        } else
+          insert_marker(*beg++);
+
+#ifndef NDEBUG
+        board_t& b = board();
+        mwg_assert(b.cur.is_sane(b.m_width),
+          "cur: {x=%d, xenl=%d, width=%d} after InsertLength=#%zu",
+          b.cur.x(), b.cur.xenl(), b.m_width, end - beg);
+#endif
+      }
     }
 
   public:
@@ -566,8 +589,7 @@ namespace ansi {
       char32_t* const q0 = &printt_buff[0];
       char32_t* q1 = q0;
       contra::encoding::utf8_decode(data, data + size, q1, q0 + size, printt_state);
-      for (char32_t const* q = q0; q < q1; q++)
-        m_seqdecoder.process_char(*q);
+      m_seqdecoder.process(q0, q1);
     }
     void printt(const char* text) {
       write(text, std::strlen(text));

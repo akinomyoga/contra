@@ -49,60 +49,84 @@ namespace encoding {
 
   // ToDo: 注意: 非正規UTF-8のチェックをしていない。
   void utf8_decode(char const*& ibeg, char const* iend, char32_t*& obeg, char32_t* oend, std::uint64_t& state, std::int32_t error_char) {
-    std::uint32_t mode = state >> 32;
-    std::uint32_t code = state & 0xFFFFFFFF;
+    std::uint_fast32_t code = state & 0xFFFFFFFF;
+    std::uint_fast32_t norm = state >> 32 & 0xFFFF;
+    std::uint_fast32_t mode = state >> 48;
+
+    // mode は残りの後続バイトの数を保持する。
+    // code は mode が有限の時に意味を持ち、
+    // 現在組み立て中の文字のコードを表す。
+    // norm は mode が有限の時に意味を持ち、
+    // そのマルチバイト表現で表される文字が、
+    // 最低でも norm bit では表現しきれない事を要求する。
 
     while (ibeg != iend && obeg != oend) {
       byte const c = *ibeg++;
 
-      if (mode != 0 && (c & 0xC0) != 0x80) {
-        // error_char
-        if (error_char >= 0) *obeg++ = error_char;
-        mode = 0;
-        if (obeg == oend) break;
+      if (mode) {
+        if ((c & 0xC0) == 0x80) {
+          code = code << 6 | (c & 0x3F);
+          if (--mode == 0) {
+            if (code >> norm && code < 0x00110000)
+              *obeg++ = code;
+            else if (error_char >= 0)
+              *obeg++ = error_char;
+          }
+          continue;
+        } else {
+          mode = 0;
+          if (error_char >= 0) {
+            *obeg++ = error_char;
+            if (obeg == oend) {
+              ibeg--;
+              break;
+            }
+          }
+        }
       }
 
+      // 最初のバイト
       if (c < 0xF0) {
         if (c < 0xC0) {
           if (c < 0x80) {
             // 0xxxxxxx [00-80]
             *obeg++ = c;
-          }else{
+          } else {
             // 10xxxxxx [80-C0]
-            if (mode == 0) {
-              if (error_char >= 0) *obeg++ = error_char;
-            } else{
-              code = code << 6 | (c & 0x3F);
-              if (--mode == 0) *obeg++ = code;
-            }
+            if (error_char >= 0) *obeg++ = error_char;
           }
         } else {
           if (c < 0xE0) {
             // 110xxxxx [C0-E0]
-            code = c & 0x1F;
             mode = 1;
+            code = c & 0x1F;
+            norm = 7;
           } else {
             // 1110xxxx [E0-F0]
-            code = c & 0x0F;
             mode = 2;
+            code = c & 0x0F;
+            norm = 11;
           }
         }
       } else {
         if (c < 0xFC) {
           if (c < 0xF8) {
             // 11110xxx [F0-F8]
-            code = c & 0x07;
             mode = 3;
+            code = c & 0x07;
+            norm = 16;
           } else {
             // 111110xx [F8-FC]
-            code = c & 0x03;
             mode = 4;
+            code = c & 0x03;
+            norm = 21;
           }
         } else {
           if(c < 0xFE) {
             // 1111110x [FC-FE]
-            code = c & 0x01;
             mode = 5;
+            code = c & 0x01;
+            norm = 26;
           } else {
             // 0xFE 0xFF
             if (error_char >= 0) *obeg++ = error_char;
@@ -111,7 +135,7 @@ namespace encoding {
       }
     }
 
-    state = (std::uint64_t) mode << 32 | code;
+    state = std::uint64_t(mode << 16 | norm) << 32 | code;
     return;
   }
 
