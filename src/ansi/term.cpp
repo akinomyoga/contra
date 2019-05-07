@@ -669,7 +669,7 @@ namespace {
     cell.attribute = b.cur.attribute;
     cell.width = 1;
 
-    static std::vector<cell_t> buffer;
+    std::vector<cell_t>& buffer = term.m_buffer;
     mwg_assert(buffer.empty());
     curpos_t xwrite = 0;
     auto _write = [&] () {

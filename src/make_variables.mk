@@ -28,8 +28,8 @@
 
 CXXFLAGS := -Wall -Wextra
 # CXXFLAGS += -g
-#CXXFLAGS += -O1
-CXXFLAGS += -O3 -s #-DNDEBUG
+CXXFLAGS += -O1
+#CXXFLAGS += -O3 -s -DNDEBUG
 
 default_CPPFLAGS = -MP -MD -MF $(@:.o=.dep)
 CPPFLAGS = $(default_CPPFLAGS)

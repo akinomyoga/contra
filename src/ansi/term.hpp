@@ -385,8 +385,10 @@ namespace ansi {
     tstate_t m_state {this};
 
     contra::idevice* m_send_target = nullptr;
-    std::vector<byte> m_send_buff;
 
+    void report_error(const char* message) {
+      std::fprintf(stderr, "%s", message);
+    }
   public:
     void initialize_line(line_t& line) const {
       if (line.lflags() & line_attr_t::is_line_used) return;
@@ -396,9 +398,11 @@ namespace ansi {
     }
 
   public:
-    term_t(curpos_t width, curpos_t height): m_board(width, height) {
-      this->m_send_buff.reserve(32);
-    }
+    // do_insert_graphs() で使う為だけの変数
+    std::vector<cell_t> m_buffer;
+
+  public:
+    term_t(curpos_t width, curpos_t height): m_board(width, height) {}
 
   public:
     board_t& board() { return this->m_board; }
@@ -475,6 +479,11 @@ namespace ansi {
 
   public:
     void insert_marker(std::uint32_t marker) {
+      if (m_board.line().cells().size() >= contra::limit::maximal_cells_per_line) {
+        this->report_error("insert_marker: Exceeded the maximal number of cells per line.\n");
+        return;
+      }
+
       bool const simd = m_state.get_mode(mode_simd);
       curpos_t const dir = simd ? -1 : 1;
 

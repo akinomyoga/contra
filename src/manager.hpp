@@ -28,14 +28,16 @@ namespace term {
     curpos_t height() const { return m_height; }
     curpos_t xpixel() const { return m_xpixel; }
     curpos_t ypixel() const { return m_ypixel; }
-    void set_size(curpos_t width, curpos_t height) {
-      m_width = width;
-      m_height = height;
+
+    virtual void reset_size(curpos_t width, curpos_t height) {
+      m_width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
+      m_height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
+      if (m_term) m_term->board().reset_size(m_width, m_height);
     }
-    void set_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
-      set_size(width, height);
-      this->m_xpixel = xpixel;
-      this->m_ypixel = ypixel;
+    virtual void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
+      this->reset_size(width, height);
+      m_xpixel = std::clamp(xpixel, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
+      m_ypixel = std::clamp(ypixel, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
     }
 
   private:
@@ -50,7 +52,7 @@ namespace term {
 
   public:
     terminal_application() {
-      set_size(80, 24, 13, 7);
+      reset_size(80, 24, 13, 7);
     }
     virtual ~terminal_application() {}
 
@@ -72,15 +74,6 @@ namespace term {
     }
     virtual bool input_mouse(key_t key, coord_t px, coord_t py, curpos_t x, curpos_t y) {
       return m_term->input_mouse(key, px, py, x, y);
-    }
-    virtual void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
-      mwg_assert(width > 0 && height > 0 && xpixel > 0 && ypixel > 0,
-        "non-positive size is passed (width = %d, height = %d, xpixel = %d, ypixel = %d).", (int) width, (int) height, (int) xpixel, (int) ypixel);
-      this->set_size(width, height, xpixel, ypixel);
-      this->board().reset_size(width, height);
-    }
-    virtual void reset_size(curpos_t width, curpos_t height) {
-      reset_size(width, height, this->m_xpixel, this->m_ypixel);
     }
   };
 

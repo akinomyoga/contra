@@ -19,6 +19,8 @@
 #include <vector>
 #include <string>
 
+#include <chrono>
+
 #include "pty.hpp"
 #include "contradef.hpp"
 #include "manager.hpp"
@@ -34,10 +36,19 @@ namespace term {
   }
 
   std::size_t read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size) {
-    ssize_t const nread = read(fdsrc, buff, size);
-    if (nread <= 0) return 0;
-    dst->dev_write(buff, nread);
-    return nread;
+    char* p = buff;
+    ssize_t nread;
+auto const time0 = std::chrono::high_resolution_clock::now();
+    while ((nread = ::read(fdsrc, p, size)) > 0) {
+      size -= nread;
+      p += nread;
+    }
+auto const time1 = std::chrono::high_resolution_clock::now();
+    //if(nread < 0 && errno != EAGAIN) fdclosed?;
+    dst->dev_write(buff, p - buff);
+auto const nsec = std::chrono::duration_cast<std::chrono::microseconds>(time1 - time0);
+if (p!=buff)mwg_printd("nread total: %zu (%dnsec)", p - buff, (unsigned) nsec.count());
+    return p - buff;
   }
 
   bool fd_set_nonblock(int fd, bool value) {
@@ -226,7 +237,7 @@ namespace term {
       if (m_pty.is_active()) return true;
 
       if (!base::initialize()) return false;
-      base::set_size(params.col, params.row, params.xpixel, params.ypixel);
+      base::reset_size(params.col, params.row, params.xpixel, params.ypixel);
 
       if (!m_pty.start(params)) return false;
 
@@ -249,13 +260,14 @@ namespace term {
   public:
     virtual void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) override {
       base::reset_size(width, height, xpixel, ypixel);
-      m_pty.set_winsize(width, height, xpixel, ypixel);
+      if (m_pty.is_active())
+        m_pty.set_winsize(width, height, xpixel, ypixel);
     }
   };
 
   std::unique_ptr<terminal_application> create_terminal_session(terminal_session_parameters& params) {
-    // buffer size の設定
-    params.fd_read_buffer_size = 64 * 1024;
+    // buffer size の設定 (Note: 64kb 読み取って処理するのに 30ms かかった @ mag)
+    params.fd_read_buffer_size = 16 * 1024;
 
     // 環境変数の設定
     struct passwd* pw = ::getpwuid(::getuid());

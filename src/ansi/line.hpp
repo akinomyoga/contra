@@ -712,8 +712,9 @@ namespace ansi {
     std::uint32_t m_line_count = 0;
     presentation_direction m_presentation_direction {presentation_direction_default};
 
-    board_t(curpos_t width, curpos_t height): m_lines(height), m_width(width), m_height(height) {
-      mwg_check(width > 0 && height > 0, "width = %d, height = %d", (int) width, (int) height);
+    board_t(curpos_t width, curpos_t height): m_lines(height){
+      m_width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
+      m_height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
       this->cur.set(0, 0);
       for (line_t& line : m_lines)
         line.set_id(m_line_count++);
@@ -722,7 +723,8 @@ namespace ansi {
 
   public:
     void reset_size(curpos_t width, curpos_t height) {
-      mwg_check(width > 0 && height > 0, "non-positive size is passed (width = %d, height = %d).", (int) width, (int) height);
+      width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
+      height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
       if (width == this->m_width && height == this->m_height) return;
       if (this->cur.x() >= width) cur.set_x(width - 1);
       if (this->cur.y() >= height) cur.set_y(height - 1);
