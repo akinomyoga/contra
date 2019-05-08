@@ -1,3 +1,8 @@
+#include <cstdint>
+#include <cstdio>
+#include <vector>
+#include <string>
+#include <mwg/except.h>
 #include "enc.utf8.hpp"
 #include "contradef.hpp"
 
@@ -47,7 +52,6 @@ namespace encoding {
     return put_u8_impl(c, [=] (byte b) { std::putc(b, file); });
   }
 
-  // ToDo: 注意: 非正規UTF-8のチェックをしていない。
   void utf8_decode(char const*& ibeg, char const* iend, char32_t*& obeg, char32_t* oend, std::uint64_t& state, std::int32_t error_char) {
     std::uint_fast32_t code = state & 0xFFFFFFFF;
     std::uint_fast32_t norm = state >> 32 & 0xFFFF;
@@ -137,6 +141,61 @@ namespace encoding {
 
     state = std::uint64_t(mode << 16 | norm) << 32 | code;
     return;
+  }
+
+  template<typename ProcessChar32>
+  void utf16_decode_impl(char16_t const* ibeg, char16_t const* iend, ProcessChar32 proc, std::uint64_t& state, std::int32_t error_char) {
+    char32_t high = (char32_t) state;
+    mwg_assert(!high || is_high_surrogate(high));
+
+    while (ibeg < iend) {
+      char16_t const u = *ibeg++;
+      if (high) {
+        if (is_low_surrogate(u)) {
+          std::uint32_t const offset = (high & 0x3FF) << 10 | (u & 0x3FF);
+          proc(char32_t(0x1000 + offset));
+          high = 0;
+          continue;
+        } else {
+          if (error_char >= 0) proc((char32_t) error_char);
+        }
+        high = 0;
+      }
+
+      if (!is_surrogate(u)) {
+        proc(u);
+      } else if (is_high_surrogate(u)) {
+        high = u;
+      } else {
+        if (error_char >= 0)
+          proc((char32_t) error_char);
+      }
+    }
+
+    state = (std::uint64_t) high;
+  }
+  void utf16_decode(char16_t const* ibeg, char16_t const* iend, std::u32string& buffer, std::uint64_t& state, std::int32_t error_char) {
+    return utf16_decode_impl(ibeg, iend, [&] (char32_t u) { buffer.append(1, u); }, state, error_char);
+  }
+  void utf16_decode(char16_t const* ibeg, char16_t const* iend, std::vector<char32_t>& buffer, std::uint64_t& state, std::int32_t error_char) {
+    return utf16_decode_impl(ibeg, iend, [&] (char32_t u) { buffer.push_back(u); }, state, error_char);
+  }
+
+  void utf16_encode(char32_t const* ibeg, char32_t const* iend, std::u16string& buffer, std::uint64_t& state, std::int32_t error_char) {
+    contra_unused(state);
+    while (ibeg < iend) {
+      char32_t const u = *ibeg++;
+      if (u < (char32_t) 0x10000) {
+        buffer.append(1, char16_t(u));
+      } else if (u <= (char32_t) 0x10FFFF) {
+        std::uint32_t offset = u - 0x10000;
+        buffer.append(1, char16_t(0xD800 | (offset >> 10 & 0x3FF)));
+        buffer.append(1, char16_t(0xDC00 | (offset & 0x3FF)));
+      } else {
+        if (0 <= error_char && error_char < 0x10000)
+          buffer.append(1, char16_t(error_char));
+      }
+    }
   }
 
 }

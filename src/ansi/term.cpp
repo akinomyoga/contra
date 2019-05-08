@@ -2694,6 +2694,7 @@ namespace {
       input_unsigned(201);
       input_byte(ascii_tilde);
     }
+    input_flush();
     return true;
   }
 

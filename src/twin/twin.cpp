@@ -92,6 +92,32 @@ namespace twin {
 
   };
 
+  static std::u16string get_error_message(DWORD error_code) {
+    LPTSTR result = nullptr;
+    ::FormatMessage(
+      FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+      NULL, error_code, LANG_USER_DEFAULT, (LPTSTR) &result, 0, NULL);
+    std::u16string ret;
+    if (result) {
+      static_assert(sizeof(wchar_t) == sizeof(char16_t)); // Windows
+      ret = reinterpret_cast<char16_t*>(result);
+      ::LocalFree(result);
+    }
+    return ret;
+  }
+
+  static void report_error_message(const char* title, DWORD error_code) {
+    std::fprintf(stderr, "%s: (Error: %lu) ", title, error_code);
+    {
+      auto message = get_error_message(error_code);
+      std::vector<char32_t> buffer;
+      std::uint64_t state = 0;
+      contra::encoding::utf16_decode(&message[0], &message[message.size()], buffer, state);
+      for (char32_t u : buffer) contra::encoding::put_u8(u, stderr);
+    }
+    std::putc('\n', stderr);
+  }
+
   typedef std::uint32_t font_t;
 
   enum font_flags {
@@ -362,14 +388,125 @@ namespace twin {
   LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
   class twin_window_t {
+    static constexpr LPCTSTR szClassName = TEXT("Contra.Twin.Main");
+
     twin_settings settings;
     font_store_t fstore { settings };
 
     terminal_manager manager;
-
     HWND hWnd = NULL;
 
-    static constexpr LPCTSTR szClassName = TEXT("Contra.Twin.Main");
+    class twin_events: public contra::term::terminal_events {
+      twin_window_t* win;
+    public:
+      twin_events(twin_window_t* win): win(win) {}
+    private:
+      static bool read_clipboard(std::u16string& buffer) {
+        bool result = false;
+        if (!::OpenClipboard(NULL)) {
+          report_error_message("twin.clipboard", ::GetLastError());
+          return false;
+        }
+
+        HANDLE clip;
+        LPVOID data;
+
+        clip = ::GetClipboardData(CF_UNICODETEXT);
+        if (!clip) {
+          report_error_message("twin.clipboard", ::GetLastError());
+          goto close_clipboard;
+        }
+
+        data = ::GlobalLock(clip);
+        if (data == NULL) {
+          report_error_message("twin.clipboard", ::GetLastError());
+          goto close_clipboard;
+        }
+
+        static_assert(sizeof(TCHAR) == sizeof(char16_t));
+        buffer = reinterpret_cast<char16_t const*>(data);
+        result = true;
+        ::GlobalUnlock(clip);
+      close_clipboard:
+        ::CloseClipboard();
+        return result;
+      }
+
+      static bool write_clipboard(std::u16string const& buffer, HWND hWnd) {
+        std::size_t const sz = buffer.size();
+        HGLOBAL const hg = ::GlobalAlloc(GHND | GMEM_SHARE , (sz + 1) * sizeof(char16_t));
+        if (!hg) {
+          report_error_message("twin.clipboard", ::GetLastError());
+          return false;
+        }
+
+        LPVOID mem = ::GlobalLock(hg);
+        if (!mem) {
+          report_error_message("twin.clipboard", ::GetLastError());
+          goto global_free;
+        }
+
+        static_assert(sizeof(TCHAR) == sizeof(char16_t));
+        std::copy(buffer.c_str(), buffer.c_str() + sz + 1, reinterpret_cast<char16_t*>(mem));
+        ::GlobalUnlock(hg);
+
+        if (::OpenClipboard(hWnd)) {
+          ::EmptyClipboard();
+          HANDLE cdata = ::SetClipboardData(CF_UNICODETEXT , hg);
+          if (!cdata) report_error_message("twin.clipboard", ::GetLastError());
+          ::CloseClipboard();
+          return true;
+        }
+
+      global_free:
+        ::GlobalFree(hg);
+        return false;
+      }
+
+      std::u16string convert_lf_to_crlf(std::u16string const& src) {
+        std::u16string dst;
+        bool cr = false;
+        for (char16_t const c : src) {
+          if (c == u'\n' && !cr)
+            dst.append(1, u'\r');
+          dst.append(1, c);
+          cr = c == u'\r';
+        }
+        return dst;
+      }
+      std::u16string convert_crlf_to_lf(std::u16string const& src) {
+        std::u16string dst;
+        bool cr = false;
+        for (char16_t const c : src) {
+          if (cr && c != '\n')
+            dst.append(1, U'\r');
+          if (!(cr = c == '\r'))
+            dst.append(1, c);
+        }
+        if (cr) dst.append(1, U'\r');
+        return dst;
+      }
+    private:
+      virtual bool get_clipboard(std::u32string& data) override {
+        std::u16string data3;
+        if (!read_clipboard(data3)) return false;
+        std::u16string const data2 = convert_crlf_to_lf(data3);
+        data.clear();
+        std::uint64_t state = 0;
+        contra::encoding::utf16_decode(data2.c_str(), data2.c_str() + data2.size(), data, state);
+        return true;
+      }
+      virtual bool set_clipboard(std::u32string const& data) override {
+        if (!win->hWnd) return false;
+        std::u16string data2;
+        std::uint64_t state = 0;
+        contra::encoding::utf16_encode(data.c_str(), data.c_str() + data.size(), data2, state);
+        std::u16string const data3 = convert_lf_to_crlf(data2);
+        return write_clipboard(data3, win->hWnd);
+      }
+    };
+
+    twin_events events {this};
 
   private:
     bool is_session_ready() { return hWnd && manager.is_active(); }
@@ -412,6 +549,7 @@ namespace twin {
         NULL);
 
       this->start_blinking_timer();
+      this->manager.set_events(events);
       return hWnd;
     }
     bool m_window_size_adjusted = false;
