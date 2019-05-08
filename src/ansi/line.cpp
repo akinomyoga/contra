@@ -1246,3 +1246,28 @@ bool line_t::set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool
   if (dirty & attribute_t::ssa_selected) m_version++;
   return dirty & attribute_t::ssa_selected;
 }
+
+curpos_t line_t::extract_selection(std::u32string& data) const {
+  data.clear();
+  curpos_t head_x = 0;
+  curpos_t space_count = 0;
+  for (cell_t const& cell : this->m_cells) {
+    if (cell.attribute.xflags & attribute_t::ssa_selected) {
+      char32_t value = cell.character.get_unicode_representation();
+      if (value != (char32_t) character_t::invalid_value) {
+        if (value == ascii_nul) value = U' ';
+        if (data.empty())
+          head_x = space_count;
+        else
+          data.append(space_count, U' ');
+        space_count = 0;
+        data.append(1, value);
+        if ((cell.attribute.xflags & attribute_t::decdhl_mask) && cell.width / 2)
+          data.append(cell.width / 2, U' ');
+        continue;
+      }
+    }
+    space_count += cell.width;
+  }
+  return head_x;
+}

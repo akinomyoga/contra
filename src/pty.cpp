@@ -38,16 +38,12 @@ namespace term {
   std::size_t read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size) {
     char* p = buff;
     ssize_t nread;
-auto const time0 = std::chrono::high_resolution_clock::now();
     while ((nread = ::read(fdsrc, p, size)) > 0) {
       size -= nread;
       p += nread;
     }
-auto const time1 = std::chrono::high_resolution_clock::now();
     //if(nread < 0 && errno != EAGAIN) fdclosed?;
     dst->dev_write(buff, p - buff);
-auto const nsec = std::chrono::duration_cast<std::chrono::microseconds>(time1 - time0);
-if (p!=buff)mwg_printd("nread total: %zu (%dnsec)", p - buff, (unsigned) nsec.count());
     return p - buff;
   }
 
@@ -93,6 +89,7 @@ if (p!=buff)mwg_printd("nread total: %zu (%dnsec)", p - buff, (unsigned) nsec.co
     bool m_active = false;
     int slave_pid = -1;
     std::vector<char> m_read_buffer;
+    struct winsize ws;
   public:
     pty_connection() {}
     pty_connection(terminal_session_parameters const& params) {
@@ -125,7 +122,6 @@ if (p!=buff)mwg_printd("nread total: %zu (%dnsec)", p - buff, (unsigned) nsec.co
         setsid();
         if (params.termios) tcsetattr(slavefd, TCSANOW, params.termios);
         {
-          struct winsize ws;
           ws.ws_col = params.col;
           ws.ws_row = params.row;
           ws.ws_xpixel = params.xpixel;
@@ -164,8 +160,10 @@ if (p!=buff)mwg_printd("nread total: %zu (%dnsec)", p - buff, (unsigned) nsec.co
 
     bool is_active() const { return m_active; }
 
+  public:
     void set_winsize(curpos_t col, curpos_t row, curpos_t xpixel, curpos_t ypixel) {
-      struct winsize ws;
+      if (ws.ws_col == col && ws.ws_row == row &&
+        ws.ws_xpixel == xpixel && ws.ws_ypixel == ypixel) return;
       ws.ws_col = col;
       ws.ws_row = row;
       ws.ws_xpixel = xpixel;

@@ -651,6 +651,7 @@ namespace ansi {
   public:
     bool input_key(key_t key);
     bool input_mouse(key_t key, coord_t px, coord_t py, curpos_t x, curpos_t y);
+    bool input_paste(std::u32string const& data);
   };
 
 }

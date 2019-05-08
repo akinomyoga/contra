@@ -183,7 +183,6 @@ namespace dict {
       // daq_space_fill        = (xflags_t) 9  << daq_shift,
       // daq_tabstop           = (xflags_t) 10 << daq_shift,
 
-
       xflags_reserverd_bit1 = (xflags_t) 1 << 29,
       xflags_reserverd_bit2 = (xflags_t) 1 << 30,
       xflags_reserverd_bit3 = (xflags_t) 1 << 31,

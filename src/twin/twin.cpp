@@ -388,7 +388,7 @@ namespace twin {
         myProg.cbWndExtra    = 0;
         myProg.hInstance     = hInstance;
         myProg.hIcon         = NULL;
-        myProg.hCursor       = LoadCursor(NULL, IDC_ARROW);
+        myProg.hCursor       = ::LoadCursor(NULL, IDC_IBEAM);
         myProg.hbrBackground = (HBRUSH) ::GetStockObject(WHITE_BRUSH);
         myProg.lpszMenuName  = NULL;
         myProg.lpszClassName = szClassName;
@@ -1686,7 +1686,6 @@ namespace twin {
       logfont.lfWidth = fstore.width() * (current_font & font_decdwl ? 2 : 1);
       ::ImmSetCompositionFont(hIMC, const_cast<LOGFONT*>(&logfont));
 
-
       RECT rcClient;
       if (::GetClientRect(hWnd, &rcClient)) {
         auto const& b = manager.app().board();
@@ -1769,7 +1768,6 @@ namespace twin {
         key = GET_XBUTTON_WPARAM(wParam) == XBUTTON1 ? key_mouse4_up : key_mouse5_up;
         goto mouse_event;
       case WM_MOUSEMOVE:
-        ::SetCursor(::LoadCursor(NULL, IDC_IBEAM));
         {
           constexpr WORD mouse_buttons = MK_LBUTTON | MK_MBUTTON | MK_RBUTTON | MK_XBUTTON1 | MK_XBUTTON2;
           key = key_mouse_move;
@@ -1786,8 +1784,8 @@ namespace twin {
             else if (kstate & MK_XBUTTON2)
               key = key_mouse5_drag;
           }
-          goto mouse_event;
         }
+        goto mouse_event;
       case WM_MOUSEWHEEL:
         key = GET_WHEEL_DELTA_WPARAM(wParam) > 0 ? key_wheel_up : key_wheel_down;
         goto mouse_event;
@@ -1814,10 +1812,13 @@ namespace twin {
         goto defproc;
 
       case WM_TIMER:
-        if (m_cursor_timer_id && wParam == m_cursor_timer_id)
+        if (m_cursor_timer_id && wParam == m_cursor_timer_id) {
           process_cursor_timer();
-        else if (m_blinking_timer_id && wParam == m_blinking_timer_id)
+          return 0L;
+        } else if (m_blinking_timer_id && wParam == m_blinking_timer_id) {
           process_blinking_timer();
+          return 0L;
+        }
         goto defproc;
 
       default:

@@ -30,14 +30,14 @@ namespace term {
     curpos_t ypixel() const { return m_ypixel; }
 
     virtual void reset_size(curpos_t width, curpos_t height) {
-      m_width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
-      m_height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
-      if (m_term) m_term->board().reset_size(m_width, m_height);
+      this->reset_size(width, height, m_xpixel, m_ypixel);
     }
     virtual void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
-      this->reset_size(width, height);
+      m_width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
+      m_height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
       m_xpixel = std::clamp(xpixel, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
       m_ypixel = std::clamp(ypixel, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
+      if (m_term) m_term->board().reset_size(m_width, m_height);
     }
 
   private:
@@ -75,10 +75,21 @@ namespace term {
     virtual bool input_mouse(key_t key, coord_t px, coord_t py, curpos_t x, curpos_t y) {
       return m_term->input_mouse(key, px, py, x, y);
     }
+    virtual bool input_paste(std::u32string const& data) {
+      return m_term->input_paste(data);
+    }
+  };
+
+  class terminal_events {
+  public:
+    virtual bool get_clipboard([[maybe_unused]] std::u32string& data) { return false; }
+    virtual bool set_clipboard([[maybe_unused]] std::u32string const& data) { return false; }
+    virtual ~terminal_events() {}
   };
 
   class terminal_manager {
     std::vector<std::shared_ptr<terminal_application> > m_apps;
+    terminal_events* m_events = nullptr;
 
   public:
     terminal_manager() {}
@@ -90,6 +101,7 @@ namespace term {
     }
     template<typename T>
     void add_app(T&& app) { m_apps.emplace_back(std::forward<T>(app)); }
+    void set_events(terminal_events& events) { this->m_events = &events; }
 
   private:
     // ToDo: foreground/background で優先順位をつけたい。
@@ -154,7 +166,7 @@ namespace term {
         m_dirty |= line.clear_selection();
     }
 
-    void selection_start(curpos_t x, curpos_t y) {
+    void selection_initialize(curpos_t x, curpos_t y) {
       selection_clear();
       m_sel_type = 0;
       m_sel_beg_x = x;
@@ -184,7 +196,6 @@ namespace term {
 
       return false;
     }
-
     bool selection_update(key_t key, curpos_t x, curpos_t y) {
       using namespace contra::ansi;
 
@@ -261,10 +272,131 @@ namespace term {
       return true;
     }
 
+    void selection_extract_rectangle(std::u32string& data) {
+      using namespace contra::ansi;
+      board_t const& b = app().board();
+      curpos_t y1 = m_sel_beg_y;
+      curpos_t y2 = m_sel_end_y;
+      if (y1 > y2) std::swap(y1, y2);
+
+      std::vector<std::pair<curpos_t, std::u32string> > lines;
+      curpos_t min_x = -1;
+      {
+        curpos_t const nline = b.m_lines.size();
+        curpos_t skipped_line_count = 0;
+        bool started = false;
+        std::u32string line_data;
+        for (curpos_t iline = 0; iline < nline; iline++) {
+          curpos_t const x = b.m_lines[iline].extract_selection(line_data);
+          if (line_data.size() || (y1 <= iline && iline <= y2)) {
+            if (started && skipped_line_count)
+              lines.resize(lines.size() + skipped_line_count, std::make_pair(0, std::u32string()));
+            if (line_data.size() && (min_x < 0 || x < min_x)) min_x = x;
+            lines.emplace_back(std::make_pair(x, line_data));
+            skipped_line_count = 0;
+            started = true;
+          } else
+            skipped_line_count++;
+        }
+      }
+
+      data.clear();
+      bool isfirst = true;
+      for (auto& [x, line_data] : lines) {
+        // Note: OS 依存の CR LF への変換はもっと上のレイヤーで行う。
+        if (isfirst)
+          isfirst = false;
+        else
+          data.append(1, U'\n');
+        if (min_x < x) data.append(x - min_x, U' ');
+        data.append(line_data);
+      }
+    }
+
+    void selection_extract_characters(std::u32string& data) {
+      using namespace contra::ansi;
+      board_t const& b = app().board();
+      curpos_t const nline = b.m_lines.size();
+
+      // 開始点と範囲
+      curpos_t x1 = -1, x2 = -1, y1 = -1, y2 =-1;
+      if (m_sel_type) {
+        x1 = m_sel_beg_x;
+        y1 = m_sel_beg_y;
+        y2 = m_sel_end_y;
+        x2 = m_sel_end_x;
+        if (y1 < nline) x1 = b.to_data_position(y1, x1);
+        if (y2 < nline) x2 = b.to_data_position(y2, x2);
+        if (y1 > y2) {
+          std::swap(y1, y2);
+          std::swap(x1, x2);
+        } else if (y1 == y2 && x1 > x2) {
+          std::swap(x1, x2);
+        }
+      }
+
+      std::u32string result;
+      {
+        bool started = false;
+        curpos_t skipped_line_count = 0;
+        std::u32string line_data;
+        for (curpos_t iline = 0; iline < nline; iline++) {
+          curpos_t x = b.m_lines[iline].extract_selection(line_data);
+          if (line_data.size() || (y1 <= iline && iline <= y2)) {
+            if (started) result.append(skipped_line_count + 1, U'\n');
+            if (iline == y1 && x >= x1) x = 0;
+            if (x) result.append(x, U' ');
+            result.append(line_data);
+            skipped_line_count = 0;
+            started = true;
+          } else
+            skipped_line_count++;
+        }
+      }
+      if (!result.empty()) data.swap(result);
+    }
+
+    void selection_extract(std::u32string& data) {
+      if (m_sel_type & contra::ansi::modifier_meta)
+        selection_extract_rectangle(data);
+      else
+        selection_extract_characters(data);
+    }
+
+  private:
+    std::u32string m_clipboard_data;
+    void clipboard_paste() {
+      if (m_events) m_events->get_clipboard(m_clipboard_data);
+      app().input_paste(m_clipboard_data);
+    }
+    void clipboard_copy() {
+      selection_extract(m_clipboard_data);
+      if (m_events) m_events->set_clipboard(m_clipboard_data);
+    }
+
   public:
     bool m_dirty = false;
   private:
-    int m_drag_state = 0;
+    int m_mouse_multiple_click_threshold = 500;
+    int m_mouse1_drag_state = 0;
+    std::chrono::high_resolution_clock::time_point m_mouse1_release_time;
+    int m_mouse1_click_count = 0;
+    int m_mouse3_drag_state = 0;
+    void do_click(key_t key) { contra_unused(key); }
+    void do_select() { this->clipboard_copy(); }
+    void do_multiple_click(key_t key, int count) {
+      if (key == contra::ansi::key_mouse1_down) {
+        if (count == 2) {
+          // @@@単語選択
+        } else {
+          // @@@行選択
+        }
+      }
+    }
+    void do_right_click(key_t key) {
+      if (key == contra::ansi::key_mouse3_up)
+        this->clipboard_paste();
+    }
   public:
     bool input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t x, curpos_t y) {
       if (app().input_mouse(key, px, py, x, y)) return true;
@@ -272,22 +404,53 @@ namespace term {
       using namespace contra::ansi;
       switch (key & _character_mask) {
       case key_mouse1_down:
-        m_drag_state = 1;
-        selection_start(x, y);
+        m_mouse1_drag_state = 1;
+        selection_initialize(x, y);
+        {
+          // Note: double click, triple click, etc. の検出。
+          //   普通と違って前回のマウスボタンの解放からの時間で判定する。
+          //   これは自分の趣味。
+          auto current_time = std::chrono::high_resolution_clock::now();
+          auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - m_mouse1_release_time).count();
+          if (msec < m_mouse_multiple_click_threshold) {
+            if (++m_mouse1_click_count >= 2)
+              do_multiple_click(key, m_mouse1_click_count);
+          } else {
+            m_mouse1_click_count = 1;
+          }
+        }
         return true;
       case key_mouse1_drag:
-        if (m_drag_state) {
-          m_drag_state = 2;
+        if (m_mouse1_drag_state) {
+          m_mouse1_drag_state = 2;
           if (!selection_update(key, x, y))
-            m_drag_state = 0;
+            m_mouse1_drag_state = 0;
         }
+        // Note: 移動したら mouse down 回数を 1 に戻して
+        //   次は double click しか起こさない様にする。これは自分の趣味。
+        m_mouse1_click_count = 1;
         return true;
       case key_mouse1_up:
-        if (m_drag_state == 2) {
-          m_drag_state = 3;
-          if (!selection_update(key, x, y))
-            m_drag_state = 0;
+        if (m_mouse1_drag_state == 2) {
+          if (selection_update(key, x, y))
+            do_select();
+        } else if (m_mouse1_drag_state == 1) {
+          do_click(key);
         }
+        m_mouse1_release_time = std::chrono::high_resolution_clock::now();
+        m_mouse1_drag_state = 0;
+        return true;
+
+      case key_mouse3_down:
+        m_mouse3_drag_state = 1;
+        return true;
+      case key_mouse3_drag:
+        m_mouse3_drag_state = 2;
+        return true;
+      case key_mouse3_up:
+        if (m_mouse3_drag_state == 1)
+          do_right_click(key);
+        m_mouse3_drag_state = 0;
         return true;
       }
 

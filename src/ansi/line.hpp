@@ -25,6 +25,7 @@ namespace ansi {
   struct character_t {
     enum flags {
       unicode_mask         = 0x001FFFFF,
+      unicode_max          = 0x0010FFFF,
       flag_acs_character   = 0x01000000, // not yet supported
       flag_embedded_object = 0x08000000, // not yet supported
       flag_private1        = 0x02000000, // for private usage
@@ -41,6 +42,9 @@ namespace ansi {
       marker_srs_beg = marker_base + 4,
       marker_srs_end = marker_base + 5,
 
+      // Note: Unicode 表示のある marker に関しては
+      // flag_marker を外せばその文字になる様にする。
+
       // Unicode bidi markers
       marker_lre = flag_marker | 0x202A,
       marker_rle = flag_marker | 0x202B,
@@ -51,6 +55,8 @@ namespace ansi {
       marker_rli = flag_marker | 0x2067,
       marker_fsi = flag_marker | 0x2068,
       marker_pdi = flag_marker | 0x2069,
+
+      invalid_value = 0xFFFFFFFF,
     };
 
     std::uint32_t value;
@@ -82,6 +88,11 @@ namespace ansi {
       return value & flag_marker;
     }
 
+    constexpr char32_t get_unicode_representation() const {
+      char32_t const ret = value & ~(flag_marker | flag_cluster_extension);
+      if (ret <= unicode_max) return ret;
+      return invalid_value;
+    }
   };
 
   struct cell_t {
@@ -600,6 +611,14 @@ namespace ansi {
   public:
     bool set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool dcsm);
     bool clear_selection() { return set_selection(0, 0, false, true, true); }
+
+    /*?lwiki
+     * @fn curpos_t extract_selection(std::u32string& data);
+     * @param[in] x
+     *   ここに指定した x データ位置以降の選択済みセルを取得します。
+     * @return 最初の選択セルのデータ部における x 位置を返します。
+     */
+    curpos_t extract_selection(std::u32string& data) const;
 
   public:
     void debug_string_nest(curpos_t width, presentation_direction board_charpath) const {

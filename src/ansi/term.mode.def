@@ -29,6 +29,7 @@ flags     mode_decom              dec6        false
 flags     mode_decarm             dec8        true
 flags     mode_decnkm             dec66       false
 
+# Bracketed Paste Mode
 flags     mode_bracketedPasteMode dec2004     true
 
 # Implicit Movements

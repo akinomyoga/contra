@@ -2569,7 +2569,7 @@ namespace {
         input_byte(ascii_semicolon);
         input_modifier(mod);
       } else {
-        input_c1(m_state.get_mode(ansi::mode_decckm) ? ascii_ss3 : ascii_csi);
+        input_c1(m_state.get_mode(mode_decckm) ? ascii_ss3 : ascii_csi);
       }
       input_byte(a);
       input_flush();
@@ -2677,6 +2677,24 @@ namespace {
     }
 
     return false;
+  }
+
+  bool term_t::input_paste(std::u32string const& data) {
+    // Note: data が空であったとしても paste_begin/end は送る事にする。
+    //   空文字列でも vim 等でモードの変更などを引き起こしそうな気がする。
+    bool const bracketed_paste_mode = state().get_mode(mode_bracketedPasteMode);
+    if (bracketed_paste_mode) {
+      input_c1(ascii_csi);
+      input_unsigned(200);
+      input_byte(ascii_tilde);
+    }
+    for (char32_t const u : data) input_uchar(u);
+    if (bracketed_paste_mode) {
+      input_c1(ascii_csi);
+      input_unsigned(201);
+      input_byte(ascii_tilde);
+    }
+    return true;
   }
 
 }
