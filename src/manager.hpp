@@ -207,7 +207,7 @@ namespace term {
       tstate_t& s = app().state();
 
       bool const gatm =  s.get_mode(mode_gatm);
-      bool const truncate = !(m_sel_type & modifier_shift);
+      bool const truncate = !(m_sel_type & modifier_control);
       if (!selection_find_start_line()) {
         selection_clear();
         return false;
@@ -344,7 +344,8 @@ namespace term {
           curpos_t x = b.m_lines[iline].extract_selection(line_data);
           if (line_data.size() || (y1 <= iline && iline <= y2)) {
             if (started) result.append(skipped_line_count + 1, U'\n');
-            if (iline == y1 && x >= x1) x = 0;
+            //if (iline == y1 && x >= x1) x = 0;
+            if (!started) x = 0;
             if (x) result.append(x, U' ');
             result.append(line_data);
             skipped_line_count = 0;
@@ -384,13 +385,34 @@ namespace term {
     int m_mouse3_drag_state = 0;
     void do_click(key_t key) { contra_unused(key); }
     void do_select() { this->clipboard_copy(); }
-    void do_multiple_click(key_t key, int count) {
-      if (key == contra::ansi::key_mouse1_down) {
-        if (count == 2) {
-          // @@@単語選択
-        } else {
-          // @@@行選択
+    void do_multiple_click(key_t key, int count, curpos_t x, curpos_t y) {
+      using namespace contra::ansi;
+      if (key == key_mouse1_down) {
+        board_t& b = app().board();
+        curpos_t const nline = b.m_height;
+        bool const gatm = app().state().get_mode(mode_gatm);
+        for (curpos_t y1 = 0; y1 < nline; y1++) {
+          line_t& line = b.m_lines[y1];
+          if (y1 == y) {
+            word_selection_type wtype;
+            switch (count) {
+            case 2:
+              wtype = word_selection_cword;
+              goto set_selection_word;
+            case 3:
+              wtype = word_selection_sword;
+              goto set_selection_word;
+            set_selection_word:
+              m_dirty |= line.set_selection_word(b.to_data_position(y1, x), wtype, gatm);
+              break;
+            default:
+              m_dirty |= line.set_selection(0, b.m_width + 1, key & modifier_shift, gatm, true);
+              break;
+            }
+          } else
+            m_dirty |= line.clear_selection();
         }
+        if (y < nline) clipboard_copy();
       }
     }
     void do_right_click(key_t key) {
@@ -414,7 +436,7 @@ namespace term {
           auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - m_mouse1_release_time).count();
           if (msec < m_mouse_multiple_click_threshold) {
             if (++m_mouse1_click_count >= 2)
-              do_multiple_click(key, m_mouse1_click_count);
+              do_multiple_click(key, m_mouse1_click_count, x, y);
           } else {
             m_mouse1_click_count = 1;
           }

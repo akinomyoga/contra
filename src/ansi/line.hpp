@@ -216,6 +216,11 @@ namespace ansi {
     static constexpr def erm_protect             = 0x10;
   };
 
+  enum word_selection_type {
+    word_selection_cword,
+    word_selection_sword,
+  };
+
   class line_t {
   private:
     std::vector<cell_t> m_cells;
@@ -609,7 +614,14 @@ namespace ansi {
     }
 
   public:
+    /*?lwiki
+     * @fn bool set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool dcsm);
+     * @fn bool set_selection_word(curpos_t x, word_selection_type type, bool gatm);
+     * @fn bool clear_selection();
+     * @return 選択範囲の設定によって実際に行内容に変更があった時に true を返します。
+     */
     bool set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool dcsm);
+    bool set_selection_word(curpos_t x, word_selection_type type, bool gatm);
     bool clear_selection() { return set_selection(0, 0, false, true, true); }
 
     /*?lwiki

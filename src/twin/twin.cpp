@@ -463,7 +463,7 @@ namespace twin {
         return false;
       }
 
-      std::u16string convert_lf_to_crlf(std::u16string const& src) {
+      static std::u16string convert_lf_to_crlf(std::u16string const& src) {
         std::u16string dst;
         bool cr = false;
         for (char16_t const c : src) {
@@ -474,7 +474,7 @@ namespace twin {
         }
         return dst;
       }
-      std::u16string convert_crlf_to_lf(std::u16string const& src) {
+      static std::u16string convert_crlf_to_lf(std::u16string const& src) {
         std::u16string dst;
         bool cr = false;
         for (char16_t const c : src) {

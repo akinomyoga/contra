@@ -1247,6 +1247,54 @@ bool line_t::set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool
   return dirty & attribute_t::ssa_selected;
 }
 
+bool line_t::set_selection_word(curpos_t x, word_selection_type type, bool gatm) {
+  auto _guarded = [gatm] (cell_t const& cell) {
+    return !gatm && cell.attribute.xflags & (attribute_t::spa_protected | attribute_t::daq_guarded);
+  };
+  curpos_t const ncell = m_cells.size();
+  if (x >= ncell || _guarded(m_cells[x])) return false;
+
+  auto _isspace = [] (cell_t const& cell) {
+    return cell.character.value == ascii_nul || cell.character.value == ascii_sp;
+  };
+  auto _isalpha = [] (cell_t const& cell) {
+    std::uint32_t code = cell.character.value;
+    return code == ascii_underscore ||
+      (ascii_0 <= code && code <= ascii_9) ||
+      (ascii_A <= code && code <= ascii_Z) ||
+      (ascii_a <= code && code <= ascii_z) ||
+      code >= 0x80;
+  };
+  auto _isother = [&] (cell_t const& cell) { return !_isspace(cell) && !_isalpha(cell); };
+  auto _range = [&, this] (curpos_t x, auto predicate) {
+    curpos_t x1 = x;
+    for (curpos_t x1p = x; --x1p >= 0 && !_guarded(m_cells[x1p]); ) {
+      if (m_cells[x1p].character.is_extension()) continue;
+      if (predicate(m_cells[x1p])) x1 = x1p;
+      else break;
+    }
+
+    curpos_t x2 = x + 1;
+    for (curpos_t x2p = x + 1; x2p < ncell && !_guarded(m_cells[x2p]); x2p++) {
+      if (predicate(m_cells[x2p]) || m_cells[x2p].character.is_extension()) x2 = x2p + 1;
+      else break;
+    }
+
+    return std::make_pair(x1, x2);
+  };
+
+  if (type == word_selection_sword) {
+    auto const [x1, x2] = _isspace(m_cells[x]) ? _range(x, _isspace) :
+      _range(x, [&] (cell_t const& cell) { return !_isspace(cell); });
+    return set_selection(x1, x2, false, gatm, true);
+  } else {
+    auto const [x1, x2] = _isspace(m_cells[x]) ? _range(x, _isspace) :
+      _isalpha(m_cells[x]) ? _range(x, _isalpha) :
+      _range(x, _isother);
+    return set_selection(x1, x2, false, gatm, true);
+  }
+}
+
 curpos_t line_t::extract_selection(std::u32string& data) const {
   data.clear();
   curpos_t head_x = 0;
