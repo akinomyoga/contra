@@ -157,10 +157,10 @@ namespace contra {
     constexpr ansi::curpos_t minimal_terminal_row = 1;
     constexpr ansi::curpos_t maximal_terminal_col = 2048;
     constexpr ansi::curpos_t maximal_terminal_row = 2048;
-    constexpr ansi::curpos_t minimal_terminal_xpixel = 4; // SGR装飾の類で仮定?
-    constexpr ansi::curpos_t minimal_terminal_ypixel = 4; // SGR装飾の類で仮定?
-    constexpr ansi::curpos_t maximal_terminal_xpixel = 512;
-    constexpr ansi::curpos_t maximal_terminal_ypixel = 512;
+    constexpr ansi::coord_t minimal_terminal_xpixel = 4; // SGR装飾の類で仮定?
+    constexpr ansi::coord_t minimal_terminal_ypixel = 4; // SGR装飾の類で仮定?
+    constexpr ansi::coord_t maximal_terminal_xpixel = 512;
+    constexpr ansi::coord_t maximal_terminal_ypixel = 512;
     constexpr std::size_t maximal_cells_per_line = maximal_terminal_col * 5;
   }
 }

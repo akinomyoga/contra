@@ -73,7 +73,7 @@ namespace twin {
     const char* m_env_term = "xterm-256color";
     const char* m_env_shell = nullptr;
 
-    bool m_debug_print_window_messages = false;
+    int m_debug_print_window_messages = 0; // 0: none, 1: unprocessed, 2: all
     bool m_debug_print_unknown_key = false;
 
   public:
@@ -504,6 +504,43 @@ namespace twin {
         std::u16string const data3 = convert_lf_to_crlf(data2);
         return write_clipboard(data3, win->hWnd);
       }
+
+    private:
+      virtual bool request_change_size(curpos_t col, curpos_t row, coord_t xpixel, coord_t ypixel) override {
+        auto& settings = win->settings;
+        if (xpixel >= 0) xpixel = std::clamp(xpixel, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
+        if (ypixel >= 0) ypixel = std::clamp(ypixel, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
+
+        if (col < 0 && row < 0) {
+          // 文字サイズだけを変更→自動的に列・行を変えてウィンドウサイズを変えなくて済む様にする。
+          if (settings.m_xpixel != xpixel || settings.m_ypixel != ypixel) {
+            settings.m_xpixel = xpixel;
+            settings.m_ypixel = ypixel;
+            win->fstore.set_size(settings.m_xpixel, settings.m_ypixel);
+            win->adjust_terminal_size_using_current_client_size();
+            return true;
+          }
+        }
+
+        bool changed = false;
+        if (xpixel >= 0 && settings.m_xpixel != xpixel) { settings.m_xpixel = xpixel; changed = true; }
+        if (ypixel >= 0 && settings.m_ypixel != ypixel) { settings.m_ypixel = ypixel; changed = true; }
+        if (changed) win->fstore.set_size(settings.m_xpixel, settings.m_ypixel);
+        if (col >= 0) {
+          col = std::clamp(col, limit::minimal_terminal_col, limit::maximal_terminal_col);
+          if (col != settings.m_col) { settings.m_col = col; changed = true; }
+        }
+        if (row >= 0) {
+          row = std::clamp(row, limit::minimal_terminal_row, limit::maximal_terminal_row);
+          if (row != settings.m_row) { settings.m_row = row; changed = true; }
+        }
+        if (changed) {
+          win->adjust_window_size();
+          win->manager.reset_size(settings.m_col, settings.m_row, settings.m_xpixel, settings.m_ypixel);
+        }
+        return true;
+      }
+
     };
 
     twin_events events {this};
@@ -587,6 +624,12 @@ namespace twin {
         settings.m_row = new_row;
         manager.reset_size(new_col, new_row);
       }
+    }
+    void adjust_window_size() {
+      if (!is_session_ready()) return;
+      ::SetWindowPos(hWnd, NULL, 0, 0,
+        settings.calculate_window_width(), settings.calculate_window_height(),
+        SWP_NOZORDER | SWP_NOMOVE);
     }
 
   private:
@@ -1848,8 +1891,18 @@ namespace twin {
       this->render_window();
     }
 
+    static void  debug_print_window_message(UINT msg) {
+      const char* name = get_window_message_name(msg);
+      if (name)
+        std::fprintf(stderr, "message: %s\n", name);
+      else
+        std::fprintf(stderr, "message: %08x\n", msg);
+    }
   public:
     LRESULT process_message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+      if (settings.m_debug_print_window_messages == 2)
+        debug_print_window_message(msg);
+
       key_t key = 0;
       switch (msg) {
       case WM_CREATE:
@@ -1960,13 +2013,8 @@ namespace twin {
         goto defproc;
 
       default:
-        if (settings.m_debug_print_window_messages) {
-          const char* name = get_window_message_name(msg);
-          if (name)
-            std::fprintf(stderr, "message: %s\n", name);
-          else
-            std::fprintf(stderr, "message: %08x\n", msg);
-        }
+        if (settings.m_debug_print_window_messages == 1)
+          debug_print_window_message(msg);
       defproc:
         return ::DefWindowProc(hWnd, msg, wParam, lParam);
       }

@@ -3,6 +3,7 @@
 #define contra_manager_hpp
 #include <cstdint>
 #include <cstdio>
+#include <cmath>
 #include <sstream>
 #include <iterator>
 #include <memory>
@@ -22,7 +23,7 @@ namespace term {
 
   class terminal_application {
     curpos_t m_width = 80, m_height = 24;
-    coord_t m_xpixel = 13, m_ypixel = 7;
+    coord_t m_xpixel = 7, m_ypixel = 13;
   public:
     curpos_t width() const { return m_width; }
     curpos_t height() const { return m_height; }
@@ -82,17 +83,29 @@ namespace term {
 
   class terminal_events {
   public:
+    virtual ~terminal_events() {}
+
     virtual bool get_clipboard([[maybe_unused]] std::u32string& data) { return false; }
     virtual bool set_clipboard([[maybe_unused]] std::u32string const& data) { return false; }
-    virtual ~terminal_events() {}
+    virtual bool request_change_size(
+      [[maybe_unused]] curpos_t col,
+      [[maybe_unused]] curpos_t row,
+      [[maybe_unused]] coord_t xpixel,
+      [[maybe_unused]] coord_t ypixel
+    ) { return false; }
   };
 
   class terminal_manager {
     std::vector<std::shared_ptr<terminal_application> > m_apps;
     terminal_events* m_events = nullptr;
 
+    curpos_t m_width = 80, m_height = 24;
+    coord_t m_xpixel = 7, m_ypixel = 13;
+
   public:
-    terminal_manager() {}
+    terminal_manager() {
+      this->initialize_zoom();
+    }
 
   public:
     terminal_application& app() const {
@@ -419,6 +432,42 @@ namespace term {
       if (key == contra::ansi::key_mouse3_up)
         this->clipboard_paste();
     }
+
+  private:
+    coord_t m_zoom_xpixel0 = 7;
+    coord_t m_zoom_ypixel0 = 13;
+    int m_zoom_level_min = 0;
+    int m_zoom_level_max = 0;
+    int m_zoom_level = 0;
+    static constexpr double zoom_ratio = 1.05;
+
+    static double calculate_zoom(coord_t base, int zoom_level) {
+      return std::ceil(base * std::pow(zoom_ratio, zoom_level) + zoom_level);
+    }
+    void initialize_zoom(coord_t xpixel = -1, coord_t ypixel = -1) {
+      if (xpixel >= 0) m_zoom_xpixel0 = std::clamp(xpixel, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
+      if (ypixel >= 0) m_zoom_ypixel0 = std::clamp(ypixel, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
+      double const max_zoom_x = (double) limit::maximal_terminal_xpixel / m_zoom_xpixel0;
+      double const max_zoom_y = (double) limit::maximal_terminal_ypixel / m_zoom_ypixel0;
+      m_zoom_level_max = std::ceil(std::log(std::min(max_zoom_x, max_zoom_y)) / std::log(zoom_ratio));
+      double const min_zoom_x = (double) limit::minimal_terminal_xpixel / m_zoom_xpixel0;
+      double const min_zoom_y = (double) limit::minimal_terminal_ypixel / m_zoom_ypixel0;
+      m_zoom_level_min = std::ceil(std::log(std::max(min_zoom_x, min_zoom_y)) / std::log(zoom_ratio));
+      while (calculate_zoom(m_zoom_xpixel0, m_zoom_level_max) > limit::maximal_terminal_xpixel) m_zoom_level_max--;
+      while (calculate_zoom(m_zoom_ypixel0, m_zoom_level_max) > limit::maximal_terminal_ypixel) m_zoom_level_max--;
+      while (calculate_zoom(m_zoom_xpixel0, m_zoom_level_min) < limit::minimal_terminal_xpixel) m_zoom_level_min++;
+      while (calculate_zoom(m_zoom_ypixel0, m_zoom_level_min) < limit::minimal_terminal_ypixel) m_zoom_level_min++;
+      this->update_zoom(0);
+    }
+    void update_zoom(int zoom_level) {
+      m_zoom_level = std::clamp(zoom_level, m_zoom_level_min, m_zoom_level_max);
+      coord_t const xpixel_zoom = calculate_zoom(m_zoom_xpixel0, m_zoom_level);
+      coord_t const ypixel_zoom = calculate_zoom(m_zoom_ypixel0, m_zoom_level);
+      coord_t const xpixel = std::clamp(xpixel_zoom, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
+      coord_t const ypixel = std::clamp(ypixel_zoom, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
+      if (m_events) m_events->request_change_size(-1, -1, xpixel, ypixel);
+    }
+
   public:
     bool input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t x, curpos_t y) {
       if (app().input_mouse(key, px, py, x, y)) return true;
@@ -474,12 +523,32 @@ namespace term {
           do_right_click(key);
         m_mouse3_drag_state = 0;
         return true;
+
+      case key_wheel_down:
+        if ((key & _modifier_mask) == modifier_control) {
+          this->update_zoom(m_zoom_level - 1);
+        }
+        break;
+      case key_wheel_up:
+        if ((key & _modifier_mask) == modifier_control) {
+          this->update_zoom(m_zoom_level + 1);
+        }
+        break;
       }
 
       return false;
     }
-    void reset_size(std::size_t width, std::size_t height) {
+    void reset_size(curpos_t width, curpos_t height) {
+      this->m_width = width;
+      this->m_height = height;
       app().reset_size(width, height);
+    }
+    void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
+      this->m_width = width;
+      this->m_height = height;
+      this->m_xpixel = xpixel;
+      this->m_ypixel = ypixel;
+      app().reset_size(width, height, xpixel, ypixel);
     }
 
   };
