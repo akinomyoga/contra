@@ -1708,9 +1708,7 @@ namespace twin {
       }
     }
 
-
     enum extended_key_flags {
-      modifier_application = 0x04000000,
       toggle_capslock   = 0x100,
       toggle_numlock    = 0x200,
       toggle_scrolllock = 0x400,
@@ -1726,10 +1724,10 @@ namespace twin {
       if (GetKeyState(VK_LSHIFT) & 0x8000) ret |= modifier_shift;
       if (GetKeyState(VK_LCONTROL) & 0x8000) ret |= modifier_control;
       if (GetKeyState(VK_LMENU) & 0x8000) ret |= modifier_meta;
-      if (GetKeyState(VK_RMENU) & 0x8000) ret |= modifier_alter;
-      if (GetKeyState(VK_RCONTROL) & 0x8000) ret |= modifier_super;
-      if (GetKeyState(VK_RSHIFT) & 0x8000) ret |= modifier_hyper;
-      if (GetKeyState(VK_APPS) & 0x8000) ret |= modifier_application;
+      if (GetKeyState(VK_RMENU) & 0x8000) ret |= modifier_alter; // 右Alt
+      if (GetKeyState(VK_RCONTROL) & 0x8000) ret |= modifier_super; // 右Ctrl
+      if (GetKeyState(VK_RSHIFT) & 0x8000) ret |= modifier_hyper; // 右Shift
+      if (GetKeyState(VK_APPS) & 0x8000) ret |= modifier_application; // Menu
 
       if (GetKeyState(VK_CAPITAL) & 1) ret |= toggle_capslock;
       if (GetKeyState(VK_NUMLOCK) & 1) ret |= toggle_numlock;

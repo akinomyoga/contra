@@ -22,6 +22,9 @@ namespace contra {
   // discarded expression
 #define contra_unused(X) static_cast<void>(X)
 
+  template<typename Integer>
+  constexpr Integer ceil_div(Integer a, Integer b) { return (a + b - 1) / b; }
+
   //---------------------------------------------------------------------------
   // Output devices
 

@@ -127,6 +127,11 @@
   ToDo
 ------------------------------------------------------------------------------
 
+2019-05-16
+
+* settings: 設定ファイルを読み取る様にする
+* settings: 装飾キーの設定をできるようにする
+
 2019-05-15
 
 * カーソルの移動などがあったら multiple click は解除するべき
@@ -1640,6 +1645,50 @@
 ------------------------------------------------------------------------------
 
 2019-05-15
+
+* manager: a-0 で文字の大きさを元に戻す [#D0153]
+  キーの配置を変更する事にした。動いている。OK
+  a-+, a-- で拡大縮小ができる様にする。
+
+  取り敢えず現在の所は a として Menu キー (VK_APPS) を割り当ててはいるが、
+  正直な所押しにくい。自分で各装飾キーの意味を設定できる様にして、
+  自分専用の設定として右 Alt を a に割り当てたい気もする。
+  或いは prefix キーを登録できる様にする。
+  色々試すと CapsLock や 無変換・変換・カタカナキー等は IME が反応してしまうので、
+  勝手に装飾キーとして使ってしまうとかそういう用途には向かない。
+
+* manager: 文字の大きさ拡大縮小の仕方が変な気がする [#D0152]
+
+  やはり何か変だ。考え直さなければならない。
+  現在の式は ceil(xpixel0 pow(1.05, zoom_level) + zoom_level) になっているが、
+  これだと + zoom_level の部分で比率が変わってしまう。
+  比率を保持する様に修正しなければならない。
+
+  その為には y 方向だけに上の式を適用して、
+  x 方向に関しては比率で計算するという具合にしたい。
+  ではその場合に x 方向が limit を満たす様にする為には
+  どの様に zoom_level を制限すれば良いという事になるだろうか。
+
+  xpixel = ceil(ypixel * (xpixel0 / ypixel0)) という式で計算される。
+  xpixel_min <= xpixel <= xpixel_max が満たされる様な ypixel は何かという事。
+
+  xpixel = (ypixel * xpixel0 + ypixel0 - 1) / ypixel0
+  - xpixel >= xpixel_min
+    →ypixel * xpixel0 + ypixel0 - 1 >= xpixel_min * ypixel0
+  - xpixel <= xpixel_max
+    →ypixel * xpixel0 + ypixel0 - 1 >= xpixel_min * ypixel0 + ypixel0-1
+  よって、 xpixel_min*ypixel0 - (ypixel0-1) <= ypixel * xpixel0 <= xpixel_min*ypixel0.
+  次に A <= B*C という条件を A/C <= B 的な形に変形したいとする。
+  うーん。(A+C-1)/C <= B ならばOK
+  従って (xpixel_min*ypixel0 - (ypixel0-1) + (xpixel0-1))/xpixel0 <= ypixel
+  また A*B <= C という条件を A <= C/B 的な形に変形したいとする。これはそのままでOK
+  つまり、ypixel <= xpixel_min*ypixel0/xpixel0 という事になる。
+
+  何だか分かりにくい式である。。。
+  整理すると A*B <= C <=> A <= C/B,
+    A <= B*C <=> (A+(C-1))/C <= B,
+    A/C <= B <=> A-(C-1) <= B*C という事になる。
+  うーん。恐らく整理しても綺麗な形にはならないのだろうという気がする。
 
 * C-wheel による文字の大きさの変更に対応する [#D0151]
 

@@ -26,7 +26,7 @@ namespace ansi {
     _unicode_max    = 0x0010FFFF,
     _key_base       = 0x00110000,
 
-    _modifier_mask  = 0x3F000000,
+    _modifier_mask  = 0x7F000000,
     _modifier_shft  = 24,
 
     key_f1        = _key_base | 1,
@@ -87,6 +87,7 @@ namespace ansi {
     modifier_super       = 0x08000000,
     modifier_hyper       = 0x10000000,
     modifier_alter       = 0x20000000,
+    modifier_application = 0x40000000,
 
     // focus in/out
     key_focus     = _key_base | 58,

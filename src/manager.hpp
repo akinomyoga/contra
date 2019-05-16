@@ -159,7 +159,24 @@ namespace term {
 
   public:
     bool input_key(key_t key) {
-      return app().input_key(key);
+      using namespace contra::ansi;
+      if (key & modifier_application) {
+        key &= ~modifier_application;
+        switch (key) {
+        case ascii_0:
+          this->update_zoom(0);
+          return true;
+        case ascii_plus:
+          this->update_zoom(m_zoom_level + 1);
+          return true;
+        case ascii_minus:
+          this->update_zoom(m_zoom_level - 1);
+          return true;
+        default:
+          return false;
+        }
+      } else
+        return app().input_key(key);
     }
 
   private:
@@ -447,24 +464,23 @@ namespace term {
     void initialize_zoom(coord_t xpixel = -1, coord_t ypixel = -1) {
       if (xpixel >= 0) m_zoom_xpixel0 = std::clamp(xpixel, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
       if (ypixel >= 0) m_zoom_ypixel0 = std::clamp(ypixel, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
-      double const max_zoom_x = (double) limit::maximal_terminal_xpixel / m_zoom_xpixel0;
-      double const max_zoom_y = (double) limit::maximal_terminal_ypixel / m_zoom_ypixel0;
-      m_zoom_level_max = std::ceil(std::log(std::min(max_zoom_x, max_zoom_y)) / std::log(zoom_ratio));
-      double const min_zoom_x = (double) limit::minimal_terminal_xpixel / m_zoom_xpixel0;
-      double const min_zoom_y = (double) limit::minimal_terminal_ypixel / m_zoom_ypixel0;
-      m_zoom_level_min = std::ceil(std::log(std::max(min_zoom_x, min_zoom_y)) / std::log(zoom_ratio));
-      while (calculate_zoom(m_zoom_xpixel0, m_zoom_level_max) > limit::maximal_terminal_xpixel) m_zoom_level_max--;
-      while (calculate_zoom(m_zoom_ypixel0, m_zoom_level_max) > limit::maximal_terminal_ypixel) m_zoom_level_max--;
-      while (calculate_zoom(m_zoom_xpixel0, m_zoom_level_min) < limit::minimal_terminal_xpixel) m_zoom_level_min++;
-      while (calculate_zoom(m_zoom_ypixel0, m_zoom_level_min) < limit::minimal_terminal_ypixel) m_zoom_level_min++;
+
+      coord_t const ypixel_min_from_xrange = contra::ceil_div((limit::minimal_terminal_xpixel - 1) * m_zoom_ypixel0 + 1, m_zoom_xpixel0);
+      coord_t const ypixel_max_from_xrange = limit::maximal_terminal_xpixel * m_zoom_ypixel0 / m_zoom_xpixel0;
+      coord_t const ypixel_min = std::max(limit::minimal_terminal_ypixel, ypixel_min_from_xrange);
+      coord_t const ypixel_max = std::min(limit::maximal_terminal_ypixel, ypixel_max_from_xrange);
+      m_zoom_level_min = std::ceil(std::log((double) ypixel_min / m_zoom_ypixel0) / std::log(zoom_ratio));
+      m_zoom_level_max = std::ceil(std::log((double) ypixel_max / m_zoom_ypixel0) / std::log(zoom_ratio));
+      while (calculate_zoom(m_zoom_ypixel0, m_zoom_level_max) > ypixel_max) m_zoom_level_max--;
+      while (calculate_zoom(m_zoom_ypixel0, m_zoom_level_min) < ypixel_min) m_zoom_level_min++;
       this->update_zoom(0);
     }
     void update_zoom(int zoom_level) {
       m_zoom_level = std::clamp(zoom_level, m_zoom_level_min, m_zoom_level_max);
-      coord_t const xpixel_zoom = calculate_zoom(m_zoom_xpixel0, m_zoom_level);
       coord_t const ypixel_zoom = calculate_zoom(m_zoom_ypixel0, m_zoom_level);
-      coord_t const xpixel = std::clamp(xpixel_zoom, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
+      coord_t const xpixel_zoom = contra::ceil_div(ypixel_zoom * m_zoom_xpixel0, m_zoom_ypixel0);
       coord_t const ypixel = std::clamp(ypixel_zoom, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
+      coord_t const xpixel = std::clamp(xpixel_zoom, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
       if (m_events) m_events->request_change_size(-1, -1, xpixel, ypixel);
     }
 
