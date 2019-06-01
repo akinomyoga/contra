@@ -95,6 +95,7 @@ namespace ansi {
 
     // mouse events
     _key_mouse_button_mask = 0x0700,
+    _key_mouse_button_shft = 8,
     _key_mouse1     = 0x0100,
     _key_mouse2     = 0x0200,
     _key_mouse3     = 0x0300,

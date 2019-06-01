@@ -81,6 +81,146 @@ namespace term {
     }
   };
 
+  class mouse_events {
+  public:
+    virtual ~mouse_events() {}
+    virtual void on_select_initialize([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {}
+    virtual void on_select_finalize([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {}
+    virtual bool on_select_update([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) { return false; }
+    virtual void on_select([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {}
+    virtual void on_click([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {}
+    virtual void on_multiple_click([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y, [[maybe_unused]] int count) {}
+  };
+
+  class mouse_event_detector {
+    bool button_state[5] = {};
+    int button_count = 0;
+
+    int drag_state = 0;
+    int drag_button = 0;
+
+    int multiple_click_threshold = 500;
+    int multiple_click_button = 0;
+    int multiple_click_count = 0;
+    std::chrono::high_resolution_clock::time_point multiple_click_time;
+
+    mouse_events* events = nullptr;
+
+  public:
+    mouse_event_detector() {}
+    mouse_event_detector(mouse_events* events): events(events) {}
+
+  private:
+    bool process_mouse_down(key_t key, curpos_t x, curpos_t y, int button_index) {
+      if (this->button_state[button_index - 1]) return false;
+      this->button_state[button_index - 1] = true;
+      this->button_count++;
+
+      if (this->button_count == 1) {
+        this->drag_state = 1;
+        events->on_select_initialize(key, x, y);
+      } else if (this->drag_state) {
+        this->drag_state = 0;
+        events->on_select_finalize(key, x, y);
+      }
+
+      // 複数クリックの検出
+      if (this->multiple_click_button != button_index) {
+        if (this->button_count == 1) {
+          this->multiple_click_button = button_index;
+          this->multiple_click_count = 1;
+        } else
+          this->multiple_click_button = 0;
+      } else {
+        // Note: double click, triple click, etc. の検出。
+        //   普通と違って前回のマウスボタンの解放からの時間で判定する。
+        //   これは自分の趣味。
+        auto const current_time = std::chrono::high_resolution_clock::now();
+        auto const msec = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - this->multiple_click_time).count();
+        if (msec < this->multiple_click_threshold) {
+          if (++this->multiple_click_count >= 2)
+            events->on_multiple_click(key, x, y, this->multiple_click_count);
+        } else {
+          this->multiple_click_count = 1;
+        }
+      }
+
+      return true;
+    }
+    bool process_mouse_drag(key_t key, curpos_t x, curpos_t y, int button_index) {
+      if (this->drag_state) {
+        this->drag_state = 2;
+        if (!events->on_select_update(key, x, y)) {
+          this->drag_state = 0;
+          events->on_select_finalize(key, x, y);
+        }
+      }
+
+      if (button_index == this->multiple_click_button) {
+        // Note: 移動したら mouse down 回数を 1 に戻して
+        //   次は double click しか起こさない様にする。これは自分の趣味。
+        this->multiple_click_count = 1;
+      } else {
+        this->multiple_click_button = 0;
+      }
+
+      return true;
+    }
+    bool process_mouse_up(key_t key, curpos_t x, curpos_t y, int button_index) {
+      if (!this->button_state[button_index - 1]) return false;
+      this->button_state[button_index - 1] = false;
+      this->button_count--;
+
+      if (this->drag_state) {
+        if (this->drag_state == 2) {
+          if (events->on_select_update(key, x, y))
+            events->on_select(key, x, y);
+        } else if (this->drag_state == 1) {
+          if (button_index != this->multiple_click_button ||
+            this->multiple_click_count == 1)
+            events->on_click(key, x, y);
+        }
+        this->drag_state = 0;
+        events->on_select_finalize(key, x, y);
+      }
+
+      if (this->button_count == 0) {
+        if (button_index == this->multiple_click_button) {
+          this->multiple_click_time = std::chrono::high_resolution_clock::now();
+        } else {
+          this->multiple_click_button = 0;
+        }
+      }
+
+      return true;
+    }
+    bool process_mouse_move([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {
+      this->drag_state = 0;
+      this->multiple_click_button = 0;
+      return true;
+    }
+
+  public:
+    bool input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t x, curpos_t y) {
+      using namespace contra::ansi;
+      int const button_index = (key & _key_mouse_button_mask) >> _key_mouse_button_shft;
+      if (1 <= button_index && button_index <= 5) {
+        switch (key & _key_mouse_event_mask) {
+        case _key_mouse_event_down:
+          return process_mouse_down(key, x, y, button_index);
+        case _key_mouse_event_move:
+          return process_mouse_drag(key, x, y, button_index);
+        case _key_mouse_event_up:
+          return process_mouse_up(key, x, y, button_index);
+        }
+      } else {
+        if (key == key_mouse_move)
+          return process_mouse_move(key, x, y);
+      }
+      return false;
+    }
+  };
+
   class terminal_events {
   public:
     virtual ~terminal_events() {}
@@ -408,11 +548,43 @@ namespace term {
   public:
     bool m_dirty = false;
   private:
-    int m_mouse_multiple_click_threshold = 500;
-    int m_mouse1_drag_state = 0;
-    std::chrono::high_resolution_clock::time_point m_mouse1_release_time;
-    int m_mouse1_click_count = 0;
-    int m_mouse3_drag_state = 0;
+    class manager_mouse_events: public mouse_events {
+      terminal_manager* manager;
+    public:
+      manager_mouse_events(terminal_manager* m): manager(m) {}
+    private:
+      virtual void on_select_initialize(key_t key, curpos_t x, curpos_t y) override {
+        if (key == contra::ansi::key_mouse1_down)
+          manager->selection_initialize(x, y);
+      }
+      virtual bool on_select_update(key_t key, curpos_t x, curpos_t y) override {
+        return key == contra::ansi::key_mouse1_drag && manager->selection_update(key, x, y);
+      }
+      virtual void on_select(key_t key, curpos_t x, curpos_t y) {
+        contra_unused(key);
+        contra_unused(x);
+        contra_unused(y);
+        manager->do_select();
+      }
+      virtual void on_click(key_t key, curpos_t x, curpos_t y) {
+        contra_unused(x);
+        contra_unused(y);
+        switch (key & contra::ansi::_key_mouse_button_mask) {
+        case contra::ansi::_key_mouse1:
+          manager->do_click(key);
+          break;
+        case contra::ansi::_key_mouse3:
+          manager->do_right_click(key);
+          break;
+        }
+      }
+      virtual void on_multiple_click(key_t key, curpos_t x, curpos_t y, int count) {
+        manager->do_multiple_click(key, count, x, y);
+      }
+    };
+
+    manager_mouse_events m_mouse_events {this};
+    mouse_event_detector m_mouse_detector {&this->m_mouse_events};
     void do_click(key_t key) { contra_unused(key); }
     void do_select() { this->clipboard_copy(); }
     void do_multiple_click(key_t key, int count, curpos_t x, curpos_t y) {
@@ -489,67 +661,22 @@ namespace term {
       if (app().input_mouse(key, px, py, x, y)) return true;
 
       using namespace contra::ansi;
+
       switch (key & _character_mask) {
-      case key_mouse1_down:
-        m_mouse1_drag_state = 1;
-        selection_initialize(x, y);
-        {
-          // Note: double click, triple click, etc. の検出。
-          //   普通と違って前回のマウスボタンの解放からの時間で判定する。
-          //   これは自分の趣味。
-          auto current_time = std::chrono::high_resolution_clock::now();
-          auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - m_mouse1_release_time).count();
-          if (msec < m_mouse_multiple_click_threshold) {
-            if (++m_mouse1_click_count >= 2)
-              do_multiple_click(key, m_mouse1_click_count, x, y);
-          } else {
-            m_mouse1_click_count = 1;
-          }
-        }
-        return true;
-      case key_mouse1_drag:
-        if (m_mouse1_drag_state) {
-          m_mouse1_drag_state = 2;
-          if (!selection_update(key, x, y))
-            m_mouse1_drag_state = 0;
-        }
-        // Note: 移動したら mouse down 回数を 1 に戻して
-        //   次は double click しか起こさない様にする。これは自分の趣味。
-        m_mouse1_click_count = 1;
-        return true;
-      case key_mouse1_up:
-        if (m_mouse1_drag_state == 2) {
-          if (selection_update(key, x, y))
-            do_select();
-        } else if (m_mouse1_drag_state == 1) {
-          do_click(key);
-        }
-        m_mouse1_release_time = std::chrono::high_resolution_clock::now();
-        m_mouse1_drag_state = 0;
-        return true;
-
-      case key_mouse3_down:
-        m_mouse3_drag_state = 1;
-        return true;
-      case key_mouse3_drag:
-        m_mouse3_drag_state = 2;
-        return true;
-      case key_mouse3_up:
-        if (m_mouse3_drag_state == 1)
-          do_right_click(key);
-        m_mouse3_drag_state = 0;
-        return true;
-
       case key_wheel_down:
         if ((key & _modifier_mask) == modifier_control) {
           this->update_zoom(m_zoom_level - 1);
+          return true;
         }
         break;
       case key_wheel_up:
         if ((key & _modifier_mask) == modifier_control) {
           this->update_zoom(m_zoom_level + 1);
+          return true;
         }
         break;
+      default:
+        return m_mouse_detector.input_mouse(key, px, py, x, y);
       }
 
       return false;
