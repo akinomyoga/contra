@@ -3,7 +3,7 @@
 #include <sys/ioctl.h>
 
 #include "pty.hpp"
-#include "session.hpp"
+#include "manager.hpp"
 #include "sequence.hpp"
 #include "dict.hpp"
 #include "ttty/buffer.hpp"
@@ -11,29 +11,33 @@
 
 int main() {
   contra::ttty::ttty_screen screen(STDIN_FILENO, STDOUT_FILENO);
-  auto& sess = screen.session();
+  contra::term::terminal_session_parameters params;
   {
-    ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &sess.init_ws);
-    sess.init_termios = &screen.old_termios;
+    struct winsize ws;
+    ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &ws);
+    params.col = ws.ws_col;
+    params.row = ws.ws_row;
+    params.xpixel = ws.ws_xpixel;
+    params.ypixel = ws.ws_ypixel;
+    params.termios = &screen.old_termios;
+
+    params.dbg_fd_tee = STDOUT_FILENO;
+    params.dbg_sequence_logfile = "impl2-allseq.txt";
   }
-  if (!screen.initialize()) return 10;
+  if (!screen.initialize(params)) return 10;
 
-  contra::term::fd_device d0(STDOUT_FILENO);
-  sess.output_device().push(&d0);
-
-  contra::sequence_printer printer("impl2-allseq.txt");
-  sess.output_device().push(&printer);
+  auto& app = screen.manager().app();
 
   screen.do_loop(false);
   screen.finalize();
 
   contra::dict::termcap_sgr_type sgrcap;
   sgrcap.initialize();
-  contra::ttty::tty_observer target(sess.term(), stdout, &sgrcap);
-  target.writer().print_screen(sess.board());
+  contra::ttty::tty_observer target(app.term(), stdout, &sgrcap);
+  target.writer().print_screen(app.board());
 
   std::FILE* file = std::fopen("impl2-dump.txt", "w");
-  sess.board().debug_print(file);
+  app.board().debug_print(file);
   std::fclose(file);
 
   return 0;

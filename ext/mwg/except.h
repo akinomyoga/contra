@@ -522,6 +522,8 @@ namespace except_detail {
     increment_fail_count();
 #if defined(MWG_DEBUG) || !defined(NDEBUG)
     vprint_onfail_impl(expr, pos, func, fmt, arg1);
+#else
+    (void) arg1;
 #endif
     vthrow_onfail_impl(expr, pos, func, fmt, arg2);
 

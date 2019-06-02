@@ -4,6 +4,7 @@ all:
 .PHONY: all
 
 include make_variables.mk
+CXXFLAGS += -std=gnu++17 -I ../ext
 
 SHELL := /bin/bash
 ostype := $(shell echo -n $$OSTYPE)

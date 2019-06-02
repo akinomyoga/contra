@@ -1,11 +1,11 @@
 # Modes
 
-flags     mode_gatm               ansi1       unsupported
+flags     mode_gatm               ansi1       false
 flags     mode_kam                ansi2       unsupported
 flags     mode_crm                ansi3       unsupported
 flags     mode_irm                ansi4       unsupported
 flags     mode_srtm               ansi5       unsupported
-flags     mode_erm                ansi6       true
+flags     mode_erm                ansi6       false
 flags     mode_vem                ansi7       false
 flags     mode_bdsm               ansi8       false
 flags     mode_dcsm               ansi9       true
@@ -19,7 +19,7 @@ flags     mode_ttm                ansi16      unsupported
 flags     mode_satm               ansi17      unsupported
 flags     mode_tsm                ansi18      unsupported
 flags     mode_ebm                ansi19      unsupported
-flags     mode_lnm                ansi20      true
+flags     mode_lnm                ansi20      false
 flags     mode_grcm               ansi21      true
 flags     mode_zdm                ansi22      true
 
@@ -29,6 +29,7 @@ flags     mode_decom              dec6        false
 flags     mode_decarm             dec8        true
 flags     mode_decnkm             dec66       false
 
+# Bracketed Paste Mode
 flags     mode_bracketedPasteMode dec2004     true
 
 # Implicit Movements
@@ -61,6 +62,17 @@ flags     mode_decncsm            dec95       false
 # 既定の前景色・背景色の反転
 flags     mode_decscnm_           private     false
 accessor  mode_decscnm            dec5        -
+
+# Mouse report
+accessor  mode_xtMouseX10         dec9        -
+accessor  mode_xtMouseVt200       dec1000     -
+accessor  mode_xtMouseHilite      dec1001     -
+accessor  mode_xtMouseButton      dec1002     -
+accessor  mode_xtMouseAll         dec1003     -
+accessor  mode_xtExtMouseUtf8     dec1005     -
+accessor  mode_xtExtMouseSgr      dec1006     -
+accessor  mode_xtExtMouseUrxvt    dec1015     -
+flags     mode_xtSendFocus        dec1004     false
 
 #------------------------------------------------------------------------------
 # Contra original modes (inaccessible)

@@ -13,7 +13,7 @@ namespace contra {
 namespace ansi {
 
   void print_key(key_t key, std::FILE* file) {
-    key_t const code = key & mask_keycode;
+    key_t const code = key & _character_mask;
 
     std::ostringstream str;
     if (key & modifier_alter) str << "A-";
@@ -24,7 +24,7 @@ namespace ansi {
     if (key & modifier_shift) str << "S-";
     std::fprintf(file, "key: %s", str.str().c_str());
 
-    if (code < key_base) {
+    if (code < _key_base) {
       switch (code) {
       case ascii_bs: std::fprintf(file, "BS"); break;
       case ascii_ht: std::fprintf(file, "TAB"); break;
@@ -50,7 +50,7 @@ namespace ansi {
         "kp5", "kp6", "kp7", "kp8", "kp9",
         "kpdec", "kpsep", "kpmul", "kpadd", "kpsub", "kpdiv",
       };
-      std::uint32_t const index = code - key_base;
+      std::uint32_t const index = code - _key_base;
       const char* name = index <= std::size(table) ? table[index] : NULL;
       if (name) {
         std::fprintf(file, "%s\n", name);
@@ -220,6 +220,14 @@ namespace {
       else
         std::fprintf(stderr, "unrecognized DEC mode %u\n", (unsigned) param);
     }
+    int rqm_ansi_mode(tstate_t& s, csi_single_param_t param) {
+      auto const it = data_ansi.find(param);
+      return it == data_ansi.end() ? 0 : s.rqm_mode(it->second);
+    }
+    int rqm_dec_mode(tstate_t& s, csi_single_param_t param) {
+      auto const it = data_dec.find(param);
+      return it == data_dec.end() ? 0 : s.rqm_mode(it->second);
+    }
   };
   static mode_dictionary_t mode_dictionary;
 
@@ -250,6 +258,33 @@ namespace {
     while (params.read_param(value, 0))
       mode_dictionary.set_dec_mode(s, value, false);
     return true;
+  }
+  static bool do_decrqm_impl(term_t& term, csi_parameters& params, bool decmode) {
+    tstate_t& s = term.state();
+    csi_single_param_t value;
+    params.read_param(value, 0);
+
+    int result;
+    if (decmode)
+      result = mode_dictionary.rqm_dec_mode(s, value);
+    else
+      result = mode_dictionary.rqm_dec_mode(s, value);
+
+    term.input_c1(ascii_csi);
+    if (decmode) term.input_byte(ascii_question);
+    term.input_unsigned(value);
+    term.input_byte(ascii_semicolon);
+    term.input_unsigned(result);
+    term.input_byte(ascii_dollar);
+    term.input_byte(ascii_y);
+
+    return true;
+  }
+  bool do_decrqm_ansi(term_t& term, csi_parameters& params) {
+    return do_decrqm_impl(term, params, false);
+  }
+  bool do_decrqm_dec(term_t& term, csi_parameters& params) {
+    return do_decrqm_impl(term, params, false);
   }
 
   bool do_decscusr(term_t& term, csi_parameters& params) {
@@ -588,6 +623,119 @@ namespace {
     }
     b.cur.set_x(x, xenl);
   }
+
+  void do_insert_graphs(term_t& term, char32_t const* beg, char32_t const* end) {
+    if (beg + 1 == end) return do_insert_graph(term, *beg);
+
+    board_t& b = term.board();
+    tstate_t& s = term.state();
+
+    // initialize configuration
+    bool const simd = s.get_mode(mode_simd);
+    curpos_t const dir = simd ? -1 : 1;
+    bool const decawm = s.get_mode(mode_decawm);
+    bool const cap_xenl = s.get_mode(mode_xenl);
+    int const width_multiplier = b.cur.attribute.xflags & attribute_t::decdhl_mask ? 2 : 1;
+
+    curpos_t x = b.cur.x();
+
+    // current line and range
+    line_t* line = &b.line();
+    term.initialize_line(*line);
+    curpos_t slh = term.implicit_slh(*line);
+    curpos_t sll = term.implicit_sll(*line);
+    if (x < slh)
+      slh = 0;
+    else if (x > (b.cur.xenl() ? sll + 1 : sll))
+      sll = b.m_width - 1;
+    if (simd) std::swap(slh, sll);
+
+    auto _next_line = [&] () {
+      do_nel(term);
+      x = b.cur.x();
+      line = &b.line();
+      term.initialize_line(*line);
+
+      // Note: do_nel() 後に b.cur.x() in [slh, sll]
+      //   は保証されていると思って良いので、
+      //   現在位置が範囲外の時の sll の補正は不要。
+      slh = term.implicit_slh(*line);
+      sll = term.implicit_sll(*line);
+      if (simd) std::swap(slh, sll);
+    };
+
+    cell_t cell;
+    cell.character = ascii_nul;
+    cell.attribute = b.cur.attribute;
+    cell.width = 1;
+
+    std::vector<cell_t>& buffer = term.m_buffer;
+    mwg_assert(buffer.empty());
+    curpos_t xwrite = 0;
+    auto _write = [&] () {
+      if (simd) std::reverse(buffer.begin(), buffer.end());
+      line->write_cells(xwrite, &buffer[0], buffer.size(), 1, dir);
+      buffer.clear();
+    };
+
+    while (beg < end) {
+      char32_t const u = *beg++;
+
+      int const char_width = s.c2w(u) * width_multiplier;
+      mwg_assert(char_width > 0); // ToDo: control chars, etc.
+
+      // (行頭より後でかつ) 行末に文字が入らない時は折り返し
+      curpos_t const x0 = x;
+      curpos_t const x1 = x0 + dir * (char_width - 1);
+      if ((x1 - sll) * dir > 0 && (x0 - slh) * dir > 0) {
+        if (buffer.size()) _write();
+
+        // Note: !decawm の時は以降の文字も全部入らないので抜ける。
+        //   現在は文字幅が有限である事を要求しているので。
+        //   但し、零幅の文字を考慮に入れる時にはここは修正する必要がある。
+        //   もしくは零幅の文字の時には insert_graphs は使わない。
+        mwg_assert(char_width > 0);
+        if (!decawm) break;
+
+        _next_line();
+      }
+
+      // 文字は取り敢えず buffer に登録する
+      if (simd)
+        xwrite = std::max(0, x - (char_width - 1));
+      else if (buffer.empty())
+        xwrite = x;
+      cell.character = u;
+      cell.width = char_width;
+      buffer.emplace_back(cell);
+      x += dir * char_width;
+    }
+
+    // Note: buffer.size() == 0 なのは何も書いていないか改行した直後で、
+    //   その時にはデータを書き込む必要はないし、
+    //   また x も動かないか改行した時に設定されている筈。
+    if (buffer.size()) {
+      _write();
+
+      bool xenl = false;
+      if ((x - sll) * dir >= 1) {
+        if (decawm) {
+          // 行末を超えた時は折り返し
+          // Note: xenl かつ x == sll + 1 ならば の位置にいる事を許容する。
+          if (!simd && x == sll + 1 && cap_xenl) {
+            xenl = true;
+          } else {
+            do_nel(term);
+            return;
+          }
+        } else {
+          x = sll;
+        }
+      }
+      b.cur.set_x(x, xenl);
+    }
+  }
+
 
   //---------------------------------------------------------------------------
   // Page and line settings
@@ -1571,7 +1719,7 @@ namespace {
 
     board_t& b = term.board();
     line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
-    if (s.get_mode(mode_erm)) flags |= line_shift_flags::erm;
+    if (!s.get_mode(mode_erm)) flags |= line_shift_flags::erm_protect;
 
     curpos_t x1;
     if (s.get_mode(mode_xenl_ech)) b.cur.adjust_xenl();
@@ -1668,8 +1816,8 @@ namespace {
     board_t& b = term.board();
     tstate_t& s = term.state();
     if (param != 0 && param != 1) {
-      if (s.get_mode(mode_erm) && line.has_protected_cells()) {
-        line_shift_flags flags = line_shift_flags::erm;
+      if (!s.get_mode(mode_erm) && line.has_protected_cells()) {
+        line_shift_flags flags = line_shift_flags::erm_protect;
         if (line.is_r2l(b.m_presentation_direction)) flags |= line_shift_flags::r2l;
         if (s.dcsm()) flags |= line_shift_flags::dcsm;
         line.shift_cells(0, b.m_width, b.m_width, flags, b.m_width, fill_attr);
@@ -1679,7 +1827,7 @@ namespace {
     }
 
     line_shift_flags flags = 0;
-    if (s.get_mode(mode_erm)) flags |= line_shift_flags::erm;
+    if (!s.get_mode(mode_erm)) flags |= line_shift_flags::erm_protect;
     if (line.is_r2l(b.m_presentation_direction)) flags |= line_shift_flags::r2l;
     if (s.dcsm()) flags |= line_shift_flags::dcsm;
 
@@ -1723,7 +1871,7 @@ namespace {
       }
     }
 
-    if (s.get_mode(mode_erm)) {
+    if (!s.get_mode(mode_erm)) {
       for (curpos_t y = y1; y < y2; y++)
         do_el(term, b.m_lines[y], 2, fill_attr);
     } else {
@@ -1811,6 +1959,43 @@ namespace {
     do_il_impl(term, -(curpos_t) param);
     return true;
   }
+
+  //---------------------------------------------------------------------------
+  // Mouse report settings
+
+  static void do_set_mouse_report(term_t& term, std::uint32_t spec) {
+    tstate_t& s = term.state();
+    s.mouse_mode = (s.mouse_mode & ~mouse_report_mask) | spec;
+  }
+  static void do_set_mouse_sequence(term_t& term, std::uint32_t spec) {
+    tstate_t& s = term.state();
+    s.mouse_mode = (s.mouse_mode & ~mouse_sequence_mask) | spec;
+  }
+  static int do_rqm_mouse_report(term_t& term, std::uint32_t spec) {
+    tstate_t& s = term.state();
+    return (s.mouse_mode & mouse_report_mask) == spec ? 1 : 2;
+  }
+  static int do_rqm_mouse_sequence(term_t& term, std::uint32_t spec) {
+    tstate_t& s = term.state();
+    return (s.mouse_mode & mouse_sequence_mask) == spec ? 1 : 2;
+  }
+  void do_sm_xtMouseX10(term_t& term, bool value)      { do_set_mouse_report(term, value ? mouse_report_down : 0); }
+  void do_sm_xtMouseVt200(term_t& term, bool value)    { do_set_mouse_report(term, value ? mouse_report_xtMouseVt200 : 0); }
+  void do_sm_xtMouseHilite(term_t& term, bool value)   { do_set_mouse_report(term, value ? mouse_report_xtMouseHilite : 0); }
+  void do_sm_xtMouseButton(term_t& term, bool value)   { do_set_mouse_report(term, value ? mouse_report_xtMouseButton : 0); }
+  void do_sm_xtMouseAll(term_t& term, bool value)      { do_set_mouse_report(term, value ? mouse_report_xtMouseAll : 0); }
+  void do_sm_xtExtMouseUtf8(term_t& term, bool value)  { do_set_mouse_sequence(term, value ? mouse_sequence_utf8 : 0); }
+  void do_sm_xtExtMouseSgr(term_t& term, bool value)   { do_set_mouse_sequence(term, value ? mouse_sequence_sgr : 0); }
+  void do_sm_xtExtMouseUrxvt(term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_urxvt : 0); }
+
+  int do_rqm_xtMouseX10(term_t& term)      { return do_rqm_mouse_report(term, mouse_report_down); }
+  int do_rqm_xtMouseVt200(term_t& term)    { return do_rqm_mouse_report(term, mouse_report_xtMouseVt200); }
+  int do_rqm_xtMouseHilite(term_t& term)   { return do_rqm_mouse_report(term, mouse_report_xtMouseHilite); }
+  int do_rqm_xtMouseButton(term_t& term)   { return do_rqm_mouse_report(term, mouse_report_xtMouseButton); }
+  int do_rqm_xtMouseAll(term_t& term)      { return do_rqm_mouse_report(term, mouse_report_xtMouseAll); }
+  int do_rqm_xtExtMouseUtf8(term_t& term)  { return do_rqm_mouse_sequence(term, mouse_sequence_utf8); }
+  int do_rqm_xtExtMouseSgr(term_t& term)   { return do_rqm_mouse_sequence(term, mouse_sequence_sgr); }
+  int do_rqm_xtExtMouseUrxvt(term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_urxvt); }
 
   //---------------------------------------------------------------------------
   // device attributes
@@ -1909,33 +2094,37 @@ namespace {
     return minor << 8 | major;
   }
 
-  bool tstate_t::get_mode_with_accessor(mode_t modeSpec) const {
+  int tstate_t::rqm_mode_with_accessor(mode_t modeSpec) const {
     // Note: 現在は暫定的にハードコーディングしているが、
     //   将来的にはunordered_map か何かで登録できる様にする。
     //   もしくは何らかの表からコードを自動生成する様にする。
     switch (modeSpec) {
     case mode_wystcurm1: // Mode 32 (Set Cursor Mode (Wyse))
-      return !get_mode(mode_attCursorBlink);
+      return !get_mode(mode_attCursorBlink) ? 1 : 2;
     case mode_wystcurm2: // Mode 33 WYSTCURM (Wyse Set Cursor Mode)
-      return !get_mode(resource_cursorBlink);
+      return !get_mode(resource_cursorBlink) ? 1 : 2;
     case mode_wyulcurm: // Mode 34 WYULCURM (Wyse Underline Cursor Mode)
-      return m_cursor_shape > 0;
+      return m_cursor_shape > 0 ? 1 : 2;
     case mode_altscreen: // Mode ?47
-      return get_mode(mode_altscr);
+      return rqm_mode(mode_altscr);
     case mode_altscreen_clr: // Mode ?1047
-      return get_mode(mode_altscr);
+      return rqm_mode(mode_altscr);
     case mode_decsc: // Mode ?1048
-      return m_decsc_cur.x() >= 0;
+      return m_decsc_cur.x() >= 0 ? 1 : 2;
     case mode_altscreen_cur: // Mode ?1049
-      return get_mode(mode_altscr);
-    case mode_deccolm:
-      return 1 & do_rqm_deccolm(*m_term);
-    case mode_decscnm:
-      return 1 & do_rqm_decscnm(*m_term);
-    case mode_decawm:
-      return 1 & do_rqm_decawm(*m_term);
-    default:
-      return false;
+      return rqm_mode(mode_altscr);
+    case mode_deccolm: return do_rqm_deccolm(*m_term);
+    case mode_decscnm: return do_rqm_decscnm(*m_term);
+    case mode_decawm : return do_rqm_decawm(*m_term);
+    case mode_xtMouseX10     : return do_rqm_xtMouseX10(*m_term);
+    case mode_xtMouseVt200   : return do_rqm_xtMouseVt200(*m_term);
+    case mode_xtMouseHilite  : return do_rqm_xtMouseHilite(*m_term);
+    case mode_xtMouseButton  : return do_rqm_xtMouseButton(*m_term);
+    case mode_xtMouseAll     : return do_rqm_xtMouseAll(*m_term);
+    case mode_xtExtMouseUtf8 : return do_rqm_xtExtMouseUtf8(*m_term);
+    case mode_xtExtMouseSgr  : return do_rqm_xtExtMouseSgr(*m_term);
+    case mode_xtExtMouseUrxvt: return do_rqm_xtExtMouseUrxvt(*m_term);
+    default: return 0;
     }
   }
 
@@ -1962,8 +2151,8 @@ namespace {
       break;
     case mode_altscreen_clr:
       if (get_mode(mode_altscr) != value) {
-        if (value) do_ed(*m_term, 2);
         set_mode(mode_altscreen, value);
+        if (value) do_ed(*m_term, 2);
       }
       break;
     case mode_decsc:
@@ -1976,17 +2165,20 @@ namespace {
       if (get_mode(mode_altscr) != value) {
         set_mode(mode_altscreen, value);
         set_mode(mode_decsc, value);
+        if (value) do_ed(*m_term, 2);
       }
       break;
-    case mode_deccolm:
-      do_sm_deccolm(*m_term, value);
-      break;
-    case mode_decscnm:
-      do_sm_decscnm(*m_term, value);
-      break;
-    case mode_decawm:
-      do_sm_decawm(*m_term, value);
-      break;
+    case mode_deccolm: do_sm_deccolm(*m_term, value); break;
+    case mode_decscnm: do_sm_decscnm(*m_term, value); break;
+    case mode_decawm:  do_sm_decawm(*m_term, value);  break;
+    case mode_xtMouseX10     : do_sm_xtMouseX10(*m_term, value);      break;
+    case mode_xtMouseVt200   : do_sm_xtMouseVt200(*m_term, value);    break;
+    case mode_xtMouseHilite  : do_sm_xtMouseHilite(*m_term, value);   break;
+    case mode_xtMouseButton  : do_sm_xtMouseButton(*m_term, value);   break;
+    case mode_xtMouseAll     : do_sm_xtMouseAll(*m_term, value);      break;
+    case mode_xtExtMouseUtf8 : do_sm_xtExtMouseUtf8(*m_term, value);  break;
+    case mode_xtExtMouseSgr  : do_sm_xtExtMouseSgr(*m_term, value);   break;
+    case mode_xtExtMouseUrxvt: do_sm_xtExtMouseUrxvt(*m_term, value); break;
     default: ;
     }
   }
@@ -2061,6 +2253,7 @@ namespace {
       register_cfunc(&do_decscl  , ascii_double_quote, ascii_p);
       register_cfunc(&do_decsca  , ascii_double_quote, ascii_q);
       register_cfunc(&do_decscpp , ascii_dollar, ascii_vertical_bar);
+      register_cfunc(&do_decrqm_ansi, ascii_dollar, ascii_p);
     }
 
     control_function_t* get(byte F) const {
@@ -2086,15 +2279,20 @@ namespace {
         csi_parameters params(param + 1, len - 1);
         if (!params) return false;
 
-        switch (seq.final()) {
-        case 'h': return do_decset(term, params);
-        case 'l': return do_decrst(term, params);
+        if (seq.intermediate_size() == 0) {
+          switch (seq.final()) {
+          case ascii_h: return do_decset(term, params);
+          case ascii_l: return do_decrst(term, params);
+          }
+        } else if (seq.intermediate_size() == 1) {
+          if (seq.intermediate()[0] == ascii_dollar && seq.final() == ascii_y)
+            return do_decrqm_dec(term, params);
         }
       } else if (param[0] == '>') {
         csi_parameters params(param + 1, len - 1);
         if (!params) return false;
         switch (seq.final()) {
-        case 'c': return do_da2(term, params);
+        case ascii_c: return do_da2(term, params);
         }
       }
     }
@@ -2104,16 +2302,20 @@ namespace {
 
   void term_t::process_control_sequence(sequence const& seq) {
     // check cursor state
+#ifndef NDEBUG
     board_t& b = this->board();
     mwg_assert(b.cur.is_sane(b.m_width));
+#endif
 
     if (seq.is_private_csi()) {
       if (!process_private_control_sequence(*this, seq))
         print_unrecognized_sequence(seq);
 
+#ifndef NDEBUG
       mwg_assert(b.cur.is_sane(b.m_width),
         "cur: {x=%d, xenl=%d, width=%d} after CSI %c %c",
         b.cur.x(), b.cur.xenl(), b.m_width, seq.parameter()[0], seq.final());
+#endif
       return;
     }
 
@@ -2170,10 +2372,12 @@ namespace {
     case ascii_esa: do_esa(*this); break;
     }
 
+#ifndef NDEBUG
     board_t& b = board();
     mwg_assert(b.cur.is_sane(b.m_width),
       "cur: {x=%d, xenl=%d, width=%d} after C0/C1 %d",
       b.cur.x(), b.cur.xenl(), b.m_width, uchar);
+#endif
   }
 
   void term_t::process_escape_sequence(sequence const& seq) {
@@ -2221,10 +2425,9 @@ namespace {
     print_unrecognized_sequence(seq);
   }
 
-
-  void term_t::input_key(key_t key) {
+  bool term_t::input_key(key_t key) {
     key_t mod = key & _modifier_mask;
-    key_t code = key & mask_keycode;
+    key_t code = key & _character_mask;
 
     // Meta は一律で ESC にする。
     if (mod & modifier_meta) {
@@ -2256,12 +2459,12 @@ namespace {
     }
 
     // 通常文字
-    if (mod == 0 && code < key_base) {
+    if (mod == 0 && code < _key_base) {
       // Note: ESC, RET, HT はそのまま (C-[, C-m, C-i) 送信される。
       if (code == ascii_bs) code = ascii_del;
       contra::encoding::put_u8(code, input_buffer);
       input_flush();
-      return;
+      return true;
     }
 
     // C0 文字および DEL
@@ -2273,32 +2476,42 @@ namespace {
         // C-@ ... C-_
         input_byte(code & 0x1F);
         input_flush();
-        return;
+        return true;
       } else if (code == ascii_question) {
         // C-? → ^? (DEL 0x7F)
         input_byte(ascii_del);
         input_flush();
-        return;
+        return true;
       } else if (code == ascii_bs) {
         // C-back → ^_ (US 0x1F)
         input_byte(ascii_us);
         input_flush();
-        return;
+        return true;
       }
     }
 
     // BS CR(RET) HT(TAB) ESC
-    // CSI <Unicode> ; <Modifier> u 形式
-    if (code < key_base) {
+    if (code < _key_base) {
+      // CSI <Unicode> ; <Modifier> u 形式
+      // input_c1(ascii_csi);
+      // input_unsigned(code);
+      // if (mod) {
+      //   input_byte(ascii_semicolon);
+      //   input_modifier(mod);
+      // }
+      // input_byte(ascii_u);
+
+      // CSI 27 ; <Modifier> ; <Unicode> ~ 形式
       input_c1(ascii_csi);
+      input_byte(ascii_2);
+      input_byte(ascii_7);
+      input_byte(ascii_semicolon);
+      input_modifier(mod);
+      input_byte(ascii_semicolon);
       input_unsigned(code);
-      if (mod) {
-        input_byte(ascii_semicolon);
-        input_modifier(mod);
-      }
-      input_byte(ascii_u);
+      input_byte(ascii_tilde);
       input_flush();
-      return;
+      return true;
     }
 
     // application key mode の時修飾なしの関数キーは \eOA 等にする。
@@ -2343,7 +2556,7 @@ namespace {
       }
       input_byte(ascii_tilde);
       input_flush();
-      return;
+      return true;
     case key_up   : a = ascii_A; goto alpha;
     case key_down : a = ascii_B; goto alpha;
     case key_right: a = ascii_C; goto alpha;
@@ -2356,13 +2569,133 @@ namespace {
         input_byte(ascii_semicolon);
         input_modifier(mod);
       } else {
-        input_c1(m_state.get_mode(ansi::mode_decckm) ? ascii_ss3 : ascii_csi);
+        input_c1(m_state.get_mode(mode_decckm) ? ascii_ss3 : ascii_csi);
       }
       input_byte(a);
       input_flush();
-      return;
-    default: break;
+      return true;
+    case key_focus: a = ascii_I; goto alpha_focus;
+    case key_blur:  a = ascii_O; goto alpha_focus;
+    alpha_focus:
+      if (m_state.get_mode(mode_xtSendFocus)) goto alpha;
+      return false;
+    default:
+      return false;
     }
+  }
+
+  bool term_t::input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t const x, curpos_t const y) {
+    tstate_t const& s = this->state();
+    if (!(s.mouse_mode & mouse_report_mask)) return false;
+
+    std::uint32_t button = 0;
+    switch (key & _key_mouse_button_mask) {
+    case _key_mouse1: button = 0;  break;
+    case _key_mouse2: button = 1;  break;
+    case _key_mouse3: button = 2;  break;
+    case _key_mouse4: button = 66; break; // contra: 適当
+    case _key_mouse5: button = 67; break; // contra: 適当
+    case key_wheel_up:   button = 64; break;
+    case key_wheel_down: button = 65; break;
+    case 0: button = 3; break;
+    default: return false;
+    }
+
+    char final_character = ascii_M;
+
+    switch (key & _key_mouse_event_mask) {
+    case _key_mouse_event_down:
+      if (s.mouse_mode & mouse_report_down)
+        goto report_sequence;
+      break;
+    case _key_mouse_event_up:
+      if (s.mouse_mode & mouse_report_up) {
+        if (s.mouse_mode & mouse_sequence_sgr)
+          final_character = ascii_m;
+        else
+          button = 3;
+        goto report_sequence;
+      } else if (s.mouse_mode & mouse_report_select) {
+        final_character = ascii_t;
+        goto report_sequence;
+      }
+      break;
+    case _key_mouse_event_move:
+      // 前回と同じ升目に居る時は送らなくて良い。
+      if (x == m_mouse_prev_x && y == m_mouse_prev_y) return true;
+      if (key & _key_mouse_button_mask) {
+        if (s.mouse_mode & mouse_report_drag) {
+          button |= 32;
+          goto report_sequence;
+        }
+      } else if (s.mouse_mode & mouse_report_move) {
+        button |= 32;
+        goto report_sequence;
+      }
+      break;
+    report_sequence:
+      if (key & modifier_shift) button |= 4;
+      if (key & modifier_meta) button |= 8;
+      if (key & modifier_control) button |= 16;
+
+      switch (std::uint32_t const seqtype = s.mouse_mode & mouse_sequence_mask) {
+      default:
+        input_c1(ascii_csi);
+        input_byte(final_character);
+        if (final_character != ascii_t)
+          input_byte(std::min(button + 32, 255u));
+        input_byte(std::clamp(x + 33, 0, 255));
+        input_byte(std::clamp(y + 33, 0, 255));
+        break;
+      case mouse_sequence_utf8:
+        input_c1(ascii_csi);
+        input_byte(final_character);
+        if (final_character != ascii_t)
+          input_uchar(std::min(button + 32, (std::uint32_t) _unicode_max));
+        input_uchar(std::clamp<curpos_t>(x + 33, 0, _unicode_max));
+        input_uchar(std::clamp<curpos_t>(y + 33, 0, _unicode_max));
+        break;
+      case mouse_sequence_urxvt:
+      case mouse_sequence_sgr:
+        input_c1(ascii_csi);
+        if (seqtype == mouse_sequence_sgr)
+          input_byte(ascii_less);
+        if (final_character != ascii_t) {
+          input_unsigned(button);
+          input_byte(ascii_semicolon);
+        }
+        input_unsigned(x + 1);
+        input_byte(ascii_semicolon);
+        input_unsigned(y + 1);
+        input_byte(final_character);
+        break;
+      }
+      input_flush();
+      m_mouse_prev_x = x;
+      m_mouse_prev_y = y;
+      return true;
+    }
+
+    return false;
+  }
+
+  bool term_t::input_paste(std::u32string const& data) {
+    // Note: data が空であったとしても paste_begin/end は送る事にする。
+    //   空文字列でも vim 等でモードの変更などを引き起こしそうな気がする。
+    bool const bracketed_paste_mode = state().get_mode(mode_bracketedPasteMode);
+    if (bracketed_paste_mode) {
+      input_c1(ascii_csi);
+      input_unsigned(200);
+      input_byte(ascii_tilde);
+    }
+    for (char32_t const u : data) input_uchar(u);
+    if (bracketed_paste_mode) {
+      input_c1(ascii_csi);
+      input_unsigned(201);
+      input_byte(ascii_tilde);
+    }
+    input_flush();
+    return true;
   }
 
 }

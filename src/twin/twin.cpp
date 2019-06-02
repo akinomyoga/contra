@@ -2,14 +2,8 @@
 #include <tchar.h>
 #include <wchar.h>
 #include <windows.h>
+#include <windowsx.h>
 #include <imm.h>
-
-#include <sys/ioctl.h>
-
-// for getuid, getpwuid
-#include <unistd.h>
-#include <sys/types.h>
-#include <pwd.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -22,12 +16,14 @@
 #include <iterator>
 #include <algorithm>
 #include <numeric>
+#include <tuple>
+#include <limits>
 #include <mwg/except.h>
 #include "../contradef.hpp"
 #include "../enc.utf8.hpp"
 #include "../util.hpp"
 #include "../pty.hpp"
-#include "../session.hpp"
+#include "../manager.hpp"
 #include "win_messages.hpp"
 
 #define _tcslen wcslen
@@ -57,8 +53,6 @@ namespace twin {
   using namespace contra::term;
   using namespace contra::ansi;
 
-  typedef std::int32_t coord_t;
-
   struct twin_settings {
     curpos_t m_col = 80;//@size
     curpos_t m_row = 30;
@@ -77,6 +71,10 @@ namespace twin {
     UINT m_blinking_interval = 200;
 
     const char* m_env_term = "xterm-256color";
+    const char* m_env_shell = nullptr;
+
+    int m_debug_print_window_messages = 0; // 0: none, 1: unprocessed, 2: all
+    bool m_debug_print_unknown_key = false;
 
   public:
     coord_t calculate_client_width() const {
@@ -93,6 +91,32 @@ namespace twin {
     }
 
   };
+
+  static std::u16string get_error_message(DWORD error_code) {
+    LPTSTR result = nullptr;
+    ::FormatMessage(
+      FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+      NULL, error_code, LANG_USER_DEFAULT, (LPTSTR) &result, 0, NULL);
+    std::u16string ret;
+    if (result) {
+      static_assert(sizeof(wchar_t) == sizeof(char16_t)); // Windows
+      ret = reinterpret_cast<char16_t*>(result);
+      ::LocalFree(result);
+    }
+    return ret;
+  }
+
+  static void report_error_message(const char* title, DWORD error_code) {
+    std::fprintf(stderr, "%s: (Error: %lu) ", title, error_code);
+    {
+      auto message = get_error_message(error_code);
+      std::vector<char32_t> buffer;
+      std::uint64_t state = 0;
+      contra::encoding::utf16_decode(&message[0], &message[message.size()], buffer, state);
+      for (char32_t u : buffer) contra::encoding::put_u8(u, stderr);
+    }
+    std::putc('\n', stderr);
+  }
 
   typedef std::uint32_t font_t;
 
@@ -178,7 +202,7 @@ namespace twin {
       m_fontnames[5]  = TEXT("HGGyoshotai"); // HG行書体
       m_fontnames[6]  = TEXT("HGSeikaishotaiPRO"); // HG正楷書体-PRO
       m_fontnames[7]  = TEXT("HGSoeiKakupoptai"); // HG創英角ﾎﾟｯﾌﾟ体
-      // m_fontnames[8]  = TEXT("HGGothicM"); // HGｺﾞｼｯｸM
+      m_fontnames[8]  = TEXT("HGGothicM"); // HGｺﾞｼｯｸM
       // m_fontnames[9]  = TEXT("HGMinchoB"); // HG明朝B
       m_fontnames[9]  = TEXT("Times New Roman"); // HG明朝B
       m_fontnames[10] = TEXT("aghtex_mathfrak");
@@ -229,13 +253,28 @@ namespace twin {
       return get_font(0);
     }
 
-
   public:
     coord_t small_height() const {
       return std::max<coord_t>(8u, std::min(m_height - 4, (m_height * 7 + 9) / 10));
     }
     coord_t small_width() const {
       return std::max<coord_t>(4u, std::min(m_width - 4, (m_width * 8 + 9) / 10));
+    }
+
+    coord_t get_font_height(font_t font) const {
+      coord_t height = font & font_flag_small ? small_height() : m_height;
+      if (font & font_decdhl) height *= 2;
+      return height;
+    }
+    std::pair<coord_t, coord_t> get_font_size(font_t font) const {
+      coord_t width = m_width, height = m_height;
+      if (font & font_flag_small) {
+        height = small_height();
+        width = small_width();
+      }
+      if (font & font_decdhl) height *= 2;
+      if (font & font_decdwl) width *= 2;
+      return {width, height};
     }
 
   public:
@@ -304,13 +343,18 @@ namespace twin {
 
     /*?lwiki
      * @fn std::tuple<coord_t, coord_t, double> get_displacement(font_t font);
-     * @return dx は描画の際の横のずれ量
+     * @return dx は描画の際の横のずれ量(文字幅1の文字に対して)
      * @return dy は描画の際の縦のずれ量
-     * @return dx2 は (文字の幅-1) に比例して増える各文字の横のずれ量
+     * @return dxW は (文字の幅-1) に比例して増える各文字の横のずれ量
      */
     std::tuple<coord_t, coord_t, double> get_displacement(font_t font) {
-      double dx = 0, dy = 0, dx2 = 0;
+      double dx = 0, dy = 0, dxW = 0;
       if (font & (font_layout_mask | font_decdwl | font_flag_italic)) {
+        // Note: 横のずれ量は dxI + dxW * cell.width である。
+        // これを実際には幅1の時の値 dx = dxI + dxW を分離して、
+        // ずれ量 = dx + dxW * (cell.width - 1) と計算する。
+
+        double dxI = 0;
         if (font & font_layout_sup)
           dy -= 0.2 * m_height;
         else if (font & font_layout_sub) {
@@ -318,23 +362,22 @@ namespace twin {
           dy += m_height - this->small_height();
         }
         if (font & (font_layout_framed | font_layout_sup | font_layout_sub)) {
-          dx2 = 0.5 * (m_width - this->small_width());
-          dx += dx2;
+          dxW = 0.5 * (m_width - this->small_width());
           dy += 0.5 * (m_height - this->small_height());
         }
-        if ((font & font_flag_italic) && !(font & font_rotation_mask)) {
+        if (font & font_flag_italic) {
           coord_t width = this->width();
           if (font & (font_layout_framed | font_layout_sup | font_layout_sub))
             width = this->small_width();
-          dx -= 0.2 * width;
+          dx -= 0.4 * width;
         }
         if (font & (font_layout_upper_half | font_layout_lower_half)) dy *= 2;
-        if (font & font_decdwl) dx *= 2;
+        if (font & font_decdwl) dxI *= 2;
         if (font & font_layout_lower_half) dy -= m_height;
-        dx = std::round(dx);
+        dx = std::round(dxI + dxW);
         dy = std::round(dy);
       }
-      return {dx, dy, dx2};
+      return {dx, dy, dxW};
     }
 
     ~font_store_t() {
@@ -345,17 +388,165 @@ namespace twin {
   LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
   class twin_window_t {
+    static constexpr LPCTSTR szClassName = TEXT("Contra.Twin.Main");
+
     twin_settings settings;
     font_store_t fstore { settings };
 
-    terminal_session sess;
-
+    terminal_manager manager;
     HWND hWnd = NULL;
 
-    static constexpr LPCTSTR szClassName = TEXT("Contra.Twin.Main");
+    class twin_events: public contra::term::terminal_events {
+      twin_window_t* win;
+    public:
+      twin_events(twin_window_t* win): win(win) {}
+    private:
+      static bool read_clipboard(std::u16string& buffer) {
+        bool result = false;
+        if (!::OpenClipboard(NULL)) {
+          report_error_message("twin.clipboard", ::GetLastError());
+          return false;
+        }
+
+        HANDLE clip;
+        LPVOID data;
+
+        clip = ::GetClipboardData(CF_UNICODETEXT);
+        if (!clip) {
+          report_error_message("twin.clipboard", ::GetLastError());
+          goto close_clipboard;
+        }
+
+        data = ::GlobalLock(clip);
+        if (data == NULL) {
+          report_error_message("twin.clipboard", ::GetLastError());
+          goto close_clipboard;
+        }
+
+        static_assert(sizeof(TCHAR) == sizeof(char16_t));
+        buffer = reinterpret_cast<char16_t const*>(data);
+        result = true;
+        ::GlobalUnlock(clip);
+      close_clipboard:
+        ::CloseClipboard();
+        return result;
+      }
+
+      static bool write_clipboard(std::u16string const& buffer, HWND hWnd) {
+        std::size_t const sz = buffer.size();
+        HGLOBAL const hg = ::GlobalAlloc(GHND | GMEM_SHARE , (sz + 1) * sizeof(char16_t));
+        if (!hg) {
+          report_error_message("twin.clipboard", ::GetLastError());
+          return false;
+        }
+
+        LPVOID mem = ::GlobalLock(hg);
+        if (!mem) {
+          report_error_message("twin.clipboard", ::GetLastError());
+          goto global_free;
+        }
+
+        static_assert(sizeof(TCHAR) == sizeof(char16_t));
+        std::copy(buffer.c_str(), buffer.c_str() + sz + 1, reinterpret_cast<char16_t*>(mem));
+        ::GlobalUnlock(hg);
+
+        if (::OpenClipboard(hWnd)) {
+          ::EmptyClipboard();
+          HANDLE cdata = ::SetClipboardData(CF_UNICODETEXT , hg);
+          if (!cdata) report_error_message("twin.clipboard", ::GetLastError());
+          ::CloseClipboard();
+          return true;
+        }
+
+      global_free:
+        ::GlobalFree(hg);
+        return false;
+      }
+
+      static std::u16string convert_lf_to_crlf(std::u16string const& src) {
+        std::u16string dst;
+        bool cr = false;
+        for (char16_t const c : src) {
+          if (c == u'\n' && !cr)
+            dst.append(1, u'\r');
+          dst.append(1, c);
+          cr = c == u'\r';
+        }
+        return dst;
+      }
+      static std::u16string convert_crlf_to_lf(std::u16string const& src) {
+        std::u16string dst;
+        bool cr = false;
+        for (char16_t const c : src) {
+          if (cr && c != '\n')
+            dst.append(1, U'\r');
+          if (!(cr = c == '\r'))
+            dst.append(1, c);
+        }
+        if (cr) dst.append(1, U'\r');
+        return dst;
+      }
+    private:
+      virtual bool get_clipboard(std::u32string& data) override {
+        std::u16string data3;
+        if (!read_clipboard(data3)) return false;
+        std::u16string const data2 = convert_crlf_to_lf(data3);
+        data.clear();
+        std::uint64_t state = 0;
+        contra::encoding::utf16_decode(data2.c_str(), data2.c_str() + data2.size(), data, state);
+        return true;
+      }
+      virtual bool set_clipboard(std::u32string const& data) override {
+        if (!win->hWnd) return false;
+        std::u16string data2;
+        std::uint64_t state = 0;
+        contra::encoding::utf16_encode(data.c_str(), data.c_str() + data.size(), data2, state);
+        std::u16string const data3 = convert_lf_to_crlf(data2);
+        return write_clipboard(data3, win->hWnd);
+      }
+
+    private:
+      virtual bool request_change_size(curpos_t col, curpos_t row, coord_t xpixel, coord_t ypixel) override {
+        auto& settings = win->settings;
+        if (xpixel >= 0) xpixel = std::clamp(xpixel, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
+        if (ypixel >= 0) ypixel = std::clamp(ypixel, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
+
+        if (col < 0 && row < 0) {
+          // 文字サイズだけを変更→自動的に列・行を変えてウィンドウサイズを変えなくて済む様にする。
+          if (settings.m_xpixel != xpixel || settings.m_ypixel != ypixel) {
+            settings.m_xpixel = xpixel;
+            settings.m_ypixel = ypixel;
+            win->fstore.set_size(settings.m_xpixel, settings.m_ypixel);
+            win->adjust_terminal_size_using_current_client_size();
+            return true;
+          }
+        }
+
+        bool changed = false;
+        if (xpixel >= 0 && settings.m_xpixel != xpixel) { settings.m_xpixel = xpixel; changed = true; }
+        if (ypixel >= 0 && settings.m_ypixel != ypixel) { settings.m_ypixel = ypixel; changed = true; }
+        if (changed) win->fstore.set_size(settings.m_xpixel, settings.m_ypixel);
+        if (col >= 0) {
+          col = std::clamp(col, limit::minimal_terminal_col, limit::maximal_terminal_col);
+          if (col != settings.m_col) { settings.m_col = col; changed = true; }
+        }
+        if (row >= 0) {
+          row = std::clamp(row, limit::minimal_terminal_row, limit::maximal_terminal_row);
+          if (row != settings.m_row) { settings.m_row = row; changed = true; }
+        }
+        if (changed) {
+          win->adjust_window_size();
+          win->manager.reset_size(settings.m_col, settings.m_row, settings.m_xpixel, settings.m_ypixel);
+        }
+        return true;
+      }
+
+    };
+
+    twin_events events {this};
 
   private:
-    bool is_session_ready() { return hWnd && sess.is_active(); }
+    bool is_session_ready() { return hWnd && manager.is_active(); }
   public:
     HWND create_window(HINSTANCE hInstance) {
       fstore.set_size(settings.m_xpixel, settings.m_ypixel);
@@ -371,7 +562,7 @@ namespace twin {
         myProg.cbWndExtra    = 0;
         myProg.hInstance     = hInstance;
         myProg.hIcon         = NULL;
-        myProg.hCursor       = LoadCursor(NULL, IDC_ARROW);
+        myProg.hCursor       = ::LoadCursor(NULL, IDC_IBEAM);
         myProg.hbrBackground = (HBRUSH) ::GetStockObject(WHITE_BRUSH);
         myProg.lpszMenuName  = NULL;
         myProg.lpszClassName = szClassName;
@@ -395,6 +586,7 @@ namespace twin {
         NULL);
 
       this->start_blinking_timer();
+      this->manager.set_events(events);
       return hWnd;
     }
     bool m_window_size_adjusted = false;
@@ -430,8 +622,14 @@ namespace twin {
       if (new_col != settings.m_col || new_row != settings.m_row) {
         settings.m_col = new_col;
         settings.m_row = new_row;
-        sess.reset_size(new_col, new_row);
+        manager.reset_size(new_col, new_row);
       }
+    }
+    void adjust_window_size() {
+      if (!is_session_ready()) return;
+      ::SetWindowPos(hWnd, NULL, 0, 0,
+        settings.calculate_window_width(), settings.calculate_window_height(),
+        SWP_NOZORDER | SWP_NOMOVE);
     }
 
   private:
@@ -497,16 +695,11 @@ namespace twin {
     public:
       status_tracer_t() {}
 
-      bool is_changed(twin_window_t* _this) {
-        return is_metric_changed(_this) ||
-          is_content_changed(_this) ||
-          is_cursor_changed(_this);
-      }
-      void store(twin_window_t* _this) {
-        store_metric(_this);
-        store_content(_this);
-        store_cursor(_this);
-        store_blinking_state(_this);
+      void store(twin_window_t const& win, terminal_application const& app) {
+        store_metric(win);
+        store_content(win, app);
+        store_cursor(win, app);
+        store_blinking_state(win);
       }
 
     private:
@@ -517,8 +710,8 @@ namespace twin {
       coord_t m_xpixel = 0;
       coord_t m_ypixel = 0;
     public:
-      bool is_metric_changed(twin_window_t* _this) const {
-        twin_settings const& st = _this->settings;
+      bool is_metric_changed(twin_window_t const& win) const {
+        twin_settings const& st = win.settings;
         if (m_xframe != st.m_xframe) return true;
         if (m_yframe != st.m_yframe) return true;
         if (m_col != st.m_col) return true;
@@ -527,8 +720,8 @@ namespace twin {
         if (m_ypixel != st.m_ypixel) return true;
         return false;
       }
-      void store_metric(twin_window_t* _this) {
-        twin_settings const& st = _this->settings;
+      void store_metric(twin_window_t const& win) {
+        twin_settings const& st = win.settings;
         m_xframe = st.m_xframe;
         m_yframe = st.m_yframe;
         m_col = st.m_col;
@@ -545,8 +738,8 @@ namespace twin {
       };
       std::vector<line_trace_t> m_lines;
     public:
-      bool is_content_changed(twin_window_t* _this) const {
-        board_t const& b = _this->sess.term().board();
+      bool is_content_changed([[maybe_unused]] twin_window_t const& win, terminal_application const& app) const {
+        board_t const& b = app.board();
         std::size_t const height = b.m_height;
         if (height != m_lines.size()) return true;
         for (std::size_t iline = 0; iline < height; iline++) {
@@ -556,8 +749,8 @@ namespace twin {
         }
         return false;
       }
-      void store_content(twin_window_t* _this) {
-        board_t const& b = _this->sess.term().board();
+      void store_content([[maybe_unused]] twin_window_t const& win, terminal_application const& app) {
+        board_t const& b = app.board();
         m_lines.resize(b.m_lines.size());
         for (std::size_t i = 0; i < m_lines.size(); i++) {
           m_lines[i].id = b.m_lines[i].id();
@@ -574,12 +767,12 @@ namespace twin {
           if (line.has_blinking) return true;
         return false;
       }
-      bool is_blinking_changed(twin_window_t* _this) const {
+      bool is_blinking_changed(twin_window_t const& win) const {
         if (!this->has_blinking_cells()) return false;
-        return this->m_blinking_count != _this->m_blinking_count;
+        return this->m_blinking_count != win.m_blinking_count;
       }
-      void store_blinking_state(twin_window_t* _this) {
-        this->m_blinking_count = _this->m_blinking_count;
+      void store_blinking_state(twin_window_t const& win) {
+        this->m_blinking_count = win.m_blinking_count;
       }
 
     private:
@@ -594,23 +787,23 @@ namespace twin {
     public:
       curpos_t cur_x() const { return m_cur_x; }
       curpos_t cur_y() const { return m_cur_y; }
-      bool is_cursor_changed(twin_window_t* _this) const {
-        if (m_cur_visible != _this->is_cursor_visible()) return true;
-        term_t const& term = _this->sess.term();
-        board_t const& b = term.board();
+      bool is_cursor_changed(twin_window_t const& win, terminal_application const& app) const {
+        if (m_cur_visible != win.is_cursor_visible(app)) return true;
+        board_t const& b = app.board();
+        tstate_t const& s = app.state();
         if (m_cur_x != b.cur.x() || m_cur_y != b.cur.y() || m_cur_xenl != b.cur.xenl()) return true;
-        if (m_cur_shape != term.state().get_cursor_shape()) return true;
-        if (m_cur_blinking != term.state().is_cursor_blinking()) return true;
+        if (m_cur_shape != s.get_cursor_shape()) return true;
+        if (m_cur_blinking != s.is_cursor_blinking()) return true;
         return false;
       }
-      void store_cursor(twin_window_t* _this) {
-        m_cur_visible = _this->is_cursor_visible();
-        term_t const& term = _this->sess.term();
-        board_t const& b = term.board();
+      void store_cursor(twin_window_t const& win, terminal_application const& app) {
+        m_cur_visible = win.is_cursor_visible(app);
+        board_t const& b = app.board();
+        tstate_t const& s = app.state();
         m_cur_x = b.cur.x();
         m_cur_y = b.cur.y();
         m_cur_xenl = b.cur.xenl();
-        m_cur_shape = term.state().m_cursor_shape;
+        m_cur_shape = s.m_cursor_shape;
       }
     };
 
@@ -654,14 +847,14 @@ namespace twin {
       m_cursor_timer_count++;
       render_window();
     }
-    bool is_cursor_visible() const {
+    bool is_cursor_visible(terminal_application const& app) const {
       if (m_ime_composition_active &&
         settings.m_caret_hide_on_ime) return false;
-      return sess.term().state().is_cursor_visible();
+      return app.state().is_cursor_visible();
     }
-    void draw_cursor(HDC hdc) {
+    void draw_cursor(HDC hdc, terminal_application const& app) {
       using namespace contra::ansi;
-      term_t const& term = sess.term();
+      term_t const& term = app.term();
       board_t const& b = term.board();
       curpos_t const x = b.cur.x(), y = b.cur.y();
       bool const xenl = b.cur.xenl();
@@ -765,13 +958,17 @@ namespace twin {
       }
     public:
       color_t resolve_fg(attribute_t const& attr) {
-        auto [space, color] = attr.aflags & attribute_t::is_inverse_set ? get_bg(attr) : get_fg(attr);
+        bool const inverse = attr.aflags & attribute_t::is_inverse_set;
+        bool const selected = attr.xflags & attribute_t::ssa_selected;
+        auto [space, color] = inverse != selected ? get_bg(attr) : get_fg(attr);
         if (space == m_space && color == m_color) return m_rgba;
         return resolve(space, color);
       }
 
       color_t resolve_bg(attribute_t const& attr) {
-        auto [space, color] = attr.aflags & attribute_t::is_inverse_set ? get_fg(attr) : get_bg(attr);
+        bool const inverse = attr.aflags & attribute_t::is_inverse_set;
+        bool const selected = attr.xflags & attribute_t::ssa_selected;
+        auto [space, color] = inverse != selected ? get_fg(attr) : get_bg(attr);
         if (space == m_space && color == m_color) return m_rgba;
         return resolve(space, color);
       }
@@ -843,14 +1040,14 @@ namespace twin {
       }
     };
 
-    void draw_background(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
+    void draw_background(HDC hdc, terminal_application const& app, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
       coord_t const xorigin = settings.m_xframe;
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      board_t const& b = sess.board();
-      tstate_t const& s = sess.term().state();
+      board_t const& b = app.board();
+      tstate_t const& s = app.state();
       color_resolver_t _color(s);
 
       {
@@ -879,6 +1076,7 @@ namespace twin {
         x = xorigin;
         x0 = x;
         bg0 = 0;
+
         for (std::size_t i = 0; i < cells.size(); ) {
           auto const& cell = cells[i++];
           color_t const bg = _color.resolve_bg(cell.attribute);
@@ -893,26 +1091,28 @@ namespace twin {
       }
     }
 
-    void draw_rotated_text_ext(HDC hdc, coord_t x0, coord_t y0, std::vector<TCHAR> const& characters, std::vector<INT> const& progress, font_t font) {
+    void draw_rotated_text_ext(
+      HDC hdc, coord_t x0, coord_t y0, coord_t dx, coord_t dy, coord_t width,
+      std::vector<TCHAR> const& characters, std::vector<INT> const& progress, font_t font) {
       font_t const sco = (font & font_rotation_mask) >> font_rotation_shft;
       double const angle = -(M_PI / 4.0) * sco;
-      coord_t const ypixel = settings.m_ypixel;
-
-      INT const prog = std::accumulate(progress.begin(), progress.end(), (INT) 0);
+      coord_t const h = fstore.get_font_height(font);
 
       // Note: 何故か知らないが Windows の TextOut の仕様か Font の仕様で
       //   90 度に比例しないフォントだと y 方向に文字がずれている。
       //   以下の式は色々測って調べた結果分かったフォントのずれの量である。
       double const gdi_xshift = sco & 1 ? 1.0 : 0;
-      double const gdi_yshift = sco & 1 ? ypixel * 0.3 : 0.0;
+      double const gdi_yshift = sco & 1 ? h * 0.3 : 0.0;
 
-      double const x1 = 0.5 * prog + gdi_xshift;
-      double const y1 = 0.5 * ypixel + gdi_yshift;
-      double const x2 = x1 * std::cos(angle) - y1 * std::sin(angle);
-      double const y2 = x1 * std::sin(angle) + y1 * std::cos(angle);
-      int const dx = (int) std::round(x2 - x1 + gdi_xshift);
-      int const dy = (int) std::round(y2 - y1 + gdi_yshift);
-      ::ExtTextOut(hdc, x0 - dx, y0 - dy, 0, NULL, &characters[0], characters.size(), &progress[0]);
+      // (xc1, yc1) はGDIの回転中心(文字の左上)から見た、希望の回転中心(文字の中央)の位置
+      // (xc2, yc2) は希望の回転中心が回転後に移動する位置
+      double const xc1 = 0.5 * width + gdi_xshift - dx;
+      double const yc1 = 0.5 * h + gdi_yshift;
+      double const xc2 = xc1 * std::cos(angle) - yc1 * std::sin(angle);
+      double const yc2 = xc1 * std::sin(angle) + yc1 * std::cos(angle);
+      int const rot_dx = (int) std::round(xc2 - xc1 + gdi_xshift);
+      int const rot_dy = (int) std::round(yc2 - yc1 + gdi_yshift);
+      ::ExtTextOut(hdc, x0 + dx - rot_dx, y0 + dy - rot_dy, 0, NULL, &characters[0], characters.size(), &progress[0]);
     }
 
     class decdhl_region_holder_t {
@@ -949,14 +1149,14 @@ namespace twin {
       }
     };
 
-    void draw_characters(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
+    void draw_characters(HDC hdc, terminal_application const& app, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
       coord_t const xorigin = settings.m_xframe;
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      board_t const& b = sess.board();
-      tstate_t const& s = sess.term().state();
+      board_t const& b = app.board();
+      tstate_t const& s = app.state();
 
       constexpr std::uint32_t flag_processed = character_t::flag_private1;
 
@@ -972,17 +1172,21 @@ namespace twin {
       color_resolver_t _color(s);
       font_resolver_t _font;
 
-      coord_t x = xorigin, y = yorigin, x0 = xorigin;
+      coord_t x = xorigin, y = yorigin, xL = xorigin, xR = xorigin;
+      coord_t dx = 0, dy = 0;
+      double dxW = 0.0;
       std::vector<TCHAR> characters;
       std::vector<INT> progress;
-      auto _push_char = [&characters, &progress, &x0] (std::uint32_t code, INT prog, curpos_t width, double dx2) {
+      auto _push_char = [&characters, &progress, &xR, &dx, &dxW] (std::uint32_t code, INT prog, curpos_t width) {
+        xR += prog;
+
         // 文字位置の補正
-        if (dx2 && width > 1) {
-          int const shift = dx2 * (width - 1);
+        if (dxW && width > 1) {
+          int const shift = dxW * (width - 1);
           if (progress.size())
             progress.back() += shift;
           else
-            x0 += shift;
+            dx += shift;
           prog -= shift;
         }
 
@@ -1009,42 +1213,44 @@ namespace twin {
         region.next_line(y, ypixel);
 
         for (std::size_t i = 0; i < cells.size(); ) {
-          auto const& cell = cells[i++];
+          auto const& cell = cells[i];
           auto const& attr = cell.attribute;
-          x0 = x;
+          xL = xR = x;
           coord_t const cell_progress = cell.width * xpixel;
+          i++;
           x += cell_progress;
           std::uint32_t code = cell.character.value;
           code &= ~character_t::flag_cluster_extension;
-          if (!_visible(code, cell.attribute.aflags)) {
-            continue;
-          }
+          if (!_visible(code, cell.attribute.aflags)) continue;
 
           // 色の決定
           color_t const fg = _color.resolve_fg(attr);
           font_t const font = _font.resolve_font(attr);
-          auto const [dx, dy, dx2] = fstore.get_displacement(font);
+          std::tie(dx, dy, dxW) = fstore.get_displacement(font);
 
           characters.clear();
           progress.clear();
-          _push_char(code, cell_progress, cell.width, dx2);
+          _push_char(code, cell_progress, cell.width);
 
           // 同じ色を持つ文字は同時に描画してしまう。
           for (std::size_t j = i; j < cells.size(); j++) {
             auto const& cell2 = cells[j];
             std::uint32_t code2 = cell2.character.value;
-            code &= ~character_t::flag_cluster_extension;
             coord_t const cell2_progress = cell2.width * xpixel;
 
             // 回転文字の場合は一つずつ書かなければならない。
             // 零幅の cluster などだけ一緒に描画する。
             if ((font & font_rotation_mask) && cell2_progress) break;
 
+            bool const is_cluster = code2 & character_t::flag_cluster_extension;
+            color_t const fg2 = _color.resolve_fg(cell2.attribute);
+            font_t const font2 = _font.resolve_font(cell2.attribute);
+            code2 &= ~character_t::flag_cluster_extension;
             if (!_visible(code2, cell2.attribute.aflags, font & font_layout_proportional)) {
               if (font & font_layout_proportional) break;
               progress.back() += cell2_progress;
-            } else if (fg == _color.resolve_fg(cell2.attribute) && font == _font.resolve_font(cell2.attribute)) {
-              _push_char(code2, cell2_progress, cell2.width, dx2);
+            } else if (is_cluster || (fg == fg2 && font == font2)) {
+              _push_char(code2, cell2_progress, cell2.width);
             } else {
               if (font & font_layout_proportional) break;
               progress.back() += cell2_progress;
@@ -1068,12 +1274,12 @@ namespace twin {
             ::SelectClipRgn(hdc, region.get_lower_region());
 
           if (font & font_rotation_mask) {
-            this->draw_rotated_text_ext(hdc, x0 + dx, y + dy, characters, progress, font);
+            this->draw_rotated_text_ext(hdc, xL, y, dx, dy, xR - xL, characters, progress, font);
           } else if (font & font_layout_proportional) {
             // 配置を GDI に任せる
-            ::TextOut(hdc, x0 + dx, y + dy, &characters[0], characters.size());
+            ::TextOut(hdc, xL + dx, y + dy, &characters[0], characters.size());
           } else {
-            ::ExtTextOut(hdc, x0 + dx, y + dy, 0, NULL, &characters[0], characters.size(), &progress[0]);
+            ::ExtTextOut(hdc, xL + dx, y + dy, 0, NULL, &characters[0], characters.size(), &progress[0]);
           }
 
           // DECDHL用の制限の解除
@@ -1153,14 +1359,14 @@ namespace twin {
       }
     };
 
-    void draw_decoration(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>>& content) {
+    void draw_decoration(HDC hdc, terminal_application const& app, std::vector<std::vector<contra::ansi::cell_t>>& content) {
       using namespace contra::ansi;
       coord_t const xorigin = settings.m_xframe;
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      board_t const& b = sess.board();
-      tstate_t const& s = sess.term().state();
+      board_t const& b = app.board();
+      tstate_t const& s = app.state();
       color_resolver_t _color(s);
 
       coord_t x = xorigin, y = yorigin;
@@ -1321,8 +1527,11 @@ namespace twin {
           auto const& code = cell.character.value;
           auto const& aflags = cell.attribute.aflags;
           auto const& xflags = cell.attribute.xflags;
+          if (cell.width == 0) continue;
           coord_t const cell_width = cell.width * xpixel;
-          color_t const color = code != ascii_nul && !(aflags & attribute_t::is_invisible_set) ? _color.resolve_fg(cell.attribute) : 0;
+          color_t color = 0;
+          if (code != ascii_nul && !(aflags & attribute_t::is_invisible_set))
+            color = _color.resolve_fg(cell.attribute);
           if (color != color0) {
             dec_ul.update(x, 0, (xflags_t) 0);
             dec_sl.update(x, 0, (xflags_t) 0);
@@ -1378,13 +1587,13 @@ namespace twin {
       }
     }
 
-    void draw_characters_mono(HDC hdc, std::vector<std::vector<contra::ansi::cell_t>> const& content) {
+    void draw_characters_mono(HDC hdc, terminal_application const& app, std::vector<std::vector<contra::ansi::cell_t>> const& content) {
       using namespace contra::ansi;
       coord_t const xorigin = settings.m_xframe;
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      board_t const& b = sess.board();
+      board_t const& b = app.board();
 
       std::vector<cell_t> cells;
       std::vector<TCHAR> characters;
@@ -1422,36 +1631,38 @@ namespace twin {
     //   hdc0 ... 背景+内容+カーソル
     //   hdc1 ... 背景+内容
     //   hdc2 ... 背景 (未実装)
-    void paint_terminal_content(HDC hdc0, bool full_update) {
-      bool const content_changed = m_tracer.is_content_changed(this);
-      bool const cursor_changed = m_tracer.is_cursor_changed(this);
+    void paint_terminal_content(HDC hdc0, terminal_application const& app, bool full_update) {
+      bool const content_changed = m_tracer.is_content_changed(*this, app);
+      bool const cursor_changed = m_tracer.is_cursor_changed(*this, app);
 
-      if (m_tracer.is_metric_changed(this)) full_update = true;
+      if (m_tracer.is_metric_changed(*this)) full_update = true;
       HDC const hdc1 = m_background.hdc(hWnd, hdc0, 1);
       bool content_redraw = full_update || content_changed;
-      if (m_tracer.is_blinking_changed(this)) content_redraw = true;
+      if (m_tracer.is_blinking_changed(*this)) content_redraw = true;
       if (content_redraw) {
         std::vector<std::vector<contra::ansi::cell_t>> content;
-        auto const& b = sess.board();
+        auto const& b = app.board();
         content.resize(b.m_height);
+
         for (contra::ansi::curpos_t y = 0; y < b.m_height; y++) {
           auto const& line = b.m_lines[y];
           line.get_cells_in_presentation(content[y], b.line_r2l(line));
         }
 
         ::SetBkMode(hdc1, TRANSPARENT);
-        //this->draw_characters_mono(hdc1, content);
-        this->draw_background(hdc1, content);
-        this->draw_characters(hdc1, content);
-        this->draw_decoration(hdc1, content);
+        //this->draw_characters_mono(hdc1, app, content);
+        this->draw_background(hdc1, app, content);
+        this->draw_characters(hdc1, app, content);
+        this->draw_decoration(hdc1, app, content);
 
         // ToDo: 更新のあった部分だけ転送する?
+        // 更新のあった部分 = 内用の変更・点滅の変更・選択範囲の変更など
         ::BitBlt(hdc0, 0, 0, m_background.width(), m_background.height(), hdc1, 0, 0, SRCCOPY);
       }
 
-      tstate_t const& s = sess.term().state();
+      tstate_t const& s = app.state();
       bool const cursor_blinking = s.is_cursor_blinking();
-      bool const cursor_visible = this->is_cursor_visible();
+      bool const cursor_visible = this->is_cursor_visible(app);
       if (!cursor_visible || !cursor_blinking)
         this->unset_cursor_timer();
       else if (content_changed || cursor_changed)
@@ -1464,10 +1675,10 @@ namespace twin {
         ::BitBlt(hdc0, old_x1, old_y1, settings.m_xpixel, settings.m_ypixel, hdc1, old_x1, old_y1, SRCCOPY);
       }
       if (cursor_visible && (!cursor_blinking || !(m_cursor_timer_count & 1)))
-        this->draw_cursor(hdc0);
+        this->draw_cursor(hdc0, app);
 
       // ToDo: 二重チェックになっている気がする。もっと効率的な実装?
-      m_tracer.store(this);
+      m_tracer.store(*this, app);
     }
 
     void render_window() {
@@ -1476,7 +1687,7 @@ namespace twin {
       {
         bool resized = false;
         HDC const hdc0 = m_background.hdc(hWnd, hdc, 0, &resized);
-        paint_terminal_content(hdc0, resized);
+        paint_terminal_content(hdc0, manager.app(), resized);
         BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc0, 0, 0, SRCCOPY);
       }
       ReleaseDC(hWnd, hdc);
@@ -1488,7 +1699,7 @@ namespace twin {
       HDC const hdc0 = m_background.hdc(hWnd, hdc, 0, &resized);
       if (resized) {
         // 全体を再描画して全体を転送
-        paint_terminal_content(hdc0, resized);
+        paint_terminal_content(hdc0, manager.app(), resized);
         ::SelectClipRgn(hdc, NULL);
         BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc0, 0, 0, SRCCOPY);
       } else {
@@ -1497,9 +1708,7 @@ namespace twin {
       }
     }
 
-
     enum extended_key_flags {
-      modifier_application = 0x04000000,
       toggle_capslock   = 0x100,
       toggle_numlock    = 0x200,
       toggle_scrolllock = 0x400,
@@ -1507,7 +1716,7 @@ namespace twin {
 
     void process_input(std::uint32_t key) {
       //contra::term::print_key(key, stderr);
-      sess.term().input_key(key);
+      manager.input_key(key);
     }
 
     std::uint32_t get_modifiers() {
@@ -1515,10 +1724,10 @@ namespace twin {
       if (GetKeyState(VK_LSHIFT) & 0x8000) ret |= modifier_shift;
       if (GetKeyState(VK_LCONTROL) & 0x8000) ret |= modifier_control;
       if (GetKeyState(VK_LMENU) & 0x8000) ret |= modifier_meta;
-      if (GetKeyState(VK_RMENU) & 0x8000) ret |= modifier_alter;
-      if (GetKeyState(VK_RCONTROL) & 0x8000) ret |= modifier_super;
-      if (GetKeyState(VK_RSHIFT) & 0x8000) ret |= modifier_hyper;
-      if (GetKeyState(VK_APPS) & 0x8000) ret |= modifier_application;
+      if (GetKeyState(VK_RMENU) & 0x8000) ret |= modifier_alter; // 右Alt
+      if (GetKeyState(VK_RCONTROL) & 0x8000) ret |= modifier_super; // 右Ctrl
+      if (GetKeyState(VK_RSHIFT) & 0x8000) ret |= modifier_hyper; // 右Shift
+      if (GetKeyState(VK_APPS) & 0x8000) ret |= modifier_application; // Menu
 
       if (GetKeyState(VK_CAPITAL) & 1) ret |= toggle_capslock;
       if (GetKeyState(VK_NUMLOCK) & 1) ret |= toggle_numlock;
@@ -1553,10 +1762,10 @@ namespace twin {
       } else {
         std::uint32_t code = 0;
         switch (wParam) {
-        case VK_BACK:   code = ascii_bs;     goto function_key;
-        case VK_TAB:    code = ascii_ht;    goto function_key;
-        case VK_RETURN: code = ascii_cr;    goto function_key;
-        case VK_ESCAPE: code = ascii_esc;    goto function_key;
+        case VK_BACK:      code = ascii_bs;   goto function_key;
+        case VK_TAB:       code = ascii_ht;   goto function_key;
+        case VK_RETURN:    code = ascii_cr;   goto function_key;
+        case VK_ESCAPE:    code = ascii_esc;  goto function_key;
         case VK_DELETE:    code = key_delete; goto keypad_function_key;
         case VK_INSERT:    code = key_insert; goto keypad_function_key;
         case VK_PRIOR:     code = key_prior;  goto keypad_function_key;
@@ -1607,14 +1816,15 @@ namespace twin {
               // shift によって文字が変化していたら shift 修飾を消す。
               UINT const unshifted = ::MapVirtualKey(wParam, MAPVK_VK_TO_CHAR);
               int const unshifted_count = (INT) unshifted < 0 ? 2 : 1;
-              if (count != unshifted_count || buff != (unshifted & mask_unicode))
+              if (count != unshifted_count || buff != (unshifted & _character_mask))
                 modifiers &= ~modifier_shift;
 
-              process_input((buff & mask_unicode) | (modifiers & _modifier_mask));
+              process_input((buff & _character_mask) | (modifiers & _modifier_mask));
             } else if (UINT const code = ::MapVirtualKey(wParam, MAPVK_VK_TO_CHAR); (INT) code > 0) {
-              process_input((code & mask_unicode) | (modifiers & _modifier_mask));
+              process_input((code & _character_mask) | (modifiers & _modifier_mask));
             } else {
-              //std::fprintf(stderr, "key (unknown): wparam=%08x flags=%x\n", wParam, modifiers);
+              if (settings.m_debug_print_unknown_key)
+                std::fprintf(stderr, "key (unknown): wparam=%08x flags=%x\n", wParam, modifiers);
               return false;
             }
           }
@@ -1626,7 +1836,14 @@ namespace twin {
 
     void process_char(WPARAM wParam, std::uint32_t modifiers) {
       // ToDo: Process surrogate pair
-      process_input((wParam & mask_unicode) | (modifiers & _modifier_mask));
+      process_input((wParam & _character_mask) | (modifiers & _modifier_mask));
+    }
+
+    void process_mouse(key_t key, std::uint32_t modifiers, WORD x, WORD y) {
+      curpos_t const x1 = (x - settings.m_xframe) / settings.m_xpixel;
+      curpos_t const y1 = (y - settings.m_yframe) / settings.m_ypixel;
+      manager.input_mouse(key | (modifiers & _modifier_mask), x, y, x1, y1);
+      if (manager.m_dirty) render_window();
     }
 
   private:
@@ -1640,18 +1857,17 @@ namespace twin {
       if (!is_session_ready() || !m_ime_composition_active) return;
       util::raii hIMC(::ImmGetContext(hWnd), [this] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
 
-      font_t const current_font = font_resolver_t().resolve_font(sess.term().board().cur.attribute) & ~font_rotation_mask;
-      auto const [dx, dy, dx2] = fstore.get_displacement(current_font);
+      font_t const current_font = font_resolver_t().resolve_font(manager.app().board().cur.attribute) & ~font_rotation_mask;
+      auto const [dx, dy, dxW] = fstore.get_displacement(current_font);
       contra_unused(dx);
-      contra_unused(dx2);
+      contra_unused(dxW);
       LOGFONT logfont = fstore.create_logfont(current_font);
       logfont.lfWidth = fstore.width() * (current_font & font_decdwl ? 2 : 1);
       ::ImmSetCompositionFont(hIMC, const_cast<LOGFONT*>(&logfont));
 
-
       RECT rcClient;
       if (::GetClientRect(hWnd, &rcClient)) {
-        auto const& b = sess.term().board();
+        auto const& b = manager.app().board();
         COMPOSITIONFORM form;
         coord_t const x0 = rcClient.left + settings.m_xframe + settings.m_xpixel * b.cur.x();
         coord_t const y0 = rcClient.top + settings.m_yframe + settings.m_ypixel * b.cur.y();
@@ -1673,8 +1889,19 @@ namespace twin {
       this->render_window();
     }
 
+    static void  debug_print_window_message(UINT msg) {
+      const char* name = get_window_message_name(msg);
+      if (name)
+        std::fprintf(stderr, "message: %s\n", name);
+      else
+        std::fprintf(stderr, "message: %08x\n", msg);
+    }
   public:
     LRESULT process_message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+      if (settings.m_debug_print_window_messages == 2)
+        debug_print_window_message(msg);
+
+      key_t key = 0;
       switch (msg) {
       case WM_CREATE:
         this->adjust_window_size_using_current_client_size();
@@ -1717,6 +1944,44 @@ namespace twin {
         // DEADCHAR は accent や diacritic などの入力の時に発生する。
         return 0L;
 
+      case WM_LBUTTONDOWN: key = key_mouse1_down; goto mouse_event;
+      case WM_MBUTTONDOWN: key = key_mouse2_down; goto mouse_event;
+      case WM_RBUTTONDOWN: key = key_mouse3_down; goto mouse_event;
+      case WM_XBUTTONDOWN:
+        key = GET_XBUTTON_WPARAM(wParam) == XBUTTON1 ? key_mouse4_down : key_mouse5_down;
+        goto mouse_event;
+      case WM_LBUTTONUP: key = key_mouse1_up; goto mouse_event;
+      case WM_MBUTTONUP: key = key_mouse2_up; goto mouse_event;
+      case WM_RBUTTONUP: key = key_mouse3_up; goto mouse_event;
+      case WM_XBUTTONUP:
+        key = GET_XBUTTON_WPARAM(wParam) == XBUTTON1 ? key_mouse4_up : key_mouse5_up;
+        goto mouse_event;
+      case WM_MOUSEMOVE:
+        {
+          constexpr WORD mouse_buttons = MK_LBUTTON | MK_MBUTTON | MK_RBUTTON | MK_XBUTTON1 | MK_XBUTTON2;
+          key = key_mouse_move;
+          WORD const kstate = GET_KEYSTATE_WPARAM(wParam);
+          if (kstate & mouse_buttons) {
+            if (kstate & MK_LBUTTON)
+              key = key_mouse1_drag;
+            else if (kstate & MK_RBUTTON)
+              key = key_mouse3_drag;
+            else if (kstate & MK_MBUTTON)
+              key = key_mouse2_drag;
+            else if (kstate & MK_XBUTTON1)
+              key = key_mouse4_drag;
+            else if (kstate & MK_XBUTTON2)
+              key = key_mouse5_drag;
+          }
+        }
+        goto mouse_event;
+      case WM_MOUSEWHEEL:
+        key = GET_WHEEL_DELTA_WPARAM(wParam) > 0 ? key_wheel_up : key_wheel_down;
+        goto mouse_event;
+      mouse_event:
+        process_mouse(key, get_modifiers(), GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        return 0L;
+
       case WM_IME_STARTCOMPOSITION:
         {
           LRESULT const result = ::DefWindowProc(hWnd, msg, wParam, lParam);
@@ -1726,26 +1991,29 @@ namespace twin {
       case WM_IME_ENDCOMPOSITION:
         this->end_ime_composition();
         goto defproc;
+      case WM_SETFOCUS:
+        if (is_session_ready())
+          this->process_input(key_focus);
+        goto defproc;
       case WM_KILLFOCUS:
         this->cancel_ime_composition();
+        this->process_input(key_blur);
         goto defproc;
 
       case WM_TIMER:
-        if (m_cursor_timer_id && wParam == m_cursor_timer_id)
+        if (m_cursor_timer_id && wParam == m_cursor_timer_id) {
           process_cursor_timer();
-        else if (m_blinking_timer_id && wParam == m_blinking_timer_id)
+          return 0L;
+        } else if (m_blinking_timer_id && wParam == m_blinking_timer_id) {
           process_blinking_timer();
+          return 0L;
+        }
         goto defproc;
 
-      defproc:
       default:
-        // {
-        //   const char* name = get_window_message_name(msg);
-        //   if (name)
-        //     std::fprintf(stderr, "message: %s\n", name);
-        //   else
-        //     std::fprintf(stderr, "message: %08x\n", msg);
-        // }
+        if (settings.m_debug_print_window_messages == 1)
+          debug_print_window_message(msg);
+      defproc:
         return ::DefWindowProc(hWnd, msg, wParam, lParam);
       }
     }
@@ -1757,55 +2025,45 @@ namespace twin {
       buff << "exec: " << msg << " (errno=" << errno1 << ")";
       ::MessageBoxA(NULL, buff.str().c_str(), "Contra/Cygwin - exec failed", MB_OK);
     }
-    void setup_session_parameters() {
-      sess.init_ws.ws_col = settings.m_col;
-      sess.init_ws.ws_row = settings.m_row;
-      sess.init_ws.ws_xpixel = fstore.width();
-      sess.init_ws.ws_ypixel = fstore.height();
-      sess.init_read_buffer_size = 64 * 1024;
-      sess.init_exec_error_handler = &exec_error_handler;
+    bool setup_session() {
+      terminal_session_parameters params;
+      params.col = settings.m_col;
+      params.row = settings.m_row;
+      params.xpixel = settings.m_xpixel;
+      params.ypixel = settings.m_ypixel;
+      params.exec_error_handler = &exec_error_handler;
+      params.env["TERM"] = settings.m_env_term;
+      params.shell = settings.m_env_shell;
+      std::unique_ptr<terminal_application> sess = contra::term::create_terminal_session(params);
+      if (!sess) return false;
 
-      // 環境変数
-      struct passwd* pw = ::getpwuid(::getuid());
-      if (pw && pw->pw_dir)
-        sess.init_environment_variable("HOME", pw->pw_dir);
-      if (settings.m_env_term)
-        sess.init_environment_variable("TERM", settings.m_env_term);
-      std::string path = "/usr/local/bin:/usr/bin:";
-      path += std::getenv("PATH");
-      sess.init_environment_variable("PATH", path.c_str());
-    }
-  public:
-    int m_exit_code = 0;
-    int do_loop() {
-      this->setup_session_parameters();
-      if (!sess.initialize()) return 2;
-
-      contra::ansi::tstate_t& s = sess.term().state();
+      contra::ansi::tstate_t& s = sess->state();
       s.m_default_fg_space = contra::dict::attribute_t::color_space_rgb;
       s.m_default_bg_space = contra::dict::attribute_t::color_space_rgb;
       s.m_default_fg_color = contra::dict::rgb(0x00, 0x00, 0x00);
       s.m_default_bg_color = contra::dict::rgb(0xFF, 0xFF, 0xFF);
       // s.m_default_fg_color = contra::dict::rgb(0xD0, 0xD0, 0xD0);//@color
       // s.m_default_bg_color = contra::dict::rgb(0x00, 0x00, 0x00);
+      manager.add_app(std::move(sess));
+      return true;
+    }
+  public:
+    int m_exit_code = 0;
+    int do_loop() {
+      if (!this->setup_session()) return 2;
 
       MSG msg;
       while (hWnd) {
-        bool processed = false;
-        clock_t const time0 = clock();
-        while (sess.process()) {
-          processed = true;
-          clock_t const time1 = clock();
-          clock_t const msec = (time1 - time0) * 1000 / CLOCKS_PER_SEC;
-          if (msec > 20) break;
-        }
-        if (processed) {
+        bool processed = manager.do_events();
+        if (manager.m_dirty) {
           render_window();
+          manager.m_dirty = false;
           if (m_ime_composition_active)
             this->adjust_ime_composition();
         }
 
         while (::PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE)) {
+          processed = true;
           if (!GetMessage(&msg, 0, 0, 0)) {
             m_exit_code = msg.wParam;
             goto exit;
@@ -1815,13 +2073,12 @@ namespace twin {
           DispatchMessage(&msg);
         }
 
-        // if (contra::read_from_fd(STDIN_FILENO, &devIn, buff, sizeof(buff))) continue;
-        if (!sess.is_alive()) break;
+        if (!manager.is_alive()) break;
         if (!processed)
           contra::term::msleep(10);
       }
     exit:
-      sess.terminate();
+      manager.terminate();
       return 0;
     }
   };

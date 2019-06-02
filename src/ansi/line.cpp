@@ -917,7 +917,7 @@ void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   };
 
   if (std::abs(shift) >= p2 - p1) {
-    protect = flags & line_shift_flags::erm;
+    protect = flags & line_shift_flags::erm_protect;
     _erase_wide_left(p1);
     _erase_wide_right(p2);
     if (protect) {
@@ -961,7 +961,7 @@ void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   line_segment_t segs[4];
   int iseg = 0;
 
-  if (std::abs(shift) >= p2 - p1 && (flags & line_shift_flags::erm) && has_protected_cells()) {
+  if (std::abs(shift) >= p2 - p1 && (flags & line_shift_flags::erm_protect) && has_protected_cells()) {
     // erase unprotected cells
 
     // protected な cell が端にかかっている時にはそれを消去領域に含む様に拡張
@@ -1070,7 +1070,7 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   curpos_t wlfill = 0, wrfill = 0;
   bool flag_erase_unprotected = false;
   if (std::abs(shift) >= p2 - p1) {
-    if ((flags & line_shift_flags::erm) && has_protected_cells()) {
+    if ((flags & line_shift_flags::erm_protect) && has_protected_cells()) {
       if (w1 && m_cells[i1].is_protected()) {
         p1 += m_cells[i1].width - w1;
         w1 = 0;
@@ -1187,4 +1187,135 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   m_version++;
   m_prop_i = 0;
   m_prop_x = 0;
+}
+
+bool line_t::set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool dcsm) {
+  // presentation 座標での選択にも対応する。
+  mwg_check(dcsm, "not yet implemented");
+
+  curpos_t x = 0;
+  xflags_t dirty = false;
+  auto _unset = [&dirty, &x] (cell_t& cell) {
+    dirty |= cell.attribute.xflags;
+    cell.attribute.xflags &= ~attribute_t::ssa_selected;
+    x += cell.width;
+  };
+  auto _set = [&dirty, &x] (cell_t& cell) {
+    dirty |= ~cell.attribute.xflags;
+    cell.attribute.xflags |= attribute_t::ssa_selected;
+    x += cell.width;
+  };
+  auto _guarded = [gatm] (cell_t const& cell) {
+    return !gatm && cell.attribute.xflags & (attribute_t::spa_protected | attribute_t::daq_guarded);
+  };
+  auto _truncated = [trunc] (cell_t const& cell) {
+    return trunc && (cell.character.value == ascii_nul || cell.character.value == ascii_sp);
+  };
+
+  std::size_t const iN = m_cells.size();
+  std::size_t i = 0;
+  if (x1 < x2) {
+    while (i < iN && x < x1)
+      _unset(m_cells[i++]);
+    while (i < iN && x == x1 && m_cells[i].character.is_extension())
+      _unset(m_cells[i++]);
+
+    // Note: 選択範囲の末尾空白類は選択範囲から除外する。
+    //   最後の選択されるセルを先に決めて置かなければならない。
+    std::size_t i_ = i;
+    curpos_t x_ = x;
+    std::size_t end = 0;
+    while (i_ < iN && x_ + (curpos_t) m_cells[i_].width <= x2) {
+      auto& cell = m_cells[i_++];
+      if (!_guarded(cell) && !_truncated(cell))
+        end = i_; // 最後の選択されるセル(の次の位置)
+      x_ += cell.width;
+    }
+    while (end > 0 && m_cells[end - 1].is_zero_width_body()) end--;
+
+    while (i < end) {
+      auto& cell = m_cells[i++];
+      if (_guarded(cell))
+        _unset(cell);
+      else
+        _set(cell);
+    }
+  }
+
+  while (i < iN) _unset(m_cells[i++]);
+  if (dirty & attribute_t::ssa_selected) m_version++;
+  return dirty & attribute_t::ssa_selected;
+}
+
+bool line_t::set_selection_word(curpos_t x, word_selection_type type, bool gatm) {
+  auto _guarded = [gatm] (cell_t const& cell) {
+    return !gatm && cell.attribute.xflags & (attribute_t::spa_protected | attribute_t::daq_guarded);
+  };
+  curpos_t const ncell = m_cells.size();
+  if (x >= ncell || _guarded(m_cells[x])) return false;
+
+  auto _isspace = [] (cell_t const& cell) {
+    return cell.character.value == ascii_nul || cell.character.value == ascii_sp;
+  };
+  auto _isalpha = [] (cell_t const& cell) {
+    std::uint32_t code = cell.character.value;
+    return code == ascii_underscore ||
+      (ascii_0 <= code && code <= ascii_9) ||
+      (ascii_A <= code && code <= ascii_Z) ||
+      (ascii_a <= code && code <= ascii_z) ||
+      code >= 0x80;
+  };
+  auto _isother = [&] (cell_t const& cell) { return !_isspace(cell) && !_isalpha(cell); };
+  auto _range = [&, this] (curpos_t x, auto predicate) {
+    curpos_t x1 = x;
+    for (curpos_t x1p = x; --x1p >= 0 && !_guarded(m_cells[x1p]); ) {
+      if (m_cells[x1p].character.is_extension()) continue;
+      if (predicate(m_cells[x1p])) x1 = x1p;
+      else break;
+    }
+
+    curpos_t x2 = x + 1;
+    for (curpos_t x2p = x + 1; x2p < ncell && !_guarded(m_cells[x2p]); x2p++) {
+      if (predicate(m_cells[x2p]) || m_cells[x2p].character.is_extension()) x2 = x2p + 1;
+      else break;
+    }
+
+    return std::make_pair(x1, x2);
+  };
+
+  if (type == word_selection_sword) {
+    auto const [x1, x2] = _isspace(m_cells[x]) ? _range(x, _isspace) :
+      _range(x, [&] (cell_t const& cell) { return !_isspace(cell); });
+    return set_selection(x1, x2, false, gatm, true);
+  } else {
+    auto const [x1, x2] = _isspace(m_cells[x]) ? _range(x, _isspace) :
+      _isalpha(m_cells[x]) ? _range(x, _isalpha) :
+      _range(x, _isother);
+    return set_selection(x1, x2, false, gatm, true);
+  }
+}
+
+curpos_t line_t::extract_selection(std::u32string& data) const {
+  data.clear();
+  curpos_t head_x = 0;
+  curpos_t space_count = 0;
+  for (cell_t const& cell : this->m_cells) {
+    if (cell.attribute.xflags & attribute_t::ssa_selected) {
+      char32_t value = cell.character.get_unicode_representation();
+      if (value != (char32_t) character_t::invalid_value) {
+        if (value == ascii_nul) value = U' ';
+        if (data.empty())
+          head_x = space_count;
+        else
+          data.append(space_count, U' ');
+        space_count = 0;
+        data.append(1, value);
+        if ((cell.attribute.xflags & attribute_t::decdhl_mask) && cell.width / 2)
+          data.append(cell.width / 2, U' ');
+        continue;
+      }
+    }
+    space_count += cell.width;
+  }
+  return head_x;
 }

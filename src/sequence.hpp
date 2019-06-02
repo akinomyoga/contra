@@ -364,6 +364,21 @@ namespace contra {
         break;
       }
     }
+    static constexpr bool is_ctrl(std::uint32_t uchar) {
+      std::uint32_t u = uchar & ~(std::uint32_t) 0x80;
+      return u < 0x20;
+    }
+    void process(char32_t const* beg, char32_t const* end) {
+      while (beg != end) {
+        if (m_dstate == decode_default && !m_hasPendingESC && !is_ctrl(*beg)) {
+          char32_t const* const batch_begin = beg;
+          do beg++; while (beg != end && !is_ctrl(*beg));
+          char32_t const* const batch_end = beg;
+          m_proc->insert_chars(batch_begin, batch_end);
+        } else
+          process_char(*beg++);
+      }
+    }
 
     void process_end() {
       switch (m_dstate) {
@@ -463,6 +478,9 @@ namespace contra {
         std::fprintf(file, "SP");
       else
         std::fprintf(file, "%c", (char) u);
+    }
+    void insert_chars(char32_t const* beg, char32_t const* end) {
+      while (beg < end) insert_char(*beg++);
     }
 
     void process_control_character(char32_t uchar) {

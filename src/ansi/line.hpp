@@ -25,6 +25,7 @@ namespace ansi {
   struct character_t {
     enum flags {
       unicode_mask         = 0x001FFFFF,
+      unicode_max          = 0x0010FFFF,
       flag_acs_character   = 0x01000000, // not yet supported
       flag_embedded_object = 0x08000000, // not yet supported
       flag_private1        = 0x02000000, // for private usage
@@ -41,6 +42,9 @@ namespace ansi {
       marker_srs_beg = marker_base + 4,
       marker_srs_end = marker_base + 5,
 
+      // Note: Unicode 表示のある marker に関しては
+      // flag_marker を外せばその文字になる様にする。
+
       // Unicode bidi markers
       marker_lre = flag_marker | 0x202A,
       marker_rle = flag_marker | 0x202B,
@@ -51,6 +55,8 @@ namespace ansi {
       marker_rli = flag_marker | 0x2067,
       marker_fsi = flag_marker | 0x2068,
       marker_pdi = flag_marker | 0x2069,
+
+      invalid_value = 0xFFFFFFFF,
     };
 
     std::uint32_t value;
@@ -82,6 +88,11 @@ namespace ansi {
       return value & flag_marker;
     }
 
+    constexpr char32_t get_unicode_representation() const {
+      char32_t const ret = value & ~(flag_marker | flag_cluster_extension);
+      if (ret <= unicode_max) return ret;
+      return invalid_value;
+    }
   };
 
   struct cell_t {
@@ -199,10 +210,15 @@ namespace ansi {
     static constexpr def dcsm            = 0x04;
     static constexpr def r2l             = 0x08;
 
-    /// @var line_shift_flags::erm
+    /// @var line_shift_flags::erm_protect
     /// 消去の時 (abs(shift) >= p2 - p1 の時) に保護領域を消去しない事を表すフラグです。
     /// シフトの場合 (abs(shift) < p2 - p1 の時) には使われません。
-    static constexpr def erm             = 0x10;
+    static constexpr def erm_protect             = 0x10;
+  };
+
+  enum word_selection_type {
+    word_selection_cword,
+    word_selection_sword,
   };
 
   class line_t {
@@ -598,6 +614,25 @@ namespace ansi {
     }
 
   public:
+    /*?lwiki
+     * @fn bool set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool dcsm);
+     * @fn bool set_selection_word(curpos_t x, word_selection_type type, bool gatm);
+     * @fn bool clear_selection();
+     * @return 選択範囲の設定によって実際に行内容に変更があった時に true を返します。
+     */
+    bool set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool dcsm);
+    bool set_selection_word(curpos_t x, word_selection_type type, bool gatm);
+    bool clear_selection() { return set_selection(0, 0, false, true, true); }
+
+    /*?lwiki
+     * @fn curpos_t extract_selection(std::u32string& data);
+     * @param[in] x
+     *   ここに指定した x データ位置以降の選択済みセルを取得します。
+     * @return 最初の選択セルのデータ部における x 位置を返します。
+     */
+    curpos_t extract_selection(std::u32string& data) const;
+
+  public:
     void debug_string_nest(curpos_t width, presentation_direction board_charpath) const {
       bool const line_r2l = is_r2l(board_charpath);
       auto const& strings = this->update_strings(width, line_r2l);
@@ -708,8 +743,9 @@ namespace ansi {
     std::uint32_t m_line_count = 0;
     presentation_direction m_presentation_direction {presentation_direction_default};
 
-    board_t(curpos_t width, curpos_t height): m_lines(height), m_width(width), m_height(height) {
-      mwg_check(width > 0 && height > 0, "width = %d, height = %d", (int) width, (int) height);
+    board_t(curpos_t width, curpos_t height): m_lines(height){
+      m_width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
+      m_height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
       this->cur.set(0, 0);
       for (line_t& line : m_lines)
         line.set_id(m_line_count++);
@@ -718,7 +754,8 @@ namespace ansi {
 
   public:
     void reset_size(curpos_t width, curpos_t height) {
-      mwg_check(width > 0 && height > 0, "non-positive size is passed (width = %d, height = %d).", (int) width, (int) height);
+      width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
+      height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
       if (width == this->m_width && height == this->m_height) return;
       if (this->cur.x() >= width) cur.set_x(width - 1);
       if (this->cur.y() >= height) cur.set_y(height - 1);

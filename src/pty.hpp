@@ -1,18 +1,15 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
 #ifndef contra_pty_hpp
 #define contra_pty_hpp
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <stdio.h>
-#include <limits.h>
+#include <cstddef>
 #include <cstdint>
-#include <cstdio>
-#include <vector>
+#include <memory>
 #include <unordered_map>
-#include "sequence.hpp"
-#include "ansi/line.hpp"
-#include "ansi/term.hpp"
-#include "ttty/buffer.hpp"
+#include <string>
+#include "contradef.hpp"
+#include "manager.hpp"
+
+struct termios;
 
 namespace contra {
 namespace term {
@@ -22,7 +19,7 @@ namespace term {
   std::size_t read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size);
   void fd_set_winsize(int fd, struct winsize const* ws);
 
-  class fd_device: public idevice {
+  class fd_device: public contra::idevice {
   protected:
     int m_fd = -1;
     int m_write_interval = 1;
@@ -43,55 +40,22 @@ namespace term {
     }
   };
 
-  class pty_session: public fd_device {
-  public:
-    typedef void (*exec_error_handler_t)(int errno_, std::uintptr_t param);
+  typedef void (*exec_error_handler_t)(int errno_, std::uintptr_t param);
 
-  private:
-    bool m_active = false;
-    int slave_pid = -1;
+  struct terminal_session_parameters {
+    curpos_t col = 80, row = 24, xpixel = 7, ypixel = 13;
+    exec_error_handler_t exec_error_handler = nullptr;
+    std::uintptr_t exec_error_param = 0u;
+    struct termios* termios = nullptr;
+    std::unordered_map<std::string, std::string> env;
+    const char* shell = nullptr;
+    std::size_t fd_read_buffer_size = 4096;
 
-    std::size_t m_read_buffer_size = 4096;
-    std::vector<char> m_read_buffer;
-
-    exec_error_handler_t m_exec_error_handler = NULL;
-    std::uintptr_t m_exec_error_param = 0;
-
-    std::unordered_map<std::string, std::string> m_env;
-  public:
-    pty_session() {}
-    pty_session(const char* shell, winsize const* ws = NULL, struct termios* termios = NULL) {
-      start(shell, ws, termios);
-    }
-
-    void set_read_buffer_size(std::size_t value) {
-      m_read_buffer_size = contra::clamp(value, 0x100, 0x10000);
-    }
-    void set_exec_error_handler(exec_error_handler_t handler, std::uintptr_t param) {
-      this->m_exec_error_handler = handler;
-      this->m_exec_error_param = param;
-    }
-    void set_environment_variable(const char* name, const char* value)  {
-      m_env[name] = value;
-    }
-    bool start(const char* shell, winsize const* ws = NULL, struct termios* termios = NULL);
-
-    std::size_t read(contra::idevice* dst) {
-      if (!m_active) return 0;
-      return read_from_fd(m_fd, dst, &m_read_buffer[0], m_read_buffer.size());
-    }
-
-    void terminate();
-
-    bool is_active() const { return m_active; }
-    bool is_alive();
-
-    virtual ~pty_session() {}
-
-    void set_winsize(struct winsize* ws) {
-      fd_set_winsize(m_fd, ws);
-    }
+    int dbg_fd_tee = -1;
+    const char* dbg_sequence_logfile = nullptr;
   };
+
+  std::unique_ptr<terminal_application> create_terminal_session(terminal_session_parameters& params);
 
 }
 }
