@@ -22,6 +22,9 @@
 
 # private files
 /mat
+/dist
 
 # resources
 /src/cyg*.dll
+
+

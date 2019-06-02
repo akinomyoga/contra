@@ -554,31 +554,34 @@ namespace term {
       manager_mouse_events(terminal_manager* m): manager(m) {}
     private:
       virtual void on_select_initialize(key_t key, curpos_t x, curpos_t y) override {
-        if (key == contra::ansi::key_mouse1_down)
+        using namespace contra::ansi;
+        if ((key & _character_mask) == key_mouse1_down)
           manager->selection_initialize(x, y);
       }
       virtual bool on_select_update(key_t key, curpos_t x, curpos_t y) override {
-        return key == contra::ansi::key_mouse1_drag && manager->selection_update(key, x, y);
+        using namespace contra::ansi;
+        return (key & _key_mouse_button_mask) == _key_mouse1 && manager->selection_update(key, x, y);
       }
-      virtual void on_select(key_t key, curpos_t x, curpos_t y) {
+      virtual void on_select(key_t key, curpos_t x, curpos_t y) override {
         contra_unused(key);
         contra_unused(x);
         contra_unused(y);
         manager->do_select();
       }
-      virtual void on_click(key_t key, curpos_t x, curpos_t y) {
+      virtual void on_click(key_t key, curpos_t x, curpos_t y) override {
         contra_unused(x);
         contra_unused(y);
-        switch (key & contra::ansi::_key_mouse_button_mask) {
-        case contra::ansi::_key_mouse1:
+        using namespace contra::ansi;
+        switch (key & _key_mouse_button_mask) {
+        case _key_mouse1:
           manager->do_click(key);
           break;
-        case contra::ansi::_key_mouse3:
+        case _key_mouse3:
           manager->do_right_click(key);
           break;
         }
       }
-      virtual void on_multiple_click(key_t key, curpos_t x, curpos_t y, int count) {
+      virtual void on_multiple_click(key_t key, curpos_t x, curpos_t y, int count) override {
         manager->do_multiple_click(key, count, x, y);
       }
     };
