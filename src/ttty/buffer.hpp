@@ -26,6 +26,10 @@ namespace ttty {
     std::vector<line_buffer_t> screen_buffer;
     bool prev_decscnm = false;
 
+    // 出力先端末の状態
+    bool remote_dectcem = true;
+    curpos_t remote_x = 0, remote_y = 0;
+
     tty_writer w;
 
   public:
@@ -43,24 +47,23 @@ namespace ttty {
       w.put(ch);
     }
   private:
-    curpos_t x = 0, y = 0;
     void move_to_line(curpos_t newy) {
-      curpos_t const delta = newy - y;
+      curpos_t const delta = newy - remote_y;
       if (delta > 0) {
         put_csiseq_pn1(delta, ascii_B);
       } else if (delta < 0) {
         put_csiseq_pn1(-delta, ascii_A);
       }
-      y = newy;
+      remote_y = newy;
     }
     void move_to_column(curpos_t newx) {
-      curpos_t const delta = newx - x;
+      curpos_t const delta = newx - remote_x;
       if (delta > 0) {
         put_csiseq_pn1(delta, ascii_C);
       } else if (delta < 0) {
         put_csiseq_pn1(-delta, ascii_D);
       }
-      x = newx;
+      remote_x = newx;
     }
     void move_to(curpos_t newx, curpos_t newy) {
       move_to_line(newy);
@@ -210,14 +213,14 @@ namespace ttty {
     }
     void erase_until_eol() {
       board_t const& b = term->board();
-      if (x >= b.m_width) return;
+      if (remote_x >= b.m_width) return;
 
       attribute_t attr;
       w.apply_attr(attr);
       if (w.termcap_bce || attr.is_default()) {
-        put_ech(b.m_width - x);
+        put_ech(b.m_width - remote_x);
       } else {
-        for (; x < b.m_width; x++) w.put(' ');
+        for (; remote_x < b.m_width; remote_x++) w.put(' ');
       }
     }
 
@@ -281,11 +284,11 @@ namespace ttty {
           if (code == ascii_nul) code = ascii_sp;
           w.apply_attr(cell.attribute);
           w.put_u32(code);
-          x += cell.width;
+          remote_x += cell.width;
         }
       }
 
-      move_to_column(x + w3);
+      move_to_column(remote_x + w3);
       erase_until_eol();
     }
 
@@ -308,13 +311,20 @@ namespace ttty {
       }
     }
 
-  public:
-    void update() {
-      w.put(ascii_esc);
-      w.put(ascii_left_bracket);
-      w.put(ascii_question);
-      w.put_unsigned(25);
-      w.put(ascii_l);
+    bool is_content_changed() const {
+      if (prev_decscnm != term->state().get_mode(mode_decscnm)) return true;
+
+      board_t const& b = term->board();
+      if ((curpos_t) screen_buffer.size() != b.m_height) return true;
+      for (curpos_t y = 0; y < b.m_height; y++) {
+        line_t const& line = b.m_lines[y];
+        line_buffer_t const& line_buffer = screen_buffer[y];
+        if (line_buffer.id != line.id() || line_buffer.version != line.version()) return true;
+      }
+      return false;
+    }
+
+    void render_content() {
       std::vector<cell_t> buff;
 
       bool full_update = false;
@@ -345,18 +355,30 @@ namespace ttty {
 
         if (y + 1 == b.m_height) break;
         w.put('\n');
-        this->y++;
+        this->remote_y++;
       }
       w.apply_attr(attribute_t {});
+    }
 
-      move_to(b.cur.x(), b.cur.y());
-      if (term->state().get_mode(mode_dectcem)) {
-        w.put(ascii_esc);
-        w.put(ascii_left_bracket);
-        w.put(ascii_question);
-        w.put_unsigned(25);
-        w.put(ascii_h);
+    void update_remote_dectcem(bool value) {
+      if (remote_dectcem == value) return;
+      remote_dectcem = value;
+      w.put(ascii_esc);
+      w.put(ascii_left_bracket);
+      w.put(ascii_question);
+      w.put_unsigned(25);
+      w.put(value ? ascii_h : ascii_l);
+    }
+  public:
+    void update() {
+      if (is_content_changed()) {
+        update_remote_dectcem(false);
+        render_content();
       }
+
+      board_t const& b = term->board();
+      move_to(b.cur.x(), b.cur.y());
+      update_remote_dectcem(term->state().get_mode(mode_dectcem));
       w.flush();
     }
   };
