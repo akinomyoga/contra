@@ -26,6 +26,9 @@ $(objdir)/experimental/%.o: experimental/%.cpp | $(objdir)/experimental $(gendir
 $(gendir)/term.mode_def.hpp: make_command.sh ansi/term.mode.def
 	bash make_command.sh
 
+#------------------------------------------------------------------------------
+# test
+
 all: impl1
 impl1_objs = \
   $(objdir)/impl1.o \
@@ -54,6 +57,9 @@ impl2: $(impl2_objs)
 $(objdir)/impl2.o: impl2.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
+#------------------------------------------------------------------------------
+# ttty
+
 all: ttty.exe
 ttty_objs = \
   $(objdir)/ttty.o \
@@ -68,6 +74,9 @@ ttty.exe: $(ttty_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 $(objdir)/ttty.o: ttty.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
+
+#------------------------------------------------------------------------------
+# twin
 
 ifeq ($(ostype),cygwin)
 
@@ -98,6 +107,18 @@ all: twin/test-win1.exe
 twin/test-win1.exe: $(objdir)/twin/test-win1.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(twin_LIBS)
 endif
+
+#------------------------------------------------------------------------------
+# tx11
+
+all: tx11.exe
+tx11_LDFLAGS := $(LDFLAGS)
+tx11_LIBS := -lX11
+tx11.exe: $(objdir)/tx11.o
+	$(CXX) $(CXXFLAGS) $(tx11_LDFLAGS) -o $@ $^ $(tx11_LIBS)
+
+#------------------------------------------------------------------------------
+# samples
 
 # all: experimental/bidi
 experimental/bidi: $(objdir)/experimental/bidi.o
