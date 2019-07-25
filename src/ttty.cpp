@@ -22,7 +22,7 @@ int main() {
     params.row = std::min<contra::ansi::curpos_t>(ws.ws_row, cfg_row);
     params.termios = &screen.old_termios;
 
-    params.dbg_sequence_logfile = "ttty-allseq.txt";
+    //params.dbg_sequence_logfile = "ttty-allseq.txt";
   }
   if (!screen.initialize(params)) return 10;
 

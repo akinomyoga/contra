@@ -112,6 +112,22 @@ namespace util {
     const_iterator end() const { return {this, data.size()}; }
   };
 
+  // std::rotate に似るが結果の最初の count 個の要素だけ正しければ良い場合に使うアルゴリズム
+  template<typename ForwardIterator>
+  void partial_rotate(ForwardIterator first, ForwardIterator mid, ForwardIterator last, std::size_t count) {
+    if (mid == first || mid == last) return;
+    ForwardIterator dst = first;
+    ForwardIterator src = mid;
+    while (count--) {
+      std::iter_swap(dst++, src++);
+      if (src == last) {
+        if (dst == mid) break;
+        src = mid;
+      } else if (dst == mid)
+        mid = src;
+    }
+  }
+
   template<typename Value, typename CRTP>
   struct flags_def {
     Value value;

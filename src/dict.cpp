@@ -254,6 +254,7 @@ void tty_writer::apply_attr(attribute_t new_attr) {
 }
 
 #include "ansi/line.hpp"
+#include "ansi/term.hpp"
 
 using namespace ::contra::ansi;
 

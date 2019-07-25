@@ -467,7 +467,7 @@ namespace {
         if (!toCallCR && !s.get_mode(mode_bdsm))
           x = b.to_presentation_position(y, x);
 
-        b.clear_screen();
+        b.clear_screen(term.m_scroll_buffer);
         y = std::max(term.implicit_sph(), 0);
 
         if (!toCallCR && !s.get_mode(mode_bdsm))
@@ -475,7 +475,7 @@ namespace {
 
         b.cur.set(x, y);
       } else
-        b.clear_screen();
+        b.clear_screen(term.m_scroll_buffer);
     } else {
       do_generic_ff(term, 1, true, !toCallCR && !s.get_mode(mode_bdsm));
     }
@@ -1264,7 +1264,7 @@ namespace {
   static void do_vertical_scroll(term_t& term, curpos_t shift, curpos_t tmargin, curpos_t bmargin, curpos_t lmargin, curpos_t rmargin, bool dcsm) {
     board_t& b = term.board();
     if (lmargin == 0 && rmargin == b.m_width) {
-      b.shift_lines(tmargin, bmargin, shift, term.fill_attr());
+      b.shift_lines(tmargin, bmargin, shift, term.fill_attr(), term.m_scroll_buffer);
     } else if (lmargin < rmargin) {
       // DECSLRM が設定されている時のスクロール。行内容を切り貼りする。
       line_segment_t segs[3];

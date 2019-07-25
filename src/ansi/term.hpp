@@ -171,6 +171,215 @@ namespace ansi {
     mouse_sequence_urxvt = 0x0800,
   };
 
+  /*?lwiki
+   * @class class term_scoll_buffer_t;
+   * 0 個以上 m_capacity 個以下の行を保持する。
+   * 最初の要素は data[m_rotate] にある。
+   *
+   * @remarks
+   * `data.size() < m_capacity` の時は常に `m_rotate = 0` である。
+   * `data.size() == m_capacity` の時は `m_rotate` は有限の値を取りうる。
+   * `data.size() > m_capacity` になる事はない。
+   */
+  class term_scroll_buffer_t {
+    typedef term_scroll_buffer_t self;
+    typedef line_t value_type;
+
+    std::vector<value_type> data;
+    std::size_t m_rotate = 0;
+    std::size_t m_capacity;
+
+  public:
+    term_scroll_buffer_t(std::size_t capacity = 10): m_capacity(capacity) {}
+
+  public:
+    std::size_t capacity() const {
+      return this->m_capacity;
+    }
+    void set_capacity(std::size_t value) {
+      if (data.size() < value) {
+        if (m_rotate > 0) {
+          std::rotate(data.begin(), data.begin() + m_rotate, data.end());
+          m_rotate = 0;
+        }
+      } else if (data.size() > value) {
+        std::size_t const new_begin = (m_rotate - value + m_capacity) % m_capacity;
+        if (new_begin)
+          contra::util::partial_rotate(data.begin(), data.begin() + new_begin, data.end(), value);
+        data.resize(value);
+      }
+      this->m_capacity = value;
+    }
+
+    void push(value_type&& line) {
+      if (m_capacity == 0) return;
+      if (data.size() < m_capacity) {
+        data.emplace_back(std::move(line));
+      } else {
+        data[m_rotate] = std::move(line);
+        m_rotate = (m_rotate + 1) % m_capacity;
+      }
+    }
+
+    value_type& operator[](std::size_t index) {
+      return data[(m_rotate + index) % data.size()];
+    }
+    value_type const& operator[](std::size_t index) const {
+      return data[(m_rotate + index) % data.size()];
+    }
+
+    std::size_t size() const { return data.size(); }
+
+    typedef contra::util::indexer_iterator<value_type, self, std::size_t> iterator;
+    typedef contra::util::indexer_iterator<const value_type, const self, std::size_t> const_iterator;
+    iterator begin() { return {this, (std::size_t) 0}; }
+    iterator end() { return {this, data.size()}; }
+    const_iterator begin() const { return {this, (std::size_t) 0}; }
+    const_iterator end() const { return {this, data.size()}; }
+  };
+
+  struct board_t {
+    contra::util::ring_buffer<line_t> m_lines;
+    cursor_t cur;
+    curpos_t m_width;
+    curpos_t m_height;
+    std::uint32_t m_line_count = 0;
+    presentation_direction m_presentation_direction { presentation_direction_default };
+
+    board_t(curpos_t width, curpos_t height): m_lines(height) {
+      m_width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
+      m_height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
+      this->cur.set(0, 0);
+      for (line_t& line : m_lines)
+        line.set_id(m_line_count++);
+    }
+    board_t(): board_t(80, 32) {}
+
+  public:
+    void reset_size(curpos_t width, curpos_t height) {
+      width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
+      height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
+      if (width == this->m_width && height == this->m_height) return;
+      if (this->cur.x() >= width) cur.set_x(width - 1);
+      if (this->cur.y() >= height) cur.set_y(height - 1);
+      m_lines.resize(height);
+      if (this->m_width > width) {
+        for (auto& line : m_lines)
+          line.truncate(width, false, true);
+      }
+      this->m_width = width;
+      this->m_height = height;
+    }
+
+  public:
+    curpos_t x() const { return cur.x(); }
+    curpos_t y() const { return cur.y(); }
+
+    line_t& line() { return m_lines[cur.y()]; }
+    line_t const& line() const { return m_lines[cur.y()]; }
+    line_t& line(curpos_t y) { return m_lines[y]; }
+    line_t const& line(curpos_t y) const { return m_lines[y]; }
+
+    curpos_t line_r2l(line_t const& line) const { return line.is_r2l(m_presentation_direction); }
+    curpos_t line_r2l(curpos_t y) const { return line_r2l(m_lines[y]); }
+    curpos_t line_r2l() const { return line_r2l(cur.y()); }
+
+    curpos_t to_data_position(curpos_t y, curpos_t x) const {
+      return m_lines[y].to_data_position(x, m_width, m_presentation_direction);
+    }
+    curpos_t to_presentation_position(curpos_t y, curpos_t x) const {
+      return m_lines[y].to_presentation_position(x, m_width, m_presentation_direction);
+    }
+
+  private:
+    void transfer_lines(curpos_t y1, curpos_t y2, term_scroll_buffer_t& scroll_buffer) {
+      for (curpos_t y = y1; y < y2; y++)
+        scroll_buffer.push(std::move(m_lines[y]));
+    }
+    void initialize_lines(curpos_t y1, curpos_t y2, attribute_t const& fill_attr) {
+      for (curpos_t y = y1; y < y2; y++) {
+        m_lines[y].clear(m_width, fill_attr);
+        m_lines[y].set_id(m_line_count++);
+      }
+    }
+
+  public:
+    /// @fn void shift_lines(curpos_t y1, curpos_t y2, curpos_t count, attribute_t const& fill_attr);
+    /// 指定した範囲の行を前方または後方に移動します。
+    /// @param[in] y1 範囲の開始位置を指定します。
+    /// @param[in] y2 範囲の終端位置を指定します。
+    /// @param[in] count 移動量を指定します。正の値を指定した時、
+    ///   下方向にシフトします。負の値を指定した時、上方向にシフトします。
+    /// @param[in] fill_attr 新しく現れた行に適用する描画属性指定します。
+    void shift_lines(curpos_t y1, curpos_t y2, curpos_t count, attribute_t const& fill_attr, term_scroll_buffer_t& scroll_buffer) {
+      y1 = contra::clamp(y1, 0, m_height);
+      y2 = contra::clamp(y2, 0, m_height);
+      if (y1 >= y2 || count == 0) return;
+      if (y1 == 0 && y2 == m_height) {
+        if (count < 0) {
+          count = -count;
+          if (count > m_height) count = m_height;
+          transfer_lines(0, count, scroll_buffer);
+          initialize_lines(0, count, fill_attr);
+          m_lines.rotate(count);
+        } else if (count > 0) {
+          if (count > m_height) count = m_height;
+          m_lines.rotate(m_height - count);
+          initialize_lines(0, count, fill_attr);
+        }
+        return;
+      }
+
+      if (std::abs(count) >= y2 - y1) {
+        if (count < 0)
+          transfer_lines(y1, y2, scroll_buffer);
+        initialize_lines(y1, y2, fill_attr);
+      } else if (count > 0) {
+        auto const it1 = m_lines.begin() + y1;
+        auto const it2 = m_lines.begin() + y2;
+        std::move_backward(it1, it2 - count, it2);
+        initialize_lines(y1, y1 + count, fill_attr);
+      } else {
+        count = -count;
+        auto const it1 = m_lines.begin() + y1;
+        auto const it2 = m_lines.begin() + y2;
+        transfer_lines(y1, y1 + count, scroll_buffer);
+        std::move(it1 + count, it2, it1);
+        initialize_lines(y2 - count, y2, fill_attr);
+      }
+    }
+    void clear_screen() {
+      for (auto& line : m_lines) {
+        line.clear();
+        line.set_id(m_line_count++);
+      }
+    }
+
+    // FF 等によって "次ページに移動" した時に使う。
+    void clear_screen(term_scroll_buffer_t& scroll_buffer) {
+      for (auto& line : m_lines) {
+        scroll_buffer.push(std::move(line));
+        line.clear();
+        line.set_id(m_line_count++);
+      }
+    }
+
+  public:
+    void debug_print(std::FILE* file) {
+      for (auto const& line : m_lines) {
+        if (line.lflags() & line_attr_t::is_line_used) {
+          for (auto const& cell : line.cells()) {
+            if (cell.character.is_wide_extension()) continue;
+            char32_t c = (char32_t) (cell.character.value & character_t::unicode_mask);
+            if (c == 0) c = '~';
+            contra::encoding::put_u8(c, file);
+          }
+          std::putc('\n', file);
+        }
+      }
+    }
+  };
+
   struct tstate_t {
     term_t* m_term;
 
@@ -386,6 +595,10 @@ namespace ansi {
     board_t m_board;
     tstate_t m_state {this};
 
+  public:
+    term_scroll_buffer_t m_scroll_buffer { (std::size_t) 1000 };
+
+  private:
     contra::idevice* m_send_target = nullptr;
 
     void report_error(const char* message) {
@@ -409,8 +622,8 @@ namespace ansi {
   public:
     board_t& board() { return this->m_board; }
     board_t const& board() const { return this->m_board; }
-    tstate_t& state() {return this->m_state;}
-    tstate_t const& state() const {return this->m_state;}
+    tstate_t& state() { return this->m_state; }
+    tstate_t const& state() const { return this->m_state; }
 
     curpos_t tmargin() const {
       curpos_t const b = m_state.dec_tmargin;
