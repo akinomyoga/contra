@@ -44,6 +44,7 @@ namespace term {
 
   struct terminal_session_parameters {
     curpos_t col = 80, row = 24, xpixel = 7, ypixel = 13;
+    curpos_t scroll_buffer_size = 1000;
     exec_error_handler_t exec_error_handler = nullptr;
     std::uintptr_t exec_error_param = 0u;
     struct termios* termios = nullptr;

@@ -662,6 +662,9 @@ namespace ansi {
     curpos_t display_height() const {
       return this->m_board.m_height;
     }
+    curpos_t display_width() const {
+      return this->m_board.m_width;
+    }
     line_t const& display_line(curpos_t y) const {
       y -= m_scroll_amount;
       if (y >= 0)

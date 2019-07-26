@@ -2046,7 +2046,6 @@ namespace twin {
       s.m_default_bg_color = contra::dict::rgb(0xFF, 0xFF, 0xFF);
       // s.m_default_fg_color = contra::dict::rgb(0xD0, 0xD0, 0xD0);//@color
       // s.m_default_bg_color = contra::dict::rgb(0x00, 0x00, 0x00);
-      sess->term().set_scroll_capacity(1000);
       manager.add_app(std::move(sess));
       return true;
     }

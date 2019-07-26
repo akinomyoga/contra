@@ -297,6 +297,7 @@ namespace term {
 
     auto sess = std::make_unique<terminal_session>();
     if (!sess->initialize(params)) sess.reset();
+    sess->term().set_scroll_capacity(params.scroll_buffer_size);
 
     return sess;
   }

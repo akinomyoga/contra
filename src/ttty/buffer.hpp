@@ -100,14 +100,12 @@ namespace ttty {
      *   同時に screen_buffer の内容も実施したスクロールに合わせて更新します。
      */
     void trace_line_scroll() {
-      board_t const& b = term->board();
-
-      curpos_t const height = b.m_height;
+      curpos_t const height = term->display_height();
       curpos_t j = 0;
       for (curpos_t i = 0; i < height; i++) {
         screen_buffer[i].delta = height;
         for (curpos_t k = j; k < height; k++) {
-          if (b.line(k).id() == screen_buffer[i].id) {
+          if (term->display_line(k).id() == screen_buffer[i].id) {
             screen_buffer[i].delta = k - i;
             j = k;
             break;
@@ -212,15 +210,15 @@ namespace ttty {
 #endif
     }
     void erase_until_eol() {
-      board_t const& b = term->board();
-      if (remote_x >= b.m_width) return;
+      curpos_t const width = term->display_width();
+      if (remote_x >= width) return;
 
       attribute_t attr;
       w.apply_attr(attr);
       if (w.termcap_bce || attr.is_default()) {
-        put_ech(b.m_width - remote_x);
+        put_ech(width - remote_x);
       } else {
-        for (; remote_x < b.m_width; remote_x++) w.put(' ');
+        for (; remote_x < width; remote_x++) w.put(' ');
       }
     }
 
@@ -301,23 +299,23 @@ namespace ttty {
         if (s.m_default_bg_space && cell.attribute.is_bg_default())
           cell.attribute.set_bg(s.m_default_bg_color, s.m_default_bg_space);
       }
-      board_t& b = term->board();
-      if (content.size() < (std::size_t) b.m_width && (s.m_default_fg_space || s.m_default_bg_space)) {
+      curpos_t const width = term->display_width();
+      if (content.size() < (std::size_t) term->display_width() && (s.m_default_fg_space || s.m_default_bg_space)) {
         cell_t fill = ascii_nul;
         fill.attribute.set_fg(s.m_default_fg_color, s.m_default_fg_space);
         fill.attribute.set_bg(s.m_default_bg_color, s.m_default_bg_space);
         fill.width = 1;
-        content.resize(b.m_width, fill);
+        content.resize(width, fill);
       }
     }
 
     bool is_content_changed() const {
       if (prev_decscnm != term->state().get_mode(mode_decscnm)) return true;
 
-      board_t const& b = term->board();
-      if ((curpos_t) screen_buffer.size() != b.m_height) return true;
-      for (curpos_t y = 0; y < b.m_height; y++) {
-        line_t const& line = b.m_lines[y];
+      curpos_t const height = term->display_height();
+      if ((curpos_t) screen_buffer.size() != height) return true;
+      for (curpos_t y = 0; y < height; y++) {
+        line_t const& line = term->display_line(y);
         line_buffer_t const& line_buffer = screen_buffer[y];
         if (line_buffer.id != line.id() || line_buffer.version != line.version()) return true;
       }
@@ -335,12 +333,13 @@ namespace ttty {
       }
 
       board_t const& b = term->board();
-      screen_buffer.resize(b.m_height);
+      curpos_t const height = term->display_height();
+      screen_buffer.resize(height);
       if (is_terminal_fullwidth)
         trace_line_scroll();
       move_to(0, 0);
-      for (curpos_t y = 0; y < b.m_height; y++) {
-        line_t const& line = b.m_lines[y];
+      for (curpos_t y = 0; y < height; y++) {
+        line_t const& line = term->display_line(y);
         line_buffer_t& line_buffer = screen_buffer[y];
         if (full_update || line_buffer.id != line.id() || line_buffer.version != line.version()) {
           line.get_cells_in_presentation(buff, b.line_r2l(line));
@@ -353,7 +352,7 @@ namespace ttty {
           move_to_column(0);
         }
 
-        if (y + 1 == b.m_height) break;
+        if (y + 1 == height) break;
         w.put('\n');
         this->remote_y++;
       }
@@ -376,8 +375,8 @@ namespace ttty {
         render_content();
       }
 
-      board_t const& b = term->board();
-      move_to(b.cur.x(), b.cur.y());
+      auto const cur = term->display_cursor();
+      move_to(cur.x, cur.y);
       update_remote_dectcem(term->state().get_mode(mode_dectcem));
       w.flush();
     }
