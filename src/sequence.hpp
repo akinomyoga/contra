@@ -48,6 +48,13 @@ namespace contra {
       return parameter_size() != 0 && ascii_less <= m_content[0] && m_content[0] <= ascii_question;
     }
 
+    char32_t const* content() const {
+      return &m_content[0];
+    }
+    std::int32_t content_size() const {
+      return m_content.size();
+    }
+
     char32_t const* parameter() const {
       return &m_content[0];
     }
@@ -165,7 +172,7 @@ namespace contra {
         m_seq.append(uchar);
       } else {
         process_invalid_sequence();
-        process_char(uchar);
+        decode_char(uchar);
       }
     }
 
@@ -198,7 +205,7 @@ namespace contra {
 
         m_seq.set_final(uchar);
         process_invalid_sequence();
-        process_char(uchar);
+        decode_char(uchar);
       }
     }
 
@@ -219,8 +226,8 @@ namespace contra {
           process_command_string();
         } else {
           process_invalid_sequence();
-          process_char(ascii_esc);
-          process_char(uchar);
+          decode_char(ascii_esc);
+          decode_char(uchar);
         }
 
         return;
@@ -234,7 +241,7 @@ namespace contra {
         process_command_string();
       } else {
         process_invalid_sequence();
-        process_char(uchar);
+        decode_char(uchar);
       }
     }
 
@@ -260,8 +267,8 @@ namespace contra {
           // invalid SOS
           process_invalid_sequence();
           if (uchar == ascii_X)
-            process_char(ascii_esc);
-          process_char(uchar);
+            decode_char(ascii_esc);
+          decode_char(uchar);
           return;
         } else if (uchar == ascii_esc) {
           m_seq.append(ascii_esc);
@@ -275,7 +282,7 @@ namespace contra {
         process_character_string();
       } else if (uchar == ascii_sos && m_config->c1_8bit_representation_enabled) {
         process_invalid_sequence();
-        process_char(uchar);
+        decode_char(uchar);
       } else
         m_seq.append(uchar);
     }
@@ -339,12 +346,12 @@ namespace contra {
         if (m_config->c1_8bit_representation_enabled)
           process_char_default_c1(uchar);
       } else {
-        m_proc->insert_char(uchar);
+        m_proc->process_char(uchar);
       }
     }
 
   public:
-    void process_char(char32_t uchar) {
+    void decode_char(char32_t uchar) {
       if (uchar == ascii_nul || uchar == ascii_del) return;
       switch (m_dstate) {
       case decode_default:
@@ -368,15 +375,15 @@ namespace contra {
       std::uint32_t u = uchar & ~(std::uint32_t) 0x80;
       return u < 0x20;
     }
-    void process(char32_t const* beg, char32_t const* end) {
+    void decode(char32_t const* beg, char32_t const* end) {
       while (beg != end) {
         if (m_dstate == decode_default && !m_hasPendingESC && !is_ctrl(*beg)) {
           char32_t const* const batch_begin = beg;
           do beg++; while (beg != end && !is_ctrl(*beg));
           char32_t const* const batch_end = beg;
-          m_proc->insert_chars(batch_begin, batch_end);
+          m_proc->process_chars(batch_begin, batch_end);
         } else
-          process_char(*beg++);
+          decode_char(*beg++);
       }
     }
 
@@ -466,7 +473,7 @@ namespace contra {
       print_sequence(seq);
     }
 
-    void insert_char(char32_t u) {
+    void process_char(char32_t u) {
       if (m_hasPrecedingChar) {
         std::fputc(' ', file);
       } else
@@ -479,8 +486,8 @@ namespace contra {
       else
         std::fprintf(file, "%c", (char) u);
     }
-    void insert_chars(char32_t const* beg, char32_t const* end) {
-      while (beg < end) insert_char(*beg++);
+    void process_chars(char32_t const* beg, char32_t const* end) {
+      while (beg < end) process_char(*beg++);
     }
 
     void process_control_character(char32_t uchar) {
@@ -499,7 +506,7 @@ namespace contra {
   public:
     void write(const char* data, std::size_t size) {
       for (std::size_t i = 0; i < size; i++)
-        m_seqdecoder.process_char(data[i]);
+        m_seqdecoder.decode_char(data[i]);
     }
 
   private:
@@ -507,5 +514,435 @@ namespace contra {
       this->write(data, size);
     }
   };
+
+  //---------------------------------------------------------------------------
+  // CSI parameters
+
+  typedef std::uint32_t csi_single_param_t;
+
+  class csi_parameters;
+
+  struct csi_param_type {
+    csi_single_param_t value;
+    bool isColon;
+    bool isDefault;
+  };
+
+  class csi_parameters {
+    std::vector<csi_param_type> m_data;
+    std::size_t m_index {0};
+    bool m_result;
+
+  public:
+    csi_parameters(char32_t const* s, std::size_t n) { extract_parameters(s, n); }
+    csi_parameters(sequence const& seq) {
+      extract_parameters(seq.parameter(), seq.parameter_size());
+    }
+
+    // csi_parameters(std::initializer_list<csi_single_param_t> args) {
+    //   for (csi_single_param_t value: args)
+    //     this->push_back({value, false, false});
+    // }
+
+    operator bool() const {return this->m_result;}
+
+  public:
+    std::size_t size() const {return m_data.size();}
+    void push_back(csi_param_type const& value) {m_data.push_back(value);}
+
+  private:
+    bool extract_parameters(char32_t const* str, std::size_t len) {
+      m_data.clear();
+      m_index = 0;
+      m_isColonAppeared = false;
+      m_result = false;
+
+      bool isSet = false;
+      csi_param_type param {0, false, true};
+      for (std::size_t i = 0; i < len; i++) {
+        char32_t const c = str[i];
+        if (!(ascii_0 <= c && c <= ascii_semicolon)) {
+          std::fprintf(stderr, "invalid value of CSI parameter values.\n");
+          return false;
+        }
+
+        if (c <= ascii_9) {
+          std::uint32_t const newValue = param.value * 10 + (c - ascii_0);
+          if (newValue < param.value) {
+            // overflow
+            std::fprintf(stderr, "a CSI parameter value is too large.\n");
+            return false;
+          }
+
+          isSet = true;
+          param.value = newValue;
+          param.isDefault = false;
+        } else {
+          m_data.push_back(param);
+          isSet = true;
+          param.value = 0;
+          param.isColon = c == ascii_colon;
+          param.isDefault = true;
+        }
+      }
+
+      if (isSet) m_data.push_back(param);
+      return m_result = true;
+    }
+
+  public:
+    bool m_isColonAppeared;
+
+    bool read_param(csi_single_param_t& result, std::uint32_t defaultValue) {
+      while (m_index < m_data.size()) {
+        csi_param_type const& param = m_data[m_index++];
+        if (!param.isColon) {
+          m_isColonAppeared = false;
+          if (!param.isDefault)
+            result = param.value;
+          else
+            result = defaultValue;
+          return true;
+        }
+      }
+      result = defaultValue;
+      return false;
+    }
+
+    bool read_arg(csi_single_param_t& result, bool toAllowSemicolon, csi_single_param_t defaultValue) {
+      if (m_index <m_data.size()
+        && (m_data[m_index].isColon || (toAllowSemicolon && !m_isColonAppeared))
+      ) {
+        csi_param_type const& param = m_data[m_index++];
+        if (param.isColon) m_isColonAppeared = true;
+        if (!param.isDefault)
+          result = param.value;
+        else
+          result = defaultValue;
+        return true;
+      }
+
+      result = defaultValue;
+      return false;
+    }
+
+    void debug_print(std::FILE* file) const {
+      bool is_first = true;
+      for (auto const& entry : m_data) {
+        if (entry.isColon)
+          std::putc(':', file);
+        else if (!is_first)
+          std::putc(';', file);
+        if (!entry.isDefault)
+          std::fprintf(file, "%u", entry.value);
+        is_first = false;
+      }
+    }
+  };
+
+  //---------------------------------------------------------------------------
+  // input_decoder
+
+  enum input_data_type {
+    input_data_paste = 1,
+  };
+
+  template<typename Processor>
+  class input_decoder {
+    Processor* m_proc;
+
+    // requires the following members:
+    //   m_proc->process_key(u);
+    //   m_proc->process_input_data(type, data);
+    //   m_proc->process_invalid_sequence(seq);
+    //   m_proc->process_control_sequence(seq);
+    //
+    // ToDo: use TRIE?
+    // ToDo: use terminfo?
+
+  public:
+    input_decoder(Processor* proc): m_proc(proc) {}
+
+  private:
+    enum decode_state {
+      decode_default = 0,
+      decode_esc,
+      decode_csi,
+      decode_paste_default,
+      decode_paste_esc,
+      decode_paste_csi,
+      decode_paste_csi2,
+      decode_paste_csi20,
+      decode_paste_csi201,
+    };
+
+    int m_state = 0;
+    sequence m_seq;
+    bool has_pending_esc = false;
+    int m_paste_suffix = 0;
+    std::u32string m_paste_data;
+  public:
+    void decode(char32_t const* beg, char32_t const* end) {
+      while (beg != end) decode_char(*beg++);
+    }
+    void decode_char(char32_t u) {
+      switch (m_state) {
+      case decode_default:
+        if (u == ascii_esc) {
+          m_state = decode_esc;
+        } else if (u == ascii_csi) {
+          m_state = decode_csi;
+          m_seq.set_type(ascii_csi);
+        } else {
+          process_key(u & _character_mask);
+        }
+        break;
+      case decode_esc:
+        if (u == ascii_left_bracket) {
+          m_state = decode_csi;
+          m_seq.set_type(ascii_csi);
+        } else {
+          process_key(ascii_esc);
+          m_state = decode_default;
+          decode_char(u);
+        }
+        break;
+      case decode_csi:
+        if (0x40 <= u && u <= 0x7E) {
+          m_seq.set_final((byte) u);
+          process_control_sequence();
+          m_state = decode_default;
+          m_seq.clear();
+        } else if (0x20 <= u && u <= 0x2F) {
+          if (!m_seq.has_intermediate())
+            m_seq.start_intermediate();
+          m_seq.append(u);
+        } else if (0x30 <= u  && u <= 0x3F) {
+          if (m_seq.has_intermediate()) {
+            m_seq.set_final((byte) u);
+            process_invalid_sequence();
+            m_state = decode_default;
+            m_seq.clear();
+            decode_char(u);
+          } else {
+            m_seq.append(u);
+          }
+        } else {
+          m_seq.set_final((byte) u);
+          process_invalid_sequence();
+          m_state = decode_default;
+          m_seq.clear();
+          decode_char(u);
+        }
+        break;
+      case decode_paste_default:
+        m_paste_data += u;
+        if (u == ascii_esc) {
+          m_state = decode_paste_esc;
+          m_paste_suffix = 1;
+        } else if (u == ascii_csi) {
+          m_state = decode_paste_csi;
+          m_paste_suffix = 1;
+        }
+        break;
+      case decode_paste_esc:
+        m_paste_data += u;
+        m_state = u == ascii_left_bracket ? decode_paste_csi : decode_paste_default;
+        m_paste_suffix++;
+        break;
+      case decode_paste_csi:
+        m_paste_data += u;
+        m_state = u == ascii_2 ? decode_paste_csi2 : decode_paste_default;
+        m_paste_suffix++;
+        break;
+      case decode_paste_csi2:
+        m_paste_data += u;
+        m_state = u == ascii_0 ? decode_paste_csi20 : decode_paste_default;
+        m_paste_suffix++;
+        break;
+      case decode_paste_csi20:
+        m_paste_data += u;
+        m_state = u == ascii_1 ? decode_paste_csi201 : decode_paste_default;
+        m_paste_suffix++;
+        break;
+      case decode_paste_csi201:
+        m_paste_data += u;
+        m_state = u == ascii_1 ? decode_paste_csi201 : decode_paste_default;
+        m_paste_suffix++;
+        if (u == ascii_tilde) {
+          m_paste_data.erase(m_paste_data.end() - m_paste_suffix, m_paste_data.end());
+          process_input_data(input_data_paste, m_paste_data);
+        }
+        break;
+      default:
+        mwg_assert(false, "BUG unexpected");
+        m_state = decode_default;
+        process_key(u & _character_mask);
+        break;
+      }
+    }
+
+  private:
+    void process_key(std::uint32_t u) {
+      if (u == ascii_esc && !has_pending_esc) {
+        has_pending_esc = true;
+        return;
+      }
+
+      if (u < 32) {
+        if (1 <= u && u <= 26)
+          u |= 0x60 | modifier_control;
+        else
+          u |= 0x40 | modifier_control;
+      }
+
+      if (has_pending_esc) {
+        has_pending_esc = false;
+        if (u & modifier_meta)
+          process_key(ascii_esc);
+        else
+          u |= modifier_meta;
+      }
+
+      m_proc->process_key(u);
+    }
+
+    void process_input_data(input_data_type type, std::u32string const& data) {
+      m_proc->process_input_data(type, data);
+    }
+
+    void process_invalid_sequence() {
+      m_proc->process_invalid_sequence(m_seq);
+    }
+
+    void process_control_sequence() {
+      if (!process_csi_key())
+        m_proc->process_control_sequence(m_seq);
+    }
+
+    bool process_csi_key() {
+      csi_parameters params(m_seq);
+      if (!params) return false;
+
+      key_t key = 0;
+      switch (m_seq.final()) {
+      case ascii_tilde:
+        {
+          csi_single_param_t param1;
+          params.read_param(param1, 0);
+
+          switch (param1) {
+          case 1: key = key_home; goto modified_key;
+          case 2: key = key_insert; goto modified_key;
+          case 3: key = key_delete; goto modified_key;
+          case 4: key = key_end; goto modified_key;
+          case 5: key = key_prior; goto modified_key;
+          case 6: key = key_next; goto modified_key;
+          case 7: key = key_home; goto modified_key;
+          case 8: key = key_end; goto modified_key;
+          case 11: key = key_f1; goto modified_key;
+          case 12: key = key_f2; goto modified_key;
+          case 13: key = key_f3; goto modified_key;
+          case 14: key = key_f4; goto modified_key;
+          case 15: key = key_f5; goto modified_key;
+          case 17: key = key_f6; goto modified_key;
+          case 18: key = key_f7; goto modified_key;
+          case 19: key = key_f8; goto modified_key;
+          case 20: key = key_f9; goto modified_key;
+          case 21: key = key_f10; goto modified_key;
+          case 23: key = key_f11; goto modified_key;
+          case 24: key = key_f12; goto modified_key;
+          case 25: key = key_f13; goto modified_key;
+          case 26: key = key_f14; goto modified_key;
+          case 28: key = key_f15; goto modified_key;
+          case 29: key = key_f16; goto modified_key;
+          case 31: key = key_f17; goto modified_key;
+          case 32: key = key_f18; goto modified_key;
+          case 33: key = key_f19; goto modified_key;
+          case 34: key = key_f20; goto modified_key;
+
+          case 27: goto modified_code;
+          case 200: goto paste_begin; // paste_begin
+            // case 201: // paste_end
+          }
+        }
+        break;
+      case ascii_A: key = key_up; goto modified_alpha;
+      case ascii_B: key = key_down; goto modified_alpha;
+      case ascii_C: key = key_right; goto modified_alpha;
+      case ascii_D: key = key_left; goto modified_alpha;
+      case ascii_E: key = key_begin; goto modified_alpha;
+      case ascii_F: key = key_end; goto modified_alpha;
+      case ascii_H: key = key_home; goto modified_alpha;
+      case ascii_M: key = key_kpent; goto modified_alpha;
+      case ascii_P: key = key_kpf1; goto modified_alpha;
+      case ascii_Q: key = key_kpf2; goto modified_alpha;
+      case ascii_R: key = key_kpf3; goto modified_alpha;
+      case ascii_S: key = key_kpf4; goto modified_alpha;
+      case ascii_j: key = key_kpmul; goto modified_alpha;
+      case ascii_k: key = key_kpadd; goto modified_alpha;
+      case ascii_l: key = key_kpsep; goto modified_alpha;
+      case ascii_m: key = key_kpsub; goto modified_alpha;
+      case ascii_n: key = key_kpdec; goto modified_alpha;
+      case ascii_o: key = key_kpdiv; goto modified_alpha;
+      case ascii_p: key = key_kp0; goto modified_alpha;
+      case ascii_q: key = key_kp1; goto modified_alpha;
+      case ascii_r: key = key_kp2; goto modified_alpha;
+      case ascii_s: key = key_kp3; goto modified_alpha;
+      case ascii_t: key = key_kp4; goto modified_alpha;
+      case ascii_u: key = key_kp5; goto modified_unicode;
+      case ascii_v: key = key_kp6; goto modified_alpha;
+      case ascii_w: key = key_kp7; goto modified_alpha;
+      case ascii_x: key = key_kp8; goto modified_alpha;
+      case ascii_y: key = key_kp9; goto modified_alpha;
+      case ascii_X: key = key_kpeq; goto modified_alpha;
+
+      paste_begin:
+        if (params.size() == 1) {
+          m_state = decode_paste_default;
+          m_paste_data.clear();
+          return true;
+        }
+        break;
+      modified_code:
+        {
+          csi_single_param_t param2, param3;
+          params.read_param(param2, 0);
+          params.read_param(param3, 0);
+          key = param3 & _character_mask;
+          if (param2)
+            key |= (param2 - 1) << _modifier_shft & _modifier_mask;
+          process_key(key);
+          return true;
+        }
+      modified_unicode:
+        {
+          csi_single_param_t param1;
+          params.read_param(param1, 1);
+          if (param1 != 1) key = param1 & _character_mask;
+          goto modified_key;
+        }
+      modified_alpha:
+        {
+          csi_single_param_t param1;
+          params.read_param(param1, 1);
+          if (param1 == 1) goto modified_key;
+          break;
+        }
+      modified_key:
+        {
+          csi_single_param_t param2;
+          params.read_param(param2, 0);
+          if (param2)
+            key |= (param2 - 1) << _modifier_shft & _modifier_mask;
+          process_key(key);
+          return true;
+        }
+      }
+      return false;
+    }
+
+  };
+
 }
 #endif

@@ -376,8 +376,12 @@ namespace ttty {
       }
 
       auto const cur = term->display_cursor();
-      move_to(cur.x, cur.y);
-      update_remote_dectcem(term->state().get_mode(mode_dectcem));
+      if (0 <= cur.y && cur.y < term->display_height()) {
+        move_to(cur.x, cur.y);
+        update_remote_dectcem(term->state().get_mode(mode_dectcem));
+      } else {
+        update_remote_dectcem(false);
+      }
       w.flush();
     }
   };

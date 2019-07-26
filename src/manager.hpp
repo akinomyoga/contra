@@ -312,6 +312,18 @@ namespace term {
         case ascii_minus:
           this->update_zoom(m_zoom_level - 1);
           return true;
+        case key_up:
+          m_dirty |= app().term().display_scroll(-3);
+          return true;
+        case key_down:
+          m_dirty |= app().term().display_scroll(3);
+          return true;
+        case key_prior:
+          m_dirty |= app().term().display_scroll(-app().term().display_height());
+          return true;
+        case key_next:
+          m_dirty |= app().term().display_scroll(app().term().display_height());
+          return true;
         default:
           return false;
         }
@@ -530,7 +542,7 @@ namespace term {
     }
 
     void selection_extract(std::u32string& data) {
-      if (m_sel_type & contra::ansi::modifier_meta)
+      if (m_sel_type & contra::modifier_meta)
         selection_extract_rectangle(data);
       else
         selection_extract_characters(data);
@@ -545,6 +557,10 @@ namespace term {
     void clipboard_copy() {
       selection_extract(m_clipboard_data);
       if (m_events) m_events->set_clipboard(m_clipboard_data);
+    }
+  public:
+    void input_paste(std::u32string const& data) {
+      app().input_paste(data);
     }
 
   public:
@@ -624,7 +640,7 @@ namespace term {
       }
     }
     void do_right_click(key_t key) {
-      if (key == contra::ansi::key_mouse3_up)
+      if (key == contra::key_mouse3_up)
         this->clipboard_paste();
     }
 
