@@ -17,6 +17,9 @@
 #include "../enc.utf8.hpp"
 
 namespace contra {
+namespace limit {
+  constexpr ansi::curpos_t maximal_scroll_buffer_size = 1000000;
+}
 namespace ansi {
 
   typedef std::uint32_t key_t;
@@ -190,13 +193,14 @@ namespace ansi {
     std::size_t m_capacity;
 
   public:
-    term_scroll_buffer_t(std::size_t capacity = 10): m_capacity(capacity) {}
+    term_scroll_buffer_t(std::size_t capacity = 0): m_capacity(capacity) {}
 
   public:
     std::size_t capacity() const {
       return this->m_capacity;
     }
     void set_capacity(std::size_t value) {
+      value = std::min<std::size_t>(value, limit::maximal_scroll_buffer_size);
       if (data.size() < value) {
         if (m_rotate > 0) {
           std::rotate(data.begin(), data.begin() + m_rotate, data.end());
@@ -246,9 +250,10 @@ namespace ansi {
     std::uint32_t m_line_count = 0;
     presentation_direction m_presentation_direction { presentation_direction_default };
 
-    board_t(curpos_t width, curpos_t height): m_lines(height) {
+    board_t(curpos_t width, curpos_t height) {
       m_width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
       m_height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
+      this->m_lines.resize(m_height);
       this->cur.set(0, 0);
       for (line_t& line : m_lines)
         line.set_id(m_line_count++);
@@ -284,11 +289,17 @@ namespace ansi {
     curpos_t line_r2l(curpos_t y) const { return line_r2l(m_lines[y]); }
     curpos_t line_r2l() const { return line_r2l(cur.y()); }
 
+    curpos_t to_data_position(line_t const& line, curpos_t x) const {
+      return line.to_data_position(x, m_width, m_presentation_direction);
+    }
+    curpos_t to_presentation_position(line_t const& line, curpos_t x) const {
+      return line.to_presentation_position(x, m_width, m_presentation_direction);
+    }
     curpos_t to_data_position(curpos_t y, curpos_t x) const {
-      return m_lines[y].to_data_position(x, m_width, m_presentation_direction);
+      return to_data_position(m_lines[y], x);
     }
     curpos_t to_presentation_position(curpos_t y, curpos_t x) const {
-      return m_lines[y].to_presentation_position(x, m_width, m_presentation_direction);
+      return to_presentation_position(m_lines[y], x);
     }
 
   private:
@@ -311,7 +322,7 @@ namespace ansi {
     /// @param[in] count 移動量を指定します。正の値を指定した時、
     ///   下方向にシフトします。負の値を指定した時、上方向にシフトします。
     /// @param[in] fill_attr 新しく現れた行に適用する描画属性指定します。
-    void shift_lines(curpos_t y1, curpos_t y2, curpos_t count, attribute_t const& fill_attr, term_scroll_buffer_t& scroll_buffer) {
+    void shift_lines(curpos_t y1, curpos_t y2, curpos_t count, attribute_t const& fill_attr, term_scroll_buffer_t* scroll_buffer = nullptr) {
       y1 = contra::clamp(y1, 0, m_height);
       y2 = contra::clamp(y2, 0, m_height);
       if (y1 >= y2 || count == 0) return;
@@ -319,7 +330,8 @@ namespace ansi {
         if (count < 0) {
           count = -count;
           if (count > m_height) count = m_height;
-          transfer_lines(0, count, scroll_buffer);
+          if (scroll_buffer)
+            transfer_lines(0, count, *scroll_buffer);
           initialize_lines(0, count, fill_attr);
           m_lines.rotate(count);
         } else if (count > 0) {
@@ -331,8 +343,8 @@ namespace ansi {
       }
 
       if (std::abs(count) >= y2 - y1) {
-        if (count < 0)
-          transfer_lines(y1, y2, scroll_buffer);
+        if (count < 0 && scroll_buffer)
+          transfer_lines(y1, y2, *scroll_buffer);
         initialize_lines(y1, y2, fill_attr);
       } else if (count > 0) {
         auto const it1 = m_lines.begin() + y1;
@@ -343,7 +355,8 @@ namespace ansi {
         count = -count;
         auto const it1 = m_lines.begin() + y1;
         auto const it2 = m_lines.begin() + y2;
-        transfer_lines(y1, y1 + count, scroll_buffer);
+        if (scroll_buffer)
+          transfer_lines(y1, y1 + count, *scroll_buffer);
         std::move(it1 + count, it2, it1);
         initialize_lines(y2 - count, y2, fill_attr);
       }
@@ -594,9 +607,22 @@ namespace ansi {
   private:
     board_t m_board;
     tstate_t m_state {this};
-
   public:
-    term_scroll_buffer_t m_scroll_buffer { (std::size_t) 1000 };
+    void reset_size(curpos_t width, curpos_t height) {
+      m_board.reset_size(width, height);
+    }
+
+  public: // todo: make private
+    term_scroll_buffer_t m_scroll_buffer;
+  public:
+    term_scroll_buffer_t const& scroll_buffer() const {
+      return this->m_scroll_buffer;
+    }
+    void set_scroll_capacity(std::size_t value) {
+      this->m_scroll_buffer.set_capacity(value);
+      if (this->m_scroll_amount > (curpos_t) m_scroll_buffer.size())
+        this->m_scroll_amount = (curpos_t) m_scroll_buffer.size();
+    }
 
   private:
     contra::idevice* m_send_target = nullptr;
@@ -618,6 +644,61 @@ namespace ansi {
 
   public:
     term_t(curpos_t width, curpos_t height): m_board(width, height) {}
+
+  public:
+    curpos_t width() const { return this->m_board.m_width; }
+    curpos_t height() const { return this->m_board.m_height; }
+    line_t& line(curpos_t y) { return this->m_board.m_lines[y]; }
+    line_t const& line(curpos_t y) const { return this->m_board.m_lines[y]; }
+    cursor_t& cursor() { return this->m_board.cur; }
+    cursor_t const& cursor() const { return this->m_board.cur; }
+
+  private:
+    curpos_t m_scroll_amount { 0 };
+  public:
+    curpos_t scroll_amount() const {
+      return m_scroll_amount;
+    }
+    curpos_t display_height() const {
+      return this->m_board.m_height;
+    }
+    line_t const& display_line(curpos_t y) const {
+      y -= m_scroll_amount;
+      if (y >= 0)
+        return this->m_board.m_lines[y];
+      else
+        return this->m_scroll_buffer[m_scroll_buffer.size() + y];
+    }
+    line_t& display_line(curpos_t y) {
+      return const_cast<line_t&>(const_cast<term_t const*>(this)->display_line(y));
+    }
+    bool display_scroll(curpos_t delta) {
+      curpos_t new_value = contra::clamp(m_scroll_amount - delta, 0, m_scroll_buffer.size());
+      bool const dirty = new_value != m_scroll_amount;
+      m_scroll_amount = new_value;
+      return dirty;
+    }
+    struct term_display_cursor_t {
+      curpos_t x, y;
+      bool xenl;
+    };
+    term_display_cursor_t display_cursor() const {
+      return { cursor().x(), cursor().y() + m_scroll_amount, cursor().xenl() };
+    }
+    bool is_cursor_in_view() const {
+      curpos_t const yv = cursor().y() + m_scroll_amount;
+      return 0 <= yv && yv < display_height();
+    }
+
+  public:
+    bool clear_selection() {
+      bool dirty = false;
+      for (auto& line: m_board.m_lines)
+        dirty |= line.clear_selection();
+      for (auto& line: m_scroll_buffer)
+        dirty |= line.clear_selection();
+      return true;
+    }
 
   public:
     board_t& board() { return this->m_board; }

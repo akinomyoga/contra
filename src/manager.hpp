@@ -38,7 +38,7 @@ namespace term {
       m_height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
       m_xpixel = std::clamp(xpixel, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
       m_ypixel = std::clamp(ypixel, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
-      if (m_term) m_term->board().reset_size(m_width, m_height);
+      if (m_term) m_term->reset_size(m_width, m_height);
     }
 
   private:
@@ -332,8 +332,7 @@ namespace term {
   private:
     void selection_clear() {
       m_sel_type = 0;
-      for (auto& line : app().board().m_lines)
-        m_dirty |= line.clear_selection();
+      m_dirty |= app().term().clear_selection();
     }
 
     void selection_initialize(curpos_t x, curpos_t y) {
@@ -341,24 +340,25 @@ namespace term {
       m_sel_type = 0;
       m_sel_beg_x = x;
       m_sel_beg_y = y;
-      m_sel_beg_online = y < (curpos_t) app().board().m_lines.size();
+      m_sel_beg_online = y < app().term().display_height();
       if (m_sel_beg_online)
-        m_sel_beg_lineid = app().board().m_lines[y].id();
+        m_sel_beg_lineid = app().term().display_line(y).id();
     }
 
     bool selection_find_start_line() {
       using namespace contra::ansi;
 
-      auto const& lines = app().board().m_lines;
+      auto const& term = app().term();
+      curpos_t const height = term.display_height();
       if (!m_sel_beg_online)
-        return m_sel_beg_y >= (curpos_t) lines.size();
+        return m_sel_beg_y >= height;
 
-      if (m_sel_beg_y < (curpos_t) lines.size() &&
-        lines[m_sel_beg_y].id() == m_sel_beg_lineid)
+      if (m_sel_beg_y < height &&
+        term.display_line(m_sel_beg_y).id() == m_sel_beg_lineid)
         return true;
 
-      for (std::size_t i = 0; i < lines.size(); i++) {
-        if (lines[i].id() == m_sel_beg_lineid) {
+      for (curpos_t i = 0; i < height; i++) {
+        if (term.display_line(i).id() == m_sel_beg_lineid) {
           m_sel_beg_y = i;
           return true;
         }
@@ -373,7 +373,8 @@ namespace term {
       m_sel_end_x = x;
       m_sel_end_y = y;
 
-      board_t& b = app().board();
+      term_t& term = app().term();
+      board_t const& b = app().board();
       tstate_t& s = app().state();
 
       bool const gatm =  s.get_mode(mode_gatm);
@@ -388,9 +389,9 @@ namespace term {
       curpos_t y1 = m_sel_beg_y;
       curpos_t x2 = m_sel_end_x;
       curpos_t y2 = m_sel_end_y;
-      curpos_t const iN = b.m_lines.size();
-      if (y1 < iN) x1 = b.to_data_position(y1, x1);
-      if (y2 < iN) x2 = b.to_data_position(y2, x2);
+      curpos_t const iN = term.display_height();
+      if (y1 < iN) x1 = b.to_data_position(term.display_line(y1), x1);
+      if (y2 < iN) x2 = b.to_data_position(term.display_line(y2), x2);
 
       if (m_sel_type & modifier_meta) {
         // 矩形選択
@@ -404,11 +405,11 @@ namespace term {
 
         curpos_t i = 0;
         while (i < y1)
-          m_dirty |= b.m_lines[i++].clear_selection();
+          m_dirty |= term.display_line(i++).clear_selection();
         while (i <= y2)
-          m_dirty |= b.m_lines[i++].set_selection(x1, x2 + 1, truncate, gatm, true);
+          m_dirty |= term.display_line(i++).set_selection(x1, x2 + 1, truncate, gatm, true);
         while (i < iN)
-          m_dirty |= b.m_lines[i++].clear_selection();
+          m_dirty |= term.display_line(i++).clear_selection();
       } else {
         if (y1 > y2) {
           std::swap(y1, y2);
@@ -420,23 +421,23 @@ namespace term {
           y1 = 0; y2 = -1;
         } else if (y2 >= iN) {
           y2 = iN - 1;
-          x2 = b.m_width + 1;
+          x2 = term.width() + 1;
         }
 
         // 選択状態の更新 (前回と同じ場合は skip できたりしないか?)
         curpos_t i = 0;
         while (i < y1)
-          m_dirty |= b.m_lines[i++].clear_selection();
+          m_dirty |= term.display_line(i++).clear_selection();
         if (y1 == y2) {
-          m_dirty |= b.m_lines[i++].set_selection(x1, x2 + 1, truncate, gatm, true);
+          m_dirty |= term.display_line(i++).set_selection(x1, x2 + 1, truncate, gatm, true);
         } else if (y1 < y2) {
-          m_dirty |= b.m_lines[i++].set_selection(x1, b.m_width, truncate, gatm, true);
+          m_dirty |= term.display_line(i++).set_selection(x1, term.width(), truncate, gatm, true);
           while (i < y2)
-            m_dirty |= b.m_lines[i++].set_selection(0, b.m_width + 1, truncate, gatm, true);
-          m_dirty |= b.m_lines[i++].set_selection(0, x2 + 1, truncate, gatm, true);
+            m_dirty |= term.display_line(i++).set_selection(0, term.width() + 1, truncate, gatm, true);
+          m_dirty |= term.display_line(i++).set_selection(0, x2 + 1, truncate, gatm, true);
         }
         while (i < iN)
-          m_dirty |= b.m_lines[i++].clear_selection();
+          m_dirty |= term.display_line(i++).clear_selection();
       }
 
       return true;
@@ -444,7 +445,7 @@ namespace term {
 
     void selection_extract_rectangle(std::u32string& data) {
       using namespace contra::ansi;
-      board_t const& b = app().board();
+      term_t const& term = app().term();
       curpos_t y1 = m_sel_beg_y;
       curpos_t y2 = m_sel_end_y;
       if (y1 > y2) std::swap(y1, y2);
@@ -452,12 +453,12 @@ namespace term {
       std::vector<std::pair<curpos_t, std::u32string> > lines;
       curpos_t min_x = -1;
       {
-        curpos_t const nline = b.m_lines.size();
+        curpos_t const nline = term.display_height();
         curpos_t skipped_line_count = 0;
         bool started = false;
         std::u32string line_data;
         for (curpos_t iline = 0; iline < nline; iline++) {
-          curpos_t const x = b.m_lines[iline].extract_selection(line_data);
+          curpos_t const x = term.display_line(iline).extract_selection(line_data);
           if (line_data.size() || (y1 <= iline && iline <= y2)) {
             if (started && skipped_line_count)
               lines.resize(lines.size() + skipped_line_count, std::make_pair(0, std::u32string()));
@@ -485,8 +486,9 @@ namespace term {
 
     void selection_extract_characters(std::u32string& data) {
       using namespace contra::ansi;
-      board_t const& b = app().board();
-      curpos_t const nline = b.m_lines.size();
+      term_t const& term = app().term();
+      board_t const& b = term.board();
+      curpos_t const nline = term.display_height();
 
       // 開始点と範囲
       curpos_t x1 = -1, x2 = -1, y1 = -1, y2 =-1;
@@ -495,8 +497,8 @@ namespace term {
         y1 = m_sel_beg_y;
         y2 = m_sel_end_y;
         x2 = m_sel_end_x;
-        if (y1 < nline) x1 = b.to_data_position(y1, x1);
-        if (y2 < nline) x2 = b.to_data_position(y2, x2);
+        if (y1 < nline) x1 = b.to_data_position(term.display_line(y1), x1);
+        if (y2 < nline) x2 = b.to_data_position(term.display_line(y2), x2);
         if (y1 > y2) {
           std::swap(y1, y2);
           std::swap(x1, x2);
@@ -511,7 +513,7 @@ namespace term {
         curpos_t skipped_line_count = 0;
         std::u32string line_data;
         for (curpos_t iline = 0; iline < nline; iline++) {
-          curpos_t x = b.m_lines[iline].extract_selection(line_data);
+          curpos_t x = term.display_line(iline).extract_selection(line_data);
           if (line_data.size() || (y1 <= iline && iline <= y2)) {
             if (started) result.append(skipped_line_count + 1, U'\n');
             //if (iline == y1 && x >= x1) x = 0;
@@ -593,11 +595,12 @@ namespace term {
     void do_multiple_click(key_t key, int count, curpos_t x, curpos_t y) {
       using namespace contra::ansi;
       if (key == key_mouse1_down) {
-        board_t& b = app().board();
-        curpos_t const nline = b.m_height;
+        term_t& term = app().term();
+        board_t const& b = term.board();
+        curpos_t const nline = term.display_height();
         bool const gatm = app().state().get_mode(mode_gatm);
         for (curpos_t y1 = 0; y1 < nline; y1++) {
-          line_t& line = b.m_lines[y1];
+          line_t& line = term.display_line(y1);
           if (y1 == y) {
             word_selection_type wtype;
             switch (count) {
@@ -608,10 +611,10 @@ namespace term {
               wtype = word_selection_sword;
               goto set_selection_word;
             set_selection_word:
-              m_dirty |= line.set_selection_word(b.to_data_position(y1, x), wtype, gatm);
+              m_dirty |= line.set_selection_word(b.to_data_position(line, x), wtype, gatm);
               break;
             default:
-              m_dirty |= line.set_selection(0, b.m_width + 1, key & modifier_shift, gatm, true);
+              m_dirty |= line.set_selection(0, term.width() + 1, key & modifier_shift, gatm, true);
               break;
             }
           } else
@@ -665,19 +668,19 @@ namespace term {
 
       using namespace contra::ansi;
 
-      switch (key & _character_mask) {
-      case key_wheel_down:
-        if ((key & _modifier_mask) == modifier_control) {
-          this->update_zoom(m_zoom_level - 1);
-          return true;
-        }
-        break;
+      switch (key) {
       case key_wheel_up:
-        if ((key & _modifier_mask) == modifier_control) {
-          this->update_zoom(m_zoom_level + 1);
-          return true;
-        }
-        break;
+        m_dirty |= app().term().display_scroll(-3);
+        return true;
+      case key_wheel_down:
+        m_dirty |= app().term().display_scroll(3);
+        return true;
+      case key_wheel_down | modifier_control:
+        this->update_zoom(m_zoom_level - 1);
+        return true;
+      case key_wheel_up | modifier_control:
+        this->update_zoom(m_zoom_level + 1);
+        return true;
       default:
         return m_mouse_detector.input_mouse(key, px, py, x, y);
       }

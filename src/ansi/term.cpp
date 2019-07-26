@@ -186,7 +186,7 @@ namespace {
 }
 
   static void do_hvp_impl(term_t& term, curpos_t x, curpos_t y);
-  static void do_vertical_scroll(term_t& term, curpos_t shift, curpos_t tmargin, curpos_t bmargin, curpos_t lmargin, curpos_t rmargin, bool dcsm);
+  static void do_vertical_scroll(term_t& term, curpos_t shift, curpos_t tmargin, curpos_t bmargin, curpos_t lmargin, curpos_t rmargin, bool dcsm, bool transfer);
   static void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm);
 
   //---------------------------------------------------------------------------
@@ -1261,10 +1261,10 @@ namespace {
     return true;
   }
 
-  static void do_vertical_scroll(term_t& term, curpos_t shift, curpos_t tmargin, curpos_t bmargin, curpos_t lmargin, curpos_t rmargin, bool dcsm) {
+  static void do_vertical_scroll(term_t& term, curpos_t shift, curpos_t tmargin, curpos_t bmargin, curpos_t lmargin, curpos_t rmargin, bool dcsm, bool transfer) {
     board_t& b = term.board();
     if (lmargin == 0 && rmargin == b.m_width) {
-      b.shift_lines(tmargin, bmargin, shift, term.fill_attr(), term.m_scroll_buffer);
+      b.shift_lines(tmargin, bmargin, shift, term.fill_attr(), transfer ? &term.m_scroll_buffer : nullptr);
     } else if (lmargin < rmargin) {
       // DECSLRM が設定されている時のスクロール。行内容を切り貼りする。
       line_segment_t segs[3];
@@ -1307,7 +1307,7 @@ namespace {
     curpos_t const bmargin = term.bmargin();
     curpos_t const lmargin = term.lmargin();
     curpos_t const rmargin = term.rmargin();
-    do_vertical_scroll(term, shift, tmargin, bmargin, lmargin, rmargin, dcsm);
+    do_vertical_scroll(term, shift, tmargin, bmargin, lmargin, rmargin, dcsm, true);
   }
 
   static bool do_scroll(term_t& term, csi_parameters& params, do_cux_direction direction, bool dcsm = false) {
@@ -1352,11 +1352,11 @@ namespace {
 
     case do_cux_prec_line:
       shift = -(curpos_t) param;
-      goto shift_lines;
+      goto vertical_scroll;
     case do_cux_succ_line:
       shift = (curpos_t) param;
-      goto shift_lines;
-    shift_lines:
+      goto vertical_scroll;
+    vertical_scroll:
       {
         curpos_t const p = isPresentation ? b.to_presentation_position(y, b.cur.x()) : -1;
         do_vertical_scroll(term, shift, dcsm);
@@ -1916,9 +1916,9 @@ namespace {
     curpos_t const rmargin = term.rmargin();
     if (beg <= b.cur.y() && b.cur.y() < end) {
       if (!s.get_mode(mode_vem)) {
-        do_vertical_scroll(term, shift, b.cur.y(), end, lmargin, rmargin, s.dcsm());
+        do_vertical_scroll(term, shift, b.cur.y(), end, lmargin, rmargin, s.dcsm(), false);
       } else {
-        do_vertical_scroll(term, -shift, beg, b.cur.y() + 1, lmargin, rmargin, s.dcsm());
+        do_vertical_scroll(term, -shift, beg, b.cur.y() + 1, lmargin, rmargin, s.dcsm(), false);
       }
     }
 

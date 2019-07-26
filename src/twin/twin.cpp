@@ -739,23 +739,25 @@ namespace twin {
       std::vector<line_trace_t> m_lines;
     public:
       bool is_content_changed([[maybe_unused]] twin_window_t const& win, terminal_application const& app) const {
-        board_t const& b = app.board();
-        std::size_t const height = b.m_height;
+        term_t const& term = app.term();
+        std::size_t const height = term.display_height();
         if (height != m_lines.size()) return true;
         for (std::size_t iline = 0; iline < height; iline++) {
-          line_t const& line = b.line(iline);
+          line_t const& line = term.display_line(iline);
           if (line.id() != m_lines[iline].id) return true;
           if (line.version() != m_lines[iline].version) return true;
         }
         return false;
       }
       void store_content([[maybe_unused]] twin_window_t const& win, terminal_application const& app) {
-        board_t const& b = app.board();
-        m_lines.resize(b.m_lines.size());
-        for (std::size_t i = 0; i < m_lines.size(); i++) {
-          m_lines[i].id = b.m_lines[i].id();
-          m_lines[i].version = b.m_lines[i].version();
-          m_lines[i].has_blinking = b.m_lines[i].has_blinking_cells();
+        term_t const& term = app.term();
+        curpos_t const height = term.display_height();
+        m_lines.resize(height);
+        for (curpos_t i = 0; i < height; i++) {
+          line_t const& original_line = term.display_line(i);
+          m_lines[i].id = original_line.id();
+          m_lines[i].version = original_line.version();
+          m_lines[i].has_blinking = original_line.has_blinking_cells();
         }
       }
 
@@ -789,20 +791,20 @@ namespace twin {
       curpos_t cur_y() const { return m_cur_y; }
       bool is_cursor_changed(twin_window_t const& win, terminal_application const& app) const {
         if (m_cur_visible != win.is_cursor_visible(app)) return true;
-        board_t const& b = app.board();
+        auto const cur = app.term().display_cursor();
         tstate_t const& s = app.state();
-        if (m_cur_x != b.cur.x() || m_cur_y != b.cur.y() || m_cur_xenl != b.cur.xenl()) return true;
+        if (m_cur_x != cur.x || m_cur_y != cur.y || m_cur_xenl != cur.xenl) return true;
         if (m_cur_shape != s.get_cursor_shape()) return true;
         if (m_cur_blinking != s.is_cursor_blinking()) return true;
         return false;
       }
       void store_cursor(twin_window_t const& win, terminal_application const& app) {
         m_cur_visible = win.is_cursor_visible(app);
-        board_t const& b = app.board();
+        auto const cur = app.term().display_cursor();
         tstate_t const& s = app.state();
-        m_cur_x = b.cur.x();
-        m_cur_y = b.cur.y();
-        m_cur_xenl = b.cur.xenl();
+        m_cur_x = cur.x;
+        m_cur_y = cur.y;
+        m_cur_xenl = cur.xenl;
         m_cur_shape = s.m_cursor_shape;
       }
     };
@@ -850,14 +852,13 @@ namespace twin {
     bool is_cursor_visible(terminal_application const& app) const {
       if (m_ime_composition_active &&
         settings.m_caret_hide_on_ime) return false;
-      return app.state().is_cursor_visible();
+      return app.state().is_cursor_visible() &&
+        app.term().is_cursor_in_view();
     }
     void draw_cursor(HDC hdc, terminal_application const& app) {
       using namespace contra::ansi;
       term_t const& term = app.term();
-      board_t const& b = term.board();
-      curpos_t const x = b.cur.x(), y = b.cur.y();
-      bool const xenl = b.cur.xenl();
+      auto const cur = term.display_cursor();
       int const cursor_shape = term.state().m_cursor_shape;
 
       coord_t const xorigin = settings.m_xframe;
@@ -865,12 +866,12 @@ namespace twin {
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
 
-      coord_t x0 = xorigin + xpixel * x;
-      coord_t const y0 = yorigin + ypixel * y;
+      coord_t x0 = xorigin + xpixel * cur.x;
+      coord_t const y0 = yorigin + ypixel * cur.y;
 
       coord_t size;
       bool underline = false;
-      if (xenl) {
+      if (cur.xenl) {
         // 行末にいる時は設定に関係なく縦棒にする。
         x0 -= 2;
         size = 2;
@@ -1046,7 +1047,7 @@ namespace twin {
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      board_t const& b = app.board();
+      curpos_t const height = app.term().height();
       tstate_t const& s = app.state();
       color_resolver_t _color(s);
 
@@ -1071,7 +1072,7 @@ namespace twin {
         ::DeleteObject(brush);
       };
 
-      for (curpos_t iline = 0; iline < b.m_height; iline++, y += ypixel) {
+      for (curpos_t iline = 0; iline < height; iline++, y += ypixel) {
         std::vector<cell_t>& cells = content[iline];
         x = xorigin;
         x0 = x;
@@ -1155,7 +1156,7 @@ namespace twin {
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      board_t const& b = app.board();
+      curpos_t const height = app.term().height();
       tstate_t const& s = app.state();
 
       constexpr std::uint32_t flag_processed = character_t::flag_private1;
@@ -1205,7 +1206,7 @@ namespace twin {
 
       decdhl_region_holder_t region(m_background.width(), m_background.height());
 
-      for (curpos_t iline = 0; iline < b.m_height; iline++, y += ypixel) {
+      for (curpos_t iline = 0; iline < height; iline++, y += ypixel) {
         std::vector<cell_t>& cells = content[iline];
 
         x = xorigin;
@@ -1365,7 +1366,7 @@ namespace twin {
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      board_t const& b = app.board();
+      curpos_t const height = app.term().height();
       tstate_t const& s = app.state();
       color_resolver_t _color(s);
 
@@ -1516,7 +1517,7 @@ namespace twin {
         ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
       };
 
-      for (curpos_t iline = 0; iline < b.m_height; iline++, y += ypixel) {
+      for (curpos_t iline = 0; iline < height; iline++, y += ypixel) {
         std::vector<cell_t>& cells = content[iline];
         x = xorigin;
         color0 = 0;
@@ -1593,12 +1594,12 @@ namespace twin {
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      board_t const& b = app.board();
+      curpos_t const height = app.term().height();
 
       std::vector<cell_t> cells;
       std::vector<TCHAR> characters;
       std::vector<INT> progress;
-      for (curpos_t y = 0; y < b.m_height; y++) {
+      for (curpos_t y = 0; y < height; y++) {
         std::vector<cell_t> const& cells = content[y];
 
         coord_t xoffset = xorigin;
@@ -1641,12 +1642,13 @@ namespace twin {
       if (m_tracer.is_blinking_changed(*this)) content_redraw = true;
       if (content_redraw) {
         std::vector<std::vector<contra::ansi::cell_t>> content;
-        auto const& b = app.board();
-        content.resize(b.m_height);
+        term_t const& term = app.term();
+        curpos_t const height = term.display_height();
+        content.resize(height);
 
-        for (contra::ansi::curpos_t y = 0; y < b.m_height; y++) {
-          auto const& line = b.m_lines[y];
-          line.get_cells_in_presentation(content[y], b.line_r2l(line));
+        for (contra::ansi::curpos_t y = 0; y < height; y++) {
+          line_t const& line = term.display_line(y);
+          line.get_cells_in_presentation(content[y], term.board().line_r2l(line));
         }
 
         ::SetBkMode(hdc1, TRANSPARENT);
@@ -1857,7 +1859,7 @@ namespace twin {
       if (!is_session_ready() || !m_ime_composition_active) return;
       util::raii hIMC(::ImmGetContext(hWnd), [this] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
 
-      font_t const current_font = font_resolver_t().resolve_font(manager.app().board().cur.attribute) & ~font_rotation_mask;
+      font_t const current_font = font_resolver_t().resolve_font(manager.app().term().cursor().attribute) & ~font_rotation_mask;
       auto const [dx, dy, dxW] = fstore.get_displacement(current_font);
       contra_unused(dx);
       contra_unused(dxW);
@@ -1867,10 +1869,10 @@ namespace twin {
 
       RECT rcClient;
       if (::GetClientRect(hWnd, &rcClient)) {
-        auto const& b = manager.app().board();
+        auto const cur = manager.app().term().display_cursor();
         COMPOSITIONFORM form;
-        coord_t const x0 = rcClient.left + settings.m_xframe + settings.m_xpixel * b.cur.x();
-        coord_t const y0 = rcClient.top + settings.m_yframe + settings.m_ypixel * b.cur.y();
+        coord_t const x0 = rcClient.left + settings.m_xframe + settings.m_xpixel * cur.x;
+        coord_t const y0 = rcClient.top + settings.m_yframe + settings.m_ypixel * cur.y;
         form.dwStyle = CFS_POINT;
         form.ptCurrentPos.x = x0;
         form.ptCurrentPos.y = y0 + dy;
@@ -2044,6 +2046,7 @@ namespace twin {
       s.m_default_bg_color = contra::dict::rgb(0xFF, 0xFF, 0xFF);
       // s.m_default_fg_color = contra::dict::rgb(0xD0, 0xD0, 0xD0);//@color
       // s.m_default_bg_color = contra::dict::rgb(0x00, 0x00, 0x00);
+      sess->term().set_scroll_capacity(1000);
       manager.add_app(std::move(sess));
       return true;
     }
