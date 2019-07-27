@@ -31,10 +31,14 @@ int main() {
     ::XSetWMName(display, main_window, &win_name);
 
     // Events
-    XSelectInput(display, main_window, ExposureMask);
+    XSelectInput(display, main_window, ExposureMask | StructureNotifyMask);
   }
   XMapWindow(display, main_window);
   XFlush(display);
+
+  // #D0162 何だかよく分からないが終了する時はこうするらしい。
+  Atom WM_DELETE_WINDOW = XInternAtom(display, "WM_DELETE_WINDOW", False);
+  XSetWMProtocols(display, main_window, &WM_DELETE_WINDOW, 1);
 
   GC gc = XCreateGC(display, main_window, 0, 0);
   for (;;) {
@@ -48,6 +52,16 @@ int main() {
         XFlush(display);
       }
       break;
+
+    case ClientMessage: // #D0162
+      if ((Atom) event.xclient.data.l[0] == WM_DELETE_WINDOW) {
+        XDestroyWindow(display, main_window);
+      }
+      break;
+    case DestroyNotify: // #D0162
+      ::XSetCloseDownMode(display, DestroyAll);
+      ::XCloseDisplay(display);
+      return 0;
     }
   }
 
