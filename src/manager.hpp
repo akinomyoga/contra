@@ -357,30 +357,40 @@ namespace term {
     }
 
     void selection_initialize(curpos_t x, curpos_t y) {
+      y -= app().view().scroll_amount();
+      auto const& term = app().term();
       selection_clear();
       m_sel_type = 0;
       m_sel_beg_x = x;
       m_sel_beg_y = y;
-      m_sel_beg_online = y < app().view().height();
+      m_sel_beg_online = y < term.height();
       if (m_sel_beg_online)
-        m_sel_beg_lineid = app().view().line(y).id();
+        m_sel_beg_lineid = app().view().lline(m_sel_beg_y).id();
     }
 
     bool selection_find_start_line() {
       using namespace contra::ansi;
-
+      auto const& term = app().term();
       auto const& view = app().view();
-      curpos_t const height = view.height();
-      if (!m_sel_beg_online)
-        return m_sel_beg_y >= height;
+      auto const& scroll_buffer = term.scroll_buffer();
 
-      if (m_sel_beg_y < height &&
-        view.line(m_sel_beg_y).id() == m_sel_beg_lineid)
+      if (!m_sel_beg_online)
+        return m_sel_beg_y >= term.height();
+
+      curpos_t const ybeg = view.logical_ybeg();
+      if (ybeg <= m_sel_beg_y && m_sel_beg_y < term.height() &&
+        view.lline(m_sel_beg_y).id() == m_sel_beg_lineid)
         return true;
 
-      for (curpos_t i = 0; i < height; i++) {
-        if (view.line(i).id() == m_sel_beg_lineid) {
+      for (curpos_t i = 0; i < term.height(); i++) {
+        if (term.line(i).id() == m_sel_beg_lineid) {
           m_sel_beg_y = i;
+          return true;
+        }
+      }
+      for (curpos_t i = scroll_buffer.size(); --i >= 0; ) {
+        if (scroll_buffer[i].id() == m_sel_beg_lineid) {
+          m_sel_beg_y = i - scroll_buffer.size();
           return true;
         }
       }
@@ -390,12 +400,13 @@ namespace term {
     bool selection_update(key_t key, curpos_t x, curpos_t y) {
       using namespace contra::ansi;
 
-      m_sel_type = 1 | (key & _modifier_mask);
-      m_sel_end_x = x;
-      m_sel_end_y = y;
-
       term_t& term = app().term();
       term_view_t& view = app().view();
+
+      m_sel_type = 1 | (key & _modifier_mask);
+      m_sel_end_x = x;
+      m_sel_end_y = y - view.scroll_amount();
+
       board_t const& b = app().board();
       tstate_t& s = app().state();
 
@@ -411,27 +422,28 @@ namespace term {
       curpos_t y1 = m_sel_beg_y;
       curpos_t x2 = m_sel_end_x;
       curpos_t y2 = m_sel_end_y;
-      curpos_t const iN = view.height();
-      if (y1 < iN) x1 = b.to_data_position(view.line(y1), x1);
-      if (y2 < iN) x2 = b.to_data_position(view.line(y2), x2);
+      curpos_t const ybeg = view.logical_ybeg();
+      curpos_t const yend = view.logical_yend();
+      if (y1 < yend) x1 = b.to_data_position(view.lline(y1), x1);
+      if (y2 < yend) x2 = b.to_data_position(view.lline(y2), x2);
 
       if (m_sel_type & modifier_meta) {
         // 矩形選択
         if (y1 > y2) std::swap(y1, y2);
         if (x1 > x2) std::swap(x1, x2);
-        if (y1 >= iN) {
-          y1 = 0; y2 = -1;
-        } else if (y2 >= iN) {
-          y2 = iN - 1;
+        if (y1 >= yend) {
+          y1 = ybeg; y2 = ybeg - 1;
+        } else if (y2 >= yend) {
+          y2 = yend - 1;
         }
 
-        curpos_t i = 0;
+        curpos_t i = ybeg;
         while (i < y1)
-          m_dirty |= view.line(i++).clear_selection();
+          m_dirty |= view.lline(i++).clear_selection();
         while (i <= y2)
-          m_dirty |= view.line(i++).set_selection(x1, x2 + 1, truncate, gatm, true);
-        while (i < iN)
-          m_dirty |= view.line(i++).clear_selection();
+          m_dirty |= view.lline(i++).set_selection(x1, x2 + 1, truncate, gatm, true);
+        while (i < yend)
+          m_dirty |= view.lline(i++).clear_selection();
       } else {
         if (y1 > y2) {
           std::swap(y1, y2);
@@ -439,27 +451,27 @@ namespace term {
         } else if (y1 == y2 && x1 > x2) {
           std::swap(x1, x2);
         }
-        if (y1 >= iN) {
-          y1 = 0; y2 = -1;
-        } else if (y2 >= iN) {
-          y2 = iN - 1;
+        if (y1 >= yend) {
+          y1 = ybeg; y2 = ybeg - 1;
+        } else if (y2 >= yend) {
+          y2 = yend - 1;
           x2 = term.width() + 1;
         }
 
         // 選択状態の更新 (前回と同じ場合は skip できたりしないか?)
-        curpos_t i = 0;
+        curpos_t i = ybeg;
         while (i < y1)
-          m_dirty |= view.line(i++).clear_selection();
+          m_dirty |= view.lline(i++).clear_selection();
         if (y1 == y2) {
-          m_dirty |= view.line(i++).set_selection(x1, x2 + 1, truncate, gatm, true);
+          m_dirty |= view.lline(i++).set_selection(x1, x2 + 1, truncate, gatm, true);
         } else if (y1 < y2) {
-          m_dirty |= view.line(i++).set_selection(x1, term.width(), truncate, gatm, true);
+          m_dirty |= view.lline(i++).set_selection(x1, term.width(), truncate, gatm, true);
           while (i < y2)
-            m_dirty |= view.line(i++).set_selection(0, term.width() + 1, truncate, gatm, true);
-          m_dirty |= view.line(i++).set_selection(0, x2 + 1, truncate, gatm, true);
+            m_dirty |= view.lline(i++).set_selection(0, term.width() + 1, truncate, gatm, true);
+          m_dirty |= view.lline(i++).set_selection(0, x2 + 1, truncate, gatm, true);
         }
-        while (i < iN)
-          m_dirty |= view.line(i++).clear_selection();
+        while (i < yend)
+          m_dirty |= view.lline(i++).clear_selection();
       }
 
       return true;
@@ -467,7 +479,6 @@ namespace term {
 
     void selection_extract_rectangle(std::u32string& data) {
       using namespace contra::ansi;
-      term_view_t const& view = app().view();
       curpos_t y1 = m_sel_beg_y;
       curpos_t y2 = m_sel_end_y;
       if (y1 > y2) std::swap(y1, y2);
@@ -475,12 +486,14 @@ namespace term {
       std::vector<std::pair<curpos_t, std::u32string> > lines;
       curpos_t min_x = -1;
       {
-        curpos_t const nline = view.height();
+        term_view_t const& view = app().view();
+        curpos_t const ybeg = view.logical_ybeg();
+        curpos_t const yend = view.logical_yend();
         curpos_t skipped_line_count = 0;
         bool started = false;
         std::u32string line_data;
-        for (curpos_t iline = 0; iline < nline; iline++) {
-          curpos_t const x = view.line(iline).extract_selection(line_data);
+        for (curpos_t iline = ybeg; iline < yend; iline++) {
+          curpos_t const x = view.lline(iline).extract_selection(line_data);
           if (line_data.size() || (y1 <= iline && iline <= y2)) {
             if (started && skipped_line_count)
               lines.resize(lines.size() + skipped_line_count, std::make_pair(0, std::u32string()));
@@ -511,17 +524,18 @@ namespace term {
       term_t const& term = app().term();
       board_t const& b = term.board();
       term_view_t const& view = app().view();
-      curpos_t const nline = view.height();
+      curpos_t const ybeg = view.logical_ybeg();
+      curpos_t const yend = view.logical_yend();
 
       // 開始点と範囲
-      curpos_t x1 = -1, x2 = -1, y1 = -1, y2 =-1;
+      curpos_t x1 = -1, x2 = -1, y1 = ybeg - 1, y2 = ybeg - 1;
       if (m_sel_type) {
         x1 = m_sel_beg_x;
         y1 = m_sel_beg_y;
-        y2 = m_sel_end_y;
         x2 = m_sel_end_x;
-        if (y1 < nline) x1 = b.to_data_position(view.line(y1), x1);
-        if (y2 < nline) x2 = b.to_data_position(view.line(y2), x2);
+        y2 = m_sel_end_y;
+        if (y1 < yend) x1 = b.to_data_position(view.lline(y1), x1);
+        if (y2 < yend) x2 = b.to_data_position(view.lline(y2), x2);
         if (y1 > y2) {
           std::swap(y1, y2);
           std::swap(x1, x2);
@@ -535,8 +549,8 @@ namespace term {
         bool started = false;
         curpos_t skipped_line_count = 0;
         std::u32string line_data;
-        for (curpos_t iline = 0; iline < nline; iline++) {
-          curpos_t x = view.line(iline).extract_selection(line_data);
+        for (curpos_t iline = ybeg; iline < yend; iline++) {
+          curpos_t x = view.lline(iline).extract_selection(line_data);
           if (line_data.size() || (y1 <= iline && iline <= y2)) {
             if (started) result.append(skipped_line_count + 1, U'\n');
             //if (iline == y1 && x >= x1) x = 0;

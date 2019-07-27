@@ -878,8 +878,7 @@ namespace ansi {
     color_t bg_color() const { return m_bg_color; }
 
   public:
-    line_t const& line(curpos_t y) const {
-      y -= m_scroll_amount;
+    line_t const& lline(curpos_t y) const {
       if (y >= 0)
         return m_term->board().m_lines[y];
       else {
@@ -887,10 +886,23 @@ namespace ansi {
         return scroll_buffer[scroll_buffer.size() + y];
       }
     }
-    line_t& line(curpos_t y) {
-      return const_cast<line_t&>(const_cast<term_view_t const*>(this)->line(y));
+    line_t& lline(curpos_t y) {
+      return const_cast<line_t&>(const_cast<term_view_t const*>(this)->lline(y));
     }
-    void get_cells_in_presentation(std::vector<cell_t>& buffer, line_t const& line) {
+    curpos_t logical_ybeg() const {
+      return -(curpos_t) m_term->scroll_buffer().size();
+    }
+    curpos_t logical_yend() const {
+      return m_term->height();
+    }
+
+    line_t const& line(curpos_t y) const {
+      return this->lline(y - m_scroll_amount);
+    }
+    line_t& line(curpos_t y) {
+      return this->lline(y - m_scroll_amount);
+    }
+    void get_cells_in_presentation(std::vector<cell_t>& buffer, line_t const& line) const {
       line.get_cells_in_presentation(buffer, m_term->board().line_r2l(line));
     }
   };

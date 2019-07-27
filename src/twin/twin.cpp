@@ -855,14 +855,14 @@ namespace twin {
     void draw_cursor(HDC hdc, terminal_application const& app) {
       using namespace contra::ansi;
       term_view_t const& view = app.view();
-      int const cursor_shape = view->cursor_shape();
+      int const cursor_shape = view.cursor_shape();
 
       coord_t const xorigin = settings.m_xframe;
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
 
-      coord_t x0 = xorigin + xpixel * view.x()
+      coord_t x0 = xorigin + xpixel * view.x();
       coord_t const y0 = yorigin + ypixel * view.y();
 
       coord_t size;
@@ -1628,7 +1628,7 @@ namespace twin {
     //   hdc0 ... 背景+内容+カーソル
     //   hdc1 ... 背景+内容
     //   hdc2 ... 背景 (未実装)
-    void paint_terminal_content(HDC hdc0, terminal_application const& app, bool full_update) {
+    void paint_terminal_content(HDC hdc0, terminal_application& app, bool full_update) {
       app.view().update();
       bool const content_changed = m_tracer.is_content_changed(*this, app);
       bool const cursor_changed = m_tracer.is_cursor_changed(*this, app);
@@ -1645,7 +1645,7 @@ namespace twin {
 
         for (contra::ansi::curpos_t y = 0; y < height; y++) {
           line_t const& line = view.line(y);
-          view->get_cells_in_presentation(content[y], line);
+          view.get_cells_in_presentation(content[y], line);
         }
 
         ::SetBkMode(hdc1, TRANSPARENT);
