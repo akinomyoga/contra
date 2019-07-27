@@ -507,8 +507,6 @@ namespace ansi {
     }
     void set_scroll_capacity(std::size_t value) {
       this->m_scroll_buffer.set_capacity(value);
-      if (this->m_scroll_amount > (curpos_t) m_scroll_buffer.size())
-        this->m_scroll_amount = (curpos_t) m_scroll_buffer.size();
     }
 
   private:
@@ -539,46 +537,6 @@ namespace ansi {
     line_t const& line(curpos_t y) const { return this->m_board.m_lines[y]; }
     cursor_t& cursor() { return this->m_board.cur; }
     cursor_t const& cursor() const { return this->m_board.cur; }
-
-  private:
-    curpos_t m_scroll_amount { 0 };
-  public:
-    curpos_t scroll_amount() const {
-      return m_scroll_amount;
-    }
-    curpos_t display_height() const {
-      return this->m_board.m_height;
-    }
-    curpos_t display_width() const {
-      return this->m_board.m_width;
-    }
-    line_t const& display_line(curpos_t y) const {
-      y -= m_scroll_amount;
-      if (y >= 0)
-        return this->m_board.m_lines[y];
-      else
-        return this->m_scroll_buffer[m_scroll_buffer.size() + y];
-    }
-    line_t& display_line(curpos_t y) {
-      return const_cast<line_t&>(const_cast<term_t const*>(this)->display_line(y));
-    }
-    bool display_scroll(curpos_t delta) {
-      curpos_t new_value = contra::clamp(m_scroll_amount - delta, 0, m_scroll_buffer.size());
-      bool const dirty = new_value != m_scroll_amount;
-      m_scroll_amount = new_value;
-      return dirty;
-    }
-    struct term_display_cursor_t {
-      curpos_t x, y;
-      bool xenl;
-    };
-    term_display_cursor_t display_cursor() const {
-      return { cursor().x(), cursor().y() + m_scroll_amount, cursor().xenl() };
-    }
-    bool is_cursor_in_view() const {
-      curpos_t const yv = cursor().y() + m_scroll_amount;
-      return 0 <= yv && yv < display_height();
-    }
 
   public:
     bool clear_selection() {
@@ -856,6 +814,85 @@ namespace ansi {
     bool input_key(key_t key);
     bool input_mouse(key_t key, coord_t px, coord_t py, curpos_t x, curpos_t y);
     bool input_paste(std::u32string const& data);
+  };
+
+  class term_view_t {
+  private:
+    term_t* m_term = nullptr;
+  public:
+    term_view_t() {}
+    term_view_t(term_t* term): m_term(term) {}
+
+  private:
+    curpos_t m_scroll_amount = 0;
+    curpos_t m_x, m_y;
+    bool m_xenl;
+    byte m_fg_space, m_bg_space;
+    color_t m_fg_color, m_bg_color;
+  public:
+    void set_term(term_t* term) { this->m_term = term; }
+    bool scroll(curpos_t delta) {
+      curpos_t new_value = contra::clamp(m_scroll_amount - delta, 0, m_term->scroll_buffer().size());
+      bool const dirty = new_value != m_scroll_amount;
+      m_scroll_amount = new_value;
+      return dirty;
+    }
+    void update() {
+      m_scroll_amount = std::min(m_scroll_amount, (curpos_t) m_term->scroll_buffer().size());
+      m_x = m_term->cursor().x();
+      m_y = m_term->cursor().y() + m_scroll_amount;
+      m_xenl = m_term->cursor().xenl();
+
+      auto const& s = m_term->state();
+      m_fg_space = s.m_default_fg_space;
+      m_bg_space = s.m_default_bg_space;
+      m_fg_color = s.m_default_fg_color;
+      m_bg_color = s.m_default_bg_color;
+    }
+
+  public:
+    curpos_t height() const { return m_term->height(); }
+    curpos_t width() const { return m_term->width(); }
+    curpos_t scroll_amount() const {
+      return this->m_scroll_amount;
+    }
+    curpos_t x() const { return m_x; }
+    curpos_t y() const { return m_y; }
+    bool xenl() const { return m_xenl; }
+
+    bool is_cursor_visible() const {
+      return m_term->state().is_cursor_visible() &&
+        0 <= m_y && m_y < height();
+    }
+    bool is_cursor_blinking() const {
+      return m_term->state().is_cursor_blinking();
+    }
+    int cursor_shape() const {
+      return m_term->state().get_cursor_shape();
+    }
+
+  public:
+    byte fg_space() const { return m_fg_space; }
+    byte bg_space() const { return m_bg_space; }
+    color_t fg_color() const { return m_fg_color; }
+    color_t bg_color() const { return m_bg_color; }
+
+  public:
+    line_t const& line(curpos_t y) const {
+      y -= m_scroll_amount;
+      if (y >= 0)
+        return m_term->board().m_lines[y];
+      else {
+        auto const& scroll_buffer = m_term->scroll_buffer();
+        return scroll_buffer[scroll_buffer.size() + y];
+      }
+    }
+    line_t& line(curpos_t y) {
+      return const_cast<line_t&>(const_cast<term_view_t const*>(this)->line(y));
+    }
+    void get_cells_in_presentation(std::vector<cell_t>& buffer, line_t const& line) {
+      line.get_cells_in_presentation(buffer, m_term->board().line_r2l(line));
+    }
   };
 
 }

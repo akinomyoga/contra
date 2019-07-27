@@ -43,6 +43,7 @@ namespace term {
 
   private:
     std::unique_ptr<contra::ansi::term_t> m_term;
+    contra::ansi::term_view_t m_view;
   public:
     term_t& term() { return *m_term; }
     term_t const& term() const { return *m_term; }
@@ -50,6 +51,8 @@ namespace term {
     board_t const& board() const { return m_term->board(); }
     tstate_t& state() { return m_term->state(); }
     tstate_t const& state() const { return m_term->state(); }
+    contra::ansi::term_view_t& view() { return m_view; }
+    contra::ansi::term_view_t const& view() const { return m_view; }
 
   public:
     terminal_application() {
@@ -60,6 +63,7 @@ namespace term {
     bool initialize() {
       if (m_term) return true;
       m_term = std::make_unique<contra::ansi::term_t>(m_width, m_height);
+      m_view.set_term(m_term.get());
       return true;
     }
 
@@ -247,10 +251,15 @@ namespace term {
       this->initialize_zoom();
     }
 
+  private:
+    std::size_t m_active_app_index = 0;
   public:
+    void select_app(int index) {
+      m_active_app_index = !m_apps.size() ? 0 : contra::clamp(index, 0, m_apps.size() - 1);
+    }
     terminal_application& app() const {
       mwg_check(m_apps.size());
-      return *m_apps[0].get();
+      return *m_apps[m_active_app_index].get();
     }
     template<typename T>
     void add_app(T&& app) { m_apps.emplace_back(std::forward<T>(app)); }
@@ -313,16 +322,16 @@ namespace term {
           this->update_zoom(m_zoom_level - 1);
           return true;
         case key_up:
-          m_dirty |= app().term().display_scroll(-3);
+          m_dirty |= app().view().scroll(-3);
           return true;
         case key_down:
-          m_dirty |= app().term().display_scroll(3);
+          m_dirty |= app().view().scroll(3);
           return true;
         case key_prior:
-          m_dirty |= app().term().display_scroll(-app().term().display_height());
+          m_dirty |= app().view().scroll(-app().view().height());
           return true;
         case key_next:
-          m_dirty |= app().term().display_scroll(app().term().display_height());
+          m_dirty |= app().view().scroll(app().view().height());
           return true;
         default:
           return false;
@@ -352,25 +361,25 @@ namespace term {
       m_sel_type = 0;
       m_sel_beg_x = x;
       m_sel_beg_y = y;
-      m_sel_beg_online = y < app().term().display_height();
+      m_sel_beg_online = y < app().view().height();
       if (m_sel_beg_online)
-        m_sel_beg_lineid = app().term().display_line(y).id();
+        m_sel_beg_lineid = app().view().line(y).id();
     }
 
     bool selection_find_start_line() {
       using namespace contra::ansi;
 
-      auto const& term = app().term();
-      curpos_t const height = term.display_height();
+      auto const& view = app().view();
+      curpos_t const height = view.height();
       if (!m_sel_beg_online)
         return m_sel_beg_y >= height;
 
       if (m_sel_beg_y < height &&
-        term.display_line(m_sel_beg_y).id() == m_sel_beg_lineid)
+        view.line(m_sel_beg_y).id() == m_sel_beg_lineid)
         return true;
 
       for (curpos_t i = 0; i < height; i++) {
-        if (term.display_line(i).id() == m_sel_beg_lineid) {
+        if (view.line(i).id() == m_sel_beg_lineid) {
           m_sel_beg_y = i;
           return true;
         }
@@ -386,6 +395,7 @@ namespace term {
       m_sel_end_y = y;
 
       term_t& term = app().term();
+      term_view_t& view = app().view();
       board_t const& b = app().board();
       tstate_t& s = app().state();
 
@@ -401,9 +411,9 @@ namespace term {
       curpos_t y1 = m_sel_beg_y;
       curpos_t x2 = m_sel_end_x;
       curpos_t y2 = m_sel_end_y;
-      curpos_t const iN = term.display_height();
-      if (y1 < iN) x1 = b.to_data_position(term.display_line(y1), x1);
-      if (y2 < iN) x2 = b.to_data_position(term.display_line(y2), x2);
+      curpos_t const iN = view.height();
+      if (y1 < iN) x1 = b.to_data_position(view.line(y1), x1);
+      if (y2 < iN) x2 = b.to_data_position(view.line(y2), x2);
 
       if (m_sel_type & modifier_meta) {
         // 矩形選択
@@ -417,11 +427,11 @@ namespace term {
 
         curpos_t i = 0;
         while (i < y1)
-          m_dirty |= term.display_line(i++).clear_selection();
+          m_dirty |= view.line(i++).clear_selection();
         while (i <= y2)
-          m_dirty |= term.display_line(i++).set_selection(x1, x2 + 1, truncate, gatm, true);
+          m_dirty |= view.line(i++).set_selection(x1, x2 + 1, truncate, gatm, true);
         while (i < iN)
-          m_dirty |= term.display_line(i++).clear_selection();
+          m_dirty |= view.line(i++).clear_selection();
       } else {
         if (y1 > y2) {
           std::swap(y1, y2);
@@ -439,17 +449,17 @@ namespace term {
         // 選択状態の更新 (前回と同じ場合は skip できたりしないか?)
         curpos_t i = 0;
         while (i < y1)
-          m_dirty |= term.display_line(i++).clear_selection();
+          m_dirty |= view.line(i++).clear_selection();
         if (y1 == y2) {
-          m_dirty |= term.display_line(i++).set_selection(x1, x2 + 1, truncate, gatm, true);
+          m_dirty |= view.line(i++).set_selection(x1, x2 + 1, truncate, gatm, true);
         } else if (y1 < y2) {
-          m_dirty |= term.display_line(i++).set_selection(x1, term.width(), truncate, gatm, true);
+          m_dirty |= view.line(i++).set_selection(x1, term.width(), truncate, gatm, true);
           while (i < y2)
-            m_dirty |= term.display_line(i++).set_selection(0, term.width() + 1, truncate, gatm, true);
-          m_dirty |= term.display_line(i++).set_selection(0, x2 + 1, truncate, gatm, true);
+            m_dirty |= view.line(i++).set_selection(0, term.width() + 1, truncate, gatm, true);
+          m_dirty |= view.line(i++).set_selection(0, x2 + 1, truncate, gatm, true);
         }
         while (i < iN)
-          m_dirty |= term.display_line(i++).clear_selection();
+          m_dirty |= view.line(i++).clear_selection();
       }
 
       return true;
@@ -457,7 +467,7 @@ namespace term {
 
     void selection_extract_rectangle(std::u32string& data) {
       using namespace contra::ansi;
-      term_t const& term = app().term();
+      term_view_t const& view = app().view();
       curpos_t y1 = m_sel_beg_y;
       curpos_t y2 = m_sel_end_y;
       if (y1 > y2) std::swap(y1, y2);
@@ -465,12 +475,12 @@ namespace term {
       std::vector<std::pair<curpos_t, std::u32string> > lines;
       curpos_t min_x = -1;
       {
-        curpos_t const nline = term.display_height();
+        curpos_t const nline = view.height();
         curpos_t skipped_line_count = 0;
         bool started = false;
         std::u32string line_data;
         for (curpos_t iline = 0; iline < nline; iline++) {
-          curpos_t const x = term.display_line(iline).extract_selection(line_data);
+          curpos_t const x = view.line(iline).extract_selection(line_data);
           if (line_data.size() || (y1 <= iline && iline <= y2)) {
             if (started && skipped_line_count)
               lines.resize(lines.size() + skipped_line_count, std::make_pair(0, std::u32string()));
@@ -500,7 +510,8 @@ namespace term {
       using namespace contra::ansi;
       term_t const& term = app().term();
       board_t const& b = term.board();
-      curpos_t const nline = term.display_height();
+      term_view_t const& view = app().view();
+      curpos_t const nline = view.height();
 
       // 開始点と範囲
       curpos_t x1 = -1, x2 = -1, y1 = -1, y2 =-1;
@@ -509,8 +520,8 @@ namespace term {
         y1 = m_sel_beg_y;
         y2 = m_sel_end_y;
         x2 = m_sel_end_x;
-        if (y1 < nline) x1 = b.to_data_position(term.display_line(y1), x1);
-        if (y2 < nline) x2 = b.to_data_position(term.display_line(y2), x2);
+        if (y1 < nline) x1 = b.to_data_position(view.line(y1), x1);
+        if (y2 < nline) x2 = b.to_data_position(view.line(y2), x2);
         if (y1 > y2) {
           std::swap(y1, y2);
           std::swap(x1, x2);
@@ -525,7 +536,7 @@ namespace term {
         curpos_t skipped_line_count = 0;
         std::u32string line_data;
         for (curpos_t iline = 0; iline < nline; iline++) {
-          curpos_t x = term.display_line(iline).extract_selection(line_data);
+          curpos_t x = view.line(iline).extract_selection(line_data);
           if (line_data.size() || (y1 <= iline && iline <= y2)) {
             if (started) result.append(skipped_line_count + 1, U'\n');
             //if (iline == y1 && x >= x1) x = 0;
@@ -613,10 +624,11 @@ namespace term {
       if (key == key_mouse1_down) {
         term_t& term = app().term();
         board_t const& b = term.board();
-        curpos_t const nline = term.display_height();
+        term_view_t& view = app().view();
+        curpos_t const nline = view.height();
         bool const gatm = app().state().get_mode(mode_gatm);
         for (curpos_t y1 = 0; y1 < nline; y1++) {
-          line_t& line = term.display_line(y1);
+          line_t& line = view.line(y1);
           if (y1 == y) {
             word_selection_type wtype;
             switch (count) {
@@ -686,10 +698,10 @@ namespace term {
 
       switch (key) {
       case key_wheel_up:
-        m_dirty |= app().term().display_scroll(-3);
+        m_dirty |= app().view().scroll(-3);
         return true;
       case key_wheel_down:
-        m_dirty |= app().term().display_scroll(3);
+        m_dirty |= app().view().scroll(3);
         return true;
       case key_wheel_down | modifier_control:
         this->update_zoom(m_zoom_level - 1);

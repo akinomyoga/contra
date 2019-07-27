@@ -33,7 +33,8 @@ int main() {
 
   contra::dict::termcap_sgr_type sgrcap;
   sgrcap.initialize();
-  contra::ttty::tty_observer target(app.term(), stdout, &sgrcap);
+  contra::ansi::term_view_t view(&app.term());
+  contra::ttty::tty_observer target(view, stdout, &sgrcap);
   target.writer().print_screen(app.board());
 
   std::FILE* file = std::fopen("impl2-dump.txt", "w");

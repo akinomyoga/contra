@@ -739,22 +739,22 @@ namespace twin {
       std::vector<line_trace_t> m_lines;
     public:
       bool is_content_changed([[maybe_unused]] twin_window_t const& win, terminal_application const& app) const {
-        term_t const& term = app.term();
-        std::size_t const height = term.display_height();
+        term_view_t const& view = app.view();
+        std::size_t const height = view.height();
         if (height != m_lines.size()) return true;
         for (std::size_t iline = 0; iline < height; iline++) {
-          line_t const& line = term.display_line(iline);
+          line_t const& line = view.line(iline);
           if (line.id() != m_lines[iline].id) return true;
           if (line.version() != m_lines[iline].version) return true;
         }
         return false;
       }
       void store_content([[maybe_unused]] twin_window_t const& win, terminal_application const& app) {
-        term_t const& term = app.term();
-        curpos_t const height = term.display_height();
+        term_view_t const& view = app.view();
+        curpos_t const height = view.height();
         m_lines.resize(height);
         for (curpos_t i = 0; i < height; i++) {
-          line_t const& original_line = term.display_line(i);
+          line_t const& original_line = view.line(i);
           m_lines[i].id = original_line.id();
           m_lines[i].version = original_line.version();
           m_lines[i].has_blinking = original_line.has_blinking_cells();
@@ -791,21 +791,19 @@ namespace twin {
       curpos_t cur_y() const { return m_cur_y; }
       bool is_cursor_changed(twin_window_t const& win, terminal_application const& app) const {
         if (m_cur_visible != win.is_cursor_visible(app)) return true;
-        auto const cur = app.term().display_cursor();
-        tstate_t const& s = app.state();
-        if (m_cur_x != cur.x || m_cur_y != cur.y || m_cur_xenl != cur.xenl) return true;
-        if (m_cur_shape != s.get_cursor_shape()) return true;
-        if (m_cur_blinking != s.is_cursor_blinking()) return true;
+        auto& view = app.view();
+        if (m_cur_x != view.x() || m_cur_y != view.y() || m_cur_xenl != view.xenl()) return true;
+        if (m_cur_shape != view.cursor_shape()) return true;
+        if (m_cur_blinking != view.is_cursor_blinking()) return true;
         return false;
       }
       void store_cursor(twin_window_t const& win, terminal_application const& app) {
         m_cur_visible = win.is_cursor_visible(app);
-        auto const cur = app.term().display_cursor();
-        tstate_t const& s = app.state();
-        m_cur_x = cur.x;
-        m_cur_y = cur.y;
-        m_cur_xenl = cur.xenl;
-        m_cur_shape = s.m_cursor_shape;
+        auto& view = app.view();
+        m_cur_x = view.x();
+        m_cur_y = view.y();
+        m_cur_xenl = view.xenl();
+        m_cur_shape = view.cursor_shape();
       }
     };
 
@@ -852,26 +850,24 @@ namespace twin {
     bool is_cursor_visible(terminal_application const& app) const {
       if (m_ime_composition_active &&
         settings.m_caret_hide_on_ime) return false;
-      return app.state().is_cursor_visible() &&
-        app.term().is_cursor_in_view();
+      return app.view().is_cursor_visible();
     }
     void draw_cursor(HDC hdc, terminal_application const& app) {
       using namespace contra::ansi;
-      term_t const& term = app.term();
-      auto const cur = term.display_cursor();
-      int const cursor_shape = term.state().m_cursor_shape;
+      term_view_t const& view = app.view();
+      int const cursor_shape = view->cursor_shape();
 
       coord_t const xorigin = settings.m_xframe;
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
 
-      coord_t x0 = xorigin + xpixel * cur.x;
-      coord_t const y0 = yorigin + ypixel * cur.y;
+      coord_t x0 = xorigin + xpixel * view.x()
+      coord_t const y0 = yorigin + ypixel * view.y();
 
       coord_t size;
       bool underline = false;
-      if (cur.xenl) {
+      if (view.xenl()) {
         // 行末にいる時は設定に関係なく縦棒にする。
         x0 -= 2;
         size = 2;
@@ -1047,7 +1043,7 @@ namespace twin {
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      curpos_t const height = app.term().height();
+      curpos_t const height = app.view().height();
       tstate_t const& s = app.state();
       color_resolver_t _color(s);
 
@@ -1156,7 +1152,7 @@ namespace twin {
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      curpos_t const height = app.term().height();
+      curpos_t const height = app.view().height();
       tstate_t const& s = app.state();
 
       constexpr std::uint32_t flag_processed = character_t::flag_private1;
@@ -1366,7 +1362,7 @@ namespace twin {
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      curpos_t const height = app.term().height();
+      curpos_t const height = app.view().height();
       tstate_t const& s = app.state();
       color_resolver_t _color(s);
 
@@ -1594,7 +1590,7 @@ namespace twin {
       coord_t const yorigin = settings.m_yframe;
       coord_t const ypixel = settings.m_ypixel;
       coord_t const xpixel = settings.m_xpixel;
-      curpos_t const height = app.term().height();
+      curpos_t const height = app.view().height();
 
       std::vector<cell_t> cells;
       std::vector<TCHAR> characters;
@@ -1633,6 +1629,7 @@ namespace twin {
     //   hdc1 ... 背景+内容
     //   hdc2 ... 背景 (未実装)
     void paint_terminal_content(HDC hdc0, terminal_application const& app, bool full_update) {
+      app.view().update();
       bool const content_changed = m_tracer.is_content_changed(*this, app);
       bool const cursor_changed = m_tracer.is_cursor_changed(*this, app);
 
@@ -1642,13 +1639,13 @@ namespace twin {
       if (m_tracer.is_blinking_changed(*this)) content_redraw = true;
       if (content_redraw) {
         std::vector<std::vector<contra::ansi::cell_t>> content;
-        term_t const& term = app.term();
-        curpos_t const height = term.display_height();
+        term_view_t const& view = app.view();
+        curpos_t const height = view.height();
         content.resize(height);
 
         for (contra::ansi::curpos_t y = 0; y < height; y++) {
-          line_t const& line = term.display_line(y);
-          line.get_cells_in_presentation(content[y], term.board().line_r2l(line));
+          line_t const& line = view.line(y);
+          view->get_cells_in_presentation(content[y], line);
         }
 
         ::SetBkMode(hdc1, TRANSPARENT);
@@ -1869,10 +1866,10 @@ namespace twin {
 
       RECT rcClient;
       if (::GetClientRect(hWnd, &rcClient)) {
-        auto const cur = manager.app().term().display_cursor();
+        auto& view = manager.app().view();
         COMPOSITIONFORM form;
-        coord_t const x0 = rcClient.left + settings.m_xframe + settings.m_xpixel * cur.x;
-        coord_t const y0 = rcClient.top + settings.m_yframe + settings.m_ypixel * cur.y;
+        coord_t const x0 = rcClient.left + settings.m_xframe + settings.m_xpixel * view.x();
+        coord_t const y0 = rcClient.top + settings.m_yframe + settings.m_ypixel * view.y();
         form.dwStyle = CFS_POINT;
         form.ptCurrentPos.x = x0;
         form.ptCurrentPos.y = y0 + dy;

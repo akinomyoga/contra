@@ -115,7 +115,7 @@ namespace ttty {
       m_manager.add_app(std::move(sess));
 
       sgrcap.initialize();
-      renderer = std::make_unique<contra::ttty::tty_observer>(m_manager.app().term(), stdout, &sgrcap);
+      renderer = std::make_unique<contra::ttty::tty_observer>(m_manager.app().view(), stdout, &sgrcap);
       return true;
     }
 
