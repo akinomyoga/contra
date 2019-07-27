@@ -871,6 +871,9 @@ namespace ansi {
       return m_term->state().get_cursor_shape();
     }
 
+    // Note: インターフェイスを小さくする為に将来的には廃止したい。
+    tstate_t const& state() const { return m_term->state(); }
+
   public:
     byte fg_space() const { return m_fg_space; }
     byte bg_space() const { return m_bg_space; }
