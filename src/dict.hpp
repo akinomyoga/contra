@@ -50,6 +50,10 @@ namespace dict {
   constexpr color_t rgba2bgr(color_t value) {
     return bgr(value, value >> 8, value >> 16);
   }
+  constexpr byte rgba2r(color_t value) { return value & 0xFF; }
+  constexpr byte rgba2g(color_t value) { return value >> 8 & 0xFF; }
+  constexpr byte rgba2b(color_t value) { return value >> 16 & 0xFF; }
+  constexpr byte rgba2a(color_t value) { return value >> 24 & 0xFF; }
 
   typedef std::uint32_t aflags_t;
   typedef std::uint32_t xflags_t;

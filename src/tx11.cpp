@@ -9,6 +9,7 @@
 #include "ansi/render.hpp"
 #include "manager.hpp"
 #include "pty.hpp"
+#include <memory>
 
 namespace contra {
 namespace tx11 {
@@ -55,28 +56,125 @@ namespace tx11 {
     }
   }
 
+  struct x11_color_manager_t {
+    Display* m_display;
+    Colormap m_cmap;
+    std::size_t npixel = 0;
+    unsigned long color256_to_pixel[256];
+
+    void initialize_colors() {
+      std::size_t index = 0;
+      XColor xcolor {};
+      auto _alloc = [this, &index, &xcolor] (byte r, byte g, byte b) {
+        xcolor.red   = r | r << 8;
+        xcolor.green = g | g << 8;
+        xcolor.blue  = b | b << 8;
+        XAllocColor(m_display, m_cmap, &xcolor);
+        color256_to_pixel[index++] = xcolor.pixel;
+      };
+      auto _intensity = [] (int i) -> byte { return i == 0 ? 0 : i * 40 + 55; };
+
+      // 8colors
+      for (int i = 0; i < 8; i++)
+        _alloc(i & 1 ? 0x80 : 0, i & 2 ? 0x80 : 0, i & 4 ? 0x80 : 0);
+      // highlight 8 colors
+      for (int i = 0; i < 8; i++)
+        _alloc(i & 1 ? 0xFF : 0, i & 2 ? 0xFF : 0, i & 4 ? 0xFF : 0);
+      // 6x6x6 colors
+      for (int r = 0; r < 6; r++) {
+        auto const R = _intensity(r);
+        for (int g = 0; g < 6; g++) {
+          auto const G = _intensity(g);
+          for (int b = 0; b < 6; b++) {
+            auto const B = _intensity(b);
+            _alloc(R, G, B);
+          }
+        }
+      }
+      // 24 grayscale
+      for (int k = 0; k < 24; k++) {
+        byte const K = k * 10 + 8;
+        _alloc(K, K, K);
+      }
+
+      mwg_assert(index == 256);
+    }
+  public:
+    x11_color_manager_t(Display* display) {
+      this->m_display = display;
+      int const screen = DefaultScreen(display);
+      this->m_cmap = DefaultColormap(display, screen);
+      this->initialize_colors();
+    }
+    ~x11_color_manager_t() {
+      XFreeColors(m_display, m_cmap, &color256_to_pixel[0], std::size(color256_to_pixel), 0);
+    }
+  private:
+    template<typename T>
+    static std::pair<T, T> get_minmax3(T a, T b, T c) {
+      if (a > b) std::swap(a, b);
+      if (b <= c) return {a, c};
+      return {std::min(a, c), b};
+    }
+  public:
+    unsigned long pixel(ansi::color_t color) {
+      byte r = contra::dict::rgba2r(color);
+      byte g = contra::dict::rgba2g(color);
+      byte b = contra::dict::rgba2b(color);
+      auto [mn, mx] = get_minmax3(r, g, b);
+      int index;
+      if (mx - mn < 20) {
+        byte k = (r + g + b) / 3;
+        k = (k + 2) / 10;
+        index = k == 0 ? 16 : k == 25 ? 231 : 231 + k;
+      } else {
+        r = (r - 24) / 40;
+        g = (g - 24) / 40;
+        b = (b - 24) / 40;
+        index = 16 + r * 36 + g * 6 + b;
+      }
+      return color256_to_pixel[index];
+    }
+  };
+
   class tx11_graphics_t {
-    Display* display;
-    Window window;
-    GC gc;
     using coord_t = ansi::coord_t;
     using color_t = ansi::color_t;
     using font_t = ansi::font_t;
 
-    // int screen;
-    // Colormap color_map;
+    Display* m_display = NULL;
+    Drawable m_drawable = 0;
+    GC m_gc = NULL;
+
+    std::unique_ptr<x11_color_manager_t> color_manager;
+
+    bool is_truecolor = false;
 
     ansi::window_state_t& wstat;
+
   public:
-    tx11_graphics_t(Display* display, Window window, GC gc, ansi::window_state_t& wstat):
-      display(display), window(window), gc(gc), wstat(wstat)
-    {
-      // this->screen = DefaultScreen(display);
-      // this->color_map = DefaultColormap(display, screen);
-      // Visual *visual = DefaultVisual(display, screen);
-      // switch (visual->c_class) {
-      // case TrueColor:
-      // }
+    tx11_graphics_t(ansi::window_state_t& wstat): wstat(wstat) {}
+
+    void initialize(Display* display, Drawable drawable) {
+      this->m_display = display;
+      this->m_drawable = drawable;
+      this->m_gc = XCreateGC(display, drawable, 0, 0);
+
+      int const screen = DefaultScreen(display);
+      Visual *visual = DefaultVisual(display, screen);
+      if (visual->c_class != TrueColor)
+        color_manager = std::make_unique<x11_color_manager_t>(display);
+    }
+
+    GC gc() const { return m_gc; }
+
+  private:
+    void _set_foreground(color_t color) {
+      if (!color_manager) {
+        XSetForeground(m_display, m_gc, contra::dict::rgba2bgr(color));
+      } else {
+        XSetForeground(m_display, m_gc, color_manager->pixel(color));
+      }
     }
 
   public:
@@ -89,14 +187,10 @@ namespace tx11 {
     }
     void clip_clear() {}
 
-  private:
-    void _set_foreground(color_t color) {
-      ::XSetForeground(display, gc, contra::dict::rgba2bgr(color));
-    }
   public:
     void fill_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color) {
       _set_foreground(color);
-      ::XFillRectangle(display, window, gc, x1, y1, x2 - x1, y2 - y1);
+      ::XFillRectangle(m_display, m_drawable, m_gc, x1, y1, x2 - x1, y2 - y1);
     }
     void invert_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2) {
       contra_unused(x1);
@@ -169,7 +263,7 @@ namespace tx11 {
       contra_unused(font);
       coord_t x = x1, y = y1 + wstat.m_ypixel - 1;
       for (std::size_t i = 0, iN = buff.characters.size(); i < iN; i++) {
-        ::XDrawString(display, window, gc, x, y, &buff.characters[i], 1);
+        ::XDrawString(m_display, m_drawable, m_gc, x, y, &buff.characters[i], 1);
         x += buff.progress[i];
       }
     }
@@ -199,10 +293,9 @@ namespace tx11 {
 
     ::Display* display = NULL;
     ::Window main = 0;
-    ::GC gc = NULL;
     ::Atom WM_DELETE_WINDOW;
-
     tx11_setting_t settings;
+    tx11_graphics_t g { wstat };
 
   public:
     ~tx11_window_t() {}
@@ -226,7 +319,9 @@ namespace tx11 {
       unsigned long const white = WhitePixel(display, screen);
 
       // Main Window
-      this->main = XCreateSimpleWindow(display, root, 100, 100, 300, 120, 1, black, white);
+      ansi::coord_t const width = wstat.calculate_client_width();
+      ansi::coord_t const height = wstat.calculate_client_height();
+      this->main = XCreateSimpleWindow(display, root, 100, 100, width, height, 1, black, white);
       {
         // Properties
         XTextProperty win_name;
@@ -237,14 +332,14 @@ namespace tx11 {
         ::XSetWMName(display, this->main, &win_name);
 
         // Events
-        XSelectInput(display, this->main, ExposureMask | KeyPressMask | StructureNotifyMask);
+        XSelectInput(display, this->main, ExposureMask | KeyPressMask | StructureNotifyMask );
       }
 
       // #D0162 何だかよく分からないが終了する時はこうするらしい。
       this->WM_DELETE_WINDOW = XInternAtom(display, "WM_DELETE_WINDOW", False);
       XSetWMProtocols(display, this->main, &this->WM_DELETE_WINDOW, 1);
 
-      this->gc = XCreateGC(display, this->main, 0, 0);
+      this->g.initialize(this->display, this->main);
 
       XAutoRepeatOn(display);
     }
@@ -254,7 +349,8 @@ namespace tx11 {
     void reset_cursor_timer() {}
 
   private:
-    void paint_terminal_content(GC gc0, term::terminal_application& app, bool full_update) {
+    template<typename Graphics>
+    void paint_terminal_content(Graphics& g, term::terminal_application& app, bool full_update) {
       // update status
       ansi::term_view_t& view = app.view();
       view.update();
@@ -275,10 +371,14 @@ namespace tx11 {
 
       // 暫定:
       // HDC const hdc1 = m_background.hdc(hWnd, hdc0, 1);
-      // wstat.m_window_width = m_background.width();
-      // wstat.m_window_height = m_background.height();
-      wstat.m_window_width = wstat.calculate_client_width();
-      wstat.m_window_height = wstat.calculate_client_height();
+      {
+        Window root;
+        int x, y;
+        unsigned w, h, border, depth;
+        XGetGeometry(display, main, &root, &x, &y, &w, &h, &border, &depth);
+        wstat.m_window_width = w;
+        wstat.m_window_height = h;
+      }
 
       bool content_redraw = full_update || content_changed;
       if (m_tracer.is_blinking_changed(wstat)) content_redraw = true;
@@ -292,12 +392,10 @@ namespace tx11 {
           view.get_cells_in_presentation(content[y], line);
         }
 
-        tx11_graphics_t g1(display, main, gc0, wstat);
-        // ::SetBkMode(hdc1, TRANSPARENT);
-        renderer.draw_background(g1, view, content);
-        //renderer.draw_characters_mono(g1, view, content);
-        renderer.draw_characters(g1, view, content);
-        renderer.draw_decoration(g1, view, content);
+        renderer.draw_background(g, view, content);
+        //renderer.draw_characters_mono(g, view, content);
+        renderer.draw_characters(g, view, content);
+        renderer.draw_decoration(g, view, content);
 
         //::BitBlt(hdc0, 0, 0, m_background.width(), m_background.height(), hdc1, 0, 0, SRCCOPY);
       }
@@ -309,7 +407,6 @@ namespace tx11 {
       //   ::BitBlt(hdc0, old_x1, old_y1, wstat.m_xpixel, wstat.m_ypixel, hdc1, old_x1, old_y1, SRCCOPY);
       // }
       if (wstat.is_cursor_appearing(view)) {
-        tx11_graphics_t g(display, main, gc0, wstat);
         renderer.draw_cursor(g, view);
       }
 
@@ -318,10 +415,10 @@ namespace tx11 {
     void render_window() {
       if (!is_session_ready()) {
         const char* message = "Hello, world!";
-        XDrawString(display, this->main, gc, 3, 15, message, std::strlen(message));
+        XDrawString(display, this->main, g.gc(), 3, 15, message, std::strlen(message));
       } else {
         // resized?
-        paint_terminal_content(gc, manager.app(), false);
+        paint_terminal_content(g, manager.app(), false);
       }
       XFlush(display);
     }
@@ -459,8 +556,8 @@ namespace tx11 {
     void process_event(XEvent const& event) {
       switch (event.type) {
       case Expose:
-        //if (event.xexpose.count == 0)
-        render_window();
+        if (event.xexpose.count == 0)
+          render_window();
         break;
       case KeyPress:
         process_key(event.xkey.keycode, get_modifiers());

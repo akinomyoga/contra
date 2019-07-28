@@ -129,6 +129,11 @@
 
 2019-07-28
 
+* tx11: フォント描画について
+  http://www.02.246.ne.jp/~torutk/cxx/x11/string.html
+
+* tx11: サイズ変更のイベント?
+
 * tx11: TrueColor でない時の対策が必要
 * tx11: 現在は ascii しか表示できない
 * tx11: X11 で ExtTextOut 的な関数はあるのだろうか

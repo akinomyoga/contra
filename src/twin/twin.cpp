@@ -788,6 +788,7 @@ namespace twin {
       if (m_tracer.is_metric_changed(wstat)) full_update = true;
 
       HDC const hdc1 = m_background.hdc(hWnd, hdc0, 1);
+      ::SetBkMode(hdc1, TRANSPARENT);
       wstat.m_window_width = m_background.width();
       wstat.m_window_height = m_background.height();
 
@@ -804,7 +805,6 @@ namespace twin {
         }
 
         twin_graphics_t g1(hdc1, fstore, bstore);
-        ::SetBkMode(hdc1, TRANSPARENT);
         //renderer.draw_characters_mono(g1, view, content);
         renderer.draw_background(g1, view, content);
         renderer.draw_characters(g1, view, content);
