@@ -529,6 +529,16 @@ namespace ansi {
       }
     }
 
+  private:
+    template<typename Graphics>
+    void clip_decdhl_upper(Graphics& g, coord_t y) {
+      g.clip_rectangle(0, 0, wstat.m_window_width, y + wstat.m_ypixel);
+    }
+    template<typename Graphics>
+    void clip_decdhl_lower(Graphics& g, coord_t y) {
+      g.clip_rectangle(0, y, wstat.m_window_width, wstat.m_window_height);
+    }
+
   public:
     template<typename Graphics>
     void draw_characters(Graphics& g, term_view_t const& view, std::vector<std::vector<contra::ansi::cell_t>>& content) {
@@ -575,11 +585,9 @@ namespace ansi {
         charbuff.add_char(code, prog);
       };
 
-      g.clip_initialize(wstat.m_window_width, wstat.m_window_height);
       for (curpos_t iline = 0; iline < height; iline++, y += ypixel) {
         std::vector<cell_t>& cells = content[iline];
         x = xorigin;
-        g.clip_initialize_line(y, ypixel);
         charbuff.reserve(cells.size());
 
         for (std::size_t i = 0; i < cells.size(); ) {
@@ -635,9 +643,9 @@ namespace ansi {
 
           // DECDHL用の制限
           if (font & font_layout_upper_half)
-            g.clip_decdhl_upper();
+            this->clip_decdhl_upper(g, y);
           else if (font & font_layout_lower_half)
-            g.clip_decdhl_lower();
+            this->clip_decdhl_lower(g, y);
 
           if (font & font_rotation_mask) {
             g.draw_rotated_characters(xL, y, dx, dy, xR - xL, charbuff, font, fg);
@@ -650,7 +658,7 @@ namespace ansi {
 
           // DECDHL用の制限の解除
           if (font & (font_layout_upper_half | font_layout_lower_half))
-            g.clip_decdhl_clear();
+            g.clip_clear();
         }
 
         // clear private flags
@@ -737,8 +745,6 @@ namespace ansi {
 
       color_t color0 = 0;
 
-      g.clip_initialize(wstat.m_window_width, wstat.m_window_height);
-
       decoration_horizontal_t dec_ul([&] (coord_t x1, coord_t x2, std::uint32_t style) {
         coord_t h = (coord_t) std::ceil(ypixel * 0.05);
         switch (style & attribute_t::decdhl_mask) {
@@ -815,13 +821,13 @@ namespace ansi {
         switch (xflags & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_upper_half:
           is_clipped = true;
-          g.clip_decdhl_upper();
+          this->clip_decdhl_upper(g, y);
           w *= 2;
           y2 = y + 2 * ypixel;
           break;
         case attribute_t::decdhl_lower_half:
           is_clipped = true;
-          g.clip_decdhl_lower();
+          this->clip_decdhl_lower(g, y);
           w *= 2;
           y1 = y - ypixel;
           y2 = y + ypixel;
@@ -829,7 +835,7 @@ namespace ansi {
         }
         g.draw_ellipse(x1, y1, x2, y2, color0, w);
         if (is_clipped)
-          g.clip_decdhl_clear();
+          g.clip_clear();
       };
 
       auto _draw_stress = [&] (coord_t x1, coord_t x2, xflags_t xflags) {
@@ -857,7 +863,6 @@ namespace ansi {
         std::vector<cell_t>& cells = content[iline];
         x = xorigin;
         color0 = 0;
-        g.clip_initialize_line(y, ypixel);
 
         for (std::size_t i = 0; i < cells.size(); ) {
           auto const& cell = cells[i++];

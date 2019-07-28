@@ -51,7 +51,6 @@ namespace twin {
     return 0;
   }
 
-
   static std::u16string get_error_message(DWORD error_code) {
     LPTSTR result = nullptr;
     ::FormatMessage(
@@ -295,12 +294,15 @@ namespace twin {
     }
   };
 
-  struct graphics_t {
+  struct twin_graphics_t {
     HDC hdc;
     font_store_t& fstore;
     brush_holder_t& bstore;
   public:
-    graphics_t(HDC hdc, font_store_t& fstore, brush_holder_t& bstore): hdc(hdc), fstore(fstore), bstore(bstore) {}
+    twin_graphics_t(HDC hdc, font_store_t& fstore, brush_holder_t& bstore): hdc(hdc), fstore(fstore), bstore(bstore) {}
+    ~twin_graphics_t() {
+      clip_release();
+    }
 
   public:
     void fill_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color) const {
@@ -325,65 +327,22 @@ namespace twin {
     }
 
   private:
-    class decdhl_region_holder_t {
-      LONG m_width = 0, m_height = 0;
-      HRGN rgn1 = NULL, rgn2 = NULL;
-      coord_t y = 0, ypixel = 0;
-    public:
-      LONG width() const { return m_width; }
-      LONG height() const { return m_height; }
-      void release() {
-        if (rgn1) {
-          ::DeleteObject(rgn1);
-          rgn1 = NULL;
-        }
-        if (rgn2) {
-          ::DeleteObject(rgn2);
-          rgn2 = NULL;
-        }
+    HRGN rgn = NULL;
+    void clip_release() {
+      if (rgn) {
+        ::DeleteObject(rgn);
+        rgn = NULL;
       }
-    public:
-      decdhl_region_holder_t() {}
-      decdhl_region_holder_t(LONG width, LONG height): m_width(width), m_height(height) {}
-      ~decdhl_region_holder_t() {
-        release();
-      }
-      void initialize(LONG width, LONG height) {
-        if (this->m_width == width && this->m_height == height) return;
-        this->release();
-        this->m_width = width;
-        this->m_height = height;
-      }
-      void next_line(coord_t y, coord_t ypixel) {
-        this->release();
-        this->y = y;
-        this->ypixel = ypixel;
-      }
-      HRGN get_upper_region() {
-        if (!rgn1) rgn1 = ::CreateRectRgn(0, 0, m_width, y + ypixel);
-        return rgn1;
-      }
-      HRGN get_lower_region() {
-        if (!rgn2) rgn2 = ::CreateRectRgn(0, y, m_width, m_height);
-        return rgn2;
-      }
-    };
-    decdhl_region_holder_t region;
-
+    }
   public:
-    void clip_initialize(coord_t width, coord_t height) {
-      region.initialize(width, height);
+    void clip_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2) {
+      if (rgn)
+        SetRectRgn(rgn, x1, y1, x2, y2);
+      else
+        rgn = ::CreateRectRgn(x1, y1, x2, y2);
+      ::SelectClipRgn(hdc, rgn);
     }
-    void clip_initialize_line(coord_t y, coord_t ypixel) {
-      region.next_line(y, ypixel);
-    }
-    void clip_decdhl_upper() {
-      ::SelectClipRgn(hdc, region.get_upper_region());
-    }
-    void clip_decdhl_lower() {
-      ::SelectClipRgn(hdc, region.get_lower_region());
-    }
-    void clip_decdhl_clear() {
+    void clip_clear() {
       ::SelectClipRgn(hdc, NULL);
     }
 
@@ -459,16 +418,72 @@ namespace twin {
     }
   };
 
+  class compatible_bitmap_t {
+    LONG m_width = -1, m_height = -1;
+    struct layer_t {
+      HDC hdc = NULL;
+      HBITMAP hbmp = NULL;
+    };
+    std::vector<layer_t> m_layers;
+
+    void release() {
+      for (layer_t const& layer : m_layers) {
+        if (layer.hdc) ::DeleteDC(layer.hdc);
+        if (layer.hbmp) ::DeleteObject(layer.hbmp);
+      }
+      m_layers.clear();
+    }
+
+  private:
+    void check_window_size(HWND hWnd, bool* out_resized = NULL) {
+      RECT rcClient;
+      ::GetClientRect(hWnd, &rcClient);
+      LONG const width = rcClient.right - rcClient.left;
+      LONG const height = rcClient.bottom - rcClient.top;
+      bool const is_resized = width != m_width || height != m_height;
+      if (is_resized) {
+        release();
+        m_width = width;
+        m_height = height;
+      }
+      if (out_resized) *out_resized = is_resized;
+    }
+  public:
+    HDC hdc(HWND hWnd, HDC hdc, std::size_t index = 0, bool* out_resized = NULL) {
+      if (out_resized)
+        check_window_size(hWnd, out_resized);
+      if (index < m_layers.size() && m_layers[index].hdc)
+        return m_layers[index].hdc;
+
+      if (index >= m_layers.size()) m_layers.resize(index + 1);
+      layer_t& layer = m_layers[index];
+      layer.hbmp = ::CreateCompatibleBitmap(hdc, m_width, m_height);
+      layer.hdc = ::CreateCompatibleDC(hdc);
+      ::SelectObject(layer.hdc, layer.hbmp);
+      return layer.hdc;
+    }
+
+    HBITMAP bmp(std::size_t index = 0) const {
+      return index < m_layers.size() ? m_layers[index].hbmp : (HBITMAP) NULL;
+    }
+    LONG width() { return m_width; }
+    LONG height() { return m_height; }
+    ~compatible_bitmap_t() {
+      release();
+    }
+  };
+
   class twin_window_t {
     static constexpr LPCTSTR szClassName = TEXT("Contra.Twin.Main");
 
-    twin_settings settings;
     window_state_t wstat;
+    window_renderer_t renderer { wstat };
+    terminal_manager manager;
+
+    twin_settings settings;
     font_store_t fstore { wstat };
     brush_holder_t bstore;
-    window_renderer_t renderer { wstat };
 
-    terminal_manager manager;
     HWND hWnd = NULL;
 
     class twin_events: public contra::term::terminal_events {
@@ -749,61 +764,6 @@ namespace twin {
     }
 
   private:
-    class compatible_bitmap_t {
-      LONG m_width = -1, m_height = -1;
-      struct layer_t {
-        HDC hdc = NULL;
-        HBITMAP hbmp = NULL;
-      };
-      std::vector<layer_t> m_layers;
-
-      void release() {
-        for (layer_t const& layer : m_layers) {
-          if (layer.hdc) ::DeleteDC(layer.hdc);
-          if (layer.hbmp) ::DeleteObject(layer.hbmp);
-        }
-        m_layers.clear();
-      }
-
-    private:
-      void check_window_size(HWND hWnd, bool* out_resized = NULL) {
-        RECT rcClient;
-        ::GetClientRect(hWnd, &rcClient);
-        LONG const width = rcClient.right - rcClient.left;
-        LONG const height = rcClient.bottom - rcClient.top;
-        bool const is_resized = width != m_width || height != m_height;
-        if (is_resized) {
-          release();
-          m_width = width;
-          m_height = height;
-        }
-        if (out_resized) *out_resized = is_resized;
-      }
-    public:
-      HDC hdc(HWND hWnd, HDC hdc, std::size_t index = 0, bool* out_resized = NULL) {
-        if (out_resized)
-          check_window_size(hWnd, out_resized);
-        if (index < m_layers.size() && m_layers[index].hdc)
-          return m_layers[index].hdc;
-
-        if (index >= m_layers.size()) m_layers.resize(index + 1);
-        layer_t& layer = m_layers[index];
-        layer.hbmp = ::CreateCompatibleBitmap(hdc, m_width, m_height);
-        layer.hdc = ::CreateCompatibleDC(hdc);
-        ::SelectObject(layer.hdc, layer.hbmp);
-        return layer.hdc;
-      }
-
-      HBITMAP bmp(std::size_t index = 0) const {
-        return index < m_layers.size() ? m_layers[index].hbmp : (HBITMAP) NULL;
-      }
-      LONG width() { return m_width; }
-      LONG height() { return m_height; }
-      ~compatible_bitmap_t() {
-        release();
-      }
-    };
-
     compatible_bitmap_t m_background;
 
     // Note: background buffer として 3 枚使う。
@@ -845,7 +805,7 @@ namespace twin {
           view.get_cells_in_presentation(content[y], line);
         }
 
-        graphics_t g1(hdc1, fstore, bstore);
+        twin_graphics_t g1(hdc1, fstore, bstore);
         ::SetBkMode(hdc1, TRANSPARENT);
         //renderer.draw_characters_mono(g1, view, content);
         renderer.draw_background(g1, view, content);
@@ -864,7 +824,7 @@ namespace twin {
         ::BitBlt(hdc0, old_x1, old_y1, wstat.m_xpixel, wstat.m_ypixel, hdc1, old_x1, old_y1, SRCCOPY);
       }
       if (wstat.is_cursor_appearing(view)) {
-        graphics_t g(hdc0, fstore, bstore);
+        twin_graphics_t g(hdc0, fstore, bstore);
         renderer.draw_cursor(g, view);
       }
 
