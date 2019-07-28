@@ -569,7 +569,7 @@ namespace ansi {
       double dxW = 0.0;
 
       typename Graphics::character_buffer charbuff;
-      auto _push_char = [&charbuff, &xR, &dx, &dxW] (std::uint32_t code, INT prog, curpos_t width) {
+      auto _push_char = [&charbuff, &xR, &dx, &dxW] (std::uint32_t code, coord_t prog, curpos_t width) {
         xR += prog;
 
         // 文字位置の補正

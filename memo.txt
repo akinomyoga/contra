@@ -127,6 +127,21 @@
   ToDo
 ------------------------------------------------------------------------------
 
+2019-07-28
+
+* tx11: TrueColor でない時の対策が必要
+* tx11: 現在は ascii しか表示できない
+* tx11: X11 で ExtTextOut 的な関数はあるのだろうか
+  取り敢えず1文字ずつ描画するしかない。遅そうだけれども。
+  →取り敢えず1文字ずつ描画する事にした。これで一応動かなくはない。
+
+* tx11: 領域反転は2回 XCopyArea を実行する?
+  https://stackoverflow.com/questions/39969855/invert-the-colors-of-a-region-in-xlib
+  Pixmap はリモートに置かれるリソースの様に見える。
+  なのでバックバッファも普通に沢山使っても問題ない気がする。
+
+  既に現状で何やらちらつきが見えている。
+
 2019-07-27
 
 * twin: 画面外で選択のドラッグを止めるとコピーされない
@@ -1759,6 +1774,145 @@
 ------------------------------------------------------------------------------
   Done
 ------------------------------------------------------------------------------
+
+2019-07-28
+
+* X11 で KeyPress を捕まえるには? [#D0166]
+
+  * keycode の処理をどうするかについて。
+    その辺に書いてある通りに XKeycodeToKeysym を使ったら
+    deprecated であるとの警告が出た。
+
+    検索すると https://codeday.me/jp/qa/20190410/599503.html
+    #include <X11/XKBlib.h> の XkbKeycodeToKeysym を使えるとあるが、
+    然し廃止された理由などがあるだろうことを考えると、
+    本当にこれで良いのかというのはよく分からない。
+
+    XkbKeycodeToKeysym の説明。特に deprecated だとかの説明はない。
+    https://www.x.org/archive/X11R7.5/doc/man/man3/XkbKeycodeToKeysym.3.html
+
+
+    https://www.cl.cam.ac.uk/~mgk25/ucs/keysymdef.h
+
+  * state の処理をどうするのかについて。
+    試してみた所以下の様になっている様子だ。
+    因みに ScrollLock や CapsLock に関しては反応がなかった。
+
+    ShiftMask   ... Shift
+    ControlMask ... Control
+    Mod1Mask    ... Alt
+    Mod2Mask    ... NumLock
+
+    よく考えてみたら左右の Control を区別したいので、
+    state では駄目である。X には現在そのキーが押されているか
+    どうかを確かめる関数はあるのだろうか。
+
+    https://stackoverflow.com/questions/3649874/how-to-get-keyboard-state-in-linux
+    を観察してみた所、実は Windows と同様の関数が存在する様である。
+
+    此処に載っているのは動かない例?
+    https://ubuntuforums.org/showthread.php?t=1149710
+
+    此処には XkbGetIndicatorState という関数が載っている。でもこれは mask と同じ様な気がする。
+    https://stackoverflow.com/questions/9009775/using-getkeystatevk-capital-1-in-linux
+
+    うーん。CapsLock, ScrollLock, NumLock に関しては結局 XkbGetIndicatorState が必要の様だ。
+    https://www.qtcentre.org/threads/30180-how-to-determine-if-CapsLock-is-on-crossplatform
+    https://www.qtcentre.org/threads/44563-Kana-Lock-Detection
+    何だかよく分からないが 1, 2, 4 がそれぞれ Caps/Num/Scoll Lock に対応している様だ。
+    これらの定数は何処かに定義されていたりするのだろうか…?
+
+    うーん。CapsLock に関しては起動した瞬間に on になっていると
+    それ以降ずっと反転してしまう様である。
+    最初から off になっている場合には特に問題は発生していない。
+    これは Cygwin 固有の問題だろうか。よく分からないが気にしない事にする。
+    また、ScrollLock に関しては検出できていない気がする。
+
+  取り敢えずキーボード入力は適当に作れた。
+  描画も何か表示される様にはしたが表示は滅茶苦茶である。
+
+* X11 で XEvent を polling する方法が分からない [#D0165]
+  →結局 XCheckIfEvent を使った。
+
+  | 以下の元のコードだとブロックしてしまう。
+  | 
+  |   | XNextEvent(display, &event);
+  |   | process_event(event);
+  | 
+  | 検索すると X11 のソケットを見張るという話をしているが、
+  | これは内部でバッファリング等をしていたりすると駄目なのではないか。
+  | https://stackoverflow.com/questions/8592292/how-to-quit-the-blocking-of-xlibs-xnextevent
+  | 
+  | * XCheckMaskEvent?
+  |   XCheckMaskEvent というのがある様なのでこれを使ってみたら、
+  |   そもそもウィンドウを閉じる事ができなくなってしまった。
+  | 
+  |     | while (::XCheckMaskEvent(display, ~(long) 0, &event)) {
+  |     |   processed = true;
+  |     |   process_event(event);
+  |     | }
+  | 
+  |   検索して見つかった説明を読んでみると…
+  |   http://www.polarhome.com/service/man/?qf=XCheckMaskEvent&tf=2&of=HP-UX&sf=
+  | 
+  |   > XCheckMaskEvent -- XLIB Reference Manual R5
+  |   >
+  |   > Name
+  |   >   XCheckMaskEvent -- remove the next event that matches mask; don't wait.
+  |   >
+  |   > Synopsis
+  |   >   Bool XCheckMaskEvent(display, event_mask, event_return)
+  |   >     Display *display;
+  |   >     long event_mask;
+  |   >     XEvent *event_return;
+  |   >
+  |   > Arguments
+  |   >   display     Specifies a connection to an X server; returned from XOpenDisplay().
+  |   >   event_mask  Specifies the event types to be returned. See list under XSelectInput().
+  |   >   event_return
+  |   >               Returns a copy of the matched event's XEvent structure.
+  |   >
+  |   > Returns
+  |   >   True if a matching event is found, else False.
+  |   >
+  |   > Description
+  |   >   XCheckMaskEvent() removes the next event in the queue that matches the passed mask.
+  |   >   The event is copied into an XEvent supplied by the caller and XCheckMaskEvent()
+  |   >   returns True. Other events earlier in the queue are not discarded. If no such event has been
+  |   >   queued, XCheckMaskEvent() flushes the request buffer and immediately returns False,
+  |   >   without waiting.
+  |   >
+  |   >   XCheckMaskEvent() cannot return ClientMessage, MappingNotify,
+  |   >   SelectionClear, SelectionNotify, or SelectionRequest events because these
+  |   >   event types are by definition unmaskable.
+  |   >
+  |   >   For more information, see Volume One, Chapter 8, Events.
+  |   >
+  |   > See Also
+  |   >   XQLength(), XAllowEvents(), XCheckIfEvent(), XCheckTypedEvent(), XCheckTypedWindowEvent(),
+  |   >   XCheckWindowEvent(), XEventsQueued(), XGetInputFocus(), XGetMotionEvents(), XIfEvent(), XMask-
+  |   >   Event(), XNextEvent(), XPeekEvent(), XPeekIfEvent(), XPending(), XPutBackEvent(), XSelectInput(),
+  |   >   XSendEvent(), XSetInputFocus(), XSynchronize(), XWindowEvent().
+  | 
+  |   XCheckMaskEvent() cannot return ClientMessage, MappingNotify,
+  |   SelectionClear, SelectionNotify, or SelectionRequest events because these
+  |   event types are by definition unmaskable. と書かれている。
+  | 
+  | * XCheckIfEvent?
+  | 
+  |   うーん。更に XLIB Reference Manual R5 を Google Preview で見ると
+  |   XCheckIfEvent というのがある様だ。これは ClientMessage 等を受け取れるのだろうか。
+  |   試してみる事にする。
+  | 
+  |     | while (::XCheckIfEvent(display, &event, &event_filter, NULL)) {
+  |     |   processed = true;
+  |     |   process_event(event);
+  |     |   if (!display) goto exit:
+  |     | }
+  | 
+  |   結局これで動いている様な気がするのでこれで良いという事にする。
+  |   display をチェックしているのは、tx11_window_t では display = NULL
+  |   を設定する事でディスプレイを閉じた事の合図にしている為。
 
 2019-07-27
 

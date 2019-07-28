@@ -44,6 +44,12 @@ namespace dict {
       (0xFF & value >> 8 ) * alpha / 255,
       (0xFF & value >> 16) * alpha / 255);
   }
+  constexpr color_t bgr(byte r, byte g, byte b) {
+    return r << 16 | g << 8 | b;
+  }
+  constexpr color_t rgba2bgr(color_t value) {
+    return bgr(value, value >> 8, value >> 16);
+  }
 
   typedef std::uint32_t aflags_t;
   typedef std::uint32_t xflags_t;

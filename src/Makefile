@@ -90,11 +90,11 @@ all: twin.exe
 twin_objs = \
   $(objdir)/twin/twin.o \
   $(objdir)/twin/win_messages.o \
-  $(objdir)/enc.utf8.o \
   $(objdir)/pty.o \
   $(objdir)/dict.o \
   $(objdir)/ansi/term.o \
   $(objdir)/ansi/line.o \
+  $(objdir)/enc.utf8.o \
   $(objdir)/enc.c2w.o \
   $(objdir)/contradef.o
 #twin_LDFLAGS := $(LDFLAGS) -static-libgcc -static-libstdc++ -s
@@ -114,7 +114,16 @@ endif
 all: tx11.exe
 tx11_LDFLAGS := $(LDFLAGS)
 tx11_LIBS := -lX11
-tx11.exe: $(objdir)/tx11.o
+tx11_objs := \
+  $(objdir)/tx11.o \
+  $(objdir)/pty.o \
+  $(objdir)/ansi/term.o \
+  $(objdir)/ansi/line.o \
+  $(objdir)/enc.utf8.o \
+  $(objdir)/enc.c2w.o \
+  $(objdir)/contradef.o
+
+tx11.exe: $(tx11_objs)
 	$(CXX) $(CXXFLAGS) $(tx11_LDFLAGS) -o $@ $^ $(tx11_LIBS)
 
 #------------------------------------------------------------------------------

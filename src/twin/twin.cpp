@@ -313,15 +313,15 @@ namespace twin {
     void invert_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2) const {
       ::PatBlt(hdc, x1, y1, x2 - x1, y2 - y1, DSTINVERT);
     }
-    void draw_ellipse(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color0, int line_width) {
-      ::SelectObject(hdc, bstore.get_pen(color0, line_width));
+    void draw_ellipse(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color, int line_width) {
+      ::SelectObject(hdc, bstore.get_pen(color, line_width));
       ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
       ::Ellipse(hdc, x1, y1, x2, y2);
       ::SelectObject(hdc, ::GetStockObject(NULL_PEN));
     }
-    void fill_ellipse(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color0) {
+    void fill_ellipse(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color) {
       ::SelectObject(hdc, ::GetStockObject(NULL_PEN));
-      ::SelectObject(hdc, bstore.get_brush(color0));
+      ::SelectObject(hdc, bstore.get_brush(color));
       ::Ellipse(hdc, x1, y1, x2, y2);
       ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
     }
@@ -479,6 +479,7 @@ namespace twin {
     window_state_t wstat;
     window_renderer_t renderer { wstat };
     terminal_manager manager;
+    status_tracer_t m_tracer;
 
     twin_settings settings;
     font_store_t fstore { wstat };
@@ -724,9 +725,6 @@ namespace twin {
     }
 
   private:
-    status_tracer_t m_tracer;
-
-  private:
     static constexpr UINT BLINKING_TIMER_ID = 11; // 適当
     UINT m_blinking_timer_id = 0;
     void start_blinking_timer() {
@@ -870,8 +868,8 @@ namespace twin {
       manager.input_key(key);
     }
 
-    std::uint32_t get_modifiers() {
-      std::uint32_t ret = 0;
+    key_t get_modifiers() {
+      key_t ret = 0;
       if (GetKeyState(VK_LSHIFT) & 0x8000) ret |= modifier_shift;
       if (GetKeyState(VK_LCONTROL) & 0x8000) ret |= modifier_control;
       if (GetKeyState(VK_LMENU) & 0x8000) ret |= modifier_meta;
@@ -886,7 +884,7 @@ namespace twin {
       return ret;
     }
 
-    static bool is_keypad_shifted(std::uint32_t modifiers) {
+    static bool is_keypad_shifted(key_t modifiers) {
       if (modifiers & modifier_shift) {
         for (UINT k = VK_NUMPAD0; k <= VK_NUMPAD9; k++)
           if (GetKeyState(k) & 0x8000) return true;
@@ -895,7 +893,7 @@ namespace twin {
       return false;
     }
 
-    bool process_key(WPARAM wParam, std::uint32_t modifiers) {
+    bool process_key(WPARAM wParam, key_t modifiers) {
       static BYTE kbstate[256];
 
       if (ascii_A <= wParam && wParam <= ascii_Z) {
