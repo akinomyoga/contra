@@ -145,23 +145,19 @@ namespace tx11 {
     }
   };
 
-  class xft_font_manager_t: public ansi::font_metric_t {
-    typedef ansi::font_metric_t base;
-    using font_t = ansi::font_t;
-    using coord_t = ansi::coord_t;
+  class xft_font_factory {
+  public:
     typedef XftFont* font_type;
+
+  private:
+    using font_t = ansi::font_t;
 
     Display* m_display = NULL;
     int m_screen = 0;
-
     const char* m_fontnames[16];
-    font_type m_fonts[1u << ansi::font_basic_bits];
-    std::pair<font_t, font_type> m_cache[ansi::font_cache_count];
 
   public:
-    xft_font_manager_t(): base(7, 14) {
-      std::fill(std::begin(m_fonts), std::end(m_fonts), (font_type) NULL);
-      std::fill(std::begin(m_cache), std::end(m_cache), std::pair<font_t, font_type>(0u, NULL));
+    void initialize() {
       std::fill(std::begin(m_fontnames), std::end(m_fontnames), (const char*) NULL);
 
       // My configuration@font
@@ -179,32 +175,28 @@ namespace tx11 {
       m_fontnames[10] = "aghtex_mathfrak,monospace";
     }
 
-    void initialize(Display* display) {
-      if (m_display == display) return;
-      release();
+    bool setup_display(Display* display) {
+      if (m_display == display) return false;
       m_display = display;
       m_screen = DefaultScreen(display);
-    }
-    void set_size(coord_t width, coord_t height) {
-      if (base::width() == width && base::height() == height) return;
-      release();
-      base::set_size(width, height);
+      return true;
     }
 
-  private:
-    font_type create_font(font_t font) const {
+  public:
+    font_type create_font(font_t font, ansi::font_metric_t const& metric) const {
       using namespace contra::ansi;
 
       const char* fontname = m_fontnames[0];
-      int slant = FC_SLANT_ROMAN;
-      int weight = FC_WEIGHT_NORMAL;
-      double height = base::height();
-      double width = base::width();
-      FcMatrix matrix;
-
       if (font_t const face = (font & font_face_mask) >> font_face_shft)
         if (const char* const name = m_fontnames[face])
           fontname = name;
+
+      int slant = FC_SLANT_ROMAN;
+      int weight = FC_WEIGHT_NORMAL;
+      double height = metric.height();
+      double width = metric.width();
+      FcMatrix matrix;
+
       if (font & font_flag_italic)
         slant = FC_SLANT_OBLIQUE;
 
@@ -215,8 +207,8 @@ namespace tx11 {
       }
 
       if (font & font_flag_small) {
-        height = small_height();
-        width = small_width();
+        height = metric.small_height();
+        width = metric.small_width();
       }
       if (font & font_decdhl) height *= 2;
       if (font & font_decdwl) width *= 2;
@@ -249,52 +241,8 @@ namespace tx11 {
         XFT_MATRIX, XftTypeMatrix, &matrix,
         NULL);
     }
-    void delete_font(font_type font) {
+    void delete_font(font_type font) const {
       ::XftFontClose(m_display, font);
-    }
-
-  private:
-    void release() {
-      for (auto& hfont : m_fonts) {
-        if (hfont) delete_font(hfont);
-        hfont = NULL;
-      }
-      auto const init = std::pair<font_t, font_type>(0u, NULL);
-      for (auto& pair : m_cache) {
-        if (pair.second) delete_font(pair.second);
-        pair = init;
-      }
-    }
-  public:
-    font_type get_font(font_t font) {
-      using namespace contra::ansi;
-      font &= ~font_layout_mask;
-      if (!(font & ~font_basic_mask)) {
-        // basic fonts
-        if (!m_fonts[font]) m_fonts[font] = create_font(font);
-        return m_fonts[font];
-      } else {
-        // cached fonts (先頭にある物の方が新しい)
-        for (std::size_t i = 0; i < std::size(m_cache); i++) {
-          if (m_cache[i].first == font) {
-            // 見つかった時は、見つかった物を先頭に移動して、返す。
-            font_type const ret = m_cache[i].second;
-            std::move_backward(&m_cache[0], &m_cache[i], &m_cache[i + 1]);
-            m_cache[0] = std::make_pair(font, ret);
-            return ret;
-          }
-        }
-        // 見つからない時は末尾にあった物を削除して、新しく作る。
-        if (font_type last = std::end(m_cache)[-1].second) delete_font(last);
-        std::move_backward(std::begin(m_cache), std::end(m_cache) - 1, std::end(m_cache));
-        font_type const ret = create_font(font);
-        m_cache[0] = std::make_pair(font, ret);
-        return ret;
-      }
-    }
-
-    ~xft_font_manager_t() {
-      release();
     }
   };
 
@@ -350,7 +298,7 @@ namespace tx11 {
     Visual* m_visual = NULL;
     x11_color_manager_t* m_color_manager = NULL;
 
-    xft_font_manager_t font_manager;
+    ansi::font_manager_t<xft_font_factory> font_manager;
 
     Drawable m_drawable = 0;
     XftDraw* m_draw = NULL;
@@ -364,7 +312,8 @@ namespace tx11 {
       m_cmap = DefaultColormap(m_display, screen);
       m_visual = DefaultVisual(m_display, screen);
       m_color_manager = color_manager;
-      font_manager.initialize(display);
+      if (font_manager.factory().setup_display(display))
+        font_manager.clear();
     }
     void set_size(coord_t width, coord_t height) {
       font_manager.set_size(width, height);
@@ -700,7 +649,7 @@ namespace tx11 {
 
   private:
     void process_input(std::uint32_t key) {
-      contra::print_key(key, stderr);
+      //contra::print_key(key, stderr);
       manager.input_key(key);
     }
 

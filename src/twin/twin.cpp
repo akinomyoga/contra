@@ -103,31 +103,12 @@ namespace twin {
     }
   };
 
-  class font_store_t: public font_metric_t {
-    typedef font_metric_t base;
-
+  class win_font_factory {
+    LPCTSTR m_fontnames[16];
     LOGFONT m_logfont_normal;
 
-    HFONT m_fonts[1u << font_basic_bits];
-    std::pair<font_t, HFONT> m_cache[font_cache_count];
-
-    LPCTSTR m_fontnames[16];
-
-    void release() {
-      for (auto& hfont : m_fonts) {
-        if (hfont) ::DeleteObject(hfont);
-        hfont = NULL;
-      }
-      auto const init = std::pair<font_t, HFONT>(0u, NULL);
-      for (auto& pair : m_cache) {
-        if (pair.second) ::DeleteObject(pair.second);
-        pair = init;
-      }
-    }
-  public:
-    font_store_t(window_state_t const& wstat): base(wstat.m_xpixel, wstat.m_ypixel) {
-      std::fill(std::begin(m_fonts), std::end(m_fonts), (HFONT) NULL);
-      std::fill(std::begin(m_cache), std::end(m_cache), std::pair<font_t, HFONT>(0u, NULL));
+  private:
+    void initialize_fontnames() {
       std::fill(std::begin(m_fontnames), std::end(m_fontnames), (LPCTSTR) NULL);
 
       // My configuration@font
@@ -152,10 +133,12 @@ namespace twin {
       //   HG明朝B
       //   HG明朝E
       //   HG創英ﾌﾟﾚｾﾞﾝｽEB
+    }
 
-      // default settings
-      m_logfont_normal.lfHeight = base::height();
-      m_logfont_normal.lfWidth  = base::width();
+    // Note: initialize_fontnames の後に呼び出す事
+    void initialize_logfont() {
+      m_logfont_normal.lfHeight = 7;
+      m_logfont_normal.lfWidth  = 14;
       m_logfont_normal.lfEscapement = 0;
       m_logfont_normal.lfOrientation = 0;
       m_logfont_normal.lfWeight = FW_NORMAL;
@@ -171,19 +154,11 @@ namespace twin {
       xcscpy_s(m_logfont_normal.lfFaceName, LF_FACESIZE, m_fontnames[0]);
     }
 
-    void set_size(LONG width, LONG height) {
-      if (base::width() == width && base::height() == height) return;
-      release();
-      base::set_size(width, height);
-      m_logfont_normal.lfWidth = width;
-      m_logfont_normal.lfHeight = height;
-    }
-
-    LOGFONT const& logfont_normal() { return m_logfont_normal; }
-
   public:
-    LOGFONT create_logfont(font_t font) const {
+    LOGFONT create_logfont(font_t font, ansi::font_metric_t const& metric) const {
       LOGFONT logfont = m_logfont_normal;
+      logfont.lfHeight = metric.height();
+      logfont.lfWidth  = metric.width();
       if (font_t const face = (font & font_face_mask) >> font_face_shft)
         if (LPCTSTR const fontname = m_fontnames[face])
           xcscpy_s(logfont.lfFaceName, LF_FACESIZE, fontname);
@@ -197,8 +172,8 @@ namespace twin {
       }
 
       if (font & font_flag_small) {
-        logfont.lfHeight = small_height();
-        logfont.lfWidth = small_width();
+        logfont.lfHeight = metric.small_height();
+        logfont.lfWidth = metric.small_width();
       }
       if (font & font_decdhl) logfont.lfHeight *= 2;
       if (font & font_decdwl) logfont.lfWidth *= 2;
@@ -209,44 +184,28 @@ namespace twin {
       return logfont; /* NRVO */
     }
 
-  private:
-    HFONT create_font(font_t font) const {
-      LOGFONT const logfont = create_logfont(font);
+  public:
+    typedef HFONT font_type;
+
+    void initialize() {
+      initialize_fontnames();
+      initialize_logfont(); // Note: initialize_fontnames の後に呼び出す事
+    }
+
+    font_type create_font(font_t font, ansi::font_metric_t const& metric) const {
+      LOGFONT const logfont = create_logfont(font, metric);
       return ::CreateFontIndirect(&logfont);
     }
 
-  public:
-    HFONT get_font(font_t font) {
-      font &= ~font_layout_mask;
-
-      if (!(font & ~font_basic_mask)) {
-        // basic fonts
-        if (!m_fonts[font]) m_fonts[font] = create_font(font);
-        return m_fonts[font];
-      } else {
-        // cached fonts (先頭にある物の方が新しい)
-        for (std::size_t i = 0; i < std::size(m_cache); i++) {
-          if (m_cache[i].first == font) {
-            // 見つかった時は、見つかった物を先頭に移動して、返す。
-            HFONT const ret = m_cache[i].second;
-            std::move_backward(&m_cache[0], &m_cache[i], &m_cache[i + 1]);
-            m_cache[0] = std::make_pair(font, ret);
-            return ret;
-          }
-        }
-
-        // 見つからない時は末尾にあった物を削除して、新しく作る。
-        if (HFONT last = std::end(m_cache)[-1].second) ::DeleteObject(last);
-        std::move_backward(std::begin(m_cache), std::end(m_cache) - 1, std::end(m_cache));
-
-        HFONT const ret = create_font(font);
-        m_cache[0] = std::make_pair(font, ret);
-        return ret;
-      }
+    void delete_font(font_type hfont) const {
+      ::DeleteObject(hfont);
     }
+  };
 
-    ~font_store_t() {
-      release();
+  class win_font_manager_t: public ansi::font_manager_t<win_font_factory> {
+  public:
+    LOGFONT create_logfont(font_t font) const {
+      return factory().create_logfont(font, static_cast<ansi::font_metric_t const&>(*this));
     }
   };
 
@@ -292,10 +251,10 @@ namespace twin {
 
   struct twin_graphics_t {
     HDC hdc;
-    font_store_t& fstore;
+    win_font_manager_t& fstore;
     brush_holder_t& bstore;
   public:
-    twin_graphics_t(HDC hdc, font_store_t& fstore, brush_holder_t& bstore): hdc(hdc), fstore(fstore), bstore(bstore) {}
+    twin_graphics_t(HDC hdc, win_font_manager_t& fstore, brush_holder_t& bstore): hdc(hdc), fstore(fstore), bstore(bstore) {}
     ~twin_graphics_t() {
       clip_release();
     }
@@ -478,7 +437,7 @@ namespace twin {
     status_tracer_t m_tracer;
 
     twin_settings settings;
-    font_store_t fstore { wstat };
+    win_font_manager_t fstore;
     brush_holder_t bstore;
 
     HWND hWnd = NULL;

@@ -376,6 +376,88 @@ namespace ansi {
     }
   };
 
+  template<typename FontFactory>
+  class font_manager_t: public font_metric_t {
+    typedef font_metric_t base;
+
+  public:
+    using font_type = typename FontFactory::font_type;
+  private:
+    FontFactory m_factory;
+  public:
+    FontFactory& factory() { return m_factory; }
+    FontFactory const& factory() const { return m_factory; }
+
+  private:
+    font_type m_fonts[1u << font_basic_bits];
+    std::pair<font_t, font_type> m_cache[font_cache_count];
+
+  public:
+    font_manager_t(): base(7, 14) {
+      std::fill(std::begin(m_fonts), std::end(m_fonts), (font_type) NULL);
+      std::fill(std::begin(m_cache), std::end(m_cache), std::pair<font_t, font_type>(0u, NULL));
+      m_factory.initialize();
+    }
+
+    void set_size(coord_t width, coord_t height) {
+      if (base::width() == width && base::height() == height) return;
+      release();
+      base::set_size(width, height);
+    }
+
+  private:
+    void release() {
+      for (auto& hfont : m_fonts) {
+        if (hfont) m_factory.delete_font(hfont);
+        hfont = NULL;
+      }
+      auto const init = std::pair<font_t, font_type>(0u, NULL);
+      for (auto& pair : m_cache) {
+        if (pair.second) m_factory.delete_font(pair.second);
+        pair = init;
+      }
+    }
+  private:
+    font_type create_font(font_t font) {
+      return m_factory.create_font(font, static_cast<font_metric_t const&>(*this));
+    }
+  public:
+    font_type get_font(font_t font) {
+      using namespace contra::ansi;
+      font &= ~font_layout_mask;
+      if (!(font & ~font_basic_mask)) {
+        // basic fonts
+        if (!m_fonts[font]) m_fonts[font] = create_font(font);
+        return m_fonts[font];
+      } else {
+        // cached fonts (先頭にある物の方が新しい)
+        for (std::size_t i = 0; i < std::size(m_cache); i++) {
+          if (m_cache[i].first == font) {
+            // 見つかった時は、見つかった物を先頭に移動して、返す。
+            font_type const ret = m_cache[i].second;
+            std::move_backward(&m_cache[0], &m_cache[i], &m_cache[i + 1]);
+            m_cache[0] = std::make_pair(font, ret);
+            return ret;
+          }
+        }
+        // 見つからない時は末尾にあった物を削除して、新しく作る。
+        if (font_type last = std::end(m_cache)[-1].second) m_factory.delete_font(last);
+        std::move_backward(std::begin(m_cache), std::end(m_cache) - 1, std::end(m_cache));
+        font_type const ret = create_font(font);
+        m_cache[0] = std::make_pair(font, ret);
+        return ret;
+      }
+    }
+
+    void clear() {
+      release();
+    }
+
+    ~font_manager_t() {
+      release();
+    }
+  };
+
   class font_resolver_t {
     using attribute_t = contra::dict::attribute_t;
     using xflags_t = contra::dict::xflags_t;
