@@ -249,12 +249,105 @@ namespace twin {
     }
   };
 
+  struct twin_graphics_t;
+
+  class twin_graphics_buffer {
+    coord_t m_width = -1, m_height = -1;
+
+    struct layer_t {
+      HBITMAP hbmp = NULL;
+      HDC hctx = NULL;
+    };
+    std::vector<layer_t> m_layers;
+
+    void release_layer(layer_t& layer) {
+      if (layer.hctx) {
+        ::DeleteDC(layer.hctx);
+        layer.hctx = NULL;
+      }
+      if (layer.hbmp) {
+        ::DeleteObject(layer.hbmp);
+        layer.hbmp = NULL;
+      }
+    }
+    void initialize_layer(layer_t& layer) {
+      release_layer(layer);
+      layer.hbmp = ::CreateCompatibleBitmap(m_hdc, m_width, m_height);
+      layer.hctx = ::CreateCompatibleDC(m_hdc);
+      ::SelectObject(layer.hctx, layer.hbmp);
+      ::SetBkMode(layer.hctx, TRANSPARENT);
+    }
+
+  private:
+    void release() {
+      for (layer_t& layer : m_layers) release_layer(layer);
+      m_layers.clear();
+    }
+
+  private:
+    win_font_manager_t m_fstore;
+    brush_holder_t m_bstore;
+  public:
+    win_font_manager_t& fstore() { return m_fstore; }
+    brush_holder_t& bstore() { return m_bstore; }
+
+  public:
+    twin_graphics_buffer() {}
+    ~twin_graphics_buffer() {
+      release();
+    }
+
+    coord_t width() const { return m_width; }
+    coord_t height() const { return m_height; }
+    void update_window_size(coord_t width, coord_t height, bool* out_resized = NULL) {
+      bool const is_resized = width != m_width || height != m_height;
+      if (is_resized) {
+        release();
+        m_width = width;
+        m_height = height;
+      }
+      if (out_resized) *out_resized = is_resized;
+    }
+
+    HWND m_hWnd = NULL;
+    HDC m_hdc = NULL;
+    void setup(HWND hWnd, HDC hdc) {
+      this->m_hWnd = hWnd;
+      this->m_hdc = hdc;
+    }
+
+  public:
+    typedef HDC context_t;
+
+    context_t layer(std::size_t index) {
+      if (index < m_layers.size() && m_layers[index].hctx)
+        return m_layers[index].hctx;
+
+      if (index >= m_layers.size()) m_layers.resize(index + 1);
+      layer_t& layer = m_layers[index];
+      initialize_layer(layer);
+      return layer.hctx;
+    }
+
+    static void bitblt(
+      context_t ctx1, coord_t x1, coord_t y1, coord_t w, coord_t h,
+      context_t ctx2, coord_t x2, coord_t y2
+    ) {
+      ::BitBlt(ctx1, x1, y1, w, h, ctx2, x2, y2, SRCCOPY);
+    }
+    void render(coord_t x1, coord_t y1, coord_t w, coord_t h, context_t ctx2, coord_t x2, coord_t y2) {
+      ::BitBlt(m_hdc, x1, y1, w, h, ctx2, x2, y2, SRCCOPY);
+    }
+
+    typedef twin_graphics_t graphics_t;
+  };
+
   struct twin_graphics_t {
     HDC hdc;
     win_font_manager_t& fstore;
     brush_holder_t& bstore;
   public:
-    twin_graphics_t(HDC hdc, win_font_manager_t& fstore, brush_holder_t& bstore): hdc(hdc), fstore(fstore), bstore(bstore) {}
+    twin_graphics_t(twin_graphics_buffer& target, HDC hdc): hdc(hdc), fstore(target.fstore()), bstore(target.bstore()) {}
     ~twin_graphics_t() {
       clip_release();
     }
@@ -373,72 +466,15 @@ namespace twin {
     }
   };
 
-  class compatible_bitmap_t {
-    LONG m_width = -1, m_height = -1;
-    struct layer_t {
-      HDC hdc = NULL;
-      HBITMAP hbmp = NULL;
-    };
-    std::vector<layer_t> m_layers;
-
-    void release() {
-      for (layer_t const& layer : m_layers) {
-        if (layer.hdc) ::DeleteDC(layer.hdc);
-        if (layer.hbmp) ::DeleteObject(layer.hbmp);
-      }
-      m_layers.clear();
-    }
-
-  private:
-    void check_window_size(HWND hWnd, bool* out_resized = NULL) {
-      RECT rcClient;
-      ::GetClientRect(hWnd, &rcClient);
-      LONG const width = rcClient.right - rcClient.left;
-      LONG const height = rcClient.bottom - rcClient.top;
-      bool const is_resized = width != m_width || height != m_height;
-      if (is_resized) {
-        release();
-        m_width = width;
-        m_height = height;
-      }
-      if (out_resized) *out_resized = is_resized;
-    }
-  public:
-    HDC hdc(HWND hWnd, HDC hdc, std::size_t index = 0, bool* out_resized = NULL) {
-      if (out_resized)
-        check_window_size(hWnd, out_resized);
-      if (index < m_layers.size() && m_layers[index].hdc)
-        return m_layers[index].hdc;
-
-      if (index >= m_layers.size()) m_layers.resize(index + 1);
-      layer_t& layer = m_layers[index];
-      layer.hbmp = ::CreateCompatibleBitmap(hdc, m_width, m_height);
-      layer.hdc = ::CreateCompatibleDC(hdc);
-      ::SelectObject(layer.hdc, layer.hbmp);
-      return layer.hdc;
-    }
-
-    HBITMAP bmp(std::size_t index = 0) const {
-      return index < m_layers.size() ? m_layers[index].hbmp : (HBITMAP) NULL;
-    }
-    LONG width() { return m_width; }
-    LONG height() { return m_height; }
-    ~compatible_bitmap_t() {
-      release();
-    }
-  };
-
   class twin_window_t {
     static constexpr LPCTSTR szClassName = TEXT("Contra.Twin.Main");
 
     window_state_t wstat;
     window_renderer_t renderer { wstat };
     terminal_manager manager;
-    status_tracer_t m_tracer;
 
     twin_settings settings;
-    win_font_manager_t fstore;
-    brush_holder_t bstore;
+    twin_graphics_buffer gbuffer;
 
     HWND hWnd = NULL;
 
@@ -562,7 +598,7 @@ namespace twin {
           if (wm.m_xpixel != xpixel || wm.m_ypixel != ypixel) {
             wm.m_xpixel = xpixel;
             wm.m_ypixel = ypixel;
-            win->fstore.set_size(wm.m_xpixel, wm.m_ypixel);
+            win->gbuffer.fstore().set_size(wm.m_xpixel, wm.m_ypixel);
             win->adjust_terminal_size_using_current_client_size();
             return true;
           }
@@ -571,7 +607,7 @@ namespace twin {
         bool changed = false;
         if (xpixel >= 0 && wm.m_xpixel != xpixel) { wm.m_xpixel = xpixel; changed = true; }
         if (ypixel >= 0 && wm.m_ypixel != ypixel) { wm.m_ypixel = ypixel; changed = true; }
-        if (changed) win->fstore.set_size(wm.m_xpixel, wm.m_ypixel);
+        if (changed) win->gbuffer.fstore().set_size(wm.m_xpixel, wm.m_ypixel);
         if (col >= 0) {
           col = std::clamp(col, limit::minimal_terminal_col, limit::maximal_terminal_col);
           if (col != wm.m_col) { wm.m_col = col; changed = true; }
@@ -595,7 +631,7 @@ namespace twin {
     bool is_session_ready() { return hWnd && manager.is_active(); }
   public:
     HWND create_window(HINSTANCE hInstance) {
-      fstore.set_size(wstat.m_xpixel, wstat.m_ypixel);
+      gbuffer.fstore().set_size(wstat.m_xpixel, wstat.m_ypixel);
 
       static bool is_window_class_registered = false;
       if (!is_window_class_registered) {
@@ -678,6 +714,13 @@ namespace twin {
         settings.calculate_window_width(wstat), settings.calculate_window_height(wstat),
         SWP_NOZORDER | SWP_NOMOVE);
     }
+    std::pair<coord_t, coord_t> get_window_size() {
+      RECT rcClient;
+      ::GetClientRect(hWnd, &rcClient);
+      coord_t const width = rcClient.right - rcClient.left;
+      coord_t const height = rcClient.bottom - rcClient.top;
+      return {width, height};
+    }
 
   private:
     static constexpr UINT BLINKING_TIMER_ID = 11; // 適当
@@ -693,7 +736,7 @@ namespace twin {
     }
     void process_blinking_timer() {
       wstat.m_blinking_count++;
-      if (m_tracer.has_blinking_cells())
+      if (renderer.has_blinking_cells())
         render_window();
     }
 
@@ -701,6 +744,7 @@ namespace twin {
     static constexpr UINT CURSOR_TIMER_ID = 10; // 適当
     UINT m_cursor_timer_id = 0;
 
+    friend class ansi::window_renderer_t;
     void unset_cursor_timer() {
       if (m_cursor_timer_id)
         ::KillTimer(hWnd, m_cursor_timer_id);
@@ -717,82 +761,20 @@ namespace twin {
     }
 
   private:
-    compatible_bitmap_t m_background;
 
     // Note: background buffer として 3 枚使う。
     //   hdc0 ... 背景+内容+カーソル
     //   hdc1 ... 背景+内容
     //   hdc2 ... 背景 (未実装)
-    void paint_terminal_content(HDC hdc0, terminal_application& app, bool full_update) {
-      // update status
-      term_view_t& view = app.view();
-      view.update();
-
-      bool const content_changed = m_tracer.is_content_changed(view);
-      bool const cursor_changed = m_tracer.is_cursor_changed(wstat, view);
-      {
-        // update cursor state
-        bool const cursor_blinking = view.state().is_cursor_blinking();
-        bool const cursor_visible = wstat.is_cursor_visible(view);
-        if (!cursor_visible || !cursor_blinking)
-          this->unset_cursor_timer();
-        else if (content_changed || cursor_changed)
-          this->reset_cursor_timer();
-      }
-
-      if (m_tracer.is_metric_changed(wstat)) full_update = true;
-
-      HDC const hdc1 = m_background.hdc(hWnd, hdc0, 1);
-      ::SetBkMode(hdc1, TRANSPARENT);
-      wstat.m_window_width = m_background.width();
-      wstat.m_window_height = m_background.height();
-
-      bool content_redraw = full_update || content_changed;
-      if (m_tracer.is_blinking_changed(wstat)) content_redraw = true;
-      if (content_redraw) {
-        std::vector<std::vector<contra::ansi::cell_t>> content;
-        curpos_t const height = view.height();
-        content.resize(height);
-
-        for (contra::ansi::curpos_t y = 0; y < height; y++) {
-          line_t const& line = view.line(y);
-          view.get_cells_in_presentation(content[y], line);
-        }
-
-        twin_graphics_t g1(hdc1, fstore, bstore);
-        //renderer.draw_characters_mono(g1, view, content);
-        renderer.draw_background(g1, view, content);
-        renderer.draw_characters(g1, view, content);
-        renderer.draw_decoration(g1, view, content);
-
-        // ToDo: 更新のあった部分だけ転送する?
-        // 更新のあった部分 = 内用の変更・点滅の変更・選択範囲の変更など
-        ::BitBlt(hdc0, 0, 0, m_background.width(), m_background.height(), hdc1, 0, 0, SRCCOPY);
-      }
-
-      if (!full_update) {
-        // 前回のカーソル位置のセルをカーソルなしに戻す。
-        coord_t const old_x1 = wstat.m_xframe + wstat.m_xpixel * m_tracer.cur_x();
-        coord_t const old_y1 = wstat.m_yframe + wstat.m_ypixel * m_tracer.cur_y();
-        ::BitBlt(hdc0, old_x1, old_y1, wstat.m_xpixel, wstat.m_ypixel, hdc1, old_x1, old_y1, SRCCOPY);
-      }
-      if (wstat.is_cursor_appearing(view)) {
-        twin_graphics_t g(hdc0, fstore, bstore);
-        renderer.draw_cursor(g, view);
-      }
-
-      // ToDo: 二重チェックになっている気がする。もっと効率的な実装?
-      m_tracer.store(wstat, view);
-    }
-
     void render_window() {
       if (!is_session_ready()) return;
       HDC hdc = GetDC(hWnd);
       {
         bool resized = false;
-        HDC const hdc0 = m_background.hdc(hWnd, hdc, 0, &resized);
-        paint_terminal_content(hdc0, manager.app(), resized);
-        BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc0, 0, 0, SRCCOPY);
+        auto [width, height] = get_window_size();
+        gbuffer.setup(hWnd, hdc);
+        gbuffer.update_window_size(width, height, &resized);
+        renderer.render_view(*this, gbuffer, manager.app().view(), resized);
       }
       ReleaseDC(hWnd, hdc);
       ::ValidateRect(hWnd, NULL);
@@ -800,15 +782,16 @@ namespace twin {
     // WM_PAINT による再描画要求
     void redraw_window(HDC hdc, RECT const& rc) {
       bool resized = false;
-      HDC const hdc0 = m_background.hdc(hWnd, hdc, 0, &resized);
+      auto [width, height] = get_window_size();
+      gbuffer.setup(hWnd, hdc);
+      gbuffer.update_window_size(width, height, &resized);
       if (resized) {
         // 全体を再描画して全体を転送
-        paint_terminal_content(hdc0, manager.app(), resized);
         ::SelectClipRgn(hdc, NULL);
-        BitBlt(hdc, 0, 0, m_background.width(), m_background.height(), hdc0, 0, 0, SRCCOPY);
+        renderer.render_view(*this, gbuffer, manager.app().view(), resized);
       } else {
         // 必要な領域だけ転送
-        BitBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hdc0, rc.left, rc.top, SRCCOPY);
+        gbuffer.render(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, gbuffer.layer(0), rc.left, rc.top);
       }
     }
 
@@ -962,12 +945,14 @@ namespace twin {
       if (!is_session_ready() || !m_ime_composition_active) return;
       util::raii hIMC(::ImmGetContext(hWnd), [this] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
 
+      win_font_manager_t const& font_manager = gbuffer.fstore();
+
       font_t const current_font = font_resolver_t().resolve_font(manager.app().term().cursor().attribute) & ~font_rotation_mask;
-      auto const [dx, dy, dxW] = fstore.get_displacement(current_font);
+      auto const [dx, dy, dxW] = font_manager.get_displacement(current_font);
       contra_unused(dx);
       contra_unused(dxW);
-      LOGFONT logfont = fstore.create_logfont(current_font);
-      logfont.lfWidth = fstore.width() * (current_font & font_decdwl ? 2 : 1);
+      LOGFONT logfont = font_manager.create_logfont(current_font);
+      logfont.lfWidth = font_manager.width() * (current_font & font_decdwl ? 2 : 1);
       ::ImmSetCompositionFont(hIMC, const_cast<LOGFONT*>(&logfont));
 
       RECT rcClient;

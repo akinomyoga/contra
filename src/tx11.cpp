@@ -303,8 +303,16 @@ namespace tx11 {
     Drawable m_drawable = 0;
     XftDraw* m_draw = NULL;
 
+  private:
+    void release() {
+      if (m_draw) {
+        XftDrawDestroy(m_draw);
+        m_draw = NULL;
+      }
+    }
   public:
     xft_text_drawer_t() {}
+    ~xft_text_drawer_t() { release(); }
 
     void initialize(Display* display, x11_color_manager_t* color_manager) {
       m_display = display;
@@ -322,6 +330,7 @@ namespace tx11 {
   private:
     void update_target(Drawable drawable) {
       if (drawable == m_drawable) return;
+      release();
       this->m_drawable = drawable;
       this->m_draw = ::XftDrawCreate(m_display, drawable, m_visual, m_cmap);
     }
@@ -381,44 +390,175 @@ namespace tx11 {
   };
 
 
+  class tx11_graphics_t;
+
+  class tx11_graphics_buffer {
+    using coord_t = ansi::coord_t;
+
+  private:
+    Display* m_display = NULL;
+    int m_screen = 0;
+    std::unique_ptr<x11_color_manager_t> m_color_manager;
+    xft_text_drawer_t m_text_drawer;
+  public:
+    Display* display() const { return m_display; }
+    x11_color_manager_t* color_manager() { return m_color_manager.get(); }
+    xft_text_drawer_t& text_drawer() { return m_text_drawer; }
+    void initialize(Display* display) {
+      this->m_display = display;
+      this->m_screen = DefaultScreen(display);
+
+      Visual* const visual = DefaultVisual(m_display, m_screen);
+      if (visual->c_class != TrueColor)
+        m_color_manager = std::make_unique<x11_color_manager_t>(m_display);
+
+      this->m_text_drawer.initialize(display, color_manager());
+    }
+
+
+  private:
+    coord_t m_width = -1, m_height = -1;
+  public:
+    coord_t width() { return m_width; }
+    coord_t height() { return m_height; }
+    void update_window_size(coord_t width, coord_t height, bool* out_resized = NULL) {
+      bool const is_resized = width != m_width || height != m_height;
+      if (is_resized) {
+        release();
+        m_width = width;
+        m_height = height;
+      }
+      if (out_resized) *out_resized = is_resized;
+    }
+
+  private:
+    Window m_window = 0;
+    GC m_gc = NULL;
+  public:
+    void setup(Window hWnd, GC hdc) {
+      this->m_window = hWnd;
+      this->m_gc = hdc;
+    }
+
+  private:
+    struct layer_t {
+      GC gc = NULL;
+      Pixmap pixmap = 0;
+    };
+    std::vector<layer_t> m_layers;
+    void release() {
+      for (layer_t& layer : m_layers) release_layer(layer);
+      m_layers.clear();
+    }
+    void release_layer(layer_t& layer) {
+      if (layer.gc) {
+        XFreeGC(m_display, layer.gc);
+        layer.gc = NULL;
+      }
+      if (layer.pixmap) {
+        XFreePixmap(m_display, layer.pixmap);
+        layer.pixmap = 0;
+      }
+    }
+    void initialize_layer(layer_t& layer) {
+      release_layer(layer);
+      layer.pixmap = XCreatePixmap(m_display, m_window, m_width, m_height, DefaultDepth(m_display, m_screen));
+
+      // create GC
+      XGCValues gcparams;
+      gcparams.graphics_exposures = false;
+      layer.gc = XCreateGC(m_display, layer.pixmap, GCGraphicsExposures, &gcparams);
+    }
+  public:
+    typedef layer_t context_t;
+    context_t layer(std::size_t index) {
+      if (index < m_layers.size() && m_layers[index].gc)
+        return m_layers[index];
+
+      if (index >= m_layers.size()) m_layers.resize(index + 1);
+      layer_t& layer = m_layers[index];
+      initialize_layer(layer);
+      return layer;
+    }
+
+  public:
+    tx11_graphics_buffer(ansi::window_state_t& wstat) {
+      m_text_drawer.set_size(wstat.m_xpixel, wstat.m_ypixel);
+    }
+    ~tx11_graphics_buffer() {
+      release();
+    }
+
+    // void get_window_size(window_type hWnd, coord_t& width, coord_t& height) {
+    //   // これだと毎回問い合わせる事になり遅いのではないだろうか。
+    //   // 現在の幅と高さは自分自身で管理して知っているべきである。
+    //   XWindowAttributes attrs;
+    //   XGetWindowAttributes(display, hWnd, &attrs);
+    //   width = attrs.width;
+    //   height = attrs.height;
+    // }
+
+  public:
+    void bitblt(
+      context_t ctx1, coord_t x1, coord_t y1, coord_t w, coord_t h,
+      context_t ctx2, coord_t x2, coord_t y2
+    ) {
+      ::XCopyArea(m_display, ctx2.pixmap, ctx1.pixmap, ctx1.gc, x2, y2, w, h, x1, y1);
+    }
+    void render(coord_t x1, coord_t y1, coord_t w, coord_t h, context_t ctx2, coord_t x2, coord_t y2) {
+      ::XCopyArea(m_display, ctx2.pixmap, m_window, m_gc, x2, y2, w, h, x1, y1);
+    }
+
+    typedef tx11_graphics_t graphics_t;
+
+  };
+
   class tx11_graphics_t {
     using coord_t = ansi::coord_t;
     using color_t = ansi::color_t;
     using font_t = ansi::font_t;
 
     Display* m_display = NULL;
+    x11_color_manager_t* color_manager = nullptr;
+    xft_text_drawer_t& text_drawer;
+
     Drawable m_drawable = 0;
     GC m_gc = NULL;
+    GC m_gc_delete = NULL;
 
-    ansi::window_state_t& wstat;
-    std::unique_ptr<x11_color_manager_t> color_manager;
+    void release() {
+      if (m_gc_delete) {
+        XFreeGC(m_display, m_gc_delete);
+        m_gc_delete = NULL;
+      }
+    }
 
-    xft_text_drawer_t text_drawer;
   public:
     typedef xft_character_buffer character_buffer;
 
   public:
-    tx11_graphics_t(ansi::window_state_t& wstat): wstat(wstat) {
-      text_drawer.set_size(wstat.m_xpixel, wstat.m_ypixel);
-    }
-    ~tx11_graphics_t() {
-      this->finalize();
-    }
-
-    void initialize(Display* display, Drawable drawable) {
-      int const screen = DefaultScreen(display);
-      this->m_display = display;
+    tx11_graphics_t(tx11_graphics_buffer& gbuffer, Drawable drawable):
+      m_display(gbuffer.display()),
+      color_manager(gbuffer.color_manager()),
+      text_drawer(gbuffer.text_drawer())
+    {
+      XGCValues gcparams;
+      gcparams.graphics_exposures = false;
       this->m_drawable = drawable;
-      this->m_gc = XCreateGC(display, drawable, 0, 0);
-
-      Visual* const visual = DefaultVisual(display, screen);
-      if (visual->c_class != TrueColor)
-        color_manager = std::make_unique<x11_color_manager_t>(display);
-
-      this->text_drawer.initialize(display, color_manager.get());
+      this->m_gc_delete = XCreateGC(m_display, drawable, GCGraphicsExposures, &gcparams);
+      this->m_gc = m_gc_delete;
     }
-    void finalize() {
-      // todo: m_draw, m_gc
+    tx11_graphics_t(tx11_graphics_buffer& gbuffer, tx11_graphics_buffer::context_t const& context):
+      m_display(gbuffer.display()),
+      color_manager(gbuffer.color_manager()),
+      text_drawer(gbuffer.text_drawer())
+    {
+      this->m_drawable = context.pixmap;
+      this->m_gc = context.gc;
+    }
+
+    ~tx11_graphics_t() {
+      this->release();
     }
 
     GC gc() const { return m_gc; }
@@ -500,7 +640,6 @@ namespace tx11 {
     void draw_text(coord_t x1, coord_t y1, character_buffer const& buff, font_t font, color_t color) {
       draw_characters(x1, y1, buff, font, color);
     }
-
   };
 
   struct tx11_setting_t {
@@ -518,7 +657,7 @@ namespace tx11 {
     ::Window main = 0;
     ::Atom WM_DELETE_WINDOW;
     tx11_setting_t settings;
-    tx11_graphics_t g { wstat };
+    tx11_graphics_buffer gbuffer { wstat };
 
   public:
     ~tx11_window_t() {}
@@ -562,87 +701,28 @@ namespace tx11 {
       this->WM_DELETE_WINDOW = XInternAtom(display, "WM_DELETE_WINDOW", False);
       XSetWMProtocols(display, this->main, &this->WM_DELETE_WINDOW, 1);
 
-      this->g.initialize(this->display, this->main);
+      this->gbuffer.initialize(this->display);
 
       XAutoRepeatOn(display);
       return true;
     }
 
   private:
+    friend class ansi::window_renderer_t;
     void unset_cursor_timer() {}
     void reset_cursor_timer() {}
 
   private:
-    template<typename Graphics>
-    void paint_terminal_content(Graphics& g, term::terminal_application& app, bool full_update) {
-      // update status
-      ansi::term_view_t& view = app.view();
-      view.update();
-
-      bool const content_changed = m_tracer.is_content_changed(view);
-      bool const cursor_changed = m_tracer.is_cursor_changed(wstat, view);
-      {
-        // update cursor state
-        bool const cursor_blinking = view.state().is_cursor_blinking();
-        bool const cursor_visible = wstat.is_cursor_visible(view);
-        if (!cursor_visible || !cursor_blinking)
-          this->unset_cursor_timer();
-        else if (content_changed || cursor_changed)
-          this->reset_cursor_timer();
-      }
-
-      if (m_tracer.is_metric_changed(wstat)) full_update = true;
-
-      // 暫定:
-      // HDC const hdc1 = m_background.hdc(hWnd, hdc0, 1);
-      {
-        Window root;
-        int x, y;
-        unsigned w, h, border, depth;
-        XGetGeometry(display, main, &root, &x, &y, &w, &h, &border, &depth);
-        wstat.m_window_width = w;
-        wstat.m_window_height = h;
-      }
-
-      bool content_redraw = full_update || content_changed;
-      if (m_tracer.is_blinking_changed(wstat)) content_redraw = true;
-      if (content_redraw) {
-        std::vector<std::vector<contra::ansi::cell_t>> content;
-        ansi::curpos_t const height = view.height();
-        content.resize(height);
-
-        for (contra::ansi::curpos_t y = 0; y < height; y++) {
-          ansi::line_t const& line = view.line(y);
-          view.get_cells_in_presentation(content[y], line);
-        }
-
-        renderer.draw_background(g, view, content);
-        renderer.draw_characters(g, view, content);
-        renderer.draw_decoration(g, view, content);
-
-        //renderer.draw_characters_mono(g, view, content);
-        //::BitBlt(hdc0, 0, 0, m_background.width(), m_background.height(), hdc1, 0, 0, SRCCOPY);
-      }
-
-      // if (!full_update) {
-      //   // 前回のカーソル位置のセルをカーソルなしに戻す。
-      //   coord_t const old_x1 = wstat.m_xframe + wstat.m_xpixel * m_tracer.cur_x();
-      //   coord_t const old_y1 = wstat.m_yframe + wstat.m_ypixel * m_tracer.cur_y();
-      //   ::BitBlt(hdc0, old_x1, old_y1, wstat.m_xpixel, wstat.m_ypixel, hdc1, old_x1, old_y1, SRCCOPY);
-      // }
-      if (wstat.is_cursor_appearing(view)) {
-        renderer.draw_cursor(g, view);
-      }
-
-      m_tracer.store(wstat, view);
-    }
     void render_window() {
+      tx11_graphics_t g(gbuffer, this->main);
       if (!is_session_ready()) {
         const char* message = "Hello, world!";
         XDrawString(display, this->main, g.gc(), 3, 15, message, std::strlen(message));
       } else {
-        // resized?
-        paint_terminal_content(g, manager.app(), false);
+        bool resized = true;
+        gbuffer.setup(this->main, g.gc());
+        gbuffer.update_window_size(wstat.m_window_width, wstat.m_window_height, &resized);
+        renderer.render_view(*this, gbuffer, manager.app().view(), resized);
       }
       XFlush(display);
     }

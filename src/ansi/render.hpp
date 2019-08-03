@@ -342,7 +342,7 @@ namespace ansi {
      * @return dy は描画の際の縦のずれ量
      * @return dxW は (文字の幅-1) に比例して増える各文字の横のずれ量
      */
-    std::tuple<coord_t, coord_t, double> get_displacement(font_t font) {
+    std::tuple<coord_t, coord_t, double> get_displacement(font_t font) const {
       double dx = 0, dy = 0, dxW = 0;
       if (font & (font_layout_mask | font_decdwl | font_flag_italic)) {
         // Note: 横のずれ量は dxI + dxW * cell.width である。
@@ -1010,6 +1010,90 @@ namespace ansi {
         dec_ol.update(x, 0, (xflags_t) 0);
       }
     }
+
+  private:
+    status_tracer_t m_tracer;
+  public:
+    bool has_blinking_cells() const {
+      return m_tracer.has_blinking_cells();
+    }
+
+  public:
+    // Requirements
+    //   win.unset_cursor_timer()
+    //   win.reset_cursor_timer()
+    //   gbuffer.width()
+    //   gbuffer.height()
+    //   gbuffer.layer(index)
+    //   gbuffer.bitblt(ctx1, x1, y1, w, h, ctx2, x2, y2)
+    //   gbuffer.render(x1, y1, w, h, ctx2, x2, y2)
+    template<typename Window, typename GraphicsBuffer>
+    void render_view(Window& win, GraphicsBuffer& gbuffer, term_view_t& view, bool full_update) {
+      using graphics_t = typename GraphicsBuffer::graphics_t;
+      using context_t = typename GraphicsBuffer::context_t;
+      context_t const ctx0 = gbuffer.layer(0);
+
+      // update status
+      view.update();
+
+      bool const content_changed = m_tracer.is_content_changed(view);
+      bool const cursor_changed = m_tracer.is_cursor_changed(wstat, view);
+      {
+        // update cursor state
+        bool const cursor_blinking = view.state().is_cursor_blinking();
+        bool const cursor_visible = wstat.is_cursor_visible(view);
+        if (!cursor_visible || !cursor_blinking)
+          win.unset_cursor_timer();
+        else if (content_changed || cursor_changed)
+          win.reset_cursor_timer();
+      }
+
+      if (m_tracer.is_metric_changed(wstat)) full_update = true;
+
+      context_t const ctx1 = gbuffer.layer(1);
+      wstat.m_window_width = gbuffer.width();
+      wstat.m_window_height = gbuffer.height();
+
+      bool content_redraw = full_update || content_changed;
+      if (m_tracer.is_blinking_changed(wstat)) content_redraw = true;
+      if (content_redraw) {
+        std::vector<std::vector<cell_t>> content;
+        curpos_t const height = view.height();
+        content.resize(height);
+
+        for (curpos_t y = 0; y < height; y++) {
+          line_t const& line = view.line(y);
+          view.get_cells_in_presentation(content[y], line);
+        }
+
+        graphics_t g1(gbuffer, ctx1);
+        //this->draw_characters_mono(g1, view, content);
+        this->draw_background(g1, view, content);
+        this->draw_characters(g1, view, content);
+        this->draw_decoration(g1, view, content);
+
+        // ToDo: 更新のあった部分だけ転送する?
+        // 更新のあった部分 = 内用の変更・点滅の変更・選択範囲の変更など
+        gbuffer.bitblt(ctx0, 0,0, gbuffer.width(), gbuffer.height(), ctx1, 0, 0);
+      }
+
+      if (!full_update) {
+        // 前回のカーソル位置のセルをカーソルなしに戻す。
+        coord_t const old_x1 = wstat.m_xframe + wstat.m_xpixel * m_tracer.cur_x();
+        coord_t const old_y1 = wstat.m_yframe + wstat.m_ypixel * m_tracer.cur_y();
+        gbuffer.bitblt(ctx0, old_x1, old_y1, wstat.m_xpixel, wstat.m_ypixel, ctx1, old_x1, old_y1);
+      }
+      if (wstat.is_cursor_appearing(view)) {
+        graphics_t g(gbuffer, ctx0);
+        this->draw_cursor(g, view);
+      }
+
+      gbuffer.render(0, 0, gbuffer.width(), gbuffer.height(), ctx0, 0, 0);
+
+      // ToDo: 二重チェックになっている気がする。もっと効率的な実装?
+      m_tracer.store(wstat, view);
+    }
+
   };
 
 }
