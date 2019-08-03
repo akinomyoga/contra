@@ -112,8 +112,10 @@ endif
 # tx11
 
 all: tx11.exe
+CXXFLAGS += -I /usr/include/freetype2
+tx11_CXXFLAGS := $(CXXFLAGS)
 tx11_LDFLAGS := $(LDFLAGS)
-tx11_LIBS := -lX11
+tx11_LIBS := -lXft -lX11
 tx11_objs := \
   $(objdir)/tx11.o \
   $(objdir)/pty.o \

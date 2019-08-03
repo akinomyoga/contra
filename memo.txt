@@ -5,6 +5,15 @@
   Note
 ------------------------------------------------------------------------------
 
+2019-08-03
+
+* Cygwin で Windows のフォントを使える様にするには以下の様にする
+
+  $ ln -s /cygdrive/c/Windows/Fonts /usr/share/fonts/win-fonts
+  $ fc-cache
+
+  Ref: https://superuser.com/questions/801545/how-to-make-the-cygwin-fontconfig-package-inherit-windows-fonts
+
 2019-05-02
 
 * twin/draw: Win API (GDI) で描画する時のメモ。
@@ -31,7 +40,6 @@
 
   is_wide_extension は一定の大きさの文字を格納する時に
   各セルに対応して board_cell がある。
-
 
 2016-10-11
 
@@ -127,18 +135,22 @@
   ToDo
 ------------------------------------------------------------------------------
 
+2019-08-03
+
+* tx11: ちらつきがあるのでやはり Pixmap の使い方を調べる
+
+* tx11: 変更しすぎて commit するタイミングが分からなくなった。
+  今中途半端に残っているのは何だったか。
+
+* tx11: xft_font_manager_t は整理して
+  実装を twin と共有できる様にする。
+
 2019-07-28
 
 * tx11: フォント描画について
   http://www.02.246.ne.jp/~torutk/cxx/x11/string.html
 
 * tx11: サイズ変更のイベント?
-
-* tx11: TrueColor でない時の対策が必要
-* tx11: 現在は ascii しか表示できない
-* tx11: X11 で ExtTextOut 的な関数はあるのだろうか
-  取り敢えず1文字ずつ描画するしかない。遅そうだけれども。
-  →取り敢えず1文字ずつ描画する事にした。これで一応動かなくはない。
 
 * tx11: 領域反転は2回 XCopyArea を実行する?
   https://stackoverflow.com/questions/39969855/invert-the-colors-of-a-region-in-xlib
@@ -150,6 +162,7 @@
 2019-07-27
 
 * twin: 画面外で選択のドラッグを止めるとコピーされない
+  マウスキャプチャしなければならない気がする。
 
 * view: 実は横方向のスクロールも考えるべきなのではないか。
   然し、これは実際にそういう機能を実装してから対応するべき。
@@ -1780,6 +1793,71 @@
   Done
 ------------------------------------------------------------------------------
 
+2019-08-03
+
+* tx11: X11 の core fonts による実装は後で行う
+
+  - フォント名の一覧はどうにかする。
+    これはプログラム的に取得するのは難しいのかもしれない。
+    取り敢えず自分の所で使う上では問題ないのでそのままにする。
+
+  * ok: 日本語の表示は未だできていない
+    →Cygwin でフォントを入れたらできた。
+    それぞれの環境で日本語に対応したフォントを入れる必要があるのだろう。
+
+  * ok :Cygwin ではフォントを追加できるのではないか
+    https://superuser.com/questions/801545/how-to-make-the-cygwin-fontconfig-package-inherit-windows-fonts
+    このページに依ると
+
+    $ ln -s /cygdrive/c/Windows/Fonts /usr/share/fonts/win-fonts
+    $ fc-cache
+
+    等と実行すれば良いそうだ。試しに実装してみたら動いた。
+
+  * ok: フォントが使えない時の為に
+    ? ,monospace を取り敢えず付加しておけば大丈夫なのだろうか
+    →試してみた所それで良い様である。
+    と思ったがこうするとフォントが変化してしまう。
+    monospace の方が優先されてしまう?
+    取り敢えず自分の所で動けば良いので monospace は入れないで置く。
+
+  * ok: うーん。Windows のフォントを利用している時は
+    フォントの大きさは大きすぎるという事はない様だ。
+    オプションとしてフォントのサイズを微妙に調節する機能があった方が良いのかもしれない。
+    然し、やはり大きすぎる様な気がするので、小さめにする事にした。
+    大きくすると ascend/descend の計算も再度修正しなければならず面倒である。
+
+  * ok: 以下は全て対応した
+
+    > * tx11: TrueColor でない時の対策が必要
+    > * tx11: 現在は ascii しか表示できない
+    > * tx11: X11 で ExtTextOut 的な関数はあるのだろうか
+    >   取り敢えず1文字ずつ描画するしかない。遅そうだけれども。
+    >   →取り敢えず1文字ずつ描画する事にした。これで一応動かなくはない。
+
+2019-08-01
+
+* やはり文字列の描画位置が気になる。
+
+  どうも指定した座標位置をベースラインとして描画している気がする。
+  ディセンダとアセンダを XftFont から取得する方法を調べていると、
+  XftLockFace というので FT_Face を得てから取得している気がする。
+  https://github.com/blueyed/PKGBUILD-rxvt-unicode-wide/blob/master/line-spacing-fix.patch
+  https://uwabami.github.io/cc-env/Terminal.html
+
+  # でそのページを見ていたら何か見た名前 (Youhei SASAKI) である…。
+  # 昨日自分の前にトークしていた人だった…。
+  # GCC や Linux の開発に携わっていると言っていた人である。
+  # トークの前に端末を開いて tmux で画面分割していた人である。
+  # 木星の渦の柱の計算をしていた人である。
+  # 何時もは気付かないだけで実はこういう事って本当はいつもあるのかもしれない。
+  # というか XftLockFace で検索するとこの人のトーク画像が出てくる…。
+
+  然し使われているコードを良く見てみると普通に XftFont の方に
+  ascent/descent というデータメンバがある様である。
+  それを使ってみる事にする。調べてみるとそれぞれ値は 13 と 4 である。
+  というより単位が分からない…。うーん。比で決める事にしようか…。
+
 2019-07-28
 
 * X11 で KeyPress を捕まえるには? [#D0166]
@@ -1840,26 +1918,26 @@
   →結局 XCheckIfEvent を使った。
 
   | 以下の元のコードだとブロックしてしまう。
-  | 
+  |
   |   | XNextEvent(display, &event);
   |   | process_event(event);
-  | 
+  |
   | 検索すると X11 のソケットを見張るという話をしているが、
   | これは内部でバッファリング等をしていたりすると駄目なのではないか。
   | https://stackoverflow.com/questions/8592292/how-to-quit-the-blocking-of-xlibs-xnextevent
-  | 
+  |
   | * XCheckMaskEvent?
   |   XCheckMaskEvent というのがある様なのでこれを使ってみたら、
   |   そもそもウィンドウを閉じる事ができなくなってしまった。
-  | 
+  |
   |     | while (::XCheckMaskEvent(display, ~(long) 0, &event)) {
   |     |   processed = true;
   |     |   process_event(event);
   |     | }
-  | 
+  |
   |   検索して見つかった説明を読んでみると…
   |   http://www.polarhome.com/service/man/?qf=XCheckMaskEvent&tf=2&of=HP-UX&sf=
-  | 
+  |
   |   > XCheckMaskEvent -- XLIB Reference Manual R5
   |   >
   |   > Name
@@ -1898,23 +1976,23 @@
   |   >   XCheckWindowEvent(), XEventsQueued(), XGetInputFocus(), XGetMotionEvents(), XIfEvent(), XMask-
   |   >   Event(), XNextEvent(), XPeekEvent(), XPeekIfEvent(), XPending(), XPutBackEvent(), XSelectInput(),
   |   >   XSendEvent(), XSetInputFocus(), XSynchronize(), XWindowEvent().
-  | 
+  |
   |   XCheckMaskEvent() cannot return ClientMessage, MappingNotify,
   |   SelectionClear, SelectionNotify, or SelectionRequest events because these
   |   event types are by definition unmaskable. と書かれている。
-  | 
+  |
   | * XCheckIfEvent?
-  | 
+  |
   |   うーん。更に XLIB Reference Manual R5 を Google Preview で見ると
   |   XCheckIfEvent というのがある様だ。これは ClientMessage 等を受け取れるのだろうか。
   |   試してみる事にする。
-  | 
+  |
   |     | while (::XCheckIfEvent(display, &event, &event_filter, NULL)) {
   |     |   processed = true;
   |     |   process_event(event);
   |     |   if (!display) goto exit:
   |     | }
-  | 
+  |
   |   結局これで動いている様な気がするのでこれで良いという事にする。
   |   display をチェックしているのは、tx11_window_t では display = NULL
   |   を設定する事でディスプレイを閉じた事の合図にしている為。

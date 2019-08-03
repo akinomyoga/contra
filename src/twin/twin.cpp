@@ -181,10 +181,6 @@ namespace twin {
 
     LOGFONT const& logfont_normal() { return m_logfont_normal; }
 
-    HFONT normal() {
-      return get_font(0);
-    }
-
   public:
     LOGFONT create_logfont(font_t font) const {
       LOGFONT logfont = m_logfont_normal;

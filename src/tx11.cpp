@@ -6,6 +6,7 @@
 #include <X11/XKBlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#include <X11/Xft/Xft.h>
 #include "ansi/render.hpp"
 #include "manager.hpp"
 #include "pty.hpp"
@@ -60,6 +61,7 @@ namespace tx11 {
     Display* m_display;
     Colormap m_cmap;
     std::size_t npixel = 0;
+    ansi::color_t color256[256];
     unsigned long color256_to_pixel[256];
 
     void initialize_colors() {
@@ -70,7 +72,12 @@ namespace tx11 {
         xcolor.green = g | g << 8;
         xcolor.blue  = b | b << 8;
         XAllocColor(m_display, m_cmap, &xcolor);
-        color256_to_pixel[index++] = xcolor.pixel;
+        color256[index] = contra::dict::rgb(
+          (xcolor.red + 128) / 257,
+          (xcolor.green + 128) / 257,
+          (xcolor.blue + 128) / 257);
+        color256_to_pixel[index] = xcolor.pixel;
+        index++;
       };
       auto _intensity = [] (int i) -> byte { return i == 0 ? 0 : i * 40 + 55; };
 
@@ -117,25 +124,313 @@ namespace tx11 {
       return {std::min(a, c), b};
     }
   public:
-    unsigned long pixel(ansi::color_t color) {
+    int index(ansi::color_t color) {
       byte r = contra::dict::rgba2r(color);
       byte g = contra::dict::rgba2g(color);
       byte b = contra::dict::rgba2b(color);
       auto [mn, mx] = get_minmax3(r, g, b);
-      int index;
       if (mx - mn < 20) {
         byte k = (r + g + b) / 3;
         k = (k + 2) / 10;
-        index = k == 0 ? 16 : k == 25 ? 231 : 231 + k;
+        return k == 0 ? 16 : k == 25 ? 231 : 231 + k;
       } else {
         r = (r - 24) / 40;
         g = (g - 24) / 40;
         b = (b - 24) / 40;
-        index = 16 + r * 36 + g * 6 + b;
+        return 16 + r * 36 + g * 6 + b;
       }
-      return color256_to_pixel[index];
+    }
+    unsigned long pixel(ansi::color_t color) {
+      return color256_to_pixel[index(color)];
     }
   };
+
+  class xft_font_manager_t: public ansi::font_metric_t {
+    typedef ansi::font_metric_t base;
+    using font_t = ansi::font_t;
+    using coord_t = ansi::coord_t;
+    typedef XftFont* font_type;
+
+    Display* m_display = NULL;
+    int m_screen = 0;
+
+    const char* m_fontnames[16];
+    font_type m_fonts[1u << ansi::font_basic_bits];
+    std::pair<font_t, font_type> m_cache[ansi::font_cache_count];
+
+  public:
+    xft_font_manager_t(): base(7, 14) {
+      std::fill(std::begin(m_fonts), std::end(m_fonts), (font_type) NULL);
+      std::fill(std::begin(m_cache), std::end(m_cache), std::pair<font_t, font_type>(0u, NULL));
+      std::fill(std::begin(m_fontnames), std::end(m_fontnames), (const char*) NULL);
+
+      // My configuration@font
+      m_fontnames[0]  = "MeiryoKe_Console";
+      m_fontnames[1]  = "MS Gothic,monospace";
+      m_fontnames[2]  = "MS Mincho,monospace";
+      m_fontnames[3]  = "HGMaruGothicMPRO,monospace"; // HG丸ｺﾞｼｯｸM-PRO
+      m_fontnames[4]  = "HGKyokashotai,monospace"; // HG教科書体
+      m_fontnames[5]  = "HGGyoshotai,monospace"; // HG行書体
+      m_fontnames[6]  = "HGSeikaishotaiPRO,monospace"; // HG正楷書体-PRO
+      m_fontnames[7]  = "HGSoeiKakupoptai,monospace"; // HG創英角ﾎﾟｯﾌﾟ体
+      m_fontnames[8]  = "HGGothicM,monospace"; // HGｺﾞｼｯｸM
+      // m_fontnames[9]  = "HGMinchoB,monospace"; // HG明朝B
+      m_fontnames[9]  = "Times New Roman,monospace"; // HG明朝B
+      m_fontnames[10] = "aghtex_mathfrak,monospace";
+    }
+
+    void initialize(Display* display) {
+      if (m_display == display) return;
+      release();
+      m_display = display;
+      m_screen = DefaultScreen(display);
+    }
+    void set_size(coord_t width, coord_t height) {
+      if (base::width() == width && base::height() == height) return;
+      release();
+      base::set_size(width, height);
+    }
+
+  private:
+    font_type create_font(font_t font) const {
+      using namespace contra::ansi;
+
+      const char* fontname = m_fontnames[0];
+      int slant = FC_SLANT_ROMAN;
+      int weight = FC_WEIGHT_NORMAL;
+      double height = base::height();
+      double width = base::width();
+      FcMatrix matrix;
+
+      if (font_t const face = (font & font_face_mask) >> font_face_shft)
+        if (const char* const name = m_fontnames[face])
+          fontname = name;
+      if (font & font_flag_italic)
+        slant = FC_SLANT_OBLIQUE;
+
+      switch (font & font_weight_mask) {
+      case font_weight_bold: weight = FC_WEIGHT_BOLD; break;
+      case font_weight_faint: weight = FC_WEIGHT_THIN; break;
+      case font_weight_heavy: weight = FC_WEIGHT_HEAVY; break;
+      }
+
+      if (font & font_flag_small) {
+        height = small_height();
+        width = small_width();
+      }
+      if (font & font_decdhl) height *= 2;
+      if (font & font_decdwl) width *= 2;
+
+      // Note: ぴったりだと隣の文字とくっついてしまう様だ。
+      height--;
+      width--;
+      double const xscale = std::floor(std::max(width, 1.0)) / (height * 0.5);
+
+      if (font_t const rotation = (font & font_rotation_mask) >> font_rotation_shft) {
+        double const radian = 0.25 * M_PI * rotation;
+        double const c = std::cos(radian), s = std::sin(radian);
+        matrix.xx = c * xscale;
+        matrix.xy = -s;
+        matrix.yx = s * xscale;
+        matrix.yy = c;
+      } else {
+        matrix.xx = xscale;
+        matrix.yy = 1.0;
+        matrix.xy = 0.0;
+        matrix.yx = 0.0;
+      }
+
+      return XftFontOpen(
+        m_display, m_screen,
+        XFT_FAMILY, XftTypeString, fontname,
+        XFT_PIXEL_SIZE, XftTypeDouble, height,
+        XFT_SLANT, XftTypeInteger, slant,
+        XFT_WEIGHT, XftTypeInteger, weight,
+        XFT_MATRIX, XftTypeMatrix, &matrix,
+        NULL);
+    }
+    void delete_font(font_type font) {
+      ::XftFontClose(m_display, font);
+    }
+
+  private:
+    void release() {
+      for (auto& hfont : m_fonts) {
+        if (hfont) delete_font(hfont);
+        hfont = NULL;
+      }
+      auto const init = std::pair<font_t, font_type>(0u, NULL);
+      for (auto& pair : m_cache) {
+        if (pair.second) delete_font(pair.second);
+        pair = init;
+      }
+    }
+  public:
+    font_type get_font(font_t font) {
+      using namespace contra::ansi;
+      font &= ~font_layout_mask;
+      if (!(font & ~font_basic_mask)) {
+        // basic fonts
+        if (!m_fonts[font]) m_fonts[font] = create_font(font);
+        return m_fonts[font];
+      } else {
+        // cached fonts (先頭にある物の方が新しい)
+        for (std::size_t i = 0; i < std::size(m_cache); i++) {
+          if (m_cache[i].first == font) {
+            // 見つかった時は、見つかった物を先頭に移動して、返す。
+            font_type const ret = m_cache[i].second;
+            std::move_backward(&m_cache[0], &m_cache[i], &m_cache[i + 1]);
+            m_cache[0] = std::make_pair(font, ret);
+            return ret;
+          }
+        }
+        // 見つからない時は末尾にあった物を削除して、新しく作る。
+        if (font_type last = std::end(m_cache)[-1].second) delete_font(last);
+        std::move_backward(std::begin(m_cache), std::end(m_cache) - 1, std::end(m_cache));
+        font_type const ret = create_font(font);
+        m_cache[0] = std::make_pair(font, ret);
+        return ret;
+      }
+    }
+
+    ~xft_font_manager_t() {
+      release();
+    }
+  };
+
+  struct xft_character_buffer {
+    using coord_t = ansi::coord_t;
+    std::vector<byte> characters;
+    std::vector<coord_t> progress;
+    std::vector<std::size_t> next;
+  public:
+    bool empty() const { return progress.empty(); }
+    void add_char(std::uint32_t code, coord_t prog) {
+      contra::encoding::put_u8(code, characters);
+      if (prog == 0 && progress.size()) {
+        next.back() = characters.size();
+      } else {
+        next.push_back(characters.size());
+        progress.push_back(prog);
+      }
+      // if (code < 0x10000) {
+      //   characters.push_back(code);
+      //   progress.push_back(prog);
+      // } else {
+      //   // surrogate pair
+      //   code -= 0x10000;
+      //   characters.push_back(0xD800 | (code >> 10 & 0x3FF));
+      //   progress.push_back(prog);
+      //   characters.push_back(0xDC00 | (code & 0x3FF));
+      //   progress.push_back(0);
+      // }
+    }
+    void shift(coord_t shift) {
+      mwg_assert(!progress.empty());
+      progress.back() += shift;
+    }
+    void clear() {
+      characters.clear();
+      progress.clear();
+      next.clear();
+    }
+    void reserve(std::size_t capacity) {
+      characters.reserve(capacity * 3);
+      progress.reserve(capacity);
+    }
+  };
+
+  class xft_text_drawer_t {
+    using font_t = ansi::font_t;
+    using coord_t = ansi::coord_t;
+    using color_t = ansi::color_t;
+
+    Display* m_display = NULL;
+    Colormap m_cmap = 0;
+    Visual* m_visual = NULL;
+    x11_color_manager_t* m_color_manager = NULL;
+
+    xft_font_manager_t font_manager;
+
+    Drawable m_drawable = 0;
+    XftDraw* m_draw = NULL;
+
+  public:
+    xft_text_drawer_t() {}
+
+    void initialize(Display* display, x11_color_manager_t* color_manager) {
+      m_display = display;
+      int const screen = DefaultScreen(display);
+      m_cmap = DefaultColormap(m_display, screen);
+      m_visual = DefaultVisual(m_display, screen);
+      m_color_manager = color_manager;
+      font_manager.initialize(display);
+    }
+    void set_size(coord_t width, coord_t height) {
+      font_manager.set_size(width, height);
+    }
+
+  private:
+    void update_target(Drawable drawable) {
+      if (drawable == m_drawable) return;
+      this->m_drawable = drawable;
+      this->m_draw = ::XftDrawCreate(m_display, drawable, m_visual, m_cmap);
+    }
+
+  private:
+    void render(coord_t x, coord_t y, xft_character_buffer const& buff, XftFont* xftFont, color_t color) {
+      XftColor xftcolor;
+      xftcolor.pixel = m_color_manager ? m_color_manager->pixel(color) : contra::dict::rgba2bgr(color);
+      xftcolor.color.red   = 257 * contra::dict::rgba2r(color);
+      xftcolor.color.green = 257 * contra::dict::rgba2g(color);
+      xftcolor.color.blue  = 257 * contra::dict::rgba2b(color);
+      xftcolor.color.alpha = 0xFFFF;
+
+      std::size_t index = 0;
+      for (std::size_t i = 0, iN = buff.progress.size(); i < iN; i++) {
+        ::XftDrawStringUtf8(
+          m_draw, &xftcolor, xftFont,
+          x, y, (FcChar8*) &buff.characters[index], buff.next[i] - index);
+        x += buff.progress[i];
+        index = buff.next[i];
+      }
+    }
+  public:
+    void draw_characters(Drawable drawable, coord_t x1, coord_t y1, xft_character_buffer const& buff, font_t font, color_t color) {
+      this->update_target(drawable);
+
+      coord_t const h = font_manager.get_font_height(font);
+      XftFont* const xftFont = font_manager.get_font(font);
+      double const xftHeight = std::max({xftFont->ascent + xftFont->descent, xftFont->height, 1});
+      render(x1, y1 + h - h * xftFont->descent / xftHeight, buff, xftFont, color);
+    }
+    void draw_rotated_characters(
+      Drawable drawable,
+      coord_t x0, coord_t y0, coord_t dx, coord_t dy, coord_t w,
+      xft_character_buffer const& buff, font_t font, color_t color
+    ) {
+      this->update_target(drawable);
+      coord_t const h = font_manager.get_font_height(font);
+      font_t const sco = (font & ansi::font_rotation_mask) >> ansi::font_rotation_shft;
+
+      XftFont* const xftFont0 = font_manager.get_font(font & ~ansi::font_rotation_mask);
+      double const xftHeight = std::max({xftFont0->ascent + xftFont0->descent, xftFont0->height, 1});
+      double const yshift = h * xftFont0->descent / xftHeight + (sco & 1 ? 1.0 : 0.0);
+
+      double const angle = -(M_PI / 4.0) * sco;
+      double const xc1 = 0.5 * w - dx;
+      double const yc1 = -0.5 * h + yshift;
+      double const xc2 = xc1 * std::cos(angle) - yc1 * std::sin(angle);
+      double const yc2 = xc1 * std::sin(angle) + yc1 * std::cos(angle);
+      int const rot_dx = (int) std::round(xc2 - xc1);
+      int const rot_dy = (int) std::round(yc2 - yc1 + yshift);
+      x0 += -rot_dx;
+      y0 += -rot_dy;
+
+      render(x0 + dx, y0 + dy + h, buff, font_manager.get_font(font), color);
+    }
+  };
+
 
   class tx11_graphics_t {
     using coord_t = ansi::coord_t;
@@ -146,24 +441,35 @@ namespace tx11 {
     Drawable m_drawable = 0;
     GC m_gc = NULL;
 
+    ansi::window_state_t& wstat;
     std::unique_ptr<x11_color_manager_t> color_manager;
 
-    bool is_truecolor = false;
-
-    ansi::window_state_t& wstat;
+    xft_text_drawer_t text_drawer;
+  public:
+    typedef xft_character_buffer character_buffer;
 
   public:
-    tx11_graphics_t(ansi::window_state_t& wstat): wstat(wstat) {}
+    tx11_graphics_t(ansi::window_state_t& wstat): wstat(wstat) {
+      text_drawer.set_size(wstat.m_xpixel, wstat.m_ypixel);
+    }
+    ~tx11_graphics_t() {
+      this->finalize();
+    }
 
     void initialize(Display* display, Drawable drawable) {
+      int const screen = DefaultScreen(display);
       this->m_display = display;
       this->m_drawable = drawable;
       this->m_gc = XCreateGC(display, drawable, 0, 0);
 
-      int const screen = DefaultScreen(display);
-      Visual *visual = DefaultVisual(display, screen);
+      Visual* const visual = DefaultVisual(display, screen);
       if (visual->c_class != TrueColor)
         color_manager = std::make_unique<x11_color_manager_t>(display);
+
+      this->text_drawer.initialize(display, color_manager.get());
+    }
+    void finalize() {
+      // todo: m_draw, m_gc
     }
 
     GC gc() const { return m_gc; }
@@ -197,6 +503,7 @@ namespace tx11 {
       contra_unused(y1);
       contra_unused(x2);
       contra_unused(y2);
+      fill_rectangle(x1, y1, x2, y2, 0);
       //::PatBlt(hdc, x1, y1, x2 - x1, y2 - y1, DSTINVERT);
     }
     void draw_ellipse(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color, int line_width) {
@@ -223,56 +530,23 @@ namespace tx11 {
       // ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
     }
 
-    // 暫定
-    struct character_buffer {
-      std::vector<char> characters;
-      std::vector<coord_t> progress;
-    public:
-      bool empty() const { return progress.empty(); }
-      void add_char(std::uint32_t code, coord_t prog) {
-        characters.push_back(code < 0x80 ? (char) code : (char) ascii_sp);
-        progress.push_back(prog);
-        // if (code < 0x10000) {
-        //   characters.push_back(code);
-        //   progress.push_back(prog);
-        // } else {
-        //   // surrogate pair
-        //   code -= 0x10000;
-        //   characters.push_back(0xD800 | (code >> 10 & 0x3FF));
-        //   progress.push_back(prog);
-        //   characters.push_back(0xDC00 | (code & 0x3FF));
-        //   progress.push_back(0);
-        // }
-      }
-      void shift(coord_t shift) {
-        mwg_assert(!progress.empty());
-        progress.back() += shift;
-      }
-      void clear() {
-        characters.clear();
-        progress.clear();
-      }
-      void reserve(std::size_t capacity) {
-        characters.reserve(capacity);
-        progress.reserve(capacity);
-      }
-    };
-
+  public:
     void draw_characters(coord_t x1, coord_t y1, character_buffer const& buff, font_t font, color_t color) {
-      _set_foreground(color);
-      contra_unused(font);
-      coord_t x = x1, y = y1 + wstat.m_ypixel - 1;
-      for (std::size_t i = 0, iN = buff.characters.size(); i < iN; i++) {
-        ::XDrawString(m_display, m_drawable, m_gc, x, y, &buff.characters[i], 1);
-        x += buff.progress[i];
-      }
+      // _set_foreground(color);
+      // contra_unused(font);
+      // coord_t x = x1, y = y1 + wstat.m_ypixel - 1;
+      // for (std::size_t i = 0, iN = buff.characters.size(); i < iN; i++) {
+      //   ::XDrawString(m_display, m_drawable, m_gc, x, y, &buff.characters[i], 1);
+      //   x += buff.progress[i];
+      // }
+
+      text_drawer.draw_characters(m_drawable, x1, y1, buff, font, color);
     }
     void draw_rotated_characters(
       coord_t x0, coord_t y0, coord_t dx, coord_t dy, coord_t width,
       character_buffer const& buff, font_t font, color_t color
     ) {
-      contra_unused(width);
-      draw_characters(x0 + dx, y0 + dy, buff, font, color);
+      text_drawer.draw_rotated_characters(m_drawable, x0, y0, dx, dy, width, buff, font, color);
     }
     void draw_text(coord_t x1, coord_t y1, character_buffer const& buff, font_t font, color_t color) {
       draw_characters(x1, y1, buff, font, color);
@@ -305,12 +579,12 @@ namespace tx11 {
   public:
     Display* display_handle() { return this->display; }
     Window window_handle() const { return this->main; }
-    void create_window() {
+    bool create_window() {
       // Setup X11
       this->display = ::XOpenDisplay(NULL);
       if (this->display == NULL) {
         std::fprintf(stderr, "contra: Failed to open DISPLAY=%s\n", std::getenv("DISPLAY"));
-        return;
+        return false;
       }
       int const screen = DefaultScreen(display);
       Window const root = RootWindow(display, screen);
@@ -342,6 +616,7 @@ namespace tx11 {
       this->g.initialize(this->display, this->main);
 
       XAutoRepeatOn(display);
+      return true;
     }
 
   private:
@@ -393,10 +668,10 @@ namespace tx11 {
         }
 
         renderer.draw_background(g, view, content);
-        //renderer.draw_characters_mono(g, view, content);
         renderer.draw_characters(g, view, content);
         renderer.draw_decoration(g, view, content);
 
+        //renderer.draw_characters_mono(g, view, content);
         //::BitBlt(hdc0, 0, 0, m_background.width(), m_background.height(), hdc1, 0, 0, SRCCOPY);
       }
 
@@ -645,7 +920,7 @@ namespace tx11 {
 
 int main() {
   contra::tx11::tx11_window_t win;
-  win.create_window();
+  if (!win.create_window()) return 1;
   ::XMapWindow(win.display_handle(), win.window_handle());
   ::XFlush(win.display_handle());
   return win.do_loop();
