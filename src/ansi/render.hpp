@@ -32,13 +32,13 @@ namespace ansi {
     }
 
     // 実際の幅 (要求した幅と実際の幅が異なるかもしれないので)
-    coord_t m_window_width;
-    coord_t m_window_height;
+    coord_t m_canvas_width;
+    coord_t m_canvas_height;
 
   public:
     window_state_t() {
-      m_window_width = calculate_client_width();
-      m_window_height = calculate_client_height();
+      m_canvas_width = calculate_client_width();
+      m_canvas_height = calculate_client_height();
     }
 
   public:
@@ -581,7 +581,7 @@ namespace ansi {
       color_resolver_t _color(s);
 
       color_t const bg = _color.resolve(s.m_default_bg_space, s.m_default_bg_color);
-      graphics.fill_rectangle(0, 0, wstat.m_window_width, wstat.m_window_height, bg);
+      graphics.fill_rectangle(0, 0, wstat.m_canvas_width, wstat.m_canvas_height, bg);
 
       coord_t x = xorigin, y = yorigin;
       coord_t x0 = x;
@@ -614,11 +614,11 @@ namespace ansi {
   private:
     template<typename Graphics>
     void clip_decdhl_upper(Graphics& g, coord_t y) {
-      g.clip_rectangle(0, 0, wstat.m_window_width, y + wstat.m_ypixel);
+      g.clip_rectangle(0, 0, wstat.m_canvas_width, y + wstat.m_ypixel);
     }
     template<typename Graphics>
     void clip_decdhl_lower(Graphics& g, coord_t y) {
-      g.clip_rectangle(0, y, wstat.m_window_width, wstat.m_window_height);
+      g.clip_rectangle(0, y, wstat.m_canvas_width, wstat.m_canvas_height);
     }
 
   public:
@@ -1051,8 +1051,8 @@ namespace ansi {
       if (m_tracer.is_metric_changed(wstat)) full_update = true;
 
       context_t const ctx1 = gbuffer.layer(1);
-      wstat.m_window_width = gbuffer.width();
-      wstat.m_window_height = gbuffer.height();
+      wstat.m_canvas_width = gbuffer.width();
+      wstat.m_canvas_height = gbuffer.height();
 
       bool content_redraw = full_update || content_changed;
       if (m_tracer.is_blinking_changed(wstat)) content_redraw = true;

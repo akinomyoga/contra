@@ -489,15 +489,6 @@ namespace tx11 {
       release();
     }
 
-    // void get_window_size(window_type hWnd, coord_t& width, coord_t& height) {
-    //   // これだと毎回問い合わせる事になり遅いのではないだろうか。
-    //   // 現在の幅と高さは自分自身で管理して知っているべきである。
-    //   XWindowAttributes attrs;
-    //   XGetWindowAttributes(display, hWnd, &attrs);
-    //   width = attrs.width;
-    //   height = attrs.height;
-    // }
-
   public:
     void bitblt(
       context_t ctx1, coord_t x1, coord_t y1, coord_t w, coord_t h,
@@ -681,9 +672,9 @@ namespace tx11 {
       unsigned long const white = WhitePixel(display, screen);
 
       // Main Window
-      ansi::coord_t const width = wstat.calculate_client_width();
-      ansi::coord_t const height = wstat.calculate_client_height();
-      this->main = XCreateSimpleWindow(display, root, 100, 100, width, height, 1, black, white);
+      this->m_window_width = wstat.calculate_client_width();
+      this->m_window_height = wstat.calculate_client_height();
+      this->main = XCreateSimpleWindow(display, root, 100, 100, m_window_width, m_window_height, 1, black, white);
       {
         // Properties
         XTextProperty win_name;
@@ -708,6 +699,27 @@ namespace tx11 {
     }
 
   private:
+    ansi::coord_t m_window_width = 100;
+    ansi::coord_t m_window_height = 100;
+  public:
+    void process_window_resize() {
+      if (!is_session_ready()) return;
+
+      XWindowAttributes attrs;
+      XGetWindowAttributes(this->display, this->main, &attrs);
+      this->m_window_width = attrs.width;
+      this->m_window_height = attrs.height;
+
+      ansi::curpos_t const new_col = std::max(1, (attrs.width - 2 * wstat.m_xframe) / wstat.m_xpixel);
+      ansi::curpos_t const new_row = std::max(1, (attrs.height - 2 * wstat.m_yframe) / wstat.m_ypixel);
+      if (new_col != wstat.m_col || new_row != wstat.m_row) {
+        wstat.m_col = new_col;
+        wstat.m_row = new_row;
+        manager.reset_size(new_col, new_row);
+      }
+    }
+
+  private:
     friend class ansi::window_renderer_t;
     void unset_cursor_timer() {}
     void reset_cursor_timer() {}
@@ -721,7 +733,7 @@ namespace tx11 {
       } else {
         bool resized = true;
         gbuffer.setup(this->main, g.gc());
-        gbuffer.update_window_size(wstat.m_window_width, wstat.m_window_height, &resized);
+        gbuffer.update_window_size(this->m_window_width, this->m_window_height, &resized);
         renderer.render_view(*this, gbuffer, manager.app().view(), resized);
       }
       XFlush(display);
@@ -875,6 +887,10 @@ namespace tx11 {
         ::XSetCloseDownMode(display, DestroyAll);
         ::XCloseDisplay(display);
         this->display = NULL;
+        break;
+
+      case ConfigureNotify:
+        this->process_window_resize();
         break;
 
       default:
