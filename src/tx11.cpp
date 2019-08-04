@@ -555,12 +555,11 @@ namespace tx11 {
     GC gc() const { return m_gc; }
 
   private:
-    void _set_foreground(color_t color) {
-      if (!color_manager) {
-        XSetForeground(m_display, m_gc, contra::dict::rgba2bgr(color));
-      } else {
-        XSetForeground(m_display, m_gc, color_manager->pixel(color));
-      }
+    unsigned long color2pixel(color_t color) const {
+      return color_manager ? color_manager->pixel(color) : contra::dict::rgba2bgr(color);
+    }
+    void set_foreground(color_t color) {
+      XSetForeground(m_display, m_gc, color2pixel(color));
     }
 
   public:
@@ -575,44 +574,32 @@ namespace tx11 {
 
   public:
     void fill_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color) {
-      _set_foreground(color);
+      set_foreground(color);
       ::XFillRectangle(m_display, m_drawable, m_gc, x1, y1, x2 - x1, y2 - y1);
     }
     void invert_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2) {
-      contra_unused(x1);
-      contra_unused(y1);
-      contra_unused(x2);
-      contra_unused(y2);
-      fill_rectangle(x1, y1, x2, y2, 0);
-      //::PatBlt(hdc, x1, y1, x2 - x1, y2 - y1, DSTINVERT);
+      XGCValues params;
+      params.function = GXcopyInverted;
+      XChangeGC(m_display, m_gc, GCFunction, &params);
+      XCopyArea(m_display, m_drawable, m_drawable, m_gc, x1, y1, x2 - x1, y2 - y1, x1, y1);
+      params.function = GXcopy; // default
+      XChangeGC(m_display, m_gc, GCFunction, &params);
     }
     void draw_ellipse(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color, int line_width) {
-      contra_unused(x1);
-      contra_unused(y1);
-      contra_unused(x2);
-      contra_unused(y2);
-      contra_unused(color);
-      contra_unused(line_width);
-      // ::SelectObject(hdc, bstore.get_pen(color0, line_width));
-      // ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
-      // ::Ellipse(hdc, x1, y1, x2, y2);
-      // ::SelectObject(hdc, ::GetStockObject(NULL_PEN));
+      XGCValues params;
+      params.foreground = color2pixel(color);
+      params.line_width = line_width;
+      XChangeGC(m_display, m_gc, GCForeground | GCLineWidth, &params);
+      XDrawArc(m_display, m_drawable, m_gc, x1, y1, x2 - x1, y2 - y1, 0 * 64, 360 * 64);
     }
     void fill_ellipse(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color) {
-      contra_unused(x1);
-      contra_unused(y1);
-      contra_unused(x2);
-      contra_unused(y2);
-      contra_unused(color);
-      // ::SelectObject(hdc, ::GetStockObject(NULL_PEN));
-      // ::SelectObject(hdc, bstore.get_brush(color0));
-      // ::Ellipse(hdc, x1, y1, x2, y2);
-      // ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
+      set_foreground(color);
+      XFillArc(m_display, m_drawable, m_gc, x1, y1, x2 - x1, y2 - y1, 0 * 64, 360 * 64);
     }
 
   public:
     void draw_characters(coord_t x1, coord_t y1, character_buffer const& buff, font_t font, color_t color) {
-      // _set_foreground(color);
+      // set_foreground(color);
       // contra_unused(font);
       // coord_t x = x1, y = y1 + wstat.m_ypixel - 1;
       // for (std::size_t i = 0, iN = buff.characters.size(); i < iN; i++) {

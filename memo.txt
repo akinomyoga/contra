@@ -5,6 +5,66 @@
   Note
 ------------------------------------------------------------------------------
 
+2019-08-04
+
+* Linux で fontconfig の設定をするには
+  ref #D0172
+
+  何故かうまく行かなかったが、一般的には
+  $XDG_CONFIG_HOME/fontconfig/fonts.conf ファイルに記述する。
+  内容は以下の様な感じにする。
+  詳しくは https://www.freedesktop.org/software/fontconfig/fontconfig-user.html に書かれている。
+
+  | <?xml version="1.0"?>
+  | <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+  | <!-- $XDG_CONFIG_HOME/fontconfig/fonts.conf for per-user font configuration -->
+  | <fontconfig>
+  | <!--
+  |   Private font directory
+  | -->
+  | <dir prefix="xdg">fonts</dir>
+  | 
+  | <!--
+  |   use rgb sub-pixel ordering to improve glyph appearance on
+  |   LCD screens.  Changes affecting rendering, but not matching
+  |   should always use target="font".
+  | -->
+  | <match target="font">
+  |   <edit name="rgba" mode="assign"><const>rgb</const></edit>
+  | </match>
+  | <!--
+  |   use VL Gothic font when sans-serif is requested for Japanese
+  | -->
+  | <match>
+  |   <test name="lang" compare="contains">
+  |     <string>ja</string>
+  |   </test>
+  |   <test name="family">
+  |     <string>sans-serif</string>
+  |   </test>
+  |   <edit name="family" mode="prepend">
+  |     <string>VL Gothic</string>
+  |   </edit>
+  | </match>
+  | </fontconfig>
+
+  ファイルを適当に $HOME/.local/share/fonts に配置して、
+  $ fc-cache
+  を実行すれば良い事になっている。
+
+  然し failed to write cache のエラーが発生して失敗する。
+  sudo fc-cache -v しても、
+  sudo dnf reinstall fontconfig しても、
+  touch $HOME/.local/share/fonts しても、
+  sudo setenforce 0 しても、
+  chmod 777 $HOME/.local/share/fonts しても、駄目だった。
+
+  /usr/local/share/fonts/murase からのシンボリックリンクにしても駄目。
+  /usr/share/fonts/murase にコピーして sudo fc-cache したら成功した。
+  然し、これはユーザ毎の設定ではなくてシステムにフォントを登録している。
+  よく分からないが面倒なのでシステムに登録するので良いという事になった。
+  fc-list | grep MeiryoKe でちゃんと登録されているのを確認した。
+
 2019-08-03
 
 * Cygwin で Windows のフォントを使える様にするには以下の様にする
@@ -137,7 +197,13 @@
 
 2019-08-03
 
-* tx11: 反転矩形・楕円の描画に対応する
+* tx11: リモートでの ble-color-show が矢鱈遅い。何故?
+  先に大量の信号を送信してそれがキャッシュに溜まっているという事だろうか。
+
+  1 改善の方法は二つある。一つは通信を軽くするという事。
+    つまりできるだけ描画を省略する様にする。
+  2 更に根本的な解決としてフレームレートを強制的に調節するという事。
+    例えばフレームレートに上限を設けるなどしても良いのかも知れないと思う。
 
 * tx11: 設定ファイルからフォント名を読み取る
   自分だけで使うから問題ないと思っていたが、
@@ -148,13 +214,6 @@
 
 * tx11: フォント描画について
   http://www.02.246.ne.jp/~torutk/cxx/x11/string.html
-
-* tx11: 領域反転は2回 XCopyArea を実行する?
-  https://stackoverflow.com/questions/39969855/invert-the-colors-of-a-region-in-xlib
-  Pixmap はリモートに置かれるリソースの様に見える。
-  なのでバックバッファも普通に沢山使っても問題ない気がする。
-
-  既に現状で何やらちらつきが見えている。
 
 2019-07-27
 
@@ -234,29 +293,6 @@
     空白に置き換える時には当然 line の version は増やす必要がある。
   * altscreen の時には transfer しない。
   * transfer として別の出力先 (ファイルなど) も対応できる様にする。
-
-* twin の描画部分を分離できないかという事
-
-  全く同じ物を X11 に対しても同時に実装するのは面倒だし、
-  また機能を追加するのも面倒だしメンテナンスも面倒である。
-  従って同じ処理をしている部分は処理を共通化するのが良い。
-  そうでなくても再利用可能な形に色々と関数をまとめて置くのは良い事。
-
-  画像の出力先は GDI, X11 だけに留まらない。
-  例えば gif または bmp に出力したいという場合も考えられる。
-  或いはもっと他の形式も考えられるかもしれない。例えば PostScript 等?
-
-  2019-07-27 取り敢えず簡単に分離はしてみたが
-  未だ現状の形式には不満がある。
-
-  * そもそも bitblt だとか background buffer だとかを使えるかどうかで
-    効率的な実装が変わるのである。X11 の場合には remote の
-    background buffer に対して操作を実行するという事は可能なのだろうか。
-    然し、何れにしてもこれは実際に遅いという事が分かってから
-    インターフェイスを拡張する等すれば良いのである。
-
-  * clip に関しては graphics の側で管理する事になっているが、
-    これは renderer の側で clip 範囲も提供するべきである。
 
 2019-05-26
 
@@ -1789,6 +1825,110 @@
 ------------------------------------------------------------------------------
   Done
 ------------------------------------------------------------------------------
+
+2019-08-04
+
+* tx11: 反転矩形・楕円の描画に対応する [#D0175]
+
+* 2019-07-25 twin の描画部分を分離できないかという事 [#D0174]
+
+  全く同じ物を X11 に対しても同時に実装するのは面倒だし、
+  また機能を追加するのも面倒だしメンテナンスも面倒である。
+  従って同じ処理をしている部分は処理を共通化するのが良い。
+  そうでなくても再利用可能な形に色々と関数をまとめて置くのは良い事。
+
+  画像の出力先は GDI, X11 だけに留まらない。
+  例えば gif または bmp に出力したいという場合も考えられる。
+  或いはもっと他の形式も考えられるかもしれない。例えば PostScript 等?
+
+  2019-07-27 取り敢えず簡単に分離はしてみたが
+  未だ現状の形式には不満がある。
+
+  * そもそも bitblt だとか background buffer だとかを使えるかどうかで
+    効率的な実装が変わるのである。X11 の場合には remote の
+    background buffer に対して操作を実行するという事は可能なのだろうか。
+    然し、何れにしてもこれは実際に遅いという事が分かってから
+    インターフェイスを拡張する等すれば良いのである。
+
+    →取り敢えず X11 では Pixmap を用いて bgbuffer を作れて、
+      XCopyArea という bitblt 機能もある事が分かったので、
+      Win32 と同様に処理できる。という事で処理を分離して共通化した。
+
+    Background buffer を使わない実装に関しては、
+    今後そういう機能が使えない対象が出てきた時に初めて考えれば良い。
+
+  * clip に関しては graphics の側で管理する事になっているが、
+    これは renderer の側で clip 範囲も提供するべきである。
+    →これは対応済み 2019-08-04
+
+* 2019-07-28 tx11: 領域反転は2回 XCopyArea を実行する? [#D0173]
+  https://stackoverflow.com/questions/39969855/invert-the-colors-of-a-region-in-xlib
+  Pixmap はリモートに置かれるリソースの様に見える。
+  なのでバックバッファも普通に沢山使っても問題ない気がする。
+
+  * ok: 既に現状で何やらちらつきが見えている。
+    →バックバッファには対応済みである 2019-08-04
+
+  GC の設定で GXcopyInverted にして XCopyArea すれば良い。
+  自分自身にコピーする事は可能なのだろうか。
+  上の説明を読むと新しく pixmap を作らなければならない様にも読める。
+  分からないので試してみる事にする。
+  →試してみた所自分自身に転送すれば別に問題も起こらない様だ。
+    これで良いという事にする。もしかすると X server によっては
+    問題になるという事もあるかもしれないが気にしない事にする。
+
+* Linux でユーザ毎にフォントを追加するには [#D0172]
+  $XDG_CONFIG_HOME/fontconfig/fonts.conf ファイルに記述する。
+  https://www.freedesktop.org/software/fontconfig/fontconfig-user.html にユーザごとの設定のテンプレートがある。
+
+  特にフォントを置くディレクトリとして <dir prefix="xdg">fonts</dir> という指定が挙げられている。
+  これは実際にはどの場所になるだろうか。検索すると .local/share/fonts に配置される? 様に思われる。
+  https://github.com/eosrei/emojione-color-font/issues/14
+  というか、上のマニュアルのページの <dir prefix="default"></dir> の所に説明が書かれていた。
+  他に "relative" という値もある様である。普通に "home" という値があれば良いのにそういうのはない様だ。
+  取り敢えず .local/share/fonts に配置する事にする事にした。
+
+  取り敢えず .local/share/fontconfig/fonts.conf を書いて fc-cache を実行してみると、
+  /home/murase/.local/share/fonts: failed to write cache というエラーになってしまう。
+  a chmod 777 にしても setenforce 0 にしても駄目だった。
+  b http://lukedoomer.blogspot.com/2007/07/failed-to-write-cache.html
+    https://lists.opensuse.org/opensuse-bugs/2012-10/msg01318.html
+    https://forum.ubuntu.org.cn/viewtopic.php?f=86&t=67385
+    によるとタイムスタンプの問題なのか…?
+    うーん。2020-01-01 にしても 2010-01-01 にしても駄目だった。
+  c 或いは別の人は fontconfig と x11 を全て再インストールしたのだとか。。
+    取り敢えず chatoyancy に dnf update をかけるが、
+    大して更新はない。フォント関係の更新はない様に見える。
+    更新の後に再度実行してみるがエラーメッセージは変わらない。
+  d システムのディレクトリだと書き込めるかもしれないと思って、
+    /usr/local/share/fonts/murase-fonts にコピーしてみるが、
+    これについてもやはり failed to write cache になってしまう。
+  e やはり fontconfig を入れ直すという話が出ている。
+    https://askubuntu.com/questions/1120116/ubuntu-18-04-fontconfig-update-not-possible-fc-cache-fcdircachecreateuuid
+    sudo dnf reinstall fontconfig で入れ直してみる事にする。
+    然し結果は変わらない。やはり同じエラーメッセージである。
+
+  既存のディレクトリのキャッシュの形式はどうなっているのか調べようとしたら、ない。
+  どうやらキャッシュは別のディレクトリに保存しているという事?
+  うーん。sudo fc-cache を実行すると何もエラーが発生しない。
+  然し、これだと user murase のデータは読み込まれないのである。
+
+    $ sudo mkdir /usr/local/share/fonts
+    $ sudo ln -s ~/etc/fonts /usr/local/fonts/share/murase
+    $ sudo fc-cache
+    /usr/local/share/fonts/murase: skipping, looped directory detected
+    $ sudo rm /usr/local/share/fonts/murase
+    $ sudo cp -r fonts /usr/local/share/fonts/murase
+    /usr/local/share/fonts/murase: skipping, looped directory detected
+ 
+  うーん。不思議だ。シンボリックリンクでないのに looped directory になる。
+
+    $ sudo mv /usr/local/share/fonts/murase /usr/share/fonts/
+    $ sudo fc-cache -v
+
+  何と成功した。然し、何故か既にキャッシュされているというメッセージになっている。
+  これに関してはまとめて置く事にする。
+  取り敢えず、MeiryoKe_Console が使える様になったので満足である。
 
 2019-08-03
 
