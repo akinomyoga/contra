@@ -34,6 +34,12 @@ namespace term {
     tv.tv_nsec = milliseconds * 1000000;
     nanosleep(&tv, NULL);
   }
+  void usleep(int usec) {
+    struct timespec tv;
+    tv.tv_sec = 0;
+    tv.tv_nsec = usec * 1000;
+    nanosleep(&tv, NULL);
+  }
 
   std::size_t read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size) {
     char* p = buff;

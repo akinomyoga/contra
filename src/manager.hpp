@@ -276,11 +276,18 @@ namespace term {
           processed = true;
       return processed;
     }
-  public:
-    bool do_events() {
+    bool process2() {
+      for (int i = 0; i < 100; i++) {
+        bool const result = process1();
+        if (result) return result;
+        usleep(10);
+      }
+      return process1();
+    }
+    bool do_events_implA() {
       bool processed = false;
       auto const time0 = std::chrono::high_resolution_clock::now();
-      while (this->process1()) {
+      while (this->process2()) {
         processed = true;
         auto const time1 = std::chrono::high_resolution_clock::now();
         auto const msec = std::chrono::duration_cast<std::chrono::milliseconds>(time1 - time0);
@@ -288,6 +295,24 @@ namespace term {
       }
       if (processed) m_dirty = true;
       return processed;
+    }
+    bool do_events_implB() {
+      bool processed = false;
+      auto const time0 = std::chrono::high_resolution_clock::now();
+      for (;;) {
+        bool const result = this->process1();
+        if (result) processed = true;
+        auto const time1 = std::chrono::high_resolution_clock::now();
+        auto const msec = std::chrono::duration_cast<std::chrono::milliseconds>(time1 - time0);
+        if (msec.count() > 20) break;
+        if (!result) usleep(10);
+      }
+      if (processed) m_dirty = true;
+      return processed;
+    }
+  public:
+    bool do_events() {
+      return do_events_implB();
     }
 
     bool is_active() {
