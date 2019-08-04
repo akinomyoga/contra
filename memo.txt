@@ -1828,6 +1828,38 @@
 
 2019-08-04
 
+* tx11: clip に関しては丁度 XSetClipRectangles という関数がある [#D0176]
+  https://tronche.com/gui/x/xlib/GC/convenience-functions/XSetClipRectangles.html
+  自分で指定しようと思うと Pixmap を用意して clip 領域を設定しなければならない、
+  と思ったがちゃんと便利な関数が用意されていたのである。
+
+  →実際にやってみた所楕円等に関してはちゃんと clip されているが、
+  文字列に関しては clip されていない。もしやと思って確認してみると、
+  そもそも文字列の描画には gc は用いていない。
+  XftDraw という謎のオブジェクトを用いているのであった。
+  調べてみると XftDrawSetClip という関数があるそうである。
+
+  使い方について調べてみる。
+  https://render.xfree86.narkive.com/MVkn8trX/xftdrawsetclip-questions
+  クリアするためには単に XftDrawSetClip(m_draw, 0) とすれば良い。
+
+  http://sweaglesw.org/svn/libxyz/trunk/pango.c を見てみると、
+  | Region  clipr = XCreateRegion();
+  | XUnionRectWithRegion(&yz_d->cliprect, clipr, clipr);
+  | XftDrawSetClip(xdrw, clipr);
+  | ...
+  | XDestroyRegion(clipr);
+  としている。XCreateRegion で調べてみる。
+  http://xjman.dsl.gr.jp/man/man3/XCreateRegion.3x.html
+  http://xjman.dsl.gr.jp/man/man3/XIntersectRegion.3x.html
+  うーん。XUnionRectWithRegion で良いという事なのか。
+
+  更に既存の region を clear する方法について検索したがよく分からない。
+  どうも一度破棄してそれからまた作成するのが一番という事が
+  マニュアル (Google プレビュー) に書かれていた。
+  面倒なので何も考えずそれに従う事にする。
+  →実装した。動いている。
+
 * tx11: 反転矩形・楕円の描画に対応する [#D0175]
 
 * 2019-07-25 twin の描画部分を分離できないかという事 [#D0174]

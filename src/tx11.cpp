@@ -214,8 +214,10 @@ namespace tx11 {
       if (font & font_decdwl) width *= 2;
 
       // Note: ぴったりだと隣の文字とくっついてしまう様だ。
-      height--;
-      width--;
+      if (!(font & font_flag_small)) {
+        height--;
+        width--;
+      }
       double const xscale = std::floor(std::max(width, 1.0)) / (height * 0.5);
 
       if (font_t const rotation = (font & font_rotation_mask) >> font_rotation_shft) {
@@ -303,11 +305,32 @@ namespace tx11 {
     Drawable m_drawable = 0;
     XftDraw* m_draw = NULL;
 
+    Region m_clip_region = NULL;
+  public:
+    void clip_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2) {
+      if (m_clip_region) XDestroyRegion(m_clip_region);
+      m_clip_region = XCreateRegion();
+      XRectangle rect;
+      rect.x = x1;
+      rect.y = y1;
+      rect.width = x2 - x1;
+      rect.height = y2 - y1;
+      XUnionRectWithRegion(&rect, m_clip_region, m_clip_region);
+      XftDrawSetClip(m_draw, m_clip_region);
+    }
+    void clip_clear() {
+      XftDrawSetClip(m_draw, 0);
+    }
+
   private:
     void release() {
       if (m_draw) {
         XftDrawDestroy(m_draw);
         m_draw = NULL;
+      }
+      if (m_clip_region) {
+        XDestroyRegion(m_clip_region);
+        m_clip_region = NULL;
       }
     }
   public:
@@ -563,14 +586,19 @@ namespace tx11 {
     }
 
   public:
-    // ToDo:
     void clip_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2) {
-      contra_unused(x1);
-      contra_unused(y1);
-      contra_unused(x2);
-      contra_unused(y2);
+      XRectangle rect;
+      rect.x = 0;
+      rect.y = 0;
+      rect.width = x2 - x1;
+      rect.height = y2 - y1;
+      XSetClipRectangles(m_display, m_gc, x1, y1, &rect, 1, YXBanded);
+      text_drawer.clip_rectangle(x1, y1, x2, y2);
     }
-    void clip_clear() {}
+    void clip_clear() {
+      XSetClipMask(m_display, m_gc, None);
+      text_drawer.clip_clear();
+    }
 
   public:
     void fill_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color) {
