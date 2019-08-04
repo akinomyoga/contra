@@ -66,6 +66,7 @@ namespace ansi {
 
     void store(window_state_t const& wstat, term_view_t const& view) {
       store_metric(wstat);
+      store_color(view);
       store_content(view);
       store_cursor(wstat, view);
       store_blinking_state(wstat);
@@ -95,6 +96,24 @@ namespace ansi {
       m_row = wstat.m_row;
       m_xpixel = wstat.m_xpixel;
       m_ypixel = wstat.m_ypixel;
+    }
+
+  private:
+    byte m_fg_space, m_bg_space;
+    color_t m_fg_color, m_bg_color;
+  public:
+    bool is_color_changed(term_view_t const& view) const {
+      if (m_fg_space != view.fg_space()) return true;
+      if (m_fg_color != view.fg_color()) return true;
+      if (m_bg_space != view.bg_space()) return true;
+      if (m_bg_color != view.bg_color()) return true;
+      return false;
+    }
+    void store_color(term_view_t const& view) {
+      m_fg_space = view.fg_space();
+      m_fg_color = view.fg_color();
+      m_bg_space = view.bg_space();
+      m_bg_color = view.bg_color();
     }
 
   public:
@@ -541,9 +560,9 @@ namespace ansi {
 
   private:
     //
-    // traceline_* の実装
+    // line_tracer の実装
     //
-    //   traceline_* では行の移動と変更を追跡し、
+    //   line_tracer は行の移動と変更を追跡し、
     //   どの行を BitBlt/XCopyArea でコピーできて、
     //   どの行を再描画する必要があるかを決定する。
     //   特に、行の描画内容が隣の行にはみ出ている行がある事を考慮に入れて、
@@ -555,118 +574,167 @@ namespace ansi {
     //   将来的に拡張する時は traceline_trace の中で a/d を設定する様にすれば良い。
     //   はみ出ている量は同じ id の行でも前回と今回で変化している可能性がある事に注意する。
     //
-    struct traceline_record {
-      curpos_t y0 = -1;         //!< 移動前・移動後の対応する表示位置
-      curpos_t a = 1;           //!< 行の描画内容が上にa行はみ出ている
-      curpos_t d = 1;           //!< 行の描画内容が下にd行はみ出ている
-      bool changed = false;     //!< 自身が変更されたかどうか
-      bool invalidated = false; //!< 自領域の再描画の必要性
-      bool redraw = false;      //!< 再描画が要求されるかどうか
+    class line_tracer {
+    public:
+      struct line_record {
+        curpos_t y0 = -1;         //!< 移動前・移動後の対応する表示位置
+        curpos_t a = 1;           //!< 行の描画内容が上にa行はみ出ている
+        curpos_t d = 1;           //!< 行の描画内容が下にd行はみ出ている
+        bool changed = false;     //!< 自身が変更されたかどうか
+        bool invalidated = false; //!< 自領域の再描画の必要性
+        bool redraw = false;      //!< 再描画が要求されるかどうか
+      };
+
+    private:
+      bool tmargin_invalidated;
+      bool bmargin_invalidated;
+      std::vector<line_record> new_trace;
+      std::vector<line_record> old_trace;
+
+      void initialize(term_view_t const& view, status_tracer_t const& status_tracer, bool blinking_changed) {
+        auto const& old_lines = status_tracer.lines();
+        std::size_t const old_height = old_lines.size();
+        std::size_t const new_height = view.height();
+        tmargin_invalidated = false;
+        bmargin_invalidated = false;
+        old_trace.clear();
+        new_trace.clear();
+        old_trace.resize(old_height);
+        new_trace.resize(new_height);
+
+        for (std::size_t i = 0, j = 0; i < new_height; i++) {
+          auto const id = view.line(i).id();
+          auto const version = view.line(i).version();
+          for (std::size_t j1 = j; j1 < old_height; j1++) {
+            if (old_lines[j1].id == id) {
+              bool const changed = old_lines[j1].version != version ||
+                (blinking_changed && old_lines[j1].has_blinking);
+              old_trace[j1].y0 = i;
+              new_trace[i].y0 = j1;
+              old_trace[j1].changed = changed;
+              new_trace[i].changed = changed;
+              j = j1 + 1;
+              break;
+            }
+          }
+        }
+      }
+
+      void invalidate() {
+        // invalidate by self change
+        curpos_t const new_height = (curpos_t) new_trace.size();
+        for (curpos_t i = 0; i < new_height; i++) {
+          if (new_trace[i].y0 == -1 || new_trace[i].changed)
+            new_trace[i].invalidated = true;
+        }
+
+        // invalidate around old lines
+        curpos_t const old_height = (curpos_t) old_trace.size();
+        for (curpos_t j = 0; j < old_height; j++) {
+          auto const& entry = old_trace[j];
+          curpos_t const j1a = std::max(j - entry.a, 0);
+          curpos_t const j1d = std::min(j + entry.d, old_height - 1);
+          if (entry.y0 == -1 || entry.changed) {
+            for (curpos_t j1 = j1a; j1 < j; j1++) {
+              curpos_t const i1 = old_trace[j1].y0;
+              if (i1 >= 0) new_trace[i1].invalidated = true;
+            }
+            for (curpos_t j1 = j1d; j1 > j; j1--) {
+              curpos_t const i1 = old_trace[j1].y0;
+              if (i1 >= 0) new_trace[i1].invalidated = true;
+            }
+          } else {
+            curpos_t const shift = entry.y0 - j;
+            for (curpos_t j1 = j1a; j1 < j; j1++) {
+              curpos_t const i1 = old_trace[j1].y0;
+              if (i1 >= 0 && i1 - j1 != shift) new_trace[i1].invalidated = true;
+            }
+            for (curpos_t j1 = j1d; j1 > j; j1--) {
+              curpos_t const i1 = old_trace[j1].y0;
+              if (i1 >= 0 && i1 - j1 != shift) new_trace[i1].invalidated = true;
+            }
+          }
+        }
+
+        // invalidate around new lines
+        for (curpos_t i = 0; i < new_height; i++) {
+          auto const& entry = new_trace[i];
+          curpos_t const i1a = std::max(i - entry.a, 0);
+          curpos_t const i1d = std::min(i + entry.d, new_height - 1);
+          if (entry.y0 == -1 || entry.changed) {
+            for (curpos_t i1 = i1a; i1 < i; i1++)
+              new_trace[i1].invalidated = true;
+            for (curpos_t i1 = i1d; i1 > i; i1--)
+              new_trace[i1].invalidated = true;
+          } else {
+            curpos_t const shift = i - entry.y0;
+            for (curpos_t i1 = i1a; i1 < i; i1++) {
+              curpos_t const j1 = new_trace[i1].y0;
+              if (j1 >= 0 && i1 - j1 != shift)
+                new_trace[i1].invalidated = true;
+            }
+            for (curpos_t i1 = i1d; i1 > i; i1--) {
+              curpos_t const j1 = new_trace[i1].y0;
+              if (j1 >= 0 && i1 - j1 != shift)
+                new_trace[i1].invalidated = true;
+            }
+          }
+        }
+      }
+
+      void check_redraw() {
+        curpos_t const height = (curpos_t) new_trace.size();
+        for (curpos_t i = 0; i < height; i++) {
+          auto const& entry = new_trace[i];
+          curpos_t const i1a = std::max(i - entry.a, 0);
+          curpos_t const i1d = std::min(i + entry.d, height - 1);
+          for (curpos_t i1 = i1a; i1 <= i1d; i1++) {
+            if (new_trace[i1].invalidated) {
+              new_trace[i].redraw = true;
+              break;
+            }
+          }
+        }
+      }
+
+      void invalidate_and_check_for_margin() {
+        curpos_t const new_height = (curpos_t) new_trace.size();
+        curpos_t const old_height = (curpos_t) old_trace.size();
+        for (curpos_t j = 0; j < old_height; j++) {
+          auto const& entry = old_trace[j];
+          if (entry.y0 != j || entry.changed) {
+            if (j - entry.a < 0)
+              tmargin_invalidated = true;
+            if (j + entry.d >= new_height)
+              bmargin_invalidated = true;
+          }
+        }
+        for (curpos_t i = 0; i < new_height; i++) {
+          auto& entry = new_trace[i];
+          if (entry.y0 != i || entry.changed) {
+            if (i - entry.a < 0) {
+              tmargin_invalidated = true;
+              entry.redraw = true;
+            }
+            if (i + entry.d >= new_height) {
+              bmargin_invalidated = true;
+              entry.redraw = true;
+            }
+          }
+        }
+      }
+
+    public:
+      void trace(term_view_t const& view, status_tracer_t const& stracer, bool blinking_changed) {
+        initialize(view, stracer, blinking_changed);
+        invalidate();
+        check_redraw();
+        invalidate_and_check_for_margin();
+      }
+      line_record const& operator[](curpos_t i) const { return new_trace[i]; }
+      bool is_tmargin_invalidated() const { return tmargin_invalidated; }
+      bool is_bmargin_invalidated() const { return bmargin_invalidated; }
     };
-
-    void traceline_trace(term_view_t const& view, std::vector<traceline_record>& new_trace, std::vector<traceline_record>& old_trace) {
-      auto const& old_lines = m_tracer.lines();
-      std::size_t const old_height = old_lines.size();
-      std::size_t const new_height = view.height();
-
-      old_trace.clear();
-      new_trace.clear();
-      old_trace.resize(old_height);
-      new_trace.resize(new_height);
-
-      for (std::size_t i = 0, j = 0; i < new_height; i++) {
-        auto const id = view.line(i).id();
-        auto const version = view.line(i).version();
-        for (std::size_t j1 = j; j1 < old_height; j1++) {
-          if (old_lines[j1].id == id) {
-            bool const changed = old_lines[j1].version != version;
-            old_trace[j1].y0 = i;
-            new_trace[i].y0 = j1;
-            old_trace[j1].changed = changed;
-            new_trace[i].changed = changed;
-            j = j1 + 1;
-            break;
-          }
-        }
-      }
-    }
-
-    void traceline_invalidate(std::vector<traceline_record>& new_trace, std::vector<traceline_record> const& old_trace) {
-      // invalidate by self change
-      curpos_t const new_height = (curpos_t) new_trace.size();
-      for (curpos_t i = 0; i < new_height; i++) {
-        if (new_trace[i].y0 == -1 || new_trace[i].changed)
-          new_trace[i].invalidated = true;
-      }
-
-      // invalidate around old lines
-      curpos_t const old_height = (curpos_t) old_trace.size();
-      for (curpos_t j = 0; j < old_height; j++) {
-        auto const& entry = old_trace[j];
-        curpos_t const j1a = std::max(j - entry.a, 0);
-        curpos_t const j1d = std::min(j + entry.d, old_height - 1);
-        if (entry.y0 == -1 || entry.changed) {
-          for (curpos_t j1 = j1a; j1 < j; j1++) {
-            curpos_t const i1 = old_trace[j1].y0;
-            if (i1 >= 0) new_trace[i1].invalidated = true;
-          }
-          for (curpos_t j1 = j1d; j1 > j; j1--) {
-            curpos_t const i1 = old_trace[j1].y0;
-            if (i1 >= 0) new_trace[i1].invalidated = true;
-          }
-        } else {
-          curpos_t const shift = entry.y0 - j;
-          for (curpos_t j1 = j1a; j1 < j; j1++) {
-            curpos_t const i1 = old_trace[j1].y0;
-            if (i1 >= 0 && i1 - j1 != shift) new_trace[i1].invalidated = true;
-          }
-          for (curpos_t j1 = j1d; j1 > j; j1--) {
-            curpos_t const i1 = old_trace[j1].y0;
-            if (i1 >= 0 && i1 - j1 != shift) new_trace[i1].invalidated = true;
-          }
-        }
-      }
-
-      // invalidate around new lines
-      for (curpos_t i = 0; i < new_height; i++) {
-        auto const& entry = new_trace[i];
-        curpos_t const i1a = std::max(i - entry.a, 0);
-        curpos_t const i1d = std::min(i + entry.d, new_height - 1);
-        if (entry.y0 == -1 || entry.changed) {
-          for (curpos_t i1 = i1a; i1 < i; i1++)
-            new_trace[i1].invalidated = true;
-          for (curpos_t i1 = i1d; i1 > i; i1--)
-            new_trace[i1].invalidated = true;
-        } else {
-          curpos_t const shift = i - entry.y0;
-          for (curpos_t i1 = i1a; i1 < i; i1++) {
-            curpos_t const j1 = new_trace[i1].y0;
-            if (j1 >= 0 && i1 - j1 != shift)
-              new_trace[i1].invalidated = true;
-          }
-          for (curpos_t i1 = i1d; i1 > i; i1--) {
-            curpos_t const j1 = new_trace[i1].y0;
-            if (j1 >= 0 && i1 - j1 != shift)
-              new_trace[i1].invalidated = true;
-          }
-        }
-      }
-    }
-
-    void traceline_request(std::vector<traceline_record>& new_trace) {
-      curpos_t const height = (curpos_t) new_trace.size();
-      for (curpos_t i = 0; i < height; i++) {
-        auto const& entry = new_trace[i];
-        curpos_t const i1a = std::max(i - entry.a, 0);
-        curpos_t const i1d = std::min(i + entry.d, height - 1);
-        for (curpos_t i1 = i1a; i1 <= i1d; i1++) {
-          if (new_trace[i1].invalidated) {
-            new_trace[i].redraw = true;
-            break;
-          }
-        }
-      }
-    }
 
   private:
     struct line_content {
@@ -675,30 +743,56 @@ namespace ansi {
       bool is_redraw_requested;
       std::vector<cell_t> cells;
     };
-    void construct_content(term_view_t const& view, std::vector<line_content>& content, bool full_update) {
+    struct content_update {
+      bool is_content_changed;
+      bool is_cursor_changed;
+      bool is_blinking_changed;
+      bool is_full_update;
+      bool is_tmargin_invalidated;
+      bool is_bmargin_invalidated;
+      std::vector<line_content> lines;
+    };
+    bool construct_update(term_view_t const& view, content_update& update, bool requests_full_update) {
+      update.is_content_changed = m_tracer.is_content_changed(view);
+      update.is_cursor_changed = m_tracer.is_cursor_changed(wstat, view);
+      update.is_blinking_changed = m_tracer.is_blinking_changed(wstat);
+
+      update.is_full_update = requests_full_update;
+      if (m_tracer.is_metric_changed(wstat))
+        update.is_full_update = true;
+      if (m_tracer.is_color_changed(view))
+        update.is_full_update = true;
+
+      bool const redraw = update.is_full_update ||
+        update.is_content_changed ||
+        update.is_blinking_changed;
+      if (!redraw) return false;
+
       curpos_t const height = view.height();
-      content.resize(height);
-      if (full_update) {
+      update.lines.resize(height);
+      if (update.is_full_update) {
         for (curpos_t i = 0; i < height; i++) {
-          content[i].previous_line_index = -1;
-          content[i].is_invalidated = true;
-          content[i].is_redraw_requested = true;
-          view.get_cells_in_presentation(content[i].cells, view.line(i));
+          line_content& line = update.lines[i];
+          line.previous_line_index = -1;
+          line.is_invalidated = true;
+          line.is_redraw_requested = true;
+          view.get_cells_in_presentation(line.cells, view.line(i));
         }
       } else {
-        std::vector<traceline_record> new_trace;
-        std::vector<traceline_record> old_trace;
-        traceline_trace(view, new_trace, old_trace);
-        traceline_invalidate(new_trace, old_trace);
-        traceline_request(new_trace);
+        line_tracer ltracer;
+        ltracer.trace(view, m_tracer, update.is_blinking_changed);
+        update.is_tmargin_invalidated = ltracer.is_tmargin_invalidated();
+        update.is_bmargin_invalidated = ltracer.is_bmargin_invalidated();
         for (curpos_t i = 0; i < height; i++) {
-          content[i].previous_line_index = new_trace[i].y0;
-          content[i].is_invalidated = new_trace[i].invalidated;
-          content[i].is_redraw_requested = new_trace[i].redraw;
-          if (content[i].is_redraw_requested)
-            view.get_cells_in_presentation(content[i].cells, view.line(i));
+          line_content& line = update.lines[i];
+          line.previous_line_index = ltracer[i].y0;
+          line.is_invalidated = ltracer[i].invalidated;
+          line.is_redraw_requested = ltracer[i].redraw;
+          if (line.is_redraw_requested)
+            view.get_cells_in_presentation(line.cells, view.line(i));
         }
       }
+      return true;
     }
 
   public:
@@ -742,7 +836,7 @@ namespace ansi {
 
   public:
     template<typename Graphics>
-    void draw_background(Graphics& graphics, term_view_t const& view, std::vector<line_content>& content, bool full_update) {
+    void draw_background(Graphics& graphics, term_view_t const& view, content_update& update) {
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;
       coord_t const ypixel = wstat.m_ypixel;
@@ -752,13 +846,13 @@ namespace ansi {
       color_resolver_t _color(s);
 
       color_t const bg = _color.resolve(s.m_default_bg_space, s.m_default_bg_color);
-      if (full_update) {
+      if (update.is_full_update) {
         graphics.fill_rectangle(0, 0, wstat.m_canvas_width, wstat.m_canvas_height, bg);
       } else {
-        // ToDo: 上下余白の再描画については後で考える
-        coord_t y1 = yorigin, y2 = yorigin;
+        coord_t y1 = update.is_tmargin_invalidated ? 0 : yorigin;
+        coord_t y2 = yorigin;
         for (curpos_t iline = 0; iline < height; iline++) {
-          if (content[iline].is_invalidated) {
+          if (update.lines[iline].is_invalidated) {
             y2 += ypixel;
           } else {
             if (y1 < y2)
@@ -766,6 +860,7 @@ namespace ansi {
             y1 = y2 += ypixel;
           }
         }
+        if (update.is_bmargin_invalidated) y2 = wstat.m_canvas_height;
         if (y1 < y2)
           graphics.fill_rectangle(0, y1, wstat.m_canvas_width, y2, bg);
       }
@@ -781,9 +876,9 @@ namespace ansi {
       for (curpos_t iline = 0; iline < height; iline++, y += ypixel) {
         // Note: はみ出ない事は自明なので is_redraw_requested
         //   ではなくて is_invalidated の時だけ描画でOK
-        if (!content[iline].is_invalidated) continue;
+        if (!update.lines[iline].is_invalidated) continue;
 
-        std::vector<cell_t>& cells = content[iline].cells;
+        std::vector<cell_t>& cells = update.lines[iline].cells;
         x = xorigin;
         x0 = x;
         bg0 = 0;
@@ -1017,6 +1112,10 @@ namespace ansi {
       tstate_t const& s = view.state();
       color_resolver_t _color(s);
 
+      aflags_t invisible_flags = attribute_t::is_invisible_set;
+      if (wstat.m_blinking_count & 1) invisible_flags |= attribute_t::is_rapid_blink_set;
+      if (wstat.m_blinking_count & 2) invisible_flags |= attribute_t::is_blink_set;
+
       coord_t x = xorigin, y = yorigin;
 
       color_t color0 = 0;
@@ -1150,7 +1249,7 @@ namespace ansi {
           if (cell.width == 0) continue;
           coord_t const cell_width = cell.width * xpixel;
           color_t color = 0;
-          if (code != ascii_nul && !(aflags & attribute_t::is_invisible_set))
+          if (code != ascii_nul && !(aflags & invisible_flags))
             color = _color.resolve_fg(cell.attribute);
           if (color != color0) {
             dec_ul.update(x, 0, (xflags_t) 0);
@@ -1254,47 +1353,39 @@ namespace ansi {
     //   gbuffer.bitblt(ctx1, x1, y1, w, h, ctx2, x2, y2)
     //   gbuffer.render(x1, y1, w, h, ctx2, x2, y2)
     template<typename Window, typename GraphicsBuffer>
-    void render_view(Window& win, GraphicsBuffer& gbuffer, term_view_t& view, bool full_update) {
+    void render_view(Window& win, GraphicsBuffer& gbuffer, term_view_t& view, bool requests_full_update) {
       using graphics_t = typename GraphicsBuffer::graphics_t;
       using context_t = typename GraphicsBuffer::context_t;
 
       // update status
       view.update();
 
-      bool const content_changed = m_tracer.is_content_changed(view);
-      bool const cursor_changed = m_tracer.is_cursor_changed(wstat, view);
+      content_update update;
+      bool const content_redraw = this->construct_update(view, update, requests_full_update);
       {
         // update cursor state
         bool const cursor_blinking = view.state().is_cursor_blinking();
         bool const cursor_visible = wstat.is_cursor_visible(view);
         if (!cursor_visible || !cursor_blinking)
           win.unset_cursor_timer();
-        else if (content_changed || cursor_changed)
+        else if (update.is_content_changed || update.is_cursor_changed)
           win.reset_cursor_timer();
       }
-
-      if (m_tracer.is_metric_changed(wstat)) full_update = true;
-      bool content_redraw = full_update || content_changed;
-      if (m_tracer.is_blinking_changed(wstat)) content_redraw = true;
 
       context_t const ctx0 = gbuffer.layer(0);
       context_t const ctx1 = gbuffer.layer(1);
       graphics_t g0(gbuffer, ctx0);
-
       if (content_redraw) {
-        std::vector<line_content> content;
-        this->construct_content(view, content, full_update);
-
         // 変更のあった領域の描画
         wstat.m_canvas_width = gbuffer.width();
         wstat.m_canvas_height = gbuffer.height();
-        //this->draw_characters_mono(g1, view, content);
-        this->draw_background(g0, view, content, full_update);
-        this->draw_characters(g0, view, content);
-        this->draw_decoration(g0, view, content);
+        //this->draw_characters_mono(g1, view, update.lines);
+        this->draw_background(g0, view, update);
+        this->draw_characters(g0, view, update.lines);
+        this->draw_decoration(g0, view, update.lines);
 
         // 変化のなかった領域の転写
-        this->transfer_unchanged_content(gbuffer, ctx0, ctx1, content);
+        this->transfer_unchanged_content(gbuffer, ctx0, ctx1, update.lines);
 
         // ToDo: 更新のあった部分だけ転送する?
         // 更新のあった部分 = 内容の変更・点滅の変更・選択範囲の変更など

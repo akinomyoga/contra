@@ -908,6 +908,12 @@ namespace tx11 {
         this->process_window_resize();
         break;
 
+      case KeyRelease:
+      case MapNotify:
+      case ReparentNotify:
+        // 無視
+        break;
+
       default:
         std::fprintf(stderr, "Event %s (%d)\n", get_x11_event_name(event), event.type);
         break;
