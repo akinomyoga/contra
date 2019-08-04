@@ -97,12 +97,13 @@ namespace ansi {
       m_ypixel = wstat.m_ypixel;
     }
 
-  private:
+  public:
     struct line_trace_t {
       std::uint32_t id = (std::uint32_t) -1;
       std::uint32_t version = 0;
       bool has_blinking = false;
     };
+  private:
     std::vector<line_trace_t> m_lines;
   public:
     bool is_content_changed(term_view_t const& view) const {
@@ -125,6 +126,7 @@ namespace ansi {
         m_lines[i].has_blinking = original_line.has_blinking_cells();
       }
     }
+    std::vector<line_trace_t> const& lines() const { return m_lines; }
 
   private:
     std::uint32_t m_blinking_count = 0;
@@ -530,6 +532,175 @@ namespace ansi {
   public:
     window_renderer_t(window_state_t& wstat): wstat(wstat) {}
 
+  private:
+    status_tracer_t m_tracer;
+  public:
+    bool has_blinking_cells() const {
+      return m_tracer.has_blinking_cells();
+    }
+
+  private:
+    //
+    // traceline_* の実装
+    //
+    //   traceline_* では行の移動と変更を追跡し、
+    //   どの行を BitBlt/XCopyArea でコピーできて、
+    //   どの行を再描画する必要があるかを決定する。
+    //   特に、行の描画内容が隣の行にはみ出ている行がある事を考慮に入れて、
+    //   はみ出ている量に応じて invalidate を実施する。
+    //
+    //   変化を追跡する為に前回の内容と新しい内容を比較する。
+    //   行の追跡と変更の検出には行の id/version を用いる。
+    //   はみ出ている量は現在は 1 で固定している。
+    //   将来的に拡張する時は traceline_trace の中で a/d を設定する様にすれば良い。
+    //   はみ出ている量は同じ id の行でも前回と今回で変化している可能性がある事に注意する。
+    //
+    struct traceline_record {
+      curpos_t y0 = -1;         //!< 移動前・移動後の対応する表示位置
+      curpos_t a = 1;           //!< 行の描画内容が上にa行はみ出ている
+      curpos_t d = 1;           //!< 行の描画内容が下にd行はみ出ている
+      bool changed = false;     //!< 自身が変更されたかどうか
+      bool invalidated = false; //!< 自領域の再描画の必要性
+      bool redraw = false;      //!< 再描画が要求されるかどうか
+    };
+
+    void traceline_trace(term_view_t const& view, std::vector<traceline_record>& new_trace, std::vector<traceline_record>& old_trace) {
+      auto const& old_lines = m_tracer.lines();
+      std::size_t const old_height = old_lines.size();
+      std::size_t const new_height = view.height();
+
+      old_trace.clear();
+      new_trace.clear();
+      old_trace.resize(old_height);
+      new_trace.resize(new_height);
+
+      for (std::size_t i = 0, j = 0; i < new_height; i++) {
+        auto const id = view.line(i).id();
+        auto const version = view.line(i).version();
+        for (std::size_t j1 = j; j1 < old_height; j1++) {
+          if (old_lines[j1].id == id) {
+            bool const changed = old_lines[j1].version != version;
+            old_trace[j1].y0 = i;
+            new_trace[i].y0 = j1;
+            old_trace[j1].changed = changed;
+            new_trace[i].changed = changed;
+            j = j1 + 1;
+            break;
+          }
+        }
+      }
+    }
+
+    void traceline_invalidate(std::vector<traceline_record>& new_trace, std::vector<traceline_record> const& old_trace) {
+      // invalidate by self change
+      curpos_t const new_height = (curpos_t) new_trace.size();
+      for (curpos_t i = 0; i < new_height; i++) {
+        if (new_trace[i].y0 == -1 || new_trace[i].changed)
+          new_trace[i].invalidated = true;
+      }
+
+      // invalidate around old lines
+      curpos_t const old_height = (curpos_t) old_trace.size();
+      for (curpos_t j = 0; j < old_height; j++) {
+        auto const& entry = old_trace[j];
+        curpos_t const j1a = std::max(j - entry.a, 0);
+        curpos_t const j1d = std::min(j + entry.d, old_height - 1);
+        if (entry.y0 == -1 || entry.changed) {
+          for (curpos_t j1 = j1a; j1 < j; j1++) {
+            curpos_t const i1 = old_trace[j1].y0;
+            if (i1 >= 0) new_trace[i1].invalidated = true;
+          }
+          for (curpos_t j1 = j1d; j1 > j; j1--) {
+            curpos_t const i1 = old_trace[j1].y0;
+            if (i1 >= 0) new_trace[i1].invalidated = true;
+          }
+        } else {
+          curpos_t const shift = entry.y0 - j;
+          for (curpos_t j1 = j1a; j1 < j; j1++) {
+            curpos_t const i1 = old_trace[j1].y0;
+            if (i1 >= 0 && i1 - j1 != shift) new_trace[i1].invalidated = true;
+          }
+          for (curpos_t j1 = j1d; j1 > j; j1--) {
+            curpos_t const i1 = old_trace[j1].y0;
+            if (i1 >= 0 && i1 - j1 != shift) new_trace[i1].invalidated = true;
+          }
+        }
+      }
+
+      // invalidate around new lines
+      for (curpos_t i = 0; i < new_height; i++) {
+        auto const& entry = new_trace[i];
+        curpos_t const i1a = std::max(i - entry.a, 0);
+        curpos_t const i1d = std::min(i + entry.d, new_height - 1);
+        if (entry.y0 == -1 || entry.changed) {
+          for (curpos_t i1 = i1a; i1 < i; i1++)
+            new_trace[i1].invalidated = true;
+          for (curpos_t i1 = i1d; i1 > i; i1--)
+            new_trace[i1].invalidated = true;
+        } else {
+          curpos_t const shift = i - entry.y0;
+          for (curpos_t i1 = i1a; i1 < i; i1++) {
+            curpos_t const j1 = new_trace[i1].y0;
+            if (j1 >= 0 && i1 - j1 != shift)
+              new_trace[i1].invalidated = true;
+          }
+          for (curpos_t i1 = i1d; i1 > i; i1--) {
+            curpos_t const j1 = new_trace[i1].y0;
+            if (j1 >= 0 && i1 - j1 != shift)
+              new_trace[i1].invalidated = true;
+          }
+        }
+      }
+    }
+
+    void traceline_request(std::vector<traceline_record>& new_trace) {
+      curpos_t const height = (curpos_t) new_trace.size();
+      for (curpos_t i = 0; i < height; i++) {
+        auto const& entry = new_trace[i];
+        curpos_t const i1a = std::max(i - entry.a, 0);
+        curpos_t const i1d = std::min(i + entry.d, height - 1);
+        for (curpos_t i1 = i1a; i1 <= i1d; i1++) {
+          if (new_trace[i1].invalidated) {
+            new_trace[i].redraw = true;
+            break;
+          }
+        }
+      }
+    }
+
+  private:
+    struct line_content {
+      curpos_t previous_line_index;
+      bool is_invalidated;
+      bool is_redraw_requested;
+      std::vector<cell_t> cells;
+    };
+    void construct_content(term_view_t const& view, std::vector<line_content>& content, bool full_update) {
+      curpos_t const height = view.height();
+      content.resize(height);
+      if (full_update) {
+        for (curpos_t i = 0; i < height; i++) {
+          content[i].previous_line_index = -1;
+          content[i].is_invalidated = true;
+          content[i].is_redraw_requested = true;
+          view.get_cells_in_presentation(content[i].cells, view.line(i));
+        }
+      } else {
+        std::vector<traceline_record> new_trace;
+        std::vector<traceline_record> old_trace;
+        traceline_trace(view, new_trace, old_trace);
+        traceline_invalidate(new_trace, old_trace);
+        traceline_request(new_trace);
+        for (curpos_t i = 0; i < height; i++) {
+          content[i].previous_line_index = new_trace[i].y0;
+          content[i].is_invalidated = new_trace[i].invalidated;
+          content[i].is_redraw_requested = new_trace[i].redraw;
+          if (content[i].is_redraw_requested)
+            view.get_cells_in_presentation(content[i].cells, view.line(i));
+        }
+      }
+    }
+
   public:
     template<typename Graphics>
     void draw_cursor(Graphics& graphics, term_view_t const& view) {
@@ -571,7 +742,7 @@ namespace ansi {
 
   public:
     template<typename Graphics>
-    void draw_background(Graphics& graphics, term_view_t const& view, std::vector<std::vector<cell_t>>& content) {
+    void draw_background(Graphics& graphics, term_view_t const& view, std::vector<line_content>& content, bool full_update) {
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;
       coord_t const ypixel = wstat.m_ypixel;
@@ -581,18 +752,38 @@ namespace ansi {
       color_resolver_t _color(s);
 
       color_t const bg = _color.resolve(s.m_default_bg_space, s.m_default_bg_color);
-      graphics.fill_rectangle(0, 0, wstat.m_canvas_width, wstat.m_canvas_height, bg);
+      if (full_update) {
+        graphics.fill_rectangle(0, 0, wstat.m_canvas_width, wstat.m_canvas_height, bg);
+      } else {
+        // ToDo: 上下余白の再描画については後で考える
+        coord_t y1 = yorigin, y2 = yorigin;
+        for (curpos_t iline = 0; iline < height; iline++) {
+          if (content[iline].is_invalidated) {
+            y2 += ypixel;
+          } else {
+            if (y1 < y2)
+              graphics.fill_rectangle(0, y1, wstat.m_canvas_width, y2, bg);
+            y1 = y2 += ypixel;
+          }
+        }
+        if (y1 < y2)
+          graphics.fill_rectangle(0, y1, wstat.m_canvas_width, y2, bg);
+      }
 
       coord_t x = xorigin, y = yorigin;
       coord_t x0 = x;
       color_t bg0 = 0;
       auto _fill = [=, &graphics, &x, &y, &x0, &bg0] () {
-        if (x0 >= x || !bg0) return;
+        if (x0 >= x || !bg0 || bg0 == bg) return;
         graphics.fill_rectangle(x0, y, x, y + ypixel, bg0);
       };
 
       for (curpos_t iline = 0; iline < height; iline++, y += ypixel) {
-        std::vector<cell_t>& cells = content[iline];
+        // Note: はみ出ない事は自明なので is_redraw_requested
+        //   ではなくて is_invalidated の時だけ描画でOK
+        if (!content[iline].is_invalidated) continue;
+
+        std::vector<cell_t>& cells = content[iline].cells;
         x = xorigin;
         x0 = x;
         bg0 = 0;
@@ -623,7 +814,7 @@ namespace ansi {
 
   public:
     template<typename Graphics>
-    void draw_characters(Graphics& g, term_view_t const& view, std::vector<std::vector<contra::ansi::cell_t>>& content) {
+    void draw_characters(Graphics& g, term_view_t const& view, std::vector<line_content>& content) {
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;
       coord_t const ypixel = wstat.m_ypixel;
@@ -668,7 +859,9 @@ namespace ansi {
       };
 
       for (curpos_t iline = 0; iline < height; iline++, y += ypixel) {
-        std::vector<cell_t>& cells = content[iline];
+        if (!content[iline].is_redraw_requested) continue;
+
+        std::vector<cell_t>& cells = content[iline].cells;
         x = xorigin;
         charbuff.reserve(cells.size());
 
@@ -748,7 +941,7 @@ namespace ansi {
       }
     }
     template<typename Graphics>
-    void draw_characters_mono(Graphics& g, term_view_t const& view, std::vector<std::vector<cell_t>> const& content) {
+    void draw_characters_mono(Graphics& g, term_view_t const& view, std::vector<line_content> const& content) {
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;
       coord_t const ypixel = wstat.m_ypixel;
@@ -757,11 +950,12 @@ namespace ansi {
 
       std::vector<cell_t> cells;
       typename Graphics::character_buffer charbuff;
-      for (curpos_t y = 0; y < height; y++) {
-        std::vector<cell_t> const& cells = content[y];
+      for (curpos_t iline = 0; iline < height; iline++) {
+        if (!content[iline].is_redraw_requested) continue;
+        std::vector<cell_t> const& cells = content[iline].cells;
 
         coord_t xoffset = xorigin;
-        coord_t yoffset = yorigin + y * ypixel;
+        coord_t yoffset = yorigin + iline * ypixel;
         charbuff.clear();
         charbuff.reserve(cells.size());
         for (auto const& cell : cells) {
@@ -814,7 +1008,7 @@ namespace ansi {
     };
   public:
     template<typename Graphics>
-    void draw_decoration(Graphics& g, term_view_t const& view, std::vector<std::vector<cell_t>>& content) {
+    void draw_decoration(Graphics& g, term_view_t const& view, std::vector<line_content>& content) {
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;
       coord_t const ypixel = wstat.m_ypixel;
@@ -942,7 +1136,9 @@ namespace ansi {
       };
 
       for (curpos_t iline = 0; iline < height; iline++, y += ypixel) {
-        std::vector<cell_t>& cells = content[iline];
+        if (!content[iline].is_redraw_requested) continue;
+
+        std::vector<cell_t>& cells = content[iline].cells;
         x = xorigin;
         color0 = 0;
 
@@ -1012,10 +1208,40 @@ namespace ansi {
     }
 
   private:
-    status_tracer_t m_tracer;
-  public:
-    bool has_blinking_cells() const {
-      return m_tracer.has_blinking_cells();
+    template<typename GraphicsBuffer>
+    void transfer_unchanged_content(
+      GraphicsBuffer& gbuffer,
+      typename GraphicsBuffer::context_t const& ctx0,
+      typename GraphicsBuffer::context_t const& ctx1,
+      std::vector<line_content> const& content
+    ) {
+      coord_t const yorigin = wstat.m_yframe;
+      coord_t const ypixel = wstat.m_ypixel;
+
+      curpos_t y1dst = -1, y1src = -1;
+      curpos_t y2dst = 0;
+      auto const _transfer = [&, yorigin, ypixel, width = wstat.m_canvas_width] () {
+        if (y1dst >= 0) {
+          coord_t const y1dst_pixel = yorigin + y1dst * ypixel;
+          coord_t const y1src_pixel = yorigin + y1src * ypixel;
+          coord_t const height = (y2dst - y1dst) * ypixel;
+          gbuffer.bitblt(ctx0, 0, y1dst_pixel, width, height, ctx1, 0, y1src_pixel);
+          y1dst = -1;
+        }
+      };
+
+      for (; y2dst < (curpos_t) content.size(); y2dst++) {
+        if (!content[y2dst].is_invalidated) {
+          curpos_t const y2src = content[y2dst].previous_line_index;
+          if (y1dst >= 0 && y2dst - y2src == y1dst - y1src) continue;
+          _transfer();
+          y1dst = y2dst;
+          y1src = y2src;
+        } else {
+          _transfer();
+        }
+      }
+      _transfer();
     }
 
   public:
@@ -1031,7 +1257,6 @@ namespace ansi {
     void render_view(Window& win, GraphicsBuffer& gbuffer, term_view_t& view, bool full_update) {
       using graphics_t = typename GraphicsBuffer::graphics_t;
       using context_t = typename GraphicsBuffer::context_t;
-      context_t const ctx0 = gbuffer.layer(0);
 
       // update status
       view.update();
@@ -1049,43 +1274,40 @@ namespace ansi {
       }
 
       if (m_tracer.is_metric_changed(wstat)) full_update = true;
-
-      context_t const ctx1 = gbuffer.layer(1);
-      wstat.m_canvas_width = gbuffer.width();
-      wstat.m_canvas_height = gbuffer.height();
-
       bool content_redraw = full_update || content_changed;
       if (m_tracer.is_blinking_changed(wstat)) content_redraw = true;
+
+      context_t const ctx0 = gbuffer.layer(0);
+      context_t const ctx1 = gbuffer.layer(1);
+      graphics_t g0(gbuffer, ctx0);
+
       if (content_redraw) {
-        std::vector<std::vector<cell_t>> content;
-        curpos_t const height = view.height();
-        content.resize(height);
+        std::vector<line_content> content;
+        this->construct_content(view, content, full_update);
 
-        for (curpos_t y = 0; y < height; y++) {
-          line_t const& line = view.line(y);
-          view.get_cells_in_presentation(content[y], line);
-        }
-
-        graphics_t g1(gbuffer, ctx1);
+        // 変更のあった領域の描画
+        wstat.m_canvas_width = gbuffer.width();
+        wstat.m_canvas_height = gbuffer.height();
         //this->draw_characters_mono(g1, view, content);
-        this->draw_background(g1, view, content);
-        this->draw_characters(g1, view, content);
-        this->draw_decoration(g1, view, content);
+        this->draw_background(g0, view, content, full_update);
+        this->draw_characters(g0, view, content);
+        this->draw_decoration(g0, view, content);
+
+        // 変化のなかった領域の転写
+        this->transfer_unchanged_content(gbuffer, ctx0, ctx1, content);
 
         // ToDo: 更新のあった部分だけ転送する?
-        // 更新のあった部分 = 内用の変更・点滅の変更・選択範囲の変更など
-        gbuffer.bitblt(ctx0, 0,0, gbuffer.width(), gbuffer.height(), ctx1, 0, 0);
-      }
-
-      if (!full_update) {
+        // 更新のあった部分 = 内容の変更・点滅の変更・選択範囲の変更など
+        gbuffer.bitblt(ctx1, 0,0, gbuffer.width(), gbuffer.height(), ctx0, 0, 0);
+      } else {
         // 前回のカーソル位置のセルをカーソルなしに戻す。
         coord_t const old_x1 = wstat.m_xframe + wstat.m_xpixel * m_tracer.cur_x();
         coord_t const old_y1 = wstat.m_yframe + wstat.m_ypixel * m_tracer.cur_y();
         gbuffer.bitblt(ctx0, old_x1, old_y1, wstat.m_xpixel, wstat.m_ypixel, ctx1, old_x1, old_y1);
       }
+
       if (wstat.is_cursor_appearing(view)) {
-        graphics_t g(gbuffer, ctx0);
-        this->draw_cursor(g, view);
+        this->draw_cursor(g0, view);
       }
 
       gbuffer.render(0, 0, gbuffer.width(), gbuffer.height(), ctx0, 0, 0);
