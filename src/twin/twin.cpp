@@ -144,22 +144,61 @@ namespace twin {
 
   class win_font_factory {
     static_assert(sizeof(TCHAR) == 2 && sizeof(wchar_t) == 2);
-    std::u16string m_fontnames[16];
     LOGFONT m_logfont_normal;
+
+    // 縦横比がフォントによって異なる事があるので、その補正用
+    struct average_metric {
+      double widht, height;
+    };
+
+    struct font_info {
+      std::u16string name;
+      double width = 0.0;
+      double height = 1.0;
+
+    private:
+      static int CALLBACK EnumFontFamExProc(LOGFONT const* lplf, TEXTMETRIC const* lptm, DWORD nFontType, LPARAM lParam) {
+        contra_unused(lplf);
+        if (nFontType == TRUETYPE_FONTTYPE) {
+          auto const finfo = reinterpret_cast<font_info*>(lParam);
+          auto const lpntm = reinterpret_cast<NEWTEXTMETRICEX const*>(lptm);
+          finfo->width = (double) lpntm->ntmTm.ntmAvgWidth / lpntm->ntmTm.ntmSizeEM;
+          finfo->height = (double) lpntm->ntmTm.ntmCellHeight / lpntm->ntmTm.ntmSizeEM;
+          return 0;
+        } else {
+          return 1;
+        }
+      }
+
+    public:
+      void initialize_metric() {
+        this->width = 1.0;
+        this->height = 1.0;
+        HDC hdc = ::GetDC(0);
+        LOGFONT logfont = {};
+        logfont.lfCharSet = DEFAULT_CHARSET;
+        logfont.lfPitchAndFamily = 0;
+        xcscpy_s(logfont.lfFaceName, LF_FACESIZE, (LPCTSTR) name.c_str());
+        ::EnumFontFamiliesEx(hdc, &logfont, (FONTENUMPROC) &EnumFontFamExProc, reinterpret_cast<LPARAM>(this), 0);
+        ::ReleaseDC(0, hdc);
+      }
+    } m_fontinfo[16];
+
+    std::unordered_map<std::u16string, average_metric> m_width_factors;
 
   private:
     void initialize_fontnames() {
-      m_fontnames[0]  = u"MeiryoKe_Console";
-      m_fontnames[1]  = u"MS Gothic";
-      m_fontnames[2]  = u"MS Mincho";
-      m_fontnames[3]  = u"HGMaruGothicMPRO";
-      m_fontnames[4]  = u"HGKyokashotai";
-      m_fontnames[5]  = u"HGGyoshotai";
-      m_fontnames[6]  = u"HGSeikaishotaiPRO";
-      m_fontnames[7]  = u"HGSoeiKakupoptai";
-      m_fontnames[8]  = u"HGGothicM";
-      m_fontnames[9]  = u"Times New Roman";
-      m_fontnames[10] = u"aghtex_mathfrak";
+      m_fontinfo[0].name  = u"MeiryoKe_Console";
+      m_fontinfo[1].name  = u"MS Gothic";
+      m_fontinfo[2].name  = u"MS Mincho";
+      m_fontinfo[3].name  = u"HGMaruGothicMPRO";
+      m_fontinfo[4].name  = u"HGKyokashotai";
+      m_fontinfo[5].name  = u"HGGyoshotai";
+      m_fontinfo[6].name  = u"HGSeikaishotaiPRO";
+      m_fontinfo[7].name  = u"HGSoeiKakupoptai";
+      m_fontinfo[8].name  = u"HGGothicM";
+      m_fontinfo[9].name  = u"Times New Roman";
+      m_fontinfo[10].name = u"aghtex_mathfrak";
     }
 
     // Note: initialize_fontnames の後に呼び出す事
@@ -178,17 +217,22 @@ namespace twin {
       //m_logfont_normal.lfClipPrecision = CLIP_DEFAULT_PRECIS;
       m_logfont_normal.lfQuality = CLEARTYPE_QUALITY;
       m_logfont_normal.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-      xcscpy_s(m_logfont_normal.lfFaceName, LF_FACESIZE, (LPCTSTR) m_fontnames[0].c_str());
+      xcscpy_s(m_logfont_normal.lfFaceName, LF_FACESIZE, (LPCTSTR) m_fontinfo[0].name.c_str());
     }
 
   public:
-    LOGFONT create_logfont(font_t font, ansi::font_metric_t const& metric) const {
+    LOGFONT create_logfont(font_t font, ansi::font_metric_t const& metric) {
+      double widthFactor = 1.0;
+
       LOGFONT logfont = m_logfont_normal;
       logfont.lfHeight = metric.height();
       logfont.lfWidth  = metric.width();
-      if (font_t const face = (font & font_face_mask) >> font_face_shft)
-        if (std::u16string const& fontname = m_fontnames[face]; !fontname.empty())
-          xcscpy_s(logfont.lfFaceName, LF_FACESIZE, (LPCTSTR) fontname.c_str());
+      font_t const face = (font & font_face_mask) >> font_face_shft;
+      if (auto& info = m_fontinfo[face]; !info.name.empty()) {
+        xcscpy_s(logfont.lfFaceName, LF_FACESIZE, (LPCTSTR) info.name.c_str());
+        if (info.width == 0.0) info.initialize_metric();
+        widthFactor = 2.0 * info.width;
+      }
       if (font & font_flag_italic)
         logfont.lfItalic = TRUE;
 
@@ -209,6 +253,7 @@ namespace twin {
         logfont.lfEscapement  = 450 * rotation;
       }
 
+      logfont.lfWidth = (LONG) (logfont.lfWidth * widthFactor);
       return logfont; /* NRVO */
     }
 
@@ -220,7 +265,7 @@ namespace twin {
       initialize_logfont(); // Note: initialize_fontnames の後に呼び出す事
     }
 
-    font_type create_font(font_t font, ansi::font_metric_t const& metric) const {
+    font_type create_font(font_t font, ansi::font_metric_t const& metric) {
       LOGFONT const logfont = create_logfont(font, metric);
       return ::CreateFontIndirect(&logfont);
     }
@@ -250,24 +295,23 @@ namespace twin {
     }
   public:
     void configure(contra::app::context& actx) {
-      actx.read("term_font_default", m_fontnames[0] , &parse_fontname);
-      actx.read("term_font_ansi1"  , m_fontnames[1] , &parse_fontname);
-      actx.read("term_font_ansi2"  , m_fontnames[2] , &parse_fontname);
-      actx.read("term_font_ansi3"  , m_fontnames[3] , &parse_fontname);
-      actx.read("term_font_ansi4"  , m_fontnames[4] , &parse_fontname);
-      actx.read("term_font_ansi5"  , m_fontnames[5] , &parse_fontname);
-      actx.read("term_font_ansi6"  , m_fontnames[6] , &parse_fontname);
-      actx.read("term_font_ansi7"  , m_fontnames[7] , &parse_fontname);
-      actx.read("term_font_ansi8"  , m_fontnames[8] , &parse_fontname);
-      actx.read("term_font_ansi9"  , m_fontnames[9] , &parse_fontname);
-      actx.read("term_font_frak"   , m_fontnames[10], &parse_fontname);
-      xcscpy_s(m_logfont_normal.lfFaceName, LF_FACESIZE, (LPCTSTR) m_fontnames[0].c_str());
+      actx.read("term_font_default", m_fontinfo[0].name , &parse_fontname);
+      actx.read("term_font_ansi1"  , m_fontinfo[1].name , &parse_fontname);
+      actx.read("term_font_ansi2"  , m_fontinfo[2].name , &parse_fontname);
+      actx.read("term_font_ansi3"  , m_fontinfo[3].name , &parse_fontname);
+      actx.read("term_font_ansi4"  , m_fontinfo[4].name , &parse_fontname);
+      actx.read("term_font_ansi5"  , m_fontinfo[5].name , &parse_fontname);
+      actx.read("term_font_ansi6"  , m_fontinfo[6].name , &parse_fontname);
+      actx.read("term_font_ansi7"  , m_fontinfo[7].name , &parse_fontname);
+      actx.read("term_font_ansi8"  , m_fontinfo[8].name , &parse_fontname);
+      actx.read("term_font_ansi9"  , m_fontinfo[9].name , &parse_fontname);
+      actx.read("term_font_frak"   , m_fontinfo[10].name, &parse_fontname);
     }
   };
 
   class win_font_manager_t: public ansi::font_manager_t<win_font_factory> {
   public:
-    LOGFONT create_logfont(font_t font) const {
+    LOGFONT create_logfont(font_t font) {
       return factory().create_logfont(font, static_cast<ansi::font_metric_t const&>(*this));
     }
   };
@@ -545,7 +589,8 @@ namespace twin {
 
   public:
     twin_window_t() {
-      actx.load("twin.conf");
+      std::string config_dir = contra::term::get_config_directory();
+      actx.load((config_dir + "/contra/twin.conf").c_str());
 
       // size and dimension
       actx.read("term_col", wstat.m_col = 80);
@@ -1040,7 +1085,7 @@ namespace twin {
       if (!is_session_ready() || !m_ime_composition_active) return;
       util::raii hIMC(::ImmGetContext(hWnd), [this] (auto hIMC) { ::ImmReleaseContext(hWnd, hIMC); });
 
-      win_font_manager_t const& font_manager = gbuffer.fstore();
+      win_font_manager_t& font_manager = gbuffer.fstore();
 
       font_t const current_font = font_resolver_t().resolve_font(manager.app().term().cursor().attribute) & ~font_rotation_mask;
       auto const [dx, dy, dxW] = font_manager.get_displacement(current_font);

@@ -228,21 +228,6 @@
   然し vim, top も、Window サイズ変更に追随して来ない。
   端末の中で起動していない設定になっているのだろうか…。
 
-* twin: 色々フォントを試していたら幅が変な事になるものがある
-  例えば "UD Digi Kyokasho N-R" は半分になってしまう。
-  検索するとどうもデフォルトでは lfWidth = 0 を指定する物らしい。
-  自分で lfWidth を設定すると勝手に変形されてしまうという事の様だ。
-  http://vcpp-ml.ldblog.jp/archives/1160416.html
-
-  http://forums.codeguru.com/showthread.php?552383-Calculating-the-real-lfWidth-value-of-LOGFONT-when-lfWidth-0
-  然し自分でどの値がそのフォントの標準なのかを調べようとしても出てこない。
-  上のページではその方法を探しているが結局わからない様だ。
-
-  https://programdoria.com/tag/windowsapi/
-  ここに正に欲しい情報が書かれていた。
-  取り敢えず EnumFontFamiliesEx を呼び出して調べてみることにしようか。
-  というかこれは今の書き換えを commit してからやる。
-
 * test: 文字の種類とフォントの切り替えに関して。
   取り敢えず暫くは contra の上で作業をしてみようと思う。
   気づいたのだが実はフォントが微妙に違うのである。
@@ -1884,7 +1869,40 @@
 
 2019-08-05
 
-* manager: 複数画面対応
+* twin: 色々フォントを試していたら幅が変な事になるものがある [#D0185]
+  例えば "UD Digi Kyokasho N-R" は半分になってしまう。
+  検索するとどうもデフォルトでは lfWidth = 0 を指定する物らしい。
+  自分で lfWidth を設定すると勝手に変形されてしまうという事の様だ。
+  http://vcpp-ml.ldblog.jp/archives/1160416.html
+
+  http://forums.codeguru.com/showthread.php?552383-Calculating-the-real-lfWidth-value-of-LOGFONT-when-lfWidth-0
+  然し自分でどの値がそのフォントの標準なのかを調べようとしても出てこない。
+  上のページではその方法を探しているが結局わからない様だ。
+
+  https://programdoria.com/tag/windowsapi/
+  ここに正に欲しい情報が書かれていた。
+  取り敢えず EnumFontFamiliesEx を呼び出して調べてみることにしようか。
+  というかこれは今の書き換えを commit してからやる。
+
+  % 取り敢えず此処のサンプルプログラムを参考にしてフォントの情報を取得してみると…。
+  % 三つしかフォントが表示されない。 Courier, MS Serif, MS Sans Serif である。うーん。
+  % lfCharSet を DEFAULT_CHARSET にして見た所、代わりに System, @System, Terminal になった。
+  % 更に lfFontFace を目的の物にしようとしたところ segfault した。
+  % - どうも NEWTEXTMETRICEX に変換できるのは truetype の時だけの様だ。
+  % - 後 lambda で指定していた所 __stdcall になっていなかった様に思われる。
+  %   segfault の原因はこれである。
+
+  呼び出し方が悪かった様である。ちゃんと修正したら大量のフォント情報が出力される様になった。
+
+  - また、lfFaceName 及び elfFullName は英語ではなく日本語で取得される。
+    しかし日本語で指定するとそもそも列挙されない。これは難しい。
+  - 取得される情報は大量なので全てのフォントを列挙するのは諦める事にする。
+    必要になったフォントから順に一つずつ情報を読み取る様にすれば良いのである。
+
+  取り敢えず修正した。更に描画位置の補正も必要になるだろうか…。
+  →まあ、これに関しては現状で問題に鳴っていないし baseline を乱すのも嫌なので取り敢えずは補正しない。
+
+* manager: 複数画面対応 [#D0184]
 
   取り敢えず試しに実装してみた。
 
@@ -1900,7 +1918,8 @@
 
   * done: modifier key 及び scroll lock の効果について設定可能にする。
 
-  * Alt-v でペーストしたい。
+  * done: App-v でペーストしたい。
+    → App-C-v 及び App-C-c でコピー・ペーストに対応する事にした。
 
 2019-08-04
 

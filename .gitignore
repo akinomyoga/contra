@@ -19,6 +19,7 @@
 /src/impl?-dump.txt
 /src/ttty-*.txt
 /src/twin-*.txt
+/src/twin/test.*.txt
 
 # private files
 /mat

@@ -312,5 +312,21 @@ namespace term {
     return sess;
   }
 
+  std::string get_home_directory() {
+    struct passwd* pw = ::getpwuid(::getuid());
+    if (pw && pw->pw_dir)
+      return pw->pw_dir;
+    return std::getenv("HOME");
+  }
+  std::string get_config_directory() {
+    const char* config_home = std::getenv("XDG_CONFIG_HOME");
+    if (config_home && *config_home) return config_home;
+
+    std::string dir = get_home_directory();
+    if (!dir.empty() && dir.back() != '/') dir += '/';
+    dir += ".local/share";
+    return dir;
+  }
+
 }
 }

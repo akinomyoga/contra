@@ -20,6 +20,9 @@ namespace term {
   std::size_t read_from_fd(int fdsrc, contra::idevice* dst, char* buff, std::size_t size);
   void fd_set_winsize(int fd, struct winsize const* ws);
 
+  std::string get_home_directory();
+  std::string get_config_directory();
+
   class fd_device: public contra::idevice {
   protected:
     int m_fd = -1;

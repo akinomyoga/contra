@@ -40,9 +40,9 @@ namespace contra::app {
   template<>
   struct conv_impl<bool, void> {
     bool operator()(bool& value, const char* text) const {
-      if (std::strcmp(text, "true"))
+      if (std::strcmp(text, "true") == 0)
         value = true;
-      else if (std::strcmp(text, "false"))
+      else if (std::strcmp(text, "false") == 0)
         value = false;
       else
         return false;

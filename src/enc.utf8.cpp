@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <vector>
 #include <string>
+#include <ostream>
 #include <mwg/except.h>
 #include "enc.utf8.hpp"
 #include "contradef.hpp"
@@ -50,6 +51,9 @@ namespace encoding {
   }
   bool put_u8(char32_t c, std::FILE* file) {
     return put_u8_impl(c, [=] (byte b) { std::putc(b, file); });
+  }
+  bool put_u8(char32_t c, std::ostream& file) {
+    return put_u8_impl(c, [&file] (byte b) { file.put((char) b); });
   }
 
   void utf8_decode(char const*& ibeg, char const* iend, char32_t*& obeg, char32_t* oend, std::uint64_t& state, std::int32_t error_char) {
