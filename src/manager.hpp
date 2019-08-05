@@ -408,6 +408,7 @@ namespace term {
           }
           return true;
 
+        case ascii_v:
         case ascii_v | modifier_control:
           clipboard_paste();
           return true;

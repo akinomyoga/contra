@@ -81,40 +81,7 @@ namespace twin {
   using namespace contra::term;
   using namespace contra::ansi;
 
-  struct window_settings_base {
-    key_t term_mod_lshift = modifier_shift;
-    key_t term_mod_rshift = modifier_shift;
-    key_t term_mod_lcontrol = modifier_control;
-    key_t term_mod_rcontrol = modifier_control;
-    key_t term_mod_lalter = modifier_meta;
-    key_t term_mod_ralter = modifier_meta;
-    key_t term_mod_lmeta = modifier_meta;
-    key_t term_mod_rmeta = modifier_meta;
-    key_t term_mod_lsuper = modifier_super;
-    key_t term_mod_rsuper = modifier_super;
-    key_t term_mod_lhyper = modifier_hyper;
-    key_t term_mod_rhyper = modifier_hyper;
-    key_t term_mod_menu = modifier_application;
-
-    void configure(contra::app::context& actx) {
-      // modifiers
-      actx.read("term_mod_lshift", term_mod_lshift, &parse_modifier);
-      actx.read("term_mod_rshift", term_mod_rshift, &parse_modifier);
-      actx.read("term_mod_lcontrol", term_mod_lcontrol, &parse_modifier);
-      actx.read("term_mod_rcontrol", term_mod_rcontrol, &parse_modifier);
-      actx.read("term_mod_lalter", term_mod_lalter, &parse_modifier);
-      actx.read("term_mod_ralter", term_mod_ralter, &parse_modifier);
-      actx.read("term_mod_lmeta", term_mod_lmeta, &parse_modifier);
-      actx.read("term_mod_rmeta", term_mod_rmeta, &parse_modifier);
-      actx.read("term_mod_lsuper", term_mod_lsuper, &parse_modifier);
-      actx.read("term_mod_rsuper", term_mod_rsuper, &parse_modifier);
-      actx.read("term_mod_lhyper", term_mod_lhyper, &parse_modifier);
-      actx.read("term_mod_rhyper", term_mod_rhyper, &parse_modifier);
-      actx.read("term_mod_menu", term_mod_menu, &parse_modifier);
-    }
-  };
-
-  struct twin_settings: public window_settings_base {
+  struct twin_settings: public ansi::window_settings_base {
     coord_t window_size_xadjust = 0;
     coord_t window_size_yadjust = 0;
 
@@ -187,7 +154,7 @@ namespace twin {
     std::unordered_map<std::u16string, average_metric> m_width_factors;
 
   private:
-    void initialize_fontnames() {
+    void initialize_fontnames(contra::app::context& actx) {
       m_fontinfo[0].name  = u"MeiryoKe_Console";
       m_fontinfo[1].name  = u"MS Gothic";
       m_fontinfo[2].name  = u"MS Mincho";
@@ -199,6 +166,17 @@ namespace twin {
       m_fontinfo[8].name  = u"HGGothicM";
       m_fontinfo[9].name  = u"Times New Roman";
       m_fontinfo[10].name = u"aghtex_mathfrak";
+      actx.read("term_font_default", m_fontinfo[0].name , &parse_fontname);
+      actx.read("term_font_ansi1"  , m_fontinfo[1].name , &parse_fontname);
+      actx.read("term_font_ansi2"  , m_fontinfo[2].name , &parse_fontname);
+      actx.read("term_font_ansi3"  , m_fontinfo[3].name , &parse_fontname);
+      actx.read("term_font_ansi4"  , m_fontinfo[4].name , &parse_fontname);
+      actx.read("term_font_ansi5"  , m_fontinfo[5].name , &parse_fontname);
+      actx.read("term_font_ansi6"  , m_fontinfo[6].name , &parse_fontname);
+      actx.read("term_font_ansi7"  , m_fontinfo[7].name , &parse_fontname);
+      actx.read("term_font_ansi8"  , m_fontinfo[8].name , &parse_fontname);
+      actx.read("term_font_ansi9"  , m_fontinfo[9].name , &parse_fontname);
+      actx.read("term_font_frak"   , m_fontinfo[10].name, &parse_fontname);
     }
 
     // Note: initialize_fontnames の後に呼び出す事
@@ -218,6 +196,11 @@ namespace twin {
       m_logfont_normal.lfQuality = CLEARTYPE_QUALITY;
       m_logfont_normal.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
       xcscpy_s(m_logfont_normal.lfFaceName, LF_FACESIZE, (LPCTSTR) m_fontinfo[0].name.c_str());
+    }
+  public:
+    win_font_factory(contra::app::context& actx) {
+      initialize_fontnames(actx);
+      initialize_logfont(); // Note: initialize_fontnames の後に呼び出す事
     }
 
   public:
@@ -260,11 +243,6 @@ namespace twin {
   public:
     typedef HFONT font_type;
 
-    void initialize() {
-      initialize_fontnames();
-      initialize_logfont(); // Note: initialize_fontnames の後に呼び出す事
-    }
-
     font_type create_font(font_t font, ansi::font_metric_t const& metric) {
       LOGFONT const logfont = create_logfont(font, metric);
       return ::CreateFontIndirect(&logfont);
@@ -293,24 +271,12 @@ namespace twin {
       str = ret;
       return true;
     }
-  public:
-    void configure(contra::app::context& actx) {
-      actx.read("term_font_default", m_fontinfo[0].name , &parse_fontname);
-      actx.read("term_font_ansi1"  , m_fontinfo[1].name , &parse_fontname);
-      actx.read("term_font_ansi2"  , m_fontinfo[2].name , &parse_fontname);
-      actx.read("term_font_ansi3"  , m_fontinfo[3].name , &parse_fontname);
-      actx.read("term_font_ansi4"  , m_fontinfo[4].name , &parse_fontname);
-      actx.read("term_font_ansi5"  , m_fontinfo[5].name , &parse_fontname);
-      actx.read("term_font_ansi6"  , m_fontinfo[6].name , &parse_fontname);
-      actx.read("term_font_ansi7"  , m_fontinfo[7].name , &parse_fontname);
-      actx.read("term_font_ansi8"  , m_fontinfo[8].name , &parse_fontname);
-      actx.read("term_font_ansi9"  , m_fontinfo[9].name , &parse_fontname);
-      actx.read("term_font_frak"   , m_fontinfo[10].name, &parse_fontname);
-    }
   };
 
   class win_font_manager_t: public ansi::font_manager_t<win_font_factory> {
+    typedef ansi::font_manager_t<win_font_factory> base;
   public:
+    win_font_manager_t(contra::app::context& actx): base(actx) {}
     LOGFONT create_logfont(font_t font) {
       return factory().create_logfont(font, static_cast<ansi::font_metric_t const&>(*this));
     }
@@ -399,7 +365,7 @@ namespace twin {
     brush_holder_t& bstore() { return m_bstore; }
 
   public:
-    twin_graphics_buffer() {}
+    twin_graphics_buffer(contra::app::context& actx): m_fstore(actx) {}
     ~twin_graphics_buffer() {
       release();
     }
@@ -576,7 +542,7 @@ namespace twin {
   class twin_window_t {
     static constexpr LPCTSTR szClassName = TEXT("Contra.Twin.Main");
 
-    contra::app::context actx;
+    contra::app::context& actx;
 
     window_state_t wstat;
     window_renderer_t renderer { wstat };
@@ -588,25 +554,13 @@ namespace twin {
     HWND hWnd = NULL;
 
   public:
-    twin_window_t() {
-      std::string config_dir = contra::term::get_config_directory();
-      actx.load((config_dir + "/contra/twin.conf").c_str());
-
+    twin_window_t(contra::app::context& actx): actx(actx), gbuffer(actx) {
       // size and dimension
-      actx.read("term_col", wstat.m_col = 80);
-      actx.read("term_row", wstat.m_row = 24);
-      actx.read("term_xpixel", wstat.m_xpixel = 7);
-      actx.read("term_ypixel", wstat.m_ypixel = 13);
-      actx.read("term_xframe", wstat.m_xframe = 1);
-      actx.read("term_yframe", wstat.m_yframe = 1);
-      wstat.m_col = limit::term_col.clamp(wstat.m_col);
-      wstat.m_row = limit::term_row.clamp(wstat.m_row);
-      wstat.m_xpixel = limit::term_xpixel.clamp(wstat.m_xpixel);
-      wstat.m_ypixel = limit::term_ypixel.clamp(wstat.m_ypixel);
+      wstat.configure_metric(actx);
       manager.reset_size(wstat.m_col, wstat.m_row, wstat.m_xpixel, wstat.m_ypixel);
 
+      // other settings
       settings.configure(actx);
-      gbuffer.fstore().factory().configure(actx);
     }
 
   private:
@@ -1257,7 +1211,7 @@ namespace twin {
       ::MessageBoxA(NULL, buff.str().c_str(), "Contra/Cygwin - exec failed", MB_OK);
     }
     bool add_terminal_session() {
-      terminal_session_parameters params;
+      term::terminal_session_parameters params;
       params.col = wstat.m_col;
       params.row = wstat.m_row;
       params.xpixel = wstat.m_xpixel;
@@ -1265,7 +1219,7 @@ namespace twin {
       params.exec_error_handler = &exec_error_handler;
       actx.read("session_term", params.env["TERM"] = "xterm-256color");
       actx.read("session_shell", params.shell = "/bin/bash");
-      std::unique_ptr<terminal_application> sess = contra::term::create_terminal_session(params);
+      std::unique_ptr<term::terminal_application> sess = contra::term::create_terminal_session(params);
       if (!sess) return false;
 
       contra::ansi::tstate_t& s = sess->state();
@@ -1314,17 +1268,22 @@ namespace twin {
     }
   };
 
-  twin_window_t main_window;
+  twin_window_t* main_window = nullptr;
 
   LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    return main_window.process_message(hWnd, msg, wParam, lParam);
+    return main_window->process_message(hWnd, msg, wParam, lParam);
   }
 }
 }
 
 // from http://www.kumei.ne.jp/c_lang/index_sdk.html
 extern "C" int WINAPI _tWinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPreInst, [[maybe_unused]] LPTSTR lpszCmdLine, int nCmdShow) {
-  auto& win = contra::twin::main_window;
+  contra::app::context actx;
+  std::string config_dir = contra::term::get_config_directory();
+  actx.load((config_dir + "/contra/twin.conf").c_str());
+  contra::twin::twin_window_t win(actx);
+  contra::twin::main_window = &win;
+
   HWND const hWnd = win.create_window(hInstance);
   ::ShowWindow(hWnd, nCmdShow);
   ::UpdateWindow(hWnd);

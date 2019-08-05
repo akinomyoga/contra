@@ -10,6 +10,7 @@
 #include <tuple>
 #include <vector>
 #include "../contradef.hpp"
+#include "../context.hpp"
 #include "line.hpp"
 #include "term.hpp"
 
@@ -17,13 +18,27 @@ namespace contra {
 namespace ansi {
 
   struct window_state_t {
-    curpos_t m_col = 80;//@size
+    curpos_t m_col = 80;
     curpos_t m_row = 30;
     coord_t m_xpixel = 7;
     coord_t m_ypixel = 13;
     coord_t m_xframe = 1;
     coord_t m_yframe = 1;
+  public:
+    void configure_metric(contra::app::context& actx) {
+      actx.read("term_col", this->m_col = 80);
+      actx.read("term_row", this->m_row = 30);
+      actx.read("term_xpixel", this->m_xpixel = 7);
+      actx.read("term_ypixel", this->m_ypixel = 13);
+      actx.read("term_xframe", this->m_xframe = 1);
+      actx.read("term_yframe", this->m_yframe = 1);
+      this->m_col = limit::term_col.clamp(this->m_col);
+      this->m_row = limit::term_row.clamp(this->m_row);
+      this->m_xpixel = limit::term_xpixel.clamp(this->m_xpixel);
+      this->m_ypixel = limit::term_ypixel.clamp(this->m_ypixel);
+    }
 
+  public:
     coord_t calculate_client_width() const {
       return m_xpixel * m_col + 2 * m_xframe;
     }
@@ -57,6 +72,39 @@ namespace ansi {
     // 点滅中で一時的に消えている場合は false です。
     bool is_cursor_appearing(term_view_t const& view) const {
       return is_cursor_visible(view) && (!view.is_cursor_blinking() || !(m_cursor_timer_count & 1));
+    }
+  };
+
+  struct window_settings_base {
+    key_t term_mod_lshift = modifier_shift;
+    key_t term_mod_rshift = modifier_shift;
+    key_t term_mod_lcontrol = modifier_control;
+    key_t term_mod_rcontrol = modifier_control;
+    key_t term_mod_lalter = modifier_meta;
+    key_t term_mod_ralter = modifier_meta;
+    key_t term_mod_lmeta = modifier_meta;
+    key_t term_mod_rmeta = modifier_meta;
+    key_t term_mod_lsuper = modifier_super;
+    key_t term_mod_rsuper = modifier_super;
+    key_t term_mod_lhyper = modifier_hyper;
+    key_t term_mod_rhyper = modifier_hyper;
+    key_t term_mod_menu = modifier_application;
+
+    void configure(contra::app::context& actx) {
+      // modifiers
+      actx.read("term_mod_lshift", term_mod_lshift, &parse_modifier);
+      actx.read("term_mod_rshift", term_mod_rshift, &parse_modifier);
+      actx.read("term_mod_lcontrol", term_mod_lcontrol, &parse_modifier);
+      actx.read("term_mod_rcontrol", term_mod_rcontrol, &parse_modifier);
+      actx.read("term_mod_lalter", term_mod_lalter, &parse_modifier);
+      actx.read("term_mod_ralter", term_mod_ralter, &parse_modifier);
+      actx.read("term_mod_lmeta", term_mod_lmeta, &parse_modifier);
+      actx.read("term_mod_rmeta", term_mod_rmeta, &parse_modifier);
+      actx.read("term_mod_lsuper", term_mod_lsuper, &parse_modifier);
+      actx.read("term_mod_rsuper", term_mod_rsuper, &parse_modifier);
+      actx.read("term_mod_lhyper", term_mod_lhyper, &parse_modifier);
+      actx.read("term_mod_rhyper", term_mod_rhyper, &parse_modifier);
+      actx.read("term_mod_menu", term_mod_menu, &parse_modifier);
     }
   };
 
@@ -427,10 +475,9 @@ namespace ansi {
     std::pair<font_t, font_type> m_cache[font_cache_count];
 
   public:
-    font_manager_t(): base(7, 14) {
+    font_manager_t(contra::app::context& actx): base(7, 14), m_factory(actx) {
       std::fill(std::begin(m_fonts), std::end(m_fonts), (font_type) NULL);
       std::fill(std::begin(m_cache), std::end(m_cache), std::pair<font_t, font_type>(0u, NULL));
-      m_factory.initialize();
     }
 
     void set_size(coord_t width, coord_t height) {

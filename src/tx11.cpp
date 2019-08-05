@@ -155,27 +155,33 @@ namespace tx11 {
 
     Display* m_display = NULL;
     int m_screen = 0;
-    const char* m_fontnames[16];
+    std::string m_fontnames[16];
 
   public:
-    void initialize() {
-      std::fill(std::begin(m_fontnames), std::end(m_fontnames), (const char*) NULL);
-
-      // My configuration@font
+    xft_font_factory(contra::app::context& actx) {
       m_fontnames[0]  = "MeiryoKe_Console";
-      m_fontnames[1]  = "MS Gothic,monospace";
-      m_fontnames[2]  = "MS Mincho,monospace";
-      m_fontnames[3]  = "HGMaruGothicMPRO,monospace"; // HG丸ｺﾞｼｯｸM-PRO
-      m_fontnames[4]  = "HGKyokashotai,monospace"; // HG教科書体
-      m_fontnames[5]  = "HGGyoshotai,monospace"; // HG行書体
-      m_fontnames[6]  = "HGSeikaishotaiPRO,monospace"; // HG正楷書体-PRO
-      m_fontnames[7]  = "HGSoeiKakupoptai,monospace"; // HG創英角ﾎﾟｯﾌﾟ体
-      m_fontnames[8]  = "HGGothicM,monospace"; // HGｺﾞｼｯｸM
-      // m_fontnames[9]  = "HGMinchoB,monospace"; // HG明朝B
-      m_fontnames[9]  = "Times New Roman,monospace"; // HG明朝B
-      m_fontnames[10] = "aghtex_mathfrak,monospace";
+      m_fontnames[1]  = "MS Gothic";
+      m_fontnames[2]  = "MS Mincho";
+      m_fontnames[3]  = "HGMaruGothicMPRO";
+      m_fontnames[4]  = "HGKyokashotai";
+      m_fontnames[5]  = "HGGyoshotai";
+      m_fontnames[6]  = "HGSeikaishotaiPRO";
+      m_fontnames[7]  = "HGSoeiKakupoptai";
+      m_fontnames[8]  = "HGGothicM";
+      m_fontnames[9]  = "Times New Roman";
+      m_fontnames[10] = "aghtex_mathfrak";
+      actx.read("term_font_default", m_fontnames[0] );
+      actx.read("term_font_ansi1"  , m_fontnames[1] );
+      actx.read("term_font_ansi2"  , m_fontnames[2] );
+      actx.read("term_font_ansi3"  , m_fontnames[3] );
+      actx.read("term_font_ansi4"  , m_fontnames[4] );
+      actx.read("term_font_ansi5"  , m_fontnames[5] );
+      actx.read("term_font_ansi6"  , m_fontnames[6] );
+      actx.read("term_font_ansi7"  , m_fontnames[7] );
+      actx.read("term_font_ansi8"  , m_fontnames[8] );
+      actx.read("term_font_ansi9"  , m_fontnames[9] );
+      actx.read("term_font_frak"   , m_fontnames[10]);
     }
-
     bool setup_display(Display* display) {
       if (m_display == display) return false;
       m_display = display;
@@ -187,9 +193,9 @@ namespace tx11 {
     font_type create_font(font_t font, ansi::font_metric_t const& metric) const {
       using namespace contra::ansi;
 
-      const char* fontname = m_fontnames[0];
+      const char* fontname = m_fontnames[0].c_str();
       if (font_t const face = (font & font_face_mask) >> font_face_shft)
-        if (const char* const name = m_fontnames[face])
+        if (const char* const name = m_fontnames[face].c_str())
           fontname = name;
 
       int slant = FC_SLANT_ROMAN;
@@ -335,9 +341,8 @@ namespace tx11 {
       }
     }
   public:
-    xft_text_drawer_t() {}
+    xft_text_drawer_t(contra::app::context& actx): font_manager(actx) {}
     ~xft_text_drawer_t() { release(); }
-
     void initialize(Display* display, x11_color_manager_t* color_manager) {
       m_display = display;
       int const screen = DefaultScreen(display);
@@ -428,6 +433,7 @@ namespace tx11 {
     Display* display() const { return m_display; }
     x11_color_manager_t* color_manager() { return m_color_manager.get(); }
     xft_text_drawer_t& text_drawer() { return m_text_drawer; }
+
     void initialize(Display* display) {
       this->m_display = display;
       this->m_screen = DefaultScreen(display);
@@ -506,7 +512,7 @@ namespace tx11 {
     }
 
   public:
-    tx11_graphics_buffer(ansi::window_state_t& wstat) {
+    tx11_graphics_buffer(contra::app::context& actx, ansi::window_state_t& wstat): m_text_drawer(actx) {
       m_text_drawer.set_size(wstat.m_xpixel, wstat.m_ypixel);
     }
     ~tx11_graphics_buffer() {
@@ -649,12 +655,14 @@ namespace tx11 {
     }
   };
 
-  struct tx11_setting_t {
+  struct tx11_settings: public ansi::window_settings_base {
     const char* m_env_term = "xterm-256color";
     const char* m_env_shell = "/bin/bash";
   };
 
-  class tx11_window_t {
+  class tx11_window_t: term::terminal_events {
+    contra::app::context& actx;
+
     ansi::window_state_t wstat;
     ansi::window_renderer_t renderer { wstat };
     ansi::status_tracer_t m_tracer;
@@ -663,13 +671,17 @@ namespace tx11 {
     ::Display* display = NULL;
     ::Window main = 0;
     ::Atom WM_DELETE_WINDOW;
-    tx11_setting_t settings;
-    contra::app::context actx;
-    tx11_graphics_buffer gbuffer { wstat };
+    tx11_settings settings;
+    tx11_graphics_buffer gbuffer { actx, wstat };
 
   public:
-    tx11_window_t() {
-      actx.load("tx11.conf");
+    tx11_window_t(contra::app::context& actx): actx(actx) {
+      // size and dimension
+      wstat.configure_metric(actx);
+      manager.reset_size(wstat.m_col, wstat.m_row, wstat.m_xpixel, wstat.m_ypixel);
+
+      // other settings
+      settings.configure(actx);
     }
     ~tx11_window_t() {}
 
@@ -715,6 +727,7 @@ namespace tx11 {
       this->gbuffer.initialize(this->display);
 
       XAutoRepeatOn(display);
+      this->manager.set_events(static_cast<term::terminal_events&>(*this));
       return true;
     }
 
@@ -782,21 +795,19 @@ namespace tx11 {
       };
 
       key_t ret = 0;
-      if (key_state(XK_Shift_L)) ret |= modifier_shift;
-      if (key_state(XK_Control_L)) ret |= modifier_control;
-      if (key_state(XK_Alt_L)) ret |= modifier_meta;
-      if (key_state(XK_Alt_R)) ret |= modifier_alter;
-      if (key_state(XK_Control_R)) ret |= modifier_super;
-      if (key_state(XK_Shift_R)) ret |= modifier_hyper;
-      if (key_state(XK_Menu)) ret |= modifier_application;
-
-      // 本来は以下の様にしたい:
-      // if (key_state(XK_Shift_L) || key_state(XK_Shift_R)) ret |= modifier_shift;
-      // if (key_state(XK_Control_L) || key_state(XK_Control_R)) ret |= modifier_control;
-      // if (key_state(XK_Meta_L) || key_state(XK_Meta_R)) ret |= modifier_meta;
-      // if (key_state(XK_Alt_L) || key_state(XK_Alt_R)) ret |= modifier_alter;
-      // if (key_state(XK_Super_L) || key_state(XK_Super_R)) ret |= modifier_super;
-      // if (key_state(XK_Hyper_L) || key_state(XK_Hyper_R)) ret |= modifier_hyper;
+      if (key_state(XK_Shift_L)) ret |= settings.term_mod_lshift;
+      if (key_state(XK_Shift_R)) ret |= settings.term_mod_rshift;
+      if (key_state(XK_Control_L)) ret |= settings.term_mod_lcontrol;
+      if (key_state(XK_Control_R)) ret |= settings.term_mod_rcontrol;
+      if (key_state(XK_Alt_L)) ret |= settings.term_mod_lalter;
+      if (key_state(XK_Alt_R)) ret |= settings.term_mod_ralter;
+      if (key_state(XK_Meta_L)) ret |= settings.term_mod_lmeta;
+      if (key_state(XK_Meta_R)) ret |= settings.term_mod_rmeta;
+      if (key_state(XK_Super_L)) ret |= settings.term_mod_lsuper;
+      if (key_state(XK_Super_R)) ret |= settings.term_mod_rsuper;
+      if (key_state(XK_Hyper_L)) ret |= settings.term_mod_lhyper;
+      if (key_state(XK_Hyper_R)) ret |= settings.term_mod_rhyper;
+      if (key_state(XK_Menu)) ret |= settings.term_mod_menu;
 
       unsigned indicators = 0;
       if (XkbGetIndicatorState(display, XkbUseCoreKbd, &indicators) == Success) {
@@ -931,17 +942,17 @@ namespace tx11 {
       char const* msg = std::strerror(errno1);
       std::ostringstream buff;
       buff << "exec: " << msg << " (errno=" << errno1 << ")";
-      //::MessageBoxA(NULL, buff.str().c_str(), "Contra/Cygwin - exec failed", MB_OK);
+      //::MessageBoxA(NULL, buff.str().c_str(), "Contra/X11 - exec failed", MB_OK);
     }
-    bool setup_session() {
+    bool add_terminal_session() {
       term::terminal_session_parameters params;
       params.col = wstat.m_col;
       params.row = wstat.m_row;
       params.xpixel = wstat.m_xpixel;
       params.ypixel = wstat.m_ypixel;
       params.exec_error_handler = &exec_error_handler;
-      params.env["TERM"] = settings.m_env_term;
-      params.shell = settings.m_env_shell;
+      actx.read("session_term", params.env["TERM"] = "xterm-256color");
+      actx.read("session_shell", params.shell = "/bin/bash");
       std::unique_ptr<term::terminal_application> sess = contra::term::create_terminal_session(params);
       if (!sess) return false;
 
@@ -955,12 +966,16 @@ namespace tx11 {
       manager.add_app(std::move(sess));
       return true;
     }
+    virtual bool create_new_session() override {
+      return add_terminal_session();
+    }
+
   public:
     int do_loop() {
       // CheckIfEvent 用のダミーフィルター
       Bool (*event_filter_proc)(Display*, XEvent*, XPointer) = [] (auto...) -> Bool { return True; };
 
-      if (!this->setup_session()) return 2;
+      if (!this->add_terminal_session()) return 2;
 
       XEvent event;
       while (this->display) {
@@ -990,7 +1005,11 @@ namespace tx11 {
 }
 
 int main() {
-  contra::tx11::tx11_window_t win;
+  contra::app::context actx;
+  std::string config_dir = contra::term::get_config_directory();
+  actx.load((config_dir + "/contra/tx11.conf").c_str());
+
+  contra::tx11::tx11_window_t win(actx);
   if (!win.create_window()) return 1;
   ::XMapWindow(win.display_handle(), win.window_handle());
   ::XFlush(win.display_handle());
