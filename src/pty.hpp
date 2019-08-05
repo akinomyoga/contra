@@ -50,7 +50,7 @@ namespace term {
     std::uintptr_t exec_error_param = 0u;
     struct termios* termios = nullptr;
     std::unordered_map<std::string, std::string> env;
-    const char* shell = nullptr;
+    std::string shell;
     std::size_t fd_read_buffer_size = 4096;
 
     int dbg_fd_tee = -1;

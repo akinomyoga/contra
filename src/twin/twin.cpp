@@ -26,6 +26,7 @@
 #include "../manager.hpp"
 #include "../ansi/render.hpp"
 #include "win_messages.hpp"
+#include "../context.hpp"
 
 #define _tcslen wcslen
 #define _tcscpy_s wcscpy_s
@@ -80,7 +81,40 @@ namespace twin {
   using namespace contra::term;
   using namespace contra::ansi;
 
-  struct twin_settings {
+  struct window_settings_base {
+    key_t term_mod_lshift = modifier_shift;
+    key_t term_mod_rshift = modifier_shift;
+    key_t term_mod_lcontrol = modifier_control;
+    key_t term_mod_rcontrol = modifier_control;
+    key_t term_mod_lalter = modifier_meta;
+    key_t term_mod_ralter = modifier_meta;
+    key_t term_mod_lmeta = modifier_meta;
+    key_t term_mod_rmeta = modifier_meta;
+    key_t term_mod_lsuper = modifier_super;
+    key_t term_mod_rsuper = modifier_super;
+    key_t term_mod_lhyper = modifier_hyper;
+    key_t term_mod_rhyper = modifier_hyper;
+    key_t term_mod_menu = modifier_application;
+
+    void configure(contra::app::context& actx) {
+      // modifiers
+      actx.read("term_mod_lshift", term_mod_lshift, &parse_modifier);
+      actx.read("term_mod_rshift", term_mod_rshift, &parse_modifier);
+      actx.read("term_mod_lcontrol", term_mod_lcontrol, &parse_modifier);
+      actx.read("term_mod_rcontrol", term_mod_rcontrol, &parse_modifier);
+      actx.read("term_mod_lalter", term_mod_lalter, &parse_modifier);
+      actx.read("term_mod_ralter", term_mod_ralter, &parse_modifier);
+      actx.read("term_mod_lmeta", term_mod_lmeta, &parse_modifier);
+      actx.read("term_mod_rmeta", term_mod_rmeta, &parse_modifier);
+      actx.read("term_mod_lsuper", term_mod_lsuper, &parse_modifier);
+      actx.read("term_mod_rsuper", term_mod_rsuper, &parse_modifier);
+      actx.read("term_mod_lhyper", term_mod_lhyper, &parse_modifier);
+      actx.read("term_mod_rhyper", term_mod_rhyper, &parse_modifier);
+      actx.read("term_mod_menu", term_mod_menu, &parse_modifier);
+    }
+  };
+
+  struct twin_settings: public window_settings_base {
     coord_t window_size_xadjust = 0;
     coord_t window_size_yadjust = 0;
 
@@ -88,11 +122,11 @@ namespace twin {
     UINT m_caret_interval = 400;
     UINT m_blinking_interval = 200;
 
-    const char* m_env_term = "xterm-256color";
-    const char* m_env_shell = nullptr;
+    bool m_disable_mouse_report_on_scrlock;
 
     int m_debug_print_window_messages = 0; // 0: none, 1: unprocessed, 2: all
     bool m_debug_print_unknown_key = false;
+
 
   public:
     coord_t calculate_window_width(window_state_t const& wstat) const {
@@ -101,38 +135,31 @@ namespace twin {
     coord_t calculate_window_height(window_state_t const& wstat) const {
       return wstat.calculate_client_height() + window_size_yadjust;
     }
+
+    void configure(contra::app::context& actx) {
+      window_settings_base::configure(actx);
+      actx.read("twin_disable_mouse_report_on_scrlock", m_disable_mouse_report_on_scrlock = true);
+    }
   };
 
   class win_font_factory {
-    LPCTSTR m_fontnames[16];
+    static_assert(sizeof(TCHAR) == 2 && sizeof(wchar_t) == 2);
+    std::u16string m_fontnames[16];
     LOGFONT m_logfont_normal;
 
   private:
     void initialize_fontnames() {
-      std::fill(std::begin(m_fontnames), std::end(m_fontnames), (LPCTSTR) NULL);
-
-      // My configuration@font
-      m_fontnames[0]  = TEXT("MeiryoKe_Console");
-      m_fontnames[1]  = TEXT("MS Gothic");
-      m_fontnames[2]  = TEXT("MS Mincho");
-      m_fontnames[3]  = TEXT("HGMaruGothicMPRO"); // HG丸ｺﾞｼｯｸM-PRO
-      m_fontnames[4]  = TEXT("HGKyokashotai"); // HG教科書体
-      m_fontnames[5]  = TEXT("HGGyoshotai"); // HG行書体
-      m_fontnames[6]  = TEXT("HGSeikaishotaiPRO"); // HG正楷書体-PRO
-      m_fontnames[7]  = TEXT("HGSoeiKakupoptai"); // HG創英角ﾎﾟｯﾌﾟ体
-      m_fontnames[8]  = TEXT("HGGothicM"); // HGｺﾞｼｯｸM
-      // m_fontnames[9]  = TEXT("HGMinchoB"); // HG明朝B
-      m_fontnames[9]  = TEXT("Times New Roman"); // HG明朝B
-      m_fontnames[10] = TEXT("aghtex_mathfrak");
-
-      // ゴシック系のフォント
-      //   HGｺﾞｼｯｸE
-      //   HGｺﾞｼｯｸM
-      //   HG創英角ｺﾞｼｯｸUB
-      // 明朝系のフォント
-      //   HG明朝B
-      //   HG明朝E
-      //   HG創英ﾌﾟﾚｾﾞﾝｽEB
+      m_fontnames[0]  = u"MeiryoKe_Console";
+      m_fontnames[1]  = u"MS Gothic";
+      m_fontnames[2]  = u"MS Mincho";
+      m_fontnames[3]  = u"HGMaruGothicMPRO";
+      m_fontnames[4]  = u"HGKyokashotai";
+      m_fontnames[5]  = u"HGGyoshotai";
+      m_fontnames[6]  = u"HGSeikaishotaiPRO";
+      m_fontnames[7]  = u"HGSoeiKakupoptai";
+      m_fontnames[8]  = u"HGGothicM";
+      m_fontnames[9]  = u"Times New Roman";
+      m_fontnames[10] = u"aghtex_mathfrak";
     }
 
     // Note: initialize_fontnames の後に呼び出す事
@@ -151,7 +178,7 @@ namespace twin {
       //m_logfont_normal.lfClipPrecision = CLIP_DEFAULT_PRECIS;
       m_logfont_normal.lfQuality = CLEARTYPE_QUALITY;
       m_logfont_normal.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-      xcscpy_s(m_logfont_normal.lfFaceName, LF_FACESIZE, m_fontnames[0]);
+      xcscpy_s(m_logfont_normal.lfFaceName, LF_FACESIZE, (LPCTSTR) m_fontnames[0].c_str());
     }
 
   public:
@@ -160,8 +187,8 @@ namespace twin {
       logfont.lfHeight = metric.height();
       logfont.lfWidth  = metric.width();
       if (font_t const face = (font & font_face_mask) >> font_face_shft)
-        if (LPCTSTR const fontname = m_fontnames[face])
-          xcscpy_s(logfont.lfFaceName, LF_FACESIZE, fontname);
+        if (std::u16string const& fontname = m_fontnames[face]; !fontname.empty())
+          xcscpy_s(logfont.lfFaceName, LF_FACESIZE, (LPCTSTR) fontname.c_str());
       if (font & font_flag_italic)
         logfont.lfItalic = TRUE;
 
@@ -181,6 +208,7 @@ namespace twin {
         logfont.lfOrientation = 450 * rotation;
         logfont.lfEscapement  = 450 * rotation;
       }
+
       return logfont; /* NRVO */
     }
 
@@ -199,6 +227,41 @@ namespace twin {
 
     void delete_font(font_type hfont) const {
       ::DeleteObject(hfont);
+    }
+
+  private:
+    static bool parse_fontname(std::u16string& str, const char* text) {
+      std::size_t const len = std::strlen(text);
+      std::vector<char32_t> buffer(len);
+      char32_t* const p0 = &buffer[0];
+      char32_t* const pN = p0 + len;
+      char32_t* p = p0;
+      {
+        std::uint64_t state = 0;
+        contra::encoding::utf8_decode(text, text + len, p, pN, state);
+        if (state) return false;
+      }
+
+      std::u16string ret;
+      std::uint64_t state = 0;
+      contra::encoding::utf16_encode(p0, p, ret, state);
+      str = ret;
+      return true;
+    }
+  public:
+    void configure(contra::app::context& actx) {
+      actx.read("term_font_default", m_fontnames[0] , &parse_fontname);
+      actx.read("term_font_ansi1"  , m_fontnames[1] , &parse_fontname);
+      actx.read("term_font_ansi2"  , m_fontnames[2] , &parse_fontname);
+      actx.read("term_font_ansi3"  , m_fontnames[3] , &parse_fontname);
+      actx.read("term_font_ansi4"  , m_fontnames[4] , &parse_fontname);
+      actx.read("term_font_ansi5"  , m_fontnames[5] , &parse_fontname);
+      actx.read("term_font_ansi6"  , m_fontnames[6] , &parse_fontname);
+      actx.read("term_font_ansi7"  , m_fontnames[7] , &parse_fontname);
+      actx.read("term_font_ansi8"  , m_fontnames[8] , &parse_fontname);
+      actx.read("term_font_ansi9"  , m_fontnames[9] , &parse_fontname);
+      actx.read("term_font_frak"   , m_fontnames[10], &parse_fontname);
+      xcscpy_s(m_logfont_normal.lfFaceName, LF_FACESIZE, (LPCTSTR) m_fontnames[0].c_str());
     }
   };
 
@@ -469,6 +532,8 @@ namespace twin {
   class twin_window_t {
     static constexpr LPCTSTR szClassName = TEXT("Contra.Twin.Main");
 
+    contra::app::context actx;
+
     window_state_t wstat;
     window_renderer_t renderer { wstat };
     terminal_manager manager;
@@ -478,6 +543,28 @@ namespace twin {
 
     HWND hWnd = NULL;
 
+  public:
+    twin_window_t() {
+      actx.load("twin.conf");
+
+      // size and dimension
+      actx.read("term_col", wstat.m_col = 80);
+      actx.read("term_row", wstat.m_row = 24);
+      actx.read("term_xpixel", wstat.m_xpixel = 7);
+      actx.read("term_ypixel", wstat.m_ypixel = 13);
+      actx.read("term_xframe", wstat.m_xframe = 1);
+      actx.read("term_yframe", wstat.m_yframe = 1);
+      wstat.m_col = limit::term_col.clamp(wstat.m_col);
+      wstat.m_row = limit::term_row.clamp(wstat.m_row);
+      wstat.m_xpixel = limit::term_xpixel.clamp(wstat.m_xpixel);
+      wstat.m_ypixel = limit::term_ypixel.clamp(wstat.m_ypixel);
+      manager.reset_size(wstat.m_col, wstat.m_row, wstat.m_xpixel, wstat.m_ypixel);
+
+      settings.configure(actx);
+      gbuffer.fstore().factory().configure(actx);
+    }
+
+  private:
     class twin_events: public contra::term::terminal_events {
       twin_window_t* win;
     public:
@@ -590,8 +677,8 @@ namespace twin {
     private:
       virtual bool request_change_size(curpos_t col, curpos_t row, coord_t xpixel, coord_t ypixel) override {
         auto& wm = win->wstat;
-        if (xpixel >= 0) xpixel = std::clamp(xpixel, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
-        if (ypixel >= 0) ypixel = std::clamp(ypixel, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
+        if (xpixel >= 0) xpixel = limit::term_xpixel.clamp(xpixel);
+        if (ypixel >= 0) ypixel = limit::term_ypixel.clamp(ypixel);
 
         if (col < 0 && row < 0) {
           // 文字サイズだけを変更→自動的に列・行を変えてウィンドウサイズを変えなくて済む様にする。
@@ -609,11 +696,11 @@ namespace twin {
         if (ypixel >= 0 && wm.m_ypixel != ypixel) { wm.m_ypixel = ypixel; changed = true; }
         if (changed) win->gbuffer.fstore().set_size(wm.m_xpixel, wm.m_ypixel);
         if (col >= 0) {
-          col = std::clamp(col, limit::minimal_terminal_col, limit::maximal_terminal_col);
+          col = limit::term_col.clamp(col);
           if (col != wm.m_col) { wm.m_col = col; changed = true; }
         }
         if (row >= 0) {
-          row = std::clamp(row, limit::minimal_terminal_row, limit::maximal_terminal_row);
+          row = limit::term_row.clamp(row);
           if (row != wm.m_row) { wm.m_row = row; changed = true; }
         }
         if (changed) {
@@ -621,6 +708,11 @@ namespace twin {
           win->manager.reset_size(wm.m_col, wm.m_row, wm.m_xpixel, wm.m_ypixel);
         }
         return true;
+      }
+
+    private:
+      virtual bool create_new_session() override {
+        return win->add_terminal_session();
       }
 
     };
@@ -808,13 +900,13 @@ namespace twin {
 
     key_t get_modifiers() {
       key_t ret = 0;
-      if (GetKeyState(VK_LSHIFT) & 0x8000) ret |= modifier_shift;
-      if (GetKeyState(VK_LCONTROL) & 0x8000) ret |= modifier_control;
-      if (GetKeyState(VK_LMENU) & 0x8000) ret |= modifier_meta;
-      if (GetKeyState(VK_RMENU) & 0x8000) ret |= modifier_alter; // 右Alt
-      if (GetKeyState(VK_RCONTROL) & 0x8000) ret |= modifier_super; // 右Ctrl
-      if (GetKeyState(VK_RSHIFT) & 0x8000) ret |= modifier_hyper; // 右Shift
-      if (GetKeyState(VK_APPS) & 0x8000) ret |= modifier_application; // Menu
+      if (GetKeyState(VK_LSHIFT) & 0x8000) ret |= settings.term_mod_lshift;
+      if (GetKeyState(VK_RSHIFT) & 0x8000) ret |= settings.term_mod_rshift;
+      if (GetKeyState(VK_LCONTROL) & 0x8000) ret |= settings.term_mod_lcontrol;
+      if (GetKeyState(VK_RCONTROL) & 0x8000) ret |= settings.term_mod_rcontrol;
+      if (GetKeyState(VK_LMENU) & 0x8000) ret |= settings.term_mod_lalter;
+      if (GetKeyState(VK_RMENU) & 0x8000) ret |= settings.term_mod_ralter;
+      if (GetKeyState(VK_APPS) & 0x8000) ret |= settings.term_mod_menu;
 
       if (GetKeyState(VK_CAPITAL) & 1) ret |= toggle_capslock;
       if (GetKeyState(VK_NUMLOCK) & 1) ret |= toggle_numlock;
@@ -927,9 +1019,12 @@ namespace twin {
     }
 
     void process_mouse(key_t key, std::uint32_t modifiers, WORD x, WORD y) {
+      key |= modifiers & _modifier_mask;
+      if (settings.m_disable_mouse_report_on_scrlock && (modifiers & toggle_scrolllock))
+        key |= modifier_application;
       curpos_t const x1 = (x - wstat.m_xframe) / wstat.m_xpixel;
       curpos_t const y1 = (y - wstat.m_yframe) / wstat.m_ypixel;
-      manager.input_mouse(key | (modifiers & _modifier_mask), x, y, x1, y1);
+      manager.input_mouse(key, x, y, x1, y1);
       if (manager.m_dirty) render_window();
     }
 
@@ -1116,15 +1211,15 @@ namespace twin {
       buff << "exec: " << msg << " (errno=" << errno1 << ")";
       ::MessageBoxA(NULL, buff.str().c_str(), "Contra/Cygwin - exec failed", MB_OK);
     }
-    bool setup_session() {
+    bool add_terminal_session() {
       terminal_session_parameters params;
       params.col = wstat.m_col;
       params.row = wstat.m_row;
       params.xpixel = wstat.m_xpixel;
       params.ypixel = wstat.m_ypixel;
       params.exec_error_handler = &exec_error_handler;
-      params.env["TERM"] = settings.m_env_term;
-      params.shell = settings.m_env_shell;
+      actx.read("session_term", params.env["TERM"] = "xterm-256color");
+      actx.read("session_shell", params.shell = "/bin/bash");
       std::unique_ptr<terminal_application> sess = contra::term::create_terminal_session(params);
       if (!sess) return false;
 
@@ -1141,7 +1236,7 @@ namespace twin {
   public:
     int m_exit_code = 0;
     int do_loop() {
-      if (!this->setup_session()) return 2;
+      if (!this->add_terminal_session()) return 2;
 
       MSG msg;
       while (hWnd) {

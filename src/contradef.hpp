@@ -260,6 +260,7 @@ namespace contra {
   };
 
   void print_key(key_t key, std::FILE* file);
+  bool parse_modifier(key_t& value, const char* text);
 
   //---------------------------------------------------------------------------
   // prototype/forward declaration
@@ -278,15 +279,24 @@ namespace contra {
   // Implementation limitations
 
   namespace limit {
-    constexpr ansi::curpos_t minimal_terminal_col = 1;
-    constexpr ansi::curpos_t minimal_terminal_row = 1;
-    constexpr ansi::curpos_t maximal_terminal_col = 2048;
-    constexpr ansi::curpos_t maximal_terminal_row = 2048;
-    constexpr ansi::coord_t minimal_terminal_xpixel = 4; // SGR装飾の類で仮定?
-    constexpr ansi::coord_t minimal_terminal_ypixel = 4; // SGR装飾の類で仮定?
-    constexpr ansi::coord_t maximal_terminal_xpixel = 512;
-    constexpr ansi::coord_t maximal_terminal_ypixel = 512;
-    constexpr std::size_t maximal_cells_per_line = maximal_terminal_col * 5;
+    template<typename T>
+    class range {
+      T m_min, m_max;
+    public:
+      constexpr range(T min, T max): m_min(min), m_max(max) {}
+      constexpr T min() const { return m_min; }
+      constexpr T max() const { return m_max; }
+      constexpr T clamp(T value) const {
+        return contra::clamp(value, m_min, m_max);
+      }
+    };
+
+    constexpr range<ansi::curpos_t> term_col {1, 2048};
+    constexpr range<ansi::curpos_t> term_row {1, 2048};
+    constexpr range<ansi::coord_t> term_xpixel {4, 512}; // SGR装飾の類で仮定?
+    constexpr range<ansi::coord_t> term_ypixel {4, 512}; // SGR装飾の類で仮定?
+
+    constexpr std::size_t maximal_cells_per_line = term_col.max() * 5;
   }
 }
 #endif

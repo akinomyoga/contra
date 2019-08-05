@@ -53,6 +53,16 @@ namespace encoding {
   }
 
   void utf8_decode(char const*& ibeg, char const* iend, char32_t*& obeg, char32_t* oend, std::uint64_t& state, std::int32_t error_char) {
+    // flush
+    if (ibeg == iend) {
+      if (state) {
+        if (error_char >= 0)
+          *obeg++ = error_char;
+        state = 0;
+      }
+      return;
+    }
+
     std::uint_fast32_t code = state & 0xFFFFFFFF;
     std::uint_fast32_t norm = state >> 32 & 0xFFFF;
     std::uint_fast32_t mode = state >> 48;
@@ -75,10 +85,14 @@ namespace encoding {
               *obeg++ = code;
             else if (error_char >= 0)
               *obeg++ = error_char;
+            norm = 0;
+            code = 0;
           }
           continue;
         } else {
           mode = 0;
+          norm = 0;
+          code = 0;
           if (error_char >= 0) {
             *obeg++ = error_char;
             if (obeg == oend) {

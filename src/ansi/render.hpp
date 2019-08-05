@@ -65,11 +65,23 @@ namespace ansi {
     status_tracer_t() {}
 
     void store(window_state_t const& wstat, term_view_t const& view) {
+      store_view(view);
       store_metric(wstat);
       store_color(view);
       store_content(view);
       store_cursor(wstat, view);
       store_blinking_state(wstat);
+    }
+
+  private:
+    term_view_t const* m_view = nullptr;
+  public:
+    bool is_view_changed(term_view_t const& view) const {
+      return m_view != &view;
+    }
+  private:
+    void store_view(term_view_t const& view) {
+      this->m_view = &view;
     }
 
   private:
@@ -89,6 +101,7 @@ namespace ansi {
       if (m_ypixel != wstat.m_ypixel) return true;
       return false;
     }
+  private:
     void store_metric(window_state_t const& wstat) {
       m_xframe = wstat.m_xframe;
       m_yframe = wstat.m_yframe;
@@ -758,9 +771,11 @@ namespace ansi {
       update.is_blinking_changed = m_tracer.is_blinking_changed(wstat);
 
       update.is_full_update = requests_full_update;
-      if (m_tracer.is_metric_changed(wstat))
+      if (m_tracer.is_view_changed(view))
         update.is_full_update = true;
-      if (m_tracer.is_color_changed(view))
+      else if (m_tracer.is_metric_changed(wstat))
+        update.is_full_update = true;
+      else if (m_tracer.is_color_changed(view))
         update.is_full_update = true;
 
       bool const redraw = update.is_full_update ||

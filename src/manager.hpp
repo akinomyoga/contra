@@ -11,6 +11,7 @@
 #include "ansi/line.hpp"
 #include "ansi/term.hpp"
 #include "enc.utf8.hpp"
+#include "context.hpp"
 
 namespace contra {
 namespace term {
@@ -34,10 +35,10 @@ namespace term {
       this->reset_size(width, height, m_xpixel, m_ypixel);
     }
     virtual void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
-      m_width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
-      m_height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
-      m_xpixel = std::clamp(xpixel, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
-      m_ypixel = std::clamp(ypixel, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
+      m_width = limit::term_col.clamp(width);
+      m_height = limit::term_row.clamp(height);
+      m_xpixel = limit::term_xpixel.clamp(xpixel);
+      m_ypixel = limit::term_ypixel.clamp(ypixel);
       if (m_term) m_term->reset_size(m_width, m_height);
     }
 
@@ -237,6 +238,7 @@ namespace term {
       [[maybe_unused]] coord_t xpixel,
       [[maybe_unused]] coord_t ypixel
     ) { return false; }
+    virtual bool create_new_session() { return false; }
   };
 
   class terminal_manager {
@@ -252,14 +254,20 @@ namespace term {
     }
 
   private:
-    std::size_t m_active_app_index = 0;
+    std::size_t m_active_iapp = 0;
   public:
-    void select_app(int index) {
-      m_active_app_index = !m_apps.size() ? 0 : contra::clamp(index, 0, m_apps.size() - 1);
+    void select_app(int index, bool force_update = false) {
+      std::size_t const new_iapp = !m_apps.size() ? 0 : contra::clamp(index, 0, m_apps.size() - 1);
+      if (!force_update && new_iapp == m_active_iapp) return;
+      m_active_iapp = new_iapp;
+      if (m_apps.size()) {
+        app().reset_size(m_width, m_height, m_xpixel, m_ypixel);
+        m_dirty = true;
+      }
     }
     terminal_application& app() const {
       mwg_check(m_apps.size());
-      return *m_apps[m_active_app_index].get();
+      return *m_apps[m_active_iapp].get();
     }
     template<typename T>
     void add_app(T&& app) { m_apps.emplace_back(std::forward<T>(app)); }
@@ -320,11 +328,30 @@ namespace term {
         if (app->is_active()) return true;
       return false;
     }
-    bool is_alive() {
-      // ToDo: 死んだ物に関しては閉じる?
-      for (auto const& app : m_apps)
-        if (app->is_alive()) return true;
-      return false;
+    bool is_alive(bool remove_dead = true) {
+      if (remove_dead) {
+        std::size_t iapp = 0, new_active_iapp = m_active_iapp;
+        auto const new_end = std::remove_if(
+          m_apps.begin(), m_apps.end(),
+          [&] (auto const& app) {
+            if (!app->is_alive()) {
+              if (m_active_iapp >= iapp++ && new_active_iapp > 0)
+                new_active_iapp--;
+              return true;
+            } else {
+              iapp++;
+              return false;
+            }
+          });
+        m_apps.erase(new_end, m_apps.end());
+        select_app(new_active_iapp, true);
+        return !m_apps.empty();
+      } else {
+
+        for (auto const& app : m_apps)
+          if (app->is_alive()) return true;
+        return false;
+      }
     }
     void terminate() {
       for (auto const& app : m_apps)
@@ -336,6 +363,12 @@ namespace term {
       using namespace contra::ansi;
       if (key & modifier_application) {
         key &= ~modifier_application;
+        if (ascii_1 <= key && key <= ascii_9) {
+          std::size_t index = key - ascii_1;
+          if (index < m_apps.size())
+            select_app(index);
+        }
+
         switch (key) {
         case ascii_0:
           this->update_zoom(0);
@@ -346,6 +379,7 @@ namespace term {
         case ascii_minus:
           this->update_zoom(m_zoom_level - 1);
           return true;
+
         case key_up:
           m_dirty |= app().view().scroll(-3);
           return true;
@@ -358,6 +392,29 @@ namespace term {
         case key_next:
           m_dirty |= app().view().scroll(app().view().height());
           return true;
+
+        case ascii_n:
+          if (m_apps.size() > 1)
+            select_app((m_active_iapp + 1) % m_apps.size());
+          return true;
+        case ascii_p:
+          if (m_apps.size() > 1)
+            select_app((m_active_iapp - 1 + m_apps.size()) % m_apps.size());
+          return true;
+        case ascii_c:
+          if (m_events) {
+            if (m_events->create_new_session() && m_apps.size())
+              select_app(m_apps.size() - 1);
+          }
+          return true;
+
+        case ascii_v | modifier_control:
+          clipboard_paste();
+          return true;
+        case ascii_c | modifier_control:
+          clipboard_copy();
+          return true;
+
         default:
           return false;
         }
@@ -707,13 +764,13 @@ namespace term {
       return std::ceil(base * std::pow(zoom_ratio, zoom_level) + zoom_level);
     }
     void initialize_zoom(coord_t xpixel = -1, coord_t ypixel = -1) {
-      if (xpixel >= 0) m_zoom_xpixel0 = std::clamp(xpixel, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
-      if (ypixel >= 0) m_zoom_ypixel0 = std::clamp(ypixel, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
+      if (xpixel >= 0) m_zoom_xpixel0 = limit::term_xpixel.clamp(xpixel);
+      if (ypixel >= 0) m_zoom_ypixel0 = limit::term_ypixel.clamp(ypixel);
 
-      coord_t const ypixel_min_from_xrange = contra::ceil_div((limit::minimal_terminal_xpixel - 1) * m_zoom_ypixel0 + 1, m_zoom_xpixel0);
-      coord_t const ypixel_max_from_xrange = limit::maximal_terminal_xpixel * m_zoom_ypixel0 / m_zoom_xpixel0;
-      coord_t const ypixel_min = std::max(limit::minimal_terminal_ypixel, ypixel_min_from_xrange);
-      coord_t const ypixel_max = std::min(limit::maximal_terminal_ypixel, ypixel_max_from_xrange);
+      coord_t const ypixel_min_from_xrange = contra::ceil_div((limit::term_xpixel.min() - 1) * m_zoom_ypixel0 + 1, m_zoom_xpixel0);
+      coord_t const ypixel_max_from_xrange = limit::term_xpixel.max() * m_zoom_ypixel0 / m_zoom_xpixel0;
+      coord_t const ypixel_min = std::max(limit::term_ypixel.min(), ypixel_min_from_xrange);
+      coord_t const ypixel_max = std::min(limit::term_ypixel.max(), ypixel_max_from_xrange);
       m_zoom_level_min = std::ceil(std::log((double) ypixel_min / m_zoom_ypixel0) / std::log(zoom_ratio));
       m_zoom_level_max = std::ceil(std::log((double) ypixel_max / m_zoom_ypixel0) / std::log(zoom_ratio));
       while (calculate_zoom(m_zoom_ypixel0, m_zoom_level_max) > ypixel_max) m_zoom_level_max--;
@@ -724,14 +781,16 @@ namespace term {
       m_zoom_level = std::clamp(zoom_level, m_zoom_level_min, m_zoom_level_max);
       coord_t const ypixel_zoom = calculate_zoom(m_zoom_ypixel0, m_zoom_level);
       coord_t const xpixel_zoom = contra::ceil_div(ypixel_zoom * m_zoom_xpixel0, m_zoom_ypixel0);
-      coord_t const ypixel = std::clamp(ypixel_zoom, limit::minimal_terminal_ypixel, limit::maximal_terminal_ypixel);
-      coord_t const xpixel = std::clamp(xpixel_zoom, limit::minimal_terminal_xpixel, limit::maximal_terminal_xpixel);
+      coord_t const ypixel = limit::term_ypixel.clamp(ypixel_zoom);
+      coord_t const xpixel = limit::term_xpixel.clamp(xpixel_zoom);
       if (m_events) m_events->request_change_size(-1, -1, xpixel, ypixel);
     }
 
   public:
     bool input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t x, curpos_t y) {
-      if (app().input_mouse(key, px, py, x, y)) return true;
+      if (!(key & modifier_application) &&
+        app().input_mouse(key, px, py, x, y)) return true;
+      key &= ~modifier_application;
 
       using namespace contra::ansi;
 
@@ -757,14 +816,16 @@ namespace term {
     void reset_size(curpos_t width, curpos_t height) {
       this->m_width = width;
       this->m_height = height;
-      app().reset_size(width, height);
+      if (m_apps.size())
+        app().reset_size(width, height);
     }
     void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
       this->m_width = width;
       this->m_height = height;
       this->m_xpixel = xpixel;
       this->m_ypixel = ypixel;
-      app().reset_size(width, height, xpixel, ypixel);
+      if (m_apps.size())
+        app().reset_size(width, height, xpixel, ypixel);
     }
 
   };

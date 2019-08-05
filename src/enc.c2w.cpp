@@ -189,6 +189,7 @@ namespace {
 }
 
   int c2w(char32_t u, c2w_type type) {
+    if ((std::uint32_t) u < 0xA0) return 1;
     switch (type & _c2w_width_mask) {
     case c2w_width_west:  return c2w_west((std::uint32_t) u, type);
     case c2w_width_east:  return c2w_east((std::uint32_t) u, type);

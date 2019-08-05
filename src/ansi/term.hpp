@@ -138,8 +138,8 @@ namespace ansi {
     presentation_direction m_presentation_direction { presentation_direction_default };
 
     board_t(curpos_t width, curpos_t height) {
-      m_width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
-      m_height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
+      m_width = limit::term_col.clamp(width);
+      m_height = limit::term_row.clamp(height);
       this->m_lines.resize(m_height);
       this->cur.set(0, 0);
       for (line_t& line : m_lines)
@@ -149,8 +149,8 @@ namespace ansi {
 
   public:
     void reset_size(curpos_t width, curpos_t height) {
-      width = std::clamp(width, limit::minimal_terminal_col, limit::maximal_terminal_col);
-      height = std::clamp(height, limit::minimal_terminal_row, limit::maximal_terminal_row);
+      width = limit::term_col.clamp(width);
+      height = limit::term_row.clamp(height);
       if (width == this->m_width && height == this->m_height) return;
       if (this->cur.x() >= width) cur.set_x(width - 1);
       if (this->cur.y() >= height) cur.set_y(height - 1);

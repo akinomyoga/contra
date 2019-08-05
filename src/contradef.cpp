@@ -1,5 +1,6 @@
 #include "contradef.hpp"
 #include <cstdio>
+#include <cstring>
 #include <sstream>
 #include "enc.utf8.hpp"
 
@@ -79,6 +80,28 @@ namespace contra {
         std::fprintf(file, "unknown %08x\n", code);
       }
     }
+  }
+
+  bool parse_modifier(key_t& value, const char* text) {
+    if (std::strcmp(text, "none") == 0)
+      value = 0;
+    else if (std::strcmp(text, "shift") == 0)
+      value = modifier_shift;
+    else if (std::strcmp(text, "meta") == 0)
+      value = modifier_meta;
+    else if (std::strcmp(text, "control") == 0)
+      value = modifier_control;
+    else if (std::strcmp(text, "alter") == 0)
+      value = modifier_alter;
+    else if (std::strcmp(text, "super") == 0)
+      value = modifier_super;
+    else if (std::strcmp(text, "hyper") == 0)
+      value = modifier_hyper;
+    else if (std::strcmp(text, "application") == 0)
+      value = modifier_application;
+    else
+      return false;
+    return true;
   }
 
 }

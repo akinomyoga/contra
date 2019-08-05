@@ -146,7 +146,8 @@ namespace term {
             ::chdir(pair.second.c_str());
         }
         //execl(shell, shell, "-l", NULL);
-        execl(params.shell, params.shell, NULL);
+        const char* shell = params.shell.c_str();
+        execl(shell, shell, NULL);
 
         // exec 失敗時
         if (params.exec_error_handler)
@@ -283,10 +284,10 @@ namespace term {
         params.env["HOME"] = pw->pw_dir;
       if (pw->pw_shell) {
         params.env["SHELL"] = pw->pw_shell;
-        if (!params.shell) params.shell = pw->pw_shell;
+        if (params.shell.empty()) params.shell = pw->pw_shell;
       }
     }
-    if (!params.shell) params.shell = "/bin/sh";
+    if (params.shell.empty()) params.shell = "/bin/sh";
 
     if (params.env.find("TERM") == params.env.end())
       params.env["TERM"] = "xterm-256color";

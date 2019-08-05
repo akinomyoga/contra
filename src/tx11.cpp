@@ -10,6 +10,7 @@
 #include "ansi/render.hpp"
 #include "manager.hpp"
 #include "pty.hpp"
+#include "context.hpp"
 #include <memory>
 
 namespace contra {
@@ -663,9 +664,13 @@ namespace tx11 {
     ::Window main = 0;
     ::Atom WM_DELETE_WINDOW;
     tx11_setting_t settings;
+    contra::app::context actx;
     tx11_graphics_buffer gbuffer { wstat };
 
   public:
+    tx11_window_t() {
+      actx.load("tx11.conf");
+    }
     ~tx11_window_t() {}
 
   private:
