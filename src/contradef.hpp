@@ -140,6 +140,47 @@ namespace contra {
 
   const char* get_ascii_name(char32_t value);
 
+  enum character_flags {
+    unicode_mask      = 0x001FFFFF,
+    unicode_max       = 0x0010FFFF,
+    charflag_iso2022  = 0x01000000, // not yet supported
+    charflag_object   = 0x08000000, // not yet supported
+    charflag_private1 = 0x02000000, // for private usage
+    charflag_private2 = 0x04000000, // for private usage
+
+    charflag_wide_extension    = 0x10000000,
+    charflag_cluster_extension = 0x20000000,
+    charflag_marker            = 0x40000000,
+
+    marker_base    = charflag_marker | 0x00200000,
+    marker_sds_l2r = marker_base + 1,
+    marker_sds_r2l = marker_base + 2,
+    marker_sds_end = marker_base + 3,
+    marker_srs_beg = marker_base + 4,
+    marker_srs_end = marker_base + 5,
+
+    // Note: Unicode 表示のある marker に関しては
+    // charflag_marker を外せばその文字になる様にする。
+
+    // Unicode bidi markers
+    marker_lre = charflag_marker | 0x202A,
+    marker_rle = charflag_marker | 0x202B,
+    marker_pdf = charflag_marker | 0x202C,
+    marker_lro = charflag_marker | 0x202D,
+    marker_rlo = charflag_marker | 0x202E,
+    marker_lri = charflag_marker | 0x2066,
+    marker_rli = charflag_marker | 0x2067,
+    marker_fsi = charflag_marker | 0x2068,
+    marker_pdi = charflag_marker | 0x2069,
+
+    invalid_character = 0xFFFFFFFF,
+
+    iso2022_94_iso646_usa = 0,
+    iso2022_94_vt100_acs  = 2,
+
+    iso2022_96_iso8859_1        = 1,
+  };
+
   //---------------------------------------------------------------------------
   // key_t
 

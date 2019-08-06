@@ -23,42 +23,6 @@ namespace ansi {
   using ::contra::dict::aflags_t;
 
   struct character_t {
-    enum flags {
-      unicode_mask         = 0x001FFFFF,
-      unicode_max          = 0x0010FFFF,
-      flag_acs_character   = 0x01000000, // not yet supported
-      flag_embedded_object = 0x08000000, // not yet supported
-      flag_private1        = 0x02000000, // for private usage
-      flag_private2        = 0x04000000, // for private usage
-
-      flag_wide_extension    = 0x10000000,
-      flag_cluster_extension = 0x20000000,
-      flag_marker            = 0x40000000,
-
-      marker_base    = flag_marker | 0x00200000,
-      marker_sds_l2r = marker_base + 1,
-      marker_sds_r2l = marker_base + 2,
-      marker_sds_end = marker_base + 3,
-      marker_srs_beg = marker_base + 4,
-      marker_srs_end = marker_base + 5,
-
-      // Note: Unicode 表示のある marker に関しては
-      // flag_marker を外せばその文字になる様にする。
-
-      // Unicode bidi markers
-      marker_lre = flag_marker | 0x202A,
-      marker_rle = flag_marker | 0x202B,
-      marker_pdf = flag_marker | 0x202C,
-      marker_lro = flag_marker | 0x202D,
-      marker_rlo = flag_marker | 0x202E,
-      marker_lri = flag_marker | 0x2066,
-      marker_rli = flag_marker | 0x2067,
-      marker_fsi = flag_marker | 0x2068,
-      marker_pdi = flag_marker | 0x2069,
-
-      invalid_value = 0xFFFFFFFF,
-    };
-
     std::uint32_t value;
 
     constexpr character_t(): value() {}
@@ -71,27 +35,27 @@ namespace ansi {
   public:
     // global utility function
     static constexpr bool is_char(std::uint32_t value) {
-      return !(value & ~character_t::unicode_mask);
+      return !(value & ~unicode_mask);
     }
 
   public:
     constexpr bool is_extension() const {
-      return value & (flag_wide_extension | flag_cluster_extension);
+      return value & (charflag_wide_extension | charflag_cluster_extension);
     }
     constexpr bool is_wide_extension() const {
-      return value & flag_wide_extension;
+      return value & charflag_wide_extension;
     }
     constexpr bool is_cluster_extension() const {
-      return value & flag_cluster_extension;
+      return value & charflag_cluster_extension;
     }
     constexpr bool is_marker() const {
-      return value & flag_marker;
+      return value & charflag_marker;
     }
 
     constexpr char32_t get_unicode_representation() const {
-      char32_t const ret = value & ~(flag_marker | flag_cluster_extension);
+      char32_t const ret = value & ~(charflag_marker | charflag_cluster_extension);
       if (ret <= unicode_max) return ret;
-      return invalid_value;
+      return invalid_character;
     }
   };
 
@@ -488,7 +452,7 @@ namespace ansi {
         curpos_t x1;
         std::tie(i1, x1) = _prop_glb(x, false);
         if (i1 >= m_cells.size()) return ascii_nul;
-        if (x1 < x) return character_t::flag_wide_extension;
+        if (x1 < x) return charflag_wide_extension;
         return m_cells[i1].character;
       }
     }
@@ -674,11 +638,11 @@ namespace ansi {
         std::uint32_t code = cell.character.value;
         if (cell.character.is_marker()) {
           switch (code) {
-          case character_t::marker_sds_l2r: std::fprintf(stderr, "\x1b[91mSDS(1)\x1b[m"); break;
-          case character_t::marker_sds_r2l: std::fprintf(stderr, "\x1b[91mSDS(2)\x1b[m"); break;
-          case character_t::marker_srs_beg: std::fprintf(stderr, "\x1b[91mSRS(1)\x1b[m"); break;
-          case character_t::marker_sds_end: std::fprintf(stderr, "\x1b[91mSDS(0)\x1b[m"); break;
-          case character_t::marker_srs_end: std::fprintf(stderr, "\x1b[91mSRS(1)\x1b[m"); break;
+          case marker_sds_l2r: std::fprintf(stderr, "\x1b[91mSDS(1)\x1b[m"); break;
+          case marker_sds_r2l: std::fprintf(stderr, "\x1b[91mSDS(2)\x1b[m"); break;
+          case marker_srs_beg: std::fprintf(stderr, "\x1b[91mSRS(1)\x1b[m"); break;
+          case marker_sds_end: std::fprintf(stderr, "\x1b[91mSDS(0)\x1b[m"); break;
+          case marker_srs_end: std::fprintf(stderr, "\x1b[91mSRS(1)\x1b[m"); break;
           default: break;
           }
         } else if (code == ascii_nul) {

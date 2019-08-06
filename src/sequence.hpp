@@ -117,6 +117,8 @@ namespace contra {
 
     enum decode_state {
       decode_default,
+      decode_iso2022,
+      decode_esc,
       decode_escape_sequence,
       decode_control_sequence,
       decode_command_string,
@@ -125,18 +127,21 @@ namespace contra {
 
     processor_type* m_proc;
     sequence_decoder_config* m_config;
-    decode_state m_dstate {decode_default};
-    bool m_hasPendingESC {false};
+    decode_state m_dstate = decode_default;
+    decode_state m_dstate_plain = decode_default;
+
     sequence m_seq;
+
+    // command_string 及び character_string で使う状態
+    bool m_hasPendingESC = false;
 
   public:
     sequence_decoder(Processor* proc, sequence_decoder_config* config): m_proc(proc), m_config(config) {}
 
   private:
     void clear() {
-      this->m_hasPendingESC = false;
       this->m_seq.clear();
-      this->m_dstate = decode_default;
+      this->m_dstate = m_dstate_plain;
     }
 
     void process_invalid_sequence() {
@@ -144,8 +149,169 @@ namespace contra {
       clear();
     }
 
+  private:
+    int m_iso2022_GL = iso2022_94_iso646_usa;
+    int m_iso2022_GR = iso2022_96_iso8859_1;
+    int m_iso2022_SS = -1;
+    int m_iso2022_Gn[4] = { iso2022_94_iso646_usa, iso2022_96_iso8859_1, 0, 0, };
+    int m_iso2022_GL_lock = 0;
+    int m_iso2022_GR_lock = 1;
+    void iso2022_update() {
+      if (m_iso2022_GL == iso2022_94_iso646_usa &&
+        m_iso2022_GR == iso2022_96_iso8859_1 &&
+        m_iso2022_SS == -1
+      ) {
+        m_dstate_plain = decode_default;
+      } else {
+        m_dstate_plain = decode_iso2022;
+      }
+    }
+    void iso2022_LSn(int n) {
+      m_iso2022_GL_lock = n;
+      m_iso2022_GL = m_iso2022_Gn[n];
+      iso2022_update();
+    }
+    void iso2022_LSnR(int n) {
+      m_iso2022_GR_lock = n;
+      m_iso2022_GR = m_iso2022_Gn[n];
+      iso2022_update();
+    }
+    void iso2022_GnD(int n, int charset) {
+      m_iso2022_Gn[n] = charset;
+      if (m_iso2022_GL_lock == n)
+        m_iso2022_GL = charset;
+      if (m_iso2022_GR_lock == n)
+        m_iso2022_GR = charset;
+      iso2022_update();
+    }
+    enum charset_type {
+      charset_94,
+      charset_96,
+      charset_94n,
+      charset_96n,
+    };
+    static int iso2022_get_charset(int type, sequence const& seq) {
+      switch (type) {
+      case charset_94:
+        if (seq.content_size() == 1) {
+          switch (seq.final()) {
+          case ascii_0: return iso2022_94_vt100_acs;
+          case ascii_B: return iso2022_94_iso646_usa;
+          }
+        }
+        break;
+      case charset_96:
+        if (seq.content_size() == 1) {
+          switch (seq.final()) {
+          case ascii_A: return iso2022_96_iso8859_1;
+          }
+        }
+        break;
+      case charset_94n:
+      case charset_96n:
+        break;
+      }
+      return -1;
+    }
+
+    bool iso2022_escape_sequence() {
+      if (this->m_seq.content_size() == 0) {
+        switch (this->m_seq.final()) {
+        case ascii_n:
+          iso2022_LSn(2);
+          return true;
+        case ascii_o:
+          iso2022_LSn(3);
+          return true;
+        case ascii_vertical_bar:
+          iso2022_LSnR(3);
+          return true;
+        case ascii_right_brace:
+          iso2022_LSnR(2);
+          return true;
+        case ascii_tilde:
+          iso2022_LSnR(1);
+          return true;
+        }
+      } else {
+        int n;
+        charset_type m;
+        switch (this->m_seq.content()[0]) {
+        case ascii_left_paren:
+          n = 0; m = charset_94;
+          goto process_iso2022_GnDm;
+        case ascii_right_paren:
+          n = 1; m = charset_94;
+          goto process_iso2022_GnDm;
+        case ascii_asterisk:
+          n = 2; m = charset_94;
+          goto process_iso2022_GnDm;
+        case ascii_plus:
+          n = 3; m = charset_94;
+          goto process_iso2022_GnDm;
+        case ascii_minus:
+          n = 1; m = charset_96;
+          goto process_iso2022_GnDm;
+        case ascii_dot:
+          n = 2; m = charset_96;
+          goto process_iso2022_GnDm;
+        case ascii_slash:
+          n = 3; m = charset_96;
+          goto process_iso2022_GnDm;
+        process_iso2022_GnDm:
+          if (int const charset = iso2022_get_charset(m, m_seq); charset >= 0) {
+            iso2022_GnD(n, charset);
+            return true;
+          }
+          break;
+        }
+      }
+      return false;
+    }
+
+    void process_char_iso2022(char32_t uchar) {
+      if (uchar < 0x100 && 0x20 <= (uchar & 0x7F)) {
+        // GL/GR の文字
+        int charset;
+        if (m_iso2022_SS >= 0) {
+          charset = m_iso2022_SS;
+          m_iso2022_SS = -1;
+        } else if (uchar < 0x80) {
+          charset = m_iso2022_GL;
+        } else {
+          charset = m_iso2022_GR;
+        }
+
+        if (charset == iso2022_94_iso646_usa)
+          m_proc->process_char(uchar & 0x7F);
+        else if (charset == iso2022_96_iso8859_1)
+          m_proc->process_char((uchar & 0x7F) | 0x80);
+        else
+          m_proc->process_char((uchar & 0x7F) | charset << 7 | charflag_iso2022);
+      } else {
+        if (m_iso2022_SS >= 0) {
+          m_proc->process_char(0xFFFD);
+          m_iso2022_SS = -1;
+        }
+        process_char_default(uchar);
+      }
+    }
+
+  private:
+    void process_c0(char32_t uchar) {
+      switch (uchar) {
+      case ascii_so:
+        iso2022_LSn(1);
+        return;
+      case ascii_si:
+        iso2022_LSn(1);
+        return;
+      }
+      m_proc->process_control_character(uchar);
+    }
     void process_escape_sequence() {
-      m_proc->process_escape_sequence(this->m_seq);
+      if (!iso2022_escape_sequence())
+        m_proc->process_escape_sequence(this->m_seq);
       clear();
     }
 
@@ -157,11 +323,13 @@ namespace contra {
     void process_command_string() {
       m_proc->process_command_string(this->m_seq);
       clear();
+      this->m_hasPendingESC = false;
     }
 
     void process_character_string() {
       m_proc->process_character_string(this->m_seq);
       clear();
+      this->m_hasPendingESC = false;
     }
 
     void process_char_for_escape_sequence(char32_t uchar) {
@@ -199,7 +367,7 @@ namespace contra {
         //   RLogin はエスケープシーケンス以外の C0 を全てその場で処理している気がする。
         //   SI, SO に関しても文字コード制御の効果を持っている。
         if (0 <= uchar && uchar < 0x20 && uchar != ascii_esc) {
-          m_proc->process_control_character(uchar);
+          process_c0(uchar);
           return;
         }
 
@@ -310,38 +478,40 @@ namespace contra {
       }
     }
 
-    void process_char_default(char32_t uchar) {
-      if (m_hasPendingESC) {
-        m_hasPendingESC = false;
-        if (0x20 <= uchar && uchar < 0x7E) {
-          if (uchar < 0x30) {
-            // <I> to start an escape sequence
-            m_seq.set_type((byte) ascii_esc);
-            m_seq.append((byte) uchar);
-            m_dstate = decode_escape_sequence;
-          } else if (0x40 <= uchar && uchar < 0x60) {
-            // <F> to call C1
-            process_char_default_c1((uchar & 0x1F) | 0x80);
-          } else if (uchar == ascii_k && m_config->title_definition_string_enabled) {
-            m_seq.set_type((byte) ascii_k);
-            m_dstate = decode_character_string;
-          } else {
-            // <F>/<P> to complete an escape sequence
-            m_seq.set_type((byte) ascii_esc);
-            m_seq.set_final((byte) uchar);
-            process_escape_sequence();
-          }
+    void process_esc_char(char32_t uchar) {
+      m_dstate = m_dstate_plain;
+      if (0x20 <= uchar && uchar < 0x7E) {
+        if (uchar < 0x30) {
+          // <I> to start an escape sequence
+          m_seq.set_type((byte) ascii_esc);
+          m_seq.append((byte) uchar);
+          m_dstate = decode_escape_sequence;
+        } else if (0x40 <= uchar && uchar < 0x60) {
+          // <F> to call C1
+          process_char_default_c1((uchar & 0x1F) | 0x80);
+        } else if (uchar == ascii_k && m_config->title_definition_string_enabled) {
+          m_seq.set_type((byte) ascii_k);
+          m_dstate = decode_character_string;
         } else {
-          process_invalid_sequence();
+          // <F>/<P> to complete an escape sequence
+          m_seq.set_type((byte) ascii_esc);
+          m_seq.set_final((byte) uchar);
+          process_escape_sequence();
         }
-        return;
+      } else {
+        process_invalid_sequence();
       }
+    }
 
+  private:
+    void process_char_default(char32_t uchar) {
       if (0 <= uchar && uchar < 0x20) {
         if (uchar == ascii_esc)
-          m_hasPendingESC = true;
-        else
-          m_proc->process_control_character(uchar);
+          m_dstate = decode_esc;
+        else {
+          process_c0(uchar);
+          m_dstate = m_dstate_plain;
+        }
       } else if (0x80 <= uchar && uchar < 0xA0) {
         if (m_config->c1_8bit_representation_enabled)
           process_char_default_c1(uchar);
@@ -356,6 +526,12 @@ namespace contra {
       switch (m_dstate) {
       case decode_default:
         process_char_default(uchar);
+        break;
+      case decode_iso2022:
+        process_char_iso2022(uchar);
+        break;
+      case decode_esc:
+        process_esc_char(uchar);
         break;
       case decode_escape_sequence:
         process_char_for_escape_sequence(uchar);
@@ -377,7 +553,7 @@ namespace contra {
     }
     void decode(char32_t const* beg, char32_t const* end) {
       while (beg != end) {
-        if (m_dstate == decode_default && !m_hasPendingESC && !is_ctrl(*beg)) {
+        if (m_dstate == decode_default && !is_ctrl(*beg)) {
           char32_t const* const batch_begin = beg;
           do beg++; while (beg != end && !is_ctrl(*beg));
           char32_t const* const batch_end = beg;

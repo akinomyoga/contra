@@ -771,9 +771,9 @@ namespace ansi {
     params.read_param(param, 0);
     if (param > 2) return false;
     term.insert_marker(
-      param == 1 ? character_t::marker_sds_l2r :
-      param == 2 ? character_t::marker_sds_r2l :
-      character_t::marker_sds_end);
+      param == 1 ? marker_sds_l2r :
+      param == 2 ? marker_sds_r2l :
+      marker_sds_end);
     return true;
   }
   bool do_srs(term_t& term, csi_parameters& params) {
@@ -781,8 +781,8 @@ namespace ansi {
     params.read_param(param, 0);
     if (param > 2) return false;
     term.insert_marker(
-      param == 1 ? character_t::marker_srs_beg :
-      character_t::marker_srs_end);
+      param == 1 ? marker_srs_beg :
+      marker_srs_end);
     return true;
   }
 

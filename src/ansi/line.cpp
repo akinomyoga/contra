@@ -43,7 +43,7 @@ void line_t::_mono_generic_replace_cells(curpos_t xL, curpos_t xR, cell_t const*
       curpos_t const w = cell[i].width;
       m_cells[x] = cell[i];
       for (curpos_t j = 1; j < w; j++) {
-        m_cells[x + j].character = character_t::flag_wide_extension;
+        m_cells[x + j].character = charflag_wide_extension;
         m_cells[x + j].attribute = cell[i].attribute;
         m_cells[x + j].width = 0;
       }
@@ -149,11 +149,11 @@ void line_t::_prop_reverse(curpos_t width) {
     bool remove = false;
     if (cell.character.is_marker()) {
       switch (code) {
-      case character_t::marker_sds_l2r: _push(cell, code, character_t::marker_sds_end); break;
-      case character_t::marker_sds_r2l: _push(cell, code, character_t::marker_sds_end); break;
-      case character_t::marker_srs_beg: _push(cell, code, character_t::marker_srs_end); break;
-      case character_t::marker_sds_end:
-      case character_t::marker_srs_end:
+      case marker_sds_l2r: _push(cell, code, marker_sds_end); break;
+      case marker_sds_r2l: _push(cell, code, marker_sds_end); break;
+      case marker_srs_beg: _push(cell, code, marker_srs_end); break;
+      case marker_sds_end:
+      case marker_srs_end:
         remove = true; // 対応する始まりがもし見つからなければ削除
         while (stack.size()) {
           if (stack.back().end_marker == code) {
@@ -219,11 +219,11 @@ std::vector<line_t::nested_string> const& line_t::update_strings(curpos_t width,
     std::uint32_t code = cell.character.value;
     if (cell.character.is_marker()) {
       switch (code) {
-      case character_t::marker_sds_l2r: _push(code, character_t::marker_sds_end, false); break;
-      case character_t::marker_sds_r2l: _push(code, character_t::marker_sds_end, true); break;
-      case character_t::marker_srs_beg: _push(code, character_t::marker_srs_end, !ret[istr].r2l); break;
-      case character_t::marker_sds_end:
-      case character_t::marker_srs_end:
+      case marker_sds_l2r: _push(code, marker_sds_end, false); break;
+      case marker_sds_r2l: _push(code, marker_sds_end, true); break;
+      case marker_srs_beg: _push(code, marker_srs_end, !ret[istr].r2l); break;
+      case marker_sds_end:
+      case marker_srs_end:
         while (istr >= 1) {
           bool const hit = ret[istr].end_marker == code;
           ret[istr].end = x1;
@@ -323,18 +323,18 @@ curpos_t line_t::_prop_to_presentation_position(curpos_t x, bool line_r2l) const
     std::uint32_t code = cell.character.value;
     if (cell.character.is_marker()) {
       switch (code) {
-      case character_t::marker_sds_l2r:
-        _push(character_t::marker_sds_end, false);
+      case marker_sds_l2r:
+        _push(marker_sds_end, false);
         break;
-      case character_t::marker_sds_r2l:
-        _push(character_t::marker_sds_end, true);
+      case marker_sds_r2l:
+        _push(marker_sds_end, true);
         break;
-      case character_t::marker_srs_beg:
-        _push(character_t::marker_srs_end, !r2l);
+      case marker_srs_beg:
+        _push(marker_srs_end, !r2l);
         break;
 
-      case character_t::marker_sds_end:
-      case character_t::marker_srs_end:
+      case marker_sds_end:
+      case marker_srs_end:
         while (stack.size()) {
           bool const hit = stack.back().end_marker == code;
           _pop();
@@ -432,18 +432,18 @@ void line_t::_prop_cells_in_presentation(std::vector<cell_t>& buff, bool line_r2
     std::uint32_t code = cell.character.value;
     if (cell.character.is_marker()) {
       switch (code) {
-      case character_t::marker_sds_l2r:
-        _push(character_t::marker_sds_end, false);
+      case marker_sds_l2r:
+        _push(marker_sds_end, false);
         continue;
-      case character_t::marker_sds_r2l:
-        _push(character_t::marker_sds_end, true);
+      case marker_sds_r2l:
+        _push(marker_sds_end, true);
         continue;
-      case character_t::marker_srs_beg:
-        _push(character_t::marker_srs_end, !r2l);
+      case marker_srs_beg:
+        _push(marker_srs_end, !r2l);
         continue;
 
-      case character_t::marker_sds_end:
-      case character_t::marker_srs_end:
+      case marker_sds_end:
+      case marker_srs_end:
         while (stack.size()) {
           bool const hit = stack.back().end_marker == code;
           _pop();
@@ -751,7 +751,7 @@ void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpo
 
       // 転送元と向きが異なる場合
       if (src_r2l != line_r2l) {
-        mark.character = character_t::marker_srs_beg;
+        mark.character = marker_srs_beg;
         cells.push_back(mark);
       }
 
@@ -760,7 +760,7 @@ void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpo
 
       // 転送元と向きが異なる場合
       if (src_r2l != line_r2l) {
-        mark.character = character_t::marker_srs_end;
+        mark.character = marker_srs_end;
         cells.push_back(mark);
       }
 
@@ -807,7 +807,7 @@ void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpo
 
       // 転送元と向きが異なる場合
       if (src_r2l != line_r2l) {
-        mark.character = character_t::marker_srs_beg;
+        mark.character = marker_srs_beg;
         cells.push_back(mark);
       }
 
@@ -835,7 +835,7 @@ void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpo
 
       // 転送元と向きが異なる場合
       if (src_r2l != line_r2l) {
-        mark.character = character_t::marker_srs_end;
+        mark.character = marker_srs_end;
         cells.push_back(mark);
       }
     }
@@ -1302,7 +1302,7 @@ curpos_t line_t::extract_selection(std::u32string& data) const {
   for (cell_t const& cell : this->m_cells) {
     if (cell.attribute.xflags & attribute_t::ssa_selected) {
       char32_t value = cell.character.get_unicode_representation();
-      if (value != (char32_t) character_t::invalid_value) {
+      if (value != (char32_t) invalid_character) {
         if (value == ascii_nul) value = U' ';
         if (data.empty())
           head_x = space_count;

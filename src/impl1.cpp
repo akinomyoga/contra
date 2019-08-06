@@ -23,7 +23,7 @@ std::u32string get_data_content(board_t& board) {
   for (curpos_t x = 0; x < board.m_width; x++) {
     //curpos_t const x = board.to_presentation_position(board.cur.y, p);
     char32_t c = board.line().char_at(x).value;
-    if (!(c & character_t::flag_wide_extension))
+    if (!(c & contra::charflag_wide_extension))
       buff.push_back(c == U'\0' ? U'@' : c);
   }
   return std::u32string(buff.begin(), buff.end());
@@ -33,7 +33,7 @@ std::u32string get_presentation_content(board_t& board) {
   for (curpos_t p = 0; p < board.m_width; p++) {
     curpos_t const x = board.to_data_position(board.cur.y(), p);
     char32_t c = board.line().char_at(x).value;
-    if (!(c & character_t::flag_wide_extension))
+    if (!(c & contra::charflag_wide_extension))
       buff.push_back(c == U'\0' ? U'@' : c);
   }
   if (board.line_r2l())
@@ -242,7 +242,7 @@ void test_presentation() {
     curpos_t const x = b.to_data_position(0, p);
     curpos_t const p2 = b.to_presentation_position(0, x);
     char32_t c = b.line().char_at(x).value;
-    if (!(c & character_t::flag_wide_extension))
+    if (!(c & contra::charflag_wide_extension))
       buff.push_back(c == U'\0' ? U'@' : c);
     mwg_check(p == p2, "p=%d -> x=%d -> p=%d", p, x, p2);
   }

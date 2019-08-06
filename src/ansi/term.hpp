@@ -270,7 +270,7 @@ namespace ansi {
         if (line.lflags() & line_attr_t::is_line_used) {
           for (auto const& cell : line.cells()) {
             if (cell.character.is_wide_extension()) continue;
-            char32_t c = (char32_t) (cell.character.value & character_t::unicode_mask);
+            char32_t c = (char32_t) (cell.character.value & unicode_mask);
             if (c == 0) c = '~';
             contra::encoding::put_u8(c, file);
           }
@@ -632,7 +632,7 @@ namespace ansi {
       curpos_t const dir = simd ? -1 : 1;
 
       cell_t cell;
-      cell.character = marker | character_t::flag_marker;
+      cell.character = marker | charflag_marker;
       cell.attribute = m_board.cur.attribute;
       cell.width = 0;
       initialize_line(m_board.line());
@@ -646,8 +646,6 @@ namespace ansi {
     }
 
     void process_char(char32_t u) {
-      u &= character_t::unicode_mask;
-
       if (is_marker(u))
         return insert_marker(u);
 

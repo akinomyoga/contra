@@ -567,11 +567,6 @@ namespace ansi {
       else if (attr.aflags & attribute_t::is_fraktur_set)
         ret = (ret & ~font_face_mask) | font_face_fraktur;
 
-      if (attr.aflags & attribute_t::is_bold_set)
-        ret |= font_weight_bold;
-      else if (attr.aflags & attribute_t::is_faint_set)
-        ret |= font_weight_faint;
-
       if (attr.xflags & attribute_t::is_sup_set)
         ret |= font_flag_small | font_layout_sup;
       else if (attr.xflags & attribute_t::is_sub_set)
@@ -971,6 +966,100 @@ namespace ansi {
 
   public:
     template<typename Graphics>
+    std::uint32_t draw_acs(Graphics& g, coord_t x1, coord_t x2, coord_t y, std::uint32_t code, color_t color, attribute_t const& attr) {
+      coord_t const y1 = y;
+      coord_t const y2 = y + wstat.m_ypixel;
+      bool const bold = attr.aflags & attribute_t::is_bold_set;
+
+      auto _center = [&] (coord_t x1, coord_t x2) -> std::tuple<coord_t, coord_t> {
+        coord_t xc1 = (x1 + x2) / 2;
+        coord_t xc2 = xc1 + 1;
+        if (bold) xc1--;
+        return { xc1, xc2 };
+      };
+
+      int vparam = 0, hparam = 0;
+      switch (code) {
+      case ascii_back_quote:   return 0x2666; // ACS_DIAMOND ***
+      case ascii_a:            return 0x2592; // ACS_CKBOARD (A)
+      case ascii_f:            return 0x00B0; // ACS_DEGREE (A)
+      case ascii_g:            return 0x00B1; // ACS_PLMINUS (A)
+      case ascii_i:            return 0x240B; // ACS_LANTERN
+      case ascii_left_brace:   return 0x03C0; // ACS_PI (A)
+      case ascii_vertical_bar: return 0x2260; // ACS_NEQUAL (A)***
+      case ascii_right_brace:  return 0x00A3; // ACS_STERLING
+      case ascii_tilde:        return 0x2022; // ACS_BULLET (A)
+      case ascii_plus:         return 0x2192; // ACS_RARROW (A)
+      case ascii_comma:        return 0x2190; // ACS_LARROW (A)
+      case ascii_minus:        return 0x2191; // ACS_UARROW (A)
+      case ascii_dot:          return 0x2193; // ACS_DARROW (A)
+      case ascii_y:            return 0x2264; // ACS_LEQUAL (A)
+      case ascii_z:            return 0x2265; // ACS_GEQUAL (A)
+
+      case ascii_0: // ACS_BLOCK
+        {
+          coord_t const w = bold ? 2 : 1;
+          g.fill_rectangle(x1, y1, x2, y1 + w, color);
+          g.fill_rectangle(x1, y2 - w, x2, y2, color);
+          g.fill_rectangle(x1, y1, x1 + w, y2, color);
+          g.fill_rectangle(x2 - w, y1, x2, y2, color);
+        }
+        return 0;
+      case ascii_h: // ACS_BOARD
+        g.fill_rectangle(x1, y1, x2, y2, color);
+        return 0;
+
+      case ascii_x: // ACS_VLINE
+        {
+          auto [xc1, xc2] = _center(x1, x2);
+          g.fill_rectangle(xc1, y1, xc2, y2, color);
+        }
+        return 0;
+      case ascii_o: // ACS_S1
+        g.fill_rectangle(x1, y1, x2, y1 + (bold ? 2 : 1), color);
+        return 0;
+      case ascii_p: hparam = -wstat.m_ypixel / 4; goto hline; // ACS_S3
+      case ascii_q: hparam = 0; goto hline; // ACS_HLINE
+      case ascii_r: hparam = +wstat.m_ypixel / 4; goto hline; // ACS_S7
+      case ascii_s: // ACS_S9
+        g.fill_rectangle(x1, y2, x2, y2 - (bold ? 2 : 1), color);
+        return 0;
+      hline:
+        {
+          auto [yc1, yc2] = _center(y1, y2);
+          g.fill_rectangle(x1, yc1 + hparam, x2, yc2 + hparam, color);
+        }
+        return 0;
+      case ascii_j: hparam = 2; vparam = 2; goto hvlines; // ACS_LRCORNER
+      case ascii_k: hparam = 2; vparam = 3; goto hvlines; // ACS_URCORNER
+      case ascii_l: hparam = 3; vparam = 3; goto hvlines; // ACS_ULCORNER
+      case ascii_m: hparam = 3; vparam = 2; goto hvlines; // ACS_LLCORNER
+      case ascii_n: hparam = 1; vparam = 1; goto hvlines; // ACS_PLUS
+      case ascii_t: hparam = 3; vparam = 1; goto hvlines; // ACS_LTEE
+      case ascii_u: hparam = 2; vparam = 1; goto hvlines; // ACS_RTEE
+      case ascii_v: hparam = 1; vparam = 2; goto hvlines; // ACS_BTEE
+      case ascii_w: hparam = 1; vparam = 3; goto hvlines; // ACS_TTEE
+      hvlines:
+        {
+          auto [xc1, xc2] = _center(x1, x2);
+          auto [yc1, yc2] = _center(y1, y2);
+          switch (hparam) {
+          case 1: g.fill_rectangle(x1, yc1, x2, yc2, color); break;
+          case 2: g.fill_rectangle(x1, yc1, xc2, yc2, color); break;
+          case 3: g.fill_rectangle(xc1, yc1, x2, yc2, color); break;
+          }
+          switch (vparam) {
+          case 1: g.fill_rectangle(xc1, y1, xc2, y2, color); break;
+          case 2: g.fill_rectangle(xc1, y1, xc2, yc2, color); break;
+          case 3: g.fill_rectangle(xc1, yc1, xc2, y2, color); break;
+          }
+        }
+        return 0;
+      }
+      return code;
+    }
+  public:
+    template<typename Graphics>
     void draw_characters(Graphics& g, term_view_t const& view, std::vector<line_content>& content) {
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;
@@ -979,14 +1068,14 @@ namespace ansi {
       curpos_t const height = view.height();
       tstate_t const& s = view.state();
 
-      constexpr std::uint32_t flag_processed = character_t::flag_private1;
+      constexpr std::uint32_t flag_processed = charflag_private1;
 
       aflags_t invisible_flags = attribute_t::is_invisible_set;
       if (wstat.m_blinking_count & 1) invisible_flags |= attribute_t::is_rapid_blink_set;
       if (wstat.m_blinking_count & 2) invisible_flags |= attribute_t::is_blink_set;
       auto _visible = [invisible_flags] (std::uint32_t code, aflags_t aflags, bool sp_visible = false) {
         return code != ascii_nul && (sp_visible || code != ascii_sp)
-          && character_t::is_char(code & flag_processed)
+          && !(code & flag_processed)
           && !(aflags & invisible_flags);
       };
 
@@ -1030,14 +1119,25 @@ namespace ansi {
           i++;
           x += cell_progress;
           std::uint32_t code = cell.character.value;
-          code &= ~character_t::flag_cluster_extension;
+          code &= ~charflag_cluster_extension;
           if (!_visible(code, cell.attribute.aflags)) continue;
 
           // 色の決定
           color_t const fg = _color.resolve_fg(attr);
+
+          if (!character_t::is_char(code)) {
+            if (code & charflag_iso2022) {
+              std::uint32_t const charset = (code & ~charflag_iso2022) >> 7;
+              if (charset == iso2022_94_vt100_acs) {
+                code = draw_acs(g, xL, x, y, code & 0x7F, fg, attr);
+                if (!code) continue;
+              }
+            } else
+              continue;
+          }
+
           font_t const font = _font.resolve_font(attr);
           std::tie(dx, dy, dxW) = _fmetric.get_displacement(font);
-
           charbuff.clear();
           _push_char(code, cell_progress, cell.width);
 
@@ -1051,13 +1151,16 @@ namespace ansi {
             // 零幅の cluster などだけ一緒に描画する。
             if ((font & font_rotation_mask) && cell2_progress) break;
 
-            bool const is_cluster = code2 & character_t::flag_cluster_extension;
+            bool const is_cluster = code2 & charflag_cluster_extension;
             color_t const fg2 = _color.resolve_fg(cell2.attribute);
             font_t const font2 = _font.resolve_font(cell2.attribute);
-            code2 &= ~character_t::flag_cluster_extension;
+            code2 &= ~charflag_cluster_extension;
             if (!_visible(code2, cell2.attribute.aflags, font & font_layout_proportional)) {
               if (font & font_layout_proportional) break;
               charbuff.shift(cell2_progress);
+            } else if (!character_t::is_char(code2)) {
+              charbuff.shift(cell2_progress);
+              continue;
             } else if (is_cluster || (fg == fg2 && font == font2)) {
               _push_char(code2, cell2_progress, cell2.width);
             } else {
@@ -1117,14 +1220,14 @@ namespace ansi {
         charbuff.reserve(cells.size());
         for (auto const& cell : cells) {
           std::uint32_t code = cell.character.value;
-          if (code & character_t::flag_cluster_extension)
-            code &= ~character_t::flag_cluster_extension;
+          if (code & charflag_cluster_extension)
+            code &= ~charflag_cluster_extension;
           if (code == ascii_nul || code == ascii_sp) {
             if (charbuff.empty())
               xoffset += cell.width * xpixel;
             else
               charbuff.shift(cell.width * xpixel);
-          } else if (code == (code & character_t::unicode_mask)) {
+          } else if (code == (code & unicode_mask)) {
             charbuff.add_char(code, cell.width * xpixel);
           }
           // ToDo: その他の文字・マーカーに応じた処理。
