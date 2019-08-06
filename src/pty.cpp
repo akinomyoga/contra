@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <pwd.h> /* for getuid, getpwuid */
+#include <utmp.h> /* for login_tty */
 
 #include <cstdint>
 #include <cstdio>
@@ -126,6 +127,7 @@ namespace term {
 
       if (pid == 0) {
         setsid();
+        login_tty(slavefd);
         if (params.termios) tcsetattr(slavefd, TCSANOW, params.termios);
         {
           ws.ws_col = params.col;
@@ -145,6 +147,7 @@ namespace term {
           if (pair.first == "HOME")
             ::chdir(pair.second.c_str());
         }
+
         //execl(shell, shell, "-l", NULL);
         const char* shell = params.shell.c_str();
         execl(shell, shell, NULL);

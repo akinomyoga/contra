@@ -26,6 +26,10 @@ $(objdir)/experimental/%.o: experimental/%.cpp | $(objdir)/experimental $(gendir
 $(gendir)/term.mode_def.hpp: make_command.sh ansi/term.mode.def
 	bash make_command.sh
 
+
+# for login_tty (pty.cpp)
+LIBS := -lutil
+
 #------------------------------------------------------------------------------
 # test
 
@@ -53,7 +57,7 @@ impl2_objs = \
   $(objdir)/enc.utf8.o \
   $(objdir)/contradef.o
 impl2: $(impl2_objs)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
 $(objdir)/impl2.o: impl2.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
@@ -71,7 +75,7 @@ ttty_objs = \
   $(objdir)/enc.utf8.o \
   $(objdir)/contradef.o
 ttty.exe: $(ttty_objs)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
 $(objdir)/ttty.o: ttty.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
@@ -81,7 +85,11 @@ $(objdir)/ttty.o: ttty.cpp | $(objdir)
 ifeq ($(ostype),cygwin)
 
 twin_CPPFLAGS = $(CPPFLAGS) -DUNICODE -D_UNICODE
-twin_LIBS := -lgdi32 -limm32
+twin_LIBS := -lgdi32 -limm32 $(LIBS)
+#twin_LDFLAGS := $(LDFLAGS) -static-libgcc -static-libstdc++ -s
+#twin_LDFLAGS := $(LDFLAGS) -mwindows
+twin_LDFLAGS := $(LDFLAGS)
+
 directories += $(objdir)/twin
 $(objdir)/twin/%.o: twin/%.cpp | $(objdir)/twin
 	$(CXX) $(twin_CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
@@ -97,9 +105,6 @@ twin_objs = \
   $(objdir)/enc.utf8.o \
   $(objdir)/enc.c2w.o \
   $(objdir)/contradef.o
-#twin_LDFLAGS := $(LDFLAGS) -static-libgcc -static-libstdc++ -s
-#twin_LDFLAGS := $(LDFLAGS) -mwindows
-twin_LDFLAGS := $(LDFLAGS)
 twin.exe: $(twin_objs)
 	$(CXX) $(CXXFLAGS) $(twin_LDFLAGS) -o $@ $^ $(twin_LIBS)
 
@@ -118,7 +123,7 @@ all: tx11.exe
 CXXFLAGS += -I /usr/include/freetype2
 tx11_CXXFLAGS := $(CXXFLAGS)
 tx11_LDFLAGS := $(LDFLAGS)
-tx11_LIBS := -lXft -lX11
+tx11_LIBS := -lXft -lX11 $(LIBS)
 tx11_objs := \
   $(objdir)/tx11.o \
   $(objdir)/pty.o \

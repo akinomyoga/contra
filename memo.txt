@@ -197,37 +197,6 @@
 
 2019-08-05
 
-* twin: bash 以外のシェルを起動しようとすると tty が変な状態
-
-  zsh を起動してみたら以下のエラーが出てちゃんと起動しない。使えなくはないが
-  $ zsh
-  zsh: can't set tty pgrp: operation not permitted
-  この中でコマンドを実行すると実行できるコマンドもあるが、
-  然し bash 等を起動する事ができない。
-
-  dash も駄目な様だ。tty はちゃんと文字列を返す。posh も駄目。ksh も駄目
-  $ dash
-  dash: 0: can't access tty; job control turned off
-  $ tty
-  /dev/pty19
-  $ posh
-  /bin/posh: No controlling tty (open /dev/tty: No such device or address)
-  $ ksh
-  /bin/ksh: No controlling tty: open /dev/tty: No such device or address
-  /bin/ksh: warning: won't have full job control
-
-  /bin/sh は大丈夫。また、/bin/sh, /bin/bash を起動してから
-  中で zsh, ash, dash を起動した場合には問題は発生しない。
-  zsh, ash, dash, posh, ksh から始めると sh, bash は起動できない。
-  exec sh, exec bash ならば起動できる。一度 exec sh, exec bash すれば、
-  後は zsh, ash, dash, posh, ksh も普通に実行する事ができるようになる。
-  何故 bash だけ大丈夫なのだろうか…。
-  何れにしても何か変な事をしているのだという事は確かである。
-
-  色々試すと vim, top は起動できる。emacs, emacs-nox は起動できない。
-  然し vim, top も、Window サイズ変更に追随して来ない。
-  端末の中で起動していない設定になっているのだろうか…。
-
 * test: 文字の種類とフォントの切り替えに関して。
   取り敢えず暫くは contra の上で作業をしてみようと思う。
   気づいたのだが実はフォントが微妙に違うのである。
@@ -1866,6 +1835,65 @@
 ------------------------------------------------------------------------------
   Done
 ------------------------------------------------------------------------------
+
+2019-08-06
+
+* twin: bash 以外のシェルを起動しようとすると tty が変な状態 [#D0187]
+
+  zsh を起動してみたら以下のエラーが出てちゃんと起動しない。使えなくはないが
+  $ zsh
+  zsh: can't set tty pgrp: operation not permitted
+  この中でコマンドを実行すると実行できるコマンドもあるが、
+  然し bash 等を起動する事ができない。
+
+  dash も駄目な様だ。tty はちゃんと文字列を返す。posh も駄目。ksh も駄目
+  $ dash
+  dash: 0: can't access tty; job control turned off
+  $ tty
+  /dev/pty19
+  $ posh
+  /bin/posh: No controlling tty (open /dev/tty: No such device or address)
+  $ ksh
+  /bin/ksh: No controlling tty: open /dev/tty: No such device or address
+  /bin/ksh: warning: won't have full job control
+
+  /bin/sh は大丈夫。また、/bin/sh, /bin/bash を起動してから
+  中で zsh, ash, dash を起動した場合には問題は発生しない。
+  zsh, ash, dash, posh, ksh から始めると sh, bash は起動できない。
+  exec sh, exec bash ならば起動できる。一度 exec sh, exec bash すれば、
+  後は zsh, ash, dash, posh, ksh も普通に実行する事ができるようになる。
+  何故 bash だけ大丈夫なのだろうか…。
+  何れにしても何か変な事をしているのだという事は確かである。
+
+  色々試すと vim, top は起動できる。emacs, emacs-nox は起動できない。
+  然し vim, top も、Window サイズ変更に追随して来ない。
+  端末の中で起動していない設定になっているのだろうか…。
+
+  Linux 上で試すとどうなるか。
+  ok: sh bash zsh ksh ksh93
+  駄目: dash tcsh csh fish yash
+
+  これらの振る舞いを観察するとどうも /dev/tty が開けないという問題の様だ。
+
+  検索すると何か出てくるが…。うーん。grantpt, unlockpt はちゃんとやっている。
+  所で forkpty なる関数も存在する様である。
+  https://stackoverflow.com/questions/9363652/c-fork-a-new-tty
+
+  https://linux.die.net/man/3/forkpty
+  forkpty で検索するとこの関数は openpty, fork, login_tty の組み合わせらしい。
+  login_tty は呼び出していない。調べてみる。posix では定義されていない関数の様だ。
+  然し、これを見てみると utmp.h に定義されているという事から、
+  w で見える様にするというそれだけの関数の様にも見える。
+  →これを実行したら直った…。
+
+  また w で追加されるかどうかを確認してみたが特に追加されるという事はない様だ。
+  所で bash は /dev/tty が見つからない時は勝手に
+  login_tty を実施してしまうという事なのだろうか。賢いといえば賢い。
+
+  Cygwin では何もしなくても login_tty は使えるが
+  Linux では -lutil を指定しなければならない。
+  Cygwin でも -lutil を指定してもコンパイルできた。
+  なので -lutil は入れる事にする。
 
 2019-08-05
 
