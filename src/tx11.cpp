@@ -548,6 +548,10 @@ namespace tx11 {
     GC m_gc_delete = NULL;
 
     void release() {
+      if (m_stipple) {
+        XFreePixmap(m_display, m_stipple);
+        m_stipple = 0;
+      }
       if (m_gc_delete) {
         XFreeGC(m_display, m_gc_delete);
         m_gc_delete = NULL;
@@ -607,6 +611,22 @@ namespace tx11 {
       text_drawer.clip_clear();
     }
 
+  private:
+    std::vector<XPoint> xpoints;
+    Pixmap m_stipple = 0;
+    Pixmap get_stipple() {
+      if (!m_stipple) {
+        m_stipple = XCreatePixmap(m_display, m_drawable, 2, 2, 1);
+        GC gc2 = XCreateGC(m_display, m_stipple, 0, 0);
+        XSetForeground(m_display, gc2, 0);
+        XFillRectangle(m_display, m_stipple, gc2, 0, 0, 2, 2);
+        XSetForeground(m_display, gc2, 1);
+        XDrawPoint(m_display, m_stipple, gc2, 0, 0);
+        XDrawPoint(m_display, m_stipple, gc2, 1, 1);
+        XFreeGC(m_display, gc2);
+      }
+      return m_stipple;
+    }
   public:
     void fill_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color) {
       set_foreground(color);
@@ -620,6 +640,16 @@ namespace tx11 {
       params.function = GXcopy; // default
       XChangeGC(m_display, m_gc, GCFunction, &params);
     }
+    void checked_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color) {
+      XGCValues params;
+      params.foreground = color2pixel(color);
+      params.fill_style = FillStippled;
+      params.stipple = get_stipple();
+      XChangeGC(m_display, m_gc, GCForeground | GCStipple | GCFillStyle, &params);
+      XFillRectangle(m_display, m_drawable, m_gc, x1, y1, x2 - x1, y2 - y1);
+      params.fill_style = FillSolid; // default
+      XChangeGC(m_display, m_gc, GCFillStyle, &params);
+    }
     void draw_ellipse(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color, int line_width) {
       XGCValues params;
       params.foreground = color2pixel(color);
@@ -630,6 +660,23 @@ namespace tx11 {
     void fill_ellipse(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color) {
       set_foreground(color);
       XFillArc(m_display, m_drawable, m_gc, x1, y1, x2 - x1, y2 - y1, 0 * 64, 360 * 64);
+    }
+    void fill_polygon(coord_t const (*points)[2], std::size_t count, color_t color) {
+      set_foreground(color);
+      xpoints.resize(count);
+      for (std::size_t i = 0; i < count; i++) {
+        xpoints[i].x = points[i][0];
+        xpoints[i].y = points[i][1];
+      }
+      XFillPolygon(m_display, m_drawable, m_gc, &xpoints[0], count, Nonconvex, CoordModeOrigin);
+    }
+    void draw_line(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color, int line_width) {
+      XGCValues params;
+      params.foreground = color2pixel(color);
+      params.line_width = line_width;
+      params.cap_style = CapRound;
+      XChangeGC(m_display, m_gc, GCForeground | GCLineWidth | GCCapStyle, &params);
+      XDrawLine(m_display, m_drawable, m_gc, x1, y1, x2, y2);
     }
 
   public:

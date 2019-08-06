@@ -434,6 +434,23 @@ namespace twin {
     void invert_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2) const {
       ::PatBlt(hdc, x1, y1, x2 - x1, y2 - y1, DSTINVERT);
     }
+    void checked_rectangle(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color) const {
+      // CreatePatternBrush による実装を試みたが背景色を透明にできないので使えなかった
+      int odd = (x1 + y1) & 1;
+      ::SelectObject(hdc, bstore.get_pen(color, 1));
+      ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
+      for (coord_t x = x1 + odd; x < x2; x += 2) {
+        coord_t const d = std::min(x2 - x, y2 - y1);
+        ::MoveToEx(hdc, x, y1, NULL);
+        ::LineTo(hdc, x + d, y1 + d);
+      }
+      for (coord_t y = y1 + 2 - odd; y < y2; y += 2) {
+        coord_t const d = std::min(y2 - y, x2 - x1);
+        ::MoveToEx(hdc, x1, y, NULL);
+        ::LineTo(hdc, x1 + d, y + d);
+      }
+      ::SelectObject(hdc, ::GetStockObject(NULL_PEN));
+    }
     void draw_ellipse(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color, int line_width) {
       ::SelectObject(hdc, bstore.get_pen(color, line_width));
       ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
@@ -445,6 +462,19 @@ namespace twin {
       ::SelectObject(hdc, bstore.get_brush(color));
       ::Ellipse(hdc, x1, y1, x2, y2);
       ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
+    }
+    void fill_polygon(coord_t const (*points)[2], std::size_t count, color_t color) {
+      ::SelectObject(hdc, ::GetStockObject(NULL_PEN));
+      ::SelectObject(hdc, bstore.get_brush(color));
+      ::Polygon(hdc, reinterpret_cast<POINT const*>(points), count);
+      ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
+    }
+    void draw_line(coord_t x1, coord_t y1, coord_t x2, coord_t y2, color_t color, int line_width) {
+      ::SelectObject(hdc, bstore.get_pen(color, line_width));
+      ::SelectObject(hdc, ::GetStockObject(NULL_BRUSH));
+      ::MoveToEx(hdc, x1, y1, NULL);
+      ::LineTo(hdc, x2, y2);
+      ::SelectObject(hdc, ::GetStockObject(NULL_PEN));
     }
 
   private:

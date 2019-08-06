@@ -964,72 +964,79 @@ namespace ansi {
       g.clip_rectangle(0, y, wstat.m_canvas_width, wstat.m_canvas_height);
     }
 
-  public:
+  private:
     template<typename Graphics>
-    std::uint32_t draw_acs(Graphics& g, coord_t x1, coord_t x2, coord_t y, std::uint32_t code, color_t color, attribute_t const& attr) {
-      coord_t const y1 = y;
-      coord_t const y2 = y + wstat.m_ypixel;
-      bool const bold = attr.aflags & attribute_t::is_bold_set;
+    void acs_draw_invariant(Graphics& g, coord_t x, coord_t y, std::uint32_t code, curpos_t width, color_t color, font_t font) {
+      coord_t const x1 = x, x2 = x + wstat.m_xpixel * width;
+      coord_t y1 = y;
+      coord_t y2 = y + wstat.m_ypixel;
+      bool const bold = font & font_weight_bold; // bold or heavy
 
-      auto _center = [&] (coord_t x1, coord_t x2) -> std::tuple<coord_t, coord_t> {
+      // DECDWL, DECDHL
+      bool const dwl = font & font_decdwl;
+      bool const dhl = font & font_decdhl;
+      if (dhl) {
+        if (font & font_layout_lower_half) {
+          y1 -= wstat.m_ypixel;
+          this->clip_decdhl_lower(g, y);
+        } else {
+          y2 += wstat.m_ypixel;
+          this->clip_decdhl_upper(g, y);
+        }
+      }
+
+      auto const _center = [&] (coord_t x1, coord_t x2, bool decdwl) -> std::tuple<coord_t, coord_t> {
         coord_t xc1 = (x1 + x2) / 2;
         coord_t xc2 = xc1 + 1;
-        if (bold) xc1--;
+        if (decdwl || bold){
+          xc1--;
+          if (decdwl && bold) {
+            xc1--;
+            xc2++;
+          }
+        }
         return { xc1, xc2 };
       };
 
       int vparam = 0, hparam = 0;
       switch (code) {
-      case ascii_back_quote:   return 0x2666; // ACS_DIAMOND ***
-      case ascii_a:            return 0x2592; // ACS_CKBOARD (A)
-      case ascii_f:            return 0x00B0; // ACS_DEGREE (A)
-      case ascii_g:            return 0x00B1; // ACS_PLMINUS (A)
-      case ascii_i:            return 0x240B; // ACS_LANTERN
-      case ascii_left_brace:   return 0x03C0; // ACS_PI (A)
-      case ascii_vertical_bar: return 0x2260; // ACS_NEQUAL (A)***
-      case ascii_right_brace:  return 0x00A3; // ACS_STERLING
-      case ascii_tilde:        return 0x2022; // ACS_BULLET (A)
-      case ascii_plus:         return 0x2192; // ACS_RARROW (A)
-      case ascii_comma:        return 0x2190; // ACS_LARROW (A)
-      case ascii_minus:        return 0x2191; // ACS_UARROW (A)
-      case ascii_dot:          return 0x2193; // ACS_DARROW (A)
-      case ascii_y:            return 0x2264; // ACS_LEQUAL (A)
-      case ascii_z:            return 0x2265; // ACS_GEQUAL (A)
-
       case ascii_0: // ACS_BLOCK
         {
-          coord_t const w = bold ? 2 : 1;
+          coord_t const w = (bold ? 2 : 1) * (dwl ? 2 : 1);
           g.fill_rectangle(x1, y1, x2, y1 + w, color);
           g.fill_rectangle(x1, y2 - w, x2, y2, color);
           g.fill_rectangle(x1, y1, x1 + w, y2, color);
           g.fill_rectangle(x2 - w, y1, x2, y2, color);
         }
-        return 0;
+        break;
       case ascii_h: // ACS_BOARD
         g.fill_rectangle(x1, y1, x2, y2, color);
-        return 0;
+        break;
+      case ascii_a: // ACS_CKBOARD
+        g.checked_rectangle(x1, y1, x2, y2, color);
+        break;
 
       case ascii_x: // ACS_VLINE
         {
-          auto [xc1, xc2] = _center(x1, x2);
+          auto [xc1, xc2] = _center(x1, x2, dwl);
           g.fill_rectangle(xc1, y1, xc2, y2, color);
         }
-        return 0;
+        break;
       case ascii_o: // ACS_S1
-        g.fill_rectangle(x1, y1, x2, y1 + (bold ? 2 : 1), color);
-        return 0;
-      case ascii_p: hparam = -wstat.m_ypixel / 4; goto hline; // ACS_S3
+        g.fill_rectangle(x1, y1, x2, y1 + (bold ? 2 : 1) * (dhl ? 2 : 1), color);
+        break;
+      case ascii_p: hparam = -(y2 - y1) / 4; goto hline; // ACS_S3
       case ascii_q: hparam = 0; goto hline; // ACS_HLINE
-      case ascii_r: hparam = +wstat.m_ypixel / 4; goto hline; // ACS_S7
+      case ascii_r: hparam = +(y2 - y1) / 4; goto hline; // ACS_S7
       case ascii_s: // ACS_S9
-        g.fill_rectangle(x1, y2, x2, y2 - (bold ? 2 : 1), color);
-        return 0;
+        g.fill_rectangle(x1, y2 - (bold ? 2 : 1) * (dhl ? 2 : 1), x2, y2, color);
+        break;
       hline:
         {
-          auto [yc1, yc2] = _center(y1, y2);
+          auto [yc1, yc2] = _center(y1, y2, dhl);
           g.fill_rectangle(x1, yc1 + hparam, x2, yc2 + hparam, color);
         }
-        return 0;
+        break;
       case ascii_j: hparam = 2; vparam = 2; goto hvlines; // ACS_LRCORNER
       case ascii_k: hparam = 2; vparam = 3; goto hvlines; // ACS_URCORNER
       case ascii_l: hparam = 3; vparam = 3; goto hvlines; // ACS_ULCORNER
@@ -1041,8 +1048,8 @@ namespace ansi {
       case ascii_w: hparam = 1; vparam = 3; goto hvlines; // ACS_TTEE
       hvlines:
         {
-          auto [xc1, xc2] = _center(x1, x2);
-          auto [yc1, yc2] = _center(y1, y2);
+          auto [xc1, xc2] = _center(x1, x2, dwl);
+          auto [yc1, yc2] = _center(y1, y2, dhl);
           switch (hparam) {
           case 1: g.fill_rectangle(x1, yc1, x2, yc2, color); break;
           case 2: g.fill_rectangle(x1, yc1, xc2, yc2, color); break;
@@ -1054,9 +1061,245 @@ namespace ansi {
           case 3: g.fill_rectangle(xc1, yc1, xc2, y2, color); break;
           }
         }
-        return 0;
+        break;
       }
-      return code;
+      if (dhl) g.clip_clear();
+    }
+    template<typename Graphics>
+    void acs_draw_glyph(Graphics& g, coord_t x, coord_t y, std::uint32_t code, curpos_t width, color_t color, font_t font) {
+      font_metric_t fmetric(wstat.m_xpixel, wstat.m_ypixel);
+      auto [dx, dy, dxW] = fmetric.get_displacement(font);
+      x += dx + dxW * (width - 1);
+      y += dy;
+
+      auto [w, h] = fmetric.get_font_size(font);
+
+      if (font & font_layout_lower_half)
+        this->clip_decdhl_lower(g, y);
+      else if (font & font_layout_upper_half)
+        this->clip_decdhl_upper(g, y);
+
+      bool const bold = font & font_weight_bold; // bold or heavy
+
+      auto const _polygon = [&] (coord_t (*points)[2], std::size_t count) {
+        if (font & font_flag_italic) {
+          for (std::size_t i = 0; i < count; i++)
+            points[i][0] -= (points[i][1] - (y + h / 2)) / 3;
+        }
+        g.fill_polygon(points, count, color);
+      };
+      auto const _line = [&] (coord_t x1, coord_t y1, coord_t x2, coord_t y2, coord_t w) {
+        if (font & font_flag_italic) {
+          x1 -= (y1 - (y + h / 2)) / 3;
+          x2 -= (y2 - (y + h / 2)) / 3;
+        }
+        g.draw_line(x1, y1, x2, y2, color, w);
+      };
+
+      switch (code) {
+      case ascii_back_quote: // ACS_DIAMOND
+        {
+          coord_t const w1 = bold ? w * 9 / 10 : std::min(w - 2, w * 4 / 5);
+          coord_t const h1 = bold ? h * 9 / 10 : std::min(h - 2, h * 4 / 5);
+          coord_t const x1 = x + (w - w1) / 2;
+          coord_t const y1 = y + (h - h1) / 2;
+          coord_t const x2 = x1 + w1, xM = x + w / 2;
+          coord_t const y2 = y1 + h1, yM = y + h / 2;
+          coord_t points[4][2] = { {xM, y1}, {x1, yM}, {xM, y2}, {x2, yM} };
+          _polygon(points, 4);
+        }
+        break;
+      case ascii_minus: // ACS_UARROW
+      case ascii_dot: // ACS_DARROW
+        {
+          coord_t const xM = x + w / 2;
+          coord_t const vlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdwl));
+          coord_t const h1 = std::max<coord_t>(5, (bold ? h * 9 / 10 : std::min(h - 2, std::max(5, h * 4 / 5))) - (vlw - 1));
+          coord_t const xwing = std::max<coord_t>(3, (w - vlw - 1) / 2);
+          coord_t const ywing = !(font & font_decdwl) || (font & font_decdhl) ? xwing : (xwing + 1) / 2;
+          if (code == ascii_minus) {
+            coord_t const y1 = y + h  - (h - h1) / 2;
+            coord_t const y2 = y1 - h1;
+            _line(xM, y1, xM, y2, vlw);
+            _line(xM, y2, xM - xwing, y2 + ywing, vlw);
+            _line(xM, y2, xM + xwing, y2 + ywing, vlw);
+          } else {
+            coord_t const y1 = y + (h - h1) / 2;
+            coord_t const y2 = y1 + h1;
+            _line(xM, y1, xM, y2, vlw);
+            _line(xM, y2, xM - xwing, y2 - ywing, vlw);
+            _line(xM, y2, xM + xwing, y2 - ywing, vlw);
+          }
+        }
+        break;
+      case ascii_plus: // ACS_RARROW
+      case ascii_comma: // ACS_LARROW
+        {
+          coord_t const yM = y + h / 2;
+          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
+          coord_t const w1 = std::max<coord_t>(4, (bold ? w * 9 / 10 : std::min(w - 2, std::max(5, w * 4 / 5))) - (hlw - 1));
+          coord_t const ywing = std::max<coord_t>(3, (h - hlw - 1) / 4);
+          coord_t const xwing = !(font & font_decdwl) || (font & font_decdhl) ? ywing : ywing * 2;
+          if (code == ascii_comma) {
+            coord_t const x1 = x + w  - (w - w1) / 2;
+            coord_t const x2 = x1 - w1;
+            _line(x1, yM, x2, yM, hlw);
+            _line(x2, yM, x2 + xwing, yM - ywing, hlw);
+            _line(x2, yM, x2 + xwing, yM + ywing, hlw);
+          } else {
+            coord_t const x1 = x + (w - w1) / 2;
+            coord_t const x2 = x1 + w1;
+            _line(x1, yM, x2, yM, hlw);
+            _line(x2, yM, x2 - xwing, yM - ywing, hlw);
+            _line(x2, yM, x2 - xwing, yM + ywing, hlw);
+          }
+        }
+        break;
+      case ascii_g: // ACS_PLMINUS
+      case ascii_y: // ACS_LEQUAL
+      case ascii_z: // ACS_GEQUAL
+        {
+          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
+          coord_t const w1 = std::max<coord_t>(4, (bold ? w * 9 / 10 : std::min(w - 1, std::max(5, w * 7 / 8))) - hlw);
+
+          coord_t const x2 = x + w / 2;
+          coord_t const x1 = x2 - w1 / 2;
+          coord_t const x3 = x1 + w1;
+          coord_t const y2 = y + h * 9 / 20 - hlw;
+          coord_t const y1 = y2 - h / 4;
+          coord_t const y3 = y2 + h / 4;
+          coord_t const y4 = y3 + hlw * 2;
+
+          _line(x1, y4, x3, y4, hlw);
+          switch (code) {
+          case ascii_g:
+            _line(x1, y2, x3, y2, hlw);
+            _line(x2, y1, x2, y3, hlw);
+            break;
+          case ascii_y:
+            _line(x3, y1, x1, y2, hlw);
+            _line(x1, y2, x3, y3, hlw);
+            break;
+          case ascii_z:
+            _line(x1, y1, x3, y2, hlw);
+            _line(x3, y2, x1, y3, hlw);
+            break;
+          }
+        }
+        break;
+      case ascii_vertical_bar: // ACS_NEQUAL
+        {
+          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
+          coord_t const w1 = std::max<coord_t>(4, (bold ? w * 9 / 10 : std::min(w - 1, std::max(5, w * 7 / 8))) - hlw);
+          coord_t const x2 = x + w / 2;
+          coord_t const x1 = x2 - w1 / 2;
+          coord_t const x3 = x1 + w1;
+          coord_t const y2 = y + h * 9 / 20;
+          coord_t const y1 = y2 - h / 10;
+          coord_t const y3 = y1 + h / 5;
+          coord_t const y0 = y2 - h / 4;
+          coord_t const y4 = y2 + h / 4;
+          _line(x1, y1, x3, y1, hlw);
+          _line(x1, y3, x3, y3, hlw);
+          _line(x2 + w / 4, y0, x2 -  w / 4, y4, hlw);
+        }
+        break;
+      case ascii_left_brace: // ACS_PI (A)
+        {
+          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
+          coord_t const w1 = std::max<coord_t>(4, (bold ? w * 9 / 10 : std::min(w - 1, std::max(5, w * 7 / 8))) - hlw);
+          coord_t const x2 = x + w / 2;
+          coord_t const x1 = x2 - w1 / 2;
+          coord_t const x3 = x1 + w1;
+
+          coord_t const y1 = y + h * 4 / 10;
+          coord_t const y2 = y + h * 7 / 10;
+          coord_t const tip = (w1 + 5) / 6;
+          _line(x1, y1, x3, y1, hlw);
+          _line(x1 + tip, y1, x1 + tip, y2, hlw);
+          _line(x3 - tip, y1, x3 - tip, y2, hlw);
+        }
+        break;
+      case ascii_tilde: // ACS_BULLET
+        {
+          coord_t const xo = x + w / 2, yo = y + h * 2 / 5;
+          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
+          g.fill_ellipse(xo - hlw, yo - hlw, xo + hlw + 1, yo + hlw + 1, color);
+        }
+        break;
+      case ascii_f: // ACS_DEGREE
+        {
+          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
+          coord_t const xo = x + w / 2 - hlw * 2, yo = y + hlw / 2;
+          g.draw_ellipse(xo, yo, xo + 3 * hlw + 1, yo + 3 * hlw + 1, color, hlw);
+        }
+        break;
+      case ascii_i: // ACS_LANTERN
+        {
+          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
+          coord_t const xc3 = x + w - hlw / 2;
+          coord_t const xc2 = xc3 - std::max(hlw * 2, w / 3);
+          coord_t const xc1 = xc2 - std::max(hlw * 2, w / 3);
+          coord_t const yc3 = y + h * 5 / 6- hlw / 2;
+          coord_t const yc2 = y + h * 2 / 6;
+          _line(xc1, yc2, xc3, yc2, hlw);
+          _line(xc1, yc3, xc3, yc3, hlw);
+          _line(xc1, yc2, xc1, yc3, hlw);
+          _line(xc3, yc2, xc3, yc3, hlw);
+          _line(xc2, (yc2 + yc3) / 2, xc2, yc3, hlw);
+          _line(xc2, yc2 - hlw * 2, xc2, yc2, hlw);
+          _line(x, yc2 - hlw * 2, xc2, yc2 - hlw * 4, hlw);
+        }
+      }
+
+      if (font & (font_layout_upper_half | font_layout_lower_half))
+        g.clip_clear();
+    }
+
+    template<typename Graphics>
+    std::uint32_t draw_acs(Graphics& g, coord_t x, coord_t y, std::uint32_t code, curpos_t width, color_t color, font_t font) {
+      // ACS の対象でない文字は普通に文字として描画
+      bool const is_acs = (ascii_plus <= code && code <= ascii_dot) ||
+        (ascii_back_quote <= code && code < ascii_b) ||
+        (ascii_f <= code && code <= ascii_tilde) || code == ascii_0;
+      if (!is_acs) return code;
+
+      // ACS で別の Unicode 文字として描画する場合
+      switch (code) {
+      case ascii_plus: // ACS_RARROW (A)
+      case ascii_comma: // ACS_LARROW (A)
+      case ascii_minus: // ACS_UARROW (A)
+      case ascii_dot: // ACS_DARROW (A)
+      case ascii_back_quote: // ACS_DIAMOND (A)
+      case ascii_f: // ACS_DEGREE (A)
+      case ascii_g: // ACS_PLMINUS (A)
+      case ascii_i: // ACS_LANTERN
+      case ascii_y: // ACS_LEQUAL (A)
+      case ascii_z: // ACS_GEQUAL (A)
+      case ascii_left_brace: // ACS_PI (A)
+      case ascii_vertical_bar: // ACS_NEQUAL (A)
+      case ascii_tilde: // ACS_BULLET (A)
+        acs_draw_glyph(g, x, y, code, width, color, font);
+        return 0;
+      // case ascii_back_quote:   return 0x2666; // ACS_DIAMOND ***
+      // case ascii_a:            return 0x2592; // ACS_CKBOARD (A)
+      // case ascii_f:            return 0x00B0; // ACS_DEGREE (A)
+      // case ascii_g:            return 0x00B1; // ACS_PLMINUS (A)
+      // case ascii_i:            return 0x240B; // ACS_LANTERN
+      // case ascii_left_brace:   return 0x03C0; // ACS_PI (A)
+      // case ascii_vertical_bar: return 0x2260; // ACS_NEQUAL (A)***
+      case ascii_right_brace:  return 0x00A3; // ACS_STERLING
+      // case ascii_tilde:        return 0x2022; // ACS_BULLET (A)
+      // case ascii_plus:         return 0x2192; // ACS_RARROW (A)
+      // case ascii_comma:        return 0x2190; // ACS_LARROW (A)
+      // case ascii_minus:        return 0x2191; // ACS_UARROW (A)
+      // case ascii_dot:          return 0x2193; // ACS_DARROW (A)
+      // case ascii_y:            return 0x2264; // ACS_LEQUAL (A)
+      // case ascii_z:            return 0x2265; // ACS_GEQUAL (A)
+      }
+
+      acs_draw_invariant(g, x, y, code, width, color, font);
+      return 0;
     }
   public:
     template<typename Graphics>
@@ -1124,19 +1367,20 @@ namespace ansi {
 
           // 色の決定
           color_t const fg = _color.resolve_fg(attr);
+          font_t const font = _font.resolve_font(attr);
 
           if (!character_t::is_char(code)) {
             if (code & charflag_iso2022) {
               std::uint32_t const charset = (code & ~charflag_iso2022) >> 7;
-              if (charset == iso2022_94_vt100_acs) {
-                code = draw_acs(g, xL, x, y, code & 0x7F, fg, attr);
+              switch (charset) {
+              case iso2022_94_vt100_acs:
+                code = draw_acs(g, xL, y, code & 0x7F, cell.width, fg, font);
                 if (!code) continue;
               }
             } else
               continue;
           }
 
-          font_t const font = _font.resolve_font(attr);
           std::tie(dx, dy, dxW) = _fmetric.get_displacement(font);
           charbuff.clear();
           _push_char(code, cell_progress, cell.width);
