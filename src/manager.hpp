@@ -94,6 +94,11 @@ namespace term {
     virtual bool on_select_update([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) { return false; }
     virtual void on_select([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {}
     virtual void on_click([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {}
+
+    /*?lwiki @fn void on_multiple_click(key_t key, curpos_t x, curpos_t y, int count);
+     *   単一のマウスボタンが押下された時に発生します。
+     *   同じ単独のマウスボタンが連続で何回押されたかの情報を `count` に指定します。
+     */
     virtual void on_multiple_click([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y, [[maybe_unused]] int count) {}
   };
 
@@ -134,6 +139,7 @@ namespace term {
         if (this->button_count == 1) {
           this->multiple_click_button = button_index;
           this->multiple_click_count = 1;
+          events->on_multiple_click(key, x, y, 1);
         } else
           this->multiple_click_button = 0;
       } else {
@@ -142,12 +148,9 @@ namespace term {
         //   これは自分の趣味。
         auto const current_time = std::chrono::high_resolution_clock::now();
         auto const msec = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - this->multiple_click_time).count();
-        if (msec < this->multiple_click_threshold) {
-          if (++this->multiple_click_count >= 2)
-            events->on_multiple_click(key, x, y, this->multiple_click_count);
-        } else {
-          this->multiple_click_count = 1;
-        }
+        if (msec >= this->multiple_click_threshold)
+          this->multiple_click_count = 0;
+        events->on_multiple_click(key, x, y, ++this->multiple_click_count);
       }
 
       return true;
@@ -442,7 +445,6 @@ namespace term {
     void selection_initialize(curpos_t x, curpos_t y) {
       y -= app().view().scroll_amount();
       auto const& term = app().term();
-      selection_clear();
       m_sel_type = 0;
       m_sel_beg_x = x;
       m_sel_beg_y = y;
@@ -714,38 +716,66 @@ namespace term {
 
     manager_mouse_events m_mouse_events {this};
     mouse_event_detector m_mouse_detector {&this->m_mouse_events};
+    std::uint32_t m_word_selection_line = 0;
+    int m_word_selection_level = 0;
     void do_click(key_t key) { contra_unused(key); }
     void do_select() { this->clipboard_copy(); }
     void do_multiple_click(key_t key, int count, curpos_t x, curpos_t y) {
       using namespace contra::ansi;
+      if (count == 1) {
+        selection_clear();
+        return;
+      }
+
       if (key == key_mouse1_down) {
         term_t& term = app().term();
         board_t const& b = term.board();
         term_view_t& view = app().view();
-        curpos_t const nline = view.height();
         bool const gatm = app().state().get_mode(mode_gatm);
-        for (curpos_t y1 = 0; y1 < nline; y1++) {
+
+        curpos_t const scroll = view.scroll_amount();
+        curpos_t const ybeg = view.logical_ybeg();
+        curpos_t const yend = view.logical_yend();
+        curpos_t const visible_ybeg = -scroll;
+        curpos_t const visible_yend = view.height() - scroll;
+        curpos_t const ylog = y - view.scroll_amount();
+        if (!(ybeg <= ylog && ylog < yend)) {
+          m_word_selection_line = (std::uint32_t) -1;
+          selection_clear();
+          return;
+        }
+
+        if (count <= 2 || m_word_selection_line != view.lline(ylog).id()) {
+          m_word_selection_line = view.lline(ylog).id();
+          m_word_selection_level = 0;
+        } else
+          m_word_selection_level++;
+
+        for (curpos_t y1 = ybeg; y1 < yend; y1++) {
           line_t& line = view.line(y1);
-          if (y1 == y) {
-            word_selection_type wtype;
-            switch (count) {
-            case 2:
-              wtype = word_selection_cword;
-              goto set_selection_word;
-            case 3:
-              wtype = word_selection_sword;
-              goto set_selection_word;
-            set_selection_word:
-              m_dirty |= line.set_selection_word(b.to_data_position(line, x), wtype, gatm);
+          bool dirty = false;
+          if (y1 != ylog) {
+            dirty = line.clear_selection();
+          } else {
+            switch (m_word_selection_level % 3) {
+            case 0:
+              dirty = line.set_selection_word(b.to_data_position(line, x), word_selection_cword, gatm);
               break;
+            case 1:
+              dirty = line.set_selection_word(b.to_data_position(line, x), word_selection_sword, gatm);
+              if (dirty) break;
+              m_word_selection_level++;
+              [[fallthrough]];
             default:
-              m_dirty |= line.set_selection(0, term.width() + 1, key & modifier_shift, gatm, true);
+              dirty = line.set_selection(0, term.width() + 1, key & modifier_shift, gatm, true);
               break;
             }
-          } else
-            m_dirty |= line.clear_selection();
+          }
+
+          if (dirty && visible_ybeg <= y1 && y1 < visible_yend)
+            m_dirty = true;
         }
-        if (y < nline) clipboard_copy();
+        clipboard_copy();
       }
     }
     void do_right_click(key_t key) {
