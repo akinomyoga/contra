@@ -1,0 +1,137 @@
+# 此処に 94 文字集合の定義を記録する。
+#
+#   注意: Unicode の文字に一対一に対応するとは限らない。
+#     此処に挙げる対応は一例に過ぎない。
+#
+#   対応する文字がない場合は省略している。
+#   本来は対応する文字がない場合には不明な文字として処理するべきでは。
+#
+#   https://www.itscj.ipsj.or.jp/itscj_english/iso-ir/ISO-IR.pdf
+#
+
+SB94(B) ISO-IR-6 ISO 646, USA Version X3.4 - 1968
+  map !!""##$$%%&&''(())**++,,--..//00112233445566778899::;;<<==>>??
+  map @@AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZ[[\\]]^^__
+  map ``aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~
+
+SB94(@) ISO-IR-2 IRV of ISO 646:1983
+  load SB94(B)
+  map $¤~¯
+
+SB94(A) ISO-IR-4 ISO 646, British Version BSI 4730
+  load SB94(B)
+  map #£~¯
+
+# Finland/Sweden
+#
+# 2/13 long dash, minus sign
+# 7/14 short dash, hyphen
+# 5/14 solid
+# 4/0 unit space A
+# 6/0 unit space B
+#   2/0 は可変長のスペースであり 4/0 6/0 はユーザ定義の固定長のスペースである。
+#   4/0 の方が 6/0 以上の幅を持つものとする。
+#   取り敢えず此処では em/en space を割り当てる。
+#
+SB94(C) ISO-IR-8-1 NATS, Primary Set for Finland and Sweden
+  load SB94(B)
+  map @ [Ä\Ö]Å^█` {ä|ö}å~‐
+
+SB94(D) ISO-IR-8-2 NATS, Secondary Set for Finland and Sweden
+  map AÀDĐEÉPÞUÜ[Æ\Øaàdđeépþuü{æ|ø
+
+SB94(E) ISO-IR-9-1 NATS, Primary Set for Denmark and Norway
+  load SB94(B)
+  map "«$»@ [Æ\Ø]Å^█` {æ|ø}å~‐
+
+SB94(F) ISO-IR-9-2 NATS, Secondary Set for Denmark and Norway
+  map AÀDĐEÉPÞUÜ[Ä\Öaàdđeépþuü{ä|ö
+
+SB94(G) ISO-IR-10 ISO 646, Swedish Version SEN 850200 (Ann. B)
+  load SB94(B)
+  map $¤[Ä\Ö]Å{ä|ö}å~¯
+
+SB94(H) ISO-IR-11 ISO 646, Swedish Version for Names, (SEN 850200 Ann. C)
+  load SB94(B)
+  map $¤@É[Ä\Ö]Å^Ü`é{ä|ö}å~ü
+
+SB94(I) ISO-IR-13 Katakana Character Set JIS C6220-1969
+  map !｡"｢#｣$､%･&ｦ'ｧ(ｨ)ｩ*ｪ+ｫ,ｬ-ｭ.ｮ/ｯ
+  map 0ｰ1ｱ2ｲ3ｳ4ｴ5ｵ6ｶ7ｷ8ｸ9ｹ:ｺ;ｻ<ｼ=ｽ>ｾ?ｿ
+  map @ﾀAﾁBﾂCﾃDﾄEﾅFﾆGﾇHﾈIﾉJﾊKﾋLﾌMﾍNﾎOﾏ
+  map PﾐQﾑRﾒSﾓTﾔUﾕVﾖWﾗXﾘYﾙZﾚ[ﾛ\ﾜ]ﾝ^ﾞ_ﾟ
+
+SB94(J) ISO-IR-14 ISO 646, Japanese Version for Roman Characters JIS C6220-1969
+  load SB94(B)
+  map \¥~¯
+
+SB94(Y) ISO-IR-15 ISO 646, Version for Italian, ECMA (Olivetti)
+  load SB94(B)
+  map #£@§[°\ç]é`ù{à|ò}è~ì
+
+SB94(L) ISO-IR-16 ISO 646, Version for Portuguese, ECMA (Olivetti)
+  load SB94(B)
+  map @§[Ã\Ç]Õ{ã|ç}õ~°
+
+SB94(Z) ISO-IR-17 ISO 646, Version for Spanish, ECMA (Olivetti)
+  load SB94(B)
+  map #£@§[¡\Ñ]¿{°|ñ{ç
+
+SB94([) ISO-IR-18 Character Set for Greek, ECMA (Olivetti)
+  load SB94(B)
+  map #£@´
+  map AαBβCψDδEεFφGγHηIιJξKκLλMμNνOοPπQιRρSσTτUθVωWςXχYυZζ[῏\᾿]῎^~
+  map aΑbΒcΨdΔeΕfΦgΓhΗiΙjΞkΚlΛmΜnΝoΟpΠrΡsΣtΤuΘvΩw˙xΧyΥzΖ{῟|῾}῞~¨
+  undef Q
+
+SB94(\) ISO-IR-19 Latin-Greek Character Set, ECMA (Olivetti)
+  load SB94(B)
+  map #£aΑbΒcΨdΔeΕfΦgΓhΗiΙjΞkΚlΛmΜnΝoΟpΠrΡsΣtΤuΘvΩw˙xΧyΥzΖ~¨
+  undef Q
+
+SB94(K) ISO-IR-21 ISO 646, German Version DIN 66083
+  load SB94(B)
+  map @§[Ä\Ö]Ü{ä|ö}ü~ß
+
+SB94(R) ISO-IR-25 ISO 646, French Version, NF Z 62010-1973 (Withdrawn in April 1985)
+  load SB94(B)
+  map #£@à[°\ç]§{é|ù}è~¨
+
+SB94(U) ISO-IR-27 Latin-Greek Character Set, ECMA (Honeywell-Bull)
+  load SB94(B)
+  map !Ξ#Γ$¤:ψ?Π@Δ[Ω\Θ]Φ^Λ_Σ~¯
+
+# combining を spacing で代用している部分がある。複数文字への変換をサポートする?
+SB94(X) ISO-IR-31 Greek Character Set for Bibliography, ISO 5428
+  map !<U+0300>"<U+0301>#῭$<U+0342>%<U+0313>&<U+0314>'῎(῞)<U+0308>*<U+0345>+῍,῝-῏.῟/΅5᾽6῾7῎8῞;῍<῝=῏>῟
+  map AΑBΒCΓDΔEΕFΖGΗHΘIΙJΚKΛLΜMΝNΞOΟPΠQΡRΣSΤTΥUΦVΧWΨXΩY·Z«[»\“]”^ˊ_ˏ
+  map aαbβcγdδeεfζgηhθiιjκkλlμmνnξoοpπqρrσsτtυuφvχwψxωyςzϜ{Ϟ|Ϡ}Ϛ
+
+SB94(N) ISO-IR-37 Basic Cyrillic Character Set, ECMA (Cii Honeywell-Bull) and ISO 5427
+  load SB94(B)
+  map $¤
+  map @юAаBбCцDдEеFфGгHхIиJйKкLлMмNнOоPпQяRрSсTтUуVжWвXьYыZз[ш\э]щ^ч_ъ
+  map `ЮaАbБcЦdДeЕfФgГhХiИjЙkКlЛmМnНoОpПqЯrРsСtТuУvЖwВxЬyЫzЗ{Ш|Э}Щ~Ч
+
+SB94(O) ISO-IR-38 Extended Graphic Character Set for Bibliography, DIN 31624
+  map !¡"„#£$¤%‰&†'@(°)[*{+«,♭-©.℗/®
+  map 0<U+674>1<U+8D6>2‚3<undef>4\5|6†7·8→9]:};»<♯=ʹ>ʺ?¿
+  map @<U+309>A<U+300>B<U+301>C<U+302>D<U+303>E<U+304>F<U+306>G<U+307>
+  map H<U+308>I<U+336>J<U+30A>K<U+315>L<U+312>M<U+30B>N<U+31B>O<U+30C>
+  map P<U+327>Q<U+328>R<U+321>S<U+322>T<U+325>U<U+32E>V<U+323>W<U+338>
+  map X<U+332>Y<U+333>Z<U+329>[<U+32C>\<undef>]<U+FE20>^<U+FE21>_<U+FE23>
+  map aÆqæbĐrđhŁxłiØyøjŒzœlÞ|þsðuı{Ʀ
+
+SB94(M) ISO-IR-39 Character Set for African Languages, DIN 31625 and ISO 6438
+  map !<undef>"<U+181>#<U+187>$<U+18A>%<U+189>&<undef>'<U+190>
+  map (<U+18E>)<undef>*<U+191>+<U+193>,<U+194>-<U+166>.<undef>/<U+197>
+  map 0<undef>1<undef>2<U+253>3<U+188>4<U+257>5<U+256>6<undef>7<U+25B>
+  map 8<U+259>9<undef>:<U+192>;<U+260><<U+263>=<U+167>><undef>?<U+26A>
+  map @<U+198>A<undef>B<undef>C<undef>D<undef>E<undef>F<undef>G<U+14A>
+  map H<undef>I<U+19F>J<U+186>K<U+1A4>L<undef>M<undef>N<undef>O<U+1A9>
+  map P<U+199>Q<U+26C>R<undef>S<U+271>T<undef>U<U+273>V<U+272>W<U+14B>
+  map X<undef>Y<U+275>Z<U+254>[<U+1A5>\<undef>]<U+27D>^<undef>_<U+283>
+  map `<U+1AC>a<U+1AE>b<undef>c<U+1B1>d<U+1B2>e<U+3A7>f<U+1B3>g<U+1B7>
+  map h<undef>i<undef>j<undef>k<undef>l<undef>m<undef>n<undef>o<undef>
+  map p<U+1AD>q<U+1AF>r<undef>s<U+28A>t<U+28B>u<U+3C7>v<U+1B4>w<U+292>
+  map x<U+295>y<U+294>z<U+298>{<U+1C0>|<U+1C2>}<U+1C3>~<U+1C1>

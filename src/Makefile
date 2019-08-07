@@ -61,6 +61,13 @@ impl2: $(impl2_objs)
 $(objdir)/impl2.o: impl2.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
+all: iso2022-convert.exe
+iso2022-convert.exe: $(objdir)/iso2022-convert.o $(objdir)/enc.utf8.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
+all: iso2022-dump.exe
+iso2022-dump.exe: $(objdir)/iso2022-dump.o $(objdir)/enc.utf8.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
+
 #------------------------------------------------------------------------------
 # ttty
 

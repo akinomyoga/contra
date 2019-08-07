@@ -1237,18 +1237,27 @@ namespace ansi {
       case ascii_i: // ACS_LANTERN
         {
           coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
-          coord_t const xc3 = x + w - hlw / 2;
-          coord_t const xc2 = xc3 - std::max(hlw * 2, w / 3);
-          coord_t const xc1 = xc2 - std::max(hlw * 2, w / 3);
-          coord_t const yc3 = y + h * 5 / 6- hlw / 2;
-          coord_t const yc2 = y + h * 2 / 6;
+          coord_t const xL = x + (hlw - 1) / 2, xR = x + w - hlw / 2;
+          coord_t const yT = y + (hlw - 1) / 2, yB = y + h - hlw / 2;
+          coord_t const ww = xR - xL, hh = yB - yT;
+
+          coord_t const lantern_half_width = std::clamp(hlw + 1, (ww + 1) / 3, w / 2);
+          coord_t const xc3 = xR;
+          coord_t const xc2 = xc3 - lantern_half_width;
+          coord_t const xc1 = xc2 - lantern_half_width;
+
+          coord_t const yc3 = yB - hlw;
+          coord_t const yc2 = std::max(y + hlw * 2, yc3 - hh / 2);
+          coord_t const yb1 = std::max(yT, yc2 - hlw * 4);
+          coord_t const yc1 = (yb1 + yc2) / 2;
+
           _line(xc1, yc2, xc3, yc2, hlw);
           _line(xc1, yc3, xc3, yc3, hlw);
           _line(xc1, yc2, xc1, yc3, hlw);
           _line(xc3, yc2, xc3, yc3, hlw);
           _line(xc2, (yc2 + yc3) / 2, xc2, yc3, hlw);
-          _line(xc2, yc2 - hlw * 2, xc2, yc2, hlw);
-          _line(x, yc2 - hlw * 2, xc2, yc2 - hlw * 4, hlw);
+          _line(xc2, yc1, xc2, yc2, hlw);
+          _line(x, yc1, std::min(xc2 + hlw + 1, xR), yb1, hlw);
         }
       }
 
