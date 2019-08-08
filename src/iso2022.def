@@ -10,9 +10,7 @@
 #
 
 SB94(B) ISO-IR-6 ISO 646, USA Version X3.4 - 1968
-  map !!""##$$%%&&''(())**++,,--..//00112233445566778899::;;<<==>>??
-  map @@AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZ[[\\]]^^__
-  map ``aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~
+  map_range !!-~~
 
 SB94(@) ISO-IR-2 IRV of ISO 646:1983
   load SB94(B)
@@ -78,10 +76,7 @@ SB94(H) ISO-IR-11 ISO 646, Swedish Version for Names, (SEN 850200 Ann. C)
   map_check $¤@É[Ä\Ö]Å^Ü`é{ä|ö}å~ü
 
 SB94(I) ISO-IR-13 Katakana Character Set JIS C6220-1969
-  map !｡"｢#｣$､%･&ｦ'ｧ(ｨ)ｩ*ｪ+ｫ,ｬ-ｭ.ｮ/ｯ
-  map 0ｰ1ｱ2ｲ3ｳ4ｴ5ｵ6ｶ7ｷ8ｸ9ｹ:ｺ;ｻ<ｼ=ｽ>ｾ?ｿ
-  map @ﾀAﾁBﾂCﾃDﾄEﾅFﾆGﾇHﾈIﾉJﾊKﾋLﾌMﾍNﾎOﾏ
-  map PﾐQﾑRﾒSﾓTﾔUﾕVﾖWﾗXﾘYﾙZﾚ[ﾛ\ﾜ]ﾝ^ﾞ_ﾟ
+  map_range !｡-_ﾟ
 
 SB94(J) ISO-IR-14 ISO 646, Japanese Version for Roman Characters JIS C6220-1969
   load SB94(B)
@@ -301,15 +296,6 @@ SB94(f) ISO-IR-69 ISO 646, French Version NF Z 62010-1982
   load SB94(B)
   map #£@à[°\ç]§`µ{é|ù}è~¨
 
-# モザイク文字集合について
-#   https://ja.wikipedia.org/wiki/%E3%83%A2%E3%82%B6%E3%82%A4%E3%82%AF%E9%9B%86%E5%90%88
-#   どれだけ実装があるのか不明だが日本のデータ放送でも使うことが可能なそうだ。
-#   ARIB外字集合の一部として登録されているそうだがARIB外字は全角なのだそうだ。
-#   一方で ISO-IR-71 等の分割を見ると縦長の領域を意識している様に見える。
-#
-#   https://www.unicode.org/L2/L2019/19025-terminals-prop.pdf
-#   によるとつい最近になってモザイク集合追加が受諾 (2019-01-17) されたそうだ。
-#
 SB94(b) ISO-IR-70 Supplementary Set for Videotex, CCITT
   map !¡"¢#£$$%¥&#'§(¤,←-↑.→/↓
   map 0°1±2²3³4×5µ6¶7·8÷<¼=½>¾?¿
@@ -321,10 +307,58 @@ SB94(b) ISO-IR-70 Supplementary Set for Videotex, CCITT
   map pĸqærđsðtħuıvĳwŀxłyøzœ{ß|þ}ŧ~ŋ
   undef e
 
-# ■
+# モザイク文字集合について
+#   https://ja.wikipedia.org/wiki/%E3%83%A2%E3%82%B6%E3%82%A4%E3%82%AF%E9%9B%86%E5%90%88
+#   どれだけ実装があるのか不明だが日本のデータ放送でも使うことが可能なそうだ。
+#   ARIB外字集合の一部として登録されているそうだがARIB外字は全角なのだそうだ。
+#   一方で ISO-IR-71 等の分割を見ると縦長の領域を意識している様に見える。
+#
+#   https://www.unicode.org/L2/L2019/19025-terminals-prop.pdf
+#   によるとつい最近になってUnicodeでモザイク集合追加が受諾 (2019-01-17) されたそうだ。
+#
 SB94(c) ISO-IR-71 Second Supplementary Set for Videotex (Mosaic), CCITT
-SB94(d) ISO-IR-72 Third Supplementary Set for Videotex, (Mosaic), CCITT (superseded by Reg. 173)
+  map_range !<U+1FB00>-4<U+1FB13>
+  map 5<U+258C>
+  map_range 6<U+1FB14>-?<U+1FB1D>
+  map_range `<U+1FB1E>-i<U+1FB27>
+  map j<U+2590>
+  map_range k<U+1FB28>-~<U+1FB3B>
+
+  map_range @<U+1FB3C>-D<U+1FB40>
+  map_range P<U+1FB47>-T<U+1FB4B>
+  map E<U+25E3>U<U+25E2>
+  map_range F<U+1FB41>-K<U+1FB46>
+  map_range V<U+1FB4C>-[<U+1FB51>
+  map L<U+1FB68>M<U+1FB69>N<U+1FB70>O<U+1FB95>
+  map \<U+1FB6A>]<U+1FB6B>^<U+1FB75>_<U+2588>
+
+SB94(d/deprecated) ISO-IR-72 Third Supplementary Set for Videotex, (Mosaic), CCITT (superseded by Reg. 173)
+  map_range D<U+1FBA4>-G<U+1FBA7>
+  map_range H<U+1FBA0>-K<U+1FBA3>
+  map M<U+2022>N<U+2BC4>O<U+2B55>
+  map P<U+2502>Q<U+2500>R<U+250C>S<U+2510>T<U+2514>U<U+2518>V<U+251C>W<U+2524>
+  map X<U+252C>Y<U+2534>Z<U+253C>[<U+2B95>\<U+2B05>]<U+2B06>^<U+2B07>
+
+  # Note: 以下は Unicode には対応する文字が全くない。
+  #   2019 の追加でも足りていない物である。
+  #   結局自前で描画するという事なのかもしれない。
+  map @�A�B�C�L�
+
+  map_range `<U+1FB52>-d<U+1FB56>
+  map_range f<U+1FB57>-k<U+1FB5C>
+  map_range p<U+1FB5D>-t<U+1FB61>
+  map_range v<U+1FB62>-{<U+1FB67>
+  map e<U+25E5>u<U+25E4>
+  map l<U+1FB6C>m<U+1FB6D>|<U+1FB6E>}<U+1FB6F>
+
 SB94(d) ISO-IR-173 Third supplementary set of Mosaic Characters/Videotex and Facsimile
+  load SB94(d/deprecated)
+  map !<U+2528>"<U+2512>#<U+2511>$<U+251A>%<U+2519>&<U+2520>'<U+2538>
+  map (<U+2530>)<U+2516>*<U+2515>+<U+250D>,<U+250E>-<U+2542>/<U+258C>
+  map 0<U+2503>1<U+2501>2<U+250F>3<U+2513>4<U+2517>5<U+251B>6<U+2523>7<U+252B>
+  map 8<U+2533>9<U+253B>:<U+254B>;<U+2580><<U+2584>=<U+2588>><U+25FE>?<U+2590>
+
+  map _<U+2591>n<U+2592>o<U+2593>
 
 SB94(g) ISO-IR-84 ISO 646, Version for Portuguese, ECMA (IBM)
   load SB94(B)
@@ -363,32 +397,59 @@ SB94(l) ISO-IR-90 Supplementary Set for Use with Registration No.2
   map L<U+332>
   undef &(@
 
-# ■
+# 色々と字形が異なるが Unicode には対応物がないので普通の文字と同一視する。
 SB94(m) ISO-IR-91 Japanese OCR-A graphic set JIS C6229-1984
+  map_range ""-??
+  map_range AA-ZZ
+  map #£<⑀>⑁\¥]⑂||
 
-# ■
-# これは iconv の出力結果が表と一致していない気がする。
-#  iconv: map [〈\¥]〉
 SB94(n) ISO-IR-92 Japanese OCR-B Graphic Set JIS C6229-1984
+  load SB94(B)
+  map \¥
+  undef `~
 
-# ■
+  # map_check [〈\¥]〉 # ←★iconvがおかしい気がする。
+
 SB94(o) ISO-IR-93 Japanese OCR-B, Additional Graphic Set, JIS C6229-1984
+  map #£$¤%\'§
+
 SB94(p) ISO-IR-94 Japanese Basic Hand-printed Graphic Set for OCR JIS C6229-1984
+  map_range !!-__
+  map \¥||
+
+  # Note: 以下の文字は OCR で区別が付くように少し違った様に書く。
+  #   専用のフォントが用意できないのであれば別の文字として描画するのも一つの手である。
+  #   唯、普通の文章との交換という事を考えるとこの変換があるのは都合が悪い。
+  #map /∥OŌ_␣|⟊
+
 SB94(q) ISO-IR-95 Japanese Additional Handprinted Graphic Character Set for OCR JIS C6229- 1984
+  map %\
+
 SB94(r) ISO-IR-96 Katakana hand-printed Graphic Character Set for OCR JIS C6229-1984
+  map "｢#｣&ｦ
+  map_range 0ｰ-_ﾟ
 
 SB94(s) ISO-IR-98 E13B Graphic Character Set Japanese National Committee for ISO/TC97/SC2
-  map 00112233445566778899
+  map_range 00-99
   map :⑆;⑇<⑈=⑉
 
-# ■iconv: map (不一致?)
 SB94(t) ISO-IR-99 Supplementary Set of Graphic Characters for Videotex and Teletext ANSI and Teletext ANSI and CSA (Withdrawn in November 1986)
+  load SB94(b)
+  map @<U+20D1>I<U+338>L<U+332>
+  map V─W│X╱Y╲Z◢[◣e┼
 
-# ■
+  # map_check # iconv?
+
 SB94(u) ISO-IR-102 Teletex Primary Set of Graphic Characters CCITT Rec. T.61
+  load SB94(@)
+  undef \^`{}~
 
-# ■iconv: map (不一致?)
 SB94(v) ISO-IR-103 Teletex Supplementary Set of Graphic characters CCITT Rec. T.61
+  load SB94(b)
+  map L<U+332>
+  undef )*,-./9:@PQRSTU\]^_
+
+  # map_check # iconv?
 
 SB94(w) ISO-IR-121 Alternate Primary Graphic Set No. 1 CSA Standard Z 243.4-1985
   load SB94(B)
@@ -398,33 +459,72 @@ SB94(x) ISO-IR-122 Alternate Primary Graphic Set No.2 CSA Standard Z 243.4-1985
   load SB94(B)
   map @à[â\ç]ê^É`ô{é|ù}è~û
 
-# ■
 SB94(\) ISO-IR-128 Supplementary Set of graphic Characters for CCITT Rec. T.101, Data Syntax III
+  load SB94(t)
+
 SB94(y) ISO-IR-137 Mosaic-1 Set of Data Syntax I of CCITT Rec. T.101
+  load SB94(d)
+  undef_range !-_
+  undef no
+
+  # 以下の殆どは対応する Unicode の文字が存在しない。FFFDにしている。
+  map !<U+2596>"�#�$<U+259F>%�&�'�(�)�*�+�,<U+1FB9B>-�.�/�
+  map 1<U+2597>2�3�4<U+2599>5�6�7�8�9�:�;�<<U+1FB9A>=�>�?�
+  map "<U+25FE>
+
+  # 以下は結構怪しい対応である。
+  map 0<U+2584>'<U+25B6>7<U+25C0>
 
 SB94(z) ISO-IR-141 Serbocroatian and Slovenian Latin Alphabet
   load SB94(B)
   map @Ž[Š\Đ]Ć^Č`ž{š|đ}ć~č
 
-# ■
 SB94([) ISO-IR-146 Serbocroatian Cyrillic Alphabet
+  load SB94(B)
+  map @ЖAАBБCЦDДEЕFФGГHХIИJЈKКLЛMМNНOОPПQЉRРSСTТUУVВWЊXЏYЅZЗ[Ш\Ђ]Ћ^Ч
+  map `жaаbбcцdдeеfфgгhхiиjјkкlлmмnнoоpпqљrрsсtтuуvвwњxџyѕzз{ш|ђ}ћ~ч
+
 SB94(]) ISO-IR-147 Macedonian Cyrillic Alphabet
+  load SB94([)
+  map \Ѓ]Ќ|ѓ}ќ
 
 SB94(!@) ISO-IR-150 Greek Primary Set of CCITT
   load SB94(B)
-  map $¤AΑBΒCΓDΔEΕFΖGΗHΘIΙJΚKΛLΜMΝNΞOΟPΠQΡSΣTΤUΥVΦWΧXΨYΩaαbβcγdδeεfζgηhθiιjκkλlμmνnξoοpπqρrςsσtτuυvφwχxψyω~¯
+  map $¤AΑBΒCΓDΔEΕFΖGΗHΘIΙJΚKΛLΜMΝNΞOΟPΠQΡSΣTΤUΥVΦWΧXΨYΩ
+  map aαbβcγdδeεfζgηhθiιjκkλlμmνnξoοpπqρrςsσtτuυvφwχxψyω~¯
   undef RZ`z
 
 SB94(!A) ISO-IR-151 Character Set of Cuba
   load SB94(B)
   map $¤[¡\Ñ^¿{´|ñ}[~¨
 
-# ■
 SB94(!B) ISO-IR-170 Invariant characters (82) of ISO/IEC 646
+  load SB94(B)
+  undef #$@`[\]^{|}~
+
 SB94(!C) ISO-IR-207 Variant of the ISO 7-bit coded character set for the Irish Gaelic language
+  load SB94(B)
+  map #£@Ó`ó[É{é\Í|í]Ú}ú^Á~á
+
 SB94(!D) ISO-IR-230 Turkmen Alphabet
+  load SB94(B)
+  map CÇFÄGFHGIHJIKJLŽMKNLOMPNQŇROSÖTPURVSWŞXTYUZÜ[W\Y]Ý^Z
+  map `№cçfägfhgihjikjlžmknlompnqňrosötpurvswşxtyuzü{w|y}ý~z
+
+# https://en.wikipedia.org/wiki/ANSEL
 SB94(!E) ISO-IR-231 American National Standard Extended Latin Alphabet Coded Character Set for Bibliographic Use (ANSEL)
+  map !Ł"Ø#Đ$Þ%Æ&Œ'ʹ(·)♭*®+±,Ơ-Ư.ʼ
+  map 0ʻ1ł2ø3đ4þ5æ6œ7ʺ8ı9£:ð<ơ=ư
+  map @°AℓB℗C©D♯E¿F¡
+  map `<U+309>a<U+300>b<U+301>c<U+302>d<U+303>e<U+304>f<U+306>g<U+307>
+  map h<U+308>i<U+30C>j<U+30A>k<U+FE20>l<U+FE21>m<U+315>n<U+30B>o<U+310>
+  map p<U+327>q<U+328>r<U+323>s<U+324>t<U+325>u<U+333>v<U+332>w<U+326>
+  map x<U+31C>y<U+32E>z<U+FE22>{<U+FE23>}<U+313>
+
 SB94(!F) ISO-IR-232 Turkmen character set for 8-bit codes
+  load SB94(!D)
+  undef_range !-@
+  undef _`
 
 #
 # SB96
@@ -500,7 +600,7 @@ SB94(!F) ISO-IR-232 Turkmen character set for 8-bit codes
 
 # 以下は iconv から抽出した対応する物がない文字集合 (後で調べる)
 # ISO-IR-193
-#   map 
+#   map
 
 #
 # MB94

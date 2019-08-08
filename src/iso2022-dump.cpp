@@ -12,6 +12,7 @@
 #include "enc.utf8.hpp"
 
 char32_t unused = 0xFFFFFFFF;
+char32_t invalid_code = 0xFFFFFFFE;
 
 enum charset_type {
   charset_sb94,
@@ -119,8 +120,10 @@ private:
     }
     {
       ostr << "<li>Escape sequence: ";
-      for (char a : charset->seq)
+      for (char a : charset->seq) {
         put_colrow(ostr, a) << " ";
+        if ('@' <= a && a <= '~') break;
+      }
       ostr << "(" << charset->seq << ")</li>\n";
     }
     {
@@ -154,13 +157,14 @@ private:
           else
             ostr << "<td>";
 
-          if ((0x300<= b && b < 0x370) || (0x20D0 <= b && b < 0x20F0)) ostr << "&#x25cc;";
-          //if ((0x300<= b && b < 0x370) || (0x20D0 <= b && b < 0x20F0)) ostr << "&nbsp;";
+          if ((0x300<= b && b < 0x370) || (0x20D0 <= b && b < 0x2100) || (0xFE20 <= b && b < 0xFE30)) ostr << "&#x25cc;";
           contra::encoding::put_u8(b, ostr);
+          std::ios_base::fmtflags old_flags = std::cout.flags();
           ostr << "<br/><code>U+"
-                    << std::hex << std::setw(4) << std::setfill('0')
-                    << (std::uint32_t) b << std::dec << "</code>";
+               << std::hex << std::uppercase << std::setw(4) << std::setfill('0')
+               << (std::uint32_t) b << "</code>";
           ostr << "</td>";
+          ostr.flags(old_flags);
         }
       }
       ostr << "</tr>\n";
@@ -181,8 +185,10 @@ private:
     std::cout << "  Type: " << type_name << "\n";
 
     std::cout << "  Escape sequence: ";
-    for (char a : charset->seq)
+    for (char a : charset->seq) {
       put_colrow(std::cout, a) << " ";
+      if ('@' <= a && a <= '~') break;
+    }
     std::cout << "(" << charset->seq << ")\n";
     for (char a = '!';  a <= '~'; a++) {
       char32_t b = charset->map[(int) a];
@@ -193,14 +199,47 @@ private:
         std::cout << "unused";
       } else {
         contra::encoding::put_u8(b, std::cout);
+        std::ios_base::fmtflags old_flags = std::cout.flags();
         std::cout << " (U+"
-                  << std::hex << std::setw(4) << std::setfill('0')
+                  << std::uppercase << std::hex << std::setw(4) << std::setfill('0')
                   << (std::uint32_t) b << ")";
+        std::cout.flags(old_flags);
       }
       if (b != (char32_t) a) std::cout << " *";
       std::cout << "\n";
     }
     std::cout << std::endl;
+  }
+
+private:
+  char32_t read_code() {
+    char32_t const a = *r++;
+    if (!a) {
+      print_error() << "missing start of range" << std::endl;
+      return invalid_code;
+    } else if (!(0x21 <= a && a <= 0x7E)) {
+      print_error() << "invalid code" << std::endl;
+      return invalid_code;
+    }
+    return a;
+  }
+  char32_t read_unicode() {
+    char32_t b;
+    if (!*r) {
+      print_error() << "unexpected char" << std::endl;
+      return invalid_code;
+    } else if (starts_with_skip("<U+")) {
+      b = read_hex();
+      if (!starts_with_skip(">")) {
+        print_error() << "invalid form of unicode spec <U+XXXX>" << std::endl;
+        return invalid_code;
+      }
+    } else if (starts_with_skip("<undef>")) {
+      b = unused;
+    } else {
+      b = *r++;
+    }
+    return b;
   }
 
 private:
@@ -238,6 +277,67 @@ private:
     return true;
   }
 
+  bool process_command_map_range() {
+    if (!current_charset_data) {
+      print_error() << "charset unselected" << std::endl;
+      return false;
+    }
+
+    skip_space();
+    char32_t a = read_code();
+    if (a == invalid_code) return false;
+    char32_t b = read_unicode();
+    if (b == invalid_code) return false;
+
+    if (!starts_with_skip("-")) {
+      print_error() << "'-' is expected" << std::endl;
+      return false;
+    }
+
+    char32_t const c = read_code();
+    if (c == invalid_code) return false;
+    char32_t const d = read_unicode();
+    if (d == invalid_code) return false;
+
+    if (!(a < c && b < d)) {
+      print_error() << "range beg/end are inverted" << std::endl;
+      return false;
+    } else if (c - a != d - b) {
+      print_error() << "lengths of ranges do not match" << std::endl;
+      return false;
+    }
+
+    for (; a <= c; a++, b++)
+      current_charset_data->map[(int) a] = b;
+    return true;
+  }
+  bool process_command_undef_range() {
+    if (!current_charset_data) {
+      print_error() << "charset unselected" << std::endl;
+      return false;
+    }
+
+    skip_space();
+    char32_t a = read_code();
+    if (a == invalid_code) return false;
+
+    if (!starts_with_skip("-")) {
+      print_error() << "'-' is expected" << std::endl;
+      return false;
+    }
+
+    char32_t const c = read_code();
+    if (c == invalid_code) return false;
+
+    if (!(a < c)) {
+      print_error() << "range beg/end are inverted" << std::endl;
+      return false;
+    }
+
+    for (; a <= c; a++)
+      current_charset_data->map[(int) a] = unused;
+    return true;
+  }
   bool process_command_map(bool check = false) {
     if (!current_charset_data) {
       print_error() << "charset unselected" << std::endl;
@@ -245,27 +345,11 @@ private:
     }
 
     while (*r) {
-      char32_t a = *r++;
-      if (!(0x21 <= a && a <= 0x7E)) {
-        print_error() << "invalid code" << std::endl;
-        return false;
-      }
+      char32_t const a = read_code();
+      if (a == invalid_code) return false;
 
-      char32_t b;
-      if (!*r) {
-        print_error() << "unexpected char" << std::endl;
-        return false;
-      } else if (starts_with_skip("<U+")) {
-        b = read_hex();
-        if (!starts_with_skip(">")) {
-          print_error() << "unexpected unicode spec <U+XXXX>" << std::endl;
-          return false;
-        }
-      } else if (starts_with_skip("<undef>")) {
-        b = unused;
-      } else {
-        b = *r++;
-      }
+      char32_t const b = read_unicode();
+      if (b == invalid_code) return false;
 
       if (check) {
         if (current_charset_data->map[(int) a] != b) {
@@ -337,8 +421,12 @@ private:
       return process_command_map();
     } else if (starts_with_skip("map_check ")) {
       return process_command_map(true);
+    } else if (starts_with_skip("map_range ")) {
+      return process_command_map_range();
     } else if (starts_with_skip("undef ")) {
       return process_command_undef();
+    } else if (starts_with_skip("undef_range ")) {
+      return process_command_undef_range();
     } else {
       print_error() << "unrecognized command" << std::endl;
       return false;
