@@ -86,7 +86,91 @@ private:
   std::ostream& put_colrow(std::ostream& ostr, unsigned char a) {
     return ostr << unsigned(a / 16) << "/" << unsigned(a % 16);
   }
+
+  void print_html_header(std::ostream& ostr) {
+    ostr << "<?DOCTYPE html>\n"
+         << "<html>\n"
+         << "<head>\n"
+         << "<style>\n"
+         << "table.contra-iso2022-table { border-collapse: collapse; margin: auto; }\n"
+         << "table.contra-iso2022-table td { border: 1px solid gray; text-align: center; font-size: 1.5em; height: 2em; width: 2em; }\n"
+         << "table.contra-iso2022-table td>code { font-size: 0.7rem; }\n"
+         << "td.contra-iso2022-undef { background-color: #ddd; }\n"
+         << "td.contra-iso2022-diff { background-color: #dfd; }\n"
+         << "</style>\n"
+         << "</head>\n"
+         << "<body>\n";
+  }
+  void print_html_footer(std::ostream& ostr) {
+    ostr << "</body>\n"
+         << "</html>\n";
+  }
+  void print_html_charset(std::ostream& ostr, sb94data* charset) {
+    ostr << "<h2>ISO-IR-" << charset->reg << ": "
+         << charset->name << "</h2>\n";
+
+    ostr << "<ul>\n";
+    {
+      const char* type_name = "unknown_type";
+      switch (charset->type) {
+      case charset_sb94: type_name = "SB94"; break;
+      }
+      ostr << "<li>Type: " << type_name << "</li>\n";
+    }
+    {
+      ostr << "<li>Escape sequence: ";
+      for (char a : charset->seq)
+        put_colrow(ostr, a) << " ";
+      ostr << "(" << charset->seq << ")</li>\n";
+    }
+    {
+      std::string url = "https://www.itscj.ipsj.or.jp/iso-ir/";
+      for (int i = strspn(charset->reg.c_str(), "0123456789"); i < 3; i++)
+        url += '0';
+      url = url + charset->reg + ".pdf";
+      ostr << "<li>PDF: <a href=\"" << url << "\">" << url << "</a></li>\n";
+    }
+    ostr << "</ul>\n";
+
+    ostr << "<table class=\"contra-iso2022-table\">\n";
+    {
+      ostr << "<tr>";
+      ostr << "<th></th>";
+      for (int row = 0; row <= 15; row++)
+        ostr << "<th>*/" << row << "</th>";
+      ostr << "</tr>\n";
+    }
+    for (int col = 2; col <= 7; col++) {
+      ostr << "<tr>";
+      ostr << "<th>" << col << "/*</th>";
+      for (int row = 0; row <= 15; row++) {
+        char const a = col << 4 | row;
+        char32_t b = charset->map[(int) a];
+        if (b == unused) {
+          ostr << "<td class=\"contra-iso2022-undef\"></td>";
+        } else {
+          if (b != (char32_t) a)
+            ostr << "<td class=\"contra-iso2022-diff\">";
+          else
+            ostr << "<td>";
+
+          if ((0x300<= b && b < 0x370) || (0x20D0 <= b && b < 0x20F0)) ostr << "&#x25cc;";
+          //if ((0x300<= b && b < 0x370) || (0x20D0 <= b && b < 0x20F0)) ostr << "&nbsp;";
+          contra::encoding::put_u8(b, ostr);
+          ostr << "<br/><code>U+"
+                    << std::hex << std::setw(4) << std::setfill('0')
+                    << (std::uint32_t) b << std::dec << "</code>";
+          ostr << "</td>";
+        }
+      }
+      ostr << "</tr>\n";
+    }
+    ostr << "</table>\n";
+    ostr << std::endl;
+  }
   void dump_charset(sb94data* charset) {
+    print_html_charset(ostr_html, charset);
+
     std::cout << "ISO-IR-" << charset->reg << ": "
               << charset->name << "\n";
 
@@ -109,7 +193,9 @@ private:
         std::cout << "unused";
       } else {
         contra::encoding::put_u8(b, std::cout);
-        std::cout << " (U+" << std::hex << (std::uint32_t) b << ")";
+        std::cout << " (U+"
+                  << std::hex << std::setw(4) << std::setfill('0')
+                  << (std::uint32_t) b << ")";
       }
       if (b != (char32_t) a) std::cout << " *";
       std::cout << "\n";
@@ -145,14 +231,14 @@ private:
     read_until('\0', data.name);
 
     auto& record = charset94[data.seq];
-    record = std::move(data);
     if (current_charset_data)
       dump_charset(current_charset_data);
+    record = std::move(data);
     current_charset_data = &record;
     return true;
   }
 
-  bool process_command_map() {
+  bool process_command_map(bool check = false) {
     if (!current_charset_data) {
       print_error() << "charset unselected" << std::endl;
       return false;
@@ -180,7 +266,13 @@ private:
       } else {
         b = *r++;
       }
-      current_charset_data->map[(int) a] = b;
+
+      if (check) {
+        if (current_charset_data->map[(int) a] != b) {
+          put_colrow(print_error() << "check_map: ", a) << " does not match" << std::endl;
+        }
+      } else
+        current_charset_data->map[(int) a] = b;
     }
     return true;
   }
@@ -243,6 +335,8 @@ private:
       return process_command_load();
     } else if (starts_with_skip("map ")) {
       return process_command_map();
+    } else if (starts_with_skip("map_check ")) {
+      return process_command_map(true);
     } else if (starts_with_skip("undef ")) {
       return process_command_undef();
     } else {
@@ -251,9 +345,16 @@ private:
     }
   }
 
+private:
+  std::ofstream ostr_html;
+
 public:
-  void process(std::istream& istr) {
+  int process(std::istream& istr) {
+    ostr_html.open("iso2022.html");
+    print_html_header(ostr_html);
+
     iline = 0;
+    bool error_flag = false;
     std::string line;
     std::vector<char32_t> buffer;
     while (std::getline(istr, line)) {
@@ -271,16 +372,26 @@ public:
 
       r = r0 = q0;
       rN = q1;
-      process_line();
+      if (!process_line())
+        error_flag = true;
     }
     if (current_charset_data)
       dump_charset(current_charset_data);
+
+    print_html_footer(ostr_html);
+    ostr_html.close();
+
+    if (error_flag) return 1;
+    return 0;
   }
 };
 
 int main() {
-  std::ifstream ifs("iso2022.txt");
+  std::ifstream ifs("iso2022.def");
+  if (!ifs) {
+    std::cerr << "failed to open the fil iso2022.def" << std::endl;
+    return 1;
+  }
   processor_t proc;
-  proc.process(ifs);
-  return 0;
+  return proc.process(ifs);
 }

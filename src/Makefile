@@ -67,6 +67,9 @@ iso2022-convert.exe: $(objdir)/iso2022-convert.o $(objdir)/enc.utf8.o
 all: iso2022-dump.exe
 iso2022-dump.exe: $(objdir)/iso2022-dump.o $(objdir)/enc.utf8.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
+all: iso2022.html
+iso2022.html: iso2022-dump.exe iso2022.def
+	./iso2022-dump.exe > /dev/null
 
 #------------------------------------------------------------------------------
 # ttty

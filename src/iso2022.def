@@ -22,27 +22,42 @@ SB94(A) ISO-IR-4 ISO 646, British Version BSI 4730
   load SB94(B)
   map #£~¯
 
+  # map_check #£~‾# ★iconv
+
 # Finland/Sweden
 #
 # 2/13 long dash, minus sign
 # 7/14 short dash, hyphen
+#   2/13 は - のままにしたいので、7/14 はそれよりも短い記号を選びたい。
+#   従って HYPHEN を使う事にする。因みに iconv では EN DASH になっている。
+#
 # 5/14 solid
+#
 # 4/0 unit space A
 # 6/0 unit space B
 #   2/0 は可変長のスペースであり 4/0 6/0 はユーザ定義の固定長のスペースである。
 #   4/0 の方が 6/0 以上の幅を持つものとする。
 #   取り敢えず此処では em/en space を割り当てる。
+#   iconv は私用領域 E018 E019 に割り当てている様だ。
 #
 SB94(C) ISO-IR-8-1 NATS, Primary Set for Finland and Sweden
   load SB94(B)
   map @ [Ä\Ö]Å^█` {ä|ö}å~‐
+
+  # iconv (linux)
+  map_check [Ä\Ö]Å{ä|ö}å
+  # map_check @^■`~– # ★iconv
 
 SB94(D) ISO-IR-8-2 NATS, Secondary Set for Finland and Sweden
   map AÀDĐEÉPÞUÜ[Æ\Øaàdđeépþuü{æ|ø
 
 SB94(E) ISO-IR-9-1 NATS, Primary Set for Denmark and Norway
   load SB94(B)
-  map "«$»@ [Æ\Ø]Å^█` {æ|ø}å~‐
+  map "«#»@ [Æ\Ø]Å^█` {æ|ø}å~‐
+
+  # iconv (linux)
+  map_check "«#»[Æ\Ø]Å{æ|ø}å
+  #map_check @`^■~– # ★iconv
 
 SB94(F) ISO-IR-9-2 NATS, Secondary Set for Denmark and Norway
   map AÀDĐEÉPÞUÜ[Ä\Öaàdđeépþuü{ä|ö
@@ -51,9 +66,16 @@ SB94(G) ISO-IR-10 ISO 646, Swedish Version SEN 850200 (Ann. B)
   load SB94(B)
   map $¤[Ä\Ö]Å{ä|ö}å~¯
 
+  # iconv (linux)
+  # map_check $¤[Ä\Ö]Å{ä|ö}å~‾ # ★iconv
+
+# iconv と一致。
 SB94(H) ISO-IR-11 ISO 646, Swedish Version for Names, (SEN 850200 Ann. C)
   load SB94(B)
   map $¤@É[Ä\Ö]Å^Ü`é{ä|ö}å~ü
+
+  # iconv (linux)
+  map_check $¤@É[Ä\Ö]Å^Ü`é{ä|ö}å~ü
 
 SB94(I) ISO-IR-13 Katakana Character Set JIS C6220-1969
   map !｡"｢#｣$､%･&ｦ'ｧ(ｨ)ｩ*ｪ+ｫ,ｬ-ｭ.ｮ/ｯ
@@ -65,55 +87,93 @@ SB94(J) ISO-IR-14 ISO 646, Japanese Version for Roman Characters JIS C6220-1969
   load SB94(B)
   map \¥~¯
 
+  # iconv (linux)
+  # map_check \¥~‾ # iconv★
+
 SB94(Y) ISO-IR-15 ISO 646, Version for Italian, ECMA (Olivetti)
   load SB94(B)
   map #£@§[°\ç]é`ù{à|ò}è~ì
+
+  # iconv (linux)
+  map_check #£@§[°\ç]é`ù{à|ò}è~ì
 
 SB94(L) ISO-IR-16 ISO 646, Version for Portuguese, ECMA (Olivetti)
   load SB94(B)
   map @§[Ã\Ç]Õ{ã|ç}õ~°
 
+  # iconv (linux)
+  map_check @§[Ã\Ç]Õ{ã|ç}õ~°
+
 SB94(Z) ISO-IR-17 ISO 646, Version for Spanish, ECMA (Olivetti)
   load SB94(B)
-  map #£@§[¡\Ñ]¿{°|ñ{ç
+  map #£@§[¡\Ñ]¿{°|ñ}ç
 
+  # iconv (linux)
+  map_check #£@§[¡\Ñ]¿{°|ñ}ç
+
+# 5/1 iota subscript は当初 U+1FBE GREEK PROSGEGRAMMENI にしていたが、
+#   iconv は U+037A GREEK YPOGEGRAMMENI にしていたのでそれに倣う事にする。
+# 7/7 raised dot (colon) は PDF の雰囲気からすると文字の上端の位置に点がある。
+#   ここでは U+02D0 DOT ABOVE にする。
+#   iconv はどうやら U+00B7 MIDDLE DOT に変換している様だ。
 SB94([) ISO-IR-18 Character Set for Greek, ECMA (Olivetti)
   load SB94(B)
   map #£@´
-  map AαBβCψDδEεFφGγHηIιJξKκLλMμNνOοPπQιRρSσTτUθVωWςXχYυZζ[῏\᾿]῎^~
+  map AαBβCψDδEεFφGγHηIιJξKκLλMμNνOοPπQͺRρSσTτUθVωWςXχYυZζ[῏\᾿]῎^~
   map aΑbΒcΨdΔeΕfΦgΓhΗiΙjΞkΚlΛmΜnΝoΟpΠrΡsΣtΤuΘvΩw˙xΧyΥzΖ{῟|῾}῞~¨
-  undef Q
+  undef q
+
+  # iconv (linux)
+  map_check #£@´
+  map_check AαBβCψDδEεFφGγHηIιJξKκLλMμNνOοPπQͺRρSσTτUθVωWςXχYυZζ[῏\᾿]῎^~
+  map_check aΑbΒcΨdΔeΕfΦgΓhΗiΙjΞkΚlΛmΜnΝoΟpΠrΡsΣtΤuΘvΩxΧyΥzΖ{῟|῾}῞~¨
+  # map_check w· # ★iconv
 
 SB94(\) ISO-IR-19 Latin-Greek Character Set, ECMA (Olivetti)
   load SB94(B)
   map #£aΑbΒcΨdΔeΕfΦgΓhΗiΙjΞkΚlΛmΜnΝoΟpΠrΡsΣtΤuΘvΩw˙xΧyΥzΖ~¨
-  undef Q
+  undef q
 
+  # iconv (linux)
+  map_check #£aΑbΒcΨdΔeΕfΦgΓhΗiΙjΞkΚlΛmΜnΝoΟpΠrΡsΣtΤuΘvΩxΧyΥzΖ~¨
+  # map_check w· # ★iconv
+
+# iconv: map @§[Ä\Ö]Ü{ä|ö}ü~ß
 SB94(K) ISO-IR-21 ISO 646, German Version DIN 66083
   load SB94(B)
   map @§[Ä\Ö]Ü{ä|ö}ü~ß
 
+# iconv: map #£@à[°\ç]§{é|ù}è~¨
 SB94(R) ISO-IR-25 ISO 646, French Version, NF Z 62010-1973 (Withdrawn in April 1985)
   load SB94(B)
   map #£@à[°\ç]§{é|ù}è~¨
 
+# iconv: map !Ξ#Γ$¤:Ψ?Π@Δ[Ω\Θ]Φ^Λ_Σ~‾
 SB94(U) ISO-IR-27 Latin-Greek Character Set, ECMA (Honeywell-Bull)
   load SB94(B)
   map !Ξ#Γ$¤:ψ?Π@Δ[Ω\Θ]Φ^Λ_Σ~¯
 
-# combining を spacing で代用している部分がある。複数文字への変換をサポートする?
+# combining を spacing で代用している部分がある。
+# 複数文字への変換をサポートする?
 SB94(X) ISO-IR-31 Greek Character Set for Bibliography, ISO 5428
   map !<U+0300>"<U+0301>#῭$<U+0342>%<U+0313>&<U+0314>'῎(῞)<U+0308>*<U+0345>+῍,῝-῏.῟/΅5᾽6῾7῎8῞;῍<῝=῏>῟
   map AΑBΒCΓDΔEΕFΖGΗHΘIΙJΚKΛLΜMΝNΞOΟPΠQΡRΣSΤTΥUΦVΧWΨXΩY·Z«[»\“]”^ˊ_ˏ
   map aαbβcγdδeεfζgηhθiιjκkλlμmνnξoοpπqρrσsτtυuφvχwψxωyςzϜ{Ϟ|Ϡ}Ϛ
 
 SB94(N) ISO-IR-37 Basic Cyrillic Character Set, ECMA (Cii Honeywell-Bull) and ISO 5427
+  # name Basic Cyrillic Graphic Character Set
   load SB94(B)
   map $¤
   map @юAаBбCцDдEеFфGгHхIиJйKкLлMмNнOоPпQяRрSсTтUуVжWвXьYыZз[ш\э]щ^ч_ъ
   map `ЮaАbБcЦdДeЕfФgГhХiИjЙkКlЛmМnНoОpПqЯrРsСtТuУvЖwВxЬyЫzЗ{Ш|Э}Щ~Ч
 
+  # iconv (linux)
+  map_check $¤
+  map_check @юAаBбCцDдEеFфGгHхIиJйKкLлMмNнOоPпQяRрSсTтUуVжWвXьYыZз[ш\э]щ^ч_ъ
+  map_check `ЮaАbБcЦdДeЕfФgГhХiИjЙkКlЛmМnНoОpПqЯrРsСtТuУvЖwВxЬyЫzЗ{Ш|Э}Щ~Ч
+
 SB94(O) ISO-IR-38 Extended Graphic Character Set for Bibliography, DIN 31624
+  # name Extended Character Set of Bibliographic Data written in Latin Script as defined in German Standard DIN 31624.
   map !¡"„#£$¤%‰&†'@(°)[*{+«,♭-©.℗/®
   map 0<U+674>1<U+8D6>2‚3<undef>4\5|6†7·8→9]:};»<♯=ʹ>ʺ?¿
   map @<U+309>A<U+300>B<U+301>C<U+302>D<U+303>E<U+304>F<U+306>G<U+307>
@@ -123,6 +183,7 @@ SB94(O) ISO-IR-38 Extended Graphic Character Set for Bibliography, DIN 31624
   map aÆqæbĐrđhŁxłiØyøjŒzœlÞ|þsðuı{Ʀ
 
 SB94(M) ISO-IR-39 Character Set for African Languages, DIN 31625 and ISO 6438
+  # name Coded Character Set for African Languages
   map !<undef>"<U+181>#<U+187>$<U+18A>%<U+189>&<undef>'<U+190>
   map (<U+18E>)<undef>*<U+191>+<U+193>,<U+194>-<U+166>.<undef>/<U+197>
   map 0<undef>1<undef>2<U+253>3<U+188>4<U+257>5<U+256>6<undef>7<U+25B>
@@ -135,3 +196,331 @@ SB94(M) ISO-IR-39 Character Set for African Languages, DIN 31625 and ISO 6438
   map h<undef>i<undef>j<undef>k<undef>l<undef>m<undef>n<undef>o<undef>
   map p<U+1AD>q<U+1AF>r<undef>s<U+28A>t<U+28B>u<U+3C7>v<U+1B4>w<U+292>
   map x<U+295>y<U+294>z<U+298>{<U+1C0>|<U+1C2>}<U+1C3>~<U+1C1>
+
+SB94(V) ISO-IR-47 Character Set for Viewdata and Teletext (UK)
+  # name Alphanumerics for viewdata and broadcast teletext
+  load SB94(B)
+  map `—[←\½]→^↑_⌗{¼|‖}¾~÷
+
+SB94(W) ISO-IR-49 INIS, Sub-set of the IRV
+  load SB94(B)
+  undef !"#&?@\^_`{}~
+
+SB94(]) ISO-IR-50 INIS, Non-standard Extension of Reg. 49
+  map :α;β<γ=σ>Ξ^→_∫
+  map `⁰a¹b²c³d⁴e⁵f⁶g⁷h⁸i⁹j⁺k⁻l√mΔnΛoΩ
+  map p₀q₁r₂s₃t₄u₅v₆w₇x₈y₉zΣ{μ|ν}ω~π
+
+  # iconv (linux)
+  map_check :α;β<γ>Ξ^→_∫
+  map_check `⁰a¹b²c³d⁴e⁵f⁶g⁷h⁸i⁹j⁺k⁻mΔnΛoΩ
+  map_check p₀q₁r₂s₃t₄u₅v₆w₇x₈y₉zΣ{μ|ν}ω~π
+  # map_check =δlル # ←★iconv がおかしい。何故此処に片仮名が…。
+
+SB94(^) ISO-IR-51 INIS, Cyrillic Extension of Reg. 49
+  load SB94(N)
+  undef !"#$%&'()*+-
+  map ,√.→/∫0α1β2γ3Σ4σ5μ6ν7ω8π9Ξ:Δ;Λ<Ω=Ъ>⁻?⁺
+
+  # iconv (linux)
+  map_check ,√.→/∫0α1β2γ5μ6ν7ω8π9Ξ:Δ;Λ<Ω=Ъ>⁻?⁺
+  map_check @юAаBбCцDдEеFфGгHхIиJйKкLлMмNнOоPпQяRрSсTтUуVжWвXьYыZз[ш\э]щ^ч_ъ
+  map_check `ЮaАbБcЦdДeЕfФgГhХiИjЙkКlЛmМnНoОpПqЯrРsСtТuУvЖwВxЬyЫzЗ{Ш|Э}Щ~Ч
+  #map_check 3δ4Σ # ←★iconv のこの結果は表と一致しない。
+
+SB94(P) ISO-IR-53 Extended Graphic Character Set for Bibliography ISO 5426-1980
+  load SB94(O)
+  map $$%¥'§(′8″)‘9’*“:”fĲvĳ{ß
+  undef 45
+
+# iconv: map @ґAђBѓCєDёEѕFіGїHјIљJњKћLќMўNџPѣQѳRѵSѫ`ҐaЂbЃcЄdЁeЅfІgЇhЈiЉjЊkЋlЌmЎnЏoЪpѢqѲrѴsѪ
+SB94(Q) ISO-IR-54 Extension of the Cyrillic Character Set of Reg. 37, ISO 5427-1981
+  map @ґAђBѓCєDёEѕFіGїHјIљJњKћLќMўNџPѣQѳRѵSѫ[[]]__
+  map `ҐaЂbЃcЄdЁeЅfІgЇhЈiЉjЊkЋlЌmЎnЏpѢqѲrѴsѪ
+
+# 2/1-2/7 non-spacing な文字という事になっている。
+#   然し、iconv は何故か私用領域の文字として変換している。
+#   即ち E002 E003 E009 E005 E012 E013 E014 である。
+#   iconv は内部的に私用領域を何らかの方法で割り当てているのだろうか。
+#
+# 3/4, 3/5
+#   High prime 及び Low prime は Unicode にない様だ。
+#   3/4 の説明には "follows letter used as numbers under 1000"
+#   3/5 の説明には "precedes letters used as numbers from 1000"
+#
+#   iconv の ISO-IR-55 の実装を確認するとどうやら 0374, 0375 を使っている。
+#   調べるとそれぞれ GREEK NUMERAL SIGN / GREEK LOWER NUMERAL SIGN
+#   となっていて説明文と一致している様に思われる。これを採用する。
+#
+# 3/2, 3/3 left/right double quotation だが、
+#   字形は普通と上下反転している。ここでは普通に
+#   U+201C/U+201D LEFT/RIGHT DOUBLE QUOTATION MARK を割り当てる。
+#   iconv は何故か左右が逆になった結果を返している。正しいのか?
+#   U+201F に left double quotation と同じ形の引用符が在るが、
+#   これは U+201E と対になっている様な気がするので今回は採用しない。
+#
+SB94(S) ISO-IR-55 Greek Character Set for Bibliography, ISO 5428-1980
+  map !<U+0300>"<U+0301>#<U+308>$<U+303>%<U+0313>&<U+0314>'<U+0345>
+  map 0«1»2“3”4ʹ5͵;·?;
+  map aαbβcϐdγeδfεgϛhϝiζjηkθlιmκnλoμpνqξrοsπtϟuρvσwςxτyυzφ{χ|ψ}ω~ϡ
+  map AΑBΒDΓEΔFΕGϚHϜIΖJΗKΘLΙMΚNΛOΜPΝQΞRΟSΠTϞUΡVΣXΤYΥZΦ[Χ\Ψ]Ω^Ϡ
+
+  # iconv (linux)
+  map_check 0«1»4ʹ5͵;·?;
+  map_check AΑBΒDΓEΔFΕGϚHϜIΖJΗKΘLΙMΚNΛOΜPΝQΞRΟSΠTϞUΡVΣXΤYΥZΦ[Χ\Ψ]Ω^Ϡ
+  map_check aαbβcϐdγeδfεgϛhϝiζjηkθlιmκnλoμpνqξrοsπtϟuρvσwςxτyυzφ{χ|ψ}ω~ϡ
+  # map_check !"#$%&' # ←★iconvはnon-spacingを私用領域に割り当てている
+  # map_check 2”3“ # ←★iconvは LR が反転している気がする
+
+# iconv: map $¥~‾
+SB94(T) ISO-IR-57 Coded Character Set for Information Interchange, Standard Chinese GB 1988-80
+  load SB94(B)
+  map $¥~¯
+
+# ■これは難しい。アラビア語が分からないと駄目。また結合文字も色々ある
+SB94(_) ISO-IR-59 Arabic Character Set CODAR-U IERA (Morocco)
+
+# iconv: map [Æ\Ø]Å{æ|ø}å~‾
+SB94(`) ISO-IR-60 ISO 646, Norwegian Version NS 4551
+  load SB94(B)
+  map [Æ\Ø]Å{æ|ø}å~¯
+
+# iconv: map #§[Æ\Ø]Å{æ|ø}å~|
+SB94(a) ISO-IR-61 Norwegian Character Set, Version 2, NS 4551 (Withdrawn in June 1987)
+  load SB94(`)
+  map #§~|
+
+# https://en.wikipedia.org/wiki/ISO_IR-68
+SB94(e) ISO-IR-68 APL Character Set, Canadian APL Working Group
+  map !¨")#<$≤%=&>(])∧'∨*≠+÷,,-+..//
+  map 00112233445566778899:(;[<;=×>:?\
+  map @¯A⍺B⊥C∩D⌊E∊F_G∇H∆I⍳J∘K'L⎕M|N⊤O○P⋆Q?R⍴S⌈T∼U↓V∪W⍵X⊃Y↑Z⊂[←\⊢]→^≥_-
+  map `⋄aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ{{|⊣}}~$
+
+SB94(f) ISO-IR-69 ISO 646, French Version NF Z 62010-1982
+  load SB94(B)
+  map #£@à[°\ç]§`µ{é|ù}è~¨
+
+# モザイク文字集合について
+#   https://ja.wikipedia.org/wiki/%E3%83%A2%E3%82%B6%E3%82%A4%E3%82%AF%E9%9B%86%E5%90%88
+#   どれだけ実装があるのか不明だが日本のデータ放送でも使うことが可能なそうだ。
+#   ARIB外字集合の一部として登録されているそうだがARIB外字は全角なのだそうだ。
+#   一方で ISO-IR-71 等の分割を見ると縦長の領域を意識している様に見える。
+#
+#   https://www.unicode.org/L2/L2019/19025-terminals-prop.pdf
+#   によるとつい最近になってモザイク集合追加が受諾 (2019-01-17) されたそうだ。
+#
+SB94(b) ISO-IR-70 Supplementary Set for Videotex, CCITT
+  map !¡"¢#£$$%¥&#'§(¤,←-↑.→/↓
+  map 0°1±2²3³4×5µ6¶7·8÷<¼=½>¾?¿
+  map )‘9’*“:”+«;»
+  map @<U+344>A<U+300>B<U+301>C<U+302>D<U+303>E<U+304>F<U+306>G<U+307>
+  map H<U+308>J<U+30A>K<U+327>M<U+30B>N<U+328>O<U+30C>
+  map P―Q¹R®S©T™U♪\⅛]⅜^⅝_⅞
+  map `ΩaÆbĐcªdĦe fĲgĿhŁiØjŒkºlÞmŦnŊoŉ
+  map pĸqærđsðtħuıvĳwŀxłyøzœ{ß|þ}ŧ~ŋ
+  undef e
+
+# ■
+SB94(c) ISO-IR-71 Second Supplementary Set for Videotex (Mosaic), CCITT
+SB94(d) ISO-IR-72 Third Supplementary Set for Videotex, (Mosaic), CCITT (superseded by Reg. 173)
+SB94(d) ISO-IR-173 Third supplementary set of Mosaic Characters/Videotex and Facsimile
+
+SB94(g) ISO-IR-84 ISO 646, Version for Portuguese, ECMA (IBM)
+  load SB94(B)
+  map @´[Ã\Ç]Õ{ã|ç}õ
+
+# 4/0 middle dot は iconv は U+2022 BULLET • に変換している。
+# 然し他の文字集合の時と同じ様に U+00B7 MIDDLE DOT · に変換する方が自然なのではないか。
+SB94(h) ISO-IR-85 ISO 646, Version for the Spanish languages, ECMA (IBM)
+  load SB94(B)
+  map @·[¡\Ñ]Ç^¿{´|ñ}ç~¨
+
+  # iconv (linux)
+  # map_check @•[¡\Ñ]Ç^¿{´|ñ}ç~¨
+
+SB94(i) ISO-IR-86 ISO 646, Hungarian Version Hungarian standard 7795/3
+  load SB94(B)
+  map $¤@Á[É\Ö]Ü`á{é|ö}ü~˝
+
+SB94(j) ISO-IR-88 Greek Character Set ELOT, Hellenic Organization for Standardization (Withdrawn in November 1986)
+  load SB94(B)
+  map $¤AΑBΒCΓDΔEΕFΖGΗHΘIΙKΚLΛMΜNΝOΞPΟQΠRΡSΣTΤUΥVΦXΧYΨZΩaαbβcγdδeεfζgηhθiιkκlλmμnνoξpοqπrρsσtτuυvφwςxχyψzω~‾
+  undef JWj
+
+# Note: 例を見ると括弧の字形が反転しているが iconv は反転させていない。
+#   Unicode bidi-algorithm によって丁度良い具合に反転されるので修正の必要がないという事だろうか。
+#   map {}}{())([]][
+SB94(k) ISO-IR-89 7-bit Arabic Code for Information Interchange, Arab standard ASMO-449, ISO 9036
+  load SB94(B)
+  map $¤,،;؛?؟AءBآCأDؤEإFئGاHبIةJتKثLجMحNخOدPذQرRزSسTشUصVضWطXظYعZغ`ـaفbقcكdلeمfنgهhوiىjيkًlٌmٍnَoُpِqّrْ~‾
+  undef stuvwxyz
+
+# iconv の出力結果が表と全く一致していない気がする。何故?
+# map_check $¤ # iconv
+SB94(l) ISO-IR-90 Supplementary Set for Use with Registration No.2
+  load SB94(b)
+  map L<U+332>
+  undef &(@
+
+# ■
+SB94(m) ISO-IR-91 Japanese OCR-A graphic set JIS C6229-1984
+
+# ■
+# これは iconv の出力結果が表と一致していない気がする。
+#  iconv: map [〈\¥]〉
+SB94(n) ISO-IR-92 Japanese OCR-B Graphic Set JIS C6229-1984
+
+# ■
+SB94(o) ISO-IR-93 Japanese OCR-B, Additional Graphic Set, JIS C6229-1984
+SB94(p) ISO-IR-94 Japanese Basic Hand-printed Graphic Set for OCR JIS C6229-1984
+SB94(q) ISO-IR-95 Japanese Additional Handprinted Graphic Character Set for OCR JIS C6229- 1984
+SB94(r) ISO-IR-96 Katakana hand-printed Graphic Character Set for OCR JIS C6229-1984
+
+SB94(s) ISO-IR-98 E13B Graphic Character Set Japanese National Committee for ISO/TC97/SC2
+  map 00112233445566778899
+  map :⑆;⑇<⑈=⑉
+
+# ■iconv: map (不一致?)
+SB94(t) ISO-IR-99 Supplementary Set of Graphic Characters for Videotex and Teletext ANSI and Teletext ANSI and CSA (Withdrawn in November 1986)
+
+# ■
+SB94(u) ISO-IR-102 Teletex Primary Set of Graphic Characters CCITT Rec. T.61
+
+# ■iconv: map (不一致?)
+SB94(v) ISO-IR-103 Teletex Supplementary Set of Graphic characters CCITT Rec. T.61
+
+SB94(w) ISO-IR-121 Alternate Primary Graphic Set No. 1 CSA Standard Z 243.4-1985
+  load SB94(B)
+  map @à[â\ç]ê^î`ô{é|ù}è~û
+
+SB94(x) ISO-IR-122 Alternate Primary Graphic Set No.2 CSA Standard Z 243.4-1985
+  load SB94(B)
+  map @à[â\ç]ê^É`ô{é|ù}è~û
+
+# ■
+SB94(\) ISO-IR-128 Supplementary Set of graphic Characters for CCITT Rec. T.101, Data Syntax III
+SB94(y) ISO-IR-137 Mosaic-1 Set of Data Syntax I of CCITT Rec. T.101
+
+SB94(z) ISO-IR-141 Serbocroatian and Slovenian Latin Alphabet
+  load SB94(B)
+  map @Ž[Š\Đ]Ć^Č`ž{š|đ}ć~č
+
+# ■
+SB94([) ISO-IR-146 Serbocroatian Cyrillic Alphabet
+SB94(]) ISO-IR-147 Macedonian Cyrillic Alphabet
+
+SB94(!@) ISO-IR-150 Greek Primary Set of CCITT
+  load SB94(B)
+  map $¤AΑBΒCΓDΔEΕFΖGΗHΘIΙJΚKΛLΜMΝNΞOΟPΠQΡSΣTΤUΥVΦWΧXΨYΩaαbβcγdδeεfζgηhθiιjκkλlμmνnξoοpπqρrςsσtτuυvφwχxψyω~¯
+  undef RZ`z
+
+SB94(!A) ISO-IR-151 Character Set of Cuba
+  load SB94(B)
+  map $¤[¡\Ñ^¿{´|ñ}[~¨
+
+# ■
+SB94(!B) ISO-IR-170 Invariant characters (82) of ISO/IEC 646
+SB94(!C) ISO-IR-207 Variant of the ISO 7-bit coded character set for the Irish Gaelic language
+SB94(!D) ISO-IR-230 Turkmen Alphabet
+SB94(!E) ISO-IR-231 American National Standard Extended Latin Alphabet Coded Character Set for Bibliographic Use (ANSEL)
+SB94(!F) ISO-IR-232 Turkmen character set for 8-bit codes
+
+#
+# SB96
+#
+# 何故か知らないが iconv で抽出した結果は全て空である。もしかすると GR なのかもしれない。後で調べる
+#
+# SB96(A) ISO-IR-100 Right-hand Part of Latin Alphabet No.1 ISO 8859/1, ECMA-94
+#   map (iconv)
+# SB96(B) ISO-IR-101 Right-hand Part of Latin Alphabet No.2 ISO 8859/2, ECMA-94
+#   map (iconv)
+# SB96(C) ISO-IR-109 Right-hand Part of Latin Alphabet No.3 ISO DIS 8859/3, ECMA-94
+#   map (iconv)
+# SB96(D) ISO-IR-110 Right-hand Part of Latin Alphabet No.4 ISO DIS 8859/4, ECMA-94
+#   map (iconv)
+# SB96(@) ISO-IR-111 Right-hand Part of the Latin/Cyrillic Alphabet ECMA-113 (Version of June 1986)
+#   map (iconv)
+# SB96(E) ISO-IR-123 General Purpose Supplementary Graphic Set CSA Standard Z 243.4-1985
+# SB96(F) ISO-IR-126 Right-hand Part of the Latin/Greek Alphabet Standard ELOT 928, ECMA-118, ISO DIS 8859/7
+#   map (iconv)
+# SB96(G) ISO-IR-127 Right-hand Part of the Latin/Arabic Alphabet ECMA-114, ISO 8859/6
+#   map (iconv)
+# SB96(}) ISO-IR-129 Supplementary Set of Mosaic Characters for CCITT Rec. 101, Data Syntax III
+# SB96(H) ISO-IR-138 Latin/Hebrew Alphabet Standard ECMA-121
+#   map (iconv)
+# SB96(I) ISO-IR-139 Right-hand Part for Czechoslovak Standard CSN 369103
+#   map $¤ (iconv)
+# SB96(J) ISO-IR-142 Supplementary Set of Latin Alphabetic and non-Alphabetic Graphic Characters
+# SB96(K) ISO-IR-143 Technical Set
+#   map (iconv)
+# SB96(L) ISO-IR-144 Cyrillic part of the Latin/Cyrillic Alphabet
+#   map (iconv)
+# SB96(M) ISO-IR-148 Right-hand part of Latin Alphabet No.5
+#   map (iconv)
+# SB96(N) ISO-IR-152 Residual Characters from ISO 6937-2 : 1983
+# SB96(O) ISO-IR-153 Basic Cyrillic Character Set for 8-bit Codes
+#   map (iconv)
+# SB96(P) ISO-IR-154 Supplementary set for Latin Alphabets No.1, No.2 and No.5
+# SB96(Q) ISO-IR-155 Basic Box Drawings Set
+#   map (iconv)
+# SB96(R) ISO-IR-156 Supplementary Set ISO/IEC 6937 : 1992
+#   map (iconv)
+# SB96(V) ISO-IR-157 Supplementary Set for Latin Alphabet No. 6
+#   map (iconv)
+# SB96(X) ISO-IR-158 Sami (Lappish) Supplementary Set
+# SB96(S) ISO-IR-164 CCITT Hebrew Supplementary Set
+# SB96(T) ISO-IR-166 Thai Set
+#   map (iconv)
+# SB96(U) ISO-IR-167 Arabic/French/German Set
+# SB96(Y) ISO-IR-179 Baltic Rim Supplementary Set
+#   map (iconv)
+# SB96(Z) ISO-IR-180 Vietnamese Standard Code for Information Interchange
+# SB96([) ISO-IR-181 Technical Character Set No.1: IEC Publication 1289
+# SB96(\) ISO-IR-182 Welsh variant of Latin Alphabet No. 1
+# SB96(]) ISO-IR-197 Sami supplementary Latin set
+#   map (iconv)
+# SB96(^) ISO-IR-198 Latin/Hebrew Alphabet
+# SB96(_) ISO-IR-199 Celtic Supplementary Latin Set
+#   map (iconv)
+# SB96(`) ISO-IR-200 Uralic Supplementary Cyrllic Set
+# SB96(a) ISO-IR-201 Volgaic Supplementary Cyrllic Set
+# SB96(b) ISO-IR-203 European Supplementary Latin Set ("Latin 9")
+#   map (iconv)
+# SB96(c) ISO-IR-204 Supplementary set for Latin-1 alternative with EURO SIGN
+# SB96(d) ISO-IR-205 Supplementary set for Latin-4 alternative with EURO SIGN
+# SB96(e) ISO-IR-206 Supplementary set for Latin-7 alternative with EURO SIGN
+# SB96(f) ISO-IR-226 Romanian Character Set for Information Interchange
+#   map (iconv)
+# SB96(g) ISO-IR-208 Ogham coded character set for information interchange
+# SB96(h) ISO-IR-209 Sami supplementary Latin set no 2
+#   map (iconv)
+# SB96(i) ISO-IR-227 Right-hand part of Latin/Greek alphabet
+# SB96(j) ISO-IR-234 Latin/Hebrew character set for 8-bit codes
+
+# 以下は iconv から抽出した対応する物がない文字集合 (後で調べる)
+# ISO-IR-193
+#   map 
+
+#
+# MB94
+#
+# MB94(@) ISO-IR-42 Japanese Character Set JISC C 6226-1978
+# MB94(A) ISO-IR-58 Chinese Character Set Chinese Standard GB 2312-80
+# MB94(B) ISO-IR-87 Japanese Character Set JIS C 6226-1983
+# ★MB94(B) ISO-IR-168 Update Registration 87 Japanese Graphic Character Set for Information Interchange
+# MB94(C) ISO-IR-149 Korean Graphic Character Set, Korean Standard KSC 5601-1987
+# MB94(D) ISO-IR-159 Supplementary Japanese Graphic Character Set for Information Interchange
+# MB94(E) ISO-IR-165 CCITT Chinese Set
+# MB94(F) ISO-IR-169 Blissymbol Graphic Character Set
+# MB94(G) ISO-IR-171 Chinese Standard Interchange Code - Set 1, CNS 11643-1992
+# MB94(H) ISO-IR-172 Chinese Standard Interchange Code - Set 2, CNS 11643-1992
+# MB94(I) ISO-IR-183 Chinese Standard Interchange Code - Set 3, CNS 11643-1992
+# MB94(J) ISO-IR-184 Chinese Standard Interchange Code - Set 4, CNS 11643-1992
+# MB94(K) ISO-IR-185 Chinese Standard Interchange Code - Set 5, CNS 11643-1992
+# MB94(L) ISO-IR-186 Chinese Standard Interchange Code - Set 6, CNS 11643-1992
+# MB94(M) ISO-IR-187 Chinese Standard Interchange Code - Set 7, CNS 11643-1992
+# MB94(N) ISO-IR-202 DPRK Standard Korean Graphic Character Set for Information Interchange
+# MB94(O) ISO-IR-228 Japanese Graphic Character Set for Information Interchange --- Plane 1
+# MB94(P) ISO-IR-229 Japanese Graphic Character Set for Information Interchange --- Plane 2
+# MB94(Q) ISO-IR-233 Japanese Graphic Character Set for Information Interchange, Plane 1 (Update of ISO-IR 228)
