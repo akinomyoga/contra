@@ -11,8 +11,9 @@
 #include <algorithm>
 #include "enc.utf8.hpp"
 
-char32_t unused = 0xFFFFFFFF;
-char32_t invalid_code = 0xFFFFFFFE;
+static constexpr char32_t undefined_code = 0xFFFFFFFF;
+static constexpr char32_t invalid_code = 0xFFFFFFFE;
+static constexpr char32_t multichar_conv = 0xFFFFFFFD;
 
 enum charset_type {
   charset_sb94,
@@ -21,27 +22,30 @@ enum charset_type {
   charset_mb96,
 };
 
-struct sb94data {
+struct sb_charset_data {
   int type;
   std::string seq;
   std::string reg;
   std::string name;
-
   char32_t map[128];
-  sb94data() {
-    std::fill(std::begin(map), std::end(map), unused);
+  std::vector<char32_t> multimap[128];
+
+  sb_charset_data() {
+    std::fill(std::begin(map), std::end(map), undefined_code);
   }
 };
 
 struct processor_t {
-  std::unordered_map<std::string, sb94data> charset94;
+  typedef std::unordered_map<std::string, sb_charset_data> charset_map_type;
+  std::unordered_map<std::string, sb_charset_data> charset94;
+  std::unordered_map<std::string, sb_charset_data> charset96;
 
   int iline = 0;
   char32_t const* r;
   char32_t const* r0;
   char32_t const* rN;
 
-  sb94data* current_charset_data = nullptr;
+  sb_charset_data* current_charset_data = nullptr;
 
   bool skip_space() {
     if (!std::isspace(*r)) return false;
@@ -83,6 +87,29 @@ struct processor_t {
     return ret;
   }
 
+  bool is_graphic_character(char32_t u) const {
+    if (!current_charset_data) return false;
+    switch (current_charset_data->type) {
+    case charset_sb94:
+      return 0x21 <= u && u <= 0x7E;
+    case charset_sb96:
+      return 0x20 <= u && u <= 0x80;
+    default:
+      return false;
+    }
+  }
+  static constexpr bool is_combining_character(char32_t u) {
+    if (0x300 <= u && u < 0x370) return true;
+    if (0x610 <= u && u <= 0x61a) return true;
+    if ((0x64B <= u && u <= 0x65F) || u == 0x670) return true;
+    if ((0x6D6 <= u && u <= 0x6ED) &&
+      (u != 0x6DD && u != 0x6DE && u != 0x6E5 && u != 0x6E6 && u != 0x6E9))
+      return true;
+    if (0x20D0 <= u && u < 0x2100) return true;
+    if (0xFE20 <= u && u < 0xFE30) return true;
+    return false;
+  }
+
 private:
   std::ostream& put_colrow(std::ostream& ostr, unsigned char a) {
     return ostr << unsigned(a / 16) << "/" << unsigned(a % 16);
@@ -100,13 +127,14 @@ private:
          << "td.contra-iso2022-diff { background-color: #dfd; }\n"
          << "</style>\n"
          << "</head>\n"
-         << "<body>\n";
+         << "<body>\n"
+         << "<h1>94-Character Graphic Character Sets</h1>\n";
   }
   void print_html_footer(std::ostream& ostr) {
     ostr << "</body>\n"
          << "</html>\n";
   }
-  void print_html_charset(std::ostream& ostr, sb94data* charset) {
+  void print_html_charset(std::ostream& ostr, sb_charset_data* charset) {
     ostr << "<h2>ISO-IR-" << charset->reg << ": "
          << charset->name << "</h2>\n";
 
@@ -115,6 +143,7 @@ private:
       const char* type_name = "unknown_type";
       switch (charset->type) {
       case charset_sb94: type_name = "SB94"; break;
+      case charset_sb96: type_name = "SB96"; break;
       }
       ostr << "<li>Type: " << type_name << "</li>\n";
     }
@@ -149,15 +178,41 @@ private:
       for (int row = 0; row <= 15; row++) {
         char const a = col << 4 | row;
         char32_t b = charset->map[(int) a];
-        if (b == unused) {
+        if (b == undefined_code) {
           ostr << "<td class=\"contra-iso2022-undef\"></td>";
+        } else if (b == multichar_conv) {
+          auto const& vec = charset->multimap[(int) a];
+          if (vec.size() < 2) {
+            ostr << "<td>ERROR</td>";
+            std::cerr << "ISO-IR-" << charset->reg << ": BUG? invalid multichar_conv" <<std::endl;
+            continue;
+          }
+
+          ostr << "<td class=\"contra-iso2022-diff\">";
+          if (is_combining_character(vec[0])) ostr << "&#x25cc;";
+          for (auto const b : vec)
+            contra::encoding::put_u8(b, ostr);
+
+          std::ios_base::fmtflags old_flags = std::cout.flags();
+          {
+            ostr << "<br/><code>";
+            bool first = true;
+            for (auto const b : vec) {
+              if (first) first = false; else ostr << " ";
+              ostr << "U+"
+                   << std::hex << std::uppercase
+                   << std::setw(4) << std::setfill('0') << (std::uint32_t) b;
+            }
+            ostr << "</code></td>";
+          }
+          ostr.flags(old_flags);
         } else {
           if (b != (char32_t) a)
             ostr << "<td class=\"contra-iso2022-diff\">";
           else
             ostr << "<td>";
 
-          if ((0x300<= b && b < 0x370) || (0x20D0 <= b && b < 0x2100) || (0xFE20 <= b && b < 0xFE30)) ostr << "&#x25cc;";
+          if (is_combining_character(b)) ostr << "&#x25cc;";
           contra::encoding::put_u8(b, ostr);
           std::ios_base::fmtflags old_flags = std::cout.flags();
           ostr << "<br/><code>U+"
@@ -172,55 +227,82 @@ private:
     ostr << "</table>\n";
     ostr << std::endl;
   }
-  void dump_charset(sb94data* charset) {
-    print_html_charset(ostr_html, charset);
-
-    std::cout << "ISO-IR-" << charset->reg << ": "
+  void print_text(std::ostream& ostr, sb_charset_data* charset) {
+    ostr << "ISO-IR-" << charset->reg << ": "
               << charset->name << "\n";
 
     const char* type_name = "unknown_type";
     switch (charset->type) {
     case charset_sb94: type_name = "SB94"; break;
+    case charset_sb96: type_name = "SB96"; break;
     }
-    std::cout << "  Type: " << type_name << "\n";
+    ostr << "  Type: " << type_name << "\n";
 
-    std::cout << "  Escape sequence: ";
+    ostr << "  Escape sequence: ";
     for (char a : charset->seq) {
-      put_colrow(std::cout, a) << " ";
+      put_colrow(ostr, a) << " ";
       if ('@' <= a && a <= '~') break;
     }
-    std::cout << "(" << charset->seq << ")\n";
+    ostr << "(" << charset->seq << ")\n";
     for (char a = '!';  a <= '~'; a++) {
       char32_t b = charset->map[(int) a];
-      std::cout << "  " << a << " (";
-      put_colrow(std::cout, a);
-      std::cout << "): ";
-      if (b == unused) {
-        std::cout << "unused";
-      } else {
-        contra::encoding::put_u8(b, std::cout);
+      ostr << "  " << a << " (";
+      put_colrow(ostr, a);
+      ostr << "): ";
+      if (b == undefined_code) {
+        ostr << "undefined";
+      } else if (b == multichar_conv) {
+        auto const& vec = charset->multimap[(int) a];
+        if (vec.size() < 2) {
+          ostr << "ERROR";
+          std::cerr << "ISO-IR-" << charset->reg << ": BUG? invalid multichar_conv" <<std::endl;
+          continue;
+        }
+
+        if (is_combining_character(vec[0])) ostr << "&#x25cc;";
+        for (auto const b : vec)
+          contra::encoding::put_u8(b, ostr);
+
         std::ios_base::fmtflags old_flags = std::cout.flags();
-        std::cout << " (U+"
-                  << std::uppercase << std::hex << std::setw(4) << std::setfill('0')
-                  << (std::uint32_t) b << ")";
-        std::cout.flags(old_flags);
+        {
+          ostr << " (";
+          bool first = true;
+          for (auto const b : vec) {
+            if (first) first = false; else ostr << " ";
+            ostr << "U+"
+                 << std::hex << std::uppercase
+                 << std::setw(4) << std::setfill('0') << (std::uint32_t) b;
+          }
+          ostr << ")";
+        }
+        ostr.flags(old_flags);
+      } else {
+        contra::encoding::put_u8(b, ostr);
+        ostr << " (U+"
+             << std::hex << std::uppercase
+             << std::setw(4) << std::setfill('0') << (std::uint32_t) b
+             << ")";
       }
-      if (b != (char32_t) a) std::cout << " *";
-      std::cout << "\n";
+      if (b != (char32_t) a) ostr << " *";
+      ostr << "\n";
     }
-    std::cout << std::endl;
+    ostr << std::endl;
+  }
+  void dump_charset(sb_charset_data* charset) {
+    print_html_charset(ostr_html, charset);
+    print_text(std::cout, charset);
   }
 
 private:
   char32_t read_code() {
-    char32_t const a = *r++;
+    char32_t const a = *r;
     if (!a) {
-      print_error() << "missing start of range" << std::endl;
       return invalid_code;
-    } else if (!(0x21 <= a && a <= 0x7E)) {
+    } else if (!is_graphic_character(a)) {
       print_error() << "invalid code" << std::endl;
       return invalid_code;
     }
+    r++;
     return a;
   }
   char32_t read_unicode() {
@@ -235,7 +317,7 @@ private:
         return invalid_code;
       }
     } else if (starts_with_skip("<undef>")) {
-      b = unused;
+      b = undefined_code;
     } else {
       b = *r++;
     }
@@ -243,9 +325,9 @@ private:
   }
 
 private:
-  bool process_command_sb94() {
-    sb94data data;
-    data.type = charset_sb94;
+  bool process_command_declare(charset_type type) {
+    sb_charset_data data;
+    data.type = type;
 
     // seq
     if (!read_until(')', data.seq)) {
@@ -269,7 +351,7 @@ private:
     skip_space();
     read_until('\0', data.name);
 
-    auto& record = charset94[data.seq];
+    auto& record = type == charset_sb96 ? charset96[data.seq] : charset94[data.seq];
     if (current_charset_data)
       dump_charset(current_charset_data);
     record = std::move(data);
@@ -285,6 +367,10 @@ private:
 
     skip_space();
     char32_t a = read_code();
+    if (a == invalid_code) {
+      print_error() << "missing start of range" << std::endl;
+      return false;
+    }
     if (a == invalid_code) return false;
     char32_t b = read_unicode();
     if (b == invalid_code) return false;
@@ -295,7 +381,10 @@ private:
     }
 
     char32_t const c = read_code();
-    if (c == invalid_code) return false;
+    if (c == invalid_code) {
+      print_error() << "missing end of range" << std::endl;
+      return false;
+    }
     char32_t const d = read_unicode();
     if (d == invalid_code) return false;
 
@@ -335,7 +424,7 @@ private:
     }
 
     for (; a <= c; a++)
-      current_charset_data->map[(int) a] = unused;
+      current_charset_data->map[(int) a] = undefined_code;
     return true;
   }
   bool process_command_map(bool check = false) {
@@ -360,6 +449,31 @@ private:
     }
     return true;
   }
+  bool load_charset_impl(const char* name, charset_map_type const& charset94) {
+    std::string seq;
+    if (!read_until(')', seq)) {
+      print_error() << "unrecognized charset spec" << std::endl;
+      return false;
+    }
+    r++;
+
+    auto it = charset94.find(seq);
+    if (it == charset94.end()) {
+      print_error() << name << "(" << seq << ") is not defined" << std::endl;
+      return false;
+    }
+
+    for (char a = '!';  a <= '~'; a++) {
+      char32_t const b = it->second.map[(int) a];
+      if (b != undefined_code) {
+        current_charset_data->map[(int) a] = b;
+        if (b == multichar_conv)
+          current_charset_data->multimap[(int) a]
+            = it->second.multimap[(int) a];
+      }
+    }
+    return true;
+  }
   bool process_command_load() {
     if (!current_charset_data) {
       print_error() << "charset unselected" << std::endl;
@@ -367,25 +481,9 @@ private:
     }
 
     if (starts_with_skip("SB94(")) {
-      std::string seq;
-      if (!read_until(')', seq)) {
-        print_error() << "unrecognized charset spec" << std::endl;
-        return false;
-      }
-      r++;
-
-      auto it = charset94.find(seq);
-      if (it == charset94.end()) {
-        print_error() << "SB94(" << seq << ") is not defined" << std::endl;
-        return false;
-      }
-
-      for (char a = '!';  a <= '~'; a++) {
-        char32_t const b = it->second.map[(int) a];
-        if (b != unused)
-          current_charset_data->map[(int) a] = b;
-      }
-      return true;
+      return load_charset_impl("SB94", charset94);
+    } else if (starts_with_skip("SB96(")) {
+      return load_charset_impl("SB96", charset96);
     } else {
       print_error() << "unrecognized charset spec" << std::endl;
       return false;
@@ -398,12 +496,37 @@ private:
     }
 
     while (*r) {
-      char32_t a = *r++;
-      if (!(0x21 <= a && a <= 0x7E)) {
-        print_error() << "invalid code" << std::endl;
-        return false;
-      }
-      current_charset_data->map[(int) a] = unused;
+      char32_t a = read_code();
+      if (a == invalid_code) return false;
+      current_charset_data->map[(int) a] = undefined_code;
+    }
+    return true;
+  }
+  bool process_command_define() {
+    skip_space();
+    if (!*r) {
+      print_error() << "no code specified" << std::endl;
+      return false;
+    }
+
+    char32_t a = read_code();
+    if (a == invalid_code) return false;
+
+    auto& vec = current_charset_data->multimap[(int) a];
+    vec.clear();
+    while (*r) {
+      char32_t const b = read_unicode();
+      if (b == invalid_code) return false;
+      vec.push_back(b);
+    }
+
+    if (vec.size() == 0) {
+      print_error() << "no characters are specified" << std::endl;
+      return false;
+    } else if (vec.size() == 1) {
+      current_charset_data->map[(int) a] = vec[0];
+    } else {
+      current_charset_data->map[(int) a] = multichar_conv;
     }
     return true;
   }
@@ -414,7 +537,9 @@ private:
     if (!*r || *r == '#') {
       return true;
     } else if (starts_with_skip("SB94(")) {
-      return process_command_sb94();
+      return process_command_declare(charset_sb94);
+    } else if (starts_with_skip("SB96(")) {
+      return process_command_declare(charset_sb96);
     } else if (starts_with_skip("load ")) {
       return process_command_load();
     } else if (starts_with_skip("map ")) {
@@ -427,6 +552,8 @@ private:
       return process_command_undef();
     } else if (starts_with_skip("undef_range ")) {
       return process_command_undef_range();
+    } else if (starts_with_skip("define ")) {
+      return process_command_define();
     } else {
       print_error() << "unrecognized command" << std::endl;
       return false;

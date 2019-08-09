@@ -148,10 +148,20 @@ SB94(U) ISO-IR-27 Latin-Greek Character Set, ECMA (Honeywell-Bull)
   load SB94(B)
   map !Ξ#Γ$¤:ψ?Π@Δ[Ω\Θ]Φ^Λ_Σ~¯
 
-# combining を spacing で代用している部分がある。
-# 複数文字への変換をサポートする?
 SB94(X) ISO-IR-31 Greek Character Set for Bibliography, ISO 5428
-  map !<U+0300>"<U+0301>#῭$<U+0342>%<U+0313>&<U+0314>'῎(῞)<U+0308>*<U+0345>+῍,῝-῏.῟/΅5᾽6῾7῎8῞;῍<῝=῏>῟
+  # 以下は結合文字。複数の結合文字の組み合わせでないと表現できない物もある。
+  # 然し、実際に表示してみると結合文字を複数つけた時に
+  # 上下に並ぶか左右に並ぶかがまちまちである。
+  map !<U+0300>"<U+0301>#῭$<U+0342>%<U+0313>&<U+0314>'῎(῞)<U+0308>*<U+0345>+῍,῝-῏.῟/<U+344>
+  define #<U+308><U+300>
+  define '<U+313><U+301>
+  define (<U+314><U+301>
+  define +<U+313><U+300>
+  define ,<U+314><U+300>
+  define -<U+313><U+303>
+  define .<U+314><U+303>
+
+  map 5᾽6῾7῎8῞;῍<῝=῏>῟
   map AΑBΒCΓDΔEΕFΖGΗHΘIΙJΚKΛLΜMΝNΞOΟPΠQΡRΣSΤTΥUΦVΧWΨXΩY·Z«[»\“]”^ˊ_ˏ
   map aαbβcγdδeεfζgηhθiιjκkλlμmνnξoοpπqρrσsτtυuφvχwψxωyςzϜ{Ϟ|Ϡ}Ϛ
 
@@ -267,13 +277,91 @@ SB94(S) ISO-IR-55 Greek Character Set for Bibliography, ISO 5428-1980
   # map_check !"#$%&' # ←★iconvはnon-spacingを私用領域に割り当てている
   # map_check 2”3“ # ←★iconvは LR が反転している気がする
 
-# iconv: map $¥~‾
 SB94(T) ISO-IR-57 Coded Character Set for Information Interchange, Standard Chinese GB 1988-80
   load SB94(B)
   map $¥~¯
 
-# ■これは難しい。アラビア語が分からないと駄目。また結合文字も色々ある
+  # iconv (linux)
+  # map_check $¥~‾
+
 SB94(_) ISO-IR-59 Arabic Character Set CODAR-U IERA (Morocco)
+  load SB94(B)
+  map $¤
+
+  # これは難しい。アラビア語が分からないと駄目。
+  # また結合文字も色々ある
+  #
+  # 母音などは結合文字として存在し、以下にある
+  #   U+640 kashida
+  #   U+64e fatha
+  #   U+64f damma
+  #   U+650 kasra
+  #   U+64b fathatan
+  #   U+64c dammatan
+  #   U+65d kasratan
+  #   U+651 shadda
+  #   U+652 sukun
+
+  define A<U+640><U+651><U+64e>
+  define B<U+651><U+64e>
+  define C<U+640><U+651><U+64f>
+  define D<U+651><U+64f>
+  define E<U+640><U+651><U+650>
+  define F<U+651><U+650>
+  define G<U+640><U+64e>
+  define H<U+64e>
+  define I<U+64b>
+  define J<U+640><U+64f>
+  define K<U+64f>
+  define L<U+64c>
+  define M<U+640><U+650>
+  define N<U+650>
+  define O<U+64d>
+
+  define P<U+640><U+652>
+  define Q<U+652>
+  define R<U+640><U+651>
+  define S<U+651>
+  define T<U+623>
+  define U<U+622>
+  define V<U+624>
+
+  # ISO-IR には 5/7 hamza over alif maqsura,
+  # 5/8 hamza over ya と書かれている。然し字形的には謎が残る。
+  #
+  # 一方で Unicode には 649 alef maksura の所に
+  # 654 hamza と組み合わせて hamza over yeh を作る物ではないとある。
+  # 64A 654 とするか、既に組み上がった 626 を使う事が示されている。
+  #
+  define W<U+649><U+654>
+  define X<U+626>
+
+  define Y<U+625>
+  define Z<U+64A>
+  define [<U+67E>
+  define \<U+6A4>
+  define ]<U+6AF>
+  define ^<U+640><U+654>
+  define _<U+627>
+
+  # 子音の字形は筆記と活字などで色々違うのだろうか。
+  # 名前を頼りに探すと特徴が似ている (がぱっと見では分からない)
+  # 文字がちゃんと見つかる様である。
+
+  map `<U+628>a<U+62A>b<U+629>
+  map_range c<U+62B>-p<U+638>
+
+  # 以下は ISO-IR では CIN / GIN になっていて
+  # Unicode では AIN / GHAIN になっているが、
+  # 字形とコードの並び的に ISO-IR の CIN が間違い?
+  map q<U+639>r<U+63A>
+
+  map_range s<U+641>-z<U+648>
+  map {<U+64A>}<U+649>
+
+  # 以下の二つの文字 (7/12 barre verticale, 7/14 surline)
+  # はアラビア文字っぽく書かれているが普通の記号の気がする。
+  map |¦~¯
 
 # iconv: map [Æ\Ø]Å{æ|ø}å~‾
 SB94(`) ISO-IR-60 ISO 646, Norwegian Version NS 4551
@@ -531,74 +619,74 @@ SB94(!F) ISO-IR-232 Turkmen character set for 8-bit codes
 #
 # 何故か知らないが iconv で抽出した結果は全て空である。もしかすると GR なのかもしれない。後で調べる
 #
-# SB96(A) ISO-IR-100 Right-hand Part of Latin Alphabet No.1 ISO 8859/1, ECMA-94
-#   map (iconv)
-# SB96(B) ISO-IR-101 Right-hand Part of Latin Alphabet No.2 ISO 8859/2, ECMA-94
-#   map (iconv)
-# SB96(C) ISO-IR-109 Right-hand Part of Latin Alphabet No.3 ISO DIS 8859/3, ECMA-94
-#   map (iconv)
-# SB96(D) ISO-IR-110 Right-hand Part of Latin Alphabet No.4 ISO DIS 8859/4, ECMA-94
-#   map (iconv)
-# SB96(@) ISO-IR-111 Right-hand Part of the Latin/Cyrillic Alphabet ECMA-113 (Version of June 1986)
-#   map (iconv)
-# SB96(E) ISO-IR-123 General Purpose Supplementary Graphic Set CSA Standard Z 243.4-1985
-# SB96(F) ISO-IR-126 Right-hand Part of the Latin/Greek Alphabet Standard ELOT 928, ECMA-118, ISO DIS 8859/7
-#   map (iconv)
-# SB96(G) ISO-IR-127 Right-hand Part of the Latin/Arabic Alphabet ECMA-114, ISO 8859/6
-#   map (iconv)
-# SB96(}) ISO-IR-129 Supplementary Set of Mosaic Characters for CCITT Rec. 101, Data Syntax III
-# SB96(H) ISO-IR-138 Latin/Hebrew Alphabet Standard ECMA-121
-#   map (iconv)
-# SB96(I) ISO-IR-139 Right-hand Part for Czechoslovak Standard CSN 369103
-#   map $¤ (iconv)
-# SB96(J) ISO-IR-142 Supplementary Set of Latin Alphabetic and non-Alphabetic Graphic Characters
-# SB96(K) ISO-IR-143 Technical Set
-#   map (iconv)
-# SB96(L) ISO-IR-144 Cyrillic part of the Latin/Cyrillic Alphabet
-#   map (iconv)
-# SB96(M) ISO-IR-148 Right-hand part of Latin Alphabet No.5
-#   map (iconv)
-# SB96(N) ISO-IR-152 Residual Characters from ISO 6937-2 : 1983
-# SB96(O) ISO-IR-153 Basic Cyrillic Character Set for 8-bit Codes
-#   map (iconv)
-# SB96(P) ISO-IR-154 Supplementary set for Latin Alphabets No.1, No.2 and No.5
-# SB96(Q) ISO-IR-155 Basic Box Drawings Set
-#   map (iconv)
-# SB96(R) ISO-IR-156 Supplementary Set ISO/IEC 6937 : 1992
-#   map (iconv)
-# SB96(V) ISO-IR-157 Supplementary Set for Latin Alphabet No. 6
-#   map (iconv)
-# SB96(X) ISO-IR-158 Sami (Lappish) Supplementary Set
-# SB96(S) ISO-IR-164 CCITT Hebrew Supplementary Set
-# SB96(T) ISO-IR-166 Thai Set
-#   map (iconv)
-# SB96(U) ISO-IR-167 Arabic/French/German Set
-# SB96(Y) ISO-IR-179 Baltic Rim Supplementary Set
-#   map (iconv)
-# SB96(Z) ISO-IR-180 Vietnamese Standard Code for Information Interchange
-# SB96([) ISO-IR-181 Technical Character Set No.1: IEC Publication 1289
-# SB96(\) ISO-IR-182 Welsh variant of Latin Alphabet No. 1
-# SB96(]) ISO-IR-197 Sami supplementary Latin set
-#   map (iconv)
-# SB96(^) ISO-IR-198 Latin/Hebrew Alphabet
-# SB96(_) ISO-IR-199 Celtic Supplementary Latin Set
-#   map (iconv)
-# SB96(`) ISO-IR-200 Uralic Supplementary Cyrllic Set
-# SB96(a) ISO-IR-201 Volgaic Supplementary Cyrllic Set
-# SB96(b) ISO-IR-203 European Supplementary Latin Set ("Latin 9")
-#   map (iconv)
-# SB96(c) ISO-IR-204 Supplementary set for Latin-1 alternative with EURO SIGN
-# SB96(d) ISO-IR-205 Supplementary set for Latin-4 alternative with EURO SIGN
-# SB96(e) ISO-IR-206 Supplementary set for Latin-7 alternative with EURO SIGN
-# SB96(f) ISO-IR-226 Romanian Character Set for Information Interchange
-#   map (iconv)
-# SB96(g) ISO-IR-208 Ogham coded character set for information interchange
-# SB96(h) ISO-IR-209 Sami supplementary Latin set no 2
-#   map (iconv)
-# SB96(i) ISO-IR-227 Right-hand part of Latin/Greek alphabet
-# SB96(j) ISO-IR-234 Latin/Hebrew character set for 8-bit codes
+SB96(A) ISO-IR-100 Right-hand Part of Latin Alphabet No.1 ISO 8859/1, ECMA-94
+  # iconv (linux)
+SB96(B) ISO-IR-101 Right-hand Part of Latin Alphabet No.2 ISO 8859/2, ECMA-94
+  # iconv (linux)
+SB96(C) ISO-IR-109 Right-hand Part of Latin Alphabet No.3 ISO DIS 8859/3, ECMA-94
+  # iconv (linux)
+SB96(D) ISO-IR-110 Right-hand Part of Latin Alphabet No.4 ISO DIS 8859/4, ECMA-94
+  # iconv (linux)
+SB96(@) ISO-IR-111 Right-hand Part of the Latin/Cyrillic Alphabet ECMA-113 (Version of June 1986)
+  # iconv (linux)
+SB96(E) ISO-IR-123 General Purpose Supplementary Graphic Set CSA Standard Z 243.4-1985
+SB96(F) ISO-IR-126 Right-hand Part of the Latin/Greek Alphabet Standard ELOT 928, ECMA-118, ISO DIS 8859/7
+  # iconv (linux)
+SB96(G) ISO-IR-127 Right-hand Part of the Latin/Arabic Alphabet ECMA-114, ISO 8859/6
+  # iconv (linux)
+SB96(}) ISO-IR-129 Supplementary Set of Mosaic Characters for CCITT Rec. 101, Data Syntax III
+SB96(H) ISO-IR-138 Latin/Hebrew Alphabet Standard ECMA-121
+  # iconv (linux)
+SB96(I) ISO-IR-139 Right-hand Part for Czechoslovak Standard CSN 369103
+  # map $¤ (iconv)
+SB96(J) ISO-IR-142 Supplementary Set of Latin Alphabetic and non-Alphabetic Graphic Characters
+SB96(K) ISO-IR-143 Technical Set
+  # iconv (linux)
+SB96(L) ISO-IR-144 Cyrillic part of the Latin/Cyrillic Alphabet
+  # iconv (linux)
+SB96(M) ISO-IR-148 Right-hand part of Latin Alphabet No.5
+  # iconv (linux)
+SB96(N) ISO-IR-152 Residual Characters from ISO 6937-2 : 1983
+SB96(O) ISO-IR-153 Basic Cyrillic Character Set for 8-bit Codes
+  # iconv (linux)
+SB96(P) ISO-IR-154 Supplementary set for Latin Alphabets No.1, No.2 and No.5
+SB96(Q) ISO-IR-155 Basic Box Drawings Set
+  # iconv (linux)
+SB96(R) ISO-IR-156 Supplementary Set ISO/IEC 6937 : 1992
+  # iconv (linux)
+SB96(V) ISO-IR-157 Supplementary Set for Latin Alphabet No. 6
+  # iconv (linux)
+SB96(X) ISO-IR-158 Sami (Lappish) Supplementary Set
+SB96(S) ISO-IR-164 CCITT Hebrew Supplementary Set
+SB96(T) ISO-IR-166 Thai Set
+  # iconv (linux)
+SB96(U) ISO-IR-167 Arabic/French/German Set
+SB96(Y) ISO-IR-179 Baltic Rim Supplementary Set
+  # iconv (linux)
+SB96(Z) ISO-IR-180 Vietnamese Standard Code for Information Interchange
+SB96([) ISO-IR-181 Technical Character Set No.1: IEC Publication 1289
+SB96(\) ISO-IR-182 Welsh variant of Latin Alphabet No. 1
+SB96(]) ISO-IR-197 Sami supplementary Latin set
+  # iconv (linux)
+SB96(^) ISO-IR-198 Latin/Hebrew Alphabet
+SB96(_) ISO-IR-199 Celtic Supplementary Latin Set
+  # iconv (linux)
+SB96(`) ISO-IR-200 Uralic Supplementary Cyrllic Set
+SB96(a) ISO-IR-201 Volgaic Supplementary Cyrllic Set
+SB96(b) ISO-IR-203 European Supplementary Latin Set ("Latin 9")
+  # iconv (linux)
+SB96(c) ISO-IR-204 Supplementary set for Latin-1 alternative with EURO SIGN
+SB96(d) ISO-IR-205 Supplementary set for Latin-4 alternative with EURO SIGN
+SB96(e) ISO-IR-206 Supplementary set for Latin-7 alternative with EURO SIGN
+SB96(f) ISO-IR-226 Romanian Character Set for Information Interchange
+  # iconv (linux)
+SB96(g) ISO-IR-208 Ogham coded character set for information interchange
+SB96(h) ISO-IR-209 Sami supplementary Latin set no 2
+  # iconv (linux)
+SB96(i) ISO-IR-227 Right-hand part of Latin/Greek alphabet
+SB96(j) ISO-IR-234 Latin/Hebrew character set for 8-bit codes
 
-# 以下は iconv から抽出した対応する物がない文字集合 (後で調べる)
+# iconv は以下も対応している。これは UTF-16 の一種の様だ。
 # ISO-IR-193
 #   map
 
