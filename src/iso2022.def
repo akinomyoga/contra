@@ -1,13 +1,75 @@
-# 此処に 94 文字集合の定義を記録する。
+#==============================================================================
+#
+# ISO-2022 Registered Character Sets for akinomyoga/contra
+#
+#==============================================================================
+#
+# 此処に iso-2022 に登録されている各種文字集合の定義を記録する。
+# このファイルの形式は iso2022-dump.cpp で処理することを前提としている。
+#
+#   https://www.itscj.ipsj.or.jp/itscj_english/iso-ir/ISO-IR.pdf
 #
 #   注意: Unicode の文字に一対一に対応するとは限らない。
 #     此処に挙げる対応は一例に過ぎない。
 #
-#   対応する文字がない場合は省略している。
-#   本来は対応する文字がない場合には不明な文字として処理するべきでは。
 #
-#   https://www.itscj.ipsj.or.jp/itscj_english/iso-ir/ISO-IR.pdf
+# ■ファイルの形式
 #
+# コメント
+#   "#" で始まる行はコメント行である。
+#   先頭以外の # は普通の文字として処理される事に注意する。
+#
+# SB94(XXX) ISO-IR-YYY ZZZ
+#   登録番号 YYY エスケープシーケンスの終端 XXX 名前 ZZZ の
+#   94/96文字図形文字集合の定義を開始する。
+#   定義は、内部テーブルを書き換えるコマンド列で行う。
+#
+# load XXX
+#   文字集合 XXX で定義されている既存の文字達を
+#   現在定義中の文字集合にコピーする。
+#
+# map cucucu...
+#   コード c に対応する文字として u を登録する。
+#   cu の組を繰り返す事で複数の組を登録できる。
+#   c には <SP>, <DEL> または任意の 0x21-0x7E の文字を指定できる。
+#   u には <U+XXX> の形式の指定または任意の unicode 一文字を指定できる。
+#
+# map_range cu-cu
+#   範囲 (inclusive) で対応関係を指定する。
+#
+# undef cccc...
+#   指定したコード c に対応する文字を削除する。
+#
+# undef_range c-c
+#   指定した範囲 (inclusive) の文字を削除する。
+#
+# define cuuu...
+#   コード c に対応する Unicode 表現が複数 code point から為る時、
+#   それを定義するのに使う。一回に一つしか登録できない。
+#
+# map_check cucucu...
+#   指定したコード c に u が対応付けられている事をチェックする。
+#   これはちゃんと定義できているかどうかの assertion に使う
+#   (例えば他の文字集合データベースと一致しているかの確認を行う時などに使う)。
+#
+#
+# ■参考にしたもの
+#
+# iconv (cygwin) による変換
+#   230
+# iconv (linux) による変換
+#   100 101 109 110 111 126 127 138 139 143 144 148 153
+#   155 156 157 166 179 197 199 203 226 209
+# apache/apr-iconv
+#   146 147 123 142 152 154 158
+# wikipedia
+#   180
+#
+#==============================================================================
+#
+# SB94 -- 94 Characters Graphic Character Set
+#
+#==============================================================================
 
 SB94(B) ISO-IR-6 ISO 646, USA Version X3.4 - 1968
   map_range !!-~~
@@ -567,11 +629,13 @@ SB94(z) ISO-IR-141 Serbocroatian and Slovenian Latin Alphabet
   load SB94(B)
   map @Ž[Š\Đ]Ć^Č`ž{š|đ}ć~č
 
+# https://github.com/winlibs/apache/tree/master/2.4.x/srclib/apr-iconv/ccs
 SB94([) ISO-IR-146 Serbocroatian Cyrillic Alphabet
   load SB94(B)
   map @ЖAАBБCЦDДEЕFФGГHХIИJЈKКLЛMМNНOОPПQЉRРSСTТUУVВWЊXЏYЅZЗ[Ш\Ђ]Ћ^Ч
   map `жaаbбcцdдeеfфgгhхiиjјkкlлmмnнoоpпqљrрsсtтuуvвwњxџyѕzз{ш|ђ}ћ~ч
 
+# https://github.com/winlibs/apache/tree/master/2.4.x/srclib/apr-iconv/ccs
 SB94(]) ISO-IR-147 Macedonian Cyrillic Alphabet
   load SB94([)
   map \Ѓ]Ќ|ѓ}ќ
@@ -614,82 +678,341 @@ SB94(!F) ISO-IR-232 Turkmen character set for 8-bit codes
   undef_range !-@
   undef _`
 
+#==============================================================================
 #
-# SB96
+# SB96 -- 96 Characters Graphic Character Set
 #
-# 何故か知らないが iconv で抽出した結果は全て空である。もしかすると GR なのかもしれない。後で調べる
-#
+#==============================================================================
+
 SB96(A) ISO-IR-100 Right-hand Part of Latin Alphabet No.1 ISO 8859/1, ECMA-94
-  # iconv (linux)
+  map_range <SP> -<DEL>ÿ
+
 SB96(B) ISO-IR-101 Right-hand Part of Latin Alphabet No.2 ISO 8859/2, ECMA-94
-  # iconv (linux)
+  load SB96(A)
+  map !Ą"˘#Ł%Ľ&Ś)Š*Ş+Ť,Ź.Ž/Ż1ą2˛3ł5ľ6ś7ˇ9š:ş;ť<ź=˝>ž?ż@ŔCĂEĹFĆHČJĘLĚOĎPĐQŃRŇUŐXŘYŮ[Ű^Ţ`ŕcăeĺfćhčjęlěoďpđqńrňuőxřyů{ű~ţ<DEL>˙
+
 SB96(C) ISO-IR-109 Right-hand Part of Latin Alphabet No.3 ISO DIS 8859/3, ECMA-94
-  # iconv (linux)
+  load SB96(A)
+  map !Ħ"˘&Ĥ)İ*Ş+Ğ,Ĵ/Ż1ħ6ĥ9ı:ş;ğ<ĵ?żEĊFĈUĠXĜ]Ŭ^Ŝeċfĉuġxĝ}ŭ~ŝ<DEL>˙
+  undef %.>CPcp
+
 SB96(D) ISO-IR-110 Right-hand Part of Latin Alphabet No.4 ISO DIS 8859/4, ECMA-94
-  # iconv (linux)
+  load SB96(A)
+  map !Ą"ĸ#Ŗ%Ĩ&Ļ)Š*Ē+Ģ,Ŧ.Ž1ą2˛3ŗ5ĩ6ļ7ˇ9š:ē;ģ<ŧ=Ŋ>ž?ŋ@ĀGĮHČJĘLĖOĪPĐQŅRŌSĶYŲ]Ũ^Ū`āgįhčjęlėoīpđqņrōsķyų}ũ~ū<DEL>˙
+
 SB96(@) ISO-IR-111 Right-hand Part of the Latin/Cyrillic Alphabet ECMA-113 (Version of June 1986)
-  # iconv (linux)
+  load SB96(A)
+  map !ђ"ѓ#ё$є%ѕ&і'ї(ј)љ*њ+ћ,ќ.ў/џ0№1Ђ2Ѓ3Ё4Є5Ѕ6І7Ї8Ј9Љ:Њ;Ћ<Ќ=¤>Ў?Џ
+  map @юAаBбCцDдEеFфGгHхIиJйKкLлMмNнOоPпQяRрSсTтUуVжWвXьYыZз[ш\э]щ^ч_ъ
+  map `ЮaАbБcЦdДeЕfФgГhХiИjЙkКlЛmМnНoОpПqЯrРsСtТuУvЖwВxЬyЫzЗ{Ш|Э}Щ~Ч<DEL>Ъ
+
+# https://github.com/winlibs/apache/tree/master/2.4.x/srclib/apr-iconv/ccs
 SB96(E) ISO-IR-123 General Purpose Supplementary Graphic Set CSA Standard Z 243.4-1985
+  load SB96(A)
+  map "¨$¢&±'´(⁽)⁾*½+⁺,¸.·/⁻0⁰1¹4⁴5⁵6⁶7⁷8⁸9⁹:¼;¾<⇐=≠>≥
+  map CÇDÈEÉFÊGËHÍIÎJÏKÑLÓMÔNÙOÚPÛQÜR®S§T¶UμVªWºX‘Y’Z“[”\«]»^°_¦
+  map cçdèeéfêgëhíiîjïkñlómônùoúpûqür©s─t│u└v┘w┐x┌y├z┴{┤|┬}┼~¬<DEL><U+2588>
+
 SB96(F) ISO-IR-126 Right-hand Part of the Latin/Greek Alphabet Standard ELOT 928, ECMA-118, ISO DIS 8859/7
-  # iconv (linux)
+  load SB96(A)
+  map !‘"’$€%₯*ͺ/―4΄5΅6Ά8Έ9Ή:Ί<Ό>Ύ?Ώ
+  map @ΐAΑBΒCΓDΔEΕFΖGΗHΘIΙJΚKΛLΜMΝNΞOΟPΠQΡSΣTΤUΥVΦWΧXΨYΩZΪ[Ϋ\ά]έ^ή_ί
+  map `ΰaαbβcγdδeεfζgηhθiιjκkλlμmνnξoοpπqρrςsσtτuυvφwχxψyωzϊ{ϋ|ό}ύ~ώ
+  undef $%*.R<DEL>
+
 SB96(G) ISO-IR-127 Right-hand Part of the Latin/Arabic Alphabet ECMA-114, ISO 8859/6
-  # iconv (linux)
+  map <SP><U+A0>-<U+AD>
+  map ,<U+060C>;<U+061B>?<U+061F>
+  map A<U+0621>B<U+0622>C<U+0623>D<U+0624>E<U+0625>F<U+0626>G<U+0627>
+  map H<U+0628>I<U+0629>J<U+062A>K<U+062B>L<U+062C>M<U+062D>N<U+062E>O<U+062F>
+  map P<U+0630>Q<U+0631>R<U+0632>S<U+0633>T<U+0634>U<U+0635>V<U+0636>W<U+0637>
+  map X<U+0638>Y<U+0639>Z<U+063A>
+  map `<U+0640>a<U+0641>b<U+0642>c<U+0643>d<U+0644>e<U+0645>f<U+0646>g<U+0647>
+  map h<U+0648>i<U+0649>j<U+064A>k<U+064B>l<U+064C>m<U+064D>n<U+064E>o<U+064F>
+  map p<U+0650>q<U+0651>r<U+0652>
+
 SB96(}) ISO-IR-129 Supplementary Set of Mosaic Characters for CCITT Rec. 101, Data Syntax III
+  load SB94(c)
+  undef_range @-^
+  map <SP><U+20>
+
 SB96(H) ISO-IR-138 Latin/Hebrew Alphabet Standard ECMA-121
-  # iconv (linux)
+  map_range <SP><U+A0>-><U+BE>
+  undef !
+  map *×:÷_‗
+  map_range `<U+05D0>-z<U+05EA>
+
+  map_check `אaבbגcדdהeוfזgחhטiיjךkכlלmםnמoןpנqסrעsףtפuץvצwקxרyשzת
+  # iconv は以下も追加しているが謎 (ISO-IR でない ver で追加されたのか?)
+  # map }‎~‏
+
 SB96(I) ISO-IR-139 Right-hand Part for Czechoslovak Standard CSN 369103
-  # map $¤ (iconv)
+  load SB96(A)
+  map !Ą"˘#Ł$$%Ľ&Ś)Š*Ş+Ť,Ź.Ž/Ż1ą2˛3ł5ľ6ś7ˇ9š:ş;ť<ź=˝>ž?ż
+  map @ŔCĂEĹFĆHČJĘLĚOĎPĐQŃRŇUŐXŘYŮ[Ű^Ţ
+  map `ŕcăeĺfćhčjęlěoďpđqńrňuőxřyů{ű~ţ<DEL>˙
+  # map $¤ (iconv GL)
+
 SB96(J) ISO-IR-142 Supplementary Set of Latin Alphabetic and non-Alphabetic Graphic Characters
+  # https://github.com/winlibs/apache/tree/master/2.4.x/srclib/apr-iconv/ccs
+  # を参考にしようと思ったが使用領域の文字が使われている。
+  # 結局、自分で ISO-IR-90 と見比べたら殆ど同じだったのでそれを元に定義する事にした。
+  load SB94(l)
+  map <SP><U+A0>V¬W¦<DEL><U+AD>
+
+  # apache/apr-iconv
+  map_check $$)‘*“,←-↑.→/↓4×8÷9’:”
+  #map_check ABCDEFGHJKLMNO
+  map_check Q¹R®S©T™V¬W¦\⅛]⅜^⅝_⅞
+  map_check `ΩaÆcªdĦfĲgĿhŁiØjŒkºlÞmŦnŊoŉpĸqærđsðtħuıvĳwŀxłyøzœ{ß|þ}ŧ~ŋ<DEL>­
+  #map_check P—bÐ
+  #map_check U♩ # ←★apache/apr-iconvが変だ。８分音符が４分音符になっている。
+
 SB96(K) ISO-IR-143 Technical Set
-  # iconv (linux)
+  load SB96(A)
+  map <SP>ˇ!≡"∧#∨$∩%∪&⊂'⊃(⇐)⇒*∴+∵,∈-∋.⊆/⊇
+  map 0∫1∮2∞3∇4∂5∼6≈7≃8≅9≤:≠;≥<↔=¬>∀?∃
+  map @אA□B∥CΓDΔE⊥F∠G∟HΘI〈J〉KΛL′M″NΞO∓PΠQ²RΣS×T³UΥVΦW·XΨYΩZ∅[⇀\√]ƒ^∝_±
+  map `°aαbβcγdδeεfζgηhθiιjκkλlμmνnξo‰pπqρrσs÷tτuυvφwχxψyωz†{←|↑}→~↓<DEL>‾
+
 SB96(L) ISO-IR-144 Cyrillic part of the Latin/Cyrillic Alphabet
-  # iconv (linux)
+  load SB96(A)
+  map !Ё"Ђ#Ѓ$Є%Ѕ&І'Ї(Ј)Љ*Њ+Ћ,Ќ.Ў/Џ0А1Б2В3Г4Д5Е6Ж7З8И9Й:К;Л<М=Н>О?П
+  map @РAСBТCУDФEХFЦGЧHШIЩJЪKЫLЬMЭNЮOЯPаQбRвSгTдUеVжWзXиYйZк[л\м]н^о_п
+  map `рaсbтcуdфeхfцgчhшiщjъkыlьmэnюoяp№qёrђsѓtєuѕvіwїxјyљzњ{ћ|ќ}§~ў<DEL>џ
+
 SB96(M) ISO-IR-148 Right-hand part of Latin Alphabet No.5
-  # iconv (linux)
+  load SB96(A)
+  map PĞ]İ^Şpğ}ı~ş
+
+# https://github.com/winlibs/apache/tree/master/2.4.x/srclib/apr-iconv/ccs
 SB96(N) ISO-IR-152 Residual Characters from ISO 6937-2 : 1983
+  map *“,←-↑.→/↓:”T™U♪\⅛]⅜^⅝_⅞
+  map `ΩfĲgĿjŒlŴmŶnŸoŉvĳwŀzœ|ŵ}ŷ
+
+  #map_check U♩ # ←★apache/apr-iconvが変だ。８分音符が４分音符になっている。
+
 SB96(O) ISO-IR-153 Basic Cyrillic Character Set for 8-bit Codes
-  # iconv (linux)
+  map <SP><U+A0>-<U+AD>
+  map !Ё0А1Б2В3Г4Д5Е6Ж7З8И9Й:К;Л<М=Н>О?П
+  map @РAСBТCУDФEХFЦGЧHШIЩJЪKЫLЬMЭNЮOЯPаQбRвSгTдUеVжWзXиYйZк[л\м]н^о_п
+  map `рaсbтcуdфeхfцgчhшiщjъkыlьmэnюoяqё
+
+# https://github.com/winlibs/apache/tree/master/2.4.x/srclib/apr-iconv/ccs
 SB96(P) ISO-IR-154 Supplementary set for Latin Alphabets No.1, No.2 and No.5
+  load SB96(A)
+  undef <SP>!%01@
+
+  map "Ā#Ĉ$Ċ&Ė'Ē(Ĝ)‘*“+™,←-↑.→/↓2ā3ĉ4ċ5ð6ė7ē8ĝ9’:”;♪<⅛=⅜>⅝?⅞
+  map AĞBĠCĢDĤEĦFĨGİHĪIĮJĲKĴLĶMĻNĿOŅP—QŊRŌSŒTŖUŜVŦWÞXŨYŬZŪ[Ų\Ŵ^Ŷ_Ÿ
+  map `Ωağbġcģdĥeħfĩgıhīiįjĳkĵlķmļnŀoņpĸqŋrōsœtŗuŝvŧwþxũyŭzū{ų|ŵ~ŷ<DEL>ŉ
+
+  #map_check U♩ # ←★apache/apr-iconvが変だ。８分音符が４分音符になっている。
+
+# これも Mosaic の一種である
 SB96(Q) ISO-IR-155 Basic Box Drawings Set
-  # iconv (linux)
+  map @<U+2503>A<U+2501>B<U+250F>C<U+2513>D<U+2517>E<U+251b>
+  map F<U+2523>G<U+252B>H<U+2533>I<U+253B>J<U+254B>
+  map K<U+2580>L<U+2584>M<U+2588>N<U+25FE>
+  # iconv は以下の様にしているが何か変だ
+  # map @║A═B╔C╗D╚E╝F╠G╣H╦I╩J╬KL▄M█N▪
+
+  map P│Q─R┌S┐T└U┘V├W┤X┬Y┴Z┼[░\▒]▓
+
 SB96(R) ISO-IR-156 Supplementary Set ISO/IEC 6937 : 1992
+  map <SP><U+A0><DEL><U+AD>
+  load SB94(b)
+  undef $&@
+  map V¬W¦
+
   # iconv (linux)
+  map_check (¤)‘*“,←-↑.→/↓4×8÷9’:”Q¹R®S©T™U♪V¬W¦\⅛]⅜^⅝_⅞
+  map_check `ΩaÆcªdĦfĲgĿhŁiØjŒkºlÞmŦnŊoŉpĸqærđsðtħuıvĳwŀxłyøzœ{ß|þ}ŧ~ŋ<DEL>­
+  # map_check P—bÐ # ←これは曖昧さがあるので一致しなくても仕方がない?
+
 SB96(V) ISO-IR-157 Supplementary Set for Latin Alphabet No. 6
-  # iconv (linux)
+  load SB96(A)
+  map !Ą"Ē#Ģ$Ī%Ĩ&Ķ(Ļ)Đ*Š+Ŧ,Ž.Ū/Ŋ1ą2ē3ģ4ī5ĩ6ķ8ļ9đ:š;ŧ<ž=―>ū?ŋ
+  map @ĀGĮHČJĘLĖQŅRŌWŨYŲ`āgįhčjęlėqņrōwũyų<DEL>ĸ
+
 SB96(X) ISO-IR-158 Sami (Lappish) Supplementary Set
+  # https://github.com/winlibs/apache/tree/master/2.4.x/srclib/apr-iconv/ccs
+  # を元にしようとしたが色々とずれている。何か変更でもあったのだろうか。
+  # 取り敢えずずらし戻して定義する事にする。
+  #
+  # また U+1B7 Ʒ の小文字に対して私用文字 U+E01E を割り当てているが、
+  # U+0292 ʒ にちゃんと小文字があるのでそれを使う。
+
+  map <SP>´0ʿ
+  map @ĂAÀBǞCǠDǢEĔFÈGǤHǦIǨJŎKÒLǪMǬNƷOǮ
+  map `ăaàbǟcǡdǣeĕfègǥhǧiǩjŏkòlǫmǭnʒoǯ
+
+  # apache/apr-iconv (色々ずれてる)
+  #map_check <SP>´0ʿ@ĂAÂBÀCĀDǞEǠFǢGĔIĒJǤKǦLǨMŎNÒOǪPǬQŪRƷSǮ
+  #map_check `ăaâbàcādǟeǡfǣgĕiējǥkǧlǩmŏnòoǫpǭqūrsǯ
+
 SB96(S) ISO-IR-164 CCITT Hebrew Supplementary Set
+  load SB96(H)
+  undef_range <SP>-_
+
 SB96(T) ISO-IR-166 Thai Set
-  # iconv (linux)
+  map <SP><U+A0>
+  map !<U+0E01>"<U+0E02>#<U+0E03>$<U+0E04>%<U+0E05>&<U+0E06>'<U+0E07>
+  map (<U+0E08>)<U+0E09>*<U+0E0A>+<U+0E0B>,<U+0E0C>-<U+0E0D>.<U+0E0E>/<U+0E0F>
+  map 0<U+0E10>1<U+0E11>2<U+0E12>3<U+0E13>4<U+0E14>5<U+0E15>6<U+0E16>7<U+0E17>
+  map 8<U+0E18>9<U+0E19>:<U+0E1A>;<U+0E1B><<U+0E1C>=<U+0E1D>><U+0E1E>?<U+0E1F>
+  map @<U+0E20>A<U+0E21>B<U+0E22>C<U+0E23>D<U+0E24>E<U+0E25>F<U+0E26>G<U+0E27>
+  map H<U+0E28>I<U+0E29>J<U+0E2A>K<U+0E2B>L<U+0E2C>M<U+0E2D>N<U+0E2E>O<U+0E2F>
+  map P<U+0E30>Q<U+0E31>R<U+0E32>S<U+0E33>T<U+0E34>U<U+0E35>V<U+0E36>W<U+0E37>
+  map X<U+0E38>Y<U+0E39>Z<U+0E3A>_<U+0E3F>
+  map `<U+0E40>a<U+0E41>b<U+0E42>c<U+0E43>d<U+0E44>e<U+0E45>f<U+0E46>g<U+0E47>
+  map h<U+0E48>i<U+0E49>j<U+0E4A>k<U+0E4B>l<U+0E4C>m<U+0E4D>n<U+0E4E>o<U+0E4F>
+  map p<U+0E50>q<U+0E51>r<U+0E52>s<U+0E53>t<U+0E54>u<U+0E55>v<U+0E56>w<U+0E57>
+  map x<U+0E58>y<U+0E59>z<U+0E5A>{<U+0E5B>
+
 SB96(U) ISO-IR-167 Arabic/French/German Set
+  map <SP><U+A0>-<U+AD>
+  map ,<U+60C>;<U+61B>?<U+61F>
+  map_range A<U+621>-Z<U+63A>
+  map_range `<U+640>-r<U+652>
+
+  map %¤(È)É*Ê+Ë.Î/Ï
+  map 0Á1Â2â3Ä4ß5ä6Ç7ç8è9é:ê<ë=î>ï@à
+  map [Ô\Ö]Ú^Û_Ü
+  map {ô|ö}ú~û<DEL>ü
+
 SB96(Y) ISO-IR-179 Baltic Rim Supplementary Set
-  # iconv (linux)
+  load SB96(A)
+  map !”%„(Ø*Ŗ/Æ4“8ø:ŗ?æ@ĄAĮBĀCĆFĘGĒHČJŹKĖLĢMĶNĪOĻPŠQŃRŅTŌXŲYŁZŚ[Ū]Ż^Ž`ąaįbācćfęgēhčjźkėlģmķnīoļpšqńrņtōxųyłzś{ū}ż~ž<DEL>’
+
+# https://en.wikipedia.org/wiki/VSCII
 SB96(Z) ISO-IR-180 Vietnamese Standard Code for Information Interchange
+  load SB96(A)
+  map !Ă"Â#Ê$Ô%Ơ&Ư'Đ(ă)â*ê+ô,ơ-ư.đ/Ằ
+  map 0<U+300>1<U+309>2<U+303>3<U+301>4<U+323>5à6ả7ã8á9ạ:Ẳ;ằ<ẳ=ẵ>ắ?Ẵ
+  map @ẮAẦBẨCẪDẤEỀFặGầHẩIẫJấKậLèMỂNẻOẽPéQẹRềSểTễUếVệWìXỉYỄZẾ[Ồ\ĩ]í^ị_ò
+  map `ỔaỏbõcódọeồfổgỗhốiộjờkởlỡmớnợoùpỖqủrũsútụuừvửwữxứyựzỳ{ỷ|ỹ~ỵ<DEL>Ố
+
+#■
 SB96([) ISO-IR-181 Technical Character Set No.1: IEC Publication 1289
+  load SB96(A)
+
+  # greek
+  map_range aα-yω
+  map CΓDΔHΘKΛNΞPΠSΣUΥVΦXΨYΩ
+  map eϵvϕzϑ{φ|ε
+  undef `or}~<DEL>
+
+  # ^_ に対応する強い交流の記号はないので近似等号で代替している。
+
+  map !<U+231D>"<U+238d>#<U+238e>
+  map $<U+25C7>%<U+238f>&<U+2390>'<U+2391>(<U+2392>
+  map *<U+2264>:<U+2265>+<U+226A>;<U+226B>
+  map 2÷3∞4∫5…6≠8≈9≡<™=℄>−?<U+2393>
+  map @‰A←Q→E<U+25c1>F<U+25bd>G<U+25B7>I∩J<U+2394>
+  map Z□[<U+2300>\∠]∿^≈_≋
+  undef /BRTLMO
+
+# https://en.wikipedia.org/wiki/ISO-IR-182
 SB96(\) ISO-IR-182 Welsh variant of Latin Alphabet No. 1
+  load SB96(A)
+  map (Ẁ*Ẃ,Ỳ/Ÿ8ẁ:ẃ<ỳ=Ẅ>ẅPŴ^Ŷpŵ~ŷ
+
 SB96(]) ISO-IR-197 Sami supplementary Latin set
-  # iconv (linux)
+  load SB96(A)
+  map !Č"č#Đ$đ%Ǥ&ǥ(Ǧ*ǧ,Ǩ.ǩ/Ŋ1ŋ2Š3š5Ŧ8ŧ9Ž:ž<Ʒ=ʒ>Ǯ?ǯ
+
+# https://en.wikipedia.org/wiki/ISO/IEC_8859-8
 SB96(^) ISO-IR-198 Latin/Hebrew Alphabet
+  load SB96(A)
+  undef !
+  undef_range ?-<DEL>
+
+  load SB96(S)
+  map *×:÷_‗}‎~‏
+
 SB96(_) ISO-IR-199 Celtic Supplementary Latin Set
-  # iconv (linux)
+  load SB96(A)
+  map !Ḃ"ḃ$Ċ%ċ&Ḋ(Ẁ*Ẃ+ḋ,Ỳ/Ÿ0Ḟ1ḟ2Ġ3ġ4Ṁ5ṁ7Ṗ8ẁ9ṗ:ẃ;Ṡ<ỳ=Ẅ>ẅ?ṡPŴWṪ^Ŷpŵwṫ~ŷ
+
+# https://en.wikipedia.org/wiki/ISO/IEC_8859-5#History_and_related_code_pages
 SB96(`) ISO-IR-200 Uralic Supplementary Cyrllic Set
+  load SB96(L)
+  map "Ӈ#Ӓ$Ӭ%Ҍ'Ӧ(Ҋ)Ӆ*Ӊ+«,Ӎ.Ҏ/ʼ
+  map rӈsӓtӭuҍwӧxҋyӆzӊ{»|ӎ~ҏ<DEL>ˮ
+
+  # check by https://en.wikipedia.org/wiki/ISO-IR-200
+  map_check !Ё"Ӈ#Ӓ$Ӭ%Ҍ&І'Ӧ(Ҋ)Ӆ*Ӊ,Ӎ/ʼ0А1Б2В3Г4Д5Е6Ж7З8И9Й:К;Л<М=Н>О?П
+  map_check @РAСBТCУDФEХFЦGЧHШIЩJЪKЫLЬMЭNЮOЯPаQбRвSгTдUеVжWзXиYйZк[л\м]н^о_п
+  map_check `рaсbтcуdфeхfцgчhшiщjъkыlьmэnюoяp№qёrӈsӓtӭuҍvіwӧxҋyӆzӊ{»|ӎ}§<DEL>ˮ
+
+  #map_check .Ҟ~ҟ # ←★Wikipediaの誤りだろうか。
+  # →wikipedia の 2/14, 7/14 は 049E, 049F と書かれているが
+  #   これは 048E, 048F の typo である。
+
+# https://en.wikipedia.org/wiki/ISO/IEC_8859-5#History_and_related_code_pages
 SB96(a) ISO-IR-201 Volgaic Supplementary Cyrllic Set
+  load SB96(L)
+  map "Ӑ#Ӓ$Ӗ%Ҫ'Ӧ(Ӥ)Ӝ*Ҥ+Ӹ,Ӟ.Ӱ/Ӵ
+  map rӑsӓtӗuҫwӧxӥyӝzҥ{ӹ|ӟ~ӱ<DEL>ӵ
+
 SB96(b) ISO-IR-203 European Supplementary Latin Set ("Latin 9")
-  # iconv (linux)
+  load SB96(A)
+  map $€&Š(š4Ž8ž<Œ=œ>Ÿ
+
+# https://www.wdic.org/w/WDIC/ISO/IEC%208859-1 (ISO-IR-100) 変種
 SB96(c) ISO-IR-204 Supplementary set for Latin-1 alternative with EURO SIGN
+  load SB96(A)
+  map $€
+
+  # 上の変更だけである事を実際に確認した。
+
+# https://www.wdic.org/w/WDIC/ISO/IEC%208859-4 (ISO-IR-110) 変種
 SB96(d) ISO-IR-205 Supplementary set for Latin-4 alternative with EURO SIGN
+  load SB96(D)
+  map $€
+
+  # 上の変更だけである事を実際に確認した。
+
+# https://en.wikipedia.org/wiki/ISO/IEC_8859-13
+# https://www.wdic.org/w/WDIC/ISO/IEC%208859-13 (ISO-IR-179) 変種
 SB96(e) ISO-IR-206 Supplementary set for Latin-7 alternative with EURO SIGN
+  load SB96(Y)
+  map $€
+
+  # 何処かの説明には IEC-8859-13 と全く同じであるかのように書かれているが、
+  # 実際に調べてみると IEC-8859-13 に等価なのは ISO-IR-179 であって、
+  # それに加えてユーロマークを追加したのが新しい物になっている。
+  
+  map_check !”%„(Ø*Ŗ/Æ4“8ø:ŗ?æ
+  map_check @ĄAĮBĀCĆFĘGĒHČJŹKĖLĢMĶNĪOĻPŠQŃRŅTŌXŲYŁZŚ[Ū]Ż^Ž
+  map_check `ąaįbācćfęgēhčjźkėlģmķnīoļpšqńrņtōxųyłzś{ū}ż~ž<DEL>’
+
 SB96(f) ISO-IR-226 Romanian Character Set for Information Interchange
-  # iconv (linux)
+  load SB96(A)
+  map !Ą"ą#Ł$€%„&Š(š*Ș,Ź.ź/Ż2Č3ł4Ž5”8ž9č:ș<Œ=œ>Ÿ?żCĂEĆPĐQŃUŐWŚXŰ]Ę^Țcăećpđqńuőwśxű}ę~ț
+
 SB96(g) ISO-IR-208 Ogham coded character set for information interchange
+  map_range `<U+1680>-|<U+169C>
+
 SB96(h) ISO-IR-209 Sami supplementary Latin set no 2
-  # iconv (linux)
+  load SB96(A)
+  map !Č"č#Đ$đ%Ǥ&ǥ(Ǧ*ǧ+Ȟ,Ǩ.ǩ/Ŋ1ŋ2Š3š5Ŧ8ŧ9Ž:ž;ȟ<Ʒ=ʒ>Ǯ?ǯ
+
+# https://ja.wikipedia.org/wiki/ISO/IEC_8859-7 変種
 SB96(i) ISO-IR-227 Right-hand part of Latin/Greek alphabet
+  load SB96(F)
+  map $€%₯
+
+# https://en.wikipedia.org/wiki/ISO/IEC_8859-8 (ISO-IR-138) 変種
+# https://www.wdic.org/w/WDIC/ISO/IEC%208859-8
 SB96(j) ISO-IR-234 Latin/Hebrew character set for 8-bit codes
+  load SB96(H)
+  map Y€Z₪
+  map [<U+202E>\<U+202D>]<U+202C>
+  map {<U+202A>|<U+202B>}<U+200E>~<U+200F>
 
-# iconv は以下も対応している。これは UTF-16 の一種の様だ。
-# ISO-IR-193
-#   map
-
+#==============================================================================
 #
 # MB94
 #
@@ -712,3 +1035,7 @@ SB96(j) ISO-IR-234 Latin/Hebrew character set for 8-bit codes
 # MB94(O) ISO-IR-228 Japanese Graphic Character Set for Information Interchange --- Plane 1
 # MB94(P) ISO-IR-229 Japanese Graphic Character Set for Information Interchange --- Plane 2
 # MB94(Q) ISO-IR-233 Japanese Graphic Character Set for Information Interchange, Plane 1 (Update of ISO-IR 228)
+
+# iconv は以下も対応している。これは UTF-16 の一種の様だ。
+# ISO-IR-193
+#   map

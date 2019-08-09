@@ -61,6 +61,8 @@ impl2: $(impl2_objs)
 $(objdir)/impl2.o: impl2.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
+directories += out
+
 all: iso2022-convert.exe
 iso2022-convert.exe: $(objdir)/iso2022-convert.o $(objdir)/enc.utf8.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
@@ -70,9 +72,9 @@ iso2022-gendef-table.exe: $(objdir)/iso2022-gendef-table.o $(objdir)/enc.utf8.o
 all: iso2022-dump.exe
 iso2022-dump.exe: $(objdir)/iso2022-dump.o $(objdir)/enc.utf8.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
-all: iso2022.html
-iso2022.html: iso2022-dump.exe iso2022.def
-	./iso2022-dump.exe > /dev/null
+all: out/iso2022.html
+out/iso2022.html: iso2022-dump.exe iso2022.def | out
+	./iso2022-dump.exe
 
 #------------------------------------------------------------------------------
 # ttty

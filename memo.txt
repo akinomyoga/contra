@@ -2068,19 +2068,20 @@
 
     linux の iconv と cygwin の iconv ではまた対応しているコードに差がある。
     以下は cygwin の iconv だけで対応している文字集合である。後で調べる
-    ISO-IR-58
-    ISO-IR-87
-    ISO-IR-149
-    ISO-IR-159
-    ISO-IR-165
+    ISO-IR-58  MB94 Chinese Character Set Chinese Standard GB 2312-80
+    ISO-IR-87  MB94 Japanese Character Set JIS C 6226-1983
+    ISO-IR-149 MB94 Korean
+    ISO-IR-159 MB94 Supplementary Japanese Graphic Character Set for Information Interchange
+    ISO-IR-165 MB94 CCITT Chinese Set
     ISO-IR-230
     →結局230しか有用なデータは取得できなかった。
+    →これは他は全て MB94 だったからであった。
 
   * ISO-IR-147 で検索したら以下を見つけた
     https://github.com/winlibs/apache/tree/master/2.4.x/srclib/apr-iconv/ccs
-
-    https://github.com/winlibs/apache/tree/master/2.4.x/srclib/apr-iconv/ccs
     他にも色々あるようである。対応している番号は以下の通り。今までで一番充実している。
+    公式だと https://github.com/apache/apr-iconv/tree/trunk/ccs ここにある。
+    然し、結局ちゃんとメンテナンスはされていない様だ。12年前から変化がない。
 
     2 4 8-1 8-2 9-1 9-2 10 11 13 14 15 16 17 18 19 21 25 27 37 47 49 50 51
     54 55 57 60 61 69 70 84 85 86 88 89 90 91 92 93 94 95 96 98 99 102 103
@@ -2088,6 +2089,9 @@
 
     中でも以下については未だ実装していない物であるので参考になる。
     111 123 139 142 143 146 147 152 153 154 155 158
+
+    iconv にも登録されていないのが以下である。
+    123 142 152 154 158
 
 2019-08-06
 

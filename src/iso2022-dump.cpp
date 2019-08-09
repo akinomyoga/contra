@@ -15,6 +15,18 @@ static constexpr char32_t undefined_code = 0xFFFFFFFF;
 static constexpr char32_t invalid_code = 0xFFFFFFFE;
 static constexpr char32_t multichar_conv = 0xFFFFFFFD;
 
+static constexpr bool is_combining_character(char32_t u) {
+  if (0x300 <= u && u < 0x370) return true;
+  if (0x610 <= u && u <= 0x61a) return true;
+  if ((0x64B <= u && u <= 0x65F) || u == 0x670) return true;
+  if ((0x6D6 <= u && u <= 0x6ED) &&
+    (u != 0x6DD && u != 0x6DE && u != 0x6E5 && u != 0x6E6 && u != 0x6E9))
+    return true;
+  if (0x20D0 <= u && u < 0x2100) return true;
+  if (0xFE20 <= u && u < 0xFE30) return true;
+  return false;
+}
+
 enum charset_type {
   charset_sb94,
   charset_sb96,
@@ -98,17 +110,6 @@ struct processor_t {
       return false;
     }
   }
-  static constexpr bool is_combining_character(char32_t u) {
-    if (0x300 <= u && u < 0x370) return true;
-    if (0x610 <= u && u <= 0x61a) return true;
-    if ((0x64B <= u && u <= 0x65F) || u == 0x670) return true;
-    if ((0x6D6 <= u && u <= 0x6ED) &&
-      (u != 0x6DD && u != 0x6DE && u != 0x6E5 && u != 0x6E6 && u != 0x6E9))
-      return true;
-    if (0x20D0 <= u && u < 0x2100) return true;
-    if (0xFE20 <= u && u < 0xFE30) return true;
-    return false;
-  }
 
 private:
   std::ostream& put_colrow(std::ostream& ostr, unsigned char a) {
@@ -128,7 +129,7 @@ private:
          << "</style>\n"
          << "</head>\n"
          << "<body>\n"
-         << "<h1>94-Character Graphic Character Sets</h1>\n";
+         << "<h1>94/96-Character Graphic Character Sets</h1>\n";
   }
   void print_html_footer(std::ostream& ostr) {
     ostr << "</body>\n"
@@ -138,12 +139,18 @@ private:
     ostr << "<h2>ISO-IR-" << charset->reg << ": "
          << charset->name << "</h2>\n";
 
+    unsigned char meta_shift = 0;
+
     ostr << "<ul>\n";
     {
       const char* type_name = "unknown_type";
       switch (charset->type) {
-      case charset_sb94: type_name = "SB94"; break;
-      case charset_sb96: type_name = "SB96"; break;
+      case charset_sb94:
+        type_name = "SB94"; break;
+      case charset_sb96:
+        type_name = "SB96";
+        meta_shift = 0x80;
+        break;
       }
       ostr << "<li>Type: " << type_name << "</li>\n";
     }
@@ -207,7 +214,7 @@ private:
           }
           ostr.flags(old_flags);
         } else {
-          if (b != (char32_t) a)
+          if (b != (char32_t) a + meta_shift)
             ostr << "<td class=\"contra-iso2022-diff\">";
           else
             ostr << "<td>";
@@ -231,10 +238,20 @@ private:
     ostr << "ISO-IR-" << charset->reg << ": "
               << charset->name << "\n";
 
+    unsigned char min1, max1;
+    unsigned char meta_shift = 0;
     const char* type_name = "unknown_type";
     switch (charset->type) {
-    case charset_sb94: type_name = "SB94"; break;
-    case charset_sb96: type_name = "SB96"; break;
+    default:
+    case charset_sb94:
+      type_name = "SB94";
+      min1 = '!'; max1 = '~';
+      break;
+    case charset_sb96:
+      type_name = "SB96";
+      min1 = 0x20; max1 = 0x7F;
+      meta_shift = 0x80;
+      break;
     }
     ostr << "  Type: " << type_name << "\n";
 
@@ -244,7 +261,7 @@ private:
       if ('@' <= a && a <= '~') break;
     }
     ostr << "(" << charset->seq << ")\n";
-    for (char a = '!';  a <= '~'; a++) {
+    for (unsigned char a = min1; a <= max1; a++) {
       char32_t b = charset->map[(int) a];
       ostr << "  " << a << " (";
       put_colrow(ostr, a);
@@ -277,20 +294,81 @@ private:
         }
         ostr.flags(old_flags);
       } else {
+        std::ios_base::fmtflags old_flags = std::cout.flags();
         contra::encoding::put_u8(b, ostr);
         ostr << " (U+"
              << std::hex << std::uppercase
              << std::setw(4) << std::setfill('0') << (std::uint32_t) b
              << ")";
+        ostr.flags(old_flags);
       }
-      if (b != (char32_t) a) ostr << " *";
+      if (b != (char32_t) a + meta_shift) ostr << " *";
       ostr << "\n";
     }
     ostr << std::endl;
   }
+
+  void print_cpp(std::ostream& ostr, sb_charset_data* charset) {
+    ostr << "// ISO-IR-" << charset->reg << ": "
+              << charset->name << "\n";
+
+    const char* type_name = "unknown_type";
+    switch (charset->type) {
+    default:
+    case charset_sb94:
+      type_name = "SB94";
+      break;
+    case charset_sb96:
+      type_name = "SB96";
+      break;
+    }
+    ostr << "//   Type: " << type_name << "\n";
+
+    ostr << "//   Escape sequence: ";
+    for (char a : charset->seq) {
+      put_colrow(ostr, a) << " ";
+      if ('@' <= a && a <= '~') break;
+    }
+    ostr << "(" << charset->seq << ")\n";
+
+    ostr << "char32_t const iso_ir_";
+    for (char a : charset->reg)
+      ostr << (std::isalnum(a)? a : '_');
+    ostr << "_table[96] = {\n";
+
+    bool has_multichar = false;
+    for (unsigned char a = 0x20; a <= 0x7F; a++) {
+      if (a % 8 == 0) ostr << "  ";
+
+      char32_t b = charset->map[(int) a];
+      if (b == undefined_code) {
+        ostr << "0x0000,";
+      } else if (b == multichar_conv) {
+        ostr << "0xFFFF,"; // multichar
+        has_multichar = true;
+      } else {
+        std::ios_base::fmtflags old_flags = std::cout.flags();
+        ostr << "0x"
+             << std::hex << std::uppercase
+             << std::setw(4) << std::setfill('0') << (std::uint32_t) b
+             << ",";
+        ostr.flags(old_flags);
+      }
+
+      ostr << ((a + 1) % 8 ? " " : "\n");
+    }
+    ostr << "};\n";
+    if (has_multichar)
+      ostr << "  // Note: 0xFFFF means a sequence of unicode code points\n";
+    ostr << std::endl;
+  }
+
+  int output_charset_count = 0;
   void dump_charset(sb_charset_data* charset) {
+    output_charset_count++;
     print_html_charset(ostr_html, charset);
-    print_text(std::cout, charset);
+    print_text(ostr_text, charset);
+    print_cpp(ostr_cpp, charset);
   }
 
 private:
@@ -301,9 +379,14 @@ private:
     } else if (!is_graphic_character(a)) {
       print_error() << "invalid code" << std::endl;
       return invalid_code;
+    } else if (starts_with_skip("<SP>")) {
+      return U' ';
+    } else if (starts_with_skip("<DEL>")) {
+      return U'\u007F';
+    } else {
+      r++;
+      return a;
     }
-    r++;
-    return a;
   }
   char32_t read_unicode() {
     char32_t b;
@@ -463,7 +546,7 @@ private:
       return false;
     }
 
-    for (char a = '!';  a <= '~'; a++) {
+    for (unsigned char a = 0x20;  a <= 0x7F; a++) {
       char32_t const b = it->second.map[(int) a];
       if (b != undefined_code) {
         current_charset_data->map[(int) a] = b;
@@ -562,11 +645,15 @@ private:
 
 private:
   std::ofstream ostr_html;
+  std::ofstream ostr_text;
+  std::ofstream ostr_cpp;
 
 public:
   int process(std::istream& istr) {
-    ostr_html.open("iso2022.html");
+    ostr_html.open("out/iso2022.html");
     print_html_header(ostr_html);
+    ostr_text.open("out/iso2022.txt");
+    ostr_cpp.open("out/iso2022.cpp");
 
     iline = 0;
     bool error_flag = false;
@@ -595,6 +682,10 @@ public:
 
     print_html_footer(ostr_html);
     ostr_html.close();
+    ostr_text.close();
+    ostr_cpp.close();
+
+    std::cout << output_charset_count << " charsets are processed." << std::endl;
 
     if (error_flag) return 1;
     return 0;
