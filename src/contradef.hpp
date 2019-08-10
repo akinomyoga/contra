@@ -144,9 +144,19 @@ namespace contra {
     unicode_mask      = 0x001FFFFF,
     unicode_max       = 0x0010FFFF,
     charflag_iso2022  = 0x01000000, // not yet supported
-    charflag_object   = 0x08000000, // not yet supported
-    charflag_private1 = 0x02000000, // for private usage
-    charflag_private2 = 0x04000000, // for private usage
+    charflag_object   = 0x02000000, // not yet supported
+    charflag_private1 = 0x04000000, // for private usage
+    charflag_private2 = 0x08000000, // for private usage
+
+    // 0x01XXXXXX は iso-2022 による文字に使う。
+    //   0x010XXXXX ... 94/96 文字集合
+    //   0x011XXXXX ... 94^2 文字集合
+    //   0x012XXXXX ... DRCS 94/96
+    //   0x013XXXXX ... DRCS 94^2/96^2
+    charflag_iso2022_db    = 0x00100000,
+    charflag_iso2022_drcs  = 0x00200000,
+    charflag_iso2022_mask_flag  = 0x00300000,
+    charflag_iso2022_mask_code  = 0x000FFFFF,
 
     charflag_wide_extension    = 0x10000000,
     charflag_cluster_extension = 0x20000000,
@@ -174,11 +184,6 @@ namespace contra {
     marker_pdi = charflag_marker | 0x2069,
 
     invalid_character = 0xFFFFFFFF,
-
-    iso2022_94_iso646_usa = 0,
-    iso2022_94_vt100_acs  = 2,
-
-    iso2022_96_iso8859_1        = 1,
   };
 
   //---------------------------------------------------------------------------

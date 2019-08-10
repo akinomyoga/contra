@@ -1380,10 +1380,15 @@ namespace ansi {
 
           if (!character_t::is_char(code)) {
             if (code & charflag_iso2022) {
-              std::uint32_t const charset = (code & ~charflag_iso2022) >> 7;
+              std::uint32_t const cssize = code & charflag_iso2022_db ? 96 * 96 : 96;
+              std::uint32_t const charset =
+                (code & charflag_iso2022_mask_code) / cssize |
+                (code & charflag_iso2022_mask_flag);
+              std::uint32_t const ch = 0x20 +
+                (code & charflag_iso2022_mask_code) % cssize;
               switch (charset) {
               case iso2022_94_vt100_acs:
-                code = draw_acs(g, xL, y, code & 0x7F, cell.width, fg, font);
+                code = draw_acs(g, xL, y, ch, cell.width, fg, font);
                 if (!code) continue;
               }
             } else

@@ -159,17 +159,18 @@ namespace tx11 {
 
   public:
     xft_font_factory(contra::app::context& actx) {
-      m_fontnames[0]  = "MeiryoKe_Console";
-      m_fontnames[1]  = "MS Gothic";
-      m_fontnames[2]  = "MS Mincho";
-      m_fontnames[3]  = "HGMaruGothicMPRO";
-      m_fontnames[4]  = "HGKyokashotai";
-      m_fontnames[5]  = "HGGyoshotai";
-      m_fontnames[6]  = "HGSeikaishotaiPRO";
-      m_fontnames[7]  = "HGSoeiKakupoptai";
-      m_fontnames[8]  = "HGGothicM";
-      m_fontnames[9]  = "Times New Roman";
-      m_fontnames[10] = "aghtex_mathfrak";
+      // 既定ではどのフォントが入っているのか分からないので monospace にする
+      m_fontnames[0]  = "monospace";
+      m_fontnames[1]  = "monospace";
+      m_fontnames[2]  = "monospace";
+      m_fontnames[3]  = "monospace";
+      m_fontnames[4]  = "monospace";
+      m_fontnames[5]  = "monospace";
+      m_fontnames[6]  = "monospace";
+      m_fontnames[7]  = "monospace";
+      m_fontnames[8]  = "monospace";
+      m_fontnames[9]  = "monospace";
+      m_fontnames[10] = "monospace";
       actx.read("term_font_default", m_fontnames[0] );
       actx.read("term_font_ansi1"  , m_fontnames[1] );
       actx.read("term_font_ansi2"  , m_fontnames[2] );

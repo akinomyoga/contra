@@ -6,6 +6,9 @@
 #include <cstdint>
 #include <cstdio>
 #include <vector>
+#include <algorithm>
+#include <numeric>
+#include <unordered_map>
 #include <mwg/except.h>
 #include "enc.utf8.hpp"
 
@@ -111,6 +114,126 @@ namespace contra {
     bool title_definition_string_enabled    = true; // GNU Screen ESC k ... ST
   };
 
+  typedef std::uint32_t charset_t;
+  inline constexpr charset_t iso2022_unspecified = 0xFFFFFFFF;
+  inline constexpr charset_t iso2022_charset_db   = charflag_iso2022_db;
+  inline constexpr charset_t iso2022_charset_drcs = charflag_iso2022_drcs;
+  inline constexpr charset_t iso2022_94_iso646_usa = 0;
+  inline constexpr charset_t iso2022_96_iso8859_1  = 1;
+  inline constexpr charset_t iso2022_94_vt100_acs  = 2;
+
+  enum iso2022_charset_size {
+    iso2022_size_sb94,
+    iso2022_size_sb96,
+    iso2022_size_mb94,
+    iso2022_size_mb96,
+  };
+
+
+  class iso2022_charset_registry {
+    charset_t m_sb94[160]; // ISO-IR 94
+    charset_t m_sb96[80];  // ISO-IR 96
+    charset_t m_mb94[80];  // ISO-IR 94^2
+    charset_t m_sb94_drcs[80]; // DRCS 94
+    charset_t m_sb96_drcs[80]; // DRCS 96
+    charset_t m_mb94_drcs[80]; // DRCS 94^2
+    charset_t m_mb96_drcs[80]; // DRCS 96^2
+
+    typedef std::unordered_map<std::string, charset_t> dictionary_type;
+    dictionary_type m_dict_sb94;
+    dictionary_type m_dict_sb96;
+    dictionary_type m_dict_db94;
+    dictionary_type m_dict_db96;
+
+    int sb_drcs_count;
+    int mb_drcs_count;
+
+  public:
+    iso2022_charset_registry() {
+      std::fill(std::begin(m_sb94), std::end(m_sb94), iso2022_unspecified);
+      std::fill(std::begin(m_sb96), std::end(m_sb96), iso2022_unspecified);
+      std::fill(std::begin(m_mb94), std::end(m_mb94), iso2022_unspecified);
+
+      // DRCS (DRCSMM 領域合計 160 区については予め割り当てて置く事にする)
+      sb_drcs_count = 160;
+      mb_drcs_count = 0;
+      std::iota(std::begin(m_sb94_drcs), std::end(m_sb94_drcs), iso2022_charset_drcs | 0);
+      std::iota(std::begin(m_sb96_drcs), std::end(m_sb96_drcs), iso2022_charset_drcs | 80);
+      std::fill(std::begin(m_mb94_drcs), std::end(m_mb94_drcs), iso2022_unspecified);
+      std::fill(std::begin(m_mb96_drcs), std::end(m_mb96_drcs), iso2022_unspecified);
+
+      // initialize default charset
+      m_sb94[ascii_0 - 0x30] = iso2022_94_vt100_acs;
+      m_sb94[ascii_B - 0x30] = iso2022_94_iso646_usa;
+      m_sb96[ascii_A - 0x30 + 80] = iso2022_96_iso8859_1;
+      m_mb94[ascii_B - 0x30] = iso2022_charset_db | 4; // debug 用に適当に
+    }
+
+  private:
+    mutable std::string m_designator_buff;
+    charset_t find_charset_from_dict(
+      char32_t const* intermediate, std::size_t intermediate_size, byte final_char, dictionary_type const& dict
+    ) const {
+      m_designator_buff.resize(intermediate_size + 1);
+      std::copy(intermediate, intermediate + intermediate_size, m_designator_buff.begin());
+      m_designator_buff.back() = final_char;
+      auto const it = dict.find(m_designator_buff);
+      if (it != dict.end()) return it->second;
+      return iso2022_unspecified;
+    }
+
+  public:
+    charset_t resolve_charset(int type, char32_t const* intermediate, std::size_t intermediate_size, byte final_char) const {
+      if (final_char < 0x30 || 0x7E < final_char)
+        return iso2022_unspecified;
+      byte const f = final_char - 0x30;
+
+      // F型 (Ft型 = IR文字集合, Fp型 = 私用文字集合)
+      if (intermediate_size == 0) {
+        switch (type) {
+        case iso2022_size_sb94: return m_sb94[f];
+        case iso2022_size_sb96: return m_sb96[f];
+        case iso2022_size_mb94: return m_mb94[f];
+        case iso2022_size_mb96: break;
+        default:
+          mwg_check(0, "BUG unexpected charset size");
+          return iso2022_unspecified;
+
+        }
+      }
+
+      if (intermediate_size == 1) {
+        // 1F型 (1Ft型 = IR 94文字集合の追加分, 1Fp型 = 私用文字集合)
+        if (intermediate[0] == ascii_exclamation && type == iso2022_size_sb94)
+          return m_sb94[80 + f];
+
+        // 0F型 = DRCS
+        if (intermediate[0] == ascii_sp) {
+          switch (type) {
+          case iso2022_size_sb94: return m_sb94_drcs[f];
+          case iso2022_size_sb96: return m_sb96_drcs[f];
+          case iso2022_size_mb94: return m_mb94_drcs[f];
+          case iso2022_size_mb96: return m_mb96_drcs[f];
+          default:
+            mwg_check(0, "BUG unexpected charset size");
+            return iso2022_unspecified;
+          }
+        }
+      }
+
+      // その他 DECDLD 等でユーザによって追加された分
+      switch (type) {
+      case iso2022_size_sb94: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_sb94);
+      case iso2022_size_sb96: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_sb96);
+      case iso2022_size_mb94: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_db94);
+      case iso2022_size_mb96: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_db96);
+      default:
+        mwg_check(0, "BUG unexpected charset size");
+        return iso2022_unspecified;
+      }
+    }
+  };
+
   template<typename Processor>
   class sequence_decoder {
     typedef Processor processor_type;
@@ -150,16 +273,23 @@ namespace contra {
     }
 
   private:
-    int m_iso2022_GL = iso2022_94_iso646_usa;
-    int m_iso2022_GR = iso2022_96_iso8859_1;
-    int m_iso2022_SS = -1;
-    int m_iso2022_Gn[4] = { iso2022_94_iso646_usa, iso2022_96_iso8859_1, 0, 0, };
+    iso2022_charset_registry m_iso2022;
+    charset_t m_iso2022_Gn[4] = { iso2022_94_iso646_usa, iso2022_96_iso8859_1, 0, 0, };
+    charset_t m_iso2022_GL = iso2022_94_iso646_usa;
+    charset_t m_iso2022_GR = iso2022_96_iso8859_1;
     int m_iso2022_GL_lock = 0;
     int m_iso2022_GR_lock = 1;
+    charset_t m_iso2022_SS = iso2022_unspecified;
+
+    // 複数バイト対応 (実質2Bにしか対応しない)
+    charset_t m_iso2022_mb_charset = iso2022_unspecified;
+    int m_iso2022_mb_count = 0;
+    std::uint32_t m_iso2022_mb_buff = 0;
+
     void iso2022_update() {
       if (m_iso2022_GL == iso2022_94_iso646_usa &&
         m_iso2022_GR == iso2022_96_iso8859_1 &&
-        m_iso2022_SS == -1
+        m_iso2022_SS == iso2022_unspecified
       ) {
         m_dstate_plain = decode_default;
       } else {
@@ -184,35 +314,6 @@ namespace contra {
         m_iso2022_GR = charset;
       iso2022_update();
     }
-    enum charset_type {
-      charset_94,
-      charset_96,
-      charset_94n,
-      charset_96n,
-    };
-    static int iso2022_get_charset(int type, sequence const& seq) {
-      switch (type) {
-      case charset_94:
-        if (seq.content_size() == 1) {
-          switch (seq.final()) {
-          case ascii_0: return iso2022_94_vt100_acs;
-          case ascii_B: return iso2022_94_iso646_usa;
-          }
-        }
-        break;
-      case charset_96:
-        if (seq.content_size() == 1) {
-          switch (seq.final()) {
-          case ascii_A: return iso2022_96_iso8859_1;
-          }
-        }
-        break;
-      case charset_94n:
-      case charset_96n:
-        break;
-      }
-      return -1;
-    }
 
     bool iso2022_escape_sequence() {
       if (this->m_seq.content_size() == 0) {
@@ -234,34 +335,77 @@ namespace contra {
           return true;
         }
       } else {
+        int seq_skip = 1;
         int n;
-        charset_type m;
+        iso2022_charset_size m;
         switch (this->m_seq.content()[0]) {
-        case ascii_left_paren:
-          n = 0; m = charset_94;
+        case ascii_left_paren: // GZD4
+          n = 0; m = iso2022_size_sb94;
           goto process_iso2022_GnDm;
-        case ascii_right_paren:
-          n = 1; m = charset_94;
+        case ascii_right_paren: // G1D4
+          n = 1; m = iso2022_size_sb94;
           goto process_iso2022_GnDm;
-        case ascii_asterisk:
-          n = 2; m = charset_94;
+        case ascii_asterisk: // G2D4
+          n = 2; m = iso2022_size_sb94;
           goto process_iso2022_GnDm;
-        case ascii_plus:
-          n = 3; m = charset_94;
+        case ascii_plus: // G3D4
+          n = 3; m = iso2022_size_sb94;
           goto process_iso2022_GnDm;
-        case ascii_minus:
-          n = 1; m = charset_96;
+        case ascii_minus: // G1D6
+          n = 1; m = iso2022_size_sb96;
           goto process_iso2022_GnDm;
-        case ascii_dot:
-          n = 2; m = charset_96;
+        case ascii_dot: // G2D6
+          n = 2; m = iso2022_size_sb96;
           goto process_iso2022_GnDm;
-        case ascii_slash:
-          n = 3; m = charset_96;
+        case ascii_slash: // G3D6
+          n = 3; m = iso2022_size_sb96;
           goto process_iso2022_GnDm;
+        case ascii_dollar:
+          if (this->m_seq.content_size() == 1) {
+            // ESC $ @, ESC $ A, ESC $ B は特別扱い
+            if (ascii_at <= m_seq.final() && m_seq.final() <= ascii_B) {
+              n = 0; m = iso2022_size_mb94;
+              goto process_iso2022_GnDm;
+            }
+          } else {
+            seq_skip = 2;
+            switch (m_seq.content()[1]) {
+            case ascii_left_paren: // GZDM4
+              n = 0; m = iso2022_size_mb94;
+              goto process_iso2022_GnDm;
+            case ascii_right_paren: // G1DM4
+              n = 1; m = iso2022_size_mb94;
+              goto process_iso2022_GnDm;
+            case ascii_asterisk: // G2DM4
+              n = 2; m = iso2022_size_mb94;
+              goto process_iso2022_GnDm;
+            case ascii_plus: // G3DM4
+              n = 3; m = iso2022_size_mb94;
+              goto process_iso2022_GnDm;
+            case ascii_minus: // G1DM6
+              n = 1; m = iso2022_size_mb96;
+              goto process_iso2022_GnDm;
+            case ascii_dot: // G2DM6
+              n = 2; m = iso2022_size_mb96;
+              goto process_iso2022_GnDm;
+            case ascii_slash: // G3DM6
+              n = 3; m = iso2022_size_mb96;
+              goto process_iso2022_GnDm;
+            }
+          }
+          break;
         process_iso2022_GnDm:
-          if (int const charset = iso2022_get_charset(m, m_seq); charset >= 0) {
-            iso2022_GnD(n, charset);
-            return true;
+          {
+            char32_t const* intermediate = m_seq.content() + seq_skip;
+            std::size_t const intermediate_size = m_seq.content_size() - seq_skip;
+            charset_t const charset = m_iso2022.resolve_charset(m, intermediate, intermediate_size, m_seq.final());
+            if (charset != iso2022_unspecified) {
+              iso2022_GnD(n, charset);
+              return true;
+            } else {
+              // unrecognized charset
+              // ■ログ機能を実装したら詳細な情報をそちらに出力する
+            }
           }
           break;
         }
@@ -269,29 +413,70 @@ namespace contra {
       return false;
     }
 
+    void iso2022_send_char(charset_t charset, std::uint32_t char_index) {
+      charset_t const cssize = charset & charflag_iso2022_db ? 96 * 96 : 96;
+      std::uint32_t const charset_index = charset & charflag_iso2022_mask_code;
+      std::uint32_t const flags = (charset & charflag_iso2022_mask_flag) | charflag_iso2022;
+      m_proc->process_char((charset_index * cssize + char_index) | flags);
+    }
+
     void process_char_iso2022(char32_t uchar) {
       if (uchar < 0x100 && 0x20 <= (uchar & 0x7F)) {
         // GL/GR の文字
-        int charset;
-        if (m_iso2022_SS >= 0) {
+
+        charset_t charset;
+        if (m_iso2022_SS != iso2022_unspecified) {
           charset = m_iso2022_SS;
-          m_iso2022_SS = -1;
         } else if (uchar < 0x80) {
           charset = m_iso2022_GL;
         } else {
           charset = m_iso2022_GR;
         }
 
-        if (charset == iso2022_94_iso646_usa)
-          m_proc->process_char(uchar & 0x7F);
-        else if (charset == iso2022_96_iso8859_1)
-          m_proc->process_char((uchar & 0x7F) | 0x80);
-        else
-          m_proc->process_char((uchar & 0x7F) | charset << 7 | charflag_iso2022);
-      } else {
-        if (m_iso2022_SS >= 0) {
+        // 2バイト文字集合の2バイト目
+        if (m_iso2022_mb_count) {
+          if (m_iso2022_mb_charset == charset) {
+            m_iso2022_mb_buff = m_iso2022_mb_buff * 96 + ((uchar & 0x7F) - 0x20);
+            if (--m_iso2022_mb_count == 0) {
+              // ISO-2022 複数バイト文字確定
+              m_iso2022_mb_charset = iso2022_unspecified;
+              m_iso2022_SS = iso2022_unspecified;
+              iso2022_send_char(charset, m_iso2022_mb_buff);
+            }
+            return;
+          }
+
+          // 1バイト目と2バイト目で文字集合が異なる場合は復号エラー。
+          // エラー文字を出力して、2バイト目は状態をリセットして普通に処理する。
           m_proc->process_char(0xFFFD);
-          m_iso2022_SS = -1;
+          m_iso2022_mb_charset = iso2022_unspecified;
+          if (m_iso2022_SS != iso2022_unspecified) {
+            m_iso2022_SS = iso2022_unspecified;
+            charset = uchar < 0x80 ? m_iso2022_GL : m_iso2022_GR;
+          }
+        }
+
+        if (charset & charflag_iso2022_db) {
+          m_iso2022_mb_count = 1; // 今は2バイト文字集合のみ対応
+          m_iso2022_mb_charset = charset;
+          m_iso2022_mb_buff = (uchar & 0x7F) - 0x20;
+        } else {
+          m_iso2022_SS = iso2022_unspecified;
+          if (charset == iso2022_94_iso646_usa)
+            m_proc->process_char(uchar & 0x7F);
+          else if (charset == iso2022_96_iso8859_1)
+            m_proc->process_char((uchar & 0x7F) | 0x80);
+          else
+            iso2022_send_char(charset, (uchar & 0x7F) - 0x20);
+        }
+      } else {
+        if (m_iso2022_mb_count) {
+          m_proc->process_char(0xFFFD);
+          m_iso2022_mb_count = 0;
+          m_iso2022_SS = iso2022_unspecified;
+        } else if (m_iso2022_SS != iso2022_unspecified) {
+          m_proc->process_char(0xFFFD);
+          m_iso2022_SS = iso2022_unspecified;
         }
         process_char_default(uchar);
       }

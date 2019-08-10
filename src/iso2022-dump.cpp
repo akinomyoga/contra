@@ -27,6 +27,17 @@ static constexpr bool is_combining_character(char32_t u) {
   return false;
 }
 
+static void put_for_html(char32_t u, std::ostream& ostr) {
+  switch (u) {
+  case U'<': ostr << "&lt;"; break;
+  case U'>': ostr << "&gt;"; break;
+  case U'&': ostr << "&amp;"; break;
+  default:
+    contra::encoding::put_u8(u, ostr);
+  }
+}
+
+
 enum charset_type {
   charset_sb94,
   charset_sb96,
@@ -197,8 +208,7 @@ private:
 
           ostr << "<td class=\"contra-iso2022-diff\">";
           if (is_combining_character(vec[0])) ostr << "&#x25cc;";
-          for (auto const b : vec)
-            contra::encoding::put_u8(b, ostr);
+          for (auto const b : vec) put_for_html(b, ostr);
 
           std::ios_base::fmtflags old_flags = std::cout.flags();
           {
@@ -220,7 +230,7 @@ private:
             ostr << "<td>";
 
           if (is_combining_character(b)) ostr << "&#x25cc;";
-          contra::encoding::put_u8(b, ostr);
+          put_for_html(b, ostr);
           std::ios_base::fmtflags old_flags = std::cout.flags();
           ostr << "<br/><code>U+"
                << std::hex << std::uppercase << std::setw(4) << std::setfill('0')

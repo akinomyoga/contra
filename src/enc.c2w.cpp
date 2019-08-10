@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include "contradef.hpp"
 
 namespace contra {
 namespace encoding {
@@ -186,10 +187,19 @@ namespace {
     return (l & 1) == 0 ? 2 : 1;
   }
 
+  static int c2w_iso2022(std::uint32_t code) {
+    return code & charflag_iso2022_db ? 2 : 1;
+  }
+
 }
 
   int c2w(char32_t u, c2w_type type) {
     if ((std::uint32_t) u < 0xA0) return 1;
+
+    // contra ISO-2022 characters
+    if (u & charflag_iso2022)
+      return c2w_iso2022((std::uint32_t) u);
+
     switch (type & _c2w_width_mask) {
     case c2w_width_west:  return c2w_west((std::uint32_t) u, type);
     case c2w_width_east:  return c2w_east((std::uint32_t) u, type);

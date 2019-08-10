@@ -63,7 +63,7 @@
 # apache/apr-iconv
 #   146 147 123 142 152 154 158
 # wikipedia
-#   180
+#   68 180 182 231
 #
 #==============================================================================
 #
@@ -532,13 +532,25 @@ SB94(j) ISO-IR-88 Greek Character Set ELOT, Hellenic Organization for Standardiz
   map $¤AΑBΒCΓDΔEΕFΖGΗHΘIΙKΚLΛMΜNΝOΞPΟQΠRΡSΣTΤUΥVΦXΧYΨZΩaαbβcγdδeεfζgηhθiιkκlλmμnνoξpοqπrρsσtτuυvφwςxχyψzω~‾
   undef JWj
 
-# Note: 例を見ると括弧の字形が反転しているが iconv は反転させていない。
-#   Unicode bidi-algorithm によって丁度良い具合に反転されるので修正の必要がないという事だろうか。
-#   map {}}{())([]][
 SB94(k) ISO-IR-89 7-bit Arabic Code for Information Interchange, Arab standard ASMO-449, ISO 9036
   load SB94(B)
-  map $¤,،;؛?؟AءBآCأDؤEإFئGاHبIةJتKثLجMحNخOدPذQرRزSسTشUصVضWطXظYعZغ`ـaفbقcكdلeمfنgهhوiىjيkًlٌmٍnَoُpِqّrْ~‾
+  map $¤,<U+60C>;<U+61B>?<U+61F>
+  map A<U+621>B<U+622>C<U+623>D<U+624>E<U+625>F<U+626>G<U+627>
+  map H<U+628>I<U+629>J<U+62A>K<U+62B>L<U+62C>M<U+62D>N<U+62E>O<U+62F>
+  map P<U+630>Q<U+631>R<U+632>S<U+633>T<U+634>U<U+635>V<U+636>W<U+637>
+  map X<U+638>Y<U+639>Z<U+63A>`<U+640>a<U+641>b<U+642>c<U+643>d<U+644>
+  map e<U+645>f<U+646>g<U+647>h<U+648>i<U+649>j<U+64A>k<U+64B>l<U+64C>
+  map m<U+64D>n<U+64E>o<U+64F>p<U+650>q<U+651>r<U+652>~<U+203E>
   undef stuvwxyz
+
+  # Note: 括弧の反転について
+  #   例を見ると括弧の字形が反転しているが iconv は反転させていない。
+  #   Unicode bidi-algorithm によって丁度良い具合に反転されるので
+  #   修正の必要がないという事だろうか。
+  #   取り敢えず iconv に倣って敢えて反転させるという事はしない事にする。
+  #
+  #   もし明示的に文字コードの上で反転させる場合には以下を有効にする。
+  #map {}}{())([]][
 
 # iconv の出力結果が表と全く一致していない気がする。何故?
 # map_check $¤ # iconv
@@ -893,7 +905,6 @@ SB96(Z) ISO-IR-180 Vietnamese Standard Code for Information Interchange
   map @ẮAẦBẨCẪDẤEỀFặGầHẩIẫJấKậLèMỂNẻOẽPéQẹRềSểTễUếVệWìXỉYỄZẾ[Ồ\ĩ]í^ị_ò
   map `ỔaỏbõcódọeồfổgỗhốiộjờkởlỡmớnợoùpỖqủrũsútụuừvửwữxứyựzỳ{ỷ|ỹ~ỵ<DEL>Ố
 
-#■
 SB96([) ISO-IR-181 Technical Character Set No.1: IEC Publication 1289
   load SB96(A)
 
@@ -1015,6 +1026,8 @@ SB96(j) ISO-IR-234 Latin/Hebrew character set for 8-bit codes
 #==============================================================================
 #
 # MB94
+#
+#==============================================================================
 #
 # MB94(@) ISO-IR-42 Japanese Character Set JISC C 6226-1978
 # MB94(A) ISO-IR-58 Chinese Character Set Chinese Standard GB 2312-80
