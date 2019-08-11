@@ -253,12 +253,13 @@ namespace ansi {
   };
 
   class color_resolver_t {
-    tstate_t const* s;
+    tstate_t const* s = nullptr;
     byte m_space = (byte) attribute_t::color_space_default;
     color_t m_color = color_t(-1);
     color_t m_rgba = 0;
 
   public:
+    color_resolver_t() {}
     color_resolver_t(tstate_t const& s): s(&s) {}
 
   public:
@@ -377,10 +378,14 @@ namespace ansi {
 
   class font_metric_t {
   private:
-    coord_t m_width, m_height;
+    coord_t m_width = 0, m_height = 0;
 
   public:
+    font_metric_t() = default;
     font_metric_t(coord_t xpixel, coord_t ypixel) {
+      this->initialize(xpixel, ypixel);
+    }
+    void initialize(coord_t xpixel, coord_t ypixel) {
       m_width = xpixel;
       m_height = ypixel;
     }
@@ -419,12 +424,12 @@ namespace ansi {
 
   public:
     /*?lwiki
-     * @fn std::tuple<coord_t, coord_t, double> get_displacement(font_t font);
-     * @return dx は描画の際の横のずれ量(文字幅1の文字に対して)
+     * @fn std::tuple<double, double, double> get_displacement(font_t font);
+     * @return dx は描画の際の横の絶対ずれ量
      * @return dy は描画の際の縦のずれ量
-     * @return dxW は (文字の幅-1) に比例して増える各文字の横のずれ量
+     * @return dxW は (文字の幅) に比例して増える各文字の横のずれ量
      */
-    std::tuple<coord_t, coord_t, double> get_displacement(font_t font) const {
+    std::tuple<double, double, double> get_displacement(font_t font) const {
       double dx = 0, dy = 0, dxW = 0;
       if (font & (font_layout_mask | font_decdwl | font_flag_italic)) {
         // Note: 横のずれ量は dxI + dxW * cell.width である。
@@ -451,8 +456,7 @@ namespace ansi {
         if (font & (font_layout_upper_half | font_layout_lower_half)) dy *= 2;
         if (font & font_decdwl) dxI *= 2;
         if (font & font_layout_lower_half) dy -= this->m_height;
-        dx = std::round(dxI + dxW);
-        dy = std::round(dy);
+        dx = dxI;
       }
       return {dx, dy, dxW};
     }
@@ -597,6 +601,426 @@ namespace ansi {
       m_xflags = attr.xflags;
       m_font = ret;
       return ret;
+    }
+  };
+
+  template<typename Graphics>
+  class batch_string_drawer {
+    typename Graphics::character_buffer charbuff;
+    font_metric_t fmetric;
+    coord_t u;
+    double dx, dy, dxW;
+
+  public:
+    void initialize(coord_t xpixel, coord_t ypixel) {
+      this->fmetric.initialize(xpixel, ypixel);
+    }
+
+    void reserve(std::size_t size) {
+      charbuff.reserve(size);
+    }
+
+    void start(font_t font) {
+      std::tie(dx, dy, dxW) = fmetric.get_displacement(font);
+      charbuff.clear();
+      u = 0;
+    }
+
+    void push(std::uint32_t code, curpos_t w) {
+      coord_t const char_dx = std::round(dx + dxW * w);
+      charbuff.add_char(code, u + char_dx, w == 0);
+      u += w * fmetric.width();
+    }
+
+    void skip(curpos_t w) {
+      u += w * fmetric.width();
+    }
+
+    coord_t x() const { return u; }
+
+    void render(Graphics* g, coord_t x1, coord_t y1, font_t font, color_t fg) {
+      dy = std::round(dy);
+      if (font & font_rotation_mask) {
+        g->draw_rotated_characters(x1, y1, 0, dy, u, charbuff, font, fg);
+      } else if (font & font_layout_proportional) {
+        g->draw_text(x1, y1 + dy, charbuff, font, fg);
+      } else {
+        g->draw_characters(x1, y1 + dy, charbuff, font, fg);
+      }
+    }
+  };
+
+  template<typename Graphics>
+  class graphics_drawer {
+    coord_t xpixel, ypixel;
+    Graphics* g;
+    coord_t x, y, w, h;
+    color_t color;
+    font_t font;
+  public:
+    void initialize(coord_t xpixel, coord_t ypixel) {
+      this->xpixel = xpixel;
+      this->ypixel = ypixel;
+    }
+    void set_parameters(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      this->g = g;
+      this->x = x;
+      this->y = y;
+      this->w = w;
+      this->h = h;
+      this->color = color;
+      this->font = font;
+    }
+
+  private:
+    // bold or heavy
+    bool bold() const { return font & font_weight_bold; }
+
+    coord_t hline_width() const {
+      return std::ceil(ypixel / 20.0) * (1 + bold() + !!(font & font_decdhl));
+    }
+
+    coord_t vline_width() const {
+      return std::ceil(xpixel / 10.0) * (1 + bold() + !!(font & font_decdwl));
+    }
+
+  private:
+    void glyph_line(coord_t x1, coord_t y1, coord_t x2, coord_t y2, coord_t w) const {
+      if (font & font_flag_italic) {
+        x1 -= (y1 - (y + h / 2)) / 3;
+        x2 -= (y2 - (y + h / 2)) / 3;
+      }
+      g->draw_line(x1, y1, x2, y2, color, w);
+    }
+    void glyph_polygon(coord_t (*points)[2], std::size_t count) const {
+      if (font & font_flag_italic) {
+        for (std::size_t i = 0; i < count; i++)
+          points[i][0] -= (points[i][1] - (y + h / 2)) / 3;
+      }
+      g->fill_polygon(points, count, color);
+    }
+
+  private:
+    void impl_varrow(bool is_minus) {
+      coord_t const xM = x + w / 2;
+      coord_t const vlw = std::ceil(ypixel / 20.0) * (1 + bold() + !!(font & font_decdwl));
+      coord_t const h1 = std::max<coord_t>(5, (bold() ? h * 9 / 10 : std::min(h - 2, std::max(5, h * 4 / 5))) - (vlw - 1));
+      coord_t const xwing = std::max<coord_t>(3, (w - vlw - 1) / 2);
+      coord_t const ywing = !(font & font_decdwl) || (font & font_decdhl) ? xwing : (xwing + 1) / 2;
+      if (is_minus) {
+        coord_t const y1 = y + h  - (h - h1) / 2;
+        coord_t const y2 = y1 - h1;
+        glyph_line(xM, y1, xM, y2, vlw);
+        glyph_line(xM, y2, xM - xwing, y2 + ywing, vlw);
+        glyph_line(xM, y2, xM + xwing, y2 + ywing, vlw);
+      } else {
+        coord_t const y1 = y + (h - h1) / 2;
+        coord_t const y2 = y1 + h1;
+        glyph_line(xM, y1, xM, y2, vlw);
+        glyph_line(xM, y2, xM - xwing, y2 - ywing, vlw);
+        glyph_line(xM, y2, xM + xwing, y2 - ywing, vlw);
+      }
+    }
+  public:
+    void uarrow(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      impl_varrow(true);
+    }
+    void darrow(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      impl_varrow(false);
+    }
+
+  private:
+    void impl_harrow(bool is_left) {
+      coord_t const yM = y + h / 2;
+      coord_t const hlw = hline_width();
+      coord_t const w1 = std::max<coord_t>(4, (bold() ? w * 9 / 10 : std::min(w - 2, std::max(5, w * 4 / 5))) - (hlw - 1));
+      coord_t const ywing = std::max<coord_t>(3, (h - hlw - 1) / 4);
+      coord_t const xwing = !(font & font_decdwl) || (font & font_decdhl) ? ywing : ywing * 2;
+      if (is_left) {
+        coord_t const x1 = x + w  - (w - w1) / 2;
+        coord_t const x2 = x1 - w1;
+        glyph_line(x1, yM, x2, yM, hlw);
+        glyph_line(x2, yM, x2 + xwing, yM - ywing, hlw);
+        glyph_line(x2, yM, x2 + xwing, yM + ywing, hlw);
+      } else {
+        coord_t const x1 = x + (w - w1) / 2;
+        coord_t const x2 = x1 + w1;
+        glyph_line(x1, yM, x2, yM, hlw);
+        glyph_line(x2, yM, x2 - xwing, yM - ywing, hlw);
+        glyph_line(x2, yM, x2 - xwing, yM + ywing, hlw);
+      }
+    }
+  public:
+    void rarrow(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      impl_harrow(false);
+    }
+    void larrow(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      impl_harrow(true);
+    }
+
+  private:
+    void impl_pm(int type) {
+      coord_t const hlw = hline_width();
+      coord_t const w1 = std::max<coord_t>(4, (bold() ? w * 9 / 10 : std::min(w - 1, std::max(5, w * 7 / 8))) - hlw);
+
+      coord_t const x2 = x + w / 2;
+      coord_t const x1 = x2 - w1 / 2;
+      coord_t const x3 = x1 + w1;
+      coord_t const y2 = y + h * 9 / 20 - hlw;
+      coord_t const y1 = y2 - h / 4;
+      coord_t const y3 = y2 + h / 4;
+      coord_t const y4 = y3 + hlw * 2;
+
+      glyph_line(x1, y4, x3, y4, hlw);
+      if (type == 0) {
+        // +-
+        glyph_line(x1, y2, x3, y2, hlw);
+        glyph_line(x2, y1, x2, y3, hlw);
+      } else if (type < 0) {
+        // <=
+        glyph_line(x3, y1, x1, y2, hlw);
+        glyph_line(x1, y2, x3, y3, hlw);
+      } else {
+        // >=
+        glyph_line(x1, y1, x3, y2, hlw);
+        glyph_line(x3, y2, x1, y3, hlw);
+      }
+    }
+  public:
+    void pm(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      impl_pm(0);
+    }
+    void le(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      impl_pm(-1);
+    }
+    void ge(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      impl_pm(1);
+    }
+
+  public:
+    void ne(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      coord_t const hlw = hline_width();
+      coord_t const w1 = std::max<coord_t>(4, (bold() ? w * 9 / 10 : std::min(w - 1, std::max(5, w * 7 / 8))) - hlw);
+      coord_t const x2 = x + w / 2;
+      coord_t const x1 = x2 - w1 / 2;
+      coord_t const x3 = x1 + w1;
+      coord_t const y2 = y + h * 9 / 20;
+      coord_t const y1 = y2 - h / 10;
+      coord_t const y3 = y1 + h / 5;
+      coord_t const y0 = y2 - h / 4;
+      coord_t const y4 = y2 + h / 4;
+      glyph_line(x1, y1, x3, y1, hlw);
+      glyph_line(x1, y3, x3, y3, hlw);
+      glyph_line(x2 + w / 4, y0, x2 -  w / 4, y4, hlw);
+    }
+
+  public:
+    void diamond(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      coord_t const w1 = bold() ? w * 9 / 10 : std::min(w - 2, w * 4 / 5);
+      coord_t const h1 = bold() ? h * 9 / 10 : std::min(h - 2, h * 4 / 5);
+      coord_t const x1 = x + (w - w1) / 2;
+      coord_t const y1 = y + (h - h1) / 2;
+      coord_t const x2 = x1 + w1, xM = x + w / 2;
+      coord_t const y2 = y1 + h1, yM = y + h / 2;
+      coord_t points[4][2] = { {xM, y1}, {x1, yM}, {xM, y2}, {x2, yM} };
+      glyph_polygon(points, 4);
+    }
+    void pi(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      coord_t const hlw = hline_width();
+      coord_t const w1 = std::max<coord_t>(4, (bold() ? w * 9 / 10 : std::min(w - 1, std::max(5, w * 7 / 8))) - hlw);
+      coord_t const x2 = x + w / 2;
+      coord_t const x1 = x2 - w1 / 2;
+      coord_t const x3 = x1 + w1;
+
+      coord_t const y1 = y + h * 4 / 10;
+      coord_t const y2 = y + h * 7 / 10;
+      coord_t const tip = (w1 + 5) / 6;
+      glyph_line(x1, y1, x3, y1, hlw);
+      glyph_line(x1 + tip, y1, x1 + tip, y2, hlw);
+      glyph_line(x3 - tip, y1, x3 - tip, y2, hlw);
+    }
+    void bullet(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      coord_t const xo = x + w / 2, yo = y + h * 2 / 5;
+      coord_t const hlw = hline_width();
+      g->fill_ellipse(xo - hlw, yo - hlw, xo + hlw + 1, yo + hlw + 1, color);
+    }
+    void degree(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      coord_t const hlw = hline_width();
+      coord_t const xo = x + w / 2 - hlw * 2, yo = y + hlw / 2;
+      g->draw_ellipse(xo, yo, xo + 2 * hlw + 2, yo + 2 * hlw + 2, color, hlw);
+    }
+    void lantern(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      coord_t const hlw = hline_width();
+      coord_t const xL = x + (hlw - 1) / 2, xR = x + w - hlw / 2;
+      coord_t const yT = y + (hlw - 1) / 2, yB = y + h - hlw / 2;
+      coord_t const ww = xR - xL, hh = yB - yT;
+
+      coord_t const lantern_half_width = std::clamp(hlw + 1, (ww + 1) / 3, w / 2);
+      coord_t const xc3 = xR;
+      coord_t const xc2 = xc3 - lantern_half_width;
+      coord_t const xc1 = xc2 - lantern_half_width;
+
+      coord_t const yc3 = yB - hlw;
+      coord_t const yc2 = std::max(y + hlw * 2, yc3 - hh / 2);
+      coord_t const yb1 = std::max(yT, yc2 - hlw * 4);
+      coord_t const yc1 = (yb1 + yc2) / 2;
+
+      glyph_line(xc1, yc2, xc3, yc2, hlw);
+      glyph_line(xc1, yc3, xc3, yc3, hlw);
+      glyph_line(xc1, yc2, xc1, yc3, hlw);
+      glyph_line(xc3, yc2, xc3, yc3, hlw);
+      glyph_line(xc2, (yc2 + yc3) / 2, xc2, yc3, hlw);
+      glyph_line(xc2, yc1, xc2, yc2, hlw);
+      glyph_line(x, yc1, std::min(xc2 + hlw + 1, xR), yb1, hlw);
+    }
+
+  public:
+    // draw_boxline で使う flags を構築します。
+    // 引数には中心から左・右・上・下に向かうそれぞれの罫線素片の線種を指定します。
+    // 線の種類は次の整数で指定します。
+    //   0: 線なし, 1: 実線, 2: 太線, 3: 2重線
+    static constexpr std::uint32_t boxline_flags(unsigned l, unsigned r, unsigned t, unsigned b) {
+      return l | r << 2 | t << 4 | b << 6;
+    }
+
+  public:
+    void boxline(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font, std::uint32_t flags) {
+      set_parameters(g, x, y, w, h, color, font);
+
+      coord_t const hlw = hline_width();
+      coord_t const vlw = vline_width();
+      int const L = 3 & flags;
+      int const R = 3 & flags >> 2;
+      int const T = 3 & flags >> 4;
+      int const B = 3 & flags >> 6;
+
+      coord_t const xc = x + w / 2, yc = y + h / 2;
+      coord_t const v3iw = std::ceil(vlw * 0.5);
+      coord_t const h3iw = std::ceil(hlw * 0.5);
+
+      coord_t const v1L = xc - vlw / 2, v1R = xc + (vlw + 1) / 2;
+      coord_t const v2L = xc - vlw, v2R = xc + vlw;
+      coord_t const v3iL = xc - v3iw / 2, v3iR = xc + (v3iw + 1) / 2;
+      coord_t const v3L = v3iL - vlw, v3R = v3iR + vlw;
+      coord_t const vL[5] = {0, v1L, v2L, v3L, v3iL};
+      coord_t const vR[5] = {0, v1R, v2R, v3R, v3iR};
+
+      coord_t const h1T = yc - hlw / 2, h1B = yc + (hlw + 1) / 2;
+      coord_t const h2T = yc - hlw, h2B = yc + hlw;
+      coord_t const h3iT = yc - h3iw / 2, h3iB = yc + (h3iw + 1) / 2;
+      coord_t const h3T = h3iT - hlw, h3B = h3iB + hlw;
+      coord_t const hT[5] = {0, h1T, h2T, h3T, h3iT};
+      coord_t const hB[5] = {0, h1B, h2B, h3B, h3iB};
+
+      auto const _segment =
+        [] (int L, int T, int B, coord_t const* vL, coord_t const* vR, coord_t const* hT, coord_t const* hB, auto rect) {
+          if (L == 0) return;
+          int crossing = std::max(T, B);
+          coord_t const x2 = vR[crossing];
+          switch (L) {
+          case 1:
+            rect(crossing ? x2 : vR[1], hT[1], hB[1]);
+            break;
+          case 2:
+            rect(crossing ? x2 : vR[2], hT[2], hB[2]);
+            break;
+          case 3:
+            rect(T == 3 ? vL[4] : crossing ? x2 : vR[3], hT[3], hT[4]);
+            rect(B == 3 ? vL[4] : crossing ? x2 : vR[3], hB[4], hB[3]);
+            break;
+          }
+        };
+
+      if (flags & 0x0F) {
+        if ((flags & 0x0F) == boxline_flags(1, 1, 0, 0)) {
+          g->fill_rectangle(x, hT[1], x + w, hB[1], color);
+        } else if ((flags & 0x0F) == boxline_flags(2, 2, 0, 0)) {
+          g->fill_rectangle(x, hT[2], x + w, hB[2], color);
+        } else if (flags == boxline_flags(3, 3, 0, 0)) {
+          g->fill_rectangle(x, hT[3], x + w, hT[4], color);
+          g->fill_rectangle(x, hB[4], x + w, hB[3], color);
+        } else if (flags & 0x0F) {
+          _segment(
+            L, T, B, vL, vR, hT, hB,
+            [&] (coord_t x2, coord_t y1, coord_t y2) { g->fill_rectangle(x, y1, x2, y2, color); });
+          _segment(
+            R, T, B, vR, vL, hT, hB,
+            [&] (coord_t x1, coord_t y1, coord_t y2) { g->fill_rectangle(x1, y1, x + w, y2, color); });
+        }
+      }
+
+      if (flags & 0xF0) {
+        if ((flags & 0xF0) == boxline_flags(0, 0, 1, 1)) {
+          g->fill_rectangle(vL[1], y, vR[1], y + h, color);
+        } else if ((flags & 0xF0) == boxline_flags(0, 0, 2, 2)) {
+          g->fill_rectangle(vL[2], y, vR[2], y + h, color);
+        } else if (flags == boxline_flags(0, 0, 3, 3)) {
+          g->fill_rectangle(vL[3], y, vL[4], y + h, color);
+          g->fill_rectangle(vR[4], y, vR[3], y + h, color);
+        } else if (flags & 0xF0) {
+          _segment(
+            T, L, R, hT, hB, vL, vR,
+            [&] (coord_t y2, coord_t x1, coord_t x2) { g->fill_rectangle(x1, y, x2, y2, color); });
+          _segment(
+            B, L, R, hB, hT, vL, vR,
+            [&] (coord_t y1, coord_t x1, coord_t x2) { g->fill_rectangle(x1, y1, x2, y + h, color); });
+        }
+      }
+    }
+
+  public:
+    void white_box(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      coord_t const hlw = hline_width();
+      coord_t const vlw = vline_width();
+      coord_t const x1 = x, y1 = y, x2 = x + w, y2 = y + h;
+      g->fill_rectangle(x1, y1, x2, y1 + hlw, color);
+      g->fill_rectangle(x1, y2 - hlw, x2, y2, color);
+      g->fill_rectangle(x1, y1, x1 + vlw, y2, color);
+      g->fill_rectangle(x2 - vlw, y1, x2, y2, color);
+    }
+    void black_box(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      g->fill_rectangle(x, y, x + w, y + h, color);
+    }
+    void check_box(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      g->checked_rectangle(x, y, x + w, y + h, color);
+    }
+
+  public:
+    void overline(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      coord_t const hlw = hline_width();
+      coord_t const x1 = x, x2 = x + w;
+      g->fill_rectangle(x1, y, x2, y + hlw, color);
+    }
+    void underline(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
+      set_parameters(g, x, y, w, h, color, font);
+      coord_t const hlw = hline_width();
+      coord_t const x1 = x, x2 = x + w, yB = y + h;
+      g->fill_rectangle(x1, yB - hlw, x2, yB, color);
+    }
+    void hline(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font, double position) {
+      set_parameters(g, x, y, w, h, color, font);
+      coord_t const hlw = hline_width();
+      coord_t const x1 = x, x2 = x + w;
+      coord_t const y0 = std::round(y + h * position);
+      coord_t const yT = y0 - hlw / 2, yB = y0 + (hlw + 1) / 2;
+      g->fill_rectangle(x1, yT, x2, yB, color);
     }
   };
 
@@ -966,497 +1390,322 @@ namespace ansi {
 
   private:
     template<typename Graphics>
-    void acs_draw_invariant(Graphics& g, coord_t x, coord_t y, std::uint32_t code, curpos_t width, color_t color, font_t font) {
-      coord_t const x1 = x, x2 = x + wstat.m_xpixel * width;
-      coord_t y1 = y;
-      coord_t y2 = y + wstat.m_ypixel;
-      bool const bold = font & font_weight_bold; // bold or heavy
+    struct character_drawer {
+      static constexpr std::uint32_t flag_processed = charflag_private1;
 
-      // DECDWL, DECDHL
-      bool const dwl = font & font_decdwl;
-      bool const dhl = font & font_decdhl;
-      if (dhl) {
-        if (font & font_layout_lower_half) {
-          y1 -= wstat.m_ypixel;
-          this->clip_decdhl_lower(g, y);
-        } else {
-          y2 += wstat.m_ypixel;
-          this->clip_decdhl_upper(g, y);
-        }
-      }
+      window_renderer_t* renderer;
+      Graphics* g;
 
-      auto const _center = [&] (coord_t x1, coord_t x2, bool decdwl) -> std::tuple<coord_t, coord_t> {
-        coord_t xc1 = (x1 + x2) / 2;
-        coord_t xc2 = xc1 + 1;
-        if (decdwl || bold){
-          xc1--;
-          if (decdwl && bold) {
-            xc1--;
-            xc2++;
-          }
-        }
-        return { xc1, xc2 };
-      };
+      coord_t xorigin;
+      coord_t yorigin;
+      coord_t xpixel;
+      coord_t ypixel;
+      curpos_t height;
 
-      int vparam = 0, hparam = 0;
-      switch (code) {
-      case ascii_0: // ACS_BLOCK
-        {
-          coord_t const w = (bold ? 2 : 1) * (dwl ? 2 : 1);
-          g.fill_rectangle(x1, y1, x2, y1 + w, color);
-          g.fill_rectangle(x1, y2 - w, x2, y2, color);
-          g.fill_rectangle(x1, y1, x1 + w, y2, color);
-          g.fill_rectangle(x2 - w, y1, x2, y2, color);
-        }
-        break;
-      case ascii_h: // ACS_BOARD
-        g.fill_rectangle(x1, y1, x2, y2, color);
-        break;
-      case ascii_a: // ACS_CKBOARD
-        g.checked_rectangle(x1, y1, x2, y2, color);
-        break;
+      color_resolver_t _color;
+      font_resolver_t _font;
 
-      case ascii_x: // ACS_VLINE
-        {
-          auto [xc1, xc2] = _center(x1, x2, dwl);
-          g.fill_rectangle(xc1, y1, xc2, y2, color);
-        }
-        break;
-      case ascii_o: // ACS_S1
-        g.fill_rectangle(x1, y1, x2, y1 + (bold ? 2 : 1) * (dhl ? 2 : 1), color);
-        break;
-      case ascii_p: hparam = -(y2 - y1) / 4; goto hline; // ACS_S3
-      case ascii_q: hparam = 0; goto hline; // ACS_HLINE
-      case ascii_r: hparam = +(y2 - y1) / 4; goto hline; // ACS_S7
-      case ascii_s: // ACS_S9
-        g.fill_rectangle(x1, y2 - (bold ? 2 : 1) * (dhl ? 2 : 1), x2, y2, color);
-        break;
-      hline:
-        {
-          auto [yc1, yc2] = _center(y1, y2, dhl);
-          g.fill_rectangle(x1, yc1 + hparam, x2, yc2 + hparam, color);
-        }
-        break;
-      case ascii_j: hparam = 2; vparam = 2; goto hvlines; // ACS_LRCORNER
-      case ascii_k: hparam = 2; vparam = 3; goto hvlines; // ACS_URCORNER
-      case ascii_l: hparam = 3; vparam = 3; goto hvlines; // ACS_ULCORNER
-      case ascii_m: hparam = 3; vparam = 2; goto hvlines; // ACS_LLCORNER
-      case ascii_n: hparam = 1; vparam = 1; goto hvlines; // ACS_PLUS
-      case ascii_t: hparam = 3; vparam = 1; goto hvlines; // ACS_LTEE
-      case ascii_u: hparam = 2; vparam = 1; goto hvlines; // ACS_RTEE
-      case ascii_v: hparam = 1; vparam = 2; goto hvlines; // ACS_BTEE
-      case ascii_w: hparam = 1; vparam = 3; goto hvlines; // ACS_TTEE
-      hvlines:
-        {
-          auto [xc1, xc2] = _center(x1, x2, dwl);
-          auto [yc1, yc2] = _center(y1, y2, dhl);
-          switch (hparam) {
-          case 1: g.fill_rectangle(x1, yc1, x2, yc2, color); break;
-          case 2: g.fill_rectangle(x1, yc1, xc2, yc2, color); break;
-          case 3: g.fill_rectangle(xc1, yc1, x2, yc2, color); break;
-          }
-          switch (vparam) {
-          case 1: g.fill_rectangle(xc1, y1, xc2, y2, color); break;
-          case 2: g.fill_rectangle(xc1, y1, xc2, yc2, color); break;
-          case 3: g.fill_rectangle(xc1, yc1, xc2, y2, color); break;
-          }
-        }
-        break;
-      }
-      if (dhl) g.clip_clear();
-    }
-    template<typename Graphics>
-    void acs_draw_glyph(Graphics& g, coord_t x, coord_t y, std::uint32_t code, curpos_t width, color_t color, font_t font) {
-      font_metric_t fmetric(wstat.m_xpixel, wstat.m_ypixel);
-      auto [dx, dy, dxW] = fmetric.get_displacement(font);
-      x += dx + dxW * (width - 1);
-      y += dy;
+      batch_string_drawer<Graphics> m_str;
+      graphics_drawer<Graphics> m_graph;
 
-      auto [w, h] = fmetric.get_font_size(font);
+    public:
+      character_drawer() {}
 
-      if (font & font_layout_lower_half)
-        this->clip_decdhl_lower(g, y);
-      else if (font & font_layout_upper_half)
-        this->clip_decdhl_upper(g, y);
-
-      bool const bold = font & font_weight_bold; // bold or heavy
-
-      auto const _polygon = [&] (coord_t (*points)[2], std::size_t count) {
-        if (font & font_flag_italic) {
-          for (std::size_t i = 0; i < count; i++)
-            points[i][0] -= (points[i][1] - (y + h / 2)) / 3;
-        }
-        g.fill_polygon(points, count, color);
-      };
-      auto const _line = [&] (coord_t x1, coord_t y1, coord_t x2, coord_t y2, coord_t w) {
-        if (font & font_flag_italic) {
-          x1 -= (y1 - (y + h / 2)) / 3;
-          x2 -= (y2 - (y + h / 2)) / 3;
-        }
-        g.draw_line(x1, y1, x2, y2, color, w);
-      };
-
-      switch (code) {
-      case ascii_back_quote: // ACS_DIAMOND
-        {
-          coord_t const w1 = bold ? w * 9 / 10 : std::min(w - 2, w * 4 / 5);
-          coord_t const h1 = bold ? h * 9 / 10 : std::min(h - 2, h * 4 / 5);
-          coord_t const x1 = x + (w - w1) / 2;
-          coord_t const y1 = y + (h - h1) / 2;
-          coord_t const x2 = x1 + w1, xM = x + w / 2;
-          coord_t const y2 = y1 + h1, yM = y + h / 2;
-          coord_t points[4][2] = { {xM, y1}, {x1, yM}, {xM, y2}, {x2, yM} };
-          _polygon(points, 4);
-        }
-        break;
-      case ascii_minus: // ACS_UARROW
-      case ascii_dot: // ACS_DARROW
-        {
-          coord_t const xM = x + w / 2;
-          coord_t const vlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdwl));
-          coord_t const h1 = std::max<coord_t>(5, (bold ? h * 9 / 10 : std::min(h - 2, std::max(5, h * 4 / 5))) - (vlw - 1));
-          coord_t const xwing = std::max<coord_t>(3, (w - vlw - 1) / 2);
-          coord_t const ywing = !(font & font_decdwl) || (font & font_decdhl) ? xwing : (xwing + 1) / 2;
-          if (code == ascii_minus) {
-            coord_t const y1 = y + h  - (h - h1) / 2;
-            coord_t const y2 = y1 - h1;
-            _line(xM, y1, xM, y2, vlw);
-            _line(xM, y2, xM - xwing, y2 + ywing, vlw);
-            _line(xM, y2, xM + xwing, y2 + ywing, vlw);
-          } else {
-            coord_t const y1 = y + (h - h1) / 2;
-            coord_t const y2 = y1 + h1;
-            _line(xM, y1, xM, y2, vlw);
-            _line(xM, y2, xM - xwing, y2 - ywing, vlw);
-            _line(xM, y2, xM + xwing, y2 - ywing, vlw);
-          }
-        }
-        break;
-      case ascii_plus: // ACS_RARROW
-      case ascii_comma: // ACS_LARROW
-        {
-          coord_t const yM = y + h / 2;
-          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
-          coord_t const w1 = std::max<coord_t>(4, (bold ? w * 9 / 10 : std::min(w - 2, std::max(5, w * 4 / 5))) - (hlw - 1));
-          coord_t const ywing = std::max<coord_t>(3, (h - hlw - 1) / 4);
-          coord_t const xwing = !(font & font_decdwl) || (font & font_decdhl) ? ywing : ywing * 2;
-          if (code == ascii_comma) {
-            coord_t const x1 = x + w  - (w - w1) / 2;
-            coord_t const x2 = x1 - w1;
-            _line(x1, yM, x2, yM, hlw);
-            _line(x2, yM, x2 + xwing, yM - ywing, hlw);
-            _line(x2, yM, x2 + xwing, yM + ywing, hlw);
-          } else {
-            coord_t const x1 = x + (w - w1) / 2;
-            coord_t const x2 = x1 + w1;
-            _line(x1, yM, x2, yM, hlw);
-            _line(x2, yM, x2 - xwing, yM - ywing, hlw);
-            _line(x2, yM, x2 - xwing, yM + ywing, hlw);
-          }
-        }
-        break;
-      case ascii_g: // ACS_PLMINUS
-      case ascii_y: // ACS_LEQUAL
-      case ascii_z: // ACS_GEQUAL
-        {
-          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
-          coord_t const w1 = std::max<coord_t>(4, (bold ? w * 9 / 10 : std::min(w - 1, std::max(5, w * 7 / 8))) - hlw);
-
-          coord_t const x2 = x + w / 2;
-          coord_t const x1 = x2 - w1 / 2;
-          coord_t const x3 = x1 + w1;
-          coord_t const y2 = y + h * 9 / 20 - hlw;
-          coord_t const y1 = y2 - h / 4;
-          coord_t const y3 = y2 + h / 4;
-          coord_t const y4 = y3 + hlw * 2;
-
-          _line(x1, y4, x3, y4, hlw);
-          switch (code) {
-          case ascii_g:
-            _line(x1, y2, x3, y2, hlw);
-            _line(x2, y1, x2, y3, hlw);
-            break;
-          case ascii_y:
-            _line(x3, y1, x1, y2, hlw);
-            _line(x1, y2, x3, y3, hlw);
-            break;
-          case ascii_z:
-            _line(x1, y1, x3, y2, hlw);
-            _line(x3, y2, x1, y3, hlw);
-            break;
-          }
-        }
-        break;
-      case ascii_vertical_bar: // ACS_NEQUAL
-        {
-          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
-          coord_t const w1 = std::max<coord_t>(4, (bold ? w * 9 / 10 : std::min(w - 1, std::max(5, w * 7 / 8))) - hlw);
-          coord_t const x2 = x + w / 2;
-          coord_t const x1 = x2 - w1 / 2;
-          coord_t const x3 = x1 + w1;
-          coord_t const y2 = y + h * 9 / 20;
-          coord_t const y1 = y2 - h / 10;
-          coord_t const y3 = y1 + h / 5;
-          coord_t const y0 = y2 - h / 4;
-          coord_t const y4 = y2 + h / 4;
-          _line(x1, y1, x3, y1, hlw);
-          _line(x1, y3, x3, y3, hlw);
-          _line(x2 + w / 4, y0, x2 -  w / 4, y4, hlw);
-        }
-        break;
-      case ascii_left_brace: // ACS_PI (A)
-        {
-          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
-          coord_t const w1 = std::max<coord_t>(4, (bold ? w * 9 / 10 : std::min(w - 1, std::max(5, w * 7 / 8))) - hlw);
-          coord_t const x2 = x + w / 2;
-          coord_t const x1 = x2 - w1 / 2;
-          coord_t const x3 = x1 + w1;
-
-          coord_t const y1 = y + h * 4 / 10;
-          coord_t const y2 = y + h * 7 / 10;
-          coord_t const tip = (w1 + 5) / 6;
-          _line(x1, y1, x3, y1, hlw);
-          _line(x1 + tip, y1, x1 + tip, y2, hlw);
-          _line(x3 - tip, y1, x3 - tip, y2, hlw);
-        }
-        break;
-      case ascii_tilde: // ACS_BULLET
-        {
-          coord_t const xo = x + w / 2, yo = y + h * 2 / 5;
-          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
-          g.fill_ellipse(xo - hlw, yo - hlw, xo + hlw + 1, yo + hlw + 1, color);
-        }
-        break;
-      case ascii_f: // ACS_DEGREE
-        {
-          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
-          coord_t const xo = x + w / 2 - hlw * 2, yo = y + hlw / 2;
-          g.draw_ellipse(xo, yo, xo + 3 * hlw + 1, yo + 3 * hlw + 1, color, hlw);
-        }
-        break;
-      case ascii_i: // ACS_LANTERN
-        {
-          coord_t const hlw = std::ceil(wstat.m_ypixel / 20.0) * (1 + bold + !!(font & font_decdhl));
-          coord_t const xL = x + (hlw - 1) / 2, xR = x + w - hlw / 2;
-          coord_t const yT = y + (hlw - 1) / 2, yB = y + h - hlw / 2;
-          coord_t const ww = xR - xL, hh = yB - yT;
-
-          coord_t const lantern_half_width = std::clamp(hlw + 1, (ww + 1) / 3, w / 2);
-          coord_t const xc3 = xR;
-          coord_t const xc2 = xc3 - lantern_half_width;
-          coord_t const xc1 = xc2 - lantern_half_width;
-
-          coord_t const yc3 = yB - hlw;
-          coord_t const yc2 = std::max(y + hlw * 2, yc3 - hh / 2);
-          coord_t const yb1 = std::max(yT, yc2 - hlw * 4);
-          coord_t const yc1 = (yb1 + yc2) / 2;
-
-          _line(xc1, yc2, xc3, yc2, hlw);
-          _line(xc1, yc3, xc3, yc3, hlw);
-          _line(xc1, yc2, xc1, yc3, hlw);
-          _line(xc3, yc2, xc3, yc3, hlw);
-          _line(xc2, (yc2 + yc3) / 2, xc2, yc3, hlw);
-          _line(xc2, yc1, xc2, yc2, hlw);
-          _line(x, yc1, std::min(xc2 + hlw + 1, xR), yb1, hlw);
-        }
-      }
-
-      if (font & (font_layout_upper_half | font_layout_lower_half))
-        g.clip_clear();
-    }
-
-    template<typename Graphics>
-    std::uint32_t draw_acs(Graphics& g, coord_t x, coord_t y, std::uint32_t code, curpos_t width, color_t color, font_t font) {
-      // ACS の対象でない文字は普通に文字として描画
-      bool const is_acs = (ascii_plus <= code && code <= ascii_dot) ||
-        (ascii_back_quote <= code && code < ascii_b) ||
-        (ascii_f <= code && code <= ascii_tilde) || code == ascii_0;
-      if (!is_acs) return code;
-
-      // ACS で別の Unicode 文字として描画する場合
-      switch (code) {
-      case ascii_plus: // ACS_RARROW (A)
-      case ascii_comma: // ACS_LARROW (A)
-      case ascii_minus: // ACS_UARROW (A)
-      case ascii_dot: // ACS_DARROW (A)
-      case ascii_back_quote: // ACS_DIAMOND (A)
-      case ascii_f: // ACS_DEGREE (A)
-      case ascii_g: // ACS_PLMINUS (A)
-      case ascii_i: // ACS_LANTERN
-      case ascii_y: // ACS_LEQUAL (A)
-      case ascii_z: // ACS_GEQUAL (A)
-      case ascii_left_brace: // ACS_PI (A)
-      case ascii_vertical_bar: // ACS_NEQUAL (A)
-      case ascii_tilde: // ACS_BULLET (A)
-        acs_draw_glyph(g, x, y, code, width, color, font);
-        return 0;
-      // case ascii_back_quote:   return 0x2666; // ACS_DIAMOND ***
-      // case ascii_a:            return 0x2592; // ACS_CKBOARD (A)
-      // case ascii_f:            return 0x00B0; // ACS_DEGREE (A)
-      // case ascii_g:            return 0x00B1; // ACS_PLMINUS (A)
-      // case ascii_i:            return 0x240B; // ACS_LANTERN
-      // case ascii_left_brace:   return 0x03C0; // ACS_PI (A)
-      // case ascii_vertical_bar: return 0x2260; // ACS_NEQUAL (A)***
-      case ascii_right_brace:  return 0x00A3; // ACS_STERLING
-      // case ascii_tilde:        return 0x2022; // ACS_BULLET (A)
-      // case ascii_plus:         return 0x2192; // ACS_RARROW (A)
-      // case ascii_comma:        return 0x2190; // ACS_LARROW (A)
-      // case ascii_minus:        return 0x2191; // ACS_UARROW (A)
-      // case ascii_dot:          return 0x2193; // ACS_DARROW (A)
-      // case ascii_y:            return 0x2264; // ACS_LEQUAL (A)
-      // case ascii_z:            return 0x2265; // ACS_GEQUAL (A)
-      }
-
-      acs_draw_invariant(g, x, y, code, width, color, font);
-      return 0;
-    }
-  public:
-    template<typename Graphics>
-    void draw_characters(Graphics& g, term_view_t const& view, std::vector<line_content>& content) {
-      coord_t const xorigin = wstat.m_xframe;
-      coord_t const yorigin = wstat.m_yframe;
-      coord_t const ypixel = wstat.m_ypixel;
-      coord_t const xpixel = wstat.m_xpixel;
-      curpos_t const height = view.height();
-      tstate_t const& s = view.state();
-
-      constexpr std::uint32_t flag_processed = charflag_private1;
-
-      aflags_t invisible_flags = attribute_t::is_invisible_set;
-      if (wstat.m_blinking_count & 1) invisible_flags |= attribute_t::is_rapid_blink_set;
-      if (wstat.m_blinking_count & 2) invisible_flags |= attribute_t::is_blink_set;
-      auto _visible = [invisible_flags] (std::uint32_t code, aflags_t aflags, bool sp_visible = false) {
+    private:
+      aflags_t invisible_flags;
+      bool _visible(std::uint32_t code, aflags_t aflags, bool sp_visible = false) const {
         return code != ascii_nul && (sp_visible || code != ascii_sp)
           && !(code & flag_processed)
           && !(aflags & invisible_flags);
-      };
+      }
 
-      color_resolver_t _color(s);
-      font_resolver_t _font;
-      font_metric_t _fmetric(wstat.m_xpixel, wstat.m_ypixel);
+      // DECDHL用の制限
+      void clip(font_t font, coord_t y) const {
+        if (font & font_layout_upper_half)
+          renderer->clip_decdhl_upper(*g, y);
+        else if (font & font_layout_lower_half)
+          renderer->clip_decdhl_lower(*g, y);
+      }
+      void unclip(font_t font) const {
+        // DECDHL用の制限の解除
+        if (font & (font_layout_upper_half | font_layout_lower_half))
+          g->clip_clear();
+      }
 
-      coord_t x = xorigin, y = yorigin, xL = xorigin, xR = xorigin;
-      coord_t dx = 0, dy = 0;
-      double dxW = 0.0;
+    private:
+      void draw_iso2022_graphics(coord_t x1, coord_t y1, char32_t code, cell_t const& cell) {
+        auto const& attr = cell.attribute;
+        color_t const fg = _color.resolve_fg(attr);
+        font_t const font = _font.resolve_font(attr);
 
-      typename Graphics::character_buffer charbuff;
-      auto _push_char = [&charbuff, &xR, &dx, &dxW] (std::uint32_t code, coord_t prog, curpos_t width) {
-        xR += prog;
+        this->clip(font, y1);
 
-        // 文字位置の補正
-        if (dxW && width > 1) {
-          int const shift = dxW * (width - 1);
-          if (charbuff.empty())
-            dx += shift;
-          else
-            charbuff.shift(shift);
-          prog -= shift;
+        code -= charflag_iso2022_graphics_beg;
+
+        if (code < 0x1000) {
+          // 文字的な図形 (フォントと同様の変形を受ける)
+          font_metric_t fmetric(xpixel, ypixel);
+          auto [dx, dy, dxW] = fmetric.get_displacement(font);
+          coord_t const x = x1 + std::round(dx + dxW * cell.width);
+          coord_t const y = y1 + std::round(dy);
+          auto [w, h] = fmetric.get_font_size(font);
+
+          switch (code) {
+          case 0x000: m_graph.rarrow(g, x, y, w, h, fg, font); break;
+          case 0x001: m_graph.larrow(g, x, y, w, h, fg, font); break;
+          case 0x002: m_graph.uarrow(g, x, y, w, h, fg, font); break;
+          case 0x003: m_graph.darrow(g, x, y, w, h, fg, font); break;
+          case 0x004: m_graph.diamond(g, x, y, w, h, fg, font); break;
+          case 0x005: m_graph.degree(g, x, y, w, h, fg, font); break;
+          case 0x006: m_graph.pm(g, x, y, w, h, fg, font); break;
+          case 0x007: m_graph.lantern(g, x, y, w, h, fg, font); break;
+          case 0x008: m_graph.le(g, x, y, w, h, fg, font); break;
+          case 0x009: m_graph.ge(g, x, y, w, h, fg, font); break;
+          case 0x00a: m_graph.pi(g, x, y, w, h, fg, font); break;
+          case 0x00b: m_graph.ne(g, x, y, w, h, fg, font); break;
+          default:
+          case 0x00c: m_graph.bullet(g, x, y, w, h, fg, font); break;
+          }
+        } else {
+          // 背景的な図形
+          coord_t w = xpixel, h = ypixel;
+          if (font & font_decdwl) w *= 2;
+          if (font & font_decdhl) h *= 2;
+          if (font & font_layout_lower_half) y1 -= ypixel;
+          if (0x1001 <= code && code < 0x1100) {
+            m_graph.boxline(g, x1, y1, w, h, fg, font, code & 0xFF);
+          } else {
+            switch (code) {
+            case 0x1000: m_graph.white_box(g, x1, y1, w, h, fg, font); break;
+            case 0x1100: m_graph.black_box(g, x1, y1, w, h, fg, font); break;
+            case 0x1101: m_graph.check_box(g, x1, y1, w, h, fg, font); break;
+            case 0x1102: m_graph.overline(g, x1, y1, w, h, fg, font); break;
+            case 0x1103: m_graph.hline(g, x1, y1, w, h, fg, font, 0.25); break;
+            case 0x1104: m_graph.hline(g, x1, y1, w, h, fg, font, 0.75); break;
+            case 0x1105: m_graph.underline(g, x1, y1, w, h, fg, font); break;
+            }
+          }
         }
 
-        charbuff.add_char(code, prog);
-      };
+        this->unclip(font);
+      }
 
-      for (curpos_t iline = 0; iline < height; iline++, y += ypixel) {
-        if (!content[iline].is_redraw_requested) continue;
+    private:
+      void draw_unicode(coord_t x1, coord_t y1, char32_t code, cell_t const& cell) {
+        auto const& attr = cell.attribute;
+        color_t const fg = _color.resolve_fg(attr);
+        font_t const font = _font.resolve_font(attr);
+        m_str.start(font);
+        m_str.push(code, cell.width);
+        this->clip(font, y1);
+        m_str.render(g, x1, y1, font, fg);
+        this->unclip(font);
+      }
 
-        std::vector<cell_t>& cells = content[iline].cells;
-        x = xorigin;
-        charbuff.reserve(cells.size());
+      void draw_unicode_extended(
+        coord_t x1, coord_t y1, cell_t const& cell,
+        std::vector<cell_t>& cells, std::size_t& i, coord_t& x
+      ) {
+        std::uint32_t code = cell.character.value;
+        code &= ~charflag_cluster_extension;
+        auto const& attr = cell.attribute;
+        color_t const fg = _color.resolve_fg(attr);
+        font_t const font = _font.resolve_font(attr);
+        m_str.start(font);
+        m_str.push(code, cell.width);
 
-        for (std::size_t i = 0; i < cells.size(); ) {
-          auto const& cell = cells[i];
-          auto const& attr = cell.attribute;
-          xL = xR = x;
-          coord_t const cell_progress = cell.width * xpixel;
-          i++;
-          x += cell_progress;
-          std::uint32_t code = cell.character.value;
-          code &= ~charflag_cluster_extension;
-          if (!_visible(code, cell.attribute.aflags)) continue;
+        // 同じ色・フォントのセルは同時に描画してしまう。
+        for (std::size_t j = i; j < cells.size(); j++) {
+          auto const& cell2 = cells[j];
+          std::uint32_t code2 = cell2.character.value;
 
-          // 色の決定
-          color_t const fg = _color.resolve_fg(attr);
-          font_t const font = _font.resolve_font(attr);
+          // 回転文字の場合は一つずつ書かなければならない。
+          // 零幅の cluster などだけ一緒に描画する。
+          if ((font & font_rotation_mask) && cell2.width) break;
 
-          if (!character_t::is_char(code)) {
-            if (code & charflag_iso2022) {
-              std::uint32_t const cssize = code & charflag_iso2022_db ? 96 * 96 : 96;
-              std::uint32_t const charset =
-                (code & charflag_iso2022_mask_code) / cssize |
-                (code & charflag_iso2022_mask_flag);
-              std::uint32_t const ch = 0x20 +
-                (code & charflag_iso2022_mask_code) % cssize;
-              switch (charset) {
-              case iso2022_94_vt100_acs:
-                code = draw_acs(g, xL, y, ch, cell.width, fg, font);
-                if (!code) continue;
-              }
-            } else
-              continue;
+          bool const is_cluster = code2 & charflag_cluster_extension;
+          color_t const fg2 = _color.resolve_fg(cell2.attribute);
+          font_t const font2 = _font.resolve_font(cell2.attribute);
+          code2 &= ~charflag_cluster_extension;
+          if (!_visible(code2, cell2.attribute.aflags, font & font_layout_proportional)) {
+            if (font & font_layout_proportional) break;
+            m_str.skip(cell2.width);
+          } else if (!character_t::is_char(code2)) {
+            m_str.skip(cell2.width);
+            continue;
+          } else if (is_cluster || (fg == fg2 && font == font2)) {
+            m_str.push(code2, cell2.width);
+          } else {
+            if (font & font_layout_proportional) break;
+            m_str.skip(cell2.width);
+            continue;
           }
 
-          std::tie(dx, dy, dxW) = _fmetric.get_displacement(font);
-          charbuff.clear();
-          _push_char(code, cell_progress, cell.width);
+          if (i == j) {
+            i++;
+            x += cell2.width * xpixel;
+          } else
+            cells[j].character.value |= flag_processed;
+        }
 
-          // 同じ色を持つ文字は同時に描画してしまう。
-          for (std::size_t j = i; j < cells.size(); j++) {
-            auto const& cell2 = cells[j];
-            std::uint32_t code2 = cell2.character.value;
-            coord_t const cell2_progress = cell2.width * xpixel;
+        this->clip(font, y1);
+        m_str.render(g, x1, y1, font, fg);
+        this->unclip(font);
+      }
 
-            // 回転文字の場合は一つずつ書かなければならない。
-            // 零幅の cluster などだけ一緒に描画する。
-            if ((font & font_rotation_mask) && cell2_progress) break;
+    private:
+      std::vector<char32_t> vec;
 
-            bool const is_cluster = code2 & charflag_cluster_extension;
-            color_t const fg2 = _color.resolve_fg(cell2.attribute);
-            font_t const font2 = _font.resolve_font(cell2.attribute);
-            code2 &= ~charflag_cluster_extension;
-            if (!_visible(code2, cell2.attribute.aflags, font & font_layout_proportional)) {
-              if (font & font_layout_proportional) break;
-              charbuff.shift(cell2_progress);
-            } else if (!character_t::is_char(code2)) {
-              charbuff.shift(cell2_progress);
-              continue;
-            } else if (is_cluster || (fg == fg2 && font == font2)) {
-              _push_char(code2, cell2_progress, cell2.width);
-            } else {
-              if (font & font_layout_proportional) break;
-              charbuff.shift(cell2_progress);
-              continue;
+      void draw_iso2022_extended(
+        coord_t x1, coord_t y1, cell_t const& cell,
+        std::vector<cell_t>& cells, std::size_t& i, coord_t& x
+      ) {
+        std::uint32_t const code = cell.character.value;
+        std::uint32_t const cssize = code2cssize(code);
+        std::uint32_t const cs = code2charset(code, cssize);
+
+        auto const& iso2022 = iso2022_charset_registry::instance();
+        iso2022_charset const* charset = iso2022.charset(cs);
+        if (!(charset && charset->get_chars(vec, (code & charflag_iso2022_mask_code) % cssize))) {
+          // 文字集合で定義されていない区点は REPLACEMENT CHARACTER として表示する
+          draw_unicode(x1, y1, 0xFFFD, cell);
+          return;
+        } else if (vec.size() == 1 && is_iso2022_graphics(vec[0])) {
+          draw_iso2022_graphics(x1, y1, vec[0], cell);
+          return;
+        } else if (vec.empty()) {
+          return;
+        }
+
+        auto const& attr = cell.attribute;
+        color_t const fg = _color.resolve_fg(attr);
+        font_t const font = _font.resolve_font(attr);
+        m_str.start(font);
+        m_str.push(vec[0], cell.width);
+        for (std::size_t k = 1; k < vec.size(); k++)
+          m_str.push(vec[k], 0);
+
+        // 同じ文字集合・同じ色・フォントのセルは同時に描画する。
+        for (std::size_t j = i; j < cells.size(); j++) {
+          auto const& cell2 = cells[j];
+          std::uint32_t code2 = cell2.character.value;
+
+          // 回転文字の場合は一つずつ書かなければならない。
+          // 零幅の cluster などだけ一緒に描画する。
+          if ((font & font_rotation_mask) && cell2.width) break;
+
+          bool const is_cluster = code2 & charflag_cluster_extension;
+          bool const cs2 = code2charset(code2);
+          bool const is_same_charset = (code2 & charflag_iso2022) && cs2 == cs;
+          color_t const fg2 = _color.resolve_fg(cell2.attribute);
+          font_t const font2 = _font.resolve_font(cell2.attribute);
+
+          code2 &= ~charflag_cluster_extension;
+          if (!_visible(code2, cell2.attribute.aflags, font & font_layout_proportional)) {
+            goto discard;
+          } else if (is_cluster) {
+            m_str.push(code2, cell2.width);
+            goto processed;
+          } else if (is_same_charset && fg == fg2 && font == font2) {
+            iso2022_charset const* charset2 = iso2022.charset(cs2);
+            if (!(charset2 && charset2->get_chars(vec, (code2 & charflag_iso2022_mask_code) % cssize))) {
+              goto process_later;
+            } else if (vec.size() == 1 && is_iso2022_graphics(vec[0])) {
+              //■その場で描画しても良い気がする
+              draw_iso2022_graphics(x1 + m_str.x(), y1, vec[0], cell2);
+              m_str.skip(cell2.width);
+              goto processed;
+            } else if (vec.empty()) {
+              goto discard;
             }
 
-            if (i == j) {
-              i++;
-              x += cell2_progress;
-            } else
-              cells[j].character.value |= flag_processed;
-          }
-
-          // DECDHL用の制限
-          if (font & font_layout_upper_half)
-            this->clip_decdhl_upper(g, y);
-          else if (font & font_layout_lower_half)
-            this->clip_decdhl_lower(g, y);
-
-          if (font & font_rotation_mask) {
-            g.draw_rotated_characters(xL, y, dx, dy, xR - xL, charbuff, font, fg);
-          } else if (font & font_layout_proportional) {
-            // 配置を GDI に任せる
-            g.draw_text(xL + dx, y + dy, charbuff, font, fg);
+            m_str.push(vec[0], cell.width);
+            for (std::size_t k = 1; k < vec.size(); k++)
+              m_str.push(vec[k], 0);
+            goto processed;
           } else {
-            g.draw_characters(xL + dx, y + dy, charbuff, font, fg);
+            goto process_later;
           }
+          continue;
 
-          // DECDHL用の制限の解除
-          if (font & (font_layout_upper_half | font_layout_lower_half))
-            g.clip_clear();
+        discard:
+          if (font & font_layout_proportional) break;
+          m_str.skip(cell2.width);
+          goto processed;
+
+        process_later:
+          if (font & font_layout_proportional) break;
+          m_str.skip(cell2.width);
+          continue;
+
+        processed:
+          if (i == j) {
+            i++;
+            x += cell2.width * xpixel;
+          } else
+            cells[j].character.value |= flag_processed;
         }
 
-        // clear private flags
-        for (cell_t& cell : cells) cell.character.value &= ~flag_processed;
+        this->clip(font, y1);
+        m_str.render(g, x1, y1, font, fg);
+        this->unclip(font);
       }
+
+    public:
+      void draw(window_renderer_t* renderer, Graphics& g, term_view_t const& view, std::vector<line_content>& content) {
+        this->renderer = renderer;
+        this->g = &g;
+
+        auto const& wstat = renderer->wstat;
+        this->xorigin = wstat.m_xframe;
+        this->yorigin = wstat.m_yframe;
+        this->ypixel = wstat.m_ypixel;
+        this->xpixel = wstat.m_xpixel;
+        this->height = view.height();
+        this->_color = color_resolver_t(view.state());
+        this->m_str.initialize(wstat.m_xpixel, wstat.m_ypixel);
+        this->m_graph.initialize(wstat.m_xpixel, wstat.m_ypixel);
+
+        this->invisible_flags = attribute_t::is_invisible_set;
+        if (wstat.m_blinking_count & 1) invisible_flags |= attribute_t::is_rapid_blink_set;
+        if (wstat.m_blinking_count & 2) invisible_flags |= attribute_t::is_blink_set;
+
+        for (curpos_t iline = 0; iline < height; iline++) {
+          if (!content[iline].is_redraw_requested) continue;
+          auto& cells = content[iline].cells;
+
+          coord_t x = xorigin;
+          coord_t const y = yorigin + iline * ypixel;
+          m_str.reserve(cells.size());
+
+          for (std::size_t i = 0; i < cells.size(); ) {
+            auto const& cell = cells[i];
+            coord_t const x1 = x;
+            coord_t const& y1 = y;
+            i++;
+            x += cell.width * xpixel;
+
+            std::uint32_t code = cell.character.value;
+            if (!_visible(code, cell.attribute.aflags)) continue;
+
+            if (character_t::is_char(code)) {
+              draw_unicode_extended(x1, y1, cell, cells, i, x);
+            } else if (code & charflag_iso2022) {
+              draw_iso2022_extended(x1, y1, cell, cells, i, x);
+            }
+          }
+
+          // clear private flags
+          for (cell_t& cell : cells) cell.character.value &= ~flag_processed;
+        }
+      }
+    };
+
+  public:
+    template<typename Graphics>
+    void draw_characters(Graphics& g, term_view_t const& view, std::vector<line_content>& content) {
+      character_drawer<Graphics> drawer;
+      drawer.draw(this, g, view, content);
     }
     template<typename Graphics>
     void draw_characters_mono(Graphics& g, term_view_t const& view, std::vector<line_content> const& content) {

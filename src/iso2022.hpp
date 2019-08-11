@@ -26,6 +26,20 @@ namespace contra {
   inline constexpr charset_t iso2022_96_iso8859_1  = 1;
   inline constexpr charset_t iso2022_94_vt100_acs  = 2;
 
+  inline constexpr charset_t code2cssize(char32_t code)  {
+    return code & charflag_iso2022_db ? 96 * 96 : 96;
+  }
+  inline constexpr charset_t code2charset(char32_t code, charset_t cssize)  {
+    return (code & charflag_iso2022_mask_code) / cssize |
+      (code & charflag_iso2022_mask_flag);
+  }
+  inline constexpr charset_t code2charset(char32_t code)  {
+    return code2charset(code, code2cssize(code));
+  }
+  inline constexpr bool is_iso2022_graphics(char32_t code) {
+    return charflag_iso2022_graphics_beg <= code && code < charflag_iso2022_graphics_end;
+  }
+
   enum iso2022_charset_size {
     iso2022_size_sb94,
     iso2022_size_sb96,
@@ -208,9 +222,14 @@ namespace contra {
       //   m_category_sb.push_back(charset);
       // }
 
-      m_sb94[ascii_0 - 0x30] = iso2022_94_vt100_acs;
       m_sb94[ascii_B - 0x30] = iso2022_94_iso646_usa;
       m_sb96[ascii_A - 0x30] = iso2022_96_iso8859_1;
+      m_sb94[ascii_0 - 0x30] = iso2022_94_vt100_acs;
+      {
+        iso2022_charset charset(iso2022_size_sb94, 1);
+        charset.seq = "0";
+        m_category_sb.emplace_back(std::move(charset));
+      }
     }
 
   private:
@@ -380,6 +399,9 @@ namespace contra {
       charset_t const index = cs & charflag_iso2022_mask_code;
       mwg_assert(index < category->size());
       return &(*category)[index];
+    }
+    iso2022_charset const* charset(charset_t cs) const {
+      return const_cast<iso2022_charset_registry*>(this)->charset(cs);
     }
 
     bool load_definition(std::istream& istr, const char* title, iso2022_charset_callback callback = nullptr, std::uintptr_t cbparam = 0);

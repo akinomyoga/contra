@@ -1052,3 +1052,69 @@ SB96(j) ISO-IR-234 Latin/Hebrew character set for 8-bit codes
 # iconv は以下も対応している。これは UTF-16 の一種の様だ。
 # ISO-IR-193
 #   map
+
+#==============================================================================
+#
+# SB94 -- 94 Characters Graphic Character Set
+#
+#==============================================================================
+
+SB94(0) ISO-IR-Private-1 DEC Special Graphic (VT100 Line Drawing Set)
+  # これらの値は character_drawer::draw_iso2022_graphics で直接定義されている。
+  # 後で番号の対応付けについて整理するかもしれない。
+
+  # →←↑↓
+  define +<U+1100000>
+  define ,<U+1100001>
+  define -<U+1100002>
+  define .<U+1100003>
+
+  # diamond
+  define `<U+1100004>
+
+  # degree
+  define f<U+1100005>
+
+  # pm, lantern
+  define g<U+1100006>
+  define i<U+1100007>
+
+  # le, ge, pi, ne
+  define y<U+1100008>
+  define z<U+1100009>
+  define {<U+110000a>
+  define |<U+110000b>
+
+  # sterling
+  define }£
+
+  # bullet
+  define ~<U+110000c>
+
+  # ┘┐┌└
+  define j<U+1101011>
+  define k<U+1101041>
+  define l<U+1101044>
+  define m<U+1101014>
+
+  # ┼─│
+  define n<U+1101055>
+  define q<U+1101005>
+  define x<U+1101050>
+
+  # ├┤┴┬
+  define t<U+1101054>
+  define u<U+1101051>
+  define v<U+1101015>
+  define w<U+1101045>
+
+  # frame, check, solid
+  define 0<U+1101000>
+  define a<U+1101100>
+  define h<U+1101101>
+
+  # ov, ov2, ud2, ud
+  define o<U+1101102>
+  define p<U+1101103>
+  define r<U+1101104>
+  define s<U+1101105>

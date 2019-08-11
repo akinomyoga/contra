@@ -259,42 +259,27 @@ namespace tx11 {
   struct xft_character_buffer {
     using coord_t = ansi::coord_t;
     std::vector<byte> characters;
-    std::vector<coord_t> progress;
+    std::vector<coord_t> position;
     std::vector<std::size_t> next;
   public:
-    bool empty() const { return progress.empty(); }
-    void add_char(std::uint32_t code, coord_t prog) {
+    bool empty() const { return position.empty(); }
+    void add_char(std::uint32_t code, coord_t x, bool is_extension) {
       contra::encoding::put_u8(code, characters);
-      if (prog == 0 && progress.size()) {
+      if (is_extension && position.size()) {
         next.back() = characters.size();
       } else {
         next.push_back(characters.size());
-        progress.push_back(prog);
+        position.push_back(x);
       }
-      // if (code < 0x10000) {
-      //   characters.push_back(code);
-      //   progress.push_back(prog);
-      // } else {
-      //   // surrogate pair
-      //   code -= 0x10000;
-      //   characters.push_back(0xD800 | (code >> 10 & 0x3FF));
-      //   progress.push_back(prog);
-      //   characters.push_back(0xDC00 | (code & 0x3FF));
-      //   progress.push_back(0);
-      // }
-    }
-    void shift(coord_t shift) {
-      mwg_assert(!progress.empty());
-      progress.back() += shift;
     }
     void clear() {
       characters.clear();
-      progress.clear();
+      position.clear();
       next.clear();
     }
     void reserve(std::size_t capacity) {
       characters.reserve(capacity * 3);
-      progress.reserve(capacity);
+      position.reserve(capacity);
     }
   };
 
@@ -375,11 +360,10 @@ namespace tx11 {
       xftcolor.color.alpha = 0xFFFF;
 
       std::size_t index = 0;
-      for (std::size_t i = 0, iN = buff.progress.size(); i < iN; i++) {
+      for (std::size_t i = 0, iN = buff.position.size(); i < iN; i++) {
         ::XftDrawStringUtf8(
           m_draw, &xftcolor, xftFont,
-          x, y, (FcChar8*) &buff.characters[index], buff.next[i] - index);
-        x += buff.progress[i];
+          x + buff.position[i], y, (FcChar8*) &buff.characters[index], buff.next[i] - index);
         index = buff.next[i];
       }
     }

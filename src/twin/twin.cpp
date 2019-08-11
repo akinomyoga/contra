@@ -499,50 +499,61 @@ namespace twin {
 
     struct character_buffer {
       std::vector<TCHAR> characters;
-      std::vector<INT> progress;
+      std::vector<INT> position;
+
     public:
-      bool empty() const { return progress.empty(); }
-      void add_char(std::uint32_t code, coord_t prog) {
+      bool empty() const { return position.empty(); }
+      void add_char(std::uint32_t code, coord_t x, bool is_extension) {
+        contra_unused(is_extension);
         if (code < 0x10000) {
           characters.push_back(code);
-          progress.push_back(prog);
+          position.push_back(x);
         } else {
           // surrogate pair
           code -= 0x10000;
           characters.push_back(0xD800 | (code >> 10 & 0x3FF));
-          progress.push_back(prog);
+          position.push_back(x);
           characters.push_back(0xDC00 | (code & 0x3FF));
-          progress.push_back(0);
+          position.push_back(x);
         }
-      }
-      void shift(coord_t shift) {
-        mwg_assert(!progress.empty());
-        progress.back() += shift;
-      }
-      void clear() {
-        characters.clear();
-        progress.clear();
       }
       void reserve(std::size_t capacity) {
         characters.reserve(capacity);
-        progress.reserve(capacity);
+        position.reserve(capacity);
+      }
+      void clear() {
+        characters.clear();
+        position.clear();
+      }
+
+    public:
+      void resolve(coord_t& dx) {
+        dx += position[0];
+        for (std::size_t i = 0, iN = position.size() - 1; i < iN; i++)
+          position[i] = position[i + 1] - position[i];
       }
     };
 
-    void draw_text(coord_t x1, coord_t y1, character_buffer const& buff, font_t font, color_t color) {
+    void draw_text(coord_t x1, coord_t y1, character_buffer& buff, font_t font, color_t color) {
+      if (buff.empty()) return;
       ::SetTextColor(hdc, contra::dict::rgba2rgb(color));
       ::SelectObject(hdc, fstore.get_font(font));
-      ::TextOut(hdc, x1, y1, &buff.characters[0], buff.characters.size());
+      ::TextOut(hdc, x1 + buff.position[0], y1, &buff.characters[0], buff.characters.size());
     }
-    void draw_characters(coord_t x1, coord_t y1, character_buffer const& buff, font_t font, color_t color) {
+    void draw_characters(coord_t x1, coord_t y1, character_buffer& buff, font_t font, color_t color) {
+      if (buff.empty()) return;
       ::SetTextColor(hdc, contra::dict::rgba2rgb(color));
       ::SelectObject(hdc, fstore.get_font(font));
-      ::ExtTextOut(hdc, x1, y1, 0, NULL, &buff.characters[0], buff.characters.size(), &buff.progress[0]);
+      buff.resolve(x1);
+      ::ExtTextOut(hdc, x1, y1, 0, NULL, &buff.characters[0], buff.characters.size(), &buff.position[0]);
     }
     void draw_rotated_characters(
       coord_t x0, coord_t y0, coord_t dx, coord_t dy, coord_t width,
-      character_buffer const& buff, font_t font, color_t color
+      character_buffer& buff, font_t font, color_t color
     ) {
+      if (buff.empty()) return;
+      buff.resolve(dx);
+
       ::SetTextColor(hdc, contra::dict::rgba2rgb(color));
       ::SelectObject(hdc, fstore.get_font(font));
 
@@ -565,7 +576,7 @@ namespace twin {
       int const rot_dx = (int) std::round(xc2 - xc1 + gdi_xshift);
       int const rot_dy = (int) std::round(yc2 - yc1 + gdi_yshift);
       ::ExtTextOut(hdc, x0 + dx - rot_dx, y0 + dy - rot_dy, 0, NULL,
-        &buff.characters[0], buff.characters.size(), &buff.progress[0]);
+        &buff.characters[0], buff.characters.size(), &buff.position[0]);
     }
   };
 
@@ -1087,7 +1098,7 @@ namespace twin {
         coord_t const y0 = rcClient.top + wstat.m_yframe + wstat.m_ypixel * view.y();
         form.dwStyle = CFS_POINT;
         form.ptCurrentPos.x = x0;
-        form.ptCurrentPos.y = y0 + dy;
+        form.ptCurrentPos.y = y0 + std::round(dy);
         ::ImmSetCompositionWindow(hIMC, &form);
       }
     }
