@@ -8,9 +8,11 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <fstream>
 #include <unordered_map>
 #include <mwg/except.h>
 #include "enc.utf8.hpp"
+#include "iso2022.hpp"
 
 namespace contra {
 
@@ -114,126 +116,6 @@ namespace contra {
     bool title_definition_string_enabled    = true; // GNU Screen ESC k ... ST
   };
 
-  typedef std::uint32_t charset_t;
-  inline constexpr charset_t iso2022_unspecified = 0xFFFFFFFF;
-  inline constexpr charset_t iso2022_charset_db   = charflag_iso2022_db;
-  inline constexpr charset_t iso2022_charset_drcs = charflag_iso2022_drcs;
-  inline constexpr charset_t iso2022_94_iso646_usa = 0;
-  inline constexpr charset_t iso2022_96_iso8859_1  = 1;
-  inline constexpr charset_t iso2022_94_vt100_acs  = 2;
-
-  enum iso2022_charset_size {
-    iso2022_size_sb94,
-    iso2022_size_sb96,
-    iso2022_size_mb94,
-    iso2022_size_mb96,
-  };
-
-
-  class iso2022_charset_registry {
-    charset_t m_sb94[160]; // ISO-IR 94
-    charset_t m_sb96[80];  // ISO-IR 96
-    charset_t m_mb94[80];  // ISO-IR 94^2
-    charset_t m_sb94_drcs[80]; // DRCS 94
-    charset_t m_sb96_drcs[80]; // DRCS 96
-    charset_t m_mb94_drcs[80]; // DRCS 94^2
-    charset_t m_mb96_drcs[80]; // DRCS 96^2
-
-    typedef std::unordered_map<std::string, charset_t> dictionary_type;
-    dictionary_type m_dict_sb94;
-    dictionary_type m_dict_sb96;
-    dictionary_type m_dict_db94;
-    dictionary_type m_dict_db96;
-
-    int sb_drcs_count;
-    int mb_drcs_count;
-
-  public:
-    iso2022_charset_registry() {
-      std::fill(std::begin(m_sb94), std::end(m_sb94), iso2022_unspecified);
-      std::fill(std::begin(m_sb96), std::end(m_sb96), iso2022_unspecified);
-      std::fill(std::begin(m_mb94), std::end(m_mb94), iso2022_unspecified);
-
-      // DRCS (DRCSMM 領域合計 160 区については予め割り当てて置く事にする)
-      sb_drcs_count = 160;
-      mb_drcs_count = 0;
-      std::iota(std::begin(m_sb94_drcs), std::end(m_sb94_drcs), iso2022_charset_drcs | 0);
-      std::iota(std::begin(m_sb96_drcs), std::end(m_sb96_drcs), iso2022_charset_drcs | 80);
-      std::fill(std::begin(m_mb94_drcs), std::end(m_mb94_drcs), iso2022_unspecified);
-      std::fill(std::begin(m_mb96_drcs), std::end(m_mb96_drcs), iso2022_unspecified);
-
-      // initialize default charset
-      m_sb94[ascii_0 - 0x30] = iso2022_94_vt100_acs;
-      m_sb94[ascii_B - 0x30] = iso2022_94_iso646_usa;
-      m_sb96[ascii_A - 0x30 + 80] = iso2022_96_iso8859_1;
-      m_mb94[ascii_B - 0x30] = iso2022_charset_db | 4; // debug 用に適当に
-    }
-
-  private:
-    mutable std::string m_designator_buff;
-    charset_t find_charset_from_dict(
-      char32_t const* intermediate, std::size_t intermediate_size, byte final_char, dictionary_type const& dict
-    ) const {
-      m_designator_buff.resize(intermediate_size + 1);
-      std::copy(intermediate, intermediate + intermediate_size, m_designator_buff.begin());
-      m_designator_buff.back() = final_char;
-      auto const it = dict.find(m_designator_buff);
-      if (it != dict.end()) return it->second;
-      return iso2022_unspecified;
-    }
-
-  public:
-    charset_t resolve_charset(int type, char32_t const* intermediate, std::size_t intermediate_size, byte final_char) const {
-      if (final_char < 0x30 || 0x7E < final_char)
-        return iso2022_unspecified;
-      byte const f = final_char - 0x30;
-
-      // F型 (Ft型 = IR文字集合, Fp型 = 私用文字集合)
-      if (intermediate_size == 0) {
-        switch (type) {
-        case iso2022_size_sb94: return m_sb94[f];
-        case iso2022_size_sb96: return m_sb96[f];
-        case iso2022_size_mb94: return m_mb94[f];
-        case iso2022_size_mb96: break;
-        default:
-          mwg_check(0, "BUG unexpected charset size");
-          return iso2022_unspecified;
-
-        }
-      }
-
-      if (intermediate_size == 1) {
-        // 1F型 (1Ft型 = IR 94文字集合の追加分, 1Fp型 = 私用文字集合)
-        if (intermediate[0] == ascii_exclamation && type == iso2022_size_sb94)
-          return m_sb94[80 + f];
-
-        // 0F型 = DRCS
-        if (intermediate[0] == ascii_sp) {
-          switch (type) {
-          case iso2022_size_sb94: return m_sb94_drcs[f];
-          case iso2022_size_sb96: return m_sb96_drcs[f];
-          case iso2022_size_mb94: return m_mb94_drcs[f];
-          case iso2022_size_mb96: return m_mb96_drcs[f];
-          default:
-            mwg_check(0, "BUG unexpected charset size");
-            return iso2022_unspecified;
-          }
-        }
-      }
-
-      // その他 DECDLD 等でユーザによって追加された分
-      switch (type) {
-      case iso2022_size_sb94: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_sb94);
-      case iso2022_size_sb96: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_sb96);
-      case iso2022_size_mb94: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_db94);
-      case iso2022_size_mb96: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_db96);
-      default:
-        mwg_check(0, "BUG unexpected charset size");
-        return iso2022_unspecified;
-      }
-    }
-  };
-
   template<typename Processor>
   class sequence_decoder {
     typedef Processor processor_type;
@@ -273,7 +155,6 @@ namespace contra {
     }
 
   private:
-    iso2022_charset_registry m_iso2022;
     charset_t m_iso2022_Gn[4] = { iso2022_94_iso646_usa, iso2022_96_iso8859_1, 0, 0, };
     charset_t m_iso2022_GL = iso2022_94_iso646_usa;
     charset_t m_iso2022_GR = iso2022_96_iso8859_1;
@@ -398,7 +279,8 @@ namespace contra {
           {
             char32_t const* intermediate = m_seq.content() + seq_skip;
             std::size_t const intermediate_size = m_seq.content_size() - seq_skip;
-            charset_t const charset = m_iso2022.resolve_charset(m, intermediate, intermediate_size, m_seq.final());
+            auto& iso2022 = iso2022_charset_registry::instance();
+            charset_t const charset = iso2022.resolve_designator(m, intermediate, intermediate_size, m_seq.final());
             if (charset != iso2022_unspecified) {
               iso2022_GnD(n, charset);
               return true;
@@ -421,7 +303,7 @@ namespace contra {
     }
 
     void process_char_iso2022(char32_t uchar) {
-      if (uchar < 0x100 && 0x20 <= (uchar & 0x7F)) {
+      if (uchar < 0x100 && 0x20 <= (uchar & 0x7F) && uchar != 0x20 && uchar != 0x7F) {
         // GL/GR の文字
 
         charset_t charset;
@@ -489,7 +371,7 @@ namespace contra {
         iso2022_LSn(1);
         return;
       case ascii_si:
-        iso2022_LSn(1);
+        iso2022_LSn(0);
         return;
       }
       m_proc->process_control_character(uchar);
@@ -895,15 +777,26 @@ namespace contra {
     bool m_result;
 
   public:
-    csi_parameters(char32_t const* s, std::size_t n) { extract_parameters(s, n); }
-    csi_parameters(sequence const& seq) {
-      extract_parameters(seq.parameter(), seq.parameter_size());
+    csi_parameters(char32_t const* s, std::size_t n) {
+      initialize();
+      read_parameters(s, n);
+    }
+    csi_parameters(sequence const& seq):
+      csi_parameters(seq.parameter(), seq.parameter_size()) {}
+
+    csi_parameters(): m_result(false) {}
+
+    void initialize() {
+      m_data.clear();
+      m_index = 0;
+      m_isColonAppeared = false;
+      m_result = false;
     }
 
-    // csi_parameters(std::initializer_list<csi_single_param_t> args) {
-    //   for (csi_single_param_t value: args)
-    //     this->push_back({value, false, false});
-    // }
+    void initialize(sequence const& seq) {
+      initialize();
+      read_parameters(seq.parameter(), seq.parameter_size());
+    }
 
     operator bool() const {return this->m_result;}
 
@@ -912,12 +805,7 @@ namespace contra {
     void push_back(csi_param_type const& value) {m_data.push_back(value);}
 
   private:
-    bool extract_parameters(char32_t const* str, std::size_t len) {
-      m_data.clear();
-      m_index = 0;
-      m_isColonAppeared = false;
-      m_result = false;
-
+    bool read_parameters(char32_t const* str, std::size_t len) {
       bool isSet = false;
       csi_param_type param {0, false, true};
       for (std::size_t i = 0; i < len; i++) {

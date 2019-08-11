@@ -2148,7 +2148,8 @@ namespace ansi {
       return;
     }
 
-    csi_parameters params(seq);
+    auto& params = this->w_csiparams;
+    params.initialize(seq);
     if (!params) {
       print_unrecognized_sequence(seq);
       return;

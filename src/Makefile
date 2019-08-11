@@ -42,6 +42,7 @@ impl1_objs = \
   $(objdir)/ansi/line.o \
   $(objdir)/enc.c2w.o \
   $(objdir)/enc.utf8.o \
+  $(objdir)/iso2022.o \
   $(objdir)/contradef.o
 impl1: $(impl1_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^
@@ -55,6 +56,7 @@ impl2_objs = \
   $(objdir)/ansi/line.o \
   $(objdir)/enc.c2w.o \
   $(objdir)/enc.utf8.o \
+  $(objdir)/iso2022.o \
   $(objdir)/contradef.o
 impl2: $(impl2_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
@@ -70,7 +72,7 @@ all: iso2022-gendef-table.exe
 iso2022-gendef-table.exe: $(objdir)/iso2022-gendef-table.o $(objdir)/enc.utf8.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 all: iso2022-dump.exe
-iso2022-dump.exe: $(objdir)/iso2022-dump.o $(objdir)/enc.utf8.o
+iso2022-dump.exe: $(objdir)/iso2022-dump.o $(objdir)/enc.utf8.o $(objdir)/iso2022.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 all: out/iso2022.html
 out/iso2022.html: iso2022-dump.exe iso2022.def | out
@@ -88,6 +90,7 @@ ttty_objs = \
   $(objdir)/ansi/line.o \
   $(objdir)/enc.c2w.o \
   $(objdir)/enc.utf8.o \
+  $(objdir)/iso2022.o \
   $(objdir)/contradef.o
 ttty.exe: $(ttty_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
@@ -119,6 +122,7 @@ twin_objs = \
   $(objdir)/ansi/line.o \
   $(objdir)/enc.utf8.o \
   $(objdir)/enc.c2w.o \
+  $(objdir)/iso2022.o \
   $(objdir)/contradef.o
 twin.exe: $(twin_objs)
 	$(CXX) $(CXXFLAGS) $(twin_LDFLAGS) -o $@ $^ $(twin_LIBS)
@@ -146,6 +150,7 @@ tx11_objs := \
   $(objdir)/ansi/line.o \
   $(objdir)/enc.utf8.o \
   $(objdir)/enc.c2w.o \
+  $(objdir)/iso2022.o \
   $(objdir)/contradef.o
 
 tx11.exe: $(tx11_objs)

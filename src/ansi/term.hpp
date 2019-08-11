@@ -733,13 +733,16 @@ namespace ansi {
     void process_control_character(char32_t uchar);
 
   public:
-    std::uint64_t printt_state = 0;
-    std::vector<char32_t> printt_buff;
+    csi_parameters w_csiparams;
+
+  public:
+    std::uint64_t w_printt_state = 0;
+    std::vector<char32_t> w_printt_buff;
     void write(const char* data, std::size_t const size) {
-      printt_buff.resize(size);
-      char32_t* const q0 = &printt_buff[0];
+      w_printt_buff.resize(size);
+      char32_t* const q0 = &w_printt_buff[0];
       char32_t* q1 = q0;
-      contra::encoding::utf8_decode(data, data + size, q1, q0 + size, printt_state);
+      contra::encoding::utf8_decode(data, data + size, q1, q0 + size, w_printt_state);
       m_seqdecoder.decode(q0, q1);
     }
     void printt(const char* text) {

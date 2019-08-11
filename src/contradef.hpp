@@ -150,13 +150,21 @@ namespace contra {
 
     // 0x01XXXXXX は iso-2022 による文字に使う。
     //   0x010XXXXX ... 94/96 文字集合
+    //     96文字を単位とする"区"で区切る。
+    //     第0区は ASCII として予約
+    //     第1区は ISO-8859-1 として予約
     //   0x011XXXXX ... 94^2 文字集合
+    //     96*96文字を単位とする"面"で区切る。
+    //     第0面は contra 描画図形として予約
     //   0x012XXXXX ... DRCS 94/96
+    //     初めの160区はDRCSMM領域として予約
     //   0x013XXXXX ... DRCS 94^2/96^2
     charflag_iso2022_db    = 0x00100000,
     charflag_iso2022_drcs  = 0x00200000,
     charflag_iso2022_mask_flag  = 0x00300000,
     charflag_iso2022_mask_code  = 0x000FFFFF,
+    charflag_iso2022_graphics_beg = 0x01100000,
+    charflag_iso2022_graphics_end = 0x01100000 + 96 * 96,
 
     charflag_wide_extension    = 0x10000000,
     charflag_cluster_extension = 0x20000000,

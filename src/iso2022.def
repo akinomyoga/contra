@@ -53,7 +53,7 @@
 #   (例えば他の文字集合データベースと一致しているかの確認を行う時などに使う)。
 #
 #
-# ■参考にしたもの
+# ■定義の他に参考にしたもの
 #
 # iconv (cygwin) による変換
 #   230
@@ -621,7 +621,7 @@ SB94(x) ISO-IR-122 Alternate Primary Graphic Set No.2 CSA Standard Z 243.4-1985
   load SB94(B)
   map @à[â\ç]ê^É`ô{é|ù}è~û
 
-SB94(\) ISO-IR-128 Supplementary Set of graphic Characters for CCITT Rec. T.101, Data Syntax III
+SB94(|) ISO-IR-128 Supplementary Set of graphic Characters for CCITT Rec. T.101, Data Syntax III
   load SB94(t)
 
 SB94(y) ISO-IR-137 Mosaic-1 Set of Data Syntax I of CCITT Rec. T.101
@@ -642,13 +642,13 @@ SB94(z) ISO-IR-141 Serbocroatian and Slovenian Latin Alphabet
   map @Ž[Š\Đ]Ć^Č`ž{š|đ}ć~č
 
 # https://github.com/winlibs/apache/tree/master/2.4.x/srclib/apr-iconv/ccs
-SB94([) ISO-IR-146 Serbocroatian Cyrillic Alphabet
+SB94({) ISO-IR-146 Serbocroatian Cyrillic Alphabet
   load SB94(B)
   map @ЖAАBБCЦDДEЕFФGГHХIИJЈKКLЛMМNНOОPПQЉRРSСTТUУVВWЊXЏYЅZЗ[Ш\Ђ]Ћ^Ч
   map `жaаbбcцdдeеfфgгhхiиjјkкlлmмnнoоpпqљrрsсtтuуvвwњxџyѕzз{ш|ђ}ћ~ч
 
 # https://github.com/winlibs/apache/tree/master/2.4.x/srclib/apr-iconv/ccs
-SB94(]) ISO-IR-147 Macedonian Cyrillic Alphabet
+SB94(}) ISO-IR-147 Macedonian Cyrillic Alphabet
   load SB94([)
   map \Ѓ]Ќ|ѓ}ќ
 
