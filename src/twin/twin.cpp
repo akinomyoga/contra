@@ -586,11 +586,11 @@ namespace twin {
     contra::app::context& actx;
 
     window_state_t wstat;
-    window_renderer_t renderer { wstat };
     terminal_manager manager;
 
     twin_settings settings;
     twin_graphics_buffer gbuffer;
+    window_renderer_t<twin_graphics_t> renderer { wstat };
 
     HWND hWnd = NULL;
 
@@ -876,7 +876,7 @@ namespace twin {
     static constexpr UINT CURSOR_TIMER_ID = 10; // 適当
     UINT m_cursor_timer_id = 0;
 
-    friend class ansi::window_renderer_t;
+    friend class ansi::window_renderer_t<twin_graphics_t>;
     void unset_cursor_timer() {
       if (m_cursor_timer_id)
         ::KillTimer(hWnd, m_cursor_timer_id);

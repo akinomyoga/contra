@@ -155,21 +155,25 @@ namespace contra {
     }
 
   private:
-    charset_t m_iso2022_Gn[4] = { iso2022_94_iso646_usa, iso2022_96_iso8859_1, 0, 0, };
+    // 以下の charset_t のメンバの値は、全て charset_t に加えて、
+    // その文字集合が 94 であるか 96 であるかを識別する為のフラグを付加した物である。
+    static constexpr charset_t _iso2022_96_iso8859_1 = iso2022_96_iso8859_1 | iso2022_charset_is96;
+    charset_t m_iso2022_Gn[4] = { iso2022_94_iso646_usa, _iso2022_96_iso8859_1, 0, 0, };
     charset_t m_iso2022_GL = iso2022_94_iso646_usa;
-    charset_t m_iso2022_GR = iso2022_96_iso8859_1;
+    charset_t m_iso2022_GR = _iso2022_96_iso8859_1;
     int m_iso2022_GL_lock = 0;
     int m_iso2022_GR_lock = 1;
     charset_t m_iso2022_SS = iso2022_unspecified;
 
     // 複数バイト対応 (実質2Bにしか対応しない)
-    charset_t m_iso2022_mb_charset = iso2022_unspecified;
     int m_iso2022_mb_count = 0;
+    charset_t m_iso2022_mb_charset = iso2022_unspecified;
     std::uint32_t m_iso2022_mb_buff = 0;
+    bool m_iso2022_mb_right = false;
 
     void iso2022_update() {
       if (m_iso2022_GL == iso2022_94_iso646_usa &&
-        m_iso2022_GR == iso2022_96_iso8859_1 &&
+        m_iso2022_GR == _iso2022_96_iso8859_1 &&
         m_iso2022_SS == iso2022_unspecified
       ) {
         m_dstate_plain = decode_default;
@@ -199,19 +203,19 @@ namespace contra {
     bool iso2022_escape_sequence() {
       if (this->m_seq.content_size() == 0) {
         switch (this->m_seq.final()) {
-        case ascii_n:
+        case ascii_n: // LS2
           iso2022_LSn(2);
           return true;
-        case ascii_o:
+        case ascii_o: // LS3
           iso2022_LSn(3);
           return true;
-        case ascii_vertical_bar:
+        case ascii_vertical_bar: // LS3R
           iso2022_LSnR(3);
           return true;
-        case ascii_right_brace:
+        case ascii_right_brace: // LS2R
           iso2022_LSnR(2);
           return true;
-        case ascii_tilde:
+        case ascii_tilde: // LS1R
           iso2022_LSnR(1);
           return true;
         }
@@ -277,9 +281,21 @@ namespace contra {
           break;
         process_iso2022_GnDm:
           {
+            // ESC(B は terminfo に登録されて頻繁に呼び出される。
+            // 初期化を遅延する為に特別に処理する事にする。
+            if (seq_skip == m_seq.content_size()) {
+              if (m == iso2022_size_sb94 && m_seq.final() == ascii_B) {
+                iso2022_GnD(n, iso2022_94_iso646_usa);
+                return true;
+              } else if (m == iso2022_size_sb96 && m_seq.final() == ascii_A) {
+                iso2022_GnD(n, _iso2022_96_iso8859_1);
+                return true;
+              }
+            }
+
+            auto& iso2022 = iso2022_charset_registry::instance();
             char32_t const* intermediate = m_seq.content() + seq_skip;
             std::size_t const intermediate_size = m_seq.content_size() - seq_skip;
-            auto& iso2022 = iso2022_charset_registry::instance();
             charset_t const charset = iso2022.resolve_designator(m, intermediate, intermediate_size, m_seq.final());
             if (charset != iso2022_unspecified) {
               iso2022_GnD(n, charset);
@@ -301,52 +317,81 @@ namespace contra {
       std::uint32_t const flags = (charset & charflag_iso2022_mask_flag) | charflag_iso2022;
       m_proc->process_char((charset_index * cssize + char_index) | flags);
     }
+    void iso2022_mb_start(charset_t charset, char32_t uchar) {
+      m_iso2022_mb_count = 1; // 今は2バイト文字集合のみ対応
+      m_iso2022_mb_charset = charset;
+      m_iso2022_mb_buff = (uchar & 0x7F) - 0x20;
+      m_iso2022_mb_right = uchar >= 0x80;
+    }
+    bool iso2022_mb_add(char32_t uchar) {
+      // GL/GR が混ざった multibyte は駄目
+      if (m_iso2022_mb_right != (uchar >= 0x80)) return false;
+
+      // 94/94n文字集合の時 2/0 は駄目。7/15 は無視する。
+      if (!(m_iso2022_mb_charset & iso2022_charset_is96)) {
+        if (uchar == ascii_sp) return false;
+        if (uchar == ascii_del) return true;
+      }
+
+      m_iso2022_mb_buff = m_iso2022_mb_buff * 96 + ((uchar & 0x7F) - 0x20);
+      if (--m_iso2022_mb_count == 0) {
+        // ISO-2022 複数バイト文字確定
+        m_iso2022_SS = iso2022_unspecified;
+        iso2022_send_char(m_iso2022_mb_charset, m_iso2022_mb_buff);
+      }
+      return true;
+    }
 
     void process_char_iso2022(char32_t uchar) {
-      if (uchar < 0x100 && 0x20 <= (uchar & 0x7F) && uchar != 0x20 && uchar != 0x7F) {
+      if (uchar < 0x100 && 0x20 <= (uchar & 0x7F)) {
         // GL/GR の文字
+
+        // 複数バイト文字集合の読み取り途中
+        if (m_iso2022_mb_count) {
+          if (iso2022_mb_add(uchar)) return;
+
+          // 復号エラーの時は 0xFFFD を出力して、
+          // 状態をリセットして普通に処理する。
+          m_proc->process_char(0xFFFD);
+          m_iso2022_mb_count = 0;
+          m_iso2022_SS = iso2022_unspecified;
+        }
 
         charset_t charset;
         if (m_iso2022_SS != iso2022_unspecified) {
           charset = m_iso2022_SS;
-        } else if (uchar < 0x80) {
-          charset = m_iso2022_GL;
-        } else {
-          charset = m_iso2022_GR;
-        }
 
-        // 2バイト文字集合の2バイト目
-        if (m_iso2022_mb_count) {
-          if (m_iso2022_mb_charset == charset) {
-            m_iso2022_mb_buff = m_iso2022_mb_buff * 96 + ((uchar & 0x7F) - 0x20);
-            if (--m_iso2022_mb_count == 0) {
-              // ISO-2022 複数バイト文字確定
-              m_iso2022_mb_charset = iso2022_unspecified;
-              m_iso2022_SS = iso2022_unspecified;
-              iso2022_send_char(charset, m_iso2022_mb_buff);
-            }
+          // 現在の実装では単一シフト領域を GL/GR のどちらにも規定しない。
+          // 送信側がどちらを想定していても動く様にする。
+
+          // 94/94n 文字集合を SS した直後の 2/0 及び 7/15 は駄目
+          if (!(charset & iso2022_charset_is96) && (uchar == ascii_sp || uchar == ascii_del)) {
+            // DEL は無視する (CC-data-element から除いてなかった事にする)
+            if (uchar == ascii_del) return;
+
+            m_proc->process_char(0xFFFD);
+            m_iso2022_SS = iso2022_unspecified;
+            process_char_iso2022(uchar); // retry
             return;
           }
+        } else {
+          charset = uchar < 0x80 ? m_iso2022_GL : m_iso2022_GR;
+          if (!(charset & iso2022_charset_is96) && (uchar == ascii_sp || uchar == ascii_del)) {
+            // DEL は無視する (CC-data-element から除いてなかった事にする)
+            if (uchar == ascii_del) return;
 
-          // 1バイト目と2バイト目で文字集合が異なる場合は復号エラー。
-          // エラー文字を出力して、2バイト目は状態をリセットして普通に処理する。
-          m_proc->process_char(0xFFFD);
-          m_iso2022_mb_charset = iso2022_unspecified;
-          if (m_iso2022_SS != iso2022_unspecified) {
-            m_iso2022_SS = iso2022_unspecified;
-            charset = uchar < 0x80 ? m_iso2022_GL : m_iso2022_GR;
+            m_proc->process_char(uchar);
+            return;
           }
         }
 
         if (charset & charflag_iso2022_db) {
-          m_iso2022_mb_count = 1; // 今は2バイト文字集合のみ対応
-          m_iso2022_mb_charset = charset;
-          m_iso2022_mb_buff = (uchar & 0x7F) - 0x20;
+          iso2022_mb_start(charset, uchar);
         } else {
           m_iso2022_SS = iso2022_unspecified;
           if (charset == iso2022_94_iso646_usa)
             m_proc->process_char(uchar & 0x7F);
-          else if (charset == iso2022_96_iso8859_1)
+          else if (charset == _iso2022_96_iso8859_1)
             m_proc->process_char((uchar & 0x7F) | 0x80);
           else
             iso2022_send_char(charset, (uchar & 0x7F) - 0x20);
@@ -367,10 +412,10 @@ namespace contra {
   private:
     void process_c0(char32_t uchar) {
       switch (uchar) {
-      case ascii_so:
+      case ascii_so: // SO/LS1
         iso2022_LSn(1);
         return;
-      case ascii_si:
+      case ascii_si: // SI/LS0
         iso2022_LSn(0);
         return;
       }
@@ -589,7 +634,9 @@ namespace contra {
 
   public:
     void decode_char(char32_t uchar) {
-      if (uchar == ascii_nul || uchar == ascii_del) return;
+      if ((uchar == ascii_nul || uchar == ascii_del) &&
+        m_dstate != decode_iso2022) return;
+
       switch (m_dstate) {
       case decode_default:
         process_char_default(uchar);

@@ -1055,11 +1055,11 @@ SB96(j) ISO-IR-234 Latin/Hebrew character set for 8-bit codes
 
 #==============================================================================
 #
-# SB94 -- 94 Characters Graphic Character Set
+# Mosaic & Special graphics
 #
 #==============================================================================
 
-SB94(0) ISO-IR-Private-1 DEC Special Graphic (VT100 Line Drawing Set)
+SB94(0) Private-1 DEC Special Graphic (VT100 Line Drawing Set)
   # これらの値は character_drawer::draw_iso2022_graphics で直接定義されている。
   # 後で番号の対応付けについて整理するかもしれない。
 
@@ -1085,7 +1085,7 @@ SB94(0) ISO-IR-Private-1 DEC Special Graphic (VT100 Line Drawing Set)
   define {<U+110000a>
   define |<U+110000b>
 
-  # sterling
+  # sterling (これは普通に文字として描画)
   define }£
 
   # bullet

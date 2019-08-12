@@ -696,9 +696,9 @@ namespace tx11 {
     contra::app::context& actx;
 
     ansi::window_state_t wstat;
-    ansi::window_renderer_t renderer { wstat };
     ansi::status_tracer_t m_tracer;
     term::terminal_manager manager;
+    ansi::window_renderer_t<tx11_graphics_t> renderer { wstat };
 
     ::Display* display = NULL;
     ::Window main = 0;
@@ -785,7 +785,7 @@ namespace tx11 {
     }
 
   private:
-    friend class ansi::window_renderer_t;
+    friend class ansi::window_renderer_t<tx11_graphics_t>;
     void unset_cursor_timer() {}
     void reset_cursor_timer() {}
 

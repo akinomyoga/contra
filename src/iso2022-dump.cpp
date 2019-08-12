@@ -35,8 +35,19 @@ static void put_for_html(char32_t u, std::ostream& ostr) {
   case U'>': ostr << "&gt;"; break;
   case U'&': ostr << "&amp;"; break;
   default:
-    contra::encoding::put_u8(u, ostr);
+    if (u <= contra::unicode_max)
+      contra::encoding::put_u8(u, ostr);
+    else
+      contra::encoding::put_u8(0xFFFD, ostr);
   }
+}
+
+static bool starts_with(std::string const& str, const char* prefix) {
+  const char* s = str.c_str();
+  while (*prefix)
+    if (*s++ != *prefix++)
+      return false;
+  return true;
 }
 
 typedef unsigned char byte;
@@ -68,7 +79,7 @@ class iso2022_definition_dumper {
          << "</html>\n";
   }
   void print_html_charset(std::ostream& ostr, iso2022_charset const* charset) {
-    ostr << "<h2>ISO-IR-" << charset->reg << ": "
+    ostr << "<h2>" << charset->reg << ": "
          << charset->name << "</h2>\n";
 
     ostr << "<ul>\n";
@@ -97,12 +108,13 @@ class iso2022_definition_dumper {
       }
       ostr << "(" << charset->seq << ")</li>\n";
     }
-    {
+    if (starts_with(charset->reg, "ISO-IR-")) {
+      const char* ir_number = charset->reg.c_str() + 7;
       std::string url = "https://www.itscj.ipsj.or.jp/iso-ir/";
-      for (int i = strspn(charset->reg.c_str(), "0123456789"); i < 3; i++)
+      for (int i = strspn(ir_number, "0123456789"); i < 3; i++)
         url += '0';
-      url = url + charset->reg + ".pdf";
-      ostr << "<li>PDF: <a href=\"" << url << "\">" << url << "</a></li>\n";
+      url = url + ir_number + ".pdf";
+      ostr << "<li>Definition: <a href=\"" << url << "\">" << url << "</a></li>\n";
     }
     ostr << "</ul>\n";
 
@@ -158,8 +170,7 @@ class iso2022_definition_dumper {
     ostr << std::endl;
   }
   void print_text(std::ostream& ostr, iso2022_charset const* charset) {
-    ostr << "ISO-IR-" << charset->reg << ": "
-              << charset->name << "\n";
+    ostr << charset->reg << ": " << charset->name << "\n";
 
     unsigned char min1, max1;
     unsigned char meta_shift = 0;
@@ -219,7 +230,7 @@ class iso2022_definition_dumper {
   }
 
   void print_cpp(std::ostream& ostr, iso2022_charset const* charset) {
-    ostr << "// ISO-IR-" << charset->reg << ": "
+    ostr << "// " << charset->reg << ": "
               << charset->name << "\n";
 
     const char* type_name = "unknown_type";
@@ -241,9 +252,9 @@ class iso2022_definition_dumper {
     }
     ostr << "(" << charset->seq << ")\n";
 
-    ostr << "char32_t const iso_ir_";
+    ostr << "char32_t const ";
     for (char a : charset->reg)
-      ostr << (std::isalnum(a)? a : '_');
+      ostr << (std::isalnum(a) ? std::tolower(a) : '_');
     ostr << "_table[96] = {\n";
 
     bool has_multichar = false;

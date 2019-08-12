@@ -1024,6 +1024,7 @@ namespace ansi {
     }
   };
 
+  template<typename Graphics>
   class window_renderer_t {
     window_state_t& wstat;
 
@@ -1277,7 +1278,6 @@ namespace ansi {
     }
 
   public:
-    template<typename Graphics>
     void draw_cursor(Graphics& graphics, term_view_t const& view) {
       int const cursor_shape = view.cursor_shape();
 
@@ -1316,7 +1316,6 @@ namespace ansi {
     }
 
   public:
-    template<typename Graphics>
     void draw_background(Graphics& graphics, term_view_t const& view, content_update& update) {
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;
@@ -1379,17 +1378,14 @@ namespace ansi {
     }
 
   private:
-    template<typename Graphics>
     void clip_decdhl_upper(Graphics& g, coord_t y) {
       g.clip_rectangle(0, 0, wstat.m_canvas_width, y + wstat.m_ypixel);
     }
-    template<typename Graphics>
     void clip_decdhl_lower(Graphics& g, coord_t y) {
       g.clip_rectangle(0, y, wstat.m_canvas_width, wstat.m_canvas_height);
     }
 
   private:
-    template<typename Graphics>
     struct character_drawer {
       static constexpr std::uint32_t flag_processed = charflag_private1;
 
@@ -1702,12 +1698,11 @@ namespace ansi {
     };
 
   public:
-    template<typename Graphics>
     void draw_characters(Graphics& g, term_view_t const& view, std::vector<line_content>& content) {
-      character_drawer<Graphics> drawer;
+      character_drawer drawer;
       drawer.draw(this, g, view, content);
     }
-    template<typename Graphics>
+
     void draw_characters_mono(Graphics& g, term_view_t const& view, std::vector<line_content> const& content) {
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;
@@ -1774,7 +1769,6 @@ namespace ansi {
       }
     };
   public:
-    template<typename Graphics>
     void draw_decoration(Graphics& g, term_view_t const& view, std::vector<line_content>& content) {
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;

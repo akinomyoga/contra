@@ -172,12 +172,8 @@ namespace {
 
       // reg
       skip_space();
-      if (!starts_with_skip("ISO-IR-")) {
-        print_error() << "no ISO-IR registration number" << std::endl;
-        return false;
-      }
       if (!read_until(' ', data.reg)) {
-        print_error() << "unrecognized ISO-IR registration number" << std::endl;
+        print_error() << "no registration id" << std::endl;
         return false;
       }
 

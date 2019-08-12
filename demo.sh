@@ -217,7 +217,7 @@ function contra/demo/reset-terminal {
   printf '\e[?1049h\e[2J'
   if declare -f "contra/demo:$1" &>/dev/null; then
     "contra/demo:$1"
-    while : ; do ble/util/msleep 5000; done
+    sleep 60
   else
     for key in "${contra_demo_keys[@]}"; do
       contra/demo:"$key"

@@ -22,9 +22,9 @@ namespace contra {
   inline constexpr charset_t iso2022_unspecified = 0xFFFFFFFF;
   inline constexpr charset_t iso2022_charset_db   = charflag_iso2022_db;
   inline constexpr charset_t iso2022_charset_drcs = charflag_iso2022_drcs;
+  inline constexpr charset_t iso2022_charset_is96 = 0x00400000;
   inline constexpr charset_t iso2022_94_iso646_usa = 0;
   inline constexpr charset_t iso2022_96_iso8859_1  = 1;
-  inline constexpr charset_t iso2022_94_vt100_acs  = 2;
 
   inline constexpr charset_t code2cssize(char32_t code)  {
     return code & charflag_iso2022_db ? 96 * 96 : 96;
@@ -224,12 +224,6 @@ namespace contra {
 
       m_sb94[ascii_B - 0x30] = iso2022_94_iso646_usa;
       m_sb96[ascii_A - 0x30] = iso2022_96_iso8859_1;
-      m_sb94[ascii_0 - 0x30] = iso2022_94_vt100_acs;
-      {
-        iso2022_charset charset(iso2022_size_sb94, 1);
-        charset.seq = "0";
-        m_category_sb.emplace_back(std::move(charset));
-      }
     }
 
   private:
@@ -257,7 +251,7 @@ namespace contra {
       if (intermediate_size == 0) {
         switch (type) {
         case iso2022_size_sb94: return m_sb94[f];
-        case iso2022_size_sb96: return m_sb96[f];
+        case iso2022_size_sb96: return m_sb96[f] | iso2022_charset_is96;
         case iso2022_size_mb94: return m_mb94[f];
         case iso2022_size_mb96: break;
         default:
@@ -273,9 +267,9 @@ namespace contra {
         if (intermediate[0] == ascii_sp) {
           switch (type) {
           case iso2022_size_sb94: return m_sb94_drcs[f];
-          case iso2022_size_sb96: return m_sb96_drcs[f];
+          case iso2022_size_sb96: return m_sb96_drcs[f] | iso2022_charset_is96;
           case iso2022_size_mb94: return m_mb94_drcs[f];
-          case iso2022_size_mb96: return m_mb96_drcs[f];
+          case iso2022_size_mb96: return m_mb96_drcs[f] | iso2022_charset_is96;
           default:
             mwg_check(0, "BUG unexpected charset size");
             return iso2022_unspecified;
@@ -286,9 +280,9 @@ namespace contra {
       // その他 DECDLD 等でユーザによって追加された分
       switch (type) {
       case iso2022_size_sb94: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_sb94);
-      case iso2022_size_sb96: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_sb96);
+      case iso2022_size_sb96: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_sb96) | iso2022_charset_is96;
       case iso2022_size_mb94: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_db94);
-      case iso2022_size_mb96: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_db96);
+      case iso2022_size_mb96: return find_charset_from_dict(intermediate, intermediate_size, final_char, m_dict_db96) | iso2022_charset_is96;
       default:
         mwg_check(0, "BUG unexpected charset size");
         return iso2022_unspecified;
@@ -356,7 +350,7 @@ namespace contra {
         charset_t const index = cs & charflag_iso2022_mask_code;
         mwg_assert(index < category->size(), "index=%d", index);
         (*category)[index] = std::move(charset);
-        return cs;
+        return cs & ~iso2022_charset_is96;
       }
 
       std::vector<iso2022_charset>* category = nullptr;
