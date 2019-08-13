@@ -342,6 +342,10 @@ namespace ansi {
       this->m_decsc_cur.set_x(-1);
       this->m_scosc_x = -1;
 
+      this->lflags = 0;
+      this->mouse_mode = 0;
+      this->m_cursor_shape = 1;
+
       this->page_home = -1;
       this->page_limit = -1;
       this->line_home = -1;

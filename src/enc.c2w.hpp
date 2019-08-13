@@ -19,6 +19,8 @@ namespace encoding {
   };
 
   int c2w(char32_t u, c2w_type type);
+  bool is_ambiguous(char32_t u);
+  bool is_emoji(char32_t u);
 
 }
 }

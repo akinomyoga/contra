@@ -41,7 +41,7 @@ namespace {
     return -1;
   }
 
-  static int c2w_is_emoji(std::uint32_t code) {
+  static bool c2w_is_emoji(std::uint32_t code) {
     static std::uint32_t emoji_wranges[] = {
       8252, 8253, 8265, 8266, 8482, 8483, 8505, 8506, 8596, 8602, 8617, 8619, 8986, 8988,
       9000, 9001, 9167, 9168, 9193, 9204, 9208, 9211, 9410, 9411, 9642, 9644, 9654, 9655,
@@ -206,6 +206,13 @@ namespace {
     case c2w_width_emacs: return c2w_emacs((std::uint32_t) u, type);
     default: return c2w_west((std::uint32_t) u, type);
     }
+  }
+
+  bool is_ambiguous(char32_t u) {
+    return c2w_determine_unambiguous(u) < 0;
+  }
+  bool is_emoji(char32_t u) {
+    return c2w_is_emoji(u);
   }
 
 }
