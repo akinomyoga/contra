@@ -12,7 +12,6 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <pwd.h> /* for getuid, getpwuid */
-#include <utmp.h> /* for login_tty */
 
 #include <cstdint>
 #include <cstdio>
@@ -127,7 +126,8 @@ namespace term {
 
       if (pid == 0) {
         setsid();
-        login_tty(slavefd);
+
+        ioctl(slavefd, TIOCSCTTY, 0);
         if (params.termios) tcsetattr(slavefd, TCSANOW, params.termios);
         {
           ws.ws_col = params.col;

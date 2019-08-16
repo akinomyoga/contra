@@ -1,3 +1,6 @@
+#ifdef __CYGWIN__
+# define _XOPEN_SOURCE 600
+#endif
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
@@ -80,6 +83,11 @@ int main() {
 
   if (pid == 0) {
     setsid();
+
+    // これをしておかないと多くのプログラムで
+    // "/dev/tty が見つからない" エラーになる。
+    ioctl(slavefd, TIOCSCTTY, 0);
+
     tcsetattr(slavefd, TCSANOW, &termios);
     ioctl(slavefd, TIOCSWINSZ, &winsize);
 

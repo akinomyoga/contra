@@ -2285,6 +2285,15 @@
   Done
 ------------------------------------------------------------------------------
 
+2019-08-16
+
+* 以下を見てみると login_tty は
+  setsid(); や dup2 等を包含している様である。
+  https://android.googlesource.com/platform/bionic/+/master/libc/bionic/pty.cpp
+
+  そして実行していない物は何かというと、以下の物である。
+  if (ioctl(fd, TIOCSCTTY, 0) == -1) return -1;
+
 2019-08-13
 
 * twin: カーソル形状が変な問題 [#D0202]

@@ -26,10 +26,6 @@ $(objdir)/experimental/%.o: experimental/%.cpp | $(objdir)/experimental $(gendir
 $(gendir)/term.mode_def.hpp: make_command.sh ansi/term.mode.def
 	bash make_command.sh
 
-
-# for login_tty (pty.cpp)
-LIBS := -lutil
-
 #------------------------------------------------------------------------------
 # test
 
