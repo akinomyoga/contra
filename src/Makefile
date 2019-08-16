@@ -101,8 +101,8 @@ ifeq ($(ostype),cygwin)
 twin_CPPFLAGS = $(CPPFLAGS) -DUNICODE -D_UNICODE
 twin_LIBS := -lgdi32 -limm32 $(LIBS)
 #twin_LDFLAGS := $(LDFLAGS) -static-libgcc -static-libstdc++ -s
-#twin_LDFLAGS := $(LDFLAGS) -mwindows
 twin_LDFLAGS := $(LDFLAGS)
+twin_LDFLAGS += -mwindows
 
 directories += $(objdir)/twin
 $(objdir)/twin/%.o: twin/%.cpp | $(objdir)/twin

@@ -32,14 +32,6 @@
 #define _tcscpy_s wcscpy_s
 #define _tcscpy wcscpy
 
-//#define contra_dbgout
-#ifdef contra_dbgout
-std::FILE* dbgout = NULL;
-# define dbgprintf(...) do { std::fprintf(dbgout, __VA_ARGS__); std::fflush(dbgout); } while(0)
-#else
-# define dbgprintf(...) do {} while (0)
-#endif
-
 namespace contra {
 namespace twin {
 
@@ -1334,10 +1326,6 @@ extern "C" int WINAPI _tWinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE 
 // from https://cat-in-136.github.io/2012/04/unicodemingw32twinmainwwinmain.html
 #if defined(_UNICODE) && !defined(_tWinMain)
 int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
-#ifdef contra_dbgout
-  dbgout = std::fopen("/home/murase/twin-debug.txt", "w");
-#endif
-  ::ShowWindow(GetConsoleWindow(), SW_HIDE);
   HINSTANCE const hInstance = GetModuleHandle(NULL);
   int const retval = _tWinMain(hInstance, NULL, (LPTSTR) TEXT("") /* lpCmdLine is not available*/, SW_SHOW);
   return retval;

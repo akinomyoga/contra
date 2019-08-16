@@ -105,6 +105,10 @@ namespace term {
     bool start(terminal_session_parameters const& params) {
       if (m_active) return true;
 
+      char command[256];
+      std::sprintf(command, "/usr/bin/ls -la /proc/%d/fd &> ~/a.txt", getpid());
+      system(command);
+
       // restrict in the range from 256 bytes to 64 kbytes
       m_read_buffer.resize(contra::clamp(params.fd_read_buffer_size, 0x100, 0x10000));
 
@@ -136,11 +140,13 @@ namespace term {
           ws.ws_ypixel = params.ypixel;
           fd_set_winsize(slavefd, &ws);
         }
+        close(masterfd);
         dup2(slavefd, STDIN_FILENO);
         dup2(slavefd, STDOUT_FILENO);
         dup2(slavefd, STDERR_FILENO);
-        close(slavefd);
-        close(masterfd);
+        if (slavefd != STDIN_FILENO &&
+          slavefd != STDOUT_FILENO &&
+          slavefd != STDERR_FILENO) close(slavefd);
 
         for (auto const& pair : params.env) {
           ::setenv(pair.first.c_str(), pair.second.c_str(), 1);

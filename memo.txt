@@ -780,16 +780,6 @@
   どの様に進めるべきかというとやりたい事を少しに絞って、
   その上で最終的にどの様にやりたい事を絞るのかという事を決める事である。
 
-* twin: Console window を隠す方法 #D0122 に関して
-
-  https://social.msdn.microsoft.com/Forums/en-US/e004a394-c6af-46f2-9158-acc200f3acfc/hiding-a-console-window?forum=vcgeneral
-  % http://www.cplusplus.com/forum/beginner/12001/
-
-  SW_HIDE で自分自身を起動し直して一番初めに起動した物はすぐに終了する、という方法が書かれている。
-  今回の場合にそれでちゃんと動くのかというのは試していない。
-  というか Cygwin の場合だとプロセスの親子関係を切断する事にならないだろうか。
-  もしくは親プロセスがゾンビになって生き続けるという事があったりするだろうか。
-
 2019-07-25
 
 * scroll buffer に関して。
@@ -947,25 +937,6 @@
   やはり on_term_* という関数を沢山持った抽象クラスを準備するのが良いだろうか。
 
 2019-05-03
-
-* twin: 普通に起動すると一瞬ウィンドウが表示される問題 [#tmp0001]
-  ref #D0122 #D0145
-
-  これは今の所解決できていない。
-
-  * PE ヘッダの Subsystem を Windows (2) に書き換えると、
-    何故か /bin/bash が対話モードに入れなくなってしまう。
-    (Note: mintty は Windows Subsytem でちゃんと動いている)
-  * 現在は Subsystem は Console (3) のままで
-    表示されたコンソールは SW_HIDE して消す事にしている。
-  * ショートカットの設定を弄って目立たなくする方法について #D0123 で考えたが、
-    精々ウィンドウの大きさを小さくして不透明度を 30% まで下げるのが関の山。
-    ショートカットをバイナリで無理やり編集して不透明度を 30% より小さくすると、
-    何らかのチェックに引っかかって、寧ろ不透明度 100% になってしまう。
-
-  何と検索していたら gcc に -mwindows を指定せよとの事…。
-  https://stackoverflow.com/questions/18260508/c-how-do-i-hide-a-console-window-on-startup
-  然し、これは自分で PE ヘッダを書き換えた時と同じ症状になるだけで問題は解決しなかった。
 
 * twin: DECARM (キー長押しによる連続入力) の制御は面倒だ。
   そもそも対応する意味があるのかもよく分からない。
@@ -2287,7 +2258,114 @@
 
 2019-08-16
 
-* 以下を見てみると login_tty は
+* [自然解消] 2019-07-26 twin: Console window を隠す方法 #D0122 に関して [#D0206]
+
+  https://social.msdn.microsoft.com/Forums/en-US/e004a394-c6af-46f2-9158-acc200f3acfc/hiding-a-console-window?forum=vcgeneral
+  % http://www.cplusplus.com/forum/beginner/12001/
+
+  SW_HIDE で自分自身を起動し直して一番初めに起動した物はすぐに終了する、という方法が書かれている。
+  今回の場合にそれでちゃんと動くのかというのは試していない。
+  というか Cygwin の場合だとプロセスの親子関係を切断する事にならないだろうか。
+  もしくは親プロセスがゾンビになって生き続けるという事があったりするだろうか。
+
+  2019-08-16 #D0204 によって解決したので Console window を隠す必要はなくなった。
+
+* [自然解消] 2019-05-03 twin: 普通に起動すると一瞬ウィンドウが表示される問題 [#D0205]
+  ref #D0122 #D0145
+
+  これは今の所解決できていない。
+
+  * PE ヘッダの Subsystem を Windows (2) に書き換えると、
+    何故か /bin/bash が対話モードに入れなくなってしまう。
+    (Note: mintty は Windows Subsytem でちゃんと動いている)
+  * 現在は Subsystem は Console (3) のままで
+    表示されたコンソールは SW_HIDE して消す事にしている。
+  * ショートカットの設定を弄って目立たなくする方法について #D0123 で考えたが、
+    精々ウィンドウの大きさを小さくして不透明度を 30% まで下げるのが関の山。
+    ショートカットをバイナリで無理やり編集して不透明度を 30% より小さくすると、
+    何らかのチェックに引っかかって、寧ろ不透明度 100% になってしまう。
+
+  何と検索していたら gcc に -mwindows を指定せよとの事…。
+  https://stackoverflow.com/questions/18260508/c-how-do-i-hide-a-console-window-on-startup
+  然し、これは自分で PE ヘッダを書き換えた時と同じ症状になるだけで問題は解決しなかった。
+
+  2019-08-16 #D0204 で解決した。
+
+* twin: -mwindows で改めて動かしてみる。login_tty 等を使ったら解決するのだろうか [#D0204]
+
+  結論: 実は原因が分かった。master/slave が丁度 0,1,2 になっていて、
+  close(masterfd); close(slavefd); で折角作った標準入出力を閉じてしまっていた。
+  login_tty は余り関係がなかった様である (或いは login_tty が注意深く実装されていれば
+  login_tty を使う事で回避できたのかも知れない)。
+
+  | 調べてみると、先ず std::fopen をしていないとそもそも nanosleep が sleep しない。
+  | 不思議だ。CRT の初期化との兼ね合い等があるのだろうか。std::fopen していると
+  | 途中までは起動する様になる。然し、今度は Bash の出力を読み取ることができない。
+  | 調べてみると一応何かしらは読み取られている様にも見えるが…。
+  |
+  | | うーん。調べてみると echo back は表示される様である。
+  | | C-d で終了する。echo は反応はない。ls も何も表示されない。
+  | | exit は効く。echo や ls を ~/a.txt に出力すると実は何か出力されている。
+  | | つまり、標準出力の先が変なことになっている気がする。
+  | | というかここまでは前に調べた時に分かっている事だった様な気もする。
+  | |
+  | | echo hello > /dev/tty とすると何とちゃんと出力された。
+  | | うーん。見てみると…何と…fd が一個しかない…。
+  | |
+  | |   $ \ls -la /proc/2770/fd
+  | |   合計 0
+  | |   dr-xr-xr-x 2 murase なし 0 2019-08-16 17:07:45 .
+  | |   dr-xr-xr-x 3 murase なし 0 2019-08-16 17:07:45 ..
+  | |   lrwxrwxrwx 1 murase なし 0 2019-08-16 17:12:41 0 -> /dev/pty5
+  | |
+  | | exec 1>&0 2>&0 してから bash を起動したら普通に使える様になった。
+  | |
+  | | close(slavefd) している部分をコメントアウトしたら普通に起動する様になった。
+  | | 然し、bash redirection error というエラーが表示される。以下の通り。
+  | |
+  | | bash: redirection error: cannot duplicate fd: Bad file descriptor
+  | | bash: 1: Bad file descriptor
+  | | [murase@magnate2016 0 ~]$
+  | | -- INSERT --
+  | |
+  | | ble.sh をロードしない様にする。bash --norc で起動してみたが、
+  | | そうすると起動時はエラーは出ないが、何かコマンドを実行するとエラーになる。
+  | | 他のセッションから /proc/3115/fd を観察してみると 1 番が消滅している。
+  | | close(masterfd) も実行しない様にしようとしたら、今度は普通に動く様になった。
+  |
+  | つまり何が原因だったかというと、実は fd が一個も開かれていなかった為に、
+  | masterfd 及び slavefd が 1, 2 になっていて、close で閉じてしまっていたという事。
+  | →一応確認してみたところ、やはり master/slave が 1/2 になっていたのであった。
+  |
+  | ? Cygwin で強制的に stdout stderr を初期化させる方法はあるのだろうか。うーん。
+  |   例えば、試しに stdout stderr に何か文字を書き込んで見る事にする。
+  |   うーん。以下については何の効果もなかった。
+  |     std::fprintf(stdout, "A\n");
+  |     std::fprintf(stderr, "B\n");
+  |     std::fflush(stdout);
+  |     std::fflush(stderr);
+  |   やはり自動的に開かれるという事はない様である。
+  |
+  | * 更に openpt する前に ls -la /proc/$$/fd を出力してみて分かった事は、
+  |   0 は dbgout の出力先に紐付いていたのであった。つまり、
+  |   "std::fopen をしないと nanosleep が sleep しない" というのは、
+  |   fd 0 を使って nanosleep が実行されていたからという事なのだろうか。
+  |
+  | 対応方法としては二種類考えられる。
+  |
+  | a 一つは -mwindow でそのまま起動した場合には、
+  |   自分で fd 0 1 2 を割り当てるという事。
+  | b もう一つの対応は master/slave が fd 1 or 2 になっている時の対応。
+  |   二つ目の対応に関しては何れにしてもしなければならない気がする。
+  |   そうとなれば実は前者は対応しなくても良い気がする。
+  |   →直った。
+  |
+  | 初めの症状を考えると a を実行しなければそもそも
+  | bash が開く前に終了してしまうのではないかとも思ったが、
+  | 実際にやってみると b の対応だけでちゃんと bash も起動する様になった。
+  | 恐らく bash は stdin が開けないとすぐに終了する、という具合になっていたのだろう。
+
+* 以下を見てみると login_tty は [#D0203]
   setsid(); や dup2 等を包含している様である。
   https://android.googlesource.com/platform/bionic/+/master/libc/bionic/pty.cpp
 
@@ -5067,7 +5145,7 @@
   1つの行にどんどん累積していくという事はない筈。
 
 * 2019-04-29 twin: コンソールが一瞬表示されてしまう問題をどうにかする [#D0145]
-  ref #tmp0001
+  ref #D0205
 
   % FreeConsole は効果がなかった。
   % ShowWindow(GetConsoleWindow(), SW_HIDE); は一瞬表示されてしまう。
