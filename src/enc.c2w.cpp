@@ -209,7 +209,8 @@ namespace {
   }
 
   bool is_ambiguous(char32_t u) {
-    return c2w_determine_unambiguous(u) < 0;
+    return c2w_determine_unambiguous(u) < 0 &&
+      c2w_east((std::uint32_t) u, (c2w_type) 0) == 2;
   }
   bool is_emoji(char32_t u) {
     return c2w_is_emoji(u);

@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <mwg/except.h>
 #include "enc.utf8.hpp"
+#include "enc.c2w.hpp"
 #include "iso2022.hpp"
 
 static std::ostream& put_colrow(std::ostream& ostr, unsigned char a) {
@@ -55,28 +56,100 @@ typedef unsigned char byte;
 using namespace contra;
 
 class iso2022_definition_dumper {
-  std::ofstream ostr_html;
-  std::ofstream ostr_text;
-  std::ofstream ostr_cpp;
 
+  bool is_undefined_ku(iso2022_charset const* charset, int ku_index) {
+    for (int a = 32; a < 128; a++) {
+      char32_t const kuten = (ku_index + 32) << 8 | a;
+      if (charset->kuten2u(kuten) != undefined_code) return false;
+    }
+    return true;
+  }
+
+private:
   void print_html_header(std::ostream& ostr) {
     ostr << "<?DOCTYPE html>\n"
          << "<html>\n"
          << "<head>\n"
          << "<style>\n"
          << "table.contra-iso2022-table { border-collapse: collapse; margin: auto; }\n"
-         << "table.contra-iso2022-table td { border: 1px solid gray; text-align: center; font-size: 1.5em; height: 2em; width: 2em; }\n"
+         << "table.contra-iso2022-table td { border: 1px solid gray; text-align: center; font-size: 1.5em; height: 2em; width: 2em; position: relative; }\n"
          << "table.contra-iso2022-table td>code { font-size: 0.7rem; }\n"
+         << "table.contra-iso2022-table td>span.c2w { font-size: 0.7rem; position: absolute; left: 0; top: 0; }\n"
          << "td.contra-iso2022-undef { background-color: #ddd; }\n"
          << "td.contra-iso2022-diff { background-color: #dfd; }\n"
+         << "td.contra-iso2022-narrow { background-color: #fdd; }\n"
+         << "th.contra-iso2022-ku { font-size: 1.5em; padding-right: 0.5em; }\n"
          << "</style>\n"
          << "</head>\n"
-         << "<body>\n"
-         << "<h1>94/96-Character Graphic Character Sets</h1>\n";
+         << "<body>\n";
   }
   void print_html_footer(std::ostream& ostr) {
     ostr << "</body>\n"
          << "</html>\n";
+  }
+  /// @param[in] meta_shift 違いを比較する対象の文字コードのずれ
+  void print_html_ku(std::ostream& ostr, iso2022_charset const* charset, int ku_index, unsigned char meta_shift = 0) {
+    bool multibyte = ku_index >= 0;
+    if (multibyte && is_undefined_ku(charset, ku_index)) return;
+
+    ostr << "<table class=\"contra-iso2022-table\">\n";
+    {
+      ostr << "<tr>";
+      if (multibyte)
+        ostr << "<th class=\"contra-iso2022-ku\" rowspan=\"7\">" << ku_index << "区</th>";
+      ostr << "<th></th>";
+      for (int row = 0; row <= 15; row++)
+        ostr << "<th>*/" << row << "</th>";
+      ostr << "</tr>\n";
+    }
+
+    std::vector<char32_t> vec;
+    for (int col = 2; col <= 7; col++) {
+      ostr << "<tr>";
+      ostr << "<th>" << col << "/*</th>";
+      for (int row = 0; row <= 15; row++) {
+        char32_t const a = (multibyte ? ku_index + 32 : 0) << 8 | col << 4 | row;
+
+        if (!charset->get_chars(vec, charset->kuten2index(a))) {
+          ostr << "<td class=\"contra-iso2022-undef\"></td>";
+        } else {
+          if (multibyte) {
+            if (contra::encoding::c2w(vec[0], contra::encoding::c2w_width_east) == 1)
+              ostr << "<td class=\"contra-iso2022-narrow\">";
+            else
+              ostr << "<td>";
+
+            if (contra::encoding::is_ambiguous(vec[0]))
+              ostr << "<span class=\"c2w\" title=\"ambiguous\">A</span>";
+          } else {
+            if (vec.size() != 1 || vec[0] != a + meta_shift)
+              ostr << "<td class=\"contra-iso2022-diff\">";
+            else
+              ostr << "<td>";
+          }
+
+
+          if (is_combining_character(vec[0])) ostr << "&#x25cc;";
+          for (auto const b : vec) put_for_html(b, ostr);
+
+          std::ios_base::fmtflags old_flags = std::cout.flags();
+          {
+            ostr << "<br/><code>";
+            bool first = true;
+            for (auto const b : vec) {
+              if (first) first = false; else ostr << " ";
+              ostr << "U+"
+                   << std::hex << std::uppercase
+                   << std::setw(4) << std::setfill('0') << (std::uint32_t) b;
+            }
+            ostr << "</code></td>";
+          }
+          ostr.flags(old_flags);
+        }
+      }
+      ostr << "</tr>\n";
+    }
+    ostr << "</table>\n";
   }
   void print_html_charset(std::ostream& ostr, iso2022_charset const* charset) {
     ostr << "<h2>" << charset->reg << ": "
@@ -118,57 +191,25 @@ class iso2022_definition_dumper {
     }
     ostr << "</ul>\n";
 
-    // 違いを比較する対象の文字コードのずれ
-    unsigned char meta_shift = 0;
-    if (charset->type == iso2022_size_sb96)
-      meta_shift = 0x80;
-
-    ostr << "<table class=\"contra-iso2022-table\">\n";
-    {
-      ostr << "<tr>";
-      ostr << "<th></th>";
-      for (int row = 0; row <= 15; row++)
-        ostr << "<th>*/" << row << "</th>";
-      ostr << "</tr>\n";
+    switch (charset->type) {
+    case iso2022_size_sb96:
+      print_html_ku(ostr, charset, -1, 0x80);
+      break;
+    case iso2022_size_sb94:
+      print_html_ku(ostr, charset, -1);
+      break;
+    case iso2022_size_mb94:
+      for (int k = 1; k <= 94; k++) print_html_ku(ostr, charset, k);
+      break;
+    case iso2022_size_mb96:
+      for (int k = 0; k <= 95; k++) print_html_ku(ostr, charset, k);
+      break;
     }
-    std::vector<char32_t> vec;
-    for (int col = 2; col <= 7; col++) {
-      ostr << "<tr>";
-      ostr << "<th>" << col << "/*</th>";
-      for (int row = 0; row <= 15; row++) {
-        char const a = col << 4 | row;
 
-        if (!charset->get_chars(vec, charset->kuten2index(a))) {
-          ostr << "<td class=\"contra-iso2022-undef\"></td>";
-        } else {
-          if (vec.size() != 1 || vec[0] != (char32_t) a + meta_shift)
-            ostr << "<td class=\"contra-iso2022-diff\">";
-          else
-            ostr << "<td>";
-
-          if (is_combining_character(vec[0])) ostr << "&#x25cc;";
-          for (auto const b : vec) put_for_html(b, ostr);
-
-          std::ios_base::fmtflags old_flags = std::cout.flags();
-          {
-            ostr << "<br/><code>";
-            bool first = true;
-            for (auto const b : vec) {
-              if (first) first = false; else ostr << " ";
-              ostr << "U+"
-                   << std::hex << std::uppercase
-                   << std::setw(4) << std::setfill('0') << (std::uint32_t) b;
-            }
-            ostr << "</code></td>";
-          }
-          ostr.flags(old_flags);
-        }
-      }
-      ostr << "</tr>\n";
-    }
-    ostr << "</table>\n";
     ostr << std::endl;
   }
+
+private:
   void print_text(std::ostream& ostr, iso2022_charset const* charset) {
     ostr << charset->reg << ": " << charset->name << "\n";
 
@@ -254,7 +295,7 @@ class iso2022_definition_dumper {
 
     ostr << "char32_t const ";
     for (char a : charset->reg)
-      ostr << (std::isalnum(a) ? std::tolower(a) : '_');
+      ostr << (char) (std::isalnum(a) ? std::tolower(a) : '_');
     ostr << "_table[96] = {\n";
 
     bool has_multichar = false;
@@ -268,7 +309,7 @@ class iso2022_definition_dumper {
         ostr << "0xFFFF,"; // multichar
         has_multichar = true;
       } else {
-        std::ios_base::fmtflags old_flags = std::cout.flags();
+        std::ios_base::fmtflags old_flags = ostr.flags();
         ostr << "0x"
              << std::hex << std::uppercase
              << std::setw(4) << std::setfill('0') << (std::uint32_t) b
@@ -284,39 +325,90 @@ class iso2022_definition_dumper {
     ostr << std::endl;
   }
 
-  static void on_charset_defined(iso2022_charset const* charset, std::uintptr_t param) {
-    reinterpret_cast<iso2022_definition_dumper*>(param)->dump_charset(charset);
+  iso2022_charset_registry* m_iso2022 = nullptr;
+  std::vector<charset_t> m_charset_list;
+
+  static void on_charset_defined(iso2022_charset const* charset, charset_t csindex, std::uintptr_t param) {
+    contra_unused(charset);
+    reinterpret_cast<iso2022_definition_dumper*>(param)->m_charset_list.push_back(csindex);
   }
 public:
   bool process(iso2022_charset_registry& iso2022, const char* filename) {
-    ostr_html.open("out/iso2022.html");
-    print_html_header(ostr_html);
-    ostr_text.open("out/iso2022.txt");
-    ostr_cpp.open("out/iso2022.cpp");
-
+    m_iso2022 = &iso2022;
     bool const ret = iso2022.load_definition(filename, &on_charset_defined, reinterpret_cast<std::uintptr_t>(this));
-
-    print_html_footer(ostr_html);
-    ostr_html.close();
-    ostr_text.close();
-    ostr_cpp.close();
-    std::cout << output_charset_count << " charsets are processed." << std::endl;
+    std::cout << m_charset_list.size() << " charsets are defined." << std::endl;
     return ret;
   }
 
-private:
-  int output_charset_count = 0;
+public:
+  void save_html(std::string const& filename, std::string const& title) {
+    std::ofstream ostr(filename);
+    print_html_header(ostr);
+    if (!title.empty()) ostr << "<h1>" << title << "</h1>\n";
+    for (auto index : m_charset_list)
+      print_html_charset(ostr, m_iso2022->charset(index));
+    print_html_footer(ostr);
+  }
+  void save_cpp(std::string const& filename) {
+    std::ofstream ostr(filename);
+    for (auto index : m_charset_list)
+      print_cpp(ostr, m_iso2022->charset(index));
+  }
+  void save_txt(std::string const& filename) {
+    std::ofstream ostr(filename);
+    for (auto index : m_charset_list)
+      print_text(ostr, m_iso2022->charset(index));
+  }
 
-  void dump_charset(iso2022_charset const* charset) {
-    output_charset_count++;
-    print_html_charset(ostr_html, charset);
-    print_text(ostr_text, charset);
-    print_cpp(ostr_cpp, charset);
+  void save_html_separate(std::string const& dirname) {
+    for (auto index : m_charset_list) {
+      auto const charset = m_iso2022->charset(index);
+      std::string fname_html = dirname + "/";
+      for (char a : charset->reg)
+        fname_html += (char) (std::isalnum(a) ? std::tolower(a) : '_');
+      fname_html += ".html";
+      std::ofstream file(fname_html);
+      if (!file){
+        std::cerr << "failed to open the file '" << fname_html << "'" << std::endl;
+        return;
+      }
+      print_html_header(file);
+      print_html_charset(file, charset);
+      print_html_footer(file);
+    }
   }
 };
 
-int main() {
+bool load_iso2022_def() {
   iso2022_charset_registry iso2022;
   iso2022_definition_dumper proc;
-  return !proc.process(iso2022, "iso2022.def");
+  if (!proc.process(iso2022, "res/iso2022.def")) return false;
+  proc.save_html("out/iso2022.html", "94/96-Character Graphic Character Sets");
+  // proc.save_cpp("out/iso2022.cpp");
+  // proc.save_txt("out/iso2022.txt");
+  return true;
+}
+bool load_jis_def() {
+  iso2022_charset_registry iso2022;
+  iso2022_definition_dumper proc;
+  if (!proc.process(iso2022, "res/iso2022-jis.def")) return false;
+  proc.save_html_separate("out");
+  return true;
+}
+
+bool load_file(const char* filename) {
+  iso2022_charset_registry iso2022;
+  iso2022_definition_dumper proc;
+  if (!proc.process(iso2022, filename)) return false;
+  return true;
+}
+
+int main(int argc, char** argv) {
+  if (argc == 1) {
+    if (!load_iso2022_def()) return 1;
+    if (!load_jis_def()) return 1;
+  } else {
+    if (!load_file(argv[1])) return 1;
+  }
+  return 0;
 }

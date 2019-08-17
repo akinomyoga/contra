@@ -33,6 +33,7 @@ namespace {
     char32_t const* r0;
     char32_t const* rN;
 
+    charset_t current_csindex = 0;
     iso2022_charset* current_charset = nullptr;
 
     bool skip_space() {
@@ -137,6 +138,15 @@ namespace {
       }
       return kuten;
     }
+    char32_t next_kuten(char32_t kuten) {
+      char32_t a = kuten & 0xFF;
+      if (a == 0) a = 0x20;
+      a++;
+      if (a < 0x80)
+        return (kuten & ~(char32_t) 0xFF) | a;
+      else
+        return next_kuten(kuten >> 8) << 8 | 0x20;
+    }
 
   private:
     bool process_command_declare(iso2022_charset_size type) {
@@ -182,7 +192,7 @@ namespace {
       read_until('\0', data.name);
 
       if (current_charset && callback)
-        callback(current_charset, cbparam);
+        callback(current_charset, current_csindex, cbparam);
 
       if (iso2022.resolve_designator(data.type, data.seq) != iso2022_unspecified) {
         const char* dbflag = data.type == iso2022_size_mb94 || data.type == iso2022_size_mb96 ? "$" : "";
@@ -191,8 +201,9 @@ namespace {
                       << dbflag << grflag << data.seq << "\" is redefined" << std::endl;
       }
 
-      std::uint32_t const csindex = iso2022.register_charset(std::move(data), false);
+      charset_t const csindex = iso2022.register_charset(std::move(data), false);
       current_charset = iso2022.charset(csindex);
+      current_csindex = csindex;
       return true;
     }
 
@@ -233,7 +244,7 @@ namespace {
         return false;
       }
 
-      for (; a <= c; a++, b++)
+      for (; a <= c; a = next_kuten(a), b++)
         current_charset->kuten2u(a) = b;
       return true;
     }
@@ -260,7 +271,7 @@ namespace {
         return false;
       }
 
-      for (; a <= c; a++)
+      for (; a <= c; a = next_kuten(a))
         current_charset->kuten2u(a) = undefined_code;
       return true;
     }
@@ -370,6 +381,215 @@ namespace {
       return true;
     }
 
+    bool include_file(std::string const& filename, bool optional = false) {
+      std::ifstream file(filename);
+      if (!file) {
+        if (optional) return true;
+        print_error() << "failed to open the include file '" << filename << "'" << std::endl;
+        return false;
+      }
+
+      const char* old_title = title;
+      int old_iline = iline;
+      this->title = filename.c_str();
+      this->iline = 0;
+      bool const ret = process_stream(file);
+
+      this->title = old_title;
+      this->iline = old_iline;
+      return ret;
+    }
+
+    bool process_command_include() {
+      skip_space();
+      std::string filename;
+      read_until('\0', filename);
+      if (filename.empty()) {
+        print_error() << "no filename specified" << std::endl;
+        return false;
+      }
+      return include_file(filename);
+    }
+
+    bool process_command_savebin() {
+      if (!current_charset) {
+        print_error() << "charset unselected" << std::endl;
+        return false;
+      }
+
+      skip_space();
+      std::string name;
+      read_until('\0', name);
+      if (name.empty()) {
+        print_error() << "no name specified" << std::endl;
+        return false;
+      }
+
+      std::ofstream ofs1(name + ".bin", std::ios::binary);
+      if (!ofs1) {
+        print_error() << "failed to open the file '" << name << ".bin'" << std::endl;
+        return false;
+      }
+
+      std::ofstream ofs2(name + ".def");
+      if (!ofs2) {
+        print_error() << "failed to open the file '" << name << ".def'" << std::endl;
+        return false;
+      }
+
+      int ku0, kuZ, ten0, tenZ;
+      switch (current_charset->type) {
+      case iso2022_size_sb94:
+        ku0 = 0; kuZ = 0;
+        ten0 = 1; tenZ = 94;
+        break;
+      case iso2022_size_mb94:
+        ku0 = 1; kuZ = 94;
+        ten0 = 1; tenZ = 94;
+        break;
+      case iso2022_size_sb96:
+        ku0 = 0; kuZ = 0;
+        ten0 = 0; tenZ = 95;
+        break;
+      case iso2022_size_mb96:
+        ku0 = 0; kuZ = 95;
+        ten0 = 0; tenZ = 95;
+        break;
+      default:
+        return false;
+      }
+
+      iso2022_charset const* charset = current_charset;
+
+      auto _write_utf16le = [&ofs1] (char32_t c) {
+                              ofs1.put(0xFF & c);
+                              ofs1.put(0xFF & c >> 8);
+                            };
+      auto _write_enc96 = [&ofs2] (int value) {
+                            if (value == 0)
+                              ofs2 << "<SP>";
+                            else if (value == 95)
+                              ofs2 << "<DEL>";
+                            else
+                              ofs2 << (char) (value + 0x20);
+                          };
+
+      std::vector<char32_t> vec;
+      for (int ku = ku0; ku <= kuZ; ku++) {
+        for (int ten = ten0; ten <= tenZ; ten++) {
+          std::uint32_t kuten = (ku + 32) << 8 | (ten + 32);
+          char32_t ch = 0;
+          if (!charset->get_chars(vec, charset->kuten2index(kuten))) {
+            vec.clear();
+            ch = 0xFFFD;
+          } else if (vec.size() == 1) {
+            ch = vec[0];
+          } else {
+            ch = 0xFFFF; // multichar_conv
+            ofs2 << "  define ";
+            _write_enc96(ku);
+            _write_enc96(ten);
+            std::ios_base::fmtflags old_flags = ofs2.flags();
+            ofs2 << std::hex << std::uppercase;
+            for (char32_t c : vec)
+              ofs2 << "<U+" << (std::uint32_t) c << ">";
+            ofs2 << "\n";
+            ofs2.flags(old_flags);
+          }
+
+          if (ch >= 0x10000) {
+            ch -= 0x10000;
+            _write_utf16le(0xD800 | (ch >> 10 & 0x3FF));
+            _write_utf16le(0xDC00 | (ch & 0x3FF));
+          } else {
+            _write_utf16le(ch);
+          }
+        }
+      }
+
+      return true;
+    }
+
+    bool process_command_loadbin() {
+      if (!current_charset) {
+        print_error() << "charset unselected" << std::endl;
+        return false;
+      }
+
+      skip_space();
+      std::string name;
+      read_until('\0', name);
+      if (name.empty()) {
+        print_error() << "no name specified" << std::endl;
+        return false;
+      }
+
+      std::ifstream ifs1(name + ".bin", std::ios::binary);
+      if (!ifs1) {
+        print_error() << "failed to open the file '" << name << ".bin'" << std::endl;
+        return false;
+      }
+
+      int ku0, kuZ, ten0, tenZ;
+      switch (current_charset->type) {
+      case iso2022_size_sb94:
+        ku0 = 0; kuZ = 0;
+        ten0 = 1; tenZ = 94;
+        break;
+      case iso2022_size_mb94:
+        ku0 = 1; kuZ = 94;
+        ten0 = 1; tenZ = 94;
+        break;
+      case iso2022_size_sb96:
+        ku0 = 0; kuZ = 0;
+        ten0 = 0; tenZ = 95;
+        break;
+      case iso2022_size_mb96:
+        ku0 = 0; kuZ = 95;
+        ten0 = 0; tenZ = 95;
+        break;
+      default:
+        return false;
+      }
+
+      iso2022_charset* charset = current_charset;
+
+      auto _read_utf16le = [&ifs1] () -> char32_t {
+                             unsigned char const a = ifs1.get();
+                             unsigned char const b = ifs1.get();
+                             return a | b << 8;
+                           };
+
+      for (int ku = ku0; ku <= kuZ; ku++) {
+        for (int ten = ten0; ten <= tenZ; ten++) {
+          std::uint32_t const kuten = (ku + 32) << 8 | (ten + 32);
+          char32_t ch = _read_utf16le();
+          if (0xD800 <= ch && ch < 0xDC00) {
+            // invalid surrogate
+            char32_t ch2 = _read_utf16le();
+            if (0xDC00 <= ch2 && ch2 < 0xE0000) {
+              ch = (ch & 0x3FF) << 10 | (ch2 & 0x3FF);
+              ch += 0x10000;
+            } else {
+              std::cerr << name << ".bin:" << ku << "-" << ten << ": invalid surrogate" << std::endl;
+              ch = 0xFFFD;
+            }
+          } else if (0xDC00 <= ch &&ch < 0xE000) {
+            std::cerr << name << ".bin:" << ku << "-" << ten << ": invalid surrogate" << std::endl;
+            ch = 0xFFFD;
+          }
+
+          if (ch != 0xFFFD)
+            charset->define(charset->kuten2index(kuten), ch);
+        }
+      }
+
+      // def ファイルもある時は追加で読み込む
+      include_file(name + ".def", true);
+
+      return true;
+    }
+
   private:
     bool process_line() {
       skip_space();
@@ -397,19 +617,19 @@ namespace {
         return process_command_undef_range();
       } else if (starts_with_skip("define ")) {
         return process_command_define();
+      } else if (starts_with_skip("include ")) {
+        return process_command_include();
+      } else if (starts_with_skip("savebin ")) {
+        return process_command_savebin();
+      } else if (starts_with_skip("loadbin ")) {
+        return process_command_loadbin();
       } else {
         print_error() << "unrecognized command" << std::endl;
         return false;
       }
     }
 
-  public:
-    bool process(std::istream& istr, const char* title, iso2022_charset_callback callback, std::uintptr_t cbparam) {
-      this->title = title;
-      this->callback = callback;
-      this->cbparam = cbparam;
-
-      iline = 0;
+    bool process_stream(std::istream& istr) {
       bool error_flag = false;
       std::string line;
       std::vector<char32_t> buffer;
@@ -431,16 +651,28 @@ namespace {
         if (!process_line())
           error_flag = true;
       }
-      if (current_charset && callback)
-        callback(current_charset, cbparam);
-
       return !error_flag;
+    }
+
+  public:
+    bool process(std::istream& istr, const char* title, iso2022_charset_callback callback, std::uintptr_t cbparam) {
+      this->title = title;
+      this->callback = callback;
+      this->cbparam = cbparam;
+
+      this->iline = 0;
+      bool const ret = process_stream(istr);
+      if (current_charset && callback)
+        callback(current_charset, current_csindex, cbparam);
+
+      return ret;
     }
   };
 }
 
 bool iso2022_charset_registry::load_definition(std::istream& istr, const char* title, iso2022_charset_callback callback, std::uintptr_t cbparam) {
-  return iso2022_definition_reader(*this).process(istr, title, callback, cbparam);
+  iso2022_definition_reader reader(*this);
+  return reader.process(istr, title, callback, cbparam);
 }
 bool iso2022_charset_registry::load_definition(const char* filename, iso2022_charset_callback callback, std::uintptr_t cbparam) {
   std::ifstream ifs(filename);
@@ -457,8 +689,8 @@ iso2022_charset_registry& iso2022_charset_registry::instance() {
   static iso2022_charset_registry instance;
   if (!initialized) {
     initialized = true;
-    instance.load_definition("iso2022.def");
-    instance.load_definition("iso2022-jisx0213.def");
+    instance.load_definition("res/iso2022.def");
+    instance.load_definition("res/iso2022-jis.def");
   }
   return instance;
 }

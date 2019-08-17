@@ -130,7 +130,6 @@ namespace term {
 
       if (pid == 0) {
         setsid();
-
         ioctl(slavefd, TIOCSCTTY, 0);
         if (params.termios) tcsetattr(slavefd, TCSANOW, params.termios);
         {

@@ -163,7 +163,7 @@ namespace contra {
     }
   };
 
-  typedef void (*iso2022_charset_callback)(iso2022_charset const*, std::uintptr_t cbparam);
+  typedef void (*iso2022_charset_callback)(iso2022_charset const*, charset_t, std::uintptr_t cbparam);
 
   class iso2022_charset_registry {
     std::vector<iso2022_charset> m_category_sb;

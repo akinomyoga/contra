@@ -11,7 +11,7 @@ ostype := $(shell echo -n $$OSTYPE)
 
 objdir = ../out
 gendir = ../out/gen
-directories += $(objdir) $(objdir)/experimental $(objdir)/ansi $(objdir)/ttty
+directories += $(objdir) $(objdir)/experimental $(objdir)/ansi $(objdir)/ttty $(gendir)
 
 -include $(shell find $(objdir) -name \*.dep)
 $(objdir)/%.o: %.cpp | $(objdir) $(gendir)/term.mode_def.hpp
@@ -68,11 +68,16 @@ all: iso2022-gendef-table.exe
 iso2022-gendef-table.exe: $(objdir)/iso2022-gendef-table.o $(objdir)/enc.utf8.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 all: iso2022-dump.exe
-iso2022-dump.exe: $(objdir)/iso2022-dump.o $(objdir)/enc.utf8.o $(objdir)/iso2022.o
+iso2022-dump.exe: $(objdir)/iso2022-dump.o $(objdir)/enc.utf8.o $(objdir)/enc.c2w.o $(objdir)/iso2022.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 all: out/iso2022.html
-out/iso2022.html: iso2022-dump.exe iso2022.def | out
+out/iso2022.html: iso2022-dump.exe res/iso2022.def res/iso2022-jis.def | out
 	./iso2022-dump.exe
+
+$(gendir)/jisx.plane0212.def: gen/jisx.create-jis-table.sh | $(gendir)
+	cd gen && bash jisx.create-jis-table.sh
+res/jisx.plane1.bin: iso2022-dump.exe gen/jisx.generate-bin.def $(gendir)/jisx.plane0212.def
+	./iso2022-dump.exe gen/jisx.generate-bin.def
 
 #------------------------------------------------------------------------------
 # ttty

@@ -1,0 +1,115 @@
+
+#------------------------------------------------------------------------------
+# JIS Plane 1
+
+# JIS X 0213:2004
+MB94(2,Q) ISO-IR-233 Japanese Graphic Character Set for Information Interchange, Plane 1 (Update of ISO-IR 228)
+  loadbin res/jisx.plane1
+
+  # 全角文字がある場合はそれを使う
+  map !$，!%．!'：!(；!)？!*！!.｀
+  map !0＾!1￣!2＿!?／
+  map !@＼!C｜!J（!K）!N［!O］
+  map !P｛!Q｝!\＋!]－
+  map !a＝!c＜!d＞!o￥
+  map !p＄!q￠!r￡!s％!t＃!u＆!v＊!w＠
+  map "/＇"0＂"1－"2～
+  map "L￢
+  map_range #0０-#9９
+  map_range #AＡ-#ZＺ
+  map_range #aａ-#zｚ
+
+# JIS X 0213:2000
+MB94(2,O) ISO-IR-228 Japanese Graphic Character Set for Information Interchange --- Plane 1
+  load MB94(2,Q)
+  undef .!/~OTO~t'
+  undef_range ~z-~~
+
+# JIS X 0208:1990
+MB94(2,B) ISO-IR-168 Update Registration 87 Japanese Graphic Character Set for Information Interchange ISO-IR-87 Japanese Character Set JIS C 6226-1983
+  load MB94(2,O)
+  undef_range "/-"9
+  undef_range "B-"I
+  undef_range "Q-"[
+  undef_range "k-"q
+  undef_range "z-"}
+  undef_range #!-#/
+  undef_range #:-#@
+  undef_range #[-#`
+  undef_range #{-#~
+  undef_range $t-$~
+  undef_range %w-%~
+  undef_range &9-&@
+  undef_range &Y-&~
+  undef_range 'B-'P
+  undef_range 'r-'~
+  undef_range (A-/~
+  undef_range OT-O~
+  undef_range t'-~~
+
+# JIS C 6226:1983
+MB94(2,B/depr) ISO-IR-87 Japanese Character Set JIS C 6226-1983
+  load MB94(2,B)
+  undef t%t&
+
+# JIS C 6226:1978
+MB94(2,@) ISO-IR-42 Japanese Character Set JIS C 6226-1983
+  load MB94(2,B/depr)
+  undef_range ":-"~
+  undef_range (!-(~
+
+  # 字体の入れ替え
+  map 03鰺rM鯵
+  map 2)鶯rt鴬
+  map 3B蠣iZ蛎
+  map 3I攪Yx撹
+  map 3v竈c^竃
+  map 4C灌^u潅
+  map 4R諫k]諌
+  map 7[頸pt頚
+  map 9\礦bh砿
+  map <I蘂i"蕊
+  map ?Y靱pW靭
+  map A(賤lM賎
+  map D[壺Td壷
+  map EW礪bj砺
+  map En檮[m梼
+  map Es濤^9涛
+  map Fv邇mn迩
+  map Gh蠅j$蝿
+  map I0檜[X桧
+  map Ky儘PV侭
+  map Ly藪i.薮
+  map O6籠dF篭
+
+  # 字体変更と追加
+  undef_range t!-t$
+  map 6F堯Kj槇MZ遙`v瑤
+
+  # 字体変更
+  map 0"啞1k焰2*鷗3z嚙6"俠6m軀7R繫84鹼
+  map 9m麴<H屢=+繡>U蔣>_醬@f蟬A_搔Ai瘦
+  map BM驒C=簞DO摑E6塡E?顚Ex禱FB瀆G9囊
+  map H.潑H0醱KK頰LM麵Mi萊O9蠟Z9攢
+
+#------------------------------------------------------------------------------
+# JIS Plane 2
+
+MB94(2,P) ISO-IR-229 Japanese Graphic Character Set for Information Interchange --- Plane 2
+  loadbin res/jisx.plane2
+
+  # JIS X 0213 は 1, 3-5, 8, 12-15, 78-94
+  undef_range "!-"~
+  undef_range &!-'~
+  undef_range )!-+~
+  undef_range 0!-m~
+
+MB94(2,D) ISO-IR-159 Supplementary Japanese Graphic Character Set for Information Interchange
+  loadbin res/jisx.plane2
+
+  # JIS X 0212 は 2, 6-7, 9-11, 16-77
+  undef_range !!-!~
+  undef_range #!-%~
+  undef_range (!-(~
+  undef_range ,!-/~
+  undef_range n!-~~
