@@ -105,10 +105,6 @@ namespace term {
     bool start(terminal_session_parameters const& params) {
       if (m_active) return true;
 
-      char command[256];
-      std::sprintf(command, "/usr/bin/ls -la /proc/%d/fd &> ~/a.txt", getpid());
-      system(command);
-
       // restrict in the range from 256 bytes to 64 kbytes
       m_read_buffer.resize(contra::clamp(params.fd_read_buffer_size, 0x100, 0x10000));
 

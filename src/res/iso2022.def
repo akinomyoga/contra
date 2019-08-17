@@ -1028,13 +1028,22 @@ SB96(j) ISO-IR-234 Latin/Hebrew character set for 8-bit codes
 # MB94
 #
 #==============================================================================
-#
-# MB94(@) ISO-IR-42 Japanese Character Set JISC C 6226-1978
+
+MB94(2,@) ISO-IR-42 Japanese Character Set JIS C 6226-1983
+  autoload iso2022-jis.def
+MB94(2,B) ISO-IR-168 Update Registration 87 Japanese Graphic Character Set for Information Interchange ISO-IR-87 Japanese Character Set JIS C 6226-1983
+  autoload iso2022-jis.def
+MB94(2,D) ISO-IR-159 Supplementary Japanese Graphic Character Set for Information Interchange
+  autoload iso2022-jis.def
+MB94(2,O) ISO-IR-228 Japanese Graphic Character Set for Information Interchange --- Plane 1
+  autoload iso2022-jis.def
+MB94(2,P) ISO-IR-229 Japanese Graphic Character Set for Information Interchange --- Plane 2
+  autoload iso2022-jis.def
+MB94(2,Q) ISO-IR-233 Japanese Graphic Character Set for Information Interchange, Plane 1 (Update of ISO-IR 228)
+  autoload iso2022-jis.def
+
 # MB94(A) ISO-IR-58 Chinese Character Set Chinese Standard GB 2312-80
-# MB94(B) ISO-IR-87 Japanese Character Set JIS C 6226-1983
-# ★MB94(B) ISO-IR-168 Update Registration 87 Japanese Graphic Character Set for Information Interchange
 # MB94(C) ISO-IR-149 Korean Graphic Character Set, Korean Standard KSC 5601-1987
-# MB94(D) ISO-IR-159 Supplementary Japanese Graphic Character Set for Information Interchange
 # MB94(E) ISO-IR-165 CCITT Chinese Set
 # MB94(F) ISO-IR-169 Blissymbol Graphic Character Set
 # MB94(G) ISO-IR-171 Chinese Standard Interchange Code - Set 1, CNS 11643-1992
@@ -1045,9 +1054,6 @@ SB96(j) ISO-IR-234 Latin/Hebrew character set for 8-bit codes
 # MB94(L) ISO-IR-186 Chinese Standard Interchange Code - Set 6, CNS 11643-1992
 # MB94(M) ISO-IR-187 Chinese Standard Interchange Code - Set 7, CNS 11643-1992
 # MB94(N) ISO-IR-202 DPRK Standard Korean Graphic Character Set for Information Interchange
-# MB94(O) ISO-IR-228 Japanese Graphic Character Set for Information Interchange --- Plane 1
-# MB94(P) ISO-IR-229 Japanese Graphic Character Set for Information Interchange --- Plane 2
-# MB94(Q) ISO-IR-233 Japanese Graphic Character Set for Information Interchange, Plane 1 (Update of ISO-IR 228)
 
 # iconv は以下も対応している。これは UTF-16 の一種の様だ。
 # ISO-IR-193

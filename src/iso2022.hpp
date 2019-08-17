@@ -53,6 +53,7 @@ namespace contra {
     std::string designator;
     std::string reg;
     std::string name;
+    std::string autoload;
 
   private:
     std::vector<char32_t> map;
@@ -163,7 +164,11 @@ namespace contra {
     }
   };
 
-  typedef void (*iso2022_charset_callback)(iso2022_charset const*, charset_t, std::uintptr_t cbparam);
+  struct iso2022_load_definition_params {
+    void (*callback)(iso2022_charset const*, charset_t, std::uintptr_t cbparam) = nullptr;
+    std::uintptr_t cbparam = 0;
+    bool allow_file_write = false;
+  };
 
   class iso2022_charset_registry {
     std::vector<iso2022_charset> m_category_sb;
@@ -392,14 +397,21 @@ namespace contra {
 
       charset_t const index = cs & charflag_iso2022_mask_code;
       mwg_assert(index < category->size());
-      return &(*category)[index];
+
+      iso2022_charset* const ret = &(*category)[index];
+      if (!ret->autoload.empty()) {
+        std::string const path = std::move(ret->autoload);
+        ret->autoload.clear();
+        load_definition(path.c_str());
+      }
+      return ret;
     }
     iso2022_charset const* charset(charset_t cs) const {
       return const_cast<iso2022_charset_registry*>(this)->charset(cs);
     }
 
-    bool load_definition(std::istream& istr, const char* title, iso2022_charset_callback callback = nullptr, std::uintptr_t cbparam = 0);
-    bool load_definition(const char* filename, iso2022_charset_callback callback = nullptr, std::uintptr_t cbparam = 0);
+    bool load_definition(std::istream& istr, const char* title, iso2022_load_definition_params const* params = nullptr);
+    bool load_definition(const char* filename, iso2022_load_definition_params const* params = nullptr);
 
     static iso2022_charset_registry& instance();
   };

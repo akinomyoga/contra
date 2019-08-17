@@ -20,8 +20,7 @@ namespace {
 
   struct iso2022_definition_reader {
     iso2022_charset_registry& iso2022;
-    iso2022_charset_callback callback = nullptr;
-    std::uintptr_t cbparam = 0;
+    iso2022_load_definition_params const* params = nullptr;
     const char* title = "(stream)";
     std::string filename;
 
@@ -29,13 +28,35 @@ namespace {
     iso2022_definition_reader(iso2022_charset_registry& iso2022): iso2022(iso2022) {}
 
   private:
+    charset_t current_csindex = 0;
+    iso2022_charset* current_charset = nullptr;
+
+    static int hex2int(char32_t u) {
+      if (std::isdigit(u)) return u - '0';
+      if (std::islower(u)) return u - 'a' + 10;
+      if (std::isupper(u)) return u - 'A' + 10;
+      return -1;
+    }
+
+    bool is_graphic_character(char32_t u) const {
+      if (!current_charset) return false;
+      switch (current_charset->type) {
+      case iso2022_size_sb94:
+      case iso2022_size_mb94:
+        return 0x21 <= u && u <= 0x7E;
+      case iso2022_size_sb96:
+      case iso2022_size_mb96:
+        return 0x20 <= u && u <= 0x80;
+      default:
+        return false;
+      }
+    }
+
+  private:
     int iline = 0;
     char32_t const* r;
     char32_t const* r0;
     char32_t const* rN;
-
-    charset_t current_csindex = 0;
-    iso2022_charset* current_charset = nullptr;
 
     bool skip_space() {
       if (!std::isspace(*r)) return false;
@@ -55,41 +76,18 @@ namespace {
       return *r == c;
     }
 
-    std::ostream& print_error() {
-      return std::cerr << title << ":" << iline << ":" << r - r0 << ": ";
-    }
-
     unsigned read_unsigned() {
       unsigned ret = 0;
       while (std::isdigit(*r))
         ret = ret * 10 + (*r++ - '0');
       return ret;
     }
-    static int hex2int(char32_t u) {
-      if (std::isdigit(u)) return u - '0';
-      if (std::islower(u)) return u - 'a' + 10;
-      if (std::isupper(u)) return u - 'A' + 10;
-      return -1;
-    }
+
     unsigned read_hex() {
       unsigned ret = 0;
       while (std::isxdigit(*r))
         ret = ret * 16 + hex2int(*r++);
       return ret;
-    }
-
-    bool is_graphic_character(char32_t u) const {
-      if (!current_charset) return false;
-      switch (current_charset->type) {
-      case iso2022_size_sb94:
-      case iso2022_size_mb94:
-        return 0x21 <= u && u <= 0x7E;
-      case iso2022_size_sb96:
-      case iso2022_size_mb96:
-        return 0x20 <= u && u <= 0x80;
-      default:
-        return false;
-      }
     }
 
   private:
@@ -139,6 +137,12 @@ namespace {
       }
       return kuten;
     }
+
+  private:
+    std::ostream& print_error() {
+      return std::cerr << title << ":" << iline << ":" << r - r0 << ": ";
+    }
+
     char32_t next_kuten(char32_t kuten) {
       char32_t a = kuten & 0xFF;
       if (a == 0) a = 0x20;
@@ -149,7 +153,6 @@ namespace {
         return next_kuten(kuten >> 8) << 8 | 0x20;
     }
 
-  private:
     std::string relative_path(std::string const& path) {
       if (path[0] != '/' && !filename.empty()) {
         if (std::size_t index = filename.rfind("/"); index != std::string::npos) {
@@ -202,8 +205,7 @@ namespace {
       skip_space();
       read_until('\0', data.name);
 
-      if (current_charset && callback)
-        callback(current_charset, current_csindex, cbparam);
+      on_charset_end();
 
       if (iso2022.resolve_designator(data.type, data.designator) != iso2022_unspecified) {
         const char* dbflag = data.type == iso2022_size_mb94 || data.type == iso2022_size_mb96 ? "$" : "";
@@ -392,20 +394,23 @@ namespace {
       return true;
     }
 
-    bool include_file(std::string const& filename, bool optional = false) {
-      std::ifstream file(filename);
+    bool include_file(std::string const& include_filename, bool optional = false) {
+      std::ifstream file(include_filename);
       if (!file) {
         if (optional) return true;
-        print_error() << "failed to open the include file '" << filename << "'" << std::endl;
+        print_error() << "failed to open the include file '" << include_filename << "'" << std::endl;
         return false;
       }
 
-      const char* old_title = title;
-      int old_iline = iline;
-      this->title = filename.c_str();
+      std::string const old_filename = this->filename;
+      const char* const old_title = this->title;
+      int const old_iline = this->iline;
+      this->filename = include_filename;
+      this->title = include_filename.c_str();
       this->iline = 0;
       bool const ret = process_stream(file);
 
+      this->filename = old_filename;
       this->title = old_title;
       this->iline = old_iline;
       return ret;
@@ -423,6 +428,11 @@ namespace {
     }
 
     bool process_command_savebin() {
+      if (!(params && params->allow_file_write)) {
+        print_error() << "savebin is disabled" << std::endl;
+        return false;
+      }
+
       if (!current_charset) {
         print_error() << "charset unselected" << std::endl;
         return false;
@@ -604,6 +614,24 @@ namespace {
       return true;
     }
 
+    bool process_command_autoload() {
+      if (!current_charset) {
+        print_error() << "charset unselected" << std::endl;
+        return false;
+      }
+
+      skip_space();
+      std::string path;
+      read_until('\0', path);
+      if (path.empty()) {
+        print_error() << "no path specified" << std::endl;
+        return false;
+      }
+
+      current_charset->autoload = relative_path(path);
+      return true;
+    }
+
   private:
     bool process_line() {
       skip_space();
@@ -637,6 +665,8 @@ namespace {
         return process_command_savebin();
       } else if (starts_with_skip("loadbin ")) {
         return process_command_loadbin();
+      } else if (starts_with_skip("autoload ")) {
+        return process_command_autoload();
       } else {
         print_error() << "unrecognized command" << std::endl;
         return false;
@@ -668,24 +698,29 @@ namespace {
       return !error_flag;
     }
 
+  private:
+    void on_charset_end() {
+      if (this->current_charset && this->params && this->params->callback)
+        params->callback(current_charset, current_csindex, params->cbparam);
+    }
+
   public:
-    bool load_definition(std::istream& istr, const char* title, iso2022_charset_callback callback, std::uintptr_t cbparam) {
+    bool load_definition(std::istream& istr, const char* title, iso2022_load_definition_params const* params) {
       this->filename = "";
       this->title = title;
-      this->callback = callback;
-      this->cbparam = cbparam;
+      this->params = params;
+      this->current_charset = nullptr;
       this->iline = 0;
 
       bool const ret = process_stream(istr);
-      if (current_charset && callback)
-        callback(current_charset, current_csindex, cbparam);
+      on_charset_end();
       return ret;
     }
-    bool load_definition(std::string const& filename, iso2022_charset_callback callback, std::uintptr_t cbparam) {
+    bool load_definition(std::string const& filename, iso2022_load_definition_params const* params) {
       this->filename = filename;
       this->title = filename.c_str();
-      this->callback = callback;
-      this->cbparam = cbparam;
+      this->params = params;
+      this->current_charset = nullptr;
       this->iline = 0;
 
       std::ifstream ifs(filename);
@@ -695,20 +730,19 @@ namespace {
       }
 
       bool const ret = process_stream(ifs);
-      if (current_charset && callback)
-        callback(current_charset, current_csindex, cbparam);
+      on_charset_end();
       return ret;
     }
   };
 }
 
-bool iso2022_charset_registry::load_definition(std::istream& istr, const char* title, iso2022_charset_callback callback, std::uintptr_t cbparam) {
+bool iso2022_charset_registry::load_definition(std::istream& istr, const char* title, iso2022_load_definition_params const* params) {
   iso2022_definition_reader reader(*this);
-  return reader.load_definition(istr, title, callback, cbparam);
+  return reader.load_definition(istr, title, params);
 }
-bool iso2022_charset_registry::load_definition(const char* filename, iso2022_charset_callback callback, std::uintptr_t cbparam) {
+bool iso2022_charset_registry::load_definition(const char* filename, iso2022_load_definition_params const* params) {
   iso2022_definition_reader reader(*this);
-  return reader.load_definition(filename, callback, cbparam);
+  return reader.load_definition(filename, params);
 }
 
 iso2022_charset_registry& iso2022_charset_registry::instance() {
@@ -717,7 +751,6 @@ iso2022_charset_registry& iso2022_charset_registry::instance() {
   if (!initialized) {
     initialized = true;
     instance.load_definition("res/iso2022.def");
-    instance.load_definition("res/iso2022-jis.def");
   }
   return instance;
 }

@@ -403,7 +403,11 @@ private:
 public:
   bool process(iso2022_charset_registry& iso2022, const char* filename) {
     m_iso2022 = &iso2022;
-    bool const ret = iso2022.load_definition(filename, &on_charset_defined, reinterpret_cast<std::uintptr_t>(this));
+    iso2022_load_definition_params params;
+    params.callback = &on_charset_defined;
+    params.cbparam = reinterpret_cast<std::uintptr_t>(this);
+    params.allow_file_write = true;
+    bool const ret = iso2022.load_definition(filename, &params);
     std::cout << m_charset_list.size() << " charsets are defined." << std::endl;
     return ret;
   }
@@ -413,8 +417,10 @@ public:
     std::ofstream ostr(filename);
     print_html_header(ostr);
     if (!title.empty()) ostr << "<h1>" << title << "</h1>\n";
-    for (auto index : m_charset_list)
+    for (auto index : m_charset_list) {
+      if (index & iso2022_charset_db) continue;
       print_html_charset(ostr, m_iso2022->charset(index));
+    }
     print_html_footer(ostr);
   }
   void save_cpp(std::string const& filename) {
