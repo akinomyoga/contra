@@ -152,8 +152,7 @@ private:
     ostr << "</table>\n";
   }
   void print_html_charset(std::ostream& ostr, iso2022_charset const* charset) {
-    ostr << "<h2>" << charset->reg << ": "
-         << charset->name << "</h2>\n";
+    ostr << "<h2>" << charset->reg << ": " << charset->name << "</h2>\n";
 
     ostr << "<ul>\n";
     {
@@ -175,11 +174,11 @@ private:
     }
     {
       ostr << "<li>Escape sequence: ";
-      for (char a : charset->seq) {
+      for (char a : charset->designator) {
         put_colrow(ostr, a) << " ";
         if ('@' <= a && a <= '~') break;
       }
-      ostr << "(" << charset->seq << ")</li>\n";
+      ostr << "(" << charset->designator << ")</li>\n";
     }
     if (starts_with(charset->reg, "ISO-IR-")) {
       const char* ir_number = charset->reg.c_str() + 7;
@@ -210,39 +209,44 @@ private:
   }
 
 private:
-  void print_text(std::ostream& ostr, iso2022_charset const* charset) {
-    ostr << charset->reg << ": " << charset->name << "\n";
-
+  void print_text_ku(std::ostream& ostr, iso2022_charset const* charset, int ku_index) {
     unsigned char min1, max1;
     unsigned char meta_shift = 0;
-    const char* type_name = "unknown_type";
+    bool multibyte = false;
     switch (charset->type) {
     default:
     case iso2022_size_sb94:
-      type_name = "SB94";
       min1 = '!'; max1 = '~';
       break;
+    case iso2022_size_mb94:
+      min1 = '!'; max1 = '~';
+      multibyte = true;
+      break;
     case iso2022_size_sb96:
-      type_name = "SB96";
       min1 = 0x20; max1 = 0x7F;
       meta_shift = 0x80;
       break;
+    case iso2022_size_mb96:
+      min1 = 0x20; max1 = 0x7F;
+      multibyte = true;
+      break;
     }
-    ostr << "  Type: " << type_name << "\n";
 
-    ostr << "  Escape sequence: ";
-    for (char a : charset->seq) {
-      put_colrow(ostr, a) << " ";
-      if ('@' <= a && a <= '~') break;
-    }
-    ostr << "(" << charset->seq << ")\n";
+    if (multibyte && is_undefined_ku(charset, ku_index)) return;
+
     std::vector<char32_t> vec;
     for (unsigned char a = min1; a <= max1; a++) {
-      ostr << "  " << a << " (";
+      ostr << "  ";
+      if (ku_index >= 0)
+        ostr << char(ku_index + 0x20);
+      ostr << (char) a << " (";
+      if (ku_index >= 0)
+        put_colrow(ostr, ku_index + 0x20) << " ";
       put_colrow(ostr, a);
       ostr << "): ";
 
-      if (!charset->get_chars(vec, charset->kuten2index(a))) {
+      char32_t const kuten = (ku_index >= 0 ? ku_index + 0x20 : 0) << 8 | a;
+      if (!charset->get_chars(vec, charset->kuten2index(kuten))) {
         ostr << "undefined";
       } else {
         if (is_combining_character(vec[0])) ostr << "&#x25cc;";
@@ -262,47 +266,60 @@ private:
         }
         ostr.flags(old_flags);
 
-        if (vec.size() != 1 || vec[0] != (char32_t) a + meta_shift) ostr << " *";
+        if (!multibyte) {
+          if (vec.size() != 1 || vec[0] != (char32_t) a + meta_shift) ostr << " *";
+        }
       }
 
       ostr << "\n";
     }
-    ostr << std::endl;
   }
 
-  void print_cpp(std::ostream& ostr, iso2022_charset const* charset) {
-    ostr << "// " << charset->reg << ": "
-              << charset->name << "\n";
+  void print_text(std::ostream& ostr, iso2022_charset const* charset) {
+    ostr << charset->reg << ": " << charset->name << "\n";
 
     const char* type_name = "unknown_type";
     switch (charset->type) {
     default:
-    case iso2022_size_sb94:
-      type_name = "SB94";
-      break;
-    case iso2022_size_sb96:
-      type_name = "SB96";
-      break;
+    case iso2022_size_sb94: type_name = "SB94"; break;
+    case iso2022_size_sb96: type_name = "SB96"; break;
+    case iso2022_size_mb94: type_name = "MB94"; break;
+    case iso2022_size_mb96: type_name = "MB96"; break;
     }
-    ostr << "//   Type: " << type_name << "\n";
+    ostr << "  Type: " << type_name << "\n";
 
-    ostr << "//   Escape sequence: ";
-    for (char a : charset->seq) {
+    ostr << "  Escape sequence: ";
+    for (char a : charset->designator) {
       put_colrow(ostr, a) << " ";
       if ('@' <= a && a <= '~') break;
     }
-    ostr << "(" << charset->seq << ")\n";
+    ostr << "(" << charset->designator << ")\n";
 
-    ostr << "char32_t const ";
-    for (char a : charset->reg)
-      ostr << (char) (std::isalnum(a) ? std::tolower(a) : '_');
-    ostr << "_table[96] = {\n";
+    switch (charset->type) {
+    case iso2022_size_sb96:
+      print_text_ku(ostr, charset, -1);
+      break;
+    case iso2022_size_sb94:
+      print_text_ku(ostr, charset, -1);
+      break;
+    case iso2022_size_mb94:
+      for (int k = 1; k <= 94; k++) print_text_ku(ostr, charset, k);
+      break;
+    case iso2022_size_mb96:
+      for (int k = 0; k <= 95; k++) print_text_ku(ostr, charset, k);
+      break;
+    }
 
-    bool has_multichar = false;
+    ostr << std::endl;
+  }
+
+private:
+  void print_cpp_ku(std::ostream& ostr, iso2022_charset const* charset, int ku_index, bool& has_multichar) {
     for (unsigned char a = 0x20; a <= 0x7F; a++) {
       if (a % 8 == 0) ostr << "  ";
 
-      char32_t b = charset->kuten2u(a);
+      char32_t const kuten = (ku_index >= 0 ? ku_index + 0x20 : 0) << 8 | a;
+      char32_t const b = charset->kuten2u(kuten);
       if (b == undefined_code) {
         ostr << "0x0000,";
       } else if (b == multichar_conv) {
@@ -319,6 +336,57 @@ private:
 
       ostr << ((a + 1) % 8 ? " " : "\n");
     }
+  }
+
+  void print_cpp(std::ostream& ostr, iso2022_charset const* charset) {
+    ostr << "// " << charset->reg << ": " << charset->name << "\n";
+
+    const char* type_name = "unknown_type";
+    bool multibyte = false;
+    switch (charset->type) {
+    default:
+    case iso2022_size_sb94: type_name = "SB94"; break;
+    case iso2022_size_sb96: type_name = "SB96"; break;
+    case iso2022_size_mb94: type_name = "MB94"; multibyte = true; break;
+    case iso2022_size_mb96: type_name = "MB96"; multibyte = true; break;
+    }
+    ostr << "//   Type: " << type_name << "\n";
+
+    ostr << "//   Escape sequence: ";
+    for (char a : charset->designator) {
+      put_colrow(ostr, a) << " ";
+      if ('@' <= a && a <= '~') break;
+    }
+    ostr << "(" << charset->designator << ")\n";
+
+    ostr << "char32_t const ";
+    for (char a : charset->reg)
+      ostr << (char) (std::isalnum(a) ? std::tolower(a) : '_');
+    ostr << "_table[" << (multibyte ? "96 * 96" : "96") << "] = {\n";
+
+    bool has_multichar = false;
+
+    switch (charset->type) {
+    case iso2022_size_sb96:
+      print_cpp_ku(ostr, charset, -1, has_multichar);
+      break;
+    case iso2022_size_sb94:
+      print_cpp_ku(ostr, charset, -1, has_multichar);
+      break;
+    case iso2022_size_mb94:
+      for (int k = 1; k <= 94; k++) {
+        ostr << "  // Row " << k << "\n";
+        print_cpp_ku(ostr, charset, k, has_multichar);
+      }
+      break;
+    case iso2022_size_mb96:
+      for (int k = 0; k <= 95; k++) {
+        ostr << "  // Row " << k << "\n";
+        print_cpp_ku(ostr, charset, k, has_multichar);
+      }
+      break;
+    }
+
     ostr << "};\n";
     if (has_multichar)
       ostr << "  // Note: 0xFFFF means a sequence of unicode code points\n";
@@ -384,8 +452,8 @@ bool load_iso2022_def() {
   iso2022_definition_dumper proc;
   if (!proc.process(iso2022, "res/iso2022.def")) return false;
   proc.save_html("out/iso2022.html", "94/96-Character Graphic Character Sets");
-  // proc.save_cpp("out/iso2022.cpp");
-  // proc.save_txt("out/iso2022.txt");
+  //proc.save_cpp("out/iso2022.cpp");
+  //proc.save_txt("out/iso2022.txt");
   return true;
 }
 bool load_jis_def() {
@@ -393,6 +461,8 @@ bool load_jis_def() {
   iso2022_definition_dumper proc;
   if (!proc.process(iso2022, "res/iso2022-jis.def")) return false;
   proc.save_html_separate("out");
+  proc.save_cpp("out/tmp.cpp");
+  proc.save_txt("out/tmp.txt");
   return true;
 }
 

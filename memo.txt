@@ -286,12 +286,8 @@
 
 2019-08-17
 
-* iso2022 (iso2022_definition_reader): loadbin/savebin は cwd ではなくて、
-  現在読み取っているファイルを起点にするべきな気がする。
 * iso2022 (iso2022_definition_reader): savebin はファイルを書き換える
   ことが可能なので特定の条件でしか使えない様にするべきなのでは。
-* iso2022 (iso2022_definition_reader): save_cpp, save_txt が
-  multi-byte charset に対応していない。
 * iso2022 (iso2022_definition_reader): 遅延ロードを設定できる様にしたい。
 
 2019-08-13
@@ -2280,6 +2276,14 @@
 ------------------------------------------------------------------------------
   Done
 ------------------------------------------------------------------------------
+
+2019-08-17
+
+* iso2022 (iso2022_definition_reader): save_cpp, save_txt が [#D0208]
+  multi-byte charset に対応していない→対応した。
+* iso2022 (iso2022_definition_reader): loadbin/savebin は cwd ではなくて、 [#D0207]
+  現在読み取っているファイルを起点にするべきな気がする。
+  include も含めて現在のファイル名からの相対パスで読み取る様に変更した。
 
 2019-08-16
 

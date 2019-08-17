@@ -1,10 +1,10 @@
 # jisx.generate-bin.def
 
 MB94(2,1) Private-2 JIS X Plane 2
-  include ../out/gen/jisx.plane0213-2.def
-  include ../out/gen/jisx.plane0212.def
-  savebin res/jisx.plane2
+  include ../../out/gen/jisx.plane0213-2.def
+  include ../../out/gen/jisx.plane0212.def
+  savebin ../res/jisx.plane2
 
 MB94(2,0) Private-1 JIS X Plane 1
-  include ../out/gen/jisx.plane0213-1.def
-  savebin res/jisx.plane1
+  include ../../out/gen/jisx.plane0213-1.def
+  savebin ../res/jisx.plane1

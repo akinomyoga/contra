@@ -50,7 +50,7 @@ namespace contra {
   struct iso2022_charset {
     iso2022_charset_size type;
     int number_of_bytes;
-    std::string seq;
+    std::string designator;
     std::string reg;
     std::string name;
 
@@ -202,14 +202,14 @@ namespace contra {
       // initialize default charset
       {
         iso2022_charset charset(iso2022_size_sb94, 1);
-        charset.seq = "B";
+        charset.designator = "B";
         charset.initialize_iso646_usa();
         m_category_sb.emplace_back(std::move(charset));
       }
 
       {
         iso2022_charset charset(iso2022_size_sb96, 1);
-        charset.seq = "A";
+        charset.designator = "A";
         charset.initialize_iso8859_1();
         m_category_sb.push_back(charset);
       }
@@ -217,7 +217,7 @@ namespace contra {
       // {■ファイルから読み取って定義する
       //   iso2022_charset charset;
       //   charset.type = iso2022_size_sb94;
-      //   charset.seq = "0";
+      //   charset.designator = "0";
       //   charset.initialize_iso8859_1();
       //   m_category_sb.push_back(charset);
       // }
@@ -337,9 +337,9 @@ namespace contra {
 
   public:
     charset_t register_charset(iso2022_charset&& charset, bool drcs) {
-      mwg_check(charset.seq.size(), "charset with empty designator cannot be registered.");
+      mwg_check(charset.designator.size(), "charset with empty designator cannot be registered.");
       mwg_check(charset.number_of_bytes <= 2, "94^n/96^n charsets (n >= 3) are not supported.");
-      charset_t cs = resolve_designator(charset.type, charset.seq);
+      charset_t cs = resolve_designator(charset.type, charset.designator);
       if (cs != iso2022_unspecified) {
         std::vector<iso2022_charset>* category = nullptr;
         if (cs & charflag_iso2022_db)
@@ -379,7 +379,7 @@ namespace contra {
 
       cs |= category->size();
       auto const& charset_ = category->emplace_back(std::move(charset));
-      register_designator(charset_.type, charset_.seq, cs);
+      register_designator(charset_.type, charset_.designator, cs);
       return cs;
     }
 

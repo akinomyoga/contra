@@ -23,6 +23,7 @@ namespace {
     iso2022_charset_callback callback = nullptr;
     std::uintptr_t cbparam = 0;
     const char* title = "(stream)";
+    std::string filename;
 
   public:
     iso2022_definition_reader(iso2022_charset_registry& iso2022): iso2022(iso2022) {}
@@ -149,6 +150,16 @@ namespace {
     }
 
   private:
+    std::string relative_path(std::string const& path) {
+      if (path[0] != '/' && !filename.empty()) {
+        if (std::size_t index = filename.rfind("/"); index != std::string::npos) {
+          return filename.substr(0, index + 1) + path;
+        }
+      }
+      return path;
+    }
+
+  private:
     bool process_command_declare(iso2022_charset_size type) {
       int number_of_bytes = 1;
       if (type == iso2022_size_mb94 || type == iso2022_size_mb96) {
@@ -171,10 +182,10 @@ namespace {
       iso2022_charset data(type, number_of_bytes);
 
       // seq
-      if (!read_until(')', data.seq)) {
+      if (!read_until(')', data.designator)) {
         print_error() << "no corresponding \")\" found" << std::endl;
         return false;
-      } else if (data.seq.empty()) {
+      } else if (data.designator.empty()) {
         print_error() << "empty designator is not allowed" << std::endl;
         return false;
       }
@@ -194,11 +205,11 @@ namespace {
       if (current_charset && callback)
         callback(current_charset, current_csindex, cbparam);
 
-      if (iso2022.resolve_designator(data.type, data.seq) != iso2022_unspecified) {
+      if (iso2022.resolve_designator(data.type, data.designator) != iso2022_unspecified) {
         const char* dbflag = data.type == iso2022_size_mb94 || data.type == iso2022_size_mb96 ? "$" : "";
         char grflag = data.type == iso2022_size_sb96 || data.type == iso2022_size_mb96 ? '-' : '(';
         print_error() << "charset for \"ESC"
-                      << dbflag << grflag << data.seq << "\" is redefined" << std::endl;
+                      << dbflag << grflag << data.designator << "\" is redefined" << std::endl;
       }
 
       charset_t const csindex = iso2022.register_charset(std::move(data), false);
@@ -408,7 +419,7 @@ namespace {
         print_error() << "no filename specified" << std::endl;
         return false;
       }
-      return include_file(filename);
+      return include_file(relative_path(filename));
     }
 
     bool process_command_savebin() {
@@ -424,6 +435,7 @@ namespace {
         print_error() << "no name specified" << std::endl;
         return false;
       }
+      name = relative_path(name);
 
       std::ofstream ofs1(name + ".bin", std::ios::binary);
       if (!ofs1) {
@@ -462,17 +474,17 @@ namespace {
       iso2022_charset const* charset = current_charset;
 
       auto _write_utf16le = [&ofs1] (char32_t c) {
-                              ofs1.put(0xFF & c);
-                              ofs1.put(0xFF & c >> 8);
-                            };
+        ofs1.put(0xFF & c);
+        ofs1.put(0xFF & c >> 8);
+      };
       auto _write_enc96 = [&ofs2] (int value) {
-                            if (value == 0)
-                              ofs2 << "<SP>";
-                            else if (value == 95)
-                              ofs2 << "<DEL>";
-                            else
-                              ofs2 << (char) (value + 0x20);
-                          };
+        if (value == 0)
+          ofs2 << "<SP>";
+        else if (value == 95)
+          ofs2 << "<DEL>";
+        else
+          ofs2 << (char) (value + 0x20);
+      };
 
       std::vector<char32_t> vec;
       for (int ku = ku0; ku <= kuZ; ku++) {
@@ -524,6 +536,8 @@ namespace {
         return false;
       }
 
+      name = relative_path(name);
+
       std::ifstream ifs1(name + ".bin", std::ios::binary);
       if (!ifs1) {
         print_error() << "failed to open the file '" << name << ".bin'" << std::endl;
@@ -555,10 +569,10 @@ namespace {
       iso2022_charset* charset = current_charset;
 
       auto _read_utf16le = [&ifs1] () -> char32_t {
-                             unsigned char const a = ifs1.get();
-                             unsigned char const b = ifs1.get();
-                             return a | b << 8;
-                           };
+        unsigned char const a = ifs1.get();
+        unsigned char const b = ifs1.get();
+        return a | b << 8;
+      };
 
       for (int ku = ku0; ku <= kuZ; ku++) {
         for (int ten = ten0; ten <= tenZ; ten++) {
@@ -655,16 +669,34 @@ namespace {
     }
 
   public:
-    bool process(std::istream& istr, const char* title, iso2022_charset_callback callback, std::uintptr_t cbparam) {
+    bool load_definition(std::istream& istr, const char* title, iso2022_charset_callback callback, std::uintptr_t cbparam) {
+      this->filename = "";
       this->title = title;
       this->callback = callback;
       this->cbparam = cbparam;
-
       this->iline = 0;
+
       bool const ret = process_stream(istr);
       if (current_charset && callback)
         callback(current_charset, current_csindex, cbparam);
+      return ret;
+    }
+    bool load_definition(std::string const& filename, iso2022_charset_callback callback, std::uintptr_t cbparam) {
+      this->filename = filename;
+      this->title = filename.c_str();
+      this->callback = callback;
+      this->cbparam = cbparam;
+      this->iline = 0;
 
+      std::ifstream ifs(filename);
+      if (!ifs) {
+        std::cerr << "contra :failed to open charset definition file \"" << filename << "\"." << std::endl;
+        return false;
+      }
+
+      bool const ret = process_stream(ifs);
+      if (current_charset && callback)
+        callback(current_charset, current_csindex, cbparam);
       return ret;
     }
   };
@@ -672,16 +704,11 @@ namespace {
 
 bool iso2022_charset_registry::load_definition(std::istream& istr, const char* title, iso2022_charset_callback callback, std::uintptr_t cbparam) {
   iso2022_definition_reader reader(*this);
-  return reader.process(istr, title, callback, cbparam);
+  return reader.load_definition(istr, title, callback, cbparam);
 }
 bool iso2022_charset_registry::load_definition(const char* filename, iso2022_charset_callback callback, std::uintptr_t cbparam) {
-  std::ifstream ifs(filename);
-  if (!ifs) {
-    std::cerr << "contra: failed to open charset definition file \"" << filename << "\"." << std::endl;
-    return false;
-  } else {
-    return this->load_definition(ifs, filename, callback, cbparam);
-  }
+  iso2022_definition_reader reader(*this);
+  return reader.load_definition(filename, callback, cbparam);
 }
 
 iso2022_charset_registry& iso2022_charset_registry::instance() {

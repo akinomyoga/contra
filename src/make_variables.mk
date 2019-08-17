@@ -27,7 +27,7 @@
 # endif
 
 CXXFLAGS := -Wall -Wextra
-CXXFLAGS += -O1
+CXXFLAGS += -Os
 #CXXFLAGS += -O3 -s -DNDEBUG
 #CXXFLAGS += -O2 -s -DNDEBUG
 
