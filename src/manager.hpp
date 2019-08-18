@@ -89,29 +89,38 @@ namespace term {
   class mouse_events {
   public:
     virtual ~mouse_events() {}
-    virtual void on_select_initialize([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {}
-    virtual void on_select_finalize([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {}
-    virtual bool on_select_update([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) { return false; }
-    virtual void on_select([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {}
+
+    virtual bool on_drag_start([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) { return false; }
+    virtual bool on_drag([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) { return true; }
+    virtual void on_drag_cancel([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {}
+    virtual void on_drop([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {}
+
     virtual void on_click([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {}
 
     /*?lwiki @fn void on_multiple_click(key_t key, curpos_t x, curpos_t y, int count);
      *   単一のマウスボタンが押下された時に発生します。
      *   同じ単独のマウスボタンが連続で何回押されたかの情報を `count` に指定します。
      */
-    virtual void on_multiple_click([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y, [[maybe_unused]] int count) {}
+    virtual bool on_multiple_click([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y, [[maybe_unused]] int count) { return false; }
   };
 
   class mouse_event_detector {
     bool button_state[5] = {};
     int button_count = 0;
 
+    // @var drag_state
+    //   0: ボタンが押されていない状態または
+    //     ドラッグを開始した後でキャンセルした状態。
+    //   1: ボタンが押された状態で未だ drag は開始していない。
+    //   2: drag が実行された状態。
     int drag_state = 0;
-    int drag_button = 0;
+    curpos_t drag_start_x = 0;
+    curpos_t drag_start_y = 0;
 
     int multiple_click_threshold = 500;
     int multiple_click_button = 0;
     int multiple_click_count = 0;
+    bool multiple_click_processed = false;
     std::chrono::high_resolution_clock::time_point multiple_click_time;
 
     mouse_events* events = nullptr;
@@ -128,39 +137,43 @@ namespace term {
 
       if (this->button_count == 1) {
         this->drag_state = 1;
-        events->on_select_initialize(key, x, y);
+        this->drag_start_x = x;
+        this->drag_start_y = y;
       } else if (this->drag_state) {
+        if (this->drag_state == 2)
+          events->on_drag_cancel(key, x, y);
         this->drag_state = 0;
-        events->on_select_finalize(key, x, y);
       }
 
-      // 複数クリックの検出
-      if (this->multiple_click_button != button_index) {
-        if (this->button_count == 1) {
-          this->multiple_click_button = button_index;
-          this->multiple_click_count = 1;
-          events->on_multiple_click(key, x, y, 1);
-        } else
-          this->multiple_click_button = 0;
-      } else {
+      // 複数クリック状態 (ボタン、回数) の更新
+      if (this->multiple_click_button == button_index) {
         // Note: double click, triple click, etc. の検出。
         //   普通と違って前回のマウスボタンの解放からの時間で判定する。
         //   これは自分の趣味。
         auto const current_time = std::chrono::high_resolution_clock::now();
         auto const msec = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - this->multiple_click_time).count();
-        if (msec >= this->multiple_click_threshold)
-          this->multiple_click_count = 0;
-        events->on_multiple_click(key, x, y, ++this->multiple_click_count);
+        if (msec >= this->multiple_click_threshold) this->multiple_click_count = 0;
+      } else if (this->button_count == 1) {
+        this->multiple_click_button = button_index;
+        this->multiple_click_count = 0;
+      } else {
+        this->multiple_click_button = 0;
       }
+      this->multiple_click_processed = this->multiple_click_button &&
+        events->on_multiple_click(key, x, y, ++this->multiple_click_count);
 
       return true;
     }
     bool process_mouse_drag(key_t key, curpos_t x, curpos_t y, int button_index) {
       if (this->drag_state) {
-        this->drag_state = 2;
-        if (!events->on_select_update(key, x, y)) {
+        if (this->drag_state == 1 && (x != drag_start_x || y != drag_start_y)) {
+          if (events->on_drag_start(key, drag_start_x, drag_start_y))
+            this->drag_state = 2;
+        }
+
+        if (this->drag_state == 2 && !events->on_drag(key, x, y)) {
           this->drag_state = 0;
-          events->on_select_finalize(key, x, y);
+          events->on_drag_cancel(key, x, y);
         }
       }
 
@@ -181,15 +194,16 @@ namespace term {
 
       if (this->drag_state) {
         if (this->drag_state == 2) {
-          if (events->on_select_update(key, x, y))
-            events->on_select(key, x, y);
+          if (events->on_drag(key, x, y))
+            events->on_drop(key, x, y);
+          else
+            events->on_drag_cancel(key, x, y);
         } else if (this->drag_state == 1) {
           if (button_index != this->multiple_click_button ||
-            this->multiple_click_count == 1)
+            !this->multiple_click_processed)
             events->on_click(key, x, y);
         }
         this->drag_state = 0;
-        events->on_select_finalize(key, x, y);
       }
 
       if (this->button_count == 0) {
@@ -681,21 +695,29 @@ namespace term {
     public:
       manager_mouse_events(terminal_manager* m): manager(m) {}
     private:
-      virtual void on_select_initialize(key_t key, curpos_t x, curpos_t y) override {
+      virtual bool on_drag_start(key_t key, curpos_t x, curpos_t y) override {
         using namespace contra::ansi;
-        if ((key & _character_mask) == key_mouse1_down)
+        if ((key & _character_mask) == key_mouse1_down) {
           manager->selection_initialize(x, y);
+          return true;
+        }
+        return false;
       }
-      virtual bool on_select_update(key_t key, curpos_t x, curpos_t y) override {
+      virtual bool on_drag(key_t key, curpos_t x, curpos_t y) override {
         using namespace contra::ansi;
-        return (key & _key_mouse_button_mask) == _key_mouse1 && manager->selection_update(key, x, y);
+        if ((key & _key_mouse_button_mask) == _key_mouse1) {
+          return manager->selection_update(key, x, y);
+        }
+        return false;
       }
-      virtual void on_select(key_t key, curpos_t x, curpos_t y) override {
-        contra_unused(key);
+      virtual void on_drop(key_t key, curpos_t x, curpos_t y) override {
         contra_unused(x);
         contra_unused(y);
-        manager->do_select();
+        if ((key & _key_mouse_button_mask) == _key_mouse1) {
+          manager->do_select();
+        }
       }
+
       virtual void on_click(key_t key, curpos_t x, curpos_t y) override {
         contra_unused(x);
         contra_unused(y);
@@ -709,8 +731,8 @@ namespace term {
           break;
         }
       }
-      virtual void on_multiple_click(key_t key, curpos_t x, curpos_t y, int count) override {
-        manager->do_multiple_click(key, count, x, y);
+      virtual bool on_multiple_click(key_t key, curpos_t x, curpos_t y, int count) override {
+        return manager->do_multiple_click(key, count, x, y);
       }
     };
 
@@ -720,11 +742,11 @@ namespace term {
     int m_word_selection_level = 0;
     void do_click(key_t key) { contra_unused(key); }
     void do_select() { this->clipboard_copy(); }
-    void do_multiple_click(key_t key, int count, curpos_t x, curpos_t y) {
+    bool do_multiple_click(key_t key, int count, curpos_t x, curpos_t y) {
       using namespace contra::ansi;
       if (count == 1) {
         selection_clear();
-        return;
+        return false;
       }
 
       if (key == key_mouse1_down) {
@@ -742,7 +764,7 @@ namespace term {
         if (!(ybeg <= ylog && ylog < yend)) {
           m_word_selection_line = (std::uint32_t) -1;
           selection_clear();
-          return;
+          return true;
         }
 
         if (count <= 2 || m_word_selection_line != view.lline(ylog).id()) {
@@ -776,7 +798,10 @@ namespace term {
             m_dirty = true;
         }
         clipboard_copy();
+        return true;
       }
+
+      return false;
     }
     void do_right_click(key_t key) {
       if (key == contra::key_mouse3_up)
