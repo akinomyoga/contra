@@ -120,7 +120,7 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 例えば 02/00 は 0x20 を表し ASCII コードにおいて空白文字に対応する。
 </p>
 <p>制御機能を表現するバイト列を<dfn>符号化表現</dfn> (coded representation) という。
-その形式によって以下の様に分類される。
+符号化表現の形式によって制御機能は以下の様に分類される。
 </p>
 <table class="normal center">
 <tr><th colspan="2">名称</th><th>符号化表現</th><th>説明</th><th>関連規格</th></tr>
@@ -1398,6 +1398,49 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </div>
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+<h2>文字集合の制御</h2>
+
+<ul>
+<li>[ECMA-35/8.3.3]
+  G0-G3 の何れか一つが同時に GL と GR に両方呼び出される状態も可能だが推奨されない。
+</li>
+</ul>
+<ul>
+<li><dfn class="cfunc">LS0</dfn>: LOCKING-SHIFT ZERO</li>
+<li><dfn class="cfunc">LS1</dfn>: LOCKING-SHIFT ONE</li>
+<li><dfn class="cfunc">LS2</dfn>: LOCKING-SHIFT TWO</li>
+<li><dfn class="cfunc">LS3</dfn>: LOCKING-SHIFT THREE
+  <p>[ECMA-35/8.3.1] それぞれ G0, G1, G2, G3 符号要素を GL 領域に呼び出す。
+  94文字または94<sup>n</sup>文字集合を呼び出した時は、
+  0x20 及び 0x7F にはそれぞれ SP と DEL が呼び出される。
+  96文字または96<sup>n</sup>文字集合を呼び出している時は、
+  SP 及び DEL は符号化表現を持たない。
+  </p>
+</li>
+<li><dfn class="cfunc">LS0R</dfn>: LOCKING-SHIFT RIGHT ZERO</li>
+<li><dfn class="cfunc">LS1R</dfn>: LOCKING-SHIFT RIGHT ONE</li>
+<li><dfn class="cfunc">LS2R</dfn>: LOCKING-SHIFT RIGHT TWO</li>
+<li><dfn class="cfunc">LS3R</dfn>: LOCKING-SHIFT RIGHT THREE
+  <p>[ECMA-35/8.3.2] それぞれ G0, G1, G2, G3 符号要素を GR 領域に呼び出す。
+  94文字または94<sup>n</sup>文字集合を呼び出した時は、
+  0xA0 及び 0xFF は使ってはならない。
+  </p>
+</li>
+<li><dfn class="cfunc">SS2</dfn>: SINGLE-SHIFT TWO</li>
+<li><dfn class="cfunc">SS3</dfn>: SINGLE-SHIFT THREE
+  <p>[ECMA-35/8.3.2] それぞれ G2, G3 を単一シフト領域に一時的に呼び出す。
+  単一シフト領域は GL または GR で処理系定義である。
+  直後に来る図形文字1文字分をこのシフト状態で処理しすぐに
+  この制御機能を呼び出す前のシフト状態に戻る。
+  </p>
+  <p>この制御機能の直後には単一シフト領域における
+    図形文字1文字分を表すバイトが厳密に来なければならない。
+    特に 94/94<sup>n</sup>文字集合をGLに呼び出した時は
+    2/1 及び 7/15 は許されない事に注意する。
+  </p>
+</li>
+</ul>
+
 <h2>装置の構成と双方向 (bidi) 対応</h2>
 
 <h3>装置の構成</h3>
