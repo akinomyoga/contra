@@ -383,21 +383,26 @@ curpos_t line_t::_prop_to_presentation_position(curpos_t x, bool line_r2l) const
   return a;
 }
 
-void line_t::get_cells_in_presentation(std::vector<cell_t>& buff, bool line_r2l) const {
+void line_t::get_cells_in_presentation(std::vector<cell_t>& buff, curpos_t width, bool line_r2l) const {
   if (m_prop_enabled) {
-    return _prop_cells_in_presentation(buff, line_r2l);
+    return _prop_cells_in_presentation(buff, width, line_r2l);
   } else {
     buff.clear();
     buff.reserve(m_cells.size());
+    curpos_t w = 0;
     for (auto const& cell : m_cells) {
       if (cell.character.is_extension()) continue;
+      if (curpos_t(w + cell.width) > width) break;
+      w += cell.width;
       buff.push_back(cell);
     }
-    if (line_r2l)
+    if (line_r2l) {
+      if (w < width) buff.insert(buff.end(), width - w, cell_t(ascii_nul));
       std::reverse(buff.begin(), buff.end());
+    }
   }
 }
-void line_t::_prop_cells_in_presentation(std::vector<cell_t>& buff, bool line_r2l) const {
+void line_t::_prop_cells_in_presentation(std::vector<cell_t>& buff, curpos_t width, bool line_r2l) const {
   struct nest_t {
     std::size_t beg_index;
     std::uint32_t end_marker;
@@ -427,6 +432,7 @@ void line_t::_prop_cells_in_presentation(std::vector<cell_t>& buff, bool line_r2
     stack.pop_back();
   };
 
+  curpos_t w = 0;
   for (std::size_t i = 0; i < m_cells.size(); i++) {
     cell_t const& cell = m_cells[i];
     std::uint32_t code = cell.character.value;
@@ -459,6 +465,9 @@ void line_t::_prop_cells_in_presentation(std::vector<cell_t>& buff, bool line_r2
 
     if (cell.character.is_wide_extension()) continue;
 
+    if (curpos_t(w + cell.width) > width) break;
+    w += cell.width;
+
     if (cell.character.is_extension() && r2l) {
       std::size_t j = buff.size();
       while (j && buff[--j].character.is_extension());
@@ -466,9 +475,12 @@ void line_t::_prop_cells_in_presentation(std::vector<cell_t>& buff, bool line_r2
     } else
       buff.push_back(cell);
   }
+  while (stack.size()) _pop();
 
-  if (line_r2l)
+  if (line_r2l) {
+    if (w < width) buff.insert(buff.end(), width - w, cell_t(ascii_nul));
     std::reverse(buff.begin(), buff.end());
+  }
 }
 
 void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, curpos_t x1, curpos_t x2, curpos_t width, bool line_r2l) const {

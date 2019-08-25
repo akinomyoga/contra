@@ -18,11 +18,14 @@ int main() {
     ::ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &ws);
     if (ws.ws_col > cfg_col) ws.ws_col = cfg_col;
     if (ws.ws_row > cfg_row) ws.ws_row = cfg_row;
-    params.col = std::min<contra::ansi::curpos_t>(ws.ws_col, cfg_col);
-    params.row = std::min<contra::ansi::curpos_t>(ws.ws_row, cfg_row);
+    params.col = ws.ws_col;
+    params.row = ws.ws_row;
+    params.xpixel = ws.ws_xpixel;
+    params.ypixel = ws.ws_ypixel;
     params.termios = &screen.old_termios;
 
-    //params.dbg_sequence_logfile = "ttty-allseq.txt";
+    // params.dbg_fd_tee = STDOUT_FILENO;
+    // params.dbg_sequence_logfile = "ttty-allseq.txt";
   }
   if (!screen.initialize(params)) return 10;
 
@@ -34,13 +37,6 @@ int main() {
 
   screen.do_loop();
   screen.finalize();
-
-  std::printf("\n");
-  screen.renderer->writer().print_screen(app.board());
-
-  std::FILE* file = std::fopen("impl3-dump.txt", "w");
-  app.board().debug_print(file);
-  std::fclose(file);
 
   return 0;
 }

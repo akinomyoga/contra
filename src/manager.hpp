@@ -523,8 +523,10 @@ namespace term {
       curpos_t y2 = m_sel_end_y;
       curpos_t const ybeg = view.logical_ybeg();
       curpos_t const yend = view.logical_yend();
+mwg_printd("presentation: x1=%d x2=%d (y1=%d y2=%d yend=%d)", x1, x2, y1, y2, yend);
       if (y1 < yend) x1 = b.to_data_position(view.lline(y1), x1);
       if (y2 < yend) x2 = b.to_data_position(view.lline(y2), x2);
+mwg_printd("data: x1=%d x2=%d", x1, x2);
 
       if (m_sel_type & modifier_meta) {
         // 矩形選択
@@ -697,7 +699,7 @@ namespace term {
     private:
       virtual bool on_drag_start(key_t key, curpos_t x, curpos_t y) override {
         using namespace contra::ansi;
-        if ((key & _character_mask) == key_mouse1_down) {
+        if ((key & _key_mouse_button_mask) == _key_mouse1) {
           manager->selection_initialize(x, y);
           return true;
         }

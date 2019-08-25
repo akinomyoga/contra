@@ -135,7 +135,7 @@ namespace ansi {
     curpos_t m_width;
     curpos_t m_height;
     std::uint32_t m_line_count = 0;
-    presentation_direction m_presentation_direction { presentation_direction_default };
+    presentation_direction_t m_presentation_direction { presentation_direction_default };
 
     board_t(curpos_t width, curpos_t height) {
       m_width = limit::term_col.clamp(width);
@@ -172,9 +172,9 @@ namespace ansi {
     line_t& line(curpos_t y) { return m_lines[y]; }
     line_t const& line(curpos_t y) const { return m_lines[y]; }
 
-    curpos_t line_r2l(line_t const& line) const { return line.is_r2l(m_presentation_direction); }
-    curpos_t line_r2l(curpos_t y) const { return line_r2l(m_lines[y]); }
-    curpos_t line_r2l() const { return line_r2l(cur.y()); }
+    bool line_r2l(line_t const& line) const { return line.is_r2l(m_presentation_direction); }
+    bool line_r2l(curpos_t y) const { return line_r2l(m_lines[y]); }
+    bool line_r2l() const { return line_r2l(cur.y()); }
 
     curpos_t to_data_position(line_t const& line, curpos_t x) const {
       return line.to_data_position(x, m_width, m_presentation_direction);
@@ -861,6 +861,9 @@ namespace ansi {
     curpos_t scroll_amount() const {
       return this->m_scroll_amount;
     }
+    presentation_direction_t presentation_direction() const {
+      return m_term->board().m_presentation_direction;
+    }
     curpos_t x() const { return m_x; }
     curpos_t y() const { return m_y; }
     bool xenl() const { return m_xenl; }
@@ -911,7 +914,8 @@ namespace ansi {
       return this->lline(y - m_scroll_amount);
     }
     void get_cells_in_presentation(std::vector<cell_t>& buffer, line_t const& line) const {
-      line.get_cells_in_presentation(buffer, m_term->board().line_r2l(line));
+      bool const r2l = m_term->board().line_r2l(line);
+      line.get_cells_in_presentation(buffer, this->width(), r2l);
     }
   };
 

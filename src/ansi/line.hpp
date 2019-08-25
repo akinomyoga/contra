@@ -120,7 +120,7 @@ namespace ansi {
     // The related constants are defined in `enum extended_flags`.
   };
 
-  enum presentation_direction {
+  enum presentation_direction_t {
     presentation_direction_default = 0,
     presentation_direction_lrtb = 0,
     presentation_direction_tbrl = 1,
@@ -132,7 +132,7 @@ namespace ansi {
     presentation_direction_btrl = 7,
   };
 
-  constexpr bool is_charpath_rtol(presentation_direction presentationDirection) {
+  constexpr bool is_charpath_rtol(presentation_direction_t presentationDirection) {
     return presentationDirection == presentation_direction_rltb
       || presentationDirection == presentation_direction_btlr
       || presentationDirection == presentation_direction_rlbt
@@ -458,7 +458,7 @@ namespace ansi {
     }
 
   public:
-    bool is_r2l(presentation_direction board_charpath) const {
+    bool is_r2l(presentation_direction_t board_charpath) const {
       if (m_lflags & line_attr_t::is_character_path_ltor)
         return false;
       else if (m_lflags & line_attr_t::is_character_path_rtol)
@@ -490,28 +490,28 @@ namespace ansi {
   public:
     curpos_t to_data_position(curpos_t x, curpos_t width, bool line_r2l) const {
       // !m_prop_enabled の時は SDS/SRS も Unicode bidi も存在しない。
-      if (!m_prop_enabled) return x;
+      if (!m_prop_enabled) return line_r2l ? width - 1 - x : x;
       return convert_position(false, x, 0, width, line_r2l);
     }
     curpos_t to_presentation_position(curpos_t x, curpos_t width, bool line_r2l) const {
       // !m_prop_enabled の時は SDS/SRS も Unicode bidi も存在しない。
-      if (!m_prop_enabled) return x;
+      if (!m_prop_enabled) return line_r2l ? width - 1 - x : x;
       // キャッシュがある時はそれを使った方が速いだろう。
       if (m_strings_version == m_version && m_strings_r2l == line_r2l)
         return convert_position(true, x, 0, width, line_r2l);
       return _prop_to_presentation_position(x, line_r2l);
     }
-    curpos_t to_data_position(curpos_t x, curpos_t width, presentation_direction board_charpath) const {
+    curpos_t to_data_position(curpos_t x, curpos_t width, presentation_direction_t board_charpath) const {
       return to_data_position(x, width, is_r2l(board_charpath));
     }
-    curpos_t to_presentation_position(curpos_t x, curpos_t width, presentation_direction board_charpath) const {
+    curpos_t to_presentation_position(curpos_t x, curpos_t width, presentation_direction_t board_charpath) const {
       return to_presentation_position(x, width, is_r2l(board_charpath));
     }
 
   private:
-    void _prop_cells_in_presentation(std::vector<cell_t>& buff, bool line_r2l) const;
+    void _prop_cells_in_presentation(std::vector<cell_t>& buff, curpos_t width, bool line_r2l) const;
   public:
-    void get_cells_in_presentation(std::vector<cell_t>& buff, bool line_r2l) const;
+    void get_cells_in_presentation(std::vector<cell_t>& buff, curpos_t width, bool line_r2l) const;
 
   public:
     typedef std::vector<std::pair<curpos_t, curpos_t>> slice_ranges_t;
@@ -597,7 +597,7 @@ namespace ansi {
     curpos_t extract_selection(std::u32string& data) const;
 
   public:
-    void debug_string_nest(curpos_t width, presentation_direction board_charpath) const {
+    void debug_string_nest(curpos_t width, presentation_direction_t board_charpath) const {
       bool const line_r2l = is_r2l(board_charpath);
       auto const& strings = this->update_strings(width, line_r2l);
 

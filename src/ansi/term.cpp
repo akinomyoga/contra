@@ -579,7 +579,7 @@ namespace ansi {
     board_t& b = term.board();
 
     bool const oldRToL = is_charpath_rtol(b.m_presentation_direction);
-    bool const newRToL = is_charpath_rtol(b.m_presentation_direction = (presentation_direction) direction);
+    bool const newRToL = is_charpath_rtol(b.m_presentation_direction = (presentation_direction_t) direction);
 
     /* update content
      *
@@ -799,10 +799,10 @@ namespace ansi {
     do_cux_mask  = 0x3,
   };
 
-  static constexpr std::uint32_t do_cux_vec_construct(presentation_direction dir, do_cux_direction value) {
+  static constexpr std::uint32_t do_cux_vec_construct(presentation_direction_t dir, do_cux_direction value) {
     return value << do_cux_shift * dir;
   }
-  static do_cux_direction do_cux_vec_select(std::uint32_t vec, presentation_direction value) {
+  static do_cux_direction do_cux_vec_select(std::uint32_t vec, presentation_direction_t value) {
     return do_cux_direction(vec >> do_cux_shift * (0 <= value && value < 8 ? value : 0) & do_cux_mask);
   }
 

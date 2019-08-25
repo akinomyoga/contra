@@ -26,20 +26,8 @@ int main() {
   }
   if (!screen.initialize(params)) return 10;
 
-  auto& app = screen.manager().app();
-
   screen.do_loop(false);
   screen.finalize();
-
-  contra::dict::termcap_sgr_type sgrcap;
-  sgrcap.initialize();
-  contra::ansi::term_view_t view(&app.term());
-  contra::ttty::tty_observer target(view, stdout, &sgrcap);
-  target.writer().print_screen(app.board());
-
-  std::FILE* file = std::fopen("impl2-dump.txt", "w");
-  app.board().debug_print(file);
-  std::fclose(file);
 
   return 0;
 }

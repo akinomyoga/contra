@@ -114,7 +114,7 @@ namespace ansi {
 
     void store(window_state_t const& wstat, term_view_t const& view) {
       store_view(view);
-      store_metric(wstat);
+      store_metric(wstat, view);
       store_color(view);
       store_content(view);
       store_cursor(wstat, view);
@@ -123,11 +123,9 @@ namespace ansi {
 
   private:
     term_view_t const* m_view = nullptr;
-  public:
     bool is_view_changed(term_view_t const& view) const {
       return m_view != &view;
     }
-  private:
     void store_view(term_view_t const& view) {
       this->m_view = &view;
     }
@@ -139,30 +137,30 @@ namespace ansi {
     curpos_t m_row = 0;
     coord_t m_xpixel = 0;
     coord_t m_ypixel = 0;
-  public:
-    bool is_metric_changed(window_state_t const& wstat) const {
+    presentation_direction_t m_presentation_direction = presentation_direction_default;
+    bool is_metric_changed(window_state_t const& wstat, term_view_t const& view) const {
       if (m_xframe != wstat.m_xframe) return true;
       if (m_yframe != wstat.m_yframe) return true;
       if (m_col != wstat.m_col) return true;
       if (m_row != wstat.m_row) return true;
       if (m_xpixel != wstat.m_xpixel) return true;
       if (m_ypixel != wstat.m_ypixel) return true;
+      if (view.presentation_direction() != m_presentation_direction) return true;
       return false;
     }
-  private:
-    void store_metric(window_state_t const& wstat) {
+    void store_metric(window_state_t const& wstat, term_view_t const& view) {
       m_xframe = wstat.m_xframe;
       m_yframe = wstat.m_yframe;
       m_col = wstat.m_col;
       m_row = wstat.m_row;
       m_xpixel = wstat.m_xpixel;
       m_ypixel = wstat.m_ypixel;
+      m_presentation_direction = view.presentation_direction();
     }
 
   private:
     byte m_fg_space, m_bg_space;
     color_t m_fg_color, m_bg_color;
-  public:
     bool is_color_changed(term_view_t const& view) const {
       if (m_fg_space != view.fg_space()) return true;
       if (m_fg_color != view.fg_color()) return true;
@@ -175,6 +173,13 @@ namespace ansi {
       m_fg_color = view.fg_color();
       m_bg_space = view.bg_space();
       m_bg_color = view.bg_color();
+    }
+
+  public:
+    bool requests_full_update(window_state_t const& wstat, term_view_t const& view) const {
+      return this->is_view_changed(view) ||
+        this->is_metric_changed(wstat, view) ||
+        this->is_color_changed(view);
     }
 
   public:
@@ -1221,6 +1226,7 @@ namespace ansi {
       curpos_t previous_line_index;
       bool is_invalidated;
       bool is_redraw_requested;
+
       std::vector<cell_t> cells;
     };
     struct content_update {
@@ -1236,14 +1242,7 @@ namespace ansi {
       update.is_content_changed = m_tracer.is_content_changed(view);
       update.is_cursor_changed = m_tracer.is_cursor_changed(wstat, view);
       update.is_blinking_changed = m_tracer.is_blinking_changed(wstat);
-
-      update.is_full_update = requests_full_update;
-      if (m_tracer.is_view_changed(view))
-        update.is_full_update = true;
-      else if (m_tracer.is_metric_changed(wstat))
-        update.is_full_update = true;
-      else if (m_tracer.is_color_changed(view))
-        update.is_full_update = true;
+      update.is_full_update = requests_full_update || m_tracer.requests_full_update(wstat, view);
 
       bool const redraw = update.is_full_update ||
         update.is_content_changed ||
