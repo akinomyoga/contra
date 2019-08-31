@@ -195,7 +195,7 @@ namespace twin {
     LRESULT process_message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       switch (msg) {
       case WM_CREATE:
-        ::SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG) CreateSolidBrush(RGB(0xFF,0xFF,0xFF)));
+        ::SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG_PTR) CreateSolidBrush(RGB(0xFF,0xFF,0xFF)));
         return 0L;
       case WM_DESTROY:
         this->hWnd = NULL;
