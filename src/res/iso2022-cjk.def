@@ -7,3 +7,5 @@ MB94(2,C) ISO-IR-149 Korean Graphic Character Set, Korean Standard KSC 5601-1987
   loadbin iso2022.ksc5601
 MB94(2,N) ISO-IR-202 DPRK Standard Korean Graphic Character Set for Information Interchange
   loadbin iso2022.kps9566
+MB94(2,E) ISO-IR-165 CCITT Chinese Set
+  loadbin iso2022.ir165

@@ -1,5 +1,5 @@
 #include <cstdio>
-#include "enc.utf8.hpp"
+#include "../enc.utf8.hpp"
 
 char32_t const iso_ir_146_table[96] =
   {

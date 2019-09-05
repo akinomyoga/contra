@@ -1,0 +1,3 @@
+MB94(2,<) Private-12 CCITT Chinese Set
+  include ../../out/gen/iso2022.ir165.def
+  savebin ../res/iso2022.ir165

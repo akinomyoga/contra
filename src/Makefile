@@ -20,6 +20,8 @@ $(objdir)/ansi/%.o: ansi/%.cpp | $(objdir)/ansi $(gendir)/term.mode_def.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 $(objdir)/ttty/%.o: ttty/%.cpp | $(objdir)/ttty $(gendir)/term.mode_def.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
+$(objdir)/gen/%.o: gen/%.cpp | $(objdir)/gen $(gendir)/term.mode_def.hpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 $(objdir)/experimental/%.o: experimental/%.cpp | $(objdir)/experimental $(gendir)/term.mode_def.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
@@ -64,8 +66,8 @@ directories += out
 all: iso2022-convert.exe
 iso2022-convert.exe: $(objdir)/iso2022-convert.o $(objdir)/enc.utf8.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
-all: iso2022-gendef-table.exe
-iso2022-gendef-table.exe: $(objdir)/iso2022-gendef-table.o $(objdir)/enc.utf8.o
+all: gen/iso2022.gendef-table.exe
+gen/iso2022.gendef-table.exe: $(gendir)/iso2022.gendef-table.o $(objdir)/enc.utf8.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 all: iso2022-dump.exe
 iso2022-dump.exe: $(objdir)/iso2022-dump.o $(objdir)/enc.utf8.o $(objdir)/enc.c2w.o $(objdir)/iso2022.o

@@ -90,7 +90,6 @@ function output-iconv-def-for-cygwin {
   process ISO-IR-165
   process ISO-IR-230
 }
-# output-iconv-def-for-cygwin > iso2022.cygwin.def
 
 function output-iconv-def-for-96chars {
   local keys=(
@@ -100,4 +99,51 @@ function output-iconv-def-for-96chars {
     process96 "ISO-IR-$key"
   done
 }
-output-iconv-def-for-96chars
+
+function gendef/ISO-IR-165/output {
+  local a=$1 b=$2 u=$3
+  u=${u//' '/'<SP>'}
+  u=${u//$'\x7F'/'<DEL>'}
+  echo "  define $a$b$u"
+}
+function output-iconv-def-for-ISO-IR-165 {
+  local outdir=../../out/gen
+  local ia ib a b u
+  for ((ia=0;ia<94;ia++)); do
+    echo "[$(date +'%F %T %Z')] ia=$ia..." >&2
+    a=${charlist94:ia:1}
+
+    # 一括変換を試みる
+    local line=
+    for ((ib=0;ib<94;ib++)); do
+      b=${charlist94:ib:1}
+      line=$line$a$b
+    done
+    if u=$(echo -n "$line" | iconv -f ISO-IR-165 -t utf-8 2>/dev/null) && ((${#u}==94)); then
+      for ((ib=0;ib<94;ib++)); do
+        gendef/ISO-IR-165/output "$a" "${charlist94:ib:1}" "${u:ib:1}"
+      done
+      continue
+    fi
+
+    # 一文字ずつ変換する
+    for ((ib=0;ib<94;ib++)); do
+      b=${charlist94:ib:1}
+      if u=$(echo -n "$a$b" | iconv -f ISO-IR-165 -t utf-8 2>/dev/null) && [[ $u ]]; then
+        gendef/ISO-IR-165/output "$a" "$b" "$u"
+      fi
+    done
+  done > "$outdir"/iso2022.ir165.def.part
+  mv -f "$outdir"/iso2022.ir165.def.part "$outdir"/iso2022.ir165.def
+}
+
+case $1 in
+(165)
+  output-iconv-def-for-ISO-IR-165 ;;
+(sb96)
+  output-iconv-def-for-96chars ;;
+(cygwin)
+  output-iconv-def-for-cygwin > iso2022.cygwin.def ;;
+(*)
+  echo "usage: $0 sb96|cygwin|165" ;;
+esac

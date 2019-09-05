@@ -22,21 +22,21 @@ MB94(2,4) Private-4 KPS9566
 MB94(2,5) Private-5 CNS-1
   include ../../out/gen/iso2022.cns11643-plane1.def
   savebin ../res/iso2022.cns11643-1
-MB94(2,6) Private-5 CNS-2
+MB94(2,6) Private-6 CNS-2
   include ../../out/gen/iso2022.cns11643-plane2.def
   savebin ../res/iso2022.cns11643-2
-MB94(2,7) Private-5 CNS-3
+MB94(2,7) Private-7 CNS-3
   include ../../out/gen/iso2022.cns11643-plane3.def
   savebin ../res/iso2022.cns11643-3
-MB94(2,8) Private-5 CNS-4
+MB94(2,8) Private-8 CNS-4
   include ../../out/gen/iso2022.cns11643-plane4.def
   savebin ../res/iso2022.cns11643-4
-MB94(2,9) Private-5 CNS-5
+MB94(2,9) Private-9 CNS-5
   include ../../out/gen/iso2022.cns11643-plane5.def
   savebin ../res/iso2022.cns11643-5
-MB94(2,:) Private-5 CNS-6
+MB94(2,:) Private-10 CNS-6
   include ../../out/gen/iso2022.cns11643-plane6.def
   savebin ../res/iso2022.cns11643-6
-MB94(2,;) Private-5 CNS-7
+MB94(2,;) Private-11 CNS-7
   include ../../out/gen/iso2022.cns11643-plane7.def
   savebin ../res/iso2022.cns11643-7
