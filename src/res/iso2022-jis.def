@@ -4,7 +4,7 @@
 
 # JIS X 0213:2004
 MB94(2,Q) ISO-IR-233 Japanese Graphic Character Set for Information Interchange, Plane 1 (Update of ISO-IR 228)
-  loadbin jisx.plane1
+  loadbin iso2022.jisx-1
 
   # 全角文字がある場合はそれを使う
   map !$，!%．!'：!(；!)？!*！!.｀
@@ -96,7 +96,7 @@ MB94(2,@) ISO-IR-42 Japanese Character Set JIS C 6226-1983
 # JIS Plane 2
 
 MB94(2,P) ISO-IR-229 Japanese Graphic Character Set for Information Interchange --- Plane 2
-  loadbin jisx.plane2
+  loadbin iso2022.jisx-2
 
   # JIS X 0213 は 1, 3-5, 8, 12-15, 78-94
   undef_range "!-"~
@@ -105,7 +105,7 @@ MB94(2,P) ISO-IR-229 Japanese Graphic Character Set for Information Interchange 
   undef_range 0!-m~
 
 MB94(2,D) ISO-IR-159 Supplementary Japanese Graphic Character Set for Information Interchange
-  loadbin jisx.plane2
+  loadbin iso2022.jisx-2
 
   # JIS X 0212 は 2, 6-7, 9-11, 16-77
   undef_range !!-!~

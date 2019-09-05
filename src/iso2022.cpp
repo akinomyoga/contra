@@ -453,7 +453,8 @@ namespace {
         return false;
       }
 
-      std::ofstream ofs2(name + ".def");
+      std::string ofs2_filename = name + ".def";
+      std::ofstream ofs2(ofs2_filename);
       if (!ofs2) {
         print_error() << "failed to open the file '" << name << ".def'" << std::endl;
         return false;
@@ -483,11 +484,13 @@ namespace {
 
       iso2022_charset const* charset = current_charset;
 
+      bool ofs2_written = false;
       auto _write_utf16le = [&ofs1] (char32_t c) {
         ofs1.put(0xFF & c);
         ofs1.put(0xFF & c >> 8);
       };
-      auto _write_enc96 = [&ofs2] (int value) {
+      auto _write_enc96 = [&ofs2, &ofs2_written] (int value) {
+        ofs2_written = true;
         if (value == 0)
           ofs2 << "<SP>";
         else if (value == 95)
@@ -528,6 +531,8 @@ namespace {
           }
         }
       }
+      if (!ofs2_written)
+        unlink(ofs2_filename.c_str());
 
       return true;
     }

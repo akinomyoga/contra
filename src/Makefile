@@ -74,10 +74,10 @@ all: out/iso2022.html
 out/iso2022.html: iso2022-dump.exe res/iso2022.def res/iso2022-jis.def | out
 	./iso2022-dump.exe
 
-$(gendir)/jisx.plane0212.def: gen/jisx.create-jis-table.sh | $(gendir)
-	cd gen && bash jisx.create-jis-table.sh
-res/jisx.plane1.bin: iso2022-dump.exe gen/jisx.generate-bin.def $(gendir)/jisx.plane0212.def
-	./iso2022-dump.exe gen/jisx.generate-bin.def
+$(gendir)/iso2022.jisx0212-plane.def: gen/iso2022.create-table.sh | $(gendir)
+	cd gen && bash iso2022.create-table.sh
+res/iso2022.jisx-1.bin: iso2022-dump.exe gen/iso2022.generate-bin.def $(gendir)/iso2022.jisx0212-plane.def
+	./iso2022-dump.exe gen/iso2022.generate-bin.def
 
 #------------------------------------------------------------------------------
 # ttty

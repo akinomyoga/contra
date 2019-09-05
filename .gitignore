@@ -20,6 +20,7 @@
 /src/ttty-*.txt
 /src/twin-*.txt
 /src/twin/test-*.txt
+/src/out
 
 # private files
 /mat
@@ -27,5 +28,3 @@
 
 # resources
 /src/cyg*.dll
-
-
