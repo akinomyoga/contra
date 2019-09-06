@@ -1,6 +1,6 @@
 #include <string>
 #include <iostream>
-#include "enc.utf8.hpp"
+#include "../enc.utf8.hpp"
 
 /*
  * COMBINING 文字が在ると Emacs での編集に難があるので、

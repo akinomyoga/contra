@@ -741,6 +741,167 @@ namespace {
   };
 }
 
+bool iso2022_charset_registry::register_designator(iso2022_charset_size type, std::string const& designator, charset_t cs) {
+  mwg_assert(designator.size());
+  if (designator.back() < 0x30 || 0x7E < designator.back()) return false;
+  byte const f = designator.back() - 0x30;
+
+  if (designator.size() == 1) {
+    switch (type) {
+    case iso2022_size_sb94: m_sb94[f] = cs; return true;
+    case iso2022_size_sb96: m_sb96[f] = cs; return true;
+    case iso2022_size_mb94: m_mb94[f] = cs; return true;
+    case iso2022_size_mb96: break;
+    default: mwg_assert(0);
+    }
+  } else if (designator.size() == 2) {
+    if (designator[0] == ascii_exclamation && type == iso2022_size_sb94) {
+      m_sb94[80 + f] = cs;
+      return true;
+    }
+
+    if (designator[0] == ascii_sp) {
+      switch (type) {
+      case iso2022_size_sb94: m_sb94_drcs[f] = cs; return true;
+      case iso2022_size_sb96: m_sb96_drcs[f] = cs; return true;
+      case iso2022_size_mb94: m_mb94_drcs[f] = cs; return true;
+      case iso2022_size_mb96: m_mb96_drcs[f] = cs; return true;
+      default: mwg_assert(0);
+      }
+    }
+  }
+
+  switch (type) {
+  case iso2022_size_sb94: m_dict_sb94[designator] = cs; return true;
+  case iso2022_size_sb96: m_dict_sb96[designator] = cs; return true;
+  case iso2022_size_mb94: m_dict_db94[designator] = cs; return true;
+  case iso2022_size_mb96: m_dict_db96[designator] = cs; return true;
+  default: mwg_assert(0);
+  }
+  return false;
+}
+
+charset_t iso2022_charset_registry::register_charset(iso2022_charset&& charset, bool drcs) {
+  mwg_check(charset.designator.size(), "charset with empty designator cannot be registered.");
+  mwg_check(charset.number_of_bytes <= 2, "94^n/96^n charsets (n >= 3) are not supported.");
+  charset_t cs = resolve_designator(charset.type, charset.designator);
+  if (cs != iso2022_unspecified) {
+    std::vector<iso2022_charset>* category = nullptr;
+    if (cs & charflag_iso2022_db)
+      category = cs & charflag_iso2022_drcs ? &m_category_mb_drcs : &m_category_mb;
+    else
+      category = cs & charflag_iso2022_drcs ? &m_category_sb_drcs : &m_category_sb;
+
+    charset_t const index = cs & charflag_iso2022_mask_code;
+    mwg_assert(index < category->size(), "index=%d", index);
+    (*category)[index] = std::move(charset);
+    return cs & ~iso2022_charset_is96;
+  }
+
+  std::vector<iso2022_charset>* category = nullptr;
+  std::size_t max_count = 0;
+  switch (charset.type) {
+  case iso2022_size_sb94:
+  case iso2022_size_sb96:
+    category = drcs ? &m_category_sb_drcs : &m_category_sb;
+    cs = 0;
+    max_count = (charflag_iso2022_mask_code + 1) / 96;
+    break;
+  case iso2022_size_mb94:
+  case iso2022_size_mb96:
+    category = drcs ? &m_category_mb_drcs : &m_category_mb;
+    cs = charflag_iso2022_db;
+    max_count = (charflag_iso2022_mask_code + 1) / (96 * 96);
+    break;
+  default: mwg_check(0);
+  }
+  if (drcs) cs |= charflag_iso2022_drcs;
+
+  if (category->size() >= max_count) {
+    std::cerr << "reached maximal number of registered charset." << std::endl;
+    return iso2022_unspecified;
+  }
+
+  cs |= category->size();
+  auto const& charset_ = category->emplace_back(std::move(charset));
+  register_designator(charset_.type, charset_.designator, cs);
+  return cs;
+}
+
+iso2022_charset_registry::iso2022_charset_registry() {
+  std::fill(std::begin(m_sb94), std::end(m_sb94), iso2022_unspecified);
+  std::fill(std::begin(m_sb96), std::end(m_sb96), iso2022_unspecified);
+  std::fill(std::begin(m_mb94), std::end(m_mb94), iso2022_unspecified);
+
+  // DRCS (DRCSMM 領域合計 160 区については予め割り当てて置く事にする)
+  std::iota(std::begin(m_sb94_drcs), std::end(m_sb94_drcs), iso2022_charset_drcs | 0);
+  m_category_sb_drcs.insert(m_category_sb_drcs.end(), (std::size_t) 80, iso2022_charset(iso2022_size_sb94));
+  std::iota(std::begin(m_sb96_drcs), std::end(m_sb96_drcs), iso2022_charset_drcs | 80);
+  m_category_sb_drcs.insert(m_category_sb_drcs.end(), (std::size_t) 80, iso2022_charset(iso2022_size_sb96));
+  std::fill(std::begin(m_mb94_drcs), std::end(m_mb94_drcs), iso2022_unspecified);
+  std::fill(std::begin(m_mb96_drcs), std::end(m_mb96_drcs), iso2022_unspecified);
+
+  // initialize default charset
+  {
+    iso2022_charset charset(iso2022_size_sb94, 1);
+    charset.designator = "B";
+    charset.initialize_iso646_usa();
+    m_category_sb.emplace_back(std::move(charset));
+  }
+
+  {
+    iso2022_charset charset(iso2022_size_sb96, 1);
+    charset.designator = "A";
+    charset.initialize_iso8859_1();
+    m_category_sb.emplace_back(std::move(charset));
+  }
+
+  m_sb94[ascii_B - 0x30] = iso2022_94_iso646_usa;
+  m_sb96[ascii_A - 0x30] = iso2022_96_iso8859_1;
+
+  {
+    iso2022_charset charset(iso2022_size_mb96, 2);
+
+    // 文字
+    charset.define(mosaic_rarrow , ascii_greater);
+    charset.define(mosaic_larrow , ascii_less);
+    charset.define(mosaic_uarrow , ascii_circumflex);
+    charset.define(mosaic_darrow , ascii_v);
+    charset.define(mosaic_diamond, ascii_asterisk);
+    charset.define(mosaic_degree , u'°');            // A
+    charset.define(mosaic_pm     , u'±');            // A
+    charset.define(mosaic_lantern, ascii_asterisk);
+    charset.define(mosaic_le     , u'≤');             // A
+    charset.define(mosaic_ge     , u'≥');             // A
+    charset.define(mosaic_pi     , u'π');            // A
+    charset.define(mosaic_ne     , u'≠');            // A
+    charset.define(mosaic_bullet , u'·');             // A
+
+    // 模様
+    charset.define(mosaic_white , ascii_number); // N
+    charset.define(mosaic_black , ascii_number); // N (U+2588=A)
+    charset.define(mosaic_check , ascii_number); // N (U+2592=A)
+    charset.define(mosaic_hline1, 0x23BA); // N
+    charset.define(mosaic_hline3, 0x23BB); // N
+    charset.define(mosaic_hline7, 0x23BC); // N
+    charset.define(mosaic_hline9, 0x23BD); // N
+
+    // 罫線
+    for (std::uint32_t code = 0x1001; code < 0x1100; code++) {
+      std::uint32_t const h = 0xF & code;
+      std::uint32_t const v = 0xF & code >> 4;
+      if (!v)
+        charset.define(code, ascii_minus);
+      else if (!h)
+        charset.define(code, ascii_vertical_bar);
+      else
+        charset.define(code, ascii_plus);
+    }
+
+    m_category_mb.emplace_back(std::move(charset));
+  }
+}
+
 bool iso2022_charset_registry::load_definition(std::istream& istr, const char* title, iso2022_load_definition_params const* params) {
   iso2022_definition_reader reader(*this);
   return reader.load_definition(istr, title, params);

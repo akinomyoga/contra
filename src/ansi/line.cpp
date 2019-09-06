@@ -1,6 +1,25 @@
 #include "line.hpp"
+#include "../iso2022.hpp"
 
 using namespace contra::ansi;
+
+bool character_t::get_unicode_from_iso2022(std::vector<char32_t>& buff, char32_t const code) {
+  std::uint32_t const cssize = code2cssize(code);
+  std::uint32_t const cs = code2charset(code, cssize);
+
+  auto const& iso2022 = iso2022_charset_registry::instance();
+  iso2022_charset const* charset = iso2022.charset(cs);
+  if (!(charset && charset->get_chars(buff, (code & charflag_iso2022_mask_code) % cssize))) {
+    // 文字集合で定義されていない区点は REPLACEMENT CHARACTER として表示する
+    buff.clear();
+    buff.push_back(0xFFFD);
+    return true;
+  } else if (buff.size() == 1 && is_iso2022_mosaic(buff[0])) {
+    return character_t::get_unicode_from_iso2022(buff, buff[0]);
+  } else {
+    return !buff.empty();
+  }
+}
 
 void line_t::_mono_generic_replace_cells(curpos_t xL, curpos_t xR, cell_t const* cell, int count, int repeat, curpos_t width, int implicit_move) {
   this->m_version++;
@@ -1311,17 +1330,20 @@ curpos_t line_t::extract_selection(std::u32string& data) const {
   data.clear();
   curpos_t head_x = 0;
   curpos_t space_count = 0;
+  std::vector<char32_t> buff;
   for (cell_t const& cell : this->m_cells) {
     if (cell.attribute.xflags & attribute_t::ssa_selected) {
-      char32_t value = cell.character.get_unicode_representation();
-      if (value != (char32_t) invalid_character) {
-        if (value == ascii_nul) value = U' ';
+      if (cell.character.get_unicode_representation(buff)) {
         if (data.empty())
           head_x = space_count;
         else
           data.append(space_count, U' ');
         space_count = 0;
-        data.append(1, value);
+
+        for (char32_t& value : buff)
+          if (value == ascii_nul) value = U' ';
+        data.append(buff.begin(), buff.end());
+
         if ((cell.attribute.xflags & attribute_t::decdhl_mask) && cell.width / 2)
           data.append(cell.width / 2, U' ');
         continue;

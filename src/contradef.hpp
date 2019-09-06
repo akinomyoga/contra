@@ -143,7 +143,7 @@ namespace contra {
   enum character_flags {
     unicode_mask      = 0x001FFFFF,
     unicode_max       = 0x0010FFFF,
-    charflag_iso2022  = 0x01000000, // not yet supported
+    charflag_iso2022  = 0x01000000,
     charflag_object   = 0x02000000, // not yet supported
     charflag_private1 = 0x04000000, // for private usage
     charflag_private2 = 0x08000000, // for private usage
@@ -163,8 +163,8 @@ namespace contra {
     charflag_iso2022_drcs  = 0x00200000,
     charflag_iso2022_mask_flag  = 0x00300000,
     charflag_iso2022_mask_code  = 0x000FFFFF,
-    charflag_iso2022_graphics_beg = 0x01100000,
-    charflag_iso2022_graphics_end = 0x01100000 + 96 * 96,
+    charflag_iso2022_mosaic_beg = 0x01100000,
+    charflag_iso2022_mosaic_end = 0x01100000 + 96 * 96,
 
     charflag_wide_extension    = 0x10000000,
     charflag_cluster_extension = 0x20000000,

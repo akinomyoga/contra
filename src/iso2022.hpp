@@ -25,6 +25,7 @@ namespace contra {
   inline constexpr charset_t iso2022_charset_is96 = 0x00400000;
   inline constexpr charset_t iso2022_94_iso646_usa = 0;
   inline constexpr charset_t iso2022_96_iso8859_1  = 1;
+  inline constexpr charset_t iso2022_db96_graphics = charflag_iso2022_db;
 
   inline constexpr charset_t code2cssize(char32_t code)  {
     return code & charflag_iso2022_db ? 96 * 96 : 96;
@@ -36,8 +37,8 @@ namespace contra {
   inline constexpr charset_t code2charset(char32_t code)  {
     return code2charset(code, code2cssize(code));
   }
-  inline constexpr bool is_iso2022_graphics(char32_t code) {
-    return charflag_iso2022_graphics_beg <= code && code < charflag_iso2022_graphics_end;
+  inline constexpr bool is_iso2022_mosaic(char32_t code) {
+    return charflag_iso2022_mosaic_beg <= code && code < charflag_iso2022_mosaic_end;
   }
 
   enum iso2022_charset_size {
@@ -191,45 +192,7 @@ namespace contra {
     dictionary_type m_dict_db96;
 
   public:
-    iso2022_charset_registry() {
-      std::fill(std::begin(m_sb94), std::end(m_sb94), iso2022_unspecified);
-      std::fill(std::begin(m_sb96), std::end(m_sb96), iso2022_unspecified);
-      std::fill(std::begin(m_mb94), std::end(m_mb94), iso2022_unspecified);
-
-      // DRCS (DRCSMM 領域合計 160 区については予め割り当てて置く事にする)
-      std::iota(std::begin(m_sb94_drcs), std::end(m_sb94_drcs), iso2022_charset_drcs | 0);
-      m_category_sb_drcs.insert(m_category_sb_drcs.end(), (std::size_t) 80, iso2022_charset(iso2022_size_sb94));
-      std::iota(std::begin(m_sb96_drcs), std::end(m_sb96_drcs), iso2022_charset_drcs | 80);
-      m_category_sb_drcs.insert(m_category_sb_drcs.end(), (std::size_t) 80, iso2022_charset(iso2022_size_sb96));
-      std::fill(std::begin(m_mb94_drcs), std::end(m_mb94_drcs), iso2022_unspecified);
-      std::fill(std::begin(m_mb96_drcs), std::end(m_mb96_drcs), iso2022_unspecified);
-
-      // initialize default charset
-      {
-        iso2022_charset charset(iso2022_size_sb94, 1);
-        charset.designator = "B";
-        charset.initialize_iso646_usa();
-        m_category_sb.emplace_back(std::move(charset));
-      }
-
-      {
-        iso2022_charset charset(iso2022_size_sb96, 1);
-        charset.designator = "A";
-        charset.initialize_iso8859_1();
-        m_category_sb.push_back(charset);
-      }
-
-      // {■ファイルから読み取って定義する
-      //   iso2022_charset charset;
-      //   charset.type = iso2022_size_sb94;
-      //   charset.designator = "0";
-      //   charset.initialize_iso8859_1();
-      //   m_category_sb.push_back(charset);
-      // }
-
-      m_sb94[ascii_B - 0x30] = iso2022_94_iso646_usa;
-      m_sb96[ascii_A - 0x30] = iso2022_96_iso8859_1;
-    }
+    iso2022_charset_registry();
 
   private:
     mutable std::string m_designator_buff;
@@ -300,93 +263,9 @@ namespace contra {
     }
 
   private:
-    bool register_designator(iso2022_charset_size type, std::string const& designator, charset_t cs) {
-      mwg_assert(designator.size());
-      if (designator.back() < 0x30 || 0x7E < designator.back()) return false;
-      byte const f = designator.back() - 0x30;
-
-      if (designator.size() == 1) {
-        switch (type) {
-        case iso2022_size_sb94: m_sb94[f] = cs; return true;
-        case iso2022_size_sb96: m_sb96[f] = cs; return true;
-        case iso2022_size_mb94: m_mb94[f] = cs; return true;
-        case iso2022_size_mb96: break;
-        default: mwg_assert(0);
-        }
-      } else if (designator.size() == 2) {
-        if (designator[0] == ascii_exclamation && type == iso2022_size_sb94) {
-          m_sb94[80 + f] = cs;
-          return true;
-        }
-
-        if (designator[0] == ascii_sp) {
-          switch (type) {
-          case iso2022_size_sb94: m_sb94_drcs[f] = cs; return true;
-          case iso2022_size_sb96: m_sb96_drcs[f] = cs; return true;
-          case iso2022_size_mb94: m_mb94_drcs[f] = cs; return true;
-          case iso2022_size_mb96: m_mb96_drcs[f] = cs; return true;
-          default: mwg_assert(0);
-          }
-        }
-      }
-
-      switch (type) {
-      case iso2022_size_sb94: m_dict_sb94[designator] = cs; return true;
-      case iso2022_size_sb96: m_dict_sb96[designator] = cs; return true;
-      case iso2022_size_mb94: m_dict_db94[designator] = cs; return true;
-      case iso2022_size_mb96: m_dict_db96[designator] = cs; return true;
-      default: mwg_assert(0);
-      }
-      return false;
-    }
-
+    bool register_designator(iso2022_charset_size type, std::string const& designator, charset_t cs);
   public:
-    charset_t register_charset(iso2022_charset&& charset, bool drcs) {
-      mwg_check(charset.designator.size(), "charset with empty designator cannot be registered.");
-      mwg_check(charset.number_of_bytes <= 2, "94^n/96^n charsets (n >= 3) are not supported.");
-      charset_t cs = resolve_designator(charset.type, charset.designator);
-      if (cs != iso2022_unspecified) {
-        std::vector<iso2022_charset>* category = nullptr;
-        if (cs & charflag_iso2022_db)
-          category = cs & charflag_iso2022_drcs ? &m_category_mb_drcs : &m_category_mb;
-        else
-          category = cs & charflag_iso2022_drcs ? &m_category_sb_drcs : &m_category_sb;
-
-        charset_t const index = cs & charflag_iso2022_mask_code;
-        mwg_assert(index < category->size(), "index=%d", index);
-        (*category)[index] = std::move(charset);
-        return cs & ~iso2022_charset_is96;
-      }
-
-      std::vector<iso2022_charset>* category = nullptr;
-      std::size_t max_count = 0;
-      switch (charset.type) {
-      case iso2022_size_sb94:
-      case iso2022_size_sb96:
-        category = drcs ? &m_category_sb_drcs : &m_category_sb;
-        cs = 0;
-        max_count = (charflag_iso2022_mask_code + 1) / 96;
-        break;
-      case iso2022_size_mb94:
-      case iso2022_size_mb96:
-        category = drcs ? &m_category_mb_drcs : &m_category_mb;
-        cs = charflag_iso2022_db;
-        max_count = (charflag_iso2022_mask_code + 1) / (96 * 96);
-        break;
-      default: mwg_check(0);
-      }
-      if (drcs) cs |= charflag_iso2022_drcs;
-
-      if (category->size() >= max_count) {
-        std::cerr << "reached maximal number of registered charset." << std::endl;
-        return iso2022_unspecified;
-      }
-
-      cs |= category->size();
-      auto const& charset_ = category->emplace_back(std::move(charset));
-      register_designator(charset_.type, charset_.designator, cs);
-      return cs;
-    }
+    charset_t register_charset(iso2022_charset&& charset, bool drcs);
 
     iso2022_charset* charset(charset_t cs) {
       std::vector<iso2022_charset>* category = nullptr;
@@ -415,6 +294,29 @@ namespace contra {
 
     static iso2022_charset_registry& instance();
   };
+
+  inline constexpr std::uint32_t mosaic_rarrow  = 0x000;
+  inline constexpr std::uint32_t mosaic_larrow  = 0x001;
+  inline constexpr std::uint32_t mosaic_uarrow  = 0x002;
+  inline constexpr std::uint32_t mosaic_darrow  = 0x003;
+  inline constexpr std::uint32_t mosaic_diamond = 0x004;
+  inline constexpr std::uint32_t mosaic_degree  = 0x005;
+  inline constexpr std::uint32_t mosaic_pm      = 0x006;
+  inline constexpr std::uint32_t mosaic_lantern = 0x007;
+  inline constexpr std::uint32_t mosaic_le      = 0x008;
+  inline constexpr std::uint32_t mosaic_ge      = 0x009;
+  inline constexpr std::uint32_t mosaic_pi      = 0x00a;
+  inline constexpr std::uint32_t mosaic_ne      = 0x00b;
+  inline constexpr std::uint32_t mosaic_bullet  = 0x00c;
+
+  inline constexpr std::uint32_t mosaic_white  = 0x1000;
+  inline constexpr std::uint32_t mosaic_black  = 0x1100;
+  inline constexpr std::uint32_t mosaic_check  = 0x1101;
+  inline constexpr std::uint32_t mosaic_hline1 = 0x1102;
+  inline constexpr std::uint32_t mosaic_hline3 = 0x1103;
+  inline constexpr std::uint32_t mosaic_hline7 = 0x1104;
+  inline constexpr std::uint32_t mosaic_hline9 = 0x1105;
+
 }
 
 #endif

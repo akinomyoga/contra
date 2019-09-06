@@ -10,9 +10,9 @@
 #include <iostream>
 #include <algorithm>
 #include <mwg/except.h>
-#include "enc.utf8.hpp"
-#include "enc.c2w.hpp"
-#include "iso2022.hpp"
+#include "../enc.utf8.hpp"
+#include "../enc.c2w.hpp"
+#include "../iso2022.hpp"
 
 static std::ostream& put_colrow(std::ostream& ostr, unsigned char a) {
   return ostr << unsigned(a / 16) << "/" << unsigned(a % 16);

@@ -1435,7 +1435,7 @@ namespace ansi {
 
         this->clip(font, y1);
 
-        code -= charflag_iso2022_graphics_beg;
+        code -= charflag_iso2022_mosaic_beg;
 
         if (code < 0x1000) {
           // 文字的な図形 (フォントと同様の変形を受ける)
@@ -1446,20 +1446,20 @@ namespace ansi {
           auto [w, h] = fmetric.get_font_size(font);
 
           switch (code) {
-          case 0x000: m_graph.rarrow(g, x, y, w, h, fg, font); break;
-          case 0x001: m_graph.larrow(g, x, y, w, h, fg, font); break;
-          case 0x002: m_graph.uarrow(g, x, y, w, h, fg, font); break;
-          case 0x003: m_graph.darrow(g, x, y, w, h, fg, font); break;
-          case 0x004: m_graph.diamond(g, x, y, w, h, fg, font); break;
-          case 0x005: m_graph.degree(g, x, y, w, h, fg, font); break;
-          case 0x006: m_graph.pm(g, x, y, w, h, fg, font); break;
-          case 0x007: m_graph.lantern(g, x, y, w, h, fg, font); break;
-          case 0x008: m_graph.le(g, x, y, w, h, fg, font); break;
-          case 0x009: m_graph.ge(g, x, y, w, h, fg, font); break;
-          case 0x00a: m_graph.pi(g, x, y, w, h, fg, font); break;
-          case 0x00b: m_graph.ne(g, x, y, w, h, fg, font); break;
+          case mosaic_rarrow : m_graph.rarrow(g, x, y, w, h, fg, font); break;
+          case mosaic_larrow : m_graph.larrow(g, x, y, w, h, fg, font); break;
+          case mosaic_uarrow : m_graph.uarrow(g, x, y, w, h, fg, font); break;
+          case mosaic_darrow : m_graph.darrow(g, x, y, w, h, fg, font); break;
+          case mosaic_diamond: m_graph.diamond(g, x, y, w, h, fg, font); break;
+          case mosaic_degree : m_graph.degree(g, x, y, w, h, fg, font); break;
+          case mosaic_pm     : m_graph.pm(g, x, y, w, h, fg, font); break;
+          case mosaic_lantern: m_graph.lantern(g, x, y, w, h, fg, font); break;
+          case mosaic_le     : m_graph.le(g, x, y, w, h, fg, font); break;
+          case mosaic_ge     : m_graph.ge(g, x, y, w, h, fg, font); break;
+          case mosaic_pi     : m_graph.pi(g, x, y, w, h, fg, font); break;
+          case mosaic_ne     : m_graph.ne(g, x, y, w, h, fg, font); break;
           default:
-          case 0x00c: m_graph.bullet(g, x, y, w, h, fg, font); break;
+          case mosaic_bullet : m_graph.bullet(g, x, y, w, h, fg, font); break;
           }
         } else {
           // 背景的な図形
@@ -1471,13 +1471,13 @@ namespace ansi {
             m_graph.boxline(g, x1, y1, w, h, fg, font, code & 0xFF);
           } else {
             switch (code) {
-            case 0x1000: m_graph.white_box(g, x1, y1, w, h, fg, font); break;
-            case 0x1100: m_graph.black_box(g, x1, y1, w, h, fg, font); break;
-            case 0x1101: m_graph.check_box(g, x1, y1, w, h, fg, font); break;
-            case 0x1102: m_graph.overline(g, x1, y1, w, h, fg, font); break;
-            case 0x1103: m_graph.hline(g, x1, y1, w, h, fg, font, 0.25); break;
-            case 0x1104: m_graph.hline(g, x1, y1, w, h, fg, font, 0.75); break;
-            case 0x1105: m_graph.underline(g, x1, y1, w, h, fg, font); break;
+            case mosaic_white : m_graph.white_box(g, x1, y1, w, h, fg, font); break;
+            case mosaic_black : m_graph.black_box(g, x1, y1, w, h, fg, font); break;
+            case mosaic_check : m_graph.check_box(g, x1, y1, w, h, fg, font); break;
+            case mosaic_hline1: m_graph.overline(g, x1, y1, w, h, fg, font); break;
+            case mosaic_hline3: m_graph.hline(g, x1, y1, w, h, fg, font, 0.25); break;
+            case mosaic_hline7: m_graph.hline(g, x1, y1, w, h, fg, font, 0.75); break;
+            case mosaic_hline9: m_graph.underline(g, x1, y1, w, h, fg, font); break;
             }
           }
         }
@@ -1565,7 +1565,7 @@ namespace ansi {
           // 文字集合で定義されていない区点は REPLACEMENT CHARACTER として表示する
           draw_unicode(x1, y1, 0xFFFD, cell);
           return;
-        } else if (vec.size() == 1 && is_iso2022_graphics(vec[0])) {
+        } else if (vec.size() == 1 && is_iso2022_mosaic(vec[0])) {
           draw_iso2022_graphics(x1, y1, vec[0], cell);
           return;
         } else if (vec.empty()) {
@@ -1605,8 +1605,7 @@ namespace ansi {
             iso2022_charset const* charset2 = iso2022.charset(cs2);
             if (!(charset2 && charset2->get_chars(vec, (code2 & charflag_iso2022_mask_code) % cssize))) {
               goto process_later;
-            } else if (vec.size() == 1 && is_iso2022_graphics(vec[0])) {
-              //■その場で描画しても良い気がする
+            } else if (vec.size() == 1 && is_iso2022_mosaic(vec[0])) {
               draw_iso2022_graphics(x1 + m_str.x(), y1, vec[0], cell2);
               m_str.skip(cell2.width);
               goto processed;

@@ -52,10 +52,21 @@ namespace ansi {
       return value & charflag_marker;
     }
 
-    constexpr char32_t get_unicode_representation() const {
+  private:
+    static bool get_unicode_from_iso2022(std::vector<char32_t>& buff, char32_t const value);
+
+  public:
+    bool get_unicode_representation(std::vector<char32_t>& buff) const {
       char32_t const ret = value & ~(charflag_marker | charflag_cluster_extension);
-      if (ret <= unicode_max) return ret;
-      return invalid_character;
+      if (ret <= unicode_max) {
+        buff.clear();
+        buff.push_back(ret);
+        return true;
+      }
+
+      if (ret & charflag_iso2022)
+        return get_unicode_from_iso2022(buff, ret);
+      return false;
     }
   };
 

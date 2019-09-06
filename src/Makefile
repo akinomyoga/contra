@@ -63,23 +63,23 @@ $(objdir)/impl2.o: impl2.cpp | $(objdir)
 
 directories += out
 
-all: iso2022-convert.exe
-iso2022-convert.exe: $(objdir)/iso2022-convert.o $(objdir)/enc.utf8.o
+all: gen/iso2022-convert.exe
+gen/iso2022-convert.exe: $(objdir)/gen/iso2022-convert.o $(objdir)/enc.utf8.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 all: gen/iso2022.gendef-table.exe
-gen/iso2022.gendef-table.exe: $(gendir)/iso2022.gendef-table.o $(objdir)/enc.utf8.o
+gen/iso2022.gendef-table.exe: $(objdir)/gen/iso2022.gendef-table.o $(objdir)/enc.utf8.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
-all: iso2022-dump.exe
-iso2022-dump.exe: $(objdir)/iso2022-dump.o $(objdir)/enc.utf8.o $(objdir)/enc.c2w.o $(objdir)/iso2022.o
+all: gen/iso2022-dump.exe
+gen/iso2022-dump.exe: $(objdir)/gen/iso2022-dump.o $(objdir)/enc.utf8.o $(objdir)/enc.c2w.o $(objdir)/iso2022.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 all: out/iso2022.html
-out/iso2022.html: iso2022-dump.exe res/iso2022.def res/iso2022-jis.def | out
-	./iso2022-dump.exe
+out/iso2022.html: gen/iso2022-dump.exe res/iso2022.def res/iso2022-jis.def | out
+	gen/iso2022-dump.exe
 
 $(gendir)/iso2022.jisx0212-plane.def: gen/iso2022.create-table.sh | $(gendir)
 	cd gen && bash iso2022.create-table.sh
-res/iso2022.jisx-1.bin: iso2022-dump.exe gen/iso2022.generate-bin.def $(gendir)/iso2022.jisx0212-plane.def
-	./iso2022-dump.exe gen/iso2022.generate-bin.def
+res/iso2022.jisx-1.bin: gen/iso2022-dump.exe gen/iso2022.generate-bin.def $(gendir)/iso2022.jisx0212-plane.def
+	gen/iso2022-dump.exe gen/iso2022.generate-bin.def
 
 #------------------------------------------------------------------------------
 # ttty
