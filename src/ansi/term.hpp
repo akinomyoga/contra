@@ -140,8 +140,8 @@ namespace ansi {
     board_t(curpos_t width, curpos_t height) {
       m_width = limit::term_col.clamp(width);
       m_height = limit::term_row.clamp(height);
-      this->m_lines.resize(m_height);
       this->cur.set(0, 0);
+      this->m_lines.resize(m_height);
       for (line_t& line : m_lines)
         line.set_id(m_line_count++);
     }
@@ -154,7 +154,11 @@ namespace ansi {
       if (width == this->m_width && height == this->m_height) return;
       if (this->cur.x() >= width) cur.set_x(width - 1);
       if (this->cur.y() >= height) cur.set_y(height - 1);
+
       m_lines.resize(height);
+      for (curpos_t y = this->m_height; y < height; y++)
+        m_lines[y].set_id(m_line_count++);
+
       if (this->m_width > width) {
         for (auto& line : m_lines)
           line.truncate(width, false, true);
@@ -890,9 +894,10 @@ namespace ansi {
 
   public:
     line_t const& lline(curpos_t y) const {
-      if (y >= 0)
+      if (y >= 0) {
+        mwg_assert(y < (curpos_t) m_term->board().m_lines.size());
         return m_term->board().m_lines[y];
-      else {
+      } else {
         auto const& scroll_buffer = m_term->scroll_buffer();
         return scroll_buffer[scroll_buffer.size() + y];
       }

@@ -215,7 +215,7 @@ namespace ansi {
     mutable std::size_t m_prop_i;
     mutable curpos_t m_prop_x;
 
-    std::uint32_t m_id = 0;
+    std::uint32_t m_id = (std::uint32_t) -1;
     std::uint32_t m_version = 0;
 
     struct nested_string {

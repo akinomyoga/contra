@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstdlib>
+#include <csignal>
 #include <sys/ioctl.h>
 
 #include "dict.hpp"
@@ -8,9 +9,26 @@
 #include "ttty/buffer.hpp"
 #include "ttty/screen.hpp"
 #include "enc.c2w.hpp"
+#include "signal.hpp"
 
 namespace contra::ttty {
+  static contra::ttty::ttty_screen* g_screen = nullptr;
+  static void trap_sigwinch(int) {
+    if (!g_screen) return;
+    struct winsize ws;
+    ::ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &ws);
+    g_screen->manager().reset_size(ws.ws_col, ws.ws_row, ws.ws_xpixel, ws.ws_ypixel);
+  }
+  static void initialize() {
+    static bool initialized = false;
+    if (initialized) return;
+    initialized = true;
+    contra::add_sigwinch_handler(&trap_sigwinch);
+  }
+
   bool run(contra::app::context& actx) {
+    initialize();
+
     contra_unused(actx);
     contra::ttty::ttty_screen screen(STDIN_FILENO, STDOUT_FILENO);
     contra::term::terminal_session_parameters params;
@@ -37,7 +55,9 @@ namespace contra::ttty {
     // app.state().m_default_bg_space = contra::ansi::attribute_t::color_space_indexed;
     // app.state().m_default_bg_color = 255;
 
+    g_screen = &screen;
     screen.do_loop();
+    g_screen = nullptr;
     screen.finalize();
     return true;
   }

@@ -4,6 +4,7 @@
 #include "pty.hpp"
 #include "ttty/buffer.hpp"
 #include "ttty/screen.hpp"
+#include "signal.hpp"
 
 namespace contra::tx11 {
   bool run(contra::app::context& actx);
@@ -16,6 +17,8 @@ namespace contra::ttty {
 }
 
 int main(int argc, char** argv) {
+  contra::setup_signal();
+
   contra::app::context actx;
   std::string config_dir = contra::term::get_config_directory();
   actx.load((config_dir + "/contra/contra.conf").c_str());
@@ -23,13 +26,13 @@ int main(int argc, char** argv) {
   if (argc < 2) {
 #ifdef use_twin
     if (!contra::twin::run(actx)) return 1;
-#elif
+#else
     if (!contra::tx11::run(actx)) return 1;
 #endif
   } else if (std::strcmp(argv[1], "win") == 0) {
 #ifdef use_twin
     if (!contra::twin::run(actx)) return 1;
-#elif
+#else
     std::fprintf(stderr, "contra: twin not supported\n");
     return 1;
 #endif

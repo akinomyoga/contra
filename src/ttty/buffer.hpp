@@ -107,11 +107,24 @@ namespace ttty {
         for (curpos_t k = j; k < height; k++) {
           if (view->line(k).id() == screen_buffer[i].id) {
             screen_buffer[i].delta = k - i;
-            j = k;
+            j = k + 1;
             break;
           }
         }
       }
+
+#ifndef NDEBUG
+      for (curpos_t i = 0; i < height; i++) {
+        if (screen_buffer[i].id != (std::uint32_t) -1) {
+          for (curpos_t k = i + 1; k < height; k++) {
+            if (screen_buffer[i].id == screen_buffer[k].id) {
+              std::fprintf(f, "ERROR DUPID: screen_buffer[%d] and screen_buffer[%d] has same id %d\n", i, k, screen_buffer[i].id);
+              break;
+            }
+          }
+        }
+      }
+#endif
 
       // DL による行削除
 #ifndef NDEBUG
@@ -332,7 +345,7 @@ namespace ttty {
       }
 
       curpos_t const height = view->height();
-      screen_buffer.resize(height);
+      screen_buffer.resize(height, line_buffer_t());
       if (is_terminal_fullwidth)
         trace_line_scroll();
       move_to(0, 0);

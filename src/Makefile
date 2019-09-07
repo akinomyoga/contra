@@ -55,6 +55,7 @@ impl2_objs = \
   $(objdir)/enc.c2w.o \
   $(objdir)/enc.utf8.o \
   $(objdir)/iso2022.o \
+  $(objdir)/signal.o \
   $(objdir)/contradef.o
 impl2: $(impl2_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
@@ -82,19 +83,6 @@ res/iso2022.jisx-1.bin: gen/iso2022-dump.exe gen/iso2022.generate-bin.def $(gend
 	gen/iso2022-dump.exe gen/iso2022.generate-bin.def
 
 #------------------------------------------------------------------------------
-# twin
-
-ifeq ($(ostype),cygwin)
-
-all: twin/test-win1.exe
-twin/test-win1.exe: $(objdir)/twin/test-win1.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(twin_LIBS)
-all: twin/test-fontfamily.exe
-twin/test-fontfamily.exe: $(objdir)/twin/test-fontfamily.o $(objdir)/enc.utf8.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(twin_LIBS)
-endif
-
-#------------------------------------------------------------------------------
 # contra
 
 all: contra.exe
@@ -112,6 +100,7 @@ contra_objs := \
   $(objdir)/enc.utf8.o \
   $(objdir)/enc.c2w.o \
   $(objdir)/iso2022.o \
+  $(objdir)/signal.o \
   $(objdir)/contradef.o
 
 ifeq ($(ostype),cygwin)
@@ -133,6 +122,20 @@ endif
 
 contra.exe: $(contra_objs)
 	$(CXX) $(CXXFLAGS) $(contra_LDFLAGS) -o $@ $^ $(contra_LIBS)
+
+#------------------------------------------------------------------------------
+# twin
+
+ifeq ($(ostype),cygwin)
+twin_LIBS := -lgdi32 -limm32 $(LIBS)
+
+all: twin/test-win1.exe
+twin/test-win1.exe: $(objdir)/twin/test-win1.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(twin_LIBS)
+all: twin/test-fontfamily.exe
+twin/test-fontfamily.exe: $(objdir)/twin/test-fontfamily.o $(objdir)/enc.utf8.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(twin_LIBS)
+endif
 
 #------------------------------------------------------------------------------
 # samples
