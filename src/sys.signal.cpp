@@ -1,9 +1,9 @@
 #include <csignal>
 #include <vector>
 #include <mwg/except.h>
-#include "signal.hpp"
+#include "sys.signal.hpp"
 
-namespace contra {
+namespace contra::sys {
 
   static void process_default_handler(int sig, signal_handler_t handler) {
     if (handler == SIG_DFL) {

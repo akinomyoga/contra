@@ -9,6 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include "enc.utf8.hpp"
+#include "sys.path.hpp"
 
 using namespace contra;
 
@@ -916,7 +917,8 @@ iso2022_charset_registry& iso2022_charset_registry::instance() {
   static iso2022_charset_registry instance;
   if (!initialized) {
     initialized = true;
-    instance.load_definition("res/iso2022.def");
+    std::string def = contra::sys::get_data_directory() + "/iso2022.def";
+    instance.load_definition(def.c_str());
   }
   return instance;
 }

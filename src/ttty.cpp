@@ -9,7 +9,7 @@
 #include "ttty/buffer.hpp"
 #include "ttty/screen.hpp"
 #include "enc.c2w.hpp"
-#include "signal.hpp"
+#include "sys.signal.hpp"
 
 namespace contra::ttty {
   static contra::ttty::ttty_screen* g_screen = nullptr;
@@ -23,7 +23,7 @@ namespace contra::ttty {
     static bool initialized = false;
     if (initialized) return;
     initialized = true;
-    contra::add_sigwinch_handler(&trap_sigwinch);
+    contra::sys::add_sigwinch_handler(&trap_sigwinch);
   }
 
   bool run(contra::app::context& actx) {

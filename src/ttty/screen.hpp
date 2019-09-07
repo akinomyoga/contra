@@ -14,7 +14,7 @@
 #include "../manager.hpp"
 #include "../dict.hpp"
 #include "../sequence.hpp"
-#include "../signal.hpp"
+#include "../sys.signal.hpp"
 #include "buffer.hpp"
 
 namespace contra {
@@ -128,7 +128,7 @@ namespace ttty {
         if (m_manager.m_dirty && render_to_stdout)
           renderer->update();
 
-        contra::process_signals();
+        contra::sys::process_signals();
 
         // ToDo: 本来はここはキー入力に変換してから m_manager に渡すべき。
         //if (contra::term::read_from_fd(fd_in, &m_manager.app().term().input_device(), buff, sizeof(buff))) continue;

@@ -1,8 +1,8 @@
 // -*- mode: c++; indent-tabs-mode: nil -*-
-#ifndef contra_signal_hpp
-#define contra_signal_hpp
+#ifndef contra_sys_signal_hpp
+#define contra_sys_signal_hpp
 
-namespace contra {
+namespace contra::sys {
   typedef void (*signal_handler_t)(int);
   void setup_signal();
   void process_signals();

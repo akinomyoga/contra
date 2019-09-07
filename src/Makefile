@@ -41,6 +41,7 @@ impl1_objs = \
   $(objdir)/enc.c2w.o \
   $(objdir)/enc.utf8.o \
   $(objdir)/iso2022.o \
+  $(objdir)/sys.path.o \
   $(objdir)/contradef.o
 impl1: $(impl1_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^
@@ -55,7 +56,8 @@ impl2_objs = \
   $(objdir)/enc.c2w.o \
   $(objdir)/enc.utf8.o \
   $(objdir)/iso2022.o \
-  $(objdir)/signal.o \
+  $(objdir)/sys.signal.o \
+  $(objdir)/sys.path.o \
   $(objdir)/contradef.o
 impl2: $(impl2_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
@@ -71,7 +73,7 @@ all: gen/iso2022.gendef-table.exe
 gen/iso2022.gendef-table.exe: $(objdir)/gen/iso2022.gendef-table.o $(objdir)/enc.utf8.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 all: gen/iso2022-dump.exe
-gen/iso2022-dump.exe: $(objdir)/gen/iso2022-dump.o $(objdir)/enc.utf8.o $(objdir)/enc.c2w.o $(objdir)/iso2022.o
+gen/iso2022-dump.exe: $(objdir)/gen/iso2022-dump.o $(objdir)/enc.utf8.o $(objdir)/enc.c2w.o $(objdir)/iso2022.o $(objdir)/sys.path.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 all: out/iso2022.html
 out/iso2022.html: gen/iso2022-dump.exe res/iso2022.def res/iso2022-jis.def | out
@@ -100,7 +102,8 @@ contra_objs := \
   $(objdir)/enc.utf8.o \
   $(objdir)/enc.c2w.o \
   $(objdir)/iso2022.o \
-  $(objdir)/signal.o \
+  $(objdir)/sys.signal.o \
+  $(objdir)/sys.path.o \
   $(objdir)/contradef.o
 
 ifeq ($(ostype),cygwin)

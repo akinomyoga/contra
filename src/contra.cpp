@@ -4,7 +4,8 @@
 #include "pty.hpp"
 #include "ttty/buffer.hpp"
 #include "ttty/screen.hpp"
-#include "signal.hpp"
+#include "sys.signal.hpp"
+#include "sys.path.hpp"
 
 namespace contra::tx11 {
   bool run(contra::app::context& actx);
@@ -17,11 +18,12 @@ namespace contra::ttty {
 }
 
 int main(int argc, char** argv) {
-  contra::setup_signal();
+  contra::sys::initialize_path(argc, const_cast<const char**>(argv));
+  contra::sys::setup_signal();
 
   contra::app::context actx;
-  std::string config_dir = contra::term::get_config_directory();
-  actx.load((config_dir + "/contra/contra.conf").c_str());
+  std::string config_dir = contra::sys::get_config_directory();
+  actx.load((config_dir + "/contra.conf").c_str());
 
   if (argc < 2) {
 #ifdef use_twin

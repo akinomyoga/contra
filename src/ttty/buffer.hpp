@@ -114,16 +114,16 @@ namespace ttty {
       }
 
 #ifndef NDEBUG
-      for (curpos_t i = 0; i < height; i++) {
-        if (screen_buffer[i].id != (std::uint32_t) -1) {
-          for (curpos_t k = i + 1; k < height; k++) {
-            if (screen_buffer[i].id == screen_buffer[k].id) {
-              std::fprintf(f, "ERROR DUPID: screen_buffer[%d] and screen_buffer[%d] has same id %d\n", i, k, screen_buffer[i].id);
-              break;
-            }
-          }
-        }
-      }
+      // for (curpos_t i = 0; i < height; i++) {
+      //   if (screen_buffer[i].id != (std::uint32_t) -1) {
+      //     for (curpos_t k = i + 1; k < height; k++) {
+      //       if (screen_buffer[i].id == screen_buffer[k].id) {
+      //         std::fprintf(file, "ERROR DUPID: screen_buffer[%d] and screen_buffer[%d] has same id %d\n", i, k, screen_buffer[i].id);
+      //         break;
+      //       }
+      //     }
+      //   }
+      // }
 #endif
 
       // DL による行削除
