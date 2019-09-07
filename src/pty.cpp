@@ -245,8 +245,7 @@ namespace term {
     bool initialize(terminal_session_parameters const& params) {
       if (m_pty.is_active()) return true;
 
-      if (!base::initialize()) return false;
-      base::reset_size(params.col, params.row, params.xpixel, params.ypixel);
+      if (!base::initialize(params.col, params.row, params.xpixel, params.ypixel)) return false;
 
       if (!m_pty.start(params)) return false;
 

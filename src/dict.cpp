@@ -259,7 +259,7 @@ void tty_writer::apply_attr(attribute_t new_attr) {
 using namespace ::contra::ansi;
 
 void tty_writer::print_screen(board_t const& b) {
-  for (curpos_t y = 0; y < b.m_height; y++) {
+  for (curpos_t y = 0; y < b.height(); y++) {
     line_t const& line = b.m_lines[y];
     curpos_t wskip = 0;
     curpos_t const ncell = (curpos_t) line.cells().size();

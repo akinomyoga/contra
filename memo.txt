@@ -292,32 +292,6 @@
 
 * ttty: 座標計算が xenl ではない端末に対応するという事
 
-* manager: width/height整理
-
-  何れにしても作りながら仕様をあっちこっち変えたりして作って来たのでバグが沢山ある。
-  改めて再実装するなり何なりしてバグを解消する様にする必要があるのではないか。
-  term.cpp 関連に関しては一回再実装した。大体の構造的なバグはそれで一掃された気がする。
-  今バグが沢山発生しているのは
-    terminal - manager - app - view - term - board
-  の間の情報の同期である。何故この様に複雑な事になっているのか。。
-
-  * terminal - manager については 1 対 1 に対応しているので、
-    manager の側で width/height を保持するのは理に適っている。
-
-  * app - view - term - board に関してはどうだろうか。
-    app が width/height を保持していて、
-    view が width/height を保持していて、
-    board が width/height を保持している。
-    app が width/height を保持する理由はあるだろうか。
-    うーん。app では xpixel, ypixel の情報を保持している。
-    一方で board は xpixel/ypixel の情報を保持していない。
-
-    app が xpixel/ypixel を保持しているのは、
-    terminal_session_application の場合には
-    winsize で xpixel, ypixel も設定できる様にしなければならないから。
-    その様に考えて行くと実は board の側に xpixel, ypixel を記録した方が良いのでは。
-
-
 2019-09-05
 
 * render: 部分転送?
@@ -2292,6 +2266,38 @@
 ------------------------------------------------------------------------------
 
 2019-09-07
+
+* manager: width/height整理 [#D0220]
+
+  何れにしても作りながら仕様をあっちこっち変えたりして作って来たのでバグが沢山ある。
+  改めて再実装するなり何なりしてバグを解消する様にする必要があるのではないか。
+  term.cpp 関連に関しては一回再実装した。大体の構造的なバグはそれで一掃された気がする。
+  今バグが沢山発生しているのは
+    terminal - manager - app - view - term - board
+  の間の情報の同期である。何故この様に複雑な事になっているのか。。
+
+  * terminal - manager については 1 対 1 に対応しているので、
+    manager の側で width/height を保持するのは理に適っている。
+
+  * app - view - term - board に関してはどうだろうか。
+    app が width/height を保持していて、
+    view が width/height を保持していて、
+    board が width/height を保持している。
+    app が width/height を保持する理由はあるだろうか。
+    うーん。app では xpixel, ypixel の情報を保持している。
+    一方で board は xpixel/ypixel の情報を保持していない。
+
+    app が xpixel/ypixel を保持しているのは、
+    terminal_session_application の場合には
+    winsize で xpixel, ypixel も設定できる様にしなければならないから。
+    その様に考えて行くと実は board の側に xpixel, ypixel を記録した方が良いのでは。
+
+    →分かった。app が width/height を保持しているのは、
+      app の基底クラスの初期化の段階では term を初期化したくないからである。
+      初期化を実行する時点で漸く width/height を割り当てたいという事なのである。
+
+    さて、実は何と app の width/height/xpixel/ypixel は初期化に使っていただけで
+    他からは全然使われていなかった。という訳でインターフェイスも残さずに消す事にした。
 
 * ttty: 描画がおかしい。消滅する行が色々ある [#D0219]
 

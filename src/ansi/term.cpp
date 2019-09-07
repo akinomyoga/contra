@@ -150,7 +150,7 @@ namespace ansi {
     board_t& b = term.board();
     if (value != s.get_mode(mode_altscr)) {
       s.set_mode(mode_altscr, value);
-      s.altscreen.reset_size(b.m_width, b.m_height);
+      s.altscreen.reset_size(b.width(), b.height());
       s.altscreen.cur = b.cur;
       s.altscreen.m_line_count = b.m_line_count;
       std::swap(s.altscreen, b);
@@ -181,7 +181,7 @@ namespace ansi {
     tstate_t& s = term.state();
     if (s.get_mode(mode_xtEnableColm)) {
       board_t& b = term.board();
-      b.reset_size(value ? 132 : 80, b.m_height);
+      b.reset_size(value ? 132 : 80, b.height());
       if (!s.get_mode(mode_decncsm)) b.clear_screen();
       s.clear_margin();
       s.set_mode(mode_declrmm, false);
@@ -189,7 +189,7 @@ namespace ansi {
     }
   }
   int do_rqm_deccolm(term_t& term) {
-    return term.board().m_width == 132 ? 1 : 2;
+    return term.board().width() == 132 ? 1 : 2;
   }
   bool do_decscpp(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
@@ -201,7 +201,7 @@ namespace ansi {
     curpos_t cols = contra::clamp<curpos_t>(param, s.cfg_decscpp_min, s.cfg_decscpp_max);
 
     board_t& b = term.board();
-    b.reset_size(cols, b.m_height);
+    b.reset_size(cols, b.height());
 
     return true;
   }
@@ -334,7 +334,7 @@ namespace ansi {
       curpos_t sll = term.implicit_sll(line);
       curpos_t x = b.cur.x(), y = b.cur.y();
       bool xenl = false;
-      if (b.cur.xenl() || (!cap_xenl && (x == sll || x == b.m_width - 1))) {
+      if (b.cur.xenl() || (!cap_xenl && (x == sll || x == b.width() - 1))) {
         if (s.get_mode(mode_decawm) && s.get_mode(mode_xtBSBackLine) && y > 0) {
           y--;
           x = term.implicit_slh(b.line(y));
@@ -350,8 +350,8 @@ namespace ansi {
         }
       }
 
-      mwg_assert(x < b.m_width);
-      if (x != sll && x != b.m_width - 1) {
+      mwg_assert(x < b.width());
+      if (x != sll && x != b.width() - 1) {
         x++;
       } else if (cap_xenl) {
         xenl = true;
@@ -411,7 +411,7 @@ namespace ansi {
     if (b.cur.x() < slh)
       slh = 0;
     else if (b.cur.x() > (b.cur.xenl() ? sll + 1 : sll))
-      sll = b.m_width - 1;
+      sll = b.width() - 1;
     if (simd) std::swap(slh, sll);
 
     // (行頭より後でかつ) 行末に文字が入らない時は折り返し
@@ -476,7 +476,7 @@ namespace ansi {
     if (x < slh)
       slh = 0;
     else if (x > (b.cur.xenl() ? sll + 1 : sll))
-      sll = b.m_width - 1;
+      sll = b.width() - 1;
     if (simd) std::swap(slh, sll);
 
     auto _next_line = [&] () {
@@ -578,8 +578,9 @@ namespace ansi {
 
     board_t& b = term.board();
 
-    bool const oldRToL = is_charpath_rtol(b.m_presentation_direction);
-    bool const newRToL = is_charpath_rtol(b.m_presentation_direction = (presentation_direction_t) direction);
+    bool const oldRToL = is_charpath_rtol(b.presentation_direction());
+    b.set_presentation_direction((presentation_direction_t) direction);
+    bool const newRToL = is_charpath_rtol(b.presentation_direction());
 
     /* update content
      *
@@ -592,10 +593,10 @@ namespace ansi {
      *
      */
     if (oldRToL != newRToL && update == 2) {
-      for (curpos_t y = 0, yN = b.m_height; y < yN; y++) {
+      for (curpos_t y = 0, yN = b.height(); y < yN; y++) {
         line_t& line = b.m_lines[y];
         if (!(line.lflags() & line_attr_t::character_path_mask))
-          line.reverse(b.m_width);
+          line.reverse(b.width());
       }
     }
 
@@ -615,7 +616,7 @@ namespace ansi {
     board_t& b = term.board();
     line_t& line = b.line();
 
-    bool const oldRToL = line.is_r2l(b.m_presentation_direction);
+    bool const oldRToL = line.is_r2l(b.presentation_direction());
 
     // update line attributes
     term.initialize_line(line);
@@ -632,11 +633,11 @@ namespace ansi {
       break;
     }
 
-    bool const newRToL = line.is_r2l(b.m_presentation_direction);
+    bool const newRToL = line.is_r2l(b.presentation_direction());
 
     // update line content
     if (oldRToL != newRToL && update == 2)
-      b.line().reverse(b.m_width);
+      b.line().reverse(b.width());
 
     b.cur.set_x(update == 2 ? b.to_data_position(b.cur.y(), 0) : 0);
     return true;
@@ -734,11 +735,11 @@ namespace ansi {
     params.read_param(param1, 0);
     params.read_param(param2, 0);
 
-    curpos_t const home = param1 == 0 ? 0 : std::min((curpos_t) param1 - 1, b.m_height);
-    curpos_t const limit = param2 == 0 ? b.m_height : std::min((curpos_t) param2, b.m_height);
+    curpos_t const home = param1 == 0 ? 0 : std::min((curpos_t) param1 - 1, b.height());
+    curpos_t const limit = param2 == 0 ? b.height() : std::min((curpos_t) param2, b.height());
     if (home + 2 <= limit) {
       s.dec_tmargin = home == 0 ? -1 : home;
-      s.dec_bmargin = limit == b.m_height ? -1 : limit;
+      s.dec_bmargin = limit == b.height() ? -1 : limit;
       do_hvp_impl(term, 0, 0);
     }
     return true;
@@ -753,11 +754,11 @@ namespace ansi {
     params.read_param(param1, 0);
     params.read_param(param2, 0);
 
-    curpos_t const _min = param1 == 0 ? 0 : std::min((curpos_t) param1 - 1, b.m_width);
-    curpos_t const _max = param2 == 0 ? b.m_width : std::min((curpos_t) param2, b.m_width);
+    curpos_t const _min = param1 == 0 ? 0 : std::min((curpos_t) param1 - 1, b.width());
+    curpos_t const _max = param2 == 0 ? b.width() : std::min((curpos_t) param2, b.width());
     if (_min + 2 <= _max) {
       s.dec_lmargin = _min == 0 ? -1 : _min;
-      s.dec_rmargin = _max == b.m_width ? -1 : _max;
+      s.dec_rmargin = _max == b.width() ? -1 : _max;
       do_hvp_impl(term, 0, 0);
     }
     return true;
@@ -815,8 +816,8 @@ namespace ansi {
       {
         curpos_t lmargin = 0;
         if (check_stbm) {
-          if (is_charpath_rtol(b.m_presentation_direction))
-            lmargin = std::max((curpos_t) 0, b.m_width - term.rmargin());
+          if (is_charpath_rtol(b.presentation_direction()))
+            lmargin = std::max((curpos_t) 0, b.width() - term.rmargin());
           else
             lmargin = term.lmargin();
         }
@@ -832,10 +833,10 @@ namespace ansi {
       break;
     case do_cux_succ_char:
       {
-        curpos_t rmargin = term.board().m_width;
+        curpos_t rmargin = term.board().width();
         if (check_stbm) {
-          if (is_charpath_rtol(b.m_presentation_direction))
-            rmargin = std::max((curpos_t) 0, b.m_width - term.lmargin());
+          if (is_charpath_rtol(b.presentation_direction()))
+            rmargin = std::max((curpos_t) 0, b.width() - term.lmargin());
           else
             rmargin = term.rmargin();
         }
@@ -855,7 +856,7 @@ namespace ansi {
       break;
     case do_cux_succ_line:
       b.cur.adjust_xenl();
-      b.cur.set_y(std::min(y + (curpos_t) param, (check_stbm ? term.bmargin() : term.board().m_height) - 1));
+      b.cur.set_y(std::min(y + (curpos_t) param, (check_stbm ? term.bmargin() : term.board().height()) - 1));
       break;
     }
   }
@@ -911,19 +912,19 @@ namespace ansi {
     | do_cux_vec_construct(presentation_direction_btrl, do_cux_succ_line);
 
   bool do_cuu(term_t& term, csi_parameters& params) {
-    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_u, term.board().m_presentation_direction);
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_u, term.board().presentation_direction());
     return do_cux(term, params, dir, !term.state().get_mode(mode_bdsm), true);
   }
   bool do_cud(term_t& term, csi_parameters& params) {
-    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_d, term.board().m_presentation_direction);
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_d, term.board().presentation_direction());
     return do_cux(term, params, dir, !term.state().get_mode(mode_bdsm), true);
   }
   bool do_cuf(term_t& term, csi_parameters& params) {
-    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_r, term.board().m_presentation_direction);
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_r, term.board().presentation_direction());
     return do_cux(term, params, dir, !term.state().get_mode(mode_bdsm), true);
   }
   bool do_cub(term_t& term, csi_parameters& params) {
-    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_l, term.board().m_presentation_direction);
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_l, term.board().presentation_direction());
     return do_cux(term, params, dir, !term.state().get_mode(mode_bdsm), true);
   }
 
@@ -994,8 +995,8 @@ namespace ansi {
       param2 = std::min<csi_single_param_t>(param2 + term.lmargin(), term.rmargin());
     } else {
       board_t& b = term.board();
-      param1 = std::min<csi_single_param_t>(param1, b.m_height);
-      param2 = std::min<csi_single_param_t>(param2, b.m_width);
+      param1 = std::min<csi_single_param_t>(param1, b.height());
+      param2 = std::min<csi_single_param_t>(param2, b.width());
     }
 
     return do_cup(term, (curpos_t) param2 - 1, (curpos_t) param1 - 1);
@@ -1008,8 +1009,8 @@ namespace ansi {
       x = std::min(x + term.lmargin(), term.rmargin() - 1);
       y = std::min(y + term.tmargin(), term.bmargin() - 1);
     } else {
-      if (x >= b.m_width) x = b.m_width - 1;
-      if (y >= b.m_height) y = b.m_height - 1;
+      if (x >= b.width()) x = b.width() - 1;
+      if (y >= b.height()) y = b.height() - 1;
     }
     b.cur.set(x, y);
   }
@@ -1044,7 +1045,7 @@ namespace ansi {
     if (s.get_mode(mode_decom))
       param = std::min<csi_single_param_t>(param + term.lmargin(), term.rmargin());
     else
-      param = std::min<csi_single_param_t>(param, b.m_width);
+      param = std::min<csi_single_param_t>(param, b.width());
     return do_cup(term, param - 1, b.cur.y());
   }
 
@@ -1063,7 +1064,7 @@ namespace ansi {
     if (s.get_mode(mode_decom))
       param = std::min<csi_single_param_t>(param + term.lmargin(), term.rmargin());
     else
-      param = std::min<csi_single_param_t>(param, b.m_width);
+      param = std::min<csi_single_param_t>(param, b.width());
     b.cur.set_x(param - 1);
     return true;
   }
@@ -1083,7 +1084,7 @@ namespace ansi {
     if (s.get_mode(mode_decom))
       param = std::min<csi_single_param_t>(param + term.tmargin(), term.bmargin());
     else
-      param = std::min<csi_single_param_t>(param, b.m_height);
+      param = std::min<csi_single_param_t>(param, b.height());
 
     b.cur.adjust_xenl();
     b.cur.set_y(param - 1);
@@ -1092,7 +1093,7 @@ namespace ansi {
 
   static void do_vertical_scroll(term_t& term, curpos_t shift, curpos_t tmargin, curpos_t bmargin, curpos_t lmargin, curpos_t rmargin, bool dcsm, bool transfer) {
     board_t& b = term.board();
-    if (lmargin == 0 && rmargin == b.m_width) {
+    if (lmargin == 0 && rmargin == b.width()) {
       b.shift_lines(tmargin, bmargin, shift, term.fill_attr(), transfer ? &term.m_scroll_buffer : nullptr);
     } else if (lmargin < rmargin) {
       // DECSLRM が設定されている時のスクロール。行内容を切り貼りする。
@@ -1101,8 +1102,8 @@ namespace ansi {
       if (0 < lmargin)
         segs[iseg++] = line_segment_t({0, lmargin, line_segment_slice});
       segs[iseg_transfer = iseg++] = line_segment_t({lmargin, rmargin, line_segment_transfer});
-      if (rmargin < b.m_width)
-        segs[iseg++] = line_segment_t({rmargin, b.m_width, line_segment_slice});
+      if (rmargin < b.width())
+        segs[iseg++] = line_segment_t({rmargin, b.width(), line_segment_slice});
 
       attribute_t const fill_attr = term.fill_attr();
       if (shift > 0) {
@@ -1111,11 +1112,11 @@ namespace ansi {
         for (; tmargin <= ysrc; ydst--, ysrc--) {
           segs[iseg_transfer].source = &b.line(ysrc);
           segs[iseg_transfer].source_r2l = b.line_r2l(ysrc);
-          b.line(ydst).compose_segments(segs, iseg, b.m_width, fill_attr, b.line_r2l(ydst), dcsm);
+          b.line(ydst).compose_segments(segs, iseg, b.width(), fill_attr, b.line_r2l(ydst), dcsm);
         }
         segs[iseg_transfer].type = line_segment_erase;
         for (; tmargin <= ydst; ydst--)
-          b.line(ydst).compose_segments(segs, iseg, b.m_width, fill_attr, b.line_r2l(ydst), dcsm);
+          b.line(ydst).compose_segments(segs, iseg, b.width(), fill_attr, b.line_r2l(ydst), dcsm);
       } else if (shift < 0) {
         shift = -shift;
         curpos_t ydst = tmargin;
@@ -1123,11 +1124,11 @@ namespace ansi {
         for (; ysrc < bmargin; ydst++, ysrc++) {
           segs[iseg_transfer].source = &b.line(ysrc);
           segs[iseg_transfer].source_r2l = b.line_r2l(ysrc);
-          b.line(ydst).compose_segments(segs, iseg, b.m_width, fill_attr, b.line_r2l(ydst), dcsm);
+          b.line(ydst).compose_segments(segs, iseg, b.width(), fill_attr, b.line_r2l(ydst), dcsm);
         }
         segs[iseg_transfer].type = line_segment_erase;
         for (; ydst < bmargin; ydst++)
-          b.line(ydst).compose_segments(segs, iseg, b.m_width, fill_attr, b.line_r2l(ydst), dcsm);
+          b.line(ydst).compose_segments(segs, iseg, b.width(), fill_attr, b.line_r2l(ydst), dcsm);
       }
     }
   }
@@ -1173,7 +1174,7 @@ namespace ansi {
         curpos_t const rmargin = term.rmargin();
         attribute_t const fill_attr = term.fill_attr();
         for (curpos_t y = tmargin; y < bmargin; y++)
-          b.line(y).shift_cells(lmargin, rmargin, shift, flags, b.m_width, fill_attr);
+          b.line(y).shift_cells(lmargin, rmargin, shift, flags, b.width(), fill_attr);
         if (isPresentation)
           b.cur.update_x(b.to_data_position(y, p));
       }
@@ -1199,19 +1200,19 @@ namespace ansi {
   }
 
   bool do_su(term_t& term, csi_parameters& params) {
-    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_u, term.board().m_presentation_direction);
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_u, term.board().presentation_direction());
     return do_scroll(term, params, dir);
   }
   bool do_sd(term_t& term, csi_parameters& params) {
-    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_d, term.board().m_presentation_direction);
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_d, term.board().presentation_direction());
     return do_scroll(term, params, dir);
   }
   bool do_sr(term_t& term, csi_parameters& params) {
-    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_r, term.board().m_presentation_direction);
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_r, term.board().presentation_direction());
     return do_scroll(term, params, dir);
   }
   bool do_sl(term_t& term, csi_parameters& params) {
-    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_l, term.board().m_presentation_direction);
+    do_cux_direction const dir = do_cux_vec_select(do_cux_vec_l, term.board().presentation_direction());
     return do_scroll(term, params, dir);
   }
 
@@ -1230,16 +1231,16 @@ namespace ansi {
 
   static void do_restore_cursor(term_t& term, curpos_t x, curpos_t y, bool xenl) {
     board_t& b = term.board();
-    if (y >= b.m_height) y =  b.m_height - 1;
+    if (y >= b.height()) y =  b.height() - 1;
     if (xenl) {
-      if (x >= b.m_width) {
-        x = b.m_width;
+      if (x >= b.width()) {
+        x = b.width();
       } else if (x != term.implicit_sll(b.line(y)) + 1) {
         x++;
         xenl = false;
       }
     } else {
-      if (x >= b.m_width) x = b.m_width - 1;
+      if (x >= b.width()) x = b.width() - 1;
     }
     b.cur.set(x, y, xenl);
   }
@@ -1560,10 +1561,10 @@ namespace ansi {
       // DCSM(PRESENTATION)
       x1 = b.to_presentation_position(b.cur.y(), b.cur.x());
     }
-    mwg_assert(x1 <= b.m_width);
+    mwg_assert(x1 <= b.width());
 
-    curpos_t const x2 = std::min(x1 + (curpos_t) param, b.m_width);
-    b.line().shift_cells(x1, x2, x2 - x1, flags, b.m_width, term.fill_attr());
+    curpos_t const x2 = std::min(x1 + (curpos_t) param, b.width());
+    b.line().shift_cells(x1, x2, x2 - x1, flags, b.width(), term.fill_attr());
 
     // カーソル位置
     if (!s.dcsm())
@@ -1588,16 +1589,16 @@ namespace ansi {
       // DCSM(PRESENTATION)
       x1 = b.to_presentation_position(b.cur.y(), b.cur.x());
     }
-    mwg_assert(x1 <= b.m_width);
+    mwg_assert(x1 <= b.width());
 
     line_t& line = b.line();
     curpos_t const slh = term.implicit_slh(line);
     curpos_t const sll = term.implicit_sll(line);
 
     if (!s.get_mode(mode_hem))
-      line.shift_cells(x1, sll + 1, shift, flags, b.m_width, term.fill_attr());
+      line.shift_cells(x1, sll + 1, shift, flags, b.width(), term.fill_attr());
     else
-      line.shift_cells(slh, x1 + 1, -shift, flags, b.m_width, term.fill_attr());
+      line.shift_cells(slh, x1 + 1, -shift, flags, b.width(), term.fill_attr());
 
     // カーソル位置
     if (s.dcsm()) {
@@ -1647,28 +1648,28 @@ namespace ansi {
     if (param != 0 && param != 1) {
       if (!s.get_mode(mode_erm) && line.has_protected_cells()) {
         line_shift_flags flags = line_shift_flags::erm_protect;
-        if (line.is_r2l(b.m_presentation_direction)) flags |= line_shift_flags::r2l;
+        if (line.is_r2l(b.presentation_direction())) flags |= line_shift_flags::r2l;
         if (s.dcsm()) flags |= line_shift_flags::dcsm;
-        line.shift_cells(0, b.m_width, b.m_width, flags, b.m_width, fill_attr);
+        line.shift_cells(0, b.width(), b.width(), flags, b.width(), fill_attr);
       } else
-        line.clear_content(b.m_width, fill_attr);
+        line.clear_content(b.width(), fill_attr);
       return;
     }
 
     line_shift_flags flags = 0;
     if (!s.get_mode(mode_erm)) flags |= line_shift_flags::erm_protect;
-    if (line.is_r2l(b.m_presentation_direction)) flags |= line_shift_flags::r2l;
+    if (line.is_r2l(b.presentation_direction())) flags |= line_shift_flags::r2l;
     if (s.dcsm()) flags |= line_shift_flags::dcsm;
 
     if (s.get_mode(mode_xenl_ech)) b.cur.adjust_xenl();
     curpos_t x1 = b.cur.x();
     if (!s.dcsm()) x1 = b.to_presentation_position(b.cur.y(), x1);
-    mwg_assert(x1 <= b.m_width);
+    mwg_assert(x1 <= b.width());
 
     if (param == 0)
-      line.shift_cells(x1, b.m_width, b.m_width - x1, flags, b.m_width, fill_attr);
+      line.shift_cells(x1, b.width(), b.width() - x1, flags, b.width(), fill_attr);
     else
-      line.shift_cells(0, x1 + 1, x1 + 1, flags, b.m_width, fill_attr);
+      line.shift_cells(0, x1 + 1, x1 + 1, flags, b.width(), fill_attr);
 
     if (!s.dcsm()) x1 = b.to_data_position(b.cur.y(), x1);
     b.cur.update_x(x1);
@@ -1688,12 +1689,12 @@ namespace ansi {
     curpos_t y1 = 0, y2 = 0;
     if (param != 0 && param != 1) {
       y1 = 0;
-      y2 = b.m_height;
+      y2 = b.height();
     } else {
       do_el(term, b.line(), param, fill_attr);
       if (param == 0) {
         y1 = b.cur.y() + 1;
-        y2 = b.m_height;
+        y2 = b.height();
       } else {
         y1 = 0;
         y2 = b.cur.y();
@@ -1705,7 +1706,7 @@ namespace ansi {
         do_el(term, b.m_lines[y], 2, fill_attr);
     } else {
       for (curpos_t y = y1; y < y2; y++)
-        b.m_lines[y].clear_content(b.m_width, fill_attr);
+        b.m_lines[y].clear_content(b.width(), fill_attr);
     }
   }
   bool do_ed(term_t& term, csi_parameters& params) {
@@ -1716,8 +1717,8 @@ namespace ansi {
   }
   void do_decaln(term_t& term) {
     board_t& b = term.board();
-    curpos_t const height = b.m_height;
-    curpos_t const width = b.m_width;
+    curpos_t const height = b.height();
+    curpos_t const width = b.width();
     cell_t fill = ascii_E;
     for (curpos_t y = 0; y < height; y++) {
       line_t& line = b.line(y);
@@ -2133,7 +2134,7 @@ namespace ansi {
     // check cursor state
 #ifndef NDEBUG
     board_t& b = this->board();
-    mwg_assert(b.cur.is_sane(b.m_width));
+    mwg_assert(b.cur.is_sane(b.width()));
 #endif
 
     if (seq.is_private_csi()) {
@@ -2141,9 +2142,9 @@ namespace ansi {
         print_unrecognized_sequence(seq);
 
 #ifndef NDEBUG
-      mwg_assert(b.cur.is_sane(b.m_width),
+      mwg_assert(b.cur.is_sane(b.width()),
         "cur: {x=%d, xenl=%d, width=%d} after CSI %c %c",
-        b.cur.x(), b.cur.xenl(), b.m_width, seq.parameter()[0], seq.final());
+        b.cur.x(), b.cur.xenl(), b.width(), seq.parameter()[0], seq.final());
 #endif
       return;
     }
@@ -2167,9 +2168,9 @@ namespace ansi {
       if (control_function_t* const f = cfunc_dict.get((byte) seq.intermediate()[0], seq.final()))
         result = f(*this, params);
     }
-    mwg_assert(b.cur.is_sane(b.m_width),
+    mwg_assert(b.cur.is_sane(b.width()),
       "cur: {x=%d, xenl=%d, width=%d} after CSI %c",
-      b.cur.x(), b.cur.xenl(), b.m_width, seq.final());
+      b.cur.x(), b.cur.xenl(), b.width(), seq.final());
 
     if (!result)
       print_unrecognized_sequence(seq);
@@ -2204,9 +2205,9 @@ namespace ansi {
 
 #ifndef NDEBUG
     board_t& b = board();
-    mwg_assert(b.cur.is_sane(b.m_width),
+    mwg_assert(b.cur.is_sane(b.width()),
       "cur: {x=%d, xenl=%d, width=%d} after C0/C1 %d",
-      b.cur.x(), b.cur.xenl(), b.m_width, uchar);
+      b.cur.x(), b.cur.xenl(), b.width(), uchar);
 #endif
   }
 

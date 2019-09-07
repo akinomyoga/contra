@@ -20,7 +20,7 @@ using namespace contra::ansi;
 
 std::u32string get_data_content(board_t& board) {
   std::vector<char32_t> buff;
-  for (curpos_t x = 0; x < board.m_width; x++) {
+  for (curpos_t x = 0; x < board.width(); x++) {
     //curpos_t const x = board.to_presentation_position(board.cur.y, p);
     char32_t c = board.line().char_at(x).value;
     if (!(c & contra::charflag_wide_extension))
@@ -30,7 +30,7 @@ std::u32string get_data_content(board_t& board) {
 }
 std::u32string get_presentation_content(board_t& board) {
   std::vector<char32_t> buff;
-  for (curpos_t p = 0; p < board.m_width; p++) {
+  for (curpos_t p = 0; p < board.width(); p++) {
     curpos_t const x = board.to_data_position(board.cur.y(), p);
     char32_t c = board.line().char_at(x).value;
     if (!(c & contra::charflag_wide_extension))
@@ -115,7 +115,7 @@ void test_strings() {
     }
 
     line_t::slice_ranges_t ranges2;
-    b.line().calculate_data_ranges_from_presentation_range(ranges2, x1,  x2, b.m_width, false);
+    b.line().calculate_data_ranges_from_presentation_range(ranges2, x1,  x2, b.width(), false);
 
     try {
       for (std::size_t i = 0, j = 0; i < ranges1.size() && j < ranges2.size(); i++, j++) {
@@ -143,10 +143,10 @@ void test_strings() {
   check_conversion(11, 11);
   check_conversion(13, 13);
   check_conversion(14, 14);
-  mwg_check(b.line().find_innermost_string(10, true , b.m_width, false) == 0);
-  mwg_check(b.line().find_innermost_string(10, false, b.m_width, false) == 1);
-  mwg_check(b.line().find_innermost_string(13, true,  b.m_width, false) == 1);
-  mwg_check(b.line().find_innermost_string(13, false, b.m_width, false) == 0);
+  mwg_check(b.line().find_innermost_string(10, true , b.width(), false) == 0);
+  mwg_check(b.line().find_innermost_string(10, false, b.width(), false) == 1);
+  mwg_check(b.line().find_innermost_string(13, true,  b.width(), false) == 1);
+  mwg_check(b.line().find_innermost_string(13, false, b.width(), false) == 0);
   term.printt("SDS(2)----\x1b[2]---\x1b[0]----\r");
   check_conversion(6 , 6 );
   check_conversion(7 , 7 );
@@ -170,12 +170,12 @@ void test_strings() {
   check_conversion(9, 9);
   check_conversion(10, 10);
   check_slice(0, 3);
-  mwg_check(b.line().find_innermost_string(2, true , b.m_width, false) == 0);
-  mwg_check(b.line().find_innermost_string(2, false, b.m_width, false) == 1);
-  mwg_check(b.line().find_innermost_string(5, true,  b.m_width, false) == 1);
-  mwg_check(b.line().find_innermost_string(5, false, b.m_width, false) == 2);
-  mwg_check(b.line().find_innermost_string(9, true,  b.m_width, false) == 2);
-  mwg_check(b.line().find_innermost_string(9, false, b.m_width, false) == 0);
+  mwg_check(b.line().find_innermost_string(2, true , b.width(), false) == 0);
+  mwg_check(b.line().find_innermost_string(2, false, b.width(), false) == 1);
+  mwg_check(b.line().find_innermost_string(5, true,  b.width(), false) == 1);
+  mwg_check(b.line().find_innermost_string(5, false, b.width(), false) == 2);
+  mwg_check(b.line().find_innermost_string(9, true,  b.width(), false) == 2);
+  mwg_check(b.line().find_innermost_string(9, false, b.width(), false) == 0);
 
   // DATA ab[cd[ef[gh]ij[kl]mn]op]qr
   //      ..[<<[..[<<]..[<<]..]<<]..
@@ -198,22 +198,22 @@ void test_strings() {
   check_slice(7, 7);
   check_slice(7, 9);
   check_slice(7, 11);
-  mwg_check(b.line().find_innermost_string( 2, true , b.m_width, false) == 0);
-  mwg_check(b.line().find_innermost_string( 2, false, b.m_width, false) == 1);
-  mwg_check(b.line().find_innermost_string( 4, true,  b.m_width, false) == 1);
-  mwg_check(b.line().find_innermost_string( 4, false, b.m_width, false) == 2);
-  mwg_check(b.line().find_innermost_string( 6, true,  b.m_width, false) == 2);
-  mwg_check(b.line().find_innermost_string( 6, false, b.m_width, false) == 3);
-  mwg_check(b.line().find_innermost_string( 8, true,  b.m_width, false) == 3);
-  mwg_check(b.line().find_innermost_string( 8, false, b.m_width, false) == 2);
-  mwg_check(b.line().find_innermost_string(10, true,  b.m_width, false) == 2);
-  mwg_check(b.line().find_innermost_string(10, false, b.m_width, false) == 4);
-  mwg_check(b.line().find_innermost_string(12, true , b.m_width, false) == 4);
-  mwg_check(b.line().find_innermost_string(12, false, b.m_width, false) == 2);
-  mwg_check(b.line().find_innermost_string(14, true , b.m_width, false) == 2);
-  mwg_check(b.line().find_innermost_string(14, false, b.m_width, false) == 1);
-  mwg_check(b.line().find_innermost_string(16, true , b.m_width, false) == 1);
-  mwg_check(b.line().find_innermost_string(16, false, b.m_width, false) == 0);
+  mwg_check(b.line().find_innermost_string( 2, true , b.width(), false) == 0);
+  mwg_check(b.line().find_innermost_string( 2, false, b.width(), false) == 1);
+  mwg_check(b.line().find_innermost_string( 4, true,  b.width(), false) == 1);
+  mwg_check(b.line().find_innermost_string( 4, false, b.width(), false) == 2);
+  mwg_check(b.line().find_innermost_string( 6, true,  b.width(), false) == 2);
+  mwg_check(b.line().find_innermost_string( 6, false, b.width(), false) == 3);
+  mwg_check(b.line().find_innermost_string( 8, true,  b.width(), false) == 3);
+  mwg_check(b.line().find_innermost_string( 8, false, b.width(), false) == 2);
+  mwg_check(b.line().find_innermost_string(10, true,  b.width(), false) == 2);
+  mwg_check(b.line().find_innermost_string(10, false, b.width(), false) == 4);
+  mwg_check(b.line().find_innermost_string(12, true , b.width(), false) == 4);
+  mwg_check(b.line().find_innermost_string(12, false, b.width(), false) == 2);
+  mwg_check(b.line().find_innermost_string(14, true , b.width(), false) == 2);
+  mwg_check(b.line().find_innermost_string(14, false, b.width(), false) == 1);
+  mwg_check(b.line().find_innermost_string(16, true , b.width(), false) == 1);
+  mwg_check(b.line().find_innermost_string(16, false, b.width(), false) == 0);
 
   // test cases from src/impl1.cpp
   // // abcd_[efgh]_ij
@@ -238,7 +238,7 @@ void test_presentation() {
   term.printt("\x1b[H");
   term.printt("ab\x1b[2]cd\x1b[1]ef\x1b[2]gh\x1b[0]ij\x1b[2]kl\x1b[0]mn\x1b[0]op\x1b[0]qr\r");
   std::vector<char32_t> buff;
-  for (curpos_t p = 0; p < b.m_width; p++) {
+  for (curpos_t p = 0; p < b.width(); p++) {
     curpos_t const x = b.to_data_position(0, p);
     curpos_t const p2 = b.to_presentation_position(0, x);
     char32_t c = b.line().char_at(x).value;
@@ -259,9 +259,9 @@ void test_presentation() {
     {12, 13}, {13, 14}, {4, 3}, {3, 2}, {16, 17}, {17,18},
   };
   for (std::size_t i = 0; i < std::size(data_positions); i++) {
-    auto const ledge  = b.line().convert_position(false, i    , -1, b.m_width, line_r2l);
-    auto const redge  = b.line().convert_position(false, i + 1, +1, b.m_width, line_r2l);
-    auto const center = b.line().convert_position(false, i    ,  0, b.m_width, line_r2l);
+    auto const ledge  = b.line().convert_position(false, i    , -1, b.width(), line_r2l);
+    auto const redge  = b.line().convert_position(false, i + 1, +1, b.width(), line_r2l);
+    auto const center = b.line().convert_position(false, i    ,  0, b.width(), line_r2l);
     mwg_check(ledge == data_positions[i][0], "to_data: i=%d result=%d expected=%d", i, ledge, data_positions[i][0]);
     mwg_check(redge == data_positions[i][1], "to_data: i=%d result=%d expected=%d", i, redge, data_positions[i][1]);
     mwg_check(center == std::min(data_positions[i][0], data_positions[i][1]),
@@ -269,8 +269,8 @@ void test_presentation() {
 
     curpos_t const p0 = data_positions[i][0];
     curpos_t const p1 = data_positions[i][1];
-    auto const pres_edge0 = b.line().convert_position(true, p0, p0 < p1 ? -1 : +1, b.m_width, line_r2l);
-    auto const pres_edge1 = b.line().convert_position(true, p1, p0 < p1 ? +1 : -1, b.m_width, line_r2l);
+    auto const pres_edge0 = b.line().convert_position(true, p0, p0 < p1 ? -1 : +1, b.width(), line_r2l);
+    auto const pres_edge1 = b.line().convert_position(true, p1, p0 < p1 ? +1 : -1, b.width(), line_r2l);
     mwg_check(pres_edge0 == (curpos_t) i    , "to_pres: in=%d out=%d expected=%d", p0, pres_edge0, i);
     mwg_check(pres_edge1 == (curpos_t) i + 1, "to_pres: in=%d out=%d expected=%d", p1, pres_edge1, i);
   }

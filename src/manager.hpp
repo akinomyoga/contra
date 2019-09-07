@@ -23,23 +23,14 @@ namespace term {
   using term_t = contra::ansi::term_t;
 
   class terminal_application {
-    curpos_t m_width = 80, m_height = 24;
-    coord_t m_xpixel = 7, m_ypixel = 13;
   public:
-    curpos_t width() const { return m_width; }
-    curpos_t height() const { return m_height; }
-    curpos_t xpixel() const { return m_xpixel; }
-    curpos_t ypixel() const { return m_ypixel; }
-
     virtual void reset_size(curpos_t width, curpos_t height) {
-      this->reset_size(width, height, m_xpixel, m_ypixel);
+      mwg_assert(!!m_term);
+      this->reset_size(width, height, board().xpixel(), board().ypixel());
     }
     virtual void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
-      m_width = limit::term_col.clamp(width);
-      m_height = limit::term_row.clamp(height);
-      m_xpixel = limit::term_xpixel.clamp(xpixel);
-      m_ypixel = limit::term_ypixel.clamp(ypixel);
-      if (m_term) m_term->reset_size(m_width, m_height);
+      mwg_assert(!!m_term);
+      m_term->reset_size(width, height, xpixel, ypixel);
     }
 
   private:
@@ -56,14 +47,12 @@ namespace term {
     contra::ansi::term_view_t const& view() const { return m_view; }
 
   public:
-    terminal_application() {
-      reset_size(80, 24, 13, 7);
-    }
+    terminal_application() {}
     virtual ~terminal_application() {}
 
-    bool initialize() {
+    bool initialize(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
       if (m_term) return true;
-      m_term = std::make_unique<contra::ansi::term_t>(m_width, m_height);
+      m_term = std::make_unique<contra::ansi::term_t>(width, height, xpixel, ypixel);
       m_view.set_term(m_term.get());
       return true;
     }

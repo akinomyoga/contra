@@ -132,20 +132,40 @@ namespace ansi {
   struct board_t {
     contra::util::ring_buffer<line_t> m_lines;
     cursor_t cur;
+
+  private:
     curpos_t m_width;
     curpos_t m_height;
+    coord_t m_xpixel;
+    coord_t m_ypixel;
+  public:
+    // ToDo: altscreen で直接弄っている。直接触らなくても良い様に設計を見直したい。
     std::uint32_t m_line_count = 0;
+  private:
     presentation_direction_t m_presentation_direction { presentation_direction_default };
 
-    board_t(curpos_t width, curpos_t height) {
+  public:
+    curpos_t width() const { return this->m_width; }
+    curpos_t height() const { return this->m_height; }
+    coord_t xpixel() const { return this->m_xpixel; }
+    coord_t ypixel() const { return this->m_ypixel; }
+    presentation_direction_t presentation_direction() const { return m_presentation_direction; }
+    void set_presentation_direction(presentation_direction_t value) {
+      m_presentation_direction = value;
+    }
+
+  public:
+    board_t(curpos_t width, curpos_t height, curpos_t xpixel = 7, curpos_t ypixel = 14) {
       m_width = limit::term_col.clamp(width);
       m_height = limit::term_row.clamp(height);
+      m_xpixel = limit::term_xpixel.clamp(xpixel);
+      m_ypixel = limit::term_ypixel.clamp(ypixel);
       this->cur.set(0, 0);
       this->m_lines.resize(m_height);
       for (line_t& line : m_lines)
         line.set_id(m_line_count++);
     }
-    board_t(): board_t(80, 32) {}
+    board_t(): board_t(80, 24, 7, 14) {}
 
   public:
     void reset_size(curpos_t width, curpos_t height) {
@@ -165,6 +185,11 @@ namespace ansi {
       }
       this->m_width = width;
       this->m_height = height;
+    }
+    void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
+      this->reset_size(width, height);
+      m_xpixel = limit::term_xpixel.clamp(xpixel);
+      m_ypixel = limit::term_ypixel.clamp(ypixel);
     }
 
   public:
@@ -506,6 +531,9 @@ namespace ansi {
     void reset_size(curpos_t width, curpos_t height) {
       m_board.reset_size(width, height);
     }
+    void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
+      m_board.reset_size(width, height, xpixel, ypixel);
+    }
 
   public: // todo: make private
     term_scroll_buffer_t m_scroll_buffer;
@@ -536,11 +564,12 @@ namespace ansi {
     std::vector<cell_t> m_buffer;
 
   public:
-    term_t(curpos_t width, curpos_t height): m_board(width, height) {}
+    term_t(curpos_t width, curpos_t height, coord_t xpixel = 7, coord_t ypixel = 13):
+      m_board(width, height, xpixel, ypixel) {}
 
   public:
-    curpos_t width() const { return this->m_board.m_width; }
-    curpos_t height() const { return this->m_board.m_height; }
+    curpos_t width() const { return this->m_board.width(); }
+    curpos_t height() const { return this->m_board.height(); }
     line_t& line(curpos_t y) { return this->m_board.m_lines[y]; }
     line_t const& line(curpos_t y) const { return this->m_board.m_lines[y]; }
     cursor_t& cursor() { return this->m_board.cur; }
@@ -564,21 +593,21 @@ namespace ansi {
 
     curpos_t tmargin() const {
       curpos_t const b = m_state.dec_tmargin;
-      return 0 <= b && b < m_board.m_height ? b : 0;
+      return 0 <= b && b < m_board.height() ? b : 0;
     }
     curpos_t bmargin() const {
       curpos_t const e = m_state.dec_bmargin;
-      return 0 < e && e <= m_board.m_height ? e : m_board.m_height;
+      return 0 < e && e <= m_board.height() ? e : m_board.height();
     }
     curpos_t lmargin() const {
       if (!m_state.get_mode(mode_declrmm)) return 0;
       curpos_t const l = m_state.dec_lmargin;
-      return 0 <= l && l < m_board.m_width ? l : 0;
+      return 0 <= l && l < m_board.width() ? l : 0;
     }
     curpos_t rmargin() const {
-      if (!m_state.get_mode(mode_declrmm)) return m_board.m_width;
+      if (!m_state.get_mode(mode_declrmm)) return m_board.width();
       curpos_t const r = m_state.dec_rmargin;
-      return 0 < r && r <= m_board.m_width ? r : m_board.m_width;
+      return 0 < r && r <= m_board.width() ? r : m_board.width();
     }
 
     curpos_t implicit_sph() const {
@@ -588,7 +617,7 @@ namespace ansi {
       return sph;
     }
     curpos_t implicit_spl() const {
-      curpos_t spl = m_board.m_height - 1;
+      curpos_t spl = m_board.height() - 1;
       if (m_state.page_limit >= 0 && m_state.page_limit < spl)
         spl = m_state.page_limit;
       if (m_state.dec_bmargin > 0 && m_state.dec_bmargin - 1 < spl)
@@ -596,7 +625,7 @@ namespace ansi {
       return spl;
     }
     curpos_t implicit_slh(line_t const& line) const {
-      curpos_t const width = m_board.m_width;
+      curpos_t const width = m_board.width();
       curpos_t home = line.home();
       home = home < 0 ? 0 : std::min(home, width - 1);
       if (m_state.get_mode(mode_declrmm))
@@ -604,7 +633,7 @@ namespace ansi {
       return home;
     }
     curpos_t implicit_sll(line_t const& line) const {
-      curpos_t const width = m_board.m_width;
+      curpos_t const width = m_board.width();
       curpos_t limit = line.limit();
       limit = limit < 0 ? width - 1 : std::min(limit, width - 1);
       if (m_state.get_mode(mode_declrmm) && m_state.dec_rmargin > 0)
@@ -661,9 +690,9 @@ namespace ansi {
 
 #ifndef NDEBUG
       board_t& b = board();
-      mwg_assert(b.cur.is_sane(b.m_width),
+      mwg_assert(b.cur.is_sane(b.width()),
         "cur: {x=%d, xenl=%d, width=%d} after Insert U+%04X",
-        b.cur.x(), b.cur.xenl(), b.m_width, u);
+        b.cur.x(), b.cur.xenl(), b.width(), u);
 #endif
     }
     void process_chars(char32_t const* beg, char32_t const* end) {
@@ -678,9 +707,9 @@ namespace ansi {
 
 #ifndef NDEBUG
         board_t& b = board();
-        mwg_assert(b.cur.is_sane(b.m_width),
+        mwg_assert(b.cur.is_sane(b.width()),
           "cur: {x=%d, xenl=%d, width=%d} after InsertLength=#%zu",
-          b.cur.x(), b.cur.xenl(), b.m_width, end - beg);
+          b.cur.x(), b.cur.xenl(), b.width(), end - beg);
 #endif
       }
     }
@@ -866,7 +895,7 @@ namespace ansi {
       return this->m_scroll_amount;
     }
     presentation_direction_t presentation_direction() const {
-      return m_term->board().m_presentation_direction;
+      return m_term->board().presentation_direction();
     }
     curpos_t x() const { return m_x; }
     curpos_t y() const { return m_y; }
