@@ -32,8 +32,8 @@
 #define _tcscpy_s wcscpy_s
 #define _tcscpy wcscpy
 
-namespace contra {
-namespace twin {
+namespace contra::twin {
+namespace {
 
   template<typename XCH>
   int xcscpy_s(XCH* dst, std::size_t sz, const XCH* src) {
@@ -158,17 +158,17 @@ namespace twin {
       m_fontinfo[8].name  = u"HGGothicM";
       m_fontinfo[9].name  = u"Times New Roman";
       m_fontinfo[10].name = u"aghtex_mathfrak";
-      actx.read("term_font_default", m_fontinfo[0].name , &parse_fontname);
-      actx.read("term_font_ansi1"  , m_fontinfo[1].name , &parse_fontname);
-      actx.read("term_font_ansi2"  , m_fontinfo[2].name , &parse_fontname);
-      actx.read("term_font_ansi3"  , m_fontinfo[3].name , &parse_fontname);
-      actx.read("term_font_ansi4"  , m_fontinfo[4].name , &parse_fontname);
-      actx.read("term_font_ansi5"  , m_fontinfo[5].name , &parse_fontname);
-      actx.read("term_font_ansi6"  , m_fontinfo[6].name , &parse_fontname);
-      actx.read("term_font_ansi7"  , m_fontinfo[7].name , &parse_fontname);
-      actx.read("term_font_ansi8"  , m_fontinfo[8].name , &parse_fontname);
-      actx.read("term_font_ansi9"  , m_fontinfo[9].name , &parse_fontname);
-      actx.read("term_font_frak"   , m_fontinfo[10].name, &parse_fontname);
+      actx.read("twin_font_default", m_fontinfo[0].name , &parse_fontname);
+      actx.read("twin_font_ansi1"  , m_fontinfo[1].name , &parse_fontname);
+      actx.read("twin_font_ansi2"  , m_fontinfo[2].name , &parse_fontname);
+      actx.read("twin_font_ansi3"  , m_fontinfo[3].name , &parse_fontname);
+      actx.read("twin_font_ansi4"  , m_fontinfo[4].name , &parse_fontname);
+      actx.read("twin_font_ansi5"  , m_fontinfo[5].name , &parse_fontname);
+      actx.read("twin_font_ansi6"  , m_fontinfo[6].name , &parse_fontname);
+      actx.read("twin_font_ansi7"  , m_fontinfo[7].name , &parse_fontname);
+      actx.read("twin_font_ansi8"  , m_fontinfo[8].name , &parse_fontname);
+      actx.read("twin_font_ansi9"  , m_fontinfo[9].name , &parse_fontname);
+      actx.read("twin_font_frak"   , m_fontinfo[10].name, &parse_fontname);
     }
 
     // Note: initialize_fontnames の後に呼び出す事
@@ -1267,8 +1267,8 @@ namespace twin {
     }
   public:
     int m_exit_code = 0;
-    int do_loop() {
-      if (!this->add_terminal_session()) return 2;
+    bool do_loop() {
+      if (!this->add_terminal_session()) return false;
 
       MSG msg;
       while (hWnd) {
@@ -1297,7 +1297,7 @@ namespace twin {
       }
     exit:
       manager.terminate();
-      return 0;
+      return true;
     }
   };
 
@@ -1307,8 +1307,20 @@ namespace twin {
     return main_window->process_message(hWnd, msg, wParam, lParam);
   }
 }
+
+  bool run(contra::app::context& actx) {
+    twin_window_t win(actx);
+    main_window = &win;
+
+    HINSTANCE const hInstance = GetModuleHandle(NULL);
+    HWND const hWnd = win.create_window(hInstance);
+    ::ShowWindow(hWnd, SW_SHOW);
+    ::UpdateWindow(hWnd);
+    return win.do_loop();
+  }
 }
 
+#ifdef twin_main
 // from http://www.kumei.ne.jp/c_lang/index_sdk.html
 extern "C" int WINAPI _tWinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPreInst, [[maybe_unused]] LPTSTR lpszCmdLine, int nCmdShow) {
   contra::app::context actx;
@@ -1320,7 +1332,8 @@ extern "C" int WINAPI _tWinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE 
   HWND const hWnd = win.create_window(hInstance);
   ::ShowWindow(hWnd, nCmdShow);
   ::UpdateWindow(hWnd);
-  return win.do_loop();
+  if (!win.do_loop()) return 1;
+  return 0;
 }
 
 // from https://cat-in-136.github.io/2012/04/unicodemingw32twinmainwwinmain.html
@@ -1330,4 +1343,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
   int const retval = _tWinMain(hInstance, NULL, (LPTSTR) TEXT("") /* lpCmdLine is not available*/, SW_SHOW);
   return retval;
 }
+#endif
+
 #endif

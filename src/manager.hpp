@@ -287,7 +287,10 @@ namespace term {
       return *m_apps[m_active_iapp].get();
     }
     template<typename T>
-    void add_app(T&& app) { m_apps.emplace_back(std::forward<T>(app)); }
+    void add_app(T&& app) {
+      m_apps.emplace_back(std::forward<T>(app));
+      if (m_apps.size() == 1) select_app(0, true);
+    }
     void set_events(terminal_events& events) { this->m_events = &events; }
 
   private:
@@ -348,10 +351,13 @@ namespace term {
     bool is_alive(bool remove_dead = true) {
       if (remove_dead) {
         std::size_t iapp = 0, new_active_iapp = m_active_iapp;
+        bool is_active_app_dead = false;
         auto const new_end = std::remove_if(
           m_apps.begin(), m_apps.end(),
           [&] (auto const& app) {
             if (!app->is_alive()) {
+              if (iapp == m_active_iapp)
+                is_active_app_dead = true;
               if (m_active_iapp >= iapp++ && new_active_iapp > 0)
                 new_active_iapp--;
               return true;
@@ -360,11 +366,13 @@ namespace term {
               return false;
             }
           });
-        m_apps.erase(new_end, m_apps.end());
-        select_app(new_active_iapp, true);
+        if (new_end != m_apps.end()) {
+          m_apps.erase(new_end, m_apps.end());
+          if (is_active_app_dead)
+            select_app(new_active_iapp, true);
+        }
         return !m_apps.empty();
       } else {
-
         for (auto const& app : m_apps)
           if (app->is_alive()) return true;
         return false;

@@ -56,7 +56,7 @@ namespace term {
   bool fd_set_nonblock(int fd, bool value) {
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags < 0) {
-      perror("sample_openpt (fcntl(0, F_GETFL))");
+      perror("contra::term (fd_set_nonblock/fcntl(0, F_GETFL))");
       exit(1);
     }
 
@@ -65,7 +65,7 @@ namespace term {
 
     int const result = fcntl(fd, F_SETFL, flags ^ O_NONBLOCK);
     if (result < 0) {
-      perror("sample_openpt (fcntl(0, F_SETFL))");
+      perror("contra::term (fd_set_nonblock/fcntl(0, F_SETFL))");
       exit(1);
     }
     return old_status;
@@ -193,7 +193,7 @@ namespace term {
       int status;
       pid_t const result = waitpid(slave_pid, &status, WNOHANG);
       if (result < 0) {
-        perror("sample_openpt (waitpid)");
+        perror("contra::term (pty_connection::is_alive/waitpid)");
         exit(1);
       }
 

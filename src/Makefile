@@ -82,53 +82,9 @@ res/iso2022.jisx-1.bin: gen/iso2022-dump.exe gen/iso2022.generate-bin.def $(gend
 	gen/iso2022-dump.exe gen/iso2022.generate-bin.def
 
 #------------------------------------------------------------------------------
-# ttty
-
-all: ttty.exe
-ttty_objs = \
-  $(objdir)/ttty.o \
-  $(objdir)/pty.o \
-  $(objdir)/dict.o \
-  $(objdir)/ansi/term.o \
-  $(objdir)/ansi/line.o \
-  $(objdir)/enc.c2w.o \
-  $(objdir)/enc.utf8.o \
-  $(objdir)/iso2022.o \
-  $(objdir)/contradef.o
-ttty.exe: $(ttty_objs)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
-$(objdir)/ttty.o: ttty.cpp | $(objdir)
-	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
-
-#------------------------------------------------------------------------------
 # twin
 
 ifeq ($(ostype),cygwin)
-
-twin_CPPFLAGS = $(CPPFLAGS) -DUNICODE -D_UNICODE
-twin_LIBS := -lgdi32 -limm32 $(LIBS)
-#twin_LDFLAGS := $(LDFLAGS) -static-libgcc -static-libstdc++ -s
-twin_LDFLAGS := $(LDFLAGS)
-twin_LDFLAGS += -mwindows
-
-directories += $(objdir)/twin
-$(objdir)/twin/%.o: twin/%.cpp | $(objdir)/twin
-	$(CXX) $(twin_CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
-
-all: twin.exe
-twin_objs = \
-  $(objdir)/twin/twin.o \
-  $(objdir)/twin/win_messages.o \
-  $(objdir)/pty.o \
-  $(objdir)/dict.o \
-  $(objdir)/ansi/term.o \
-  $(objdir)/ansi/line.o \
-  $(objdir)/enc.utf8.o \
-  $(objdir)/enc.c2w.o \
-  $(objdir)/iso2022.o \
-  $(objdir)/contradef.o
-twin.exe: $(twin_objs)
-	$(CXX) $(CXXFLAGS) $(twin_LDFLAGS) -o $@ $^ $(twin_LIBS)
 
 all: twin/test-win1.exe
 twin/test-win1.exe: $(objdir)/twin/test-win1.o
@@ -139,15 +95,17 @@ twin/test-fontfamily.exe: $(objdir)/twin/test-fontfamily.o $(objdir)/enc.utf8.o
 endif
 
 #------------------------------------------------------------------------------
-# tx11
+# contra
 
-all: tx11.exe
+all: contra.exe
 CXXFLAGS += -I /usr/include/freetype2
-tx11_CXXFLAGS := $(CXXFLAGS)
-tx11_LDFLAGS := $(LDFLAGS)
-tx11_LIBS := -lXft -lX11 $(LIBS)
-tx11_objs := \
+contra_LDFLAGS := $(LDFLAGS)
+contra_LIBS := -lXft -lX11 $(LIBS)
+contra_objs := \
+  $(objdir)/contra.o \
+  $(objdir)/ttty.o \
   $(objdir)/tx11.o \
+  $(objdir)/dict.o \
   $(objdir)/pty.o \
   $(objdir)/ansi/term.o \
   $(objdir)/ansi/line.o \
@@ -156,8 +114,25 @@ tx11_objs := \
   $(objdir)/iso2022.o \
   $(objdir)/contradef.o
 
-tx11.exe: $(tx11_objs)
-	$(CXX) $(CXXFLAGS) $(tx11_LDFLAGS) -o $@ $^ $(tx11_LIBS)
+ifeq ($(ostype),cygwin)
+
+directories += $(objdir)/twin
+twin_CPPFLAGS = $(CPPFLAGS) -DUNICODE -D_UNICODE
+$(objdir)/twin/%.o: twin/%.cpp | $(objdir)/twin
+	$(CXX) $(twin_CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+CXXFLAGS += -Duse_twin
+contra_objs += \
+  $(objdir)/twin/twin.o \
+  $(objdir)/twin/win_messages.o
+
+contra_LIBS := -lgdi32 -limm32 $(contra_LIBS)
+contra_LDFLAGS += -mwindows
+
+endif
+
+contra.exe: $(contra_objs)
+	$(CXX) $(CXXFLAGS) $(contra_LDFLAGS) -o $@ $^ $(contra_LIBS)
 
 #------------------------------------------------------------------------------
 # samples

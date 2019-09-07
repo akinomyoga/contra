@@ -13,8 +13,8 @@
 #include "context.hpp"
 #include <memory>
 
-namespace contra {
-namespace tx11 {
+namespace contra::tx11 {
+namespace {
 
   const char* get_x11_event_name(XEvent const& event) {
     switch (event.type) {
@@ -171,17 +171,17 @@ namespace tx11 {
       m_fontnames[8]  = "monospace";
       m_fontnames[9]  = "monospace";
       m_fontnames[10] = "monospace";
-      actx.read("term_font_default", m_fontnames[0] );
-      actx.read("term_font_ansi1"  , m_fontnames[1] );
-      actx.read("term_font_ansi2"  , m_fontnames[2] );
-      actx.read("term_font_ansi3"  , m_fontnames[3] );
-      actx.read("term_font_ansi4"  , m_fontnames[4] );
-      actx.read("term_font_ansi5"  , m_fontnames[5] );
-      actx.read("term_font_ansi6"  , m_fontnames[6] );
-      actx.read("term_font_ansi7"  , m_fontnames[7] );
-      actx.read("term_font_ansi8"  , m_fontnames[8] );
-      actx.read("term_font_ansi9"  , m_fontnames[9] );
-      actx.read("term_font_frak"   , m_fontnames[10]);
+      actx.read("tx11_font_default", m_fontnames[0] );
+      actx.read("tx11_font_ansi1"  , m_fontnames[1] );
+      actx.read("tx11_font_ansi2"  , m_fontnames[2] );
+      actx.read("tx11_font_ansi3"  , m_fontnames[3] );
+      actx.read("tx11_font_ansi4"  , m_fontnames[4] );
+      actx.read("tx11_font_ansi5"  , m_fontnames[5] );
+      actx.read("tx11_font_ansi6"  , m_fontnames[6] );
+      actx.read("tx11_font_ansi7"  , m_fontnames[7] );
+      actx.read("tx11_font_ansi8"  , m_fontnames[8] );
+      actx.read("tx11_font_ansi9"  , m_fontnames[9] );
+      actx.read("tx11_font_frak"   , m_fontnames[10]);
     }
     bool setup_display(Display* display) {
       if (m_display == display) return false;
@@ -1003,11 +1003,11 @@ namespace tx11 {
     }
 
   public:
-    int do_loop() {
+    bool do_loop() {
       // CheckIfEvent 用のダミーフィルター
       Bool (*event_filter_proc)(Display*, XEvent*, XPointer) = [] (auto...) -> Bool { return True; };
 
-      if (!this->add_terminal_session()) return 2;
+      if (!this->add_terminal_session()) return false;
 
       XEvent event;
       while (this->display) {
@@ -1029,21 +1029,16 @@ namespace tx11 {
       }
     exit:
       manager.terminate();
-      return 0;
+      return true;
     }
   };
-
-}
 }
 
-int main() {
-  contra::app::context actx;
-  std::string config_dir = contra::term::get_config_directory();
-  actx.load((config_dir + "/contra/tx11.conf").c_str());
-
-  contra::tx11::tx11_window_t win(actx);
-  if (!win.create_window()) return 1;
-  ::XMapWindow(win.display_handle(), win.window_handle());
-  ::XFlush(win.display_handle());
-  return win.do_loop();
+  bool run(contra::app::context& actx) {
+    contra::tx11::tx11_window_t win(actx);
+    if (!win.create_window()) return 1;
+    ::XMapWindow(win.display_handle(), win.window_handle());
+    ::XFlush(win.display_handle());
+    return win.do_loop();
+  }
 }

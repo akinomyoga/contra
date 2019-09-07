@@ -109,6 +109,7 @@ namespace ttty {
   public:
     bool initialize(contra::term::terminal_session_parameters& params) {
       setup_tty();
+      m_manager.reset_size(params.col, params.row, params.xpixel, params.ypixel);
 
       std::unique_ptr<contra::term::terminal_application> sess = contra::term::create_terminal_session(params);
       if (!sess) return false;
