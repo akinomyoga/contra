@@ -15,6 +15,7 @@
 #include "../dict.hpp"
 #include "../sequence.hpp"
 #include "../sys.signal.hpp"
+#include "../sys.terminfo.hpp"
 #include "buffer.hpp"
 
 namespace contra {
@@ -34,6 +35,11 @@ namespace ttty {
   public:
     contra::term::terminal_manager& manager() { return m_manager; }
     contra::term::terminal_manager const& manager() const { return m_manager; }
+
+    void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
+      m_manager.reset_size(width, height, xpixel, ypixel);
+      renderer->reset_size(width, height);
+    }
 
   private:
 
@@ -118,6 +124,8 @@ namespace ttty {
 
       sgrcap.initialize();
       renderer = std::make_unique<contra::ttty::tty_observer>(m_manager.app().view(), stdout, &sgrcap);
+      renderer->reset_size(params.col, params.row);
+      renderer->set_xenl(contra::sys::xenl());
       return true;
     }
 

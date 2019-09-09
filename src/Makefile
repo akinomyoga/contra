@@ -3,8 +3,14 @@
 all:
 .PHONY: all
 
+make_config.mk: ./configure
+	./configure
+
+include make_config.mk
 include make_variables.mk
-CXXFLAGS += -std=gnu++17 -I ../ext
+LIBS = $(config_LIBS)
+CPPFLAGS = $(config_CPPFLAGS) $(default_CPPFLAGS)
+CXXFLAGS = $(config_CXXFLAGS)
 
 SHELL := /bin/bash
 ostype := $(shell echo -n $$OSTYPE)
@@ -58,6 +64,7 @@ impl2_objs = \
   $(objdir)/iso2022.o \
   $(objdir)/sys.signal.o \
   $(objdir)/sys.path.o \
+  $(objdir)/sys.terminfo.o \
   $(objdir)/contradef.o
 impl2: $(impl2_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
@@ -87,7 +94,7 @@ res/iso2022.jisx-1.bin: gen/iso2022-dump.exe gen/iso2022.generate-bin.def $(gend
 #------------------------------------------------------------------------------
 # contra
 
-all: contra.exe
+all: contra
 CXXFLAGS += -I /usr/include/freetype2
 contra_LDFLAGS := $(LDFLAGS)
 contra_LIBS := -lXft -lX11 $(LIBS)
@@ -104,7 +111,10 @@ contra_objs := \
   $(objdir)/iso2022.o \
   $(objdir)/sys.signal.o \
   $(objdir)/sys.path.o \
+  $(objdir)/sys.terminfo.o \
   $(objdir)/contradef.o
+
+contra_LIBS := -lncursesw $(contra_LIBS)
 
 ifeq ($(ostype),cygwin)
 
@@ -123,7 +133,7 @@ contra_LDFLAGS += -mwindows
 
 endif
 
-contra.exe: $(contra_objs)
+contra: $(contra_objs)
 	$(CXX) $(CXXFLAGS) $(contra_LDFLAGS) -o $@ $^ $(contra_LIBS)
 
 #------------------------------------------------------------------------------

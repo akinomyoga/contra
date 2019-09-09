@@ -226,7 +226,7 @@ namespace contra::app {
     void load(const char* filename) {
       std::ifstream ifs(filename);
       if (!ifs) {
-        std::cerr << filename << ": failed to open to read." << std::endl;
+        std::cerr << filename << ": failed to open for read." << std::endl;
         return;
       }
 

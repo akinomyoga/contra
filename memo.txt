@@ -290,8 +290,6 @@
   その様な場合には SIGWINCH を trap しても仕方がないので、
   代わりに別の戦略で (例えば定期的に問い合わせる) winsize を取得する必要がある。
 
-* ttty: 座標計算が xenl ではない端末に対応するという事
-
 2019-09-05
 
 * render: 部分転送?
@@ -2239,9 +2237,105 @@
   Done
 ------------------------------------------------------------------------------
 
+2019-09-09
+
+* ttty: 座標計算が xenl ではない端末に対応するという事 [#D0223]
+
+  やはり端末のデータにアクセスするには ncurses に依存しなければならないのだろうか…。
+
+  端末のデータベースのバイナリ形式はなかなか見つからないが以下に見つけた。
+  https://www.systutorials.com/docs/linux/man/5-term/
+
+  早速これに従って読み出してみる。どうやら読み出せてはいる様だが、
+  何番目の cap が何の cap に対応しているかの表がないので微妙である。
+  更にその対応は OS によって異なるのだとも書かれている。面倒である。
+  その様な事を考えるとやはり ncurses に依存するしかないのだろうか。
+  或いは SVr1 の cap だけを使うならば互換性はあるとも読める。
+
+  結局 /usr/include/term.h を見る事にした。以下が SVr1 の対応である。
+
+  | #define auto_left_margin               CUR Booleans[0]
+  | #define auto_right_margin              CUR Booleans[1]
+  | #define no_esc_ctlc                    CUR Booleans[2]
+  | #define ceol_standout_glitch           CUR Booleans[3]
+  | #define eat_newline_glitch             CUR Booleans[4]
+  | #define erase_overstrike               CUR Booleans[5]
+  | #define generic_type                   CUR Booleans[6]
+  | #define hard_copy                      CUR Booleans[7]
+  | #define has_meta_key                   CUR Booleans[8]
+  | #define has_status_line                CUR Booleans[9]
+  | #define insert_null_glitch             CUR Booleans[10]
+  | #define memory_above                   CUR Booleans[11]
+  | #define memory_below                   CUR Booleans[12]
+  | #define move_insert_mode               CUR Booleans[13]
+  | #define move_standout_mode             CUR Booleans[14]
+  | #define over_strike                    CUR Booleans[15]
+  | #define status_line_esc_ok             CUR Booleans[16]
+  | #define dest_tabs_magic_smso           CUR Booleans[17]
+  | #define tilde_glitch                   CUR Booleans[18]
+  | #define transparent_underline          CUR Booleans[19]
+  | #define xon_xoff                       CUR Booleans[20]
+  | 
+  | #define columns                        CUR Numbers[0]
+  | #define init_tabs                      CUR Numbers[1]
+  | #define lines                          CUR Numbers[2]
+  | #define lines_of_memory                CUR Numbers[3]
+  | #define magic_cookie_glitch            CUR Numbers[4]
+  | #define padding_baud_rate              CUR Numbers[5]
+  | #define virtual_terminal               CUR Numbers[6]
+  | #define width_status_line              CUR Numbers[7]
+  | 
+  | #define back_tab                       CUR Strings[0]
+  | #define bell                           CUR Strings[1]
+  | #define carriage_return                CUR Strings[2]
+  | #define change_scroll_region           CUR Strings[3]
+  | #define clear_all_tabs                 CUR Strings[4]
+  | #define clear_screen                   CUR Strings[5]
+  | #define clr_eol                        CUR Strings[6]
+  | #define clr_eos                        CUR Strings[7]
+  | #define column_address                 CUR Strings[8]
+  | #define command_character              CUR Strings[9]
+  | #define cursor_address                 CUR Strings[10]
+  | 中略
+  | #define tab                            CUR Strings[134]
+  | #define to_status_line                 CUR Strings[135]
+  | #define underline_char                 CUR Strings[136]
+  | #define up_half_line                   CUR Strings[137]
+  | #define init_prog                      CUR Strings[138]
+  | #define key_a1                         CUR Strings[139]
+  | #define key_a3                         CUR Strings[140]
+  | #define key_b2                         CUR Strings[141]
+  | #define key_c1                         CUR Strings[142]
+  | #define key_c3                         CUR Strings[143]
+  | #define prtr_non                       CUR Strings[144]
+
+  この範囲で頑張って実装する事に意義は在るだろうか。
+  その様に考えていくとやはり ncurses に依存するのが賢明なのだろう。
+
+  ./configure 的な物に対応する必要があるだろうか。
+  というか実は ./configure を手書きで作っても良いのではないか。
+
+  * 実は既に mcxx という枠組みがあるのでそれを使うという手もあるが複雑になる。
+
+    mcxx は更にキャッシュする仕組みだとか色々ある。
+    やはり複雑になってしまうので再実装するか。
+    或いは mcxx の cxx_conf.sh を改造して一般化するか?
+    何れにしても mcxx を整理するのが良い気がする。
+    その後で使えそうな部分だけ抽出するのでも良いし、
+    そのままコピーして使うのでも良い。
+
+    整理しようとしたが cache 付きの枠組み前提で
+    H や諸々の機能が実装されている。これを分離するのは困難である。
+    という事を考えると cache 機能の on/off を実装する事になるのだろうか。。
+    →取り敢えず mcxx の枠組みは mconf.sh に分離した。
+      これで手で ./configure を書く準備は整った気がする。
+
+    ./configure から config.mk を生成して、
+    それを source するのが良い気がする。
+
 2019-09-07
 
-* 2019-08-11 iso2022: 色々細かい事で放置している事 [#D0221]
+* 2019-08-11 iso2022: 色々細かい事で放置している事 [#D0222]
 
   * done: res/iso2022.def の配置する位置をカレントディレクトリに決め打ちにしている。
     これは config directory または、設定によって設定できる様にする。
@@ -2277,7 +2371,7 @@
     然し、最終的には character_t の特定の領域に特別描画の指令を
     埋め込む様にしたいのである。
 
-* manager: width/height整理 [#D0220]
+* manager: width/height整理 [#D0221]
 
   何れにしても作りながら仕様をあっちこっち変えたりして作って来たのでバグが沢山ある。
   改めて再実装するなり何なりしてバグを解消する様にする必要があるのではないか。
@@ -2309,7 +2403,7 @@
     さて、実は何と app の width/height/xpixel/ypixel は初期化に使っていただけで
     他からは全然使われていなかった。という訳でインターフェイスも残さずに消す事にした。
 
-* ttty: 描画がおかしい。消滅する行が色々ある [#D0219]
+* ttty: 描画がおかしい。消滅する行が色々ある [#D0220]
 
   [状況]
 
@@ -2355,12 +2449,12 @@
     ちゃんと割り当てる様に修正したら初期値がそのまま line_t に
     入ったままになっているという問題は直った。
 
-* ttty: SIGWINCH をチェックするという事 [#D0218]
+* ttty: SIGWINCH をチェックするという事 [#D0219]
   というか現在の様に termios を弄っている状態で SIGWINCH を受信できるのか?
   実際に試してみた所ちゃんと受信できる様子である。
   →チェックする様に修正した。
 
-* tx11/twin/ttty: 実装をくっつける? [#D0217]
+* tx11/twin/ttty: 実装をくっつける? [#D0218]
 
   殆どのコードは重複していて描画が異なるだけである。
   別のバイナリとして提供する意味はあるのだろうか。
@@ -2384,7 +2478,7 @@
 
 2019-09-06
 
-* iso2022: 表を作ったのは良いが流石に使えなければ意味がない [#D0216]
+* iso2022: 表を作ったのは良いが流石に使えなければ意味がない [#D0217]
 
   * done: term_t の文字幅の対応 #D0194
   * done: sequence_decoder の対応 #D0193
@@ -2550,7 +2644,7 @@
 
 2019-09-05
 
-* [保留] tx11: padparadscha で動かしてみた所動作が遅い [#D0215]
+* [保留] tx11: padparadscha で動かしてみた所動作が遅い [#D0216]
   何故だろうか。Cygwin X Server の上で
   padparadscha tx11 を動かしてみるとそんなに遅くない。
   という事は Linux の X Server 上で動かすと遅いという事なのか。
@@ -2562,7 +2656,7 @@
   と思って今試してみたが実はそんなに遅くなかった。
   取り敢えずこれについては気にしない事にする。
 
-* 2019-08-09 iso2022: マルチバイト文字のデータベース [#D0214]
+* 2019-08-09 iso2022: マルチバイト文字のデータベース [#D0215]
 
   これらはさすがにメンテナンスされているだろうから何処かで表を拾ってくれば良い。
 
@@ -2609,7 +2703,7 @@
 
 2019-08-25
 
-* 2019-08-11 bidi の時の描画が全然駄目 [#D0213]
+* 2019-08-11 bidi の時の描画が全然駄目 [#D0214]
 
   SPD(3) を実行してみると変な事になるのである。
 
@@ -2631,12 +2725,12 @@
 
   * done: SPD が変化した場合は full update にしなければならない。
 
-* manager: 選択ができなくなっている… [#D0212]
+* manager: 選択ができなくなっている… [#D0213]
   →これは直した。
 
 2019-08-18
 
-* 2019-08-13 ttty: BUG 終了する時に core dump する様になっている [#D0211]
+* 2019-08-13 ttty: BUG 終了する時に core dump する様になっている [#D0212]
   impl2 の場合もそうである。
   これは screen.do_loop を抜けた時点で board も app も破棄されているのが原因である。
   そもそも現在の端末内容を画面に出力する必要はあっただろうか。
@@ -2648,7 +2742,7 @@
   そもそも一番最初期に board の内容がちゃんとなっているか確認する為の物だった。
   やはりこの機能は削除してしまう事にする。
 
-* 2019-08-13 manager: 右クリックがなかなか効かないのは [#D0210]
+* 2019-08-13 manager: 右クリックがなかなか効かないのは [#D0211]
   右ダブルクリック等の判定を行っているからである。
   また少しでも移動するとやはりドラッグになってしまって右クリックでなくなる。
   drag_start 的な操作をしない限りはドラッグを有効にしない様にする必要がある。

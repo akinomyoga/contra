@@ -1,0 +1,13 @@
+# gitignore
+
+# generated files
+/make_config.mk
+
+# output files
+/*.seq
+/impl?-allseq.txt
+/impl?-dump.txt
+/ttty-*.txt
+/twin-*.txt
+/twin/test-*.txt
+/out

@@ -26,9 +26,18 @@ namespace ttty {
     std::vector<line_buffer_t> screen_buffer;
     bool prev_decscnm = false;
 
+    byte prev_fg_space = 0;
+    byte prev_bg_space = 0;
+    color_t prev_fg_color = 0;
+    color_t prev_bg_color = 0;
+    curpos_t prev_width = 0;
+    curpos_t prev_height = 0;
+
     // 出力先端末の状態
     bool remote_dectcem = true;
     curpos_t remote_x = 0, remote_y = 0;
+    curpos_t remote_w = 80, remote_h = 24;
+    bool remote_xenl = true;
 
     tty_writer w;
 
@@ -39,13 +48,41 @@ namespace ttty {
     tty_writer& writer() { return w; }
     tty_writer const& writer() const { return w; }
 
+    void reset_size(curpos_t width, curpos_t height) {
+      this->remote_w = width;
+      this->remote_h = height;
+    }
+    void set_xenl(bool value) {
+      this->remote_xenl = value;
+    }
+
   private:
+    void put_csiseq(char ch) const {
+      w.put(ascii_esc);
+      w.put(ascii_left_bracket);
+      w.put(ch);
+    }
     void put_csiseq_pn1(unsigned param, char ch) const {
       w.put(ascii_esc);
       w.put(ascii_left_bracket);
       if (param != 1) w.put_unsigned(param);
       w.put(ch);
     }
+
+  private:
+    void go_to(curpos_t newx, curpos_t newy) {
+      w.put(ascii_esc);
+      w.put(ascii_left_bracket);
+      if (newy >= 1) w.put_unsigned(newy + 1);
+      if (newx >= 1) {
+        w.put(ascii_semicolon);
+        w.put_unsigned(newx + 1);
+      }
+      w.put(ascii_H);
+      remote_x = newx;
+      remote_y = newy;
+    }
+
   private:
     void move_to_line(curpos_t newy) {
       curpos_t const delta = newy - remote_y;
@@ -293,9 +330,15 @@ namespace ttty {
           cell_t const& cell = new_content[i];
           std::uint32_t code = cell.character.value;
           if (code == ascii_nul) code = ascii_sp;
+          if (remote_x + (curpos_t) cell.width > remote_w) return;
           w.apply_attr(cell.attribute);
           w.put_u32(code);
           remote_x += cell.width;
+          if (!remote_xenl && remote_x == remote_w) {
+            remote_y++;
+            remote_x = 0;
+            return;
+          }
         }
       }
 
@@ -322,8 +365,6 @@ namespace ttty {
     }
 
     bool is_content_changed() const {
-      if (prev_decscnm != view->is_cursor_visible()) return true;
-
       curpos_t const height = view->height();
       if ((curpos_t) screen_buffer.size() != height) return true;
       for (curpos_t y = 0; y < height; y++) {
@@ -334,25 +375,23 @@ namespace ttty {
       return false;
     }
 
-    void render_content() {
+    void render_content(bool full_update) {
       std::vector<cell_t> buff;
 
-      bool full_update = false;
-      if (prev_decscnm != view->is_cursor_visible()) {
-        full_update = true;
-        screen_buffer.clear();
-        prev_decscnm = !prev_decscnm;
-      }
-
       curpos_t const height = view->height();
-      screen_buffer.resize(height, line_buffer_t());
+      if (full_update) {
+        screen_buffer.clear();
+        screen_buffer.resize(height, line_buffer_t());
+        put_csiseq_pn1(2, ascii_J);
+      }
       if (is_terminal_fullwidth)
         trace_line_scroll();
-      move_to(0, 0);
+
       for (curpos_t y = 0; y < height; y++) {
         line_t const& line = view->line(y);
         line_buffer_t& line_buffer = screen_buffer[y];
         if (full_update || line_buffer.id != line.id() || line_buffer.version != line.version()) {
+          go_to(0, y);
           view->get_cells_in_presentation(buff, line);
           this->apply_default_attribute(buff);
           this->render_line(buff, line_buffer.content);
@@ -360,12 +399,9 @@ namespace ttty {
           line_buffer.version = line.version();
           line_buffer.id = line.id();
           line_buffer.content.swap(buff);
-          move_to_column(0);
         }
 
         if (y + 1 == height) break;
-        w.put('\n');
-        this->remote_y++;
       }
       w.apply_attr(attribute_t {});
     }
@@ -382,13 +418,27 @@ namespace ttty {
   public:
     void update() {
       view->update();
-      if (is_content_changed()) {
+
+      bool full_update = false;
+      auto _update_metric = [&] (auto& prev, auto value) {
+        if (prev == value) return;
+        prev = value;
+        full_update = true;
+      };
+      _update_metric(prev_fg_space, view->fg_space());
+      _update_metric(prev_fg_color, view->fg_color());
+      _update_metric(prev_bg_space, view->bg_space());
+      _update_metric(prev_bg_color, view->bg_color());
+      _update_metric(prev_width, view->width());
+      _update_metric(prev_height, view->height());
+
+      if (full_update || is_content_changed()) {
         update_remote_dectcem(false);
-        render_content();
+        render_content(full_update);
       }
 
       if (0 <= view->y() && view->y() < view->height()) {
-        move_to(view->x(), view->y());
+        go_to(view->x(), view->y());
         update_remote_dectcem(view->is_cursor_visible());
       } else {
         update_remote_dectcem(false);

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+function array#push {
+  local __array_name=$1; shift
+  while (($#)); do
+    eval "$__array_name[\${#$__array_name[@]}]=\$1"
+    shift
+  done
+}
+
+source ../ext/mconf.sh
+mconf_cxx=${CXX:-g++}
+mconf_cxx_options=(-std=gnu++17 -I ../ext)
+
+exec 7> make_config.mk
+
+array#push mconf_cxx_options -Wall -Wextra
+array#push mconf_cxx_options -Os
+# array#push mconf_cxx_options -O3 -s -DNDEBUG
+# array#push mconf_cxx_options -O2 -s -DNDEBUG
+
+#------------------------------------------------------------------------------
+echo "CHECKS"
+
+use_ncurses=NO
+if mconf/test/header term.h; then
+  if mconf/test/lib ncursesw; then
+    use_ncurses=ncursesw
+    echo 'use_ncurses := 1' >&7
+    echo 'config_CPPFLAGS += -Duse_ncurses' >&7
+    echo 'config_LIBS := -lncursesw $(config_LIBS)' >&7
+  elif mconf/test/lib ncurses; then
+    use_ncurses=ncurses
+    echo 'use_ncurses := 1' >&7
+    echo 'config_CPPFLAGS += -Duse_ncurses' >&7
+    echo 'config_LIBS := -lncurses $(config_LIBS)' >&7
+  fi
+fi
+
+echo "config_CXXFLAGS = ${mconf_cxx_options[*]}" >&7
+
+echo
+
+#------------------------------------------------------------------------------
+echo "DEPENDENCIES"
+echo "  ncurses: $use_ncurses"
+echo
+
