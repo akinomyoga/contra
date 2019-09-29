@@ -1,3 +1,5 @@
+#define __STDC_FORMAT_MACROS
+
 #include <string.h>
 #include <tchar.h>
 #include <wchar.h>
@@ -9,6 +11,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cmath>
+#include <cinttypes>
 #include <vector>
 #include <sstream>
 #include <iomanip>
@@ -59,7 +62,7 @@ namespace {
   }
 
   static void report_error_message(const char* title, DWORD error_code) {
-    std::fprintf(stderr, "%s: (Error: %lu) ", title, error_code);
+    std::fprintf(stderr, "%s: (Error: %" PRIu16 ") ", title, (std::uint16_t) error_code);
     {
       auto message = get_error_message(error_code);
       std::vector<char32_t> buffer;
@@ -1035,7 +1038,7 @@ namespace {
               process_input((code & _character_mask) | (modifiers & _modifier_mask));
             } else {
               if (settings.m_debug_print_unknown_key)
-                std::fprintf(stderr, "key (unknown): wparam=%08x flags=%x\n", wParam, modifiers);
+                std::fprintf(stderr, "key (unknown): wparam=%08" PRIx64 " flags=%x\n", (std::uint64_t) wParam, modifiers);
               return false;
             }
           }
