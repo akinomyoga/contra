@@ -771,7 +771,7 @@ namespace term {
           m_word_selection_level++;
 
         for (curpos_t y1 = ybeg; y1 < yend; y1++) {
-          line_t& line = view.line(y1);
+          line_t& line = view.lline(y1);
           bool dirty = false;
           if (y1 != ylog) {
             dirty = line.clear_selection();
