@@ -366,7 +366,7 @@
   初めのバイトがアクセントの記号であり、次のバイトが適用対象のアルファベットである。
   (d) 二バイト目に SP を指定する事によってアクセント単体を表現できる。
   (e) CCITT T.61 の non-spacing underline は次に現れる図形文字に適用される。
-  その間に別の制御機能が幾つか挟まれていても良い。  
+  その間に別の制御機能が幾つか挟まれていても良い。
 
   [T.61/Table-2] 縦書きの場合には半角文字は90度回転する。但し、double width の
   時にはそのままの形で表示するという事の様だ。と思ったがこの double width は、
@@ -2286,6 +2286,22 @@
   Done
 ------------------------------------------------------------------------------
 
+2019-10-04
+
+* 2019-09-24 時々 paste が変になる原因が分かった。
+  \n は \r に変換しなければならないのだ。
+
+  % →twin/twin.cpp の get_clipboardを修正した。
+
+  と思ったが修正するべき箇所は此処なのだろうか。
+  辿ってみると get_clipboard から
+  app.input_paste, term.input_paste に文字列が渡される。
+  term.input_paste の中で bracketed paste の時とそうでない時で処理を分けるべき。
+  →その様に修正し直した。
+
+  どうやら contra は bracketed paste に対応しているけれども
+  screen は対応していないという事だった様である。
+
 2019-09-09
 
 * ttty: 座標計算が xenl ではない端末に対応するという事 [#D0223]
@@ -2324,7 +2340,7 @@
   | #define tilde_glitch                   CUR Booleans[18]
   | #define transparent_underline          CUR Booleans[19]
   | #define xon_xoff                       CUR Booleans[20]
-  | 
+  |
   | #define columns                        CUR Numbers[0]
   | #define init_tabs                      CUR Numbers[1]
   | #define lines                          CUR Numbers[2]
@@ -2333,7 +2349,7 @@
   | #define padding_baud_rate              CUR Numbers[5]
   | #define virtual_terminal               CUR Numbers[6]
   | #define width_status_line              CUR Numbers[7]
-  | 
+  |
   | #define back_tab                       CUR Strings[0]
   | #define bell                           CUR Strings[1]
   | #define carriage_return                CUR Strings[2]
@@ -2697,11 +2713,11 @@
   何故だろうか。Cygwin X Server の上で
   padparadscha tx11 を動かしてみるとそんなに遅くない。
   という事は Linux の X Server 上で動かすと遅いという事なのか。
-  
+
   或いは 32 bit が悪いのか何なのか。何れにしてももう少し描画
   ルーチンに関しては改良ができるかもしれない。
   特に一番最後の転送部分に関しては更新のあった部分だけ転送する様にできる筈。
-  
+
   と思って今試してみたが実はそんなに遅くなかった。
   取り敢えずこれについては気にしない事にする。
 

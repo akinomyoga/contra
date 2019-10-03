@@ -2518,12 +2518,14 @@ namespace ansi {
       input_c1(ascii_csi);
       input_unsigned(200);
       input_byte(ascii_tilde);
-    }
-    for (char32_t const u : data) input_uchar(u);
-    if (bracketed_paste_mode) {
+      for (char32_t const u : data) input_uchar(u);
       input_c1(ascii_csi);
       input_unsigned(201);
       input_byte(ascii_tilde);
+    } else {
+      // 改行 LF は RET に書き換える。
+      for (char32_t const u : data)
+        input_uchar(u == '\n' ? '\r' : u);
     }
     input_flush();
     return true;
