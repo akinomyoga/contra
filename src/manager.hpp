@@ -816,6 +816,7 @@ namespace term {
     static double calculate_zoom(coord_t base, int zoom_level) {
       return std::ceil(base * std::pow(zoom_ratio, zoom_level) + zoom_level);
     }
+  public:
     void initialize_zoom(coord_t xpixel = -1, coord_t ypixel = -1) {
       if (xpixel >= 0) m_zoom_xpixel0 = limit::term_xpixel.clamp(xpixel);
       if (ypixel >= 0) m_zoom_ypixel0 = limit::term_ypixel.clamp(ypixel);
@@ -830,6 +831,7 @@ namespace term {
       while (calculate_zoom(m_zoom_ypixel0, m_zoom_level_min) < ypixel_min) m_zoom_level_min++;
       this->update_zoom(0);
     }
+  private:
     void update_zoom(int zoom_level) {
       m_zoom_level = std::clamp(zoom_level, m_zoom_level_min, m_zoom_level_max);
       coord_t const ypixel_zoom = calculate_zoom(m_zoom_ypixel0, m_zoom_level);

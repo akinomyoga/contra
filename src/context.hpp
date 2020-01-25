@@ -51,6 +51,19 @@ namespace contra::app {
   };
 
   template<typename T>
+  struct conv_impl<T, std::enable_if_t<std::is_floating_point_v<T>, void>> {
+    bool operator()(T& value, const char* text) const {
+      char* endp;
+      double const v = std::strtod(text, &endp);
+      if (endp && endp[0] == '\0') {
+        value = v;
+        return true;
+      }
+      return false;
+    }
+  };
+
+  template<typename T>
   struct conv_impl<T, std::enable_if_t<std::is_integral_v<T>, void>> {
     static int xdigit2int(char c) {
       if ('0' <= c && c <= '9') return c - '0';

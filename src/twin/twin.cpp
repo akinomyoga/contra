@@ -1,4 +1,11 @@
 #define __STDC_FORMAT_MACROS
+#define CONTRA_TWIN_SUPPORT_HIGHDPI
+
+#ifdef CONTRA_TWIN_SUPPORT_HIGHDPI
+# define _WIN32_WINNT_WIN6 0x0600
+# define WINVER        _WIN32_WINNT_WIN6
+# define _WIN32_WINNT  _WIN32_WINNT_WIN6
+#endif
 
 #include <string.h>
 #include <tchar.h>
@@ -176,8 +183,8 @@ namespace {
 
     // Note: initialize_fontnames の後に呼び出す事
     void initialize_logfont() {
-      m_logfont_normal.lfHeight = 7;
-      m_logfont_normal.lfWidth  = 14;
+      m_logfont_normal.lfHeight = 14;
+      m_logfont_normal.lfWidth  = 7;
       m_logfont_normal.lfEscapement = 0;
       m_logfont_normal.lfOrientation = 0;
       m_logfont_normal.lfWeight = FW_NORMAL;
@@ -591,8 +598,17 @@ namespace {
 
   public:
     twin_window_t(contra::app::context& actx): actx(actx), gbuffer(actx) {
+#ifdef CONTRA_TWIN_SUPPORT_HIGHDPI
+      HDC hdc = ::GetWindowDC(NULL);
+      double const dpiscale = std::max(1.0, ::GetDeviceCaps(hdc, LOGPIXELSX) / 96.0);
+      ::ReleaseDC(NULL, hdc);
+#else
+      double const dpiscale = 1.0;
+#endif
+
       // size and dimension
-      wstat.configure_metric(actx);
+      wstat.configure_metric(actx, dpiscale);
+      manager.initialize_zoom(wstat.m_xpixel, wstat.m_ypixel);
       manager.reset_size(wstat.m_col, wstat.m_row, wstat.m_xpixel, wstat.m_ypixel);
 
       // other settings
@@ -1311,15 +1327,21 @@ namespace {
   }
 }
 
-  bool run(contra::app::context& actx) {
+  bool run(contra::app::context& actx, HINSTANCE hInstance, int nCmdShow) {
+#ifdef CONTRA_TWIN_SUPPORT_HIGHDPI
+    SetProcessDPIAware();
+#endif
     twin_window_t win(actx);
     main_window = &win;
 
-    HINSTANCE const hInstance = GetModuleHandle(NULL);
     HWND const hWnd = win.create_window(hInstance);
-    ::ShowWindow(hWnd, SW_SHOW);
+    ::ShowWindow(hWnd, nCmdShow);
     ::UpdateWindow(hWnd);
     return win.do_loop();
+  }
+  bool run(contra::app::context& actx) {
+    HINSTANCE const hInstance = GetModuleHandle(NULL);
+    return run(actx, hInstance, SW_SHOW);
   }
 }
 
@@ -1329,13 +1351,7 @@ extern "C" int WINAPI _tWinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE 
   contra::app::context actx;
   std::string config_dir = contra::term::get_config_directory();
   actx.load((config_dir + "/contra/twin.conf").c_str());
-  contra::twin::twin_window_t win(actx);
-  contra::twin::main_window = &win;
-
-  HWND const hWnd = win.create_window(hInstance);
-  ::ShowWindow(hWnd, nCmdShow);
-  ::UpdateWindow(hWnd);
-  if (!win.do_loop()) return 1;
+  if (!contra::twin::run(actx, hInstance, nCmdShow)) return 1;
   return 0;
 }
 

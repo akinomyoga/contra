@@ -25,17 +25,21 @@ namespace ansi {
     coord_t m_xframe = 1;
     coord_t m_yframe = 1;
   public:
-    void configure_metric(contra::app::context& actx) {
+    void configure_metric(contra::app::context& actx, double scale = 1.0) {
       actx.read("term_col", this->m_col = 80);
       actx.read("term_row", this->m_row = 30);
-      actx.read("term_xpixel", this->m_xpixel = 7);
-      actx.read("term_ypixel", this->m_ypixel = 13);
-      actx.read("term_xframe", this->m_xframe = 1);
-      actx.read("term_yframe", this->m_yframe = 1);
       this->m_col = limit::term_col.clamp(this->m_col);
       this->m_row = limit::term_row.clamp(this->m_row);
-      this->m_xpixel = limit::term_xpixel.clamp(this->m_xpixel);
-      this->m_ypixel = limit::term_ypixel.clamp(this->m_ypixel);
+
+      double xpixel, ypixel, xframe, yframe;
+      actx.read("term_xpixel", xpixel = 7);
+      actx.read("term_ypixel", ypixel = 13);
+      actx.read("term_xframe", xframe = 1);
+      actx.read("term_yframe", yframe = 1);
+      this->m_xpixel = limit::term_xpixel.clamp(std::round(xpixel * scale));
+      this->m_ypixel = limit::term_ypixel.clamp(std::round(ypixel * scale));
+      this->m_xframe = std::round(xframe * scale);
+      this->m_yframe = std::round(yframe * scale);
     }
 
   public:

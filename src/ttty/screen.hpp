@@ -119,7 +119,10 @@ namespace ttty {
       m_manager.reset_size(params.col, params.row, params.xpixel, params.ypixel);
 
       std::unique_ptr<contra::term::terminal_application> sess = contra::term::create_terminal_session(params);
-      if (!sess) return false;
+      if (!sess) {
+        reset_tty();
+        return false;
+      }
       m_manager.add_app(std::move(sess));
 
       sgrcap.initialize();
