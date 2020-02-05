@@ -344,6 +344,14 @@ namespace ansi {
     }
 
   private:
+    /*?lwiki
+     * @fn auto [i, x] = _prob_glb(xdst, includeZwBody);
+     * @param[in] xdst
+     * @param[in] includeZwBody
+     * 指定した位置 xdst に対応する文字境界のインデックス i と位置 x を取得します。
+     * 特に xdst 以前の最後の文字境界を取得します。
+     * `includeZwBody` が false/true の時、xdst にある零幅文字の後/前の境界を取得します。
+     */
     std::pair<std::size_t, curpos_t> _prop_glb(curpos_t xdst, bool include_zw_body) const {
       std::size_t const ncell = m_cells.size();
       std::size_t i = 0;
@@ -364,6 +372,14 @@ namespace ansi {
       m_prop_x = x;
       return {i, x};
     }
+    /*?lwiki
+     * @fn auto [i, x] = _prob_lub(xdst, includeZwBody);
+     * @param[in] xdst
+     * @param[in] includeZwBody
+     * 指定した位置 xdst に対応する文字境界のインデックス i と位置 x を取得します。
+     * 特に xdst 以後の最初の文字境界を取得します。
+     * `includeZwBody` が false/true の時、xdst にある零幅文字の前/後の境界を取得します。
+     */
     std::pair<std::size_t, curpos_t> _prop_lub(curpos_t xdst, bool include_zw_body) const {
       std::size_t const ncell = m_cells.size();
       std::size_t i = 0;
@@ -579,6 +595,19 @@ namespace ansi {
     void _bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr);
     void _prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr);
   public:
+    /*?lwiki
+     * @fn void shift_cells(p1, p2, shift, flags, width, fill_atr);
+     * @param[in] curpos_t p1, p2;
+     *   移動が起こる範囲を指定します。この範囲の外側に影響はありません。
+     * @param[in] curpos_t shift;
+     *   移動量を指定します。負の値は左側に移動することを示します。
+     * @param[in] line_shift_flags flags;
+     *   細かい動作を制御するフラグを指定します。
+     * @param[in] curpos_t width;
+     *   行の幅を指定します。境界を超えて出て行った内容は失われます。
+     * @param[in] attribute_t const& fill_attr;
+     *   移動後に残る余白を埋める描画属性を指定します。
+     */
     void shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attribute_t const& fill_attr) {
       if (!m_prop_enabled)
         _mono_shift_cells(p1, p2, shift, flags, width, fill_attr);
@@ -593,6 +622,7 @@ namespace ansi {
      * @fn bool set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool dcsm);
      * @fn bool set_selection_word(curpos_t x, word_selection_type type, bool gatm);
      * @fn bool clear_selection();
+     * 選択範囲を設定・解除します。
      * @return 選択範囲の設定によって実際に行内容に変更があった時に true を返します。
      */
     bool set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool dcsm);

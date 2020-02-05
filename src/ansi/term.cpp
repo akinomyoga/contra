@@ -412,6 +412,15 @@ namespace ansi {
       slh = 0;
     else if (b.cur.x() > (b.cur.xenl() ? sll + 1 : sll))
       sll = b.width() - 1;
+
+    // IRM: 書き込み時ではなくて先に shift して置く
+    if (s.get_mode(mode_irm)) {
+      if (simd)
+        line.shift_cells(slh, b.cur.x() + 1, -char_width, line_shift_flags::dcsm, b.width(), term.fill_attr());
+      else
+        line.shift_cells(b.cur.x(), sll + 1, char_width, line_shift_flags::dcsm, b.width(), term.fill_attr());
+    }
+
     if (simd) std::swap(slh, sll);
 
     // (行頭より後でかつ) 行末に文字が入らない時は折り返し
@@ -500,10 +509,19 @@ namespace ansi {
 
     std::vector<cell_t>& buffer = term.m_buffer;
     mwg_assert(buffer.empty());
-    curpos_t xwrite = 0;
+    curpos_t xbeg = x;
     auto _write = [&] () {
-      if (simd) std::reverse(buffer.begin(), buffer.end());
-      line->write_cells(xwrite, &buffer[0], buffer.size(), 1, dir);
+      if (simd) {
+        mwg_assert(sll <= x + 1 && x < xbeg, "slh=%d sll=%d xbeg=%d x=%d", slh, sll, xbeg, x);
+        if (s.get_mode(mode_irm))
+          line->shift_cells(sll, xbeg + 1, x - xbeg, line_shift_flags::dcsm, b.width(), term.fill_attr());
+        std::reverse(buffer.begin(), buffer.end());
+        line->write_cells(x + 1, &buffer[0], buffer.size(), 1, dir);
+      } else {
+        if (s.get_mode(mode_irm))
+          line->shift_cells(xbeg, sll + 1, x - xbeg, line_shift_flags::dcsm, b.width(), term.fill_attr());
+        line->write_cells(xbeg, &buffer[0], buffer.size(), 1, dir);
+      }
       buffer.clear();
     };
 
@@ -530,10 +548,7 @@ namespace ansi {
       }
 
       // 文字は取り敢えず buffer に登録する
-      if (simd)
-        xwrite = std::max(0, x - (char_width - 1));
-      else if (buffer.empty())
-        xwrite = x;
+      if (buffer.empty()) xbeg = x;
       cell.character = u;
       cell.width = char_width;
       buffer.emplace_back(cell);
