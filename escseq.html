@@ -231,7 +231,7 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 </tr>
 <tr>
   <th>BEL</th><td>00/07</td><td>\x07</td><td>\007</td><td>\a</td><td>^G</td>
-  <th>ETB</th><td>01/07</td><td>\x17</td><td>\027</td><td></td><td>^W</td>
+  <th class="markC">ETB</th><td>01/07</td><td>\x17</td><td>\027</td><td></td><td>^W</td>
   <th>ESA</th><td>08/07</td><td>\x87</td><td>\207</td>
   <th>EPA</th><td>09/07</td><td>\x97</td><td>\227</td>
 </tr>
@@ -1251,8 +1251,24 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>smSaveCursor</th>       <td>?1048</td></tr>
 <tr><th>smAltScreenCursor</th>  <td>?1049</td></tr>
 <tr><th>smBracketedPasteMode</th><td>?2004</td></tr>
-
 </table>
+
+<pre>
+# 端末毎の対応モードの一覧
+
+| 端末      |         1111111111222|333|
+|           |1234567890123456789012|234|
+|-----------|----------------------|---|
+| xterm     | * *       *       *  |   |
+| RLogin    | * * *     *     * *  |   |
+| mintty    |   *   *   *     * *  | **|
+| screen    |   *               *  |  *|
+| Tera Term | * *       *       *  | **|
+| mlterm    | * *       *       *  | **|
+| urxvt     |   *               *  |   |
+| contra    |** * ***** *       ***|***|
+| ECMA-48   |******************DD**|RRR|
+</pre>
 
 <ul>
 <li>Mode 3 <dfn class="cmode">CRM</dfn>: CONTROL REPRESENTATION MODE (Show Control Character Mode) [既定値 off]
@@ -1263,6 +1279,19 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   <ul>
   <li>互換性: [ECMA-48/7.2.2], VT100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/CRM">VT510: CRM</a></li>
+  </ul>
+</li>
+<li>Mode 4 <dfn class="cmode">IRM</dfn>: INSERTION REPLACEMENT MODE (Insert/Replace Mode) [既定値 off]
+  <ul>
+  <li><dfn class="cmode-rm">REPLACE</dfn> (RM): 図形文字または図形表現を持つ制御機能は、
+    現在表示位置にある図形を置き換える (または実装によっては図形を組み合わせる)。</li>
+  <li><dfn class="cmode-sm">INSERT</dfn> (SM): 図形文字または図形表現を持つ制御機能は、現在表示位置に図形を挿入する。</li>
+  </ul>
+  <ul>
+  <li>互換性: [ECMA-48/7.2.10]</li>
+  <li><a href="http://www.vt100.net/docs/vt510-rm/IRM">VT510: IRM</a></li>
+  <li>SIMD が設定されている時にどのように振る舞うべきかは非自明。
+    HEM(PRECEDING) に準じた振る舞いにするのが自然だろうか。</li>
   </ul>
 </li>
 </ul>
@@ -1278,11 +1307,8 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </colgroup>
 <tr><th>引数</th><th>環境</th><th>略号</th><th>有効</th><th>無効</th><th>実装</th></tr>
 <tr><td>1</td>     <td class="markA">-</td><td>GATM</td> <td>Guarded area transfer</td><td></td><td></td></tr>
-<tr><td>2</td>     <td>x</td><td>AM/KAM</td>             <td>Keyboard Action Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>4</td>     <td>x</td><td>IRM</td>                <td>Insert Mode</td><td class="markB"></td><td>@</td></tr>
 <tr><td>5</td>     <td class="markA">-</td><td>SRTM</td> <td>Status reporting transfer</td><td></td><td></td></tr>
 <tr><td>11</td>    <td class="markA">-</td><td>PUM</td>  <td>Positioning unit</td><td></td><td>X</td></tr>
-<tr><td>12</td>    <td>vx</td><td>SRM</td>               <td class="markB">Send/receive Mode</td><td>Local Echo on</td><td></td></tr>
 <tr><td>13</td>    <td class="markA">-</td><td>FEAM</td> <td>Format effector action</td><td></td><td>X</td></tr>
 <tr><td>14</td>    <td class="markA">-</td><td>FETM</td> <td>Format effector transfer</td><td></td><td>X</td></tr>
 <tr><td>15</td>    <td class="markA">-</td><td>MATM</td> <td>Multiple area transfer</td><td></td><td>X</td></tr>
@@ -1581,8 +1607,8 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </li>
 <li><dfn class="cfunc">SIMD</dfn>: SELECT IMPLICIT MOVEMENT DIRECTION
   <p>[ECMA-48/8.3.120] 暗黙的移動の向きを設定する。この設定は次の SIMD まで有効である。
-  0 を指定すると暗黙的移動は右向きである。
-  1 を指定すると暗黙的移動は左向きである。
+  0 を指定すると暗黙的移動は右向き(つまり文字進行方向)である。
+  1 を指定すると暗黙的移動は左向き(つまり文字進行と逆方向)である。
   引数の既定値は 0 である。
   </p>
 </li>
@@ -3871,13 +3897,44 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </table>
 
 <ul>
-<li>Mode ?1 <dfn class="cmode">DECCKM</dfn>: Cursor Keys Mode
+<li>Mode 2 <dfn class="cmode">KAM</dfn>: KEYBOARD ACTION MODE [既定値 RM]
+  <ul>
+  <li><dfn class="cmode-rm">ENABLED</dfn> (RM): 全てまたは一部の手動入力装置が使用可能状態。</li>
+  <li><dfn class="cmode-sm">DISABLED</dfn> (SM): 全てまたは一部の手動入力装置が使用不能状態。</li>
+  </ul>
+  <ul>
+  <li>互換性: [ECMA-48/7.2.11]</li>
+  <li>互換性: [<a href="http://www.vt100.net/docs/vt510-rm/KAM">VT510: KAM</a>]
+    キー入力が送信されなくなる。
+    キーボードがロックされている間 "Wait" という文字列がキーボード状態行に表示される。
+    f3 及び f4 のキー入力は影響を受けない。
+  </li>
+  <li>互換性: xterm は全てのキーが効かなくなる。
+    SRM によるローカルエコーも起こらない。マウスは有効。
+    RLogin も同様の振る舞い。</li>
+  </ul>
+</li>
+<li>Mode 12 <dfn class="cmode">SRM</dfn>: SEND/RECEIVE MODE (Local Echo: Send/Receive Mode) [既定値 SM]
+  <ul>
+  <li><dfn class="cmode-rm">MONITOR</dfn> (RM): 手許で入力した内容がすぐに表示される (ローカルエコー)。</li>
+  <li><dfn class="cmode-sm">SIMULTANEOUS</dfn> (SM): ユーザ入力と表示は切断されている。装置が受信した内容だけが表示される。</li>
+  </ul>
+  <ul>
+  <li>互換性: [ECMA-48/7.2.15]</li>
+  <li>互換性: [<a href="http://www.vt100.net/docs/vt510-rm/SRM">VT510: SRM</a>]
+    註: Description の最後の文に typo がある。not が抜けている。
+  </li>
+  <li>互換性: xterm はローカルエコーが有効のとき全てのキーのキーシーケンスを直接端末に渡す。
+    CR, LF も変化なく渡す。マウスは渡さない (多分)。RLogin も同様の振る舞い。</li>
+  </ul>
+</li>
+<li>Mode ?1 <dfn class="cmode">DECCKM</dfn>: Cursor Keys Mode [既定値 RM]
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECCKM">VT510/DECCKM</a>]
     設定されている時、矢印キーによる入力を <kbd>SS3 A</kbd> 等の形式で送信する。
     解除されている時、矢印キーによる入力を <kbd>CSI A</kbd> 等の形式で送信する。
   </p>
 </li>
-<li>Mode ?66 <dfn class="cmode">DECNKM</dfn>: Numeric Keypad Mode
+<li>Mode ?66 <dfn class="cmode">DECNKM</dfn>: Numeric Keypad Mode [既定値 RM]
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECNKM">VT510/DECNKM</a>]
     設定されている時、テンキーでエスケープシーケンスを送る (DECKPAM)。
     解除されている時、テンキーで通常の文字を送る (DECKPNM)。
