@@ -1,7 +1,7 @@
 # Modes
 
 flags     mode_gatm               ansi1       false
-flags     mode_kam                ansi2       unsupported
+flags     mode_kam                ansi2       false
 flags     mode_crm                ansi3       unsupported
 flags     mode_irm                ansi4       false
 flags     mode_srtm               ansi5       unsupported
@@ -11,7 +11,7 @@ flags     mode_bdsm               ansi8       false
 flags     mode_dcsm               ansi9       true
 flags     mode_hem                ansi10      false
 flags     mode_pum                ansi11      unsupported
-flags     mode_srm                ansi12      unsupported
+flags     mode_srm                ansi12      true
 flags     mode_feam               ansi13      unsupported
 flags     mode_fetm               ansi14      unsupported
 flags     mode_matm               ansi15      unsupported

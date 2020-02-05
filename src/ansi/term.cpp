@@ -1612,8 +1612,10 @@ namespace ansi {
 
     if (!s.get_mode(mode_hem))
       line.shift_cells(x1, sll + 1, shift, flags, b.width(), term.fill_attr());
-    else
+    else {
+      // Note #0229: そこにある文字に関係なく x1 + 1 から挿入・削除を行う。
       line.shift_cells(slh, x1 + 1, -shift, flags, b.width(), term.fill_attr());
+    }
 
     // カーソル位置
     if (s.dcsm()) {
@@ -2272,8 +2274,12 @@ namespace ansi {
   }
 
   bool term_t::input_key(key_t key) {
+    if (this->state().get_mode(mode_kam)) return false;
+    bool local_echo = !this->state().get_mode(mode_srm);
     key_t mod = key & _modifier_mask;
     key_t code = key & _character_mask;
+
+    if (local_echo) input_flush();
 
     // Meta は一律で ESC にする。
     if (mod & modifier_meta) {
@@ -2309,7 +2315,7 @@ namespace ansi {
       // Note: ESC, RET, HT はそのまま (C-[, C-m, C-i) 送信される。
       if (code == ascii_bs) code = ascii_del;
       contra::encoding::put_u8(code, input_buffer);
-      input_flush();
+      input_flush(local_echo);
       return true;
     }
 
@@ -2321,17 +2327,17 @@ namespace ansi {
       ) {
         // C-@ ... C-_
         input_byte(code & 0x1F);
-        input_flush();
+        input_flush(local_echo);
         return true;
       } else if (code == ascii_question) {
         // C-? → ^? (DEL 0x7F)
         input_byte(ascii_del);
-        input_flush();
+        input_flush(local_echo);
         return true;
       } else if (code == ascii_bs) {
         // C-back → ^_ (US 0x1F)
         input_byte(ascii_us);
-        input_flush();
+        input_flush(local_echo);
         return true;
       }
     }
@@ -2356,7 +2362,7 @@ namespace ansi {
       input_byte(ascii_semicolon);
       input_unsigned(code);
       input_byte(ascii_tilde);
-      input_flush();
+      input_flush(local_echo);
       return true;
     }
 
@@ -2401,7 +2407,7 @@ namespace ansi {
         input_modifier(mod);
       }
       input_byte(ascii_tilde);
-      input_flush();
+      input_flush(local_echo);
       return true;
     case key_up   : a = ascii_A; goto alpha;
     case key_down : a = ascii_B; goto alpha;
@@ -2418,7 +2424,7 @@ namespace ansi {
         input_c1(m_state.get_mode(mode_decckm) ? ascii_ss3 : ascii_csi);
       }
       input_byte(a);
-      input_flush();
+      input_flush(local_echo);
       return true;
     case key_focus: a = ascii_I; goto alpha_focus;
     case key_blur:  a = ascii_O; goto alpha_focus;

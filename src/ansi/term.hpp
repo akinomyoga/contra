@@ -801,7 +801,9 @@ namespace ansi {
   private:
     std::vector<byte> input_buffer;
   public:
-    void input_flush() {
+    void input_flush(bool local_echo = false) {
+      if (local_echo)
+        this->write(reinterpret_cast<char const*>(&input_buffer[0]), input_buffer.size());
       if (m_send_target)
         m_send_target->dev_write(reinterpret_cast<char const*>(&input_buffer[0]), input_buffer.size());
       input_buffer.clear();
