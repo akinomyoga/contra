@@ -376,7 +376,7 @@ namespace term {
     bool input_key(key_t key) {
       using namespace contra::ansi;
       if (key & modifier_application) {
-        key &= ~modifier_application;
+        key &= ~(modifier_application | modifier_autorepeat);
         if (ascii_1 <= key && key <= ascii_9) {
           std::size_t index = key - ascii_1;
           if (index < m_apps.size())
@@ -845,7 +845,7 @@ namespace term {
     bool input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t x, curpos_t y) {
       if (!(key & modifier_application) &&
         app().input_mouse(key, px, py, x, y)) return true;
-      key &= ~modifier_application;
+      key &= ~(modifier_application | modifier_autorepeat);
 
       using namespace contra::ansi;
 

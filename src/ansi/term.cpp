@@ -2275,6 +2275,11 @@ namespace ansi {
 
   bool term_t::input_key(key_t key) {
     if (this->state().get_mode(mode_kam)) return false;
+    if (key & modifier_autorepeat) {
+      if (!this->state().get_mode(mode_decarm)) return true;
+      key &= ~modifier_autorepeat;
+    }
+
     bool local_echo = !this->state().get_mode(mode_srm);
     key_t mod = key & _modifier_mask;
     key_t code = key & _character_mask;

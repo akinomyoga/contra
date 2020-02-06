@@ -606,6 +606,8 @@ namespace {
       double const dpiscale = 1.0;
 #endif
 
+      std::fill(std::begin(m_kbflags), std::end(m_kbflags), 0);
+
       // size and dimension
       wstat.configure_metric(actx, dpiscale);
       manager.initialize_zoom(wstat.m_xpixel, wstat.m_ypixel);
@@ -974,7 +976,23 @@ namespace {
       return false;
     }
 
+    byte m_kbflags[256];
+    enum kbflag_flags {
+      kbflag_pressed = 1,
+    };
+    void process_keyup(WPARAM wParam) {
+      if (wParam < 256)
+        m_kbflags[wParam] &= ~kbflag_pressed;
+    }
     bool process_key(WPARAM wParam, key_t modifiers) {
+      if (wParam < 256) {
+        // Note #D0238: autorepeat 検出
+        if (m_kbflags[wParam] & kbflag_pressed)
+          modifiers |= modifier_autorepeat;
+        else
+          m_kbflags[wParam] |= kbflag_pressed;
+      }
+
       static BYTE kbstate[256];
 
       if (ascii_A <= wParam && wParam <= ascii_Z) {
@@ -1167,16 +1185,19 @@ namespace {
         if (hWnd != this->hWnd) goto defproc;
         if (process_key(wParam, get_modifiers())) return 0L;
         goto defproc;
+      case WM_KEYUP:
+      case WM_SYSKEYUP:
+        if (hWnd != this->hWnd) goto defproc;
+        process_keyup(wParam);
+        return 0L;
       case WM_IME_CHAR:
         if (hWnd != this->hWnd) goto defproc;
         process_char(wParam, get_modifiers());
         return 0L;
       case WM_CHAR:
       case WM_DEADCHAR:
-      case WM_KEYUP:
       case WM_SYSCHAR:
       case WM_SYSDEADCHAR:
-      case WM_SYSKEYUP:
         // 余分な操作をしない様に無視
         // DEADCHAR は accent や diacritic などの入力の時に発生する。
         return 0L;

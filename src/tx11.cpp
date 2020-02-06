@@ -714,6 +714,8 @@ namespace {
 
       // other settings
       settings.configure(actx);
+
+      std::fill(std::begin(m_kbflags), std::end(m_kbflags), 0);
     }
     ~tx11_window_t() {}
 
@@ -749,7 +751,7 @@ namespace {
         ::XSetWMName(display, this->main, &win_name);
 
         // Events
-        XSelectInput(display, this->main, ExposureMask | KeyPressMask | StructureNotifyMask );
+        XSelectInput(display, this->main, ExposureMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask);
       }
 
       // #D0162 何だかよく分からないが終了する時はこうするらしい。
@@ -759,6 +761,7 @@ namespace {
       this->gbuffer.initialize(this->display);
 
       XAutoRepeatOn(display);
+      XkbSetDetectableAutoRepeat(display, True, NULL); // #D0238
       this->manager.set_events(static_cast<term::terminal_events&>(*this));
       return true;
     }
@@ -851,7 +854,21 @@ namespace {
       return ret;
     }
 
+
+    byte m_kbflags[256];
+    enum kbflag_flags {
+      kbflag_pressed = 1,
+    };
+    void process_keyup(KeyCode keycode) {
+      m_kbflags[(byte) keycode] &= ~kbflag_pressed;
+    }
     bool process_key(KeyCode keycode, key_t modifiers) {
+      // Note #D0238: autorepeat 検出
+      if (m_kbflags[(byte) keycode] & kbflag_pressed)
+        modifiers |= modifier_autorepeat;
+      else
+        m_kbflags[(byte) keycode] |= kbflag_pressed;
+
       key_t code = XkbKeycodeToKeysym(display, keycode, 0, 0);
       if (ascii_sp <= code && code <= ascii_tilde) {
         // 前提: G1 の文字は XK は ASCII/Unicode に一致している。
@@ -941,6 +958,9 @@ namespace {
       case KeyPress:
         process_key(event.xkey.keycode, get_modifiers());
         break;
+      case KeyRelease:
+        process_keyup(event.xkey.keycode);
+        break;
 
       case ClientMessage: // #D0162
         if ((Atom) event.xclient.data.l[0] == WM_DELETE_WINDOW)
@@ -956,7 +976,6 @@ namespace {
         this->process_window_resize();
         break;
 
-      case KeyRelease:
       case MapNotify:
       case ReparentNotify:
         // 無視
