@@ -1,3 +1,4 @@
+#define CONTRA_TX11_SUPPORT_HIGHDPI
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -504,6 +505,10 @@ namespace {
       release();
     }
 
+    void reset_size(ansi::window_state_t const& wstat) {
+      m_text_drawer.set_size(wstat.m_xpixel, wstat.m_ypixel);
+    }
+
   public:
     void bitblt(
       context_t ctx1, coord_t x1, coord_t y1, coord_t w, coord_t h,
@@ -721,6 +726,18 @@ namespace {
 
   private:
     bool is_session_ready() { return display && manager.is_active(); }
+
+#ifdef CONTRA_TX11_SUPPORT_HIGHDPI
+    double get_dpi(Display* display) {
+      const char* dpi_resource = ::XGetDefault(display, "Xft", "dpi");
+      if (!dpi_resource) return 0.0;
+      char* endptr;
+      double const result = std::strtod(dpi_resource, &endptr);
+      if (endptr && *endptr) return 0.0;
+      return result;
+    }
+#endif
+
   public:
     Display* display_handle() { return this->display; }
     Window window_handle() const { return this->main; }
@@ -731,6 +748,16 @@ namespace {
         std::fprintf(stderr, "contra: Failed to open DISPLAY=%s\n", std::getenv("DISPLAY"));
         return false;
       }
+#ifdef CONTRA_TX11_SUPPORT_HIGHDPI
+      if (double const dpi = get_dpi(display)) {
+        double const dpiscale = std::max(1.0, dpi / 96.0);
+        wstat.configure_metric(actx, dpiscale);
+        gbuffer.reset_size(wstat);
+        manager.initialize_zoom(wstat.m_xpixel, wstat.m_ypixel);
+        manager.reset_size(wstat.m_col, wstat.m_row, wstat.m_xpixel, wstat.m_ypixel);
+      }
+#endif
+
       int const screen = DefaultScreen(display);
       Window const root = RootWindow(display, screen);
 
