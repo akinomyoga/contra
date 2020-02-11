@@ -2274,9 +2274,10 @@ namespace ansi {
   }
 
   bool term_t::input_key(key_t key) {
-    if (this->state().get_mode(mode_kam)) return false;
+    auto const& s = this->state();
+    if (s.get_mode(mode_kam)) return false;
     if (key & modifier_autorepeat) {
-      if (!this->state().get_mode(mode_decarm)) return true;
+      if (!s.get_mode(mode_decarm)) return true;
       key &= ~modifier_autorepeat;
     }
 
@@ -2398,12 +2399,26 @@ namespace ansi {
     case key_f22: a = 37; goto tilde;
     case key_f23: a = 38; goto tilde;
     case key_f24: a = 39; goto tilde;
-    case key_home  : a = 1; goto tilde;
     case key_insert: a = 2; goto tilde;
     case key_delete: a = 3; goto tilde;
-    case key_end   : a = 4; goto tilde;
     case key_prior : a = 5; goto tilde;
     case key_next  : a = 6; goto tilde;
+    case key_home:
+      if (s.get_mode(mode_xtVt220Key)) {
+        a = 1;
+        goto tilde;
+      } else {
+        a = ascii_H;
+        goto alpha;
+      }
+    case key_end:
+      if (s.get_mode(mode_xtVt220Key)) {
+        a = 4;
+        goto tilde;
+      } else {
+        a = ascii_F;
+        goto alpha;
+      }
     tilde:
       input_c1(ascii_csi);
       input_unsigned(a);

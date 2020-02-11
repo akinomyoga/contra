@@ -63,6 +63,13 @@ flags     mode_decncsm            dec95       false
 flags     mode_decscnm_           private     false
 accessor  mode_decscnm            dec5        -
 
+# Function-Keys
+#flags     mode_xtSunKey           dec1051     false
+#flags     mode_xtHpKey            dec1052     false
+#flags     mode_xtScoKey           dec1053     false
+#flags     mode_xtX11R6Key         dec1060     false
+flags     mode_xtVt220Key         dec1061     false
+
 # Mouse report
 accessor  mode_xtMouseX10         dec9        -
 accessor  mode_xtMouseVt200       dec1000     -
