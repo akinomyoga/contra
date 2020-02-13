@@ -28,6 +28,7 @@ flags     mode_decsclm            dec4        true
 flags     mode_decom              dec6        false
 flags     mode_decarm             dec8        true
 flags     mode_decnkm             dec66       false
+flags     mode_decbkm             dec67       false
 
 # Bracketed Paste Mode
 flags     mode_bracketedPasteMode dec2004     true

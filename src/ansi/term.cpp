@@ -2364,7 +2364,7 @@ namespace ansi {
     // 通常文字
     if (mod == 0 && code < _key_base) {
       // Note: ESC, RET, HT はそのまま (C-[, C-m, C-i) 送信される。
-      if (code == ascii_bs) code = ascii_del;
+      if (code == ascii_bs && !s.get_mode(mode_decbkm)) code = ascii_del;
       contra::encoding::put_u8(code, input_buffer);
       input_flush(local_echo);
       return true;

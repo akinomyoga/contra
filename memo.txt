@@ -353,6 +353,7 @@
 
   * done: DECSET(1050..1061) は対応した。
   * done: DECKPAM の時の kp keys に対応した。
+  * done: DECBKM に対応。
 
   * modify*Keys の振る舞いはどうなっているのか。
 
