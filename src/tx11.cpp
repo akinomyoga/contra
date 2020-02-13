@@ -156,7 +156,9 @@ namespace {
 
     Display* m_display = NULL;
     int m_screen = 0;
+
     std::string m_fontnames[16];
+    int m_font_padding;
 
   public:
     xft_font_factory(contra::app::context& actx) {
@@ -183,6 +185,7 @@ namespace {
       actx.read("tx11_font_ansi8"  , m_fontnames[8] );
       actx.read("tx11_font_ansi9"  , m_fontnames[9] );
       actx.read("tx11_font_frak"   , m_fontnames[10]);
+      actx.read("tx11_font_padding", m_font_padding = 0);
     }
     bool setup_display(Display* display) {
       if (m_display == display) return false;
@@ -222,10 +225,11 @@ namespace {
       if (font & font_decdhl) height *= 2;
       if (font & font_decdwl) width *= 2;
 
-      // Note: ぴったりだと隣の文字とくっついてしまう様だ。
-      if (!(font & font_flag_small)) {
-        height--;
-        width--;
+      // Note: ぴったりだと隣の文字とくっついてしまう様だ (使っているフォントの問題?)
+      if (!(font & font_flag_small) && m_font_padding) {
+        int const padding = std::min(m_font_padding, (int) std::ceil(width / 4));
+        height -= padding;
+        width -= padding;
       }
       double const xscale = std::floor(std::max(width, 1.0)) / (height * 0.5);
 
