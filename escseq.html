@@ -7,10 +7,14 @@
   <meta http-equiv="Content-Script-Type" content="text/javascript" />
   <title>akinomyoga/contra :: Control functions</title>
   <meta name="agh-fly-type" content="color" />
-  <link rel="stylesheet" type="text/css" href="/agh/mwg.slide.css" />
-  <link rel="stylesheet" type="text/css" href="/agh/prog.std.css" />
-  <script type="text/javascript" charset="utf-8" src="/agh/agh.fly.js"></script>
+  <!-- <link rel="stylesheet" type="text/css" href="/agh/mwg.slide.css" /> -->
+  <!-- <link rel="stylesheet" type="text/css" href="/agh/prog.std.css" /> -->
+  <!-- <script type="text/javascript" charset="utf-8" src="/agh/agh.fly.js"></script> -->
+  <link rel="stylesheet" type="text/css" href="https://akinomyoga.github.io/agh/mwg.slide.css" />
+  <link rel="stylesheet" type="text/css" href="https://akinomyoga.github.io/agh/prog.std.css" />
+  <script type="text/javascript" charset="utf-8" src="https://akinomyoga.github.io/agh/agh.fly.js"></script>
   <script type="text/javascript" charset="utf-8" src="escseq.js"></script>
+  <link rel="stylesheet" type="text/css" href="escseq.css" />
   <style type="text/css">
   table.normal>*>tr>th{background-color:#eee;}
   table.normal>*>tr>th.markB{background-color:#fee;}
@@ -416,7 +420,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>U</th>    <td>05/05 \x55<br/>\125 85</td><th>e</th>   <td>06/05 \x65<br/>\145 101</td><th>u</th>  <td>07/05 \x75<br/>\165 117</td></tr>
 <tr><th>&amp;</th><td>02/06 \x26<br/>\046 38</td><th>6</th>   <td>03/06 \x36<br/>\066  54</td><th>F</th>  <td>04/06 \x46<br/>\106  70</td>
     <th>V</th>    <td>05/06 \x56<br/>\126 86</td><th>f</th>   <td>06/06 \x66<br/>\146 102</td><th>v</th>  <td>07/06 \x76<br/>\166 118</td></tr>
-<tr><th>'</th>    <td>02/07 \x27<br/>\047 39</td><th>7</th>   <td>03/07 \x37<br/>\067  55</td><th>G</th>  <td>04/07 \x47<br/>\107  71</td>
+<tr><th>'</th>    <td>02/07 \x27<br/>\047 39</td><th>7</th>   <td>03/07 \x37<br/>\067  55</td><th>G</th>  <td>04/07 \x47<br/>\107  71</td><!--'-->
     <th>W</th>    <td>05/07 \x57<br/>\127 87</td><th>g</th>   <td>06/07 \x67<br/>\147 103</td><th>w</th>  <td>07/07 \x77<br/>\167 119</td></tr>
 <tr><th>(</th>    <td>02/08 \x28<br/>\050 40</td><th>8</th>   <td>03/08 \x38<br/>\070  56</td><th>H</th>  <td>04/08 \x48<br/>\110  72</td>
     <th>X</th>    <td>05/08 \x58<br/>\130 88</td><th>h</th>   <td>06/08 \x68<br/>\150 104</td><th>x</th>  <td>07/08 \x78<br/>\170 120</td></tr>
@@ -460,7 +464,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <tr><th rowspan="13">符号識別機能</th>
       <td>0Ft</td><td><kbd>ESC SP <i>&lt;Ft&gt;</i></kbd></td><td>ACS (ANNOUNCE CODE STRUCTURE)</td><td>ECMA-35/15.2</td></tr>
   <tr><td>1Ft</td><td><kbd>ESC ! <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>CZD (C0-DESIGNATE)</td><td rowspan="2">ECMA-35/14.2</td></tr>
-  <tr><td>2Ft</td><td><kbd>ESC " <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>C1D (C1-DESIGNATE)</td></tr>
+  <tr><td>2Ft</td><td><kbd>ESC " <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>C1D (C1-DESIGNATE)</td></tr><!--"-->
   <tr><td>4Ft</td><td><kbd>ESC $ <i>&lt;I&gt;</i> <i>&lt;Ft&gt;</i></kbd></td><td>Designation of multiple-byte graphic character sets</td><td>ECMA-35/13.2.3, 14.3</td></tr>
   <tr><td>5Ft</td><td><kbd>ESC % <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>DOCS (DESIGNATE OTHER CODING SYSTEM)</td><td>ECMA-35/15.4</td></tr>
   <tr><td>6Ft</td><td><kbd>ESC &amp; <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>IRR (IDENTIFY REVISED REGISTRATION)</td><td>ECMA-35/14.5</td></tr>
@@ -478,7 +482,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <tr><td>nFp</td><td><kbd>ESC <i>&lt;I&gt;</i><strong>+</strong> <i>&lt;Fp&gt;</i></kbd></td>
       <td>私用の機能その他 (Reserved for Private use)</td><td>ECMA-35/13.2.2</td></tr>
   <tr><th rowspan="2">(予約)</th>
-      <td>7Ft</td> <td><kbd>ESC ' <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td rowspan="2">-R- (予約)</td><td rowspan="2">-</td></tr>
+      <td>7Ft</td> <td><kbd>ESC ' <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td rowspan="2">-R- (予約)</td><td rowspan="2">-</td></tr><!--'-->
   <tr><td>12Ft</td><td><kbd>ESC , <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td></tr>
   </table>
   <ul>
@@ -522,7 +526,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>PU1</th><td><kbd>ESC Q</kbd></td>
     <th>INT</th><td><kbd>ESC a</kbd></td>
     <th>-R-</th><td><kbd>ESC q</kbd></td></tr>
-<tr><th class="markB">C1D</th><td><kbd>ESC " <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">C1D</th><td><kbd>ESC " <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><!--"-->
     <th>DECCAHT</th><td><kbd>ESC 2</kbd></td>
     <th>BPH</th><td><kbd>ESC B</kbd></td>
     <th>PU2</th><td><kbd>ESC R</kbd></td>
@@ -552,7 +556,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>SPA</th><td><kbd>ESC V</kbd></td>
     <th>-R-</th><td><kbd>ESC f</kbd></td>
     <th>-R-</th><td><kbd>ESC v</kbd></td></tr>
-<tr><th>-R-</th><td><kbd>ESC '</kbd></td>
+<tr><th>-R-</th><td><kbd>ESC '</kbd></td><!--'-->
     <th>DECSC</th><td><kbd>ESC 7</kbd></td>
     <th>ESA</th><td><kbd>ESC G</kbd></td>
     <th>EPA</th><td><kbd>ESC W</kbd></td>
@@ -1039,7 +1043,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>DCS</th>   <td>コマンド列</td>   <td><kbd>DCS <i>&lt;GL'&gt;</i><strong>*</strong> ST</kbd></td><td>Device Control String</td></tr>
 <tr><th>SOS</th>   <td>キャラクタ列</td> <td><kbd>SOS <i>&lt;U&gt;</i><strong>*</strong> ST</kbd></td> <td>Start of String</td></tr>
 <tr><th>PM</th>    <td>コマンド列</td>   <td><kbd>PM <i>&lt;GL'&gt;</i><strong>*</strong> ST</kbd></td> <td>Privacy Message</td></tr>
-<tr><th>APC</th>   <td>コマンド列</td>   <td><kbd>APC <i>&lt;GL'&gt;</i><strong>*</strong> ST</kbd></td><td>Application Program Command</td></tr>
+<tr><th>APC</th>   <td>コマンド列</td>   <td><kbd>APC <i>&lt;GL'&gt;</i><strong>*</strong> ST</kbd></td><td>Application Program Command</td></tr><!--'-->
 <tr><th>scrTDS</th><td>キャラクタ列?</td><td><kbd>ESC k <i>&lt;U&gt;</i><strong>*</strong> ST</kbd></td> <td>Title Definition String (GNU Screen)</td></tr>
 </table>
 
@@ -1127,7 +1131,9 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h2>モード</h2>
-
+<p>モードは端末の動作方法を指定する2値の変数である。
+  モードを操作する制御機能には以下のものがある。
+</p>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th><th>備考</th></tr>
 <tr><th>SM</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> h</kbd></td><td></td></tr>
@@ -1138,34 +1144,41 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>DECRPM</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ y</kbd><br/><kbd>CSI ? <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ y</kbd></td><td>(応答)</td></tr>
 </table>
 <ul>
-<li><dfn class="cfunc">SM</dfn>: SET MODE
+<li><dfn class="cfunc">SM</dfn>: SET MODE <kbd>CSI <i>&lt;Pm&gt;</i> h</kbd>
   <p>番号で指定されたモードを有効にする。</p>
   <ul>
-  <li>互換性: [ECMA-48/8.3.1251], vt100, xterm</li>
+  <li>互換性: [ECMA-48/8.3.125], vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT510: SM</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">RM</dfn>: RESET MODE
+<li><dfn class="cfunc">RM</dfn>: RESET MODE <kbd>CSI <i>&lt;Pm&gt;</i> l</kbd>
   <p>番号で指定されたモードを無効にする。</p>
   <ul>
   <li>互換性: [ECMA-48/8.3.106], vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/RM">VT510: RM</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECSET</dfn>: Set DEC Mode
+<li>Note: [ECMA-48 SM, RM] によれば
+  [ECMA-48/5.4.1] 私用引数列 (parameter strings for private use)
+  を用いて private モードを実装しても良い。
+  例えば以下の DECSET, DECRST は ? で始まる引数による SM, RM の private モードである。
+</li>
+<li><dfn class="cfunc">DECSET</dfn>: Set DEC Mode <kbd>CSI ? <i>&lt;Pm&gt;</i> h</kbd>
   <ul>
   <li>互換性: vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT510: SM</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECRST</dfn>: Reset DEC Mode
+<li><dfn class="cfunc">DECRST</dfn>: Reset DEC Mode <kbd>CSI ? <i>&lt;Pm&gt;</i> l</kbd>
   <ul>
   <li>互換性: vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/RM">VT510: RM</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECRQM</dfn>: Request Mode</li>
-<li><dfn class="cfunc">DECRPM</dfn>: Report Mode
+<li><dfn class="cfunc">DECRQM</dfn>: Request Mode
+  <kbd>CSI <i>&lt;Ps&gt;</i> $ p</kbd>, <kbd>CSI ? <i>&lt;Ps&gt;</i> $ p</kbd></li>
+<li><dfn class="cfunc">DECRPM</dfn>: Report Mode (応答)
+  <kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ y</kbd>, <kbd>CSI ? <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ y</kbd>
   <p>DECRQM で現在の状態を問い合わせる。
     一度に一つのモードについてのみ尋ねる事が可能である。
     端末から DECRPM によって現在の状態を応答する。
@@ -1185,79 +1198,218 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </li>
 </ul>
 
-<h4>Note</h4>
-<ul>
-<li>[ECMA-48] SM, RM によれば
-  [ECMA-48/5.4.1] 私用引数列 (parameter strings for private use)
-  を用いて private モードを実装しても良い。
-  例えば DECSET, DECRST は ? で始まる引数による private モードである。
-</li>
-</ul>
-
 <h4>一覧表</h4>
 <table class="normal center">
-<tr><th>略号</th><th>Mode</th><th>名前</th></tr>
-<tr><th>GATM</th> <td>1</td> <td>Guarded Area Transfer Mode</td></tr>
-<tr><th>KAM</th>  <td>2</td> <td>Keyboard Action Mode</td></tr>
-<tr><th>CRM</th>  <td>3</td> <td>Control Representation Mode</td></tr>
-<tr><th>IRM</th>  <td>4</td> <td>Insertion Replacement Mode</td></tr>
-<tr><th>SRTM</th> <td>5</td> <td>Status Report Transfer Mode</td></tr>
-<tr><th>ERM</th>  <td>6</td> <td>Erasure Mode</td></tr>
-<tr><th>VEM</th>  <td>7</td> <td>Line Editing Mode</td></tr>
-<tr><th>BDSM</th> <td>8</td> <td>Bi-Directional Support Mode</td></tr>
-<tr><th>DCSM</th> <td>9</td> <td>Device Component Select Mode</td></tr>
-<tr><th>HEM</th>  <td>10</td><td>Character Editing Mode</td></tr>
-<tr><th>PUM</th>  <td>11</td><td>Positioning Unit Mode (deprecated)</td></tr>
-<tr><th>SRM</th>  <td>12</td><td>Send/Receive Mode</td></tr>
-<tr><th>FEAM</th> <td>13</td><td>Format Effector Action Mode</td></tr>
-<tr><th>FETM</th> <td>14</td><td>Format Effector Transfer Mode</td></tr>
-<tr><th>MATM</th> <td>15</td><td>Multiple Area Transfer Mode</td></tr>
-<tr><th>TTM</th>  <td>16</td><td>Transfer Termination Mode</td></tr>
-<tr><th>SATM</th> <td>17</td><td>Selected Area Transfer Mode</td></tr>
-<tr><th>TSM</th>  <td>18</td><td>Tabulation Stop Mode</td></tr>
-<tr><th><del>EBM</del></th>        <td>19</td><td><del>Editing Boundary Mode</del> (廃止)</td></tr>
-<tr><th><del>LNM (LF/NL)</del></th><td>20</td><td><del>Line Feed/New Line Mode</del> (廃止)</td></tr>
-<tr><th>GRCM</th> <td>21</td><td>Graphic Rendition Combination</td></tr>
-<tr><th>ZDM</th>  <td>22</td><td>Zero Default Mode (deprecated)</td></tr>
-<tr><th>wySTCURM<sup>違反</sup></th><td>32</td><td></td></tr>
-<tr><th>WYSTCURM<sup>違反</sup></th><td>33</td><td></td></tr>
-<tr><th>WYULCURM<sup>違反</sup></th><td>34</td><td></td></tr>
+<caption>表: ANSI モード</caption>
+<tr><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th></tr>
+<tr><th>GATM</th> <td>1</td>   <th>PUM<sup>非推奨</sup></th>     <td>11</td>  <th>GRCM</th>                <td>21</td>  <th>-</th><td>31</td></tr>
+<tr><th>KAM</th>  <td>2</td>   <th>SRM</th>                      <td>12</td>  <th>ZDM<sup>非推奨</sup></th><td>22</td>  <th>wySTCURM<sup>違反</sup></th><td>32</td></tr>
+<tr><th>CRM</th>  <td>3</td>   <th>FEAM</th>                     <td>13</td>  <th>-</th><td>23</td>                     <th>WYSTCURM<sup>違反</sup></th><td>33</td></tr>
+<tr><th>IRM</th>  <td>4</td>   <th>FETM</th>                     <td>14</td>  <th>-</th><td>24</td>                     <th>WYULCURM<sup>違反</sup></th><td>34</td></tr>
+<tr><th>SRTM</th> <td>5</td>   <th>MATM</th>                     <td>15</td>  <th>-</th><td>25</td><th>-</th><td>35</td></tr>
+<tr><th>ERM</th>  <td>6</td>   <th>TTM</th>                      <td>16</td>  <th>-</th><td>26</td><th>-</th><td>36</td></tr>
+<tr><th>VEM</th>  <td>7</td>   <th>SATM</th>                     <td>17</td>  <th>-</th><td>27</td><th>-</th><td>37</td></tr>
+<tr><th>BDSM</th> <td>8</td>   <th>TSM</th>                      <td>18</td>  <th>-</th><td>28</td><th>-</th><td>38</td></tr>
+<tr><th>DCSM</th> <td>9</td>   <th>EBM<sup>廃</sup></th>         <td>19</td>  <th>-</th><td>29</td><th>-</th><td>39</td></tr>
+<tr><th>HEM</th>  <td>10</td>  <th>LF/NL<sup>廃</sup> (LNM)</th> <td>20</td>  <th>-</th><td>30</td><th>-</th><td>40</td></tr>
 </table>
+
 <table class="normal center">
+<caption>表: 私用モード (1-40)</caption>
+<tr><th>略号</th><th>Mode</th>
+    <th>略号</th><th>Mode</th>
+    <th>略号</th><th>Mode</th>
+    <th>略号</th><th>Mode</th></tr>
+<tr><th>DECCKM</th><td>?1</td>
+    <th>-</th><td>?11</td>
+    <th>-</th><td>?21</td>
+    <th>-</th><td>?31</td></tr>
+<tr><th>DECANM</th><td>?2</td>
+    <th>attCursorBlink</th><td>?12</td>
+    <th>-</th><td>?22</td>
+    <th>-</th><td>?32</td></tr>
+<tr><th>DECCOLM</th><td>?3</td>
+    <th>DECSCFDM<sup>*</sup><br/>xtCursorBlink</th><td>?13</td>
+    <th>-</th><td>?23</td>
+    <th>-</th><td>?33</td></tr>
+<tr><th>DECSCLM</th><td>?4</td>
+    <th>DECTEM<sup>*</sup><br/>xtCursorBlinkXOR</th><td>?14</td>
+    <th>-</th><td>?24</td>
+    <th>DECRLM</th><td>?34</td></tr>
+<tr><th>DECSCNM</th><td>?5</td>
+    <th>-</th><td>?15</td>
+    <th>DECTCEM</th><td>?25</td>
+    <th>DECHEBM<br/>rxvtNoFontShift</th><td>?35</td></tr>
+<tr><th>DECOM</th><td>?6</td>
+    <th>-</th><td>?16</td>
+    <th>-</th><td>?26</td>
+    <th>DECHEM</th><td>?36</td></tr>
+<tr><th>DECAWM</th><td>?7</td>
+    <th>-</th><td>?17</td>
+    <th>-</th><td>?27</td>
+    <th>-</th><td>?37</td></tr>
+<tr><th>DECARM</th><td>?8</td>
+    <th>DECPFF</th><td>?18</td>
+    <th>-</th><td>?28</td>
+    <th>rlTektronix</th><td>?38</td></tr>
+<tr><th>xtMouseX10</th><td>?9</td>
+    <th>DECPEX</th><td>?19</td>
+    <th>-</th><td>?29</td>
+    <th>-</th><td>?39</td></tr>
+<tr><th>-</th><td>?10</td>
+    <th>-</th><td>?20</td>
+    <th>rxvtHideScroll</th><td>?30</td>
+    <th>xtEnableColm</th><td>?40</td></tr>
+</table>
+<ul>
+<li>Note: DECSCFDM, DECTEM は all-espaces.txt に記述が見られるが他を探しても見つからない。</li>
+<li>?38 は rlogin に記述があった。</li>
+</ul>
+
+<table class="normal center">
+<caption>表: 私用モード (41-80)</caption>
+<tr><th>略号</th><th>Mode</th>
+    <th>略号</th><th>Mode</th>
+    <th>略号</th><th>Mode</th>
+    <th>略号</th><th>Mode</th></tr>
+<tr><th>xtMore1Fix</th><td>?41</td>
+    <th>-</th><td>?51</td>
+    <th>DECVCCM</th><td>?61</td>
+    <th>-</th><td>?71</td></tr>
+<tr><th>DECNRCM</th><td>?42</td>
+    <th>-</th><td>?52</td>
+    <th>-</th><td>?62</td>
+    <th>-</th><td>?72</td></tr>
+<tr><th>-</th><td>?43</td>
+    <th>-</th><td>?53</td>
+    <th>-</th><td>?63</td>
+    <th>DECXRLMM</th><td>?73</td></tr>
+<tr><th>xtMarginBell</th><td>?44</td>
+    <th>-</th><td>?54</td>
+    <th>DECPCCM</th><td>?64</td>
+    <th>-</th><td>?74</td></tr>
+<tr><th>xtBSBackLine</th><td>?45</td>
+    <th>-</th><td>?55</td>
+    <th>-</th><td>?65</td>
+    <th>-</th><td>?75</td></tr>
+<tr><th>xtLogging</th><td>?46</td>
+    <th>-</th><td>?56</td>
+    <th>DECNKM</th><td>?66</td>
+    <th>-</th><td>?76</td></tr>
+<tr><th>smAltScreen</th><td>?47</td>
+    <th>DECNAKB</th><td>?57</td>
+    <th>DECBKM</th><td>?67</td>
+    <th>-</th><td>?77</td></tr>
+<tr><th>-</th><td>?48</td>
+    <th>-</th><td>?58</td>
+    <th>DECKBUM</th><td>?68</td>
+    <th>-</th><td>?78</td></tr>
+<tr><th>-</th><td>?49</td>
+    <th>-</th><td>?59</td>
+    <th>DECLRMM (DECVSSM)</th><td>?69</td>
+    <th>-</th><td>?79</td></tr>
+<tr><th>-</th><td>?50</td>
+    <th>DECHCCM</th><td>?60</td>
+    <th>-</th><td>?70</td>
+    <th>DECSDM</th><td>?80</td></tr>
+</table>
+<ul>
+<li>?80 DECSDM は rlogin に記述があった。</li>
+</ul>
+
+<table class="normal center">
+<caption>表: 私用モード (81-120)</caption>
+<tr><th>略号</th><th>Mode</th>
+    <th>略号</th><th>Mode</th>
+    <th>略号</th><th>Mode</th>
+    <th>略号</th><th>Mode</th></tr>
+<tr><th>-</th><td>?81</td>
+    <th>-</th><td>?91</td>
+    <th>DECCANSM</th><td>?101</td>
+    <th>DECFWM</th><td>?111</td></tr>
+<tr><th>-</th><td>?82</td>
+    <th>-</th><td>?92</td>
+    <th>DECNULM</th><td>?102</td>
+    <th>DECRPL</th><td>?112</td></tr>
+<tr><th>-</th><td>?83</td>
+    <th>-</th><td>?93</td>
+    <th>DECHDPXM</th><td>?103</td>
+    <th>DECHWUM</th><td>?113</td></tr>
+<tr><th>-</th><td>?84</td>
+    <th>-</th><td>?94</td>
+    <th>DECESKM</th><td>?104</td>
+    <th>DECATCUM</th><td>?114</td></tr>
+<tr><th>-</th><td>?85</td>
+    <th>DECNCSM</th><td>?95</td>
+    <th>-</th><td>?105</td>
+    <th>DECATCBM</th><td>?115</td></tr>
+<tr><th>-</th><td>?86</td>
+    <th>DECRLCM</th><td>?96</td>
+    <th>DECOSCNM</th><td>?106</td>
+    <th>DECBBSM</th><td>?116</td></tr>
+<tr><th>-</th><td>?87</td>
+    <th>DECCRTSM</th><td>?97</td>
+    <th>-</th><td>?107</td>
+    <th>DECECM</th><td>?117</td></tr>
+<tr><th>-</th><td>?88</td>
+    <th>DECARSM</th><td>?98</td>
+    <th>DECNUMLK</th><td>?108</td>
+    <th>-</th><td>?118</td></tr>
+<tr><th>-</th><td>?89</td>
+    <th>DECMCM</th><td>?99</td>
+    <th>DECCAPSLK</th><td>?109</td>
+    <th>-</th><td>?119</td></tr>
+<tr><th>-</th><td>?90</td>
+    <th>DECAAM</th><td>?100</td>
+    <th>DECKLHIM</th><td>?110</td>
+    <th>-</th><td>?120</td></tr>
+</table>
+<ul>
+<li>?111-?117 は vt520 以降という話?</li>
+</ul>
+
+<table class="normal center">
+<caption>表: 私用モード</caption>
 <tr><th>略号</th><th>Mode</th></tr>
-<tr><th>DECCKM</th>             <td>?1</td></tr>
-<tr><th>DECCOLM</th>            <td>?3</td></tr>
-<tr><th>DECOM</th>              <td>?6</td></tr>
-<tr><th>DECAWM</th>             <td>?7</td></tr>
-<tr><th>xtMouseX10</th>     <td>?9</td></tr>
-<tr><th>attCursorBlink</th>     <td>?12</td></tr>
-<tr><th>DECSCFDM (ref: all-espaces)<br/>xtCursorBlink</th><td>?13</td></tr>
-<tr><th>DECTEM (ref: all-espaces)<br/>xtCursorBlinkXOR</th><td>?14</td></tr>
-<tr><th>DECTCEM</th>            <td>?25</td></tr>
-<tr><th>xtEnableColm</th>       <td>?40</td></tr>
-<tr><th>xtBSBackLine</th>       <td>?45</td></tr>
-<tr><th>smAltScreen</th>        <td>?47</td></tr>
-<tr><th>DECLRMM / DECVSSM</th>  <td>?69</td></tr>
-<tr><th>DECNCSM</th>            <td>?95</td></tr>
-<tr><th>xtMouseVt200</th>       <td>?1000</td></tr>
-<tr><th>xtMouseHilite</th>      <td>?1001</td></tr>
-<tr><th>xtMouseButton</th>      <td>?1002</td></tr>
-<tr><th>xtMouseAll</th>         <td>?1003</td></tr>
-<tr><th>xtSendFocus</th>        <td>?1004</td></tr>
-<tr><th>xtExtMouseUtf8</th>     <td>?1005</td></tr>
-<tr><th>xtExtMouseSgr</th>      <td>?1006</td></tr>
-<tr><th>xtExtMouseUrxvt</th>    <td>?1015</td></tr>
-<tr><th>smAltScreenClear</th>   <td>?1047</td></tr>
-<tr><th>smSaveCursor</th>       <td>?1048</td></tr>
-<tr><th>smAltScreenCursor</th>  <td>?1049</td></tr>
-<tr><th>smBracketedPasteMode</th><td>?2004</td></tr>
+<tr><th>xtMouseVt200</th>         <td>?1000</td></tr>
+<tr><th>xtMouseHilite</th>        <td>?1001</td></tr>
+<tr><th>xtMouseButton</th>        <td>?1002</td></tr>
+<tr><th>xtMouseAll</th>           <td>?1003</td></tr>
+<tr><th>xtSendFocus</th>          <td>?1004</td></tr>
+<tr><th>xtExtMouseUtf8</th>       <td>?1005</td></tr>
+<tr><th>xtExtMouseSgr</th>        <td>?1006</td></tr>
+<tr><th>xtAlternateScroll</th>    <td>?1007</td></tr>
+<tr><th>rxvtScrollOnOutput</th>   <td>?1010</td></tr>
+<tr><th>rxvtScrollOnInput</th>    <td>?1011</td></tr>
+<tr><th>xtExtMouseUrxvt</th>      <td>?1015</td></tr>
+<tr><th>xtIntepretMetaKey</th>    <td>?1034</td></tr>
+<tr><th>xtModifyAltNumlock</th>   <td>?1035</td></tr>
+<tr><th>xtMetaSendsEscape</th>    <td>?1036</td></tr>
+<tr><th>xtDeleteSendsDel</th>     <td>?1037</td></tr>
+<tr><th>xtAltSendsEscape</th>     <td>?1039</td></tr>
+<tr><th>xtKeepSelection</th>      <td>?1040</td></tr>
+<tr><th>xtSelectToClipboard</th>  <td>?1041</td></tr>
+<tr><th>xtBellIsUrgent</th>       <td>?1042</td></tr>
+<tr><th>xtPopOnBell</th>          <td>?1043</td></tr>
+<tr><th>xtKeepClipboard</th>      <td>?1044</td></tr>
+<tr><th>smEnableAltScreen</th>    <td>?1046</td></tr>
+<tr><th>smAltScreenClear</th>     <td>?1047</td></tr>
+<tr><th>smSaveCursor</th>         <td>?1048</td></tr>
+<tr><th>smAltScreenCursor</th>    <td>?1049</td></tr>
+<tr><th>xtTerminfoKey</th>        <td>?1050</td></tr>
+<tr><th>xtSunKey</th>             <td>?1051</td></tr>
+<tr><th>xtHpKey</th>              <td>?1052</td></tr>
+<tr><th>xtScoKey</th>             <td>?1053</td></tr>
+<tr><th>xtX11R6Key</th>           <td>?1060</td></tr>
+<tr><th>xtVt220Key</th>           <td>?1061</td></tr>
+<tr><th>smBracketedPasteMode</th> <td>?2004</td></tr>
 </table>
 
 <pre>
 # 端末毎の対応モードの一覧
 
-| 端末      |         1111111111222|333|
-|           |1234567890123456789012|234|
+| ANSI      |         1111111111222|333|
+|   Modes   |1234567890123456789012|234|
 |-----------|----------------------|---|
 | xterm     | * *       *       *  |   |
 | RLogin    | * * *     *     * *  |   |
@@ -1266,22 +1418,29 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 | Tera Term | * *       *       *  | **|
 | mlterm    | * *       *       *  | **|
 | urxvt     |   *               *  |   |
+| vt510     | ***       *       *  |   |
 | contra    |** * ***** *       ***|***|
 | ECMA-48   |******************DD**|RRR|
+
+| DEC       |         |   |  | | |     |        | |  |      | | |     11111 1 11111111111|
+|   ? Modes |         |111|11|2|3|333 3|444 4444|5|66|6 6666|7|8|9999900000 0 00011111111|
+|           |123456789|234|89|5|0|456 8|012 4567|7|01|4 6789|3|0|5678901234 6 78901234567|
+|-----------|---------|---|--|-|-|-----|--------|-|--|------|-|-|------------------------|
+| contra    |* *******|***|  |*| |   - |*  - * *| |  | -*  *| | |*         - -           |
 </pre>
 
 <ul>
-<li>Mode 3 <dfn class="cmode">CRM</dfn>: CONTROL REPRESENTATION MODE (Show Control Character Mode) [既定値 off]
+<li>Mode 3 <dfn class="cmode">CRM</dfn>: CONTROL REPRESENTATION MODE (Show Control Character Mode) [既定値 RM]
   <ul>
   <li><dfn class="cmode-rm">CONTROL</dfn> (RM): 全ての制御機能を通常通りに処理する。</li>
   <li><dfn class="cmode-sm">GRAPHIC</dfn> (SM): RM 以外の受信した全ての制御機能を実行せずに図形文字として表示する。</li>
   </ul>
   <ul>
-  <li>互換性: [ECMA-48/7.2.2], VT100, xterm</li>
+  <li>互換性: [ECMA-48/7.2.2], VT100</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/CRM">VT510: CRM</a></li>
   </ul>
 </li>
-<li>Mode 4 <dfn class="cmode">IRM</dfn>: INSERTION REPLACEMENT MODE (Insert/Replace Mode) [既定値 off]
+<li>Mode 4 <dfn class="cmode">IRM</dfn>: INSERTION REPLACEMENT MODE (Insert/Replace Mode) [既定値 RM]
   <ul>
   <li><dfn class="cmode-rm">REPLACE</dfn> (RM): 図形文字または図形表現を持つ制御機能は、
     現在表示位置にある図形を置き換える (または実装によっては図形を組み合わせる)。</li>
@@ -1829,7 +1988,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>NEL</th><td><kbd>NEL</kbd></td><td>DCSM</td>  <td>次行の行頭</td></tr>
 </table>
 <ul>
-<li>Mode 20 <dfn class="cmode">LNM</dfn><sup>廃</sup>: LINE FEED/NEW LINE MODE [既定値 LINE FEED (RM)]
+<li>Mode 20 <dfn class="cmode">LNM</dfn>, <dfn class="cmode">LF/NL</dfn><sup>廃</sup>: LINE FEED/NEW LINE MODE [既定値 LINE FEED (RM)]
   <p>[ECMA-48 4th/E.1.3] LF, FF, VT を実行した際に行頭に移動するかどうかを設定する。
     ECMA-48 3rd に初めて記述された時から非推奨だった。
   </p>
@@ -2619,20 +2778,20 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <li>xterm: osc sequence, dsc sequence を列挙</li>
 <li>vt510 の頁でまだ列挙していない ASCII Control Functions を列挙、分類、version 確認</li>
 <li>
- DECAAM, DECALN, DECANM, DECARM, DECARSM, DECAUPSS, DECBI, DECBKM, DECCANSM,
- DECCAPSLK, DECCARA, DECCIR, DECCKD, DECCKM, DECCKSR, DECCOLM, DECCRA, DECCRTSM, DECDC,
- DECDLD, DECDMAC, DECEKBD, DECELF, DECERA, DECESKM, DECFI, DECFNK, DECFRA,
- DECHDPXM, DECHEBM, DECHEM, DECIC, DECINVM, DECIPEM, DECKBD, DECKBUM, DECKLHIM, DECKPAM,
- DECKPM, DECKPNM, DECLANS, DECLBAN, DECLFKC, DECLL, DECLRMM, DECLTOD, DECMCM, DECMSR,
- DECNAKB, DECNCSM, DECNKM, DECNRCM, DECNULM, DECNUMLK, DECPAK, DECPCCM, DECPCTERM,
- DECPEX, DECPFF, DECPFK, DECPKA, DECPKFMR, DECRARA, DECRLCM, DECRLM, DECRPAK,
+ DECALN, DECAUPSS, DECBI,
+ DECCARA, DECCIR, DECCKD, DECCKM, DECCKSR, DECCOLM, DECCRA, DECDC,
+ DECDLD, DECDMAC, DECEKBD, DECELF, DECERA, DECFI, DECFNK, DECFRA,
+ DECIC, DECINVM, DECIPEM, DECKBD, DECKPAM,
+ DECKPM, DECKPNM, DECLANS, DECLBAN, DECLFKC, DECLL, DECLTOD, DECMSR,
+ DECPAK, DECPCTERM,
+ DECPFK, DECPKA, DECPKFMR, DECRARA, DECRPAK,
  DECRPDE, DECRPFK, DECRPKT, DECRPM, DECRPSS, DECRPTUI, DECRQCRA, DECRQDE, DECRQKD,
  DECRQKT, DECRQPKFM, DECRQPSR, DECRQSS, DECRQUPSS, DECRSPS, DECRSTS, DECSACE, DECSASD,
- DECSCL, DECSCLM, DECSCNM, DECSCP, DECSCPP, DECSCS, DECSDDT, DECSDPT,
+ DECSCL, DECSCP, DECSCPP, DECSCS, DECSDDT, DECSDPT,
  DECSED, DECSEL, DECSERA, DECSFC, DECSKCV, DECSLCK, DECSLPP, DECSLRM, DECSMBV, DECSMKR,
  DECSNLS, DECSPP, DECSPPCS, DECSPRTT, DECSR, DECSRC, DECSRFR, DECSSCLS, DECSSDT, DECSSL,
  DECST8C, DECSTBM, DECSTR, DECSTRL, DECSWBV, DECTABSR, DECTID, DECTME, DECTSR,
- DECTST, DECUDK, DECVCCM, DECXCPR, DECXRLM, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR,
+ DECTST, DECUDK, DECXCPR, DECXRLM, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR,
  HTS, HVP, IND, IRM, KAM, LNM, LS, MC, NP, PP, PPA, PPB, PPR, RIS, SCODFK,
  SCS, SD, SRM, SS, SU, TBC
 </li>
@@ -2732,7 +2891,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 
 <ul>
 <li><dfn class="cfunc">DA</dfn>: Device Attributes
-  <p>[ECMA-48//8.3.24] 0 以外の引数のシーケンスは端末の識別情報を応答するのに使う。
+  <p>[ECMA-48/8.3.24] 0 以外の引数のシーケンスは端末の識別情報を応答するのに使う。
     具体的な引数の値と意味については今後設立される登録簿に従う (多分、未だ存在していない)。
     引数が 0 の時、端末が識別DAを送ることを要求する。
     引数の既定値は 0 である。
@@ -2824,16 +2983,16 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <tr><th><i>&lt;Seq&gt;</i></th><th>制御機能</th>
       <th><i>&lt;Seq&gt;</i></th><th>制御機能</th>
       <th><i>&lt;Seq&gt;</i></th><th>制御機能</th></tr>
-  <tr><td><kbd>m</kbd>   </td><td>SGR     </td> <td><kbd>$ s</kbd> </td><td>DECSPRTT</td> <td><kbd>* |</kbd> </td><td>DECSNLS </td></tr> 
-  <tr><td><kbd>p</kbd>   </td><td>DECSSL  </td> <td><kbd>$ |</kbd> </td><td>DECSCPP </td> <td><kbd>+ w</kbd> </td><td>DECSPP  </td></tr> 
-  <tr><td><kbd>r</kbd>   </td><td>DECSTBM </td> <td><kbd>$ ~</kbd> </td><td>DECSSDT </td> <td><kbd>SP p</kbd></td><td>DECSSCLS</td></tr> 
-  <tr><td><kbd>s</kbd>   </td><td>DECSLRM </td> <td><kbd>$ }</kbd> </td><td>DECSASD </td> <td><kbd>SP q</kbd></td><td>DECSCUSR</td></tr> 
+  <tr><td><kbd>m</kbd>   </td><td>SGR     </td> <td><kbd>$ s</kbd> </td><td>DECSPRTT</td> <td><kbd>* |</kbd> </td><td>DECSNLS </td></tr>
+  <tr><td><kbd>p</kbd>   </td><td>DECSSL  </td> <td><kbd>$ |</kbd> </td><td>DECSCPP </td> <td><kbd>+ w</kbd> </td><td>DECSPP  </td></tr>
+  <tr><td><kbd>r</kbd>   </td><td>DECSTBM </td> <td><kbd>$ ~</kbd> </td><td>DECSSDT </td> <td><kbd>SP p</kbd></td><td>DECSSCLS</td></tr>
+  <tr><td><kbd>s</kbd>   </td><td>DECSLRM </td> <td><kbd>$ }</kbd> </td><td>DECSASD </td> <td><kbd>SP q</kbd></td><td>DECSCUSR</td></tr>
   <tr><td><kbd>t</kbd>   </td><td>DECSLPP </td> <td><kbd>( p</kbd> </td><td>DECSDPT </td> <td><kbd>SP r</kbd></td><td>DECSKCV </td></tr>
-  <tr><td><kbd>" p</kbd> </td><td>DECSCL  </td> <td><kbd>* p</kbd> </td><td>DECSPPCS</td> <td><kbd>SP t</kbd></td><td>DECSWBV </td></tr> 
-  <tr><td><kbd>" q</kbd> </td><td>DECSCA  </td> <td><kbd>* r</kbd> </td><td>DECSCS  </td> <td><kbd>SP u</kbd></td><td>DECSMBV </td></tr> 
-  <tr><td><kbd>" t</kbd> </td><td>DECSRFR </td> <td><kbd>* s</kbd> </td><td>DECSFC  </td> <td><kbd>SP v</kbd></td><td>DECSLCK </td></tr> 
-  <tr><td><kbd>" u</kbd> </td><td>DECSTRL </td> <td><kbd>* u</kbd> </td><td>DECSCP  </td> <td></td><td></td></tr> 
-  <tr><td><kbd>$ q</kbd> </td><td>DECSDDT </td> <td><kbd>* x</kbd> </td><td>DECSACE </td> <td></td><td></td></tr> 
+  <tr><td><kbd>" p</kbd> </td><td>DECSCL  </td> <td><kbd>* p</kbd> </td><td>DECSPPCS</td> <td><kbd>SP t</kbd></td><td>DECSWBV </td></tr>
+  <tr><td><kbd>" q</kbd> </td><td>DECSCA  </td> <td><kbd>* r</kbd> </td><td>DECSCS  </td> <td><kbd>SP u</kbd></td><td>DECSMBV </td></tr>
+  <tr><td><kbd>" t</kbd> </td><td>DECSRFR </td> <td><kbd>* s</kbd> </td><td>DECSFC  </td> <td><kbd>SP v</kbd></td><td>DECSLCK </td></tr>
+  <tr><td><kbd>" u</kbd> </td><td>DECSTRL </td> <td><kbd>* u</kbd> </td><td>DECSCP  </td> <td></td><td></td></tr>
+  <tr><td><kbd>$ q</kbd> </td><td>DECSDDT </td> <td><kbd>* x</kbd> </td><td>DECSACE </td> <td></td><td></td></tr>
   </table>
 </li>
 <li><dfn class="cfunc">DECRPSS</dfn>: Report Selection or Setting
@@ -3040,11 +3199,6 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     設定されている時に前景色・背景色の既定色を反転する。
     説明には設定されている時に明るい背景で解除されている時に暗い背景とも書かれているが、
     xterm の実装では設定されている時に反転という実装になっている。
-  </p>
-</li>
-<li>Mode ?8 <dfn class="cmode">DECARM</dfn>: Autorepeat Mode [既定値: SM]
-  <p>[<a href="https://www.vt100.net/docs/vt510-rm/DECARM.html">VT510/DECARM</a>]
-    設定されている時、キーを 0.5 秒以上押し続けるとキーを離すまでそのキーの入力を繰り返す。
   </p>
 </li>
 </ul>
@@ -3593,7 +3747,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     RGB, CMY の第6引数は無視される。
     RGB, CMY, CMYK の第7引数と第8引数はそれぞれ error tolerance と tolerance を測る color space を指定する。
     tolerance color space は 0 for CIELUV, 1 for CIELAB である。
-    <u>実際の実装で RGB, CMY の第6引数以降および CMYK の第7引数以降にたいおうしている物は見られない。</u>
+    <u>実際の実装で RGB, CMY の第6引数以降および CMYK の第7引数以降に対応している物は見られない。</u>
     例えば KDE Konsole が 38;2;r;g;b の形式を実装しているが tolerance の引数には対応していない。
     逆に KDE Konsole に対して tolerance を送信するとそれが別の意味に解釈されるので問題である。
     (tolerance は元々 ISO 8613 形式のドキュメントの印刷などで品質評価に使うものなのだろうと思われる。
@@ -3927,6 +4081,11 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <li>互換性: xterm はローカルエコーが有効のとき全てのキーのキーシーケンスを直接端末に渡す。
     CR, LF も変化なく渡す。マウスは渡さない (多分)。RLogin も同様の振る舞い。</li>
   </ul>
+</li>
+<li>Mode ?8 <dfn class="cmode">DECARM</dfn>: Autorepeat Mode [既定値: SM]
+  <p>[<a href="https://www.vt100.net/docs/vt510-rm/DECARM.html">VT510/DECARM</a>]
+    設定されている時、キーを 0.5 秒以上押し続けるとキーを離すまでそのキーの入力を繰り返す。
+  </p>
 </li>
 <li>Mode ?1 <dfn class="cmode">DECCKM</dfn>: Cursor Keys Mode [既定値 RM]
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECCKM">VT510/DECCKM</a>]
