@@ -2355,6 +2355,8 @@ namespace ansi {
       case key_kpadd: code = ascii_plus    ; break;
       case key_kpsub: code = ascii_minus   ; break;
       case key_kpdiv: code = ascii_slash   ; break;
+      case key_kpeq : code = ascii_equals  ; break;
+      case key_kpent: code = ascii_cr      ; break;
       default: ;
       }
     }
@@ -2522,10 +2524,10 @@ namespace ansi {
       if (key_f1 <= code && code <= key_f4) {
         if (!use_tilde_for_f1_f4) {
           switch (code) {
-          case key_f1: F = ascii_P; goto alpha_f4;
-          case key_f2: F = ascii_Q; goto alpha_f4;
-          case key_f3: F = ascii_R; goto alpha_f4;
-          case key_f4: F = ascii_S; goto alpha_f4;
+          case key_f1: F = ascii_P; goto alpha_ss3;
+          case key_f2: F = ascii_Q; goto alpha_ss3;
+          case key_f3: F = ascii_R; goto alpha_ss3;
+          case key_f4: F = ascii_S; goto alpha_ss3;
           }
         }
       } else {
@@ -2576,6 +2578,25 @@ namespace ansi {
       case key_begin : F = ascii_E; goto alpha;
       case key_focus : F = ascii_I; goto alpha_focus;
       case key_blur  : F = ascii_O; goto alpha_focus;
+
+      case key_kpmul: F = ascii_j; goto alpha_ss3;
+      case key_kpadd: F = ascii_k; goto alpha_ss3;
+      case key_kpsep: F = ascii_l; goto alpha_ss3;
+      case key_kpsub: F = ascii_m; goto alpha_ss3;
+      case key_kpdec: F = ascii_n; goto alpha_ss3;
+      case key_kpdiv: F = ascii_o; goto alpha_ss3;
+      case key_kp0  : F = ascii_p; goto alpha_ss3;
+      case key_kp1  : F = ascii_q; goto alpha_ss3;
+      case key_kp2  : F = ascii_r; goto alpha_ss3;
+      case key_kp3  : F = ascii_s; goto alpha_ss3;
+      case key_kp4  : F = ascii_t; goto alpha_ss3;
+      case key_kp5  : F = ascii_u; goto alpha_ss3;
+      case key_kp6  : F = ascii_v; goto alpha_ss3;
+      case key_kp7  : F = ascii_w; goto alpha_ss3;
+      case key_kp8  : F = ascii_x; goto alpha_ss3;
+      case key_kp9  : F = ascii_y; goto alpha_ss3;
+      case key_kpeq : F = ascii_X; goto alpha_ss3;
+      case key_kpent: F = ascii_M; goto alpha_ss3;
       }
     }
     return false;
@@ -2596,7 +2617,7 @@ namespace ansi {
 
   alpha_focus:
     if (!m_state.get_mode(mode_xtSendFocus)) return false;
-  alpha_f4:
+  alpha_ss3:
     if (mod) {
       input_c1(ascii_csi);
       input_byte(ascii_1);

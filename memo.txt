@@ -349,7 +349,13 @@
   xterm がどの様に振る舞うのか詳細に調べる必要がある気がする。
 
   xterm には様々な設定の項目が存在している。
-  modify*Keys もそうだし、
+  modify*Keys もそうだし、DECSET(1050..1061) もそうである。
+
+  * done: DECSET(1050..1061) は対応した。
+  * done: DECKPAM の時の kp keys に対応した。
+
+  * modify*Keys の振る舞いはどうなっているのか。
+
 
 2020-02-10
 
@@ -2684,6 +2690,20 @@
 ------------------------------------------------------------------------------
 
 2020-02-13
+
+* ansi: DECKPAM の時の kp keys [#D0242]
+
+  実装していて気付いたが kp の DECKPAM に対応していない気がする。
+  SM の時 AM である。既定では false にしている。
+  SM にして見る。やはり何も入力できない状態になる。
+  但し、home 等は動く様である。うーん。
+
+  取り敢えず実装した。xterm default の pc-style function-key の時は
+  kp0,kpdec,kp1..9 はそれぞれ DECKPAM の時、ins,del,home..next
+  のエスケープシーケンスを送る様だが、その処理は contra ではもっと
+  前の段階で実施している。ここで function key に翻訳する必要はない。
+  従って、vt220 モードと同様に kp0..kp9 をそれ専用の絵シーケンスで
+  符号化して送る実装にする事にした。
 
 * ansi: support function-key modes [#D0241]
 
