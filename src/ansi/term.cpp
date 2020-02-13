@@ -1808,6 +1808,32 @@ namespace ansi {
   }
 
   //---------------------------------------------------------------------------
+  // Function key mode settings
+
+  static void do_set_funckey_mode(term_t& term, std::uint32_t spec) {
+    tstate_t& s = term.state();
+    s.m_funckey_mode = spec;
+  }
+  static int do_rqm_funckey_mode(term_t& term, std::uint32_t spec) {
+    tstate_t& s = term.state();
+    return s.m_funckey_mode == spec ? 1 : 2;
+  }
+  void do_sm_xtTerminfoKey(term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_terminfo : 0); }
+  void do_sm_xtSunKey     (term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_sun      : 0); }
+  void do_sm_xtHpKey      (term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_hp       : 0); }
+  void do_sm_xtScoKey     (term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_sco      : 0); }
+  void do_sm_xtX11R6Key   (term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_x11r6    : 0); }
+  void do_sm_xtVt220Key   (term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_vt220    : 0); }
+  void do_sm_ctrTildeKey  (term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_contra   : 0); }
+  int do_rqm_xtTerminfoKey(term_t& term) { return do_rqm_funckey_mode(term, funckey_terminfo); }
+  int do_rqm_xtSunKey     (term_t& term) { return do_rqm_funckey_mode(term, funckey_sun     ); }
+  int do_rqm_xtHpKey      (term_t& term) { return do_rqm_funckey_mode(term, funckey_hp      ); }
+  int do_rqm_xtScoKey     (term_t& term) { return do_rqm_funckey_mode(term, funckey_sco     ); }
+  int do_rqm_xtX11R6Key   (term_t& term) { return do_rqm_funckey_mode(term, funckey_x11r6   ); }
+  int do_rqm_xtVt220Key   (term_t& term) { return do_rqm_funckey_mode(term, funckey_vt220   ); }
+  int do_rqm_ctrTildeKey  (term_t& term) { return do_rqm_funckey_mode(term, funckey_contra  ); }
+
+  //---------------------------------------------------------------------------
   // Mouse report settings
 
   static void do_set_mouse_report(term_t& term, std::uint32_t spec) {
@@ -1971,6 +1997,15 @@ namespace ansi {
     case mode_xtExtMouseUtf8 : return do_rqm_xtExtMouseUtf8(*m_term);
     case mode_xtExtMouseSgr  : return do_rqm_xtExtMouseSgr(*m_term);
     case mode_xtExtMouseUrxvt: return do_rqm_xtExtMouseUrxvt(*m_term);
+
+    case mode_xtTerminfoKey: return do_rqm_xtTerminfoKey(*m_term);
+    case mode_xtSunKey     : return do_rqm_xtSunKey     (*m_term);
+    case mode_xtHpKey      : return do_rqm_xtHpKey      (*m_term);
+    case mode_xtScoKey     : return do_rqm_xtScoKey     (*m_term);
+    case mode_xtX11R6Key   : return do_rqm_xtX11R6Key   (*m_term);
+    case mode_xtVt220Key   : return do_rqm_xtVt220Key   (*m_term);
+    case mode_ctrTildeKey  : return do_rqm_ctrTildeKey  (*m_term);
+
     default: return 0;
     }
   }
@@ -2026,6 +2061,14 @@ namespace ansi {
     case mode_xtExtMouseUtf8 : do_sm_xtExtMouseUtf8(*m_term, value);  break;
     case mode_xtExtMouseSgr  : do_sm_xtExtMouseSgr(*m_term, value);   break;
     case mode_xtExtMouseUrxvt: do_sm_xtExtMouseUrxvt(*m_term, value); break;
+
+    case mode_xtTerminfoKey: do_sm_xtTerminfoKey(*m_term, value); break;
+    case mode_xtSunKey     : do_sm_xtSunKey     (*m_term, value); break;
+    case mode_xtHpKey      : do_sm_xtHpKey      (*m_term, value); break;
+    case mode_xtScoKey     : do_sm_xtScoKey     (*m_term, value); break;
+    case mode_xtX11R6Key   : do_sm_xtX11R6Key   (*m_term, value); break;
+    case mode_xtVt220Key   : do_sm_xtVt220Key   (*m_term, value); break;
+    case mode_ctrTildeKey  : do_sm_ctrTildeKey  (*m_term, value); break;
     default: ;
     }
   }
@@ -2372,88 +2415,223 @@ namespace ansi {
       return true;
     }
 
-    // application key mode の時修飾なしの関数キーは \eOA 等にする。
-    char a = 0;
-    switch (code) {
-    case key_f1 : a = 11; goto tilde;
-    case key_f2 : a = 12; goto tilde;
-    case key_f3 : a = 13; goto tilde;
-    case key_f4 : a = 14; goto tilde;
-    case key_f5 : a = 15; goto tilde;
-    case key_f6 : a = 17; goto tilde;
-    case key_f7 : a = 18; goto tilde;
-    case key_f8 : a = 19; goto tilde;
-    case key_f9 : a = 20; goto tilde;
-    case key_f10: a = 21; goto tilde;
-    case key_f11: a = 23; goto tilde;
-    case key_f12: a = 24; goto tilde;
-    case key_f13: a = 25; goto tilde;
-    case key_f14: a = 26; goto tilde;
-    case key_f15: a = 28; goto tilde;
-    case key_f16: a = 29; goto tilde;
-    case key_f17: a = 31; goto tilde;
-    case key_f18: a = 32; goto tilde;
-    case key_f19: a = 33; goto tilde;
-    case key_f20: a = 34; goto tilde;
-    case key_f21: a = 36; goto tilde;
-    case key_f22: a = 37; goto tilde;
-    case key_f23: a = 38; goto tilde;
-    case key_f24: a = 39; goto tilde;
-    case key_insert: a = 2; goto tilde;
-    case key_delete: a = 3; goto tilde;
-    case key_prior : a = 5; goto tilde;
-    case key_next  : a = 6; goto tilde;
-    case key_home:
-      if (s.get_mode(mode_xtVt220Key)) {
-        a = 1;
+    bool use_tilde_for_f1_f4 = false;
+    int Ps1 = 0, F = 0;
+
+    switch (s.m_funckey_mode) {
+    case funckey_sun: // Mode ?1051 (Sun function-key mode)
+      F = ascii_z;
+      if (key_f1 <= code && code < key_f24) {
+        if (code <= key_f10)
+          Ps1 = 224 - key_f1 + code;
+        else if (code <= key_f20)
+          Ps1 = 182 - key_f11 + code;
+        else
+          Ps1 = 208;
+        goto input_csi_key;
+      }
+      switch (code) {
+      case key_insert: Ps1 = 2; goto input_csi_key;
+      case key_delete: Ps1 = 3; goto input_csi_key;
+      case key_home  : Ps1 = 214; goto input_csi_key;
+      case key_end   : Ps1 = 220; goto input_csi_key;
+      case key_prior : Ps1 = 222; goto input_csi_key;
+      case key_next  : Ps1 = 216; goto input_csi_key;
+      }
+      goto pc_style_function_key_mode;
+
+    case funckey_hp: // Mode ?1052 (HP function-key mode)
+      if (mod == 0) {
+        switch (code) {
+        case key_f1    : F = ascii_p; goto input_esc_key;
+        case key_f2    : F = ascii_q; goto input_esc_key;
+        case key_f3    : F = ascii_r; goto input_esc_key;
+        case key_f4    : F = ascii_s; goto input_esc_key;
+        case key_f5    : F = ascii_t; goto input_esc_key;
+        case key_f6    : F = ascii_u; goto input_esc_key;
+        case key_f7    : F = ascii_v; goto input_esc_key;
+        case key_f8    : F = ascii_w; goto input_esc_key;
+        case key_up    : F = ascii_A; goto input_esc_key;
+        case key_down  : F = ascii_B; goto input_esc_key;
+        case key_right : F = ascii_C; goto input_esc_key;
+        case key_left  : F = ascii_D; goto input_esc_key;
+        case key_insert: F = ascii_Q; goto input_esc_key;
+        case key_delete: F = ascii_P; goto input_esc_key;
+        case key_home  : F = ascii_h; goto input_esc_key;
+        case key_end   : F = ascii_F; goto input_esc_key;
+        case key_prior : F = ascii_T; goto input_esc_key;
+        case key_next  : F = ascii_S; goto input_esc_key;
+        }
+      }
+      goto pc_style_function_key_mode;
+
+    case funckey_sco: // Mode ?1053 (SCO function-key mode)
+      if (mod == 0) {
+        if (key_f1 <= code && code <= key_f24) {
+          if (code <= key_f14)
+            F = ascii_M - key_f1 + code;
+          else
+            F = ascii_a - key_f15 + code;
+          goto input_csi_key;
+        }
+        switch (code) {
+        case key_up    : F = ascii_A; goto input_esc_key;
+        case key_down  : F = ascii_B; goto input_esc_key;
+        case key_right : F = ascii_C; goto input_esc_key;
+        case key_left  : F = ascii_D; goto input_esc_key;
+        case key_insert: F = ascii_L; goto input_esc_key;
+        case key_delete: F = ascii_del; goto input_raw_char;
+        case key_home  : F = ascii_H; goto input_esc_key;
+        case key_end   : F = ascii_F; goto input_esc_key;
+        case key_prior : F = ascii_I; goto input_esc_key;
+        case key_next  : F = ascii_G; goto input_esc_key;
+        }
+      }
+      goto pc_style_function_key_mode;
+
+    case funckey_x11r6: // Mode ?1060 (X11R6 Legacy mode)
+      use_tilde_for_f1_f4 = true;
+      if ((mod & modifier_control) &&
+        key_f1 <= code && code <= key_f10
+      ) {
+        mod &= ~modifier_control;
+        code += 10;
+      } else if (code == key_delete && mod == 0) {
+        F = ascii_del;
+        goto input_raw_char;
+      }
+      goto pc_style_function_key_mode;
+
+    case funckey_vt220: // Mode ?1061 (VT220 Legacy mode)
+      if ((mod & modifier_control) &&
+        key_f1 <= code && code <= key_f10
+      ) {
+        mod &= ~modifier_control;
+        code += 10;
+      } else if (code == key_home) {
+        Ps1 = 1;
         goto tilde;
-      } else {
-        a = ascii_H;
-        goto alpha;
-      }
-    case key_end:
-      if (s.get_mode(mode_xtVt220Key)) {
-        a = 4;
+      } else if (code == key_end) {
+        Ps1 = 4;
         goto tilde;
+      }
+      goto pc_style_function_key_mode;
+
+    pc_style_function_key_mode: // xterm default
+    case funckey_pc:
+      if (key_f1 <= code && code <= key_f4) {
+        if (!use_tilde_for_f1_f4) {
+          switch (code) {
+          case key_f1: F = ascii_P; goto alpha_f4;
+          case key_f2: F = ascii_Q; goto alpha_f4;
+          case key_f3: F = ascii_R; goto alpha_f4;
+          case key_f4: F = ascii_S; goto alpha_f4;
+          }
+        }
       } else {
-        a = ascii_F;
-        goto alpha;
+        switch (code) {
+        case key_home  : F = ascii_H; goto alpha;
+        case key_end   : F = ascii_F; goto alpha;
+        }
       }
-    tilde:
-      input_c1(ascii_csi);
-      input_unsigned(a);
-      if (mod) {
-        input_byte(ascii_semicolon);
-        input_modifier(mod);
-      }
-      input_byte(ascii_tilde);
-      input_flush(local_echo);
-      return true;
-    case key_up   : a = ascii_A; goto alpha;
-    case key_down : a = ascii_B; goto alpha;
-    case key_right: a = ascii_C; goto alpha;
-    case key_left : a = ascii_D; goto alpha;
-    case key_begin: a = ascii_E; goto alpha;
-    alpha:
-      if (mod) {
-        input_c1(ascii_csi);
-        input_byte(ascii_1);
-        input_byte(ascii_semicolon);
-        input_modifier(mod);
-      } else {
-        input_c1(m_state.get_mode(mode_decckm) ? ascii_ss3 : ascii_csi);
-      }
-      input_byte(a);
-      input_flush(local_echo);
-      return true;
-    case key_focus: a = ascii_I; goto alpha_focus;
-    case key_blur:  a = ascii_O; goto alpha_focus;
-    alpha_focus:
-      if (m_state.get_mode(mode_xtSendFocus)) goto alpha;
-      return false;
+      goto contra_function_key_mode;
+
+    contra_function_key_mode:
     default:
-      return false;
+      switch (code) {
+      case key_f1 : Ps1 = 11; goto tilde;
+      case key_f2 : Ps1 = 12; goto tilde;
+      case key_f3 : Ps1 = 13; goto tilde;
+      case key_f4 : Ps1 = 14; goto tilde;
+      case key_f5 : Ps1 = 15; goto tilde;
+      case key_f6 : Ps1 = 17; goto tilde;
+      case key_f7 : Ps1 = 18; goto tilde;
+      case key_f8 : Ps1 = 19; goto tilde;
+      case key_f9 : Ps1 = 20; goto tilde;
+      case key_f10: Ps1 = 21; goto tilde;
+      case key_f11: Ps1 = 23; goto tilde;
+      case key_f12: Ps1 = 24; goto tilde;
+      case key_f13: Ps1 = 25; goto tilde;
+      case key_f14: Ps1 = 26; goto tilde;
+      case key_f15: Ps1 = 28; goto tilde;
+      case key_f16: Ps1 = 29; goto tilde;
+      case key_f17: Ps1 = 31; goto tilde;
+      case key_f18: Ps1 = 32; goto tilde;
+      case key_f19: Ps1 = 33; goto tilde;
+      case key_f20: Ps1 = 34; goto tilde;
+      case key_f21: Ps1 = 36; goto tilde;
+      case key_f22: Ps1 = 37; goto tilde;
+      case key_f23: Ps1 = 38; goto tilde;
+      case key_f24: Ps1 = 39; goto tilde;
+      case key_insert: Ps1 = 2; goto tilde;
+      case key_delete: Ps1 = 3; goto tilde;
+      case key_home  : Ps1 = 1; goto tilde;
+      case key_end   : Ps1 = 4; goto tilde;
+      case key_prior : Ps1 = 5; goto tilde;
+      case key_next  : Ps1 = 6; goto tilde;
+      case key_up    : F = ascii_A; goto alpha;
+      case key_down  : F = ascii_B; goto alpha;
+      case key_right : F = ascii_C; goto alpha;
+      case key_left  : F = ascii_D; goto alpha;
+      case key_begin : F = ascii_E; goto alpha;
+      case key_focus : F = ascii_I; goto alpha_focus;
+      case key_blur  : F = ascii_O; goto alpha_focus;
+      }
     }
+    return false;
+
+    // application key mode の時修飾なしの関数キーは \eOA 等にする。
+  alpha:
+    if (mod) {
+      input_c1(ascii_csi);
+      input_byte(ascii_1);
+      input_byte(ascii_semicolon);
+      input_modifier(mod);
+    } else {
+      input_c1(m_state.get_mode(mode_decckm) ? ascii_ss3 : ascii_csi);
+    }
+    input_byte(F);
+    input_flush(local_echo);
+    return true;
+
+  alpha_focus:
+    if (!m_state.get_mode(mode_xtSendFocus)) return false;
+  alpha_f4:
+    if (mod) {
+      input_c1(ascii_csi);
+      input_byte(ascii_1);
+      input_byte(ascii_semicolon);
+      input_modifier(mod);
+    } else {
+      input_c1(ascii_ss3);
+    }
+    input_byte(F);
+    input_flush(local_echo);
+    return true;
+
+  tilde:
+    F = ascii_tilde;
+  input_csi_key:
+    input_c1(ascii_csi);
+    input_unsigned(Ps1);
+    if (mod) {
+      input_byte(ascii_semicolon);
+      input_modifier(mod);
+    }
+    input_byte(F);
+    input_flush(local_echo);
+    return true;
+
+  input_esc_key:
+    input_c1(ascii_esc);
+    input_byte(F);
+    input_flush(local_echo);
+    return true;
+
+  input_raw_char:
+    input_byte(F);
+    input_flush(local_echo);
+    return true;
   }
 
   bool term_t::input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t const x, curpos_t const y) {

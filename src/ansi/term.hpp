@@ -61,6 +61,17 @@ namespace ansi {
     mouse_sequence_urxvt = 0x0800,
   };
 
+  enum funckey_mode_flags {
+    funckey_pc       = 0, // xterm
+    funckey_terminfo = 1, // xterm Mode ?1050
+    funckey_sun      = 2, // xterm Mode ?1051
+    funckey_hp       = 3, // xterm Mode ?1052
+    funckey_sco      = 4, // xterm Mode ?1053
+    funckey_x11r6    = 5, // xterm Mode ?1060
+    funckey_vt220    = 6, // xterm Mode ?1061
+    funckey_contra   = 7, // contra Mode ?9950
+  };
+
   /*?lwiki
    * @class class term_scoll_buffer_t;
    * 0 個以上 m_capacity 個以下の行を保持する。
@@ -357,6 +368,7 @@ namespace ansi {
     color_t m_default_bg_color = 0;
 
     std::uint32_t mouse_mode = 0;
+    std::uint32_t m_funckey_mode = 0;
 
     tstate_t(term_t* term): m_term(term) {
       this->clear();
@@ -373,6 +385,7 @@ namespace ansi {
 
       this->lflags = 0;
       this->mouse_mode = 0;
+      this->m_funckey_mode = 0;
       this->m_cursor_shape = 1;
 
       this->page_home = -1;

@@ -64,11 +64,13 @@ flags     mode_decscnm_           private     false
 accessor  mode_decscnm            dec5        -
 
 # Function-Keys
-#flags     mode_xtSunKey           dec1051     false
-#flags     mode_xtHpKey            dec1052     false
-#flags     mode_xtScoKey           dec1053     false
-#flags     mode_xtX11R6Key         dec1060     false
-flags     mode_xtVt220Key         dec1061     false
+accessor  mode_xtTerminfoKey      dec1050     unsupported
+accessor  mode_xtSunKey           dec1051     -
+accessor  mode_xtHpKey            dec1052     -
+accessor  mode_xtScoKey           dec1053     -
+accessor  mode_xtX11R6Key         dec1060     -
+accessor  mode_xtVt220Key         dec1061     -
+accessor  mode_ctrTildeKey        dec9950     -
 
 # Mouse report
 accessor  mode_xtMouseX10         dec9        -
