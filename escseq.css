@@ -1,0 +1,15 @@
+
+kbd {
+  font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", "Courier", monospace;
+  font-size: 80%; padding: 1px 5px; vertical-align: 1px;
+  border: 1px solid silver; border-bottom: 2px solid gray; border-radius: 3px;
+  display: inline-block; text-indent: 0; line-height: 1.2;
+  /* line-height: 1.8; */
+}
+
+i.kbd,
+kbd>i { color: #b0b; }
+i.kbd:before,
+kbd>i:before { content: '<'; }
+i.kbd:after,
+kbd>i:after { content: '>'; }
