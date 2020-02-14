@@ -1135,8 +1135,8 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>略号</th><th>符号化表現</th></tr>
 <tr><th>DA2</th> <td><kbd>CSI > <i>Ps</i> c</kbd></td></tr>
 <tr><th>DA3</th> <td><kbd>CSI = <i>Ps</i> c</kbd></td></tr>
-<tr><th>xtModifyKeys       </th><td><kbd>CSI &gt; <i>Ps1</i> ; <i>Ps2</i> m</kbd></td></tr>
-<tr><th>xtDisableModifyKeys</th><td><kbd>CSI &gt; <i>Ps1</i> n</kbd>             </td></tr>
+<tr><th>XTERM_SET_MOD_FKEYS       </th><td><kbd>CSI &gt; <i>Ps1</i> ; <i>Ps2</i> m</kbd></td></tr>
+<tr><th>XTERM_SET_MOD_FKEYS0</th><td><kbd>CSI &gt; <i>Ps1</i> n</kbd>             </td></tr>
 <tr><th>xtGraphicsAttribute</th> <td><kbd>CSI &gt; <i>Ps</i> S</kbd></td></tr>
 <tr><th>xtSetTitle</th> <td><kbd>CSI &gt; <i>Ps</i> t</kbd></td></tr>
 <tr><th>xtRstTitle</th> <td><kbd>CSI &gt; <i>Ps</i> T</kbd></td></tr>
@@ -1227,8 +1227,8 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <table class="normal center">
 <caption>表: ANSI モード</caption>
 <tr><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th></tr>
-<tr><th>GATM</th> <td>1</td>   <th>PUM<sup>非推奨</sup></th>     <td>11</td>  <th>GRCM</th>                <td>21</td>  <th>-</th><td>31</td></tr>
-<tr><th>KAM</th>  <td>2</td>   <th>SRM</th>                      <td>12</td>  <th>ZDM<sup>非推奨</sup></th><td>22</td>  <th>wySTCURM<sup>違反</sup></th><td>32</td></tr>
+<tr><th>GATM</th> <td>1</td>   <th>PUM<sup>非推奨</sup></th>     <td>11</td>  <th>GRCM</th>                <td>21</td>  <th>wyseSLDM<sup>違反</sup></th><td>31</td></tr>
+<tr><th>KAM</th>  <td>2</td>   <th>SRM</th>                      <td>12</td>  <th>ZDM<sup>非推奨</sup></th><td>22</td>  <th>wyseSCM<sup>違反</sup></th><td>32</td></tr>
 <tr><th>CRM</th>  <td>3</td>   <th>FEAM</th>                     <td>13</td>  <th>-</th><td>23</td>                     <th>WYSTCURM<sup>違反</sup></th><td>33</td></tr>
 <tr><th>IRM</th>  <td>4</td>   <th>FETM</th>                     <td>14</td>  <th>-</th><td>24</td>                     <th>WYULCURM<sup>違反</sup></th><td>34</td></tr>
 <tr><th>SRTM</th> <td>5</td>   <th>MATM</th>                     <td>15</td>  <th>-</th><td>25</td><th>-</th><td>35</td></tr>
@@ -1236,11 +1236,11 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>VEM</th>  <td>7</td>   <th>SATM</th>                     <td>17</td>  <th>-</th><td>27</td><th>-</th><td>37</td></tr>
 <tr><th>BDSM</th> <td>8</td>   <th>TSM</th>                      <td>18</td>  <th>-</th><td>28</td><th>-</th><td>38</td></tr>
 <tr><th>DCSM</th> <td>9</td>   <th>EBM<sup>廃</sup></th>         <td>19</td>  <th>-</th><td>29</td><th>-</th><td>39</td></tr>
-<tr><th>HEM</th>  <td>10</td>  <th>LF/NL<sup>廃</sup> (LNM)</th> <td>20</td>  <th>-</th><td>30</td><th>-</th><td>40</td></tr>
+<tr><th>HEM</th>  <td>10</td>  <th>LF/NL<sup>廃</sup> (LNM)</th> <td>20</td>  <th>wyseDDM<sup>違反</sup></th><td>30</td><th>-</th><td>40</td></tr>
 </table>
 
 <table class="normal center">
-<caption>表: 私用モード (1-40)</caption>
+<caption>表: DECモード (1-40)</caption>
 <tr><th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th>
@@ -1250,21 +1250,21 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
     <th>-</th><td>?21</td>
     <th>-</th><td>?31</td></tr>
 <tr><th>DECANM</th><td>?2</td>
-    <th>attCursorBlink</th><td>?12</td>
+    <th>ATT610_BLINK</th><td>?12</td>
     <th>-</th><td>?22</td>
     <th>-</th><td>?32</td></tr>
 <tr><th>DECCOLM</th><td>?3</td>
-    <th>DECSCFDM<sup>*</sup><br/>xtCursorBlink</th><td>?13</td>
+    <th>DECSCFDM<sup>*</sup><br/>XTERM_CURSOR_BLINK_OPS</th><td>?13</td>
     <th>-</th><td>?23</td>
     <th>-</th><td>?33</td></tr>
 <tr><th>DECSCLM</th><td>?4</td>
-    <th>DECTEM<sup>*</sup><br/>xtCursorBlinkXOR</th><td>?14</td>
+    <th>DECTEM<sup>*</sup><br/>XTERM_XOR_CURSOR_BLINKS</th><td>?14</td>
     <th>laPrintDensity<sup>*</sup></th><td>?24</td>
     <th>DECRLM</th><td>?34</td></tr>
 <tr><th>DECSCNM</th><td>?5</td>
     <th>-</th><td>?15</td>
     <th>DECTCEM</th><td>?25</td>
-    <th>DECHEBM<br/>rxvtNoFontShift</th><td>?35</td></tr>
+    <th>DECHEBM<br/>RXVT_FONTSIZE</th><td>?35</td></tr>
 <tr><th>DECOM</th><td>?6</td>
     <th>DECEKEM<sup>*</sup></th><td>?16</td>
     <th>-</th><td>?26</td>
@@ -1277,14 +1277,14 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
     <th>DECPFF</th><td>?18</td>
     <th>-</th><td>?28</td>
     <th>DECTEK</th><td>?38</td></tr>
-<tr><th>xtMouseX10</th><td>?9</td>
+<tr><th>XTERM_X10_MOUSE</th><td>?9</td>
     <th>DECPEX</th><td>?19</td>
     <th>DECPSM<sup>*</sup></th><td>?29</td>
     <th>-</th><td>?39</td></tr>
-<tr><th>-</th><td>?10</td>
+<tr><th>RXVT_TOOLBAR</th><td>?10</td>
     <th>-</th><td>?20</td>
-    <th>rxvtShowScroll</th><td>?30</td>
-    <th>DECCRNLM<sup>*</sup><br/>xtEnableColm</th><td>?40</td></tr>
+    <th>RXVT_SCROLLBAR</th><td>?30</td>
+    <th>DECCRNLM<sup>*</sup><br/>XTERM_132COLS</th><td>?40</td></tr>
 </table>
 <ul>
 <li>Note: <sup>*</sup> を付した物はは all-espaces.txt にあった物で初期の VT シリーズの古いモードと思われる。</li>
@@ -1292,12 +1292,12 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </ul>
 
 <table class="normal center">
-<caption>表: 私用モード (41-80)</caption>
+<caption>表: DECモード (41-80)</caption>
 <tr><th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th></tr>
-<tr><th>laPrintDirection<sup>*</sup><br/>xtMore1Fix</th><td>?41</td>
+<tr><th>laPrintDirection<sup>*</sup><br/>XTERM_CURSES_HACK</th><td>?41</td>
     <th>DECBWRM<sup>*</sup></th><td>?51</td>
     <th>DECVCCM</th><td>?61</td>
     <th>-</th><td>?71</td></tr>
@@ -1309,19 +1309,19 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
     <th>-</th><td>?53</td>
     <th>-</th><td>?63</td>
     <th>DECXRLMM</th><td>?73</td></tr>
-<tr><th>DECGPCM<sup>*</sup><br/>xtMarginBell</th><td>?44</td>
+<tr><th>DECGPCM<sup>*</sup><br/>XTERM_MARGIN_BELL</th><td>?44</td>
     <th>-</th><td>?54</td>
     <th>DECPCCM</th><td>?64</td>
     <th>-</th><td>?74</td></tr>
-<tr><th>DECGPCS<sup>*</sup><br/>xtBSBackLine</th><td>?45</td>
+<tr><th>DECGPCS<sup>*</sup><br/>XTERM_REVERSEWRAP</th><td>?45</td>
     <th>DECBPM<sup>*</sup></th><td>?55</td>
     <th>-</th><td>?65</td>
     <th>-</th><td>?75</td></tr>
-<tr><th>DECGPBM<sup>*</sup><br/>xtLogging</th><td>?46</td>
+<tr><th>DECGPBM<sup>*</sup><br/>XTERM_ALLOWLOGGING</th><td>?46</td>
     <th>-</th><td>?56</td>
     <th>DECNKM</th><td>?66</td>
     <th>-</th><td>?76</td></tr>
-<tr><th>DECGRPM<sup>*</sup><br/>xtAltScreen</th><td>?47</td>
+<tr><th>DECGRPM<sup>*</sup><br/>XTERM_ALTBUF</th><td>?47</td>
     <th>DECNAKB</th><td>?57</td>
     <th>DECBKM</th><td>?67</td>
     <th>-</th><td>?77</td></tr>
@@ -1343,7 +1343,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </ul>
 
 <table class="normal center">
-<caption>表: 私用モード (81-120)</caption>
+<caption>表: DECモード (81-120)</caption>
 <tr><th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th>
@@ -1394,43 +1394,55 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </ul>
 
 <table class="normal center">
-<caption>表: 私用モード</caption>
+<caption>表: XTerm モード (xterm/{ptyx,xcharmouse}.h より)</caption>
+<tr><th>略号</th><th>番号</th><th>略号</th><th>番号</th></tr>
+<tr><th>XTERM_VT200_MOUSE            </th><td>?1000</td><th>XTERM_KEEP_CLIPBOARD         </th><td>?1044</td></tr>
+<tr><th>XTERM_VT200_HIGHLIGHT_MOUSE  </th><td>?1001</td><th>XTERM_ALLOW_ALTBUF           </th><td>?1046</td></tr>
+<tr><th>XTERM_BTN_EVENT_MOUSE        </th><td>?1002</td><th>XTERM_OPT_ALTBUF             </th><td>?1047</td></tr>
+<tr><th>XTERM_ANY_EVENT_MOUSE        </th><td>?1003</td><th>XTERM_SAVE_CURSOR            </th><td>?1048</td></tr>
+<tr><th>XTERM_FOCUS_EVENT_MOUSE      </th><td>?1004</td><th>XTERM_OPT_ALTBUF_CURSOR      </th><td>?1049</td></tr>
+<tr><th>XTERM_EXT_MODE_MOUSE         </th><td>?1005</td><th>XTERM_TCAP_FKEYS             </th><td>?1050</td></tr>
+<tr><th>XTERM_SGR_EXT_MODE_MOUSE     </th><td>?1006</td><th>XTERM_SUN_FKEYS              </th><td>?1051</td></tr>
+<tr><th>XTERM_ALTERNATE_SCROLL       </th><td>?1007</td><th>XTERM_HP_FKEYS               </th><td>?1052</td></tr>
+<tr><th>RXVT_SCROLL_TTY_OUTPUT       </th><td>?1010</td><th>XTERM_SCO_FKEYS              </th><td>?1053</td></tr>
+<tr><th>RXVT_SCROLL_TTY_KEYPRESS     </th><td>?1011</td><th>XTERM_LEGACY_FKEYS           </th><td>?1060</td></tr>
+<tr><th>URXVT_EXT_MODE_MOUSE         </th><td>?1015</td><th>XTERM_VT220_FKEYS            </th><td>?1061</td></tr>
+<tr><th>XTERM_EIGHT_BIT_META         </th><td>?1034</td><th>XTERM_PRIVATE_COLOR_REGISTERS</th><td>?1070</td></tr>
+<tr><th>XTERM_REAL_NUMLOCK           </th><td>?1035</td><th>XTERM_BUTTON1_MOVE_POINT     </th><td>?2001</td></tr>
+<tr><th>XTERM_META_SENDS_ESC         </th><td>?1036</td><th>XTERM_BUTTON2_MOVE_POINT     </th><td>?2002</td></tr>
+<tr><th>XTERM_DELETE_IS_DEL          </th><td>?1037</td><th>XTERM_DBUTTON3_DELETE        </th><td>?2003</td></tr>
+<tr><th>XTERM_ALT_SENDS_ESC          </th><td>?1039</td><th>XTERM_PASTE_IN_BRACKET       </th><td>?2004</td></tr>
+<tr><th>XTERM_KEEP_SELECTION         </th><td>?1040</td><th>XTERM_PASTE_QUOTE            </th><td>?2005</td></tr>
+<tr><th>XTERM_SELECT_TO_CLIPBOARD    </th><td>?1041</td><th>XTERM_PASTE_LITERAL_NL       </th><td>?2006</td></tr>
+<tr><th>XTERM_BELL_IS_URGENT         </th><td>?1042</td><th>-</th><td>-</td></tr>
+<tr><th>XTERM_POP_ON_BELL            </th><td>?1043</td><th>-</th><td>-</td></tr>
+</table>
+
+<table class="normal center">
+<caption>表: RLogin モード (RLogin/TextRam.h より。*1 マニュアルには RLAMBCHM とある)</caption>
+<tr><th>略号</th><th>番号</th><th>略号</th><th>番号</th><th>略号</th><th>番号</th></tr>
+<tr><th>RLGCWA    </th><td>?8400</td><th>RLNORESZ  </th><td>?8435        </td><th>RLMODKEY  </th><td>?8450        </td></tr>
+<tr><th>RLGNDW    </th><td>?8401</td><th>RLKANAUTO </th><td>?8437        </td><th>RLDRWLINE </th><td>?8451        </td></tr>
+<tr><th>RLGAWL    </th><td>?8402</td><th>RLMOSWHL  </th><td>?8438        </td><th>RLSIXPOS  </th><td>?8452        </td></tr>
+<tr><th>RLBOLD    </th><td>?8403</td><th>RLMSWAPP  </th><td>?8439        </td><th>DRCSMMv1  </th><td>?8453 (?8800)</td></tr>
+<tr><th>RLFONT    </th><td>?8404</td><th>RLPNAM    </th><td>?8440        </td><th>RLC1DIS   </th><td>?8454        </td></tr>
+<tr><th>RLBPLUS   </th><td>?8405</td><th>IMECTRL   </th><td>?8441        </td><th>RLCLSBACK </th><td>?8455        </td></tr>
+<tr><th>RLALTBDIS </th><td>?8406</td><th>RLCKMESC  </th><td>?8442 (?7727)</td><th>RLBRKMBCS </th><td>?8456        </td></tr>
+<tr><th>RLADBELL  </th><td>?8416</td><th>RLMSWAPE  </th><td>?8443 (?7786)</td><th>TTCTH     </th><td>?8457 (?8200)</td></tr>
+<tr><th>RLVSBELL  </th><td>?8417</td><th>RLTEKINWND</th><td>?8446        </td><th>RLBOLDHC  </th><td>?8458        </td></tr>
+<tr><th>RLUNIAWH<sup>*1</sup></th><td>?8428</td><th>RLUNINOM  </th><td>?8448        </td><th>-</th><td>-</td></tr>
+<tr><th>RLSPCTAB  </th><td>?8429</td><th>RLUNIAHF  </th><td>?8449        </td><th>-</th><td>-</td></tr>
+</table>
+
+<table class="normal center">
+<caption>表: その他の私用モード</caption>
 <tr><th>略号</th><th>Mode</th></tr>
-<tr><th>xtMouseVt200</th>         <td>?1000</td></tr>
-<tr><th>xtMouseHilite</th>        <td>?1001</td></tr>
-<tr><th>xtMouseButton</th>        <td>?1002</td></tr>
-<tr><th>xtMouseAll</th>           <td>?1003</td></tr>
-<tr><th>xtSendFocus</th>          <td>?1004</td></tr>
-<tr><th>xtExtMouseUtf8</th>       <td>?1005</td></tr>
-<tr><th>xtExtMouseSgr</th>        <td>?1006</td></tr>
-<tr><th>xtAlternateScroll</th>    <td>?1007</td></tr>
-<tr><th>rxvtScrollOnOutput</th>   <td>?1010</td></tr>
-<tr><th>rxvtScrollOnInput</th>    <td>?1011</td></tr>
-<tr><th>rxvtExtMouseUrxvt</th>    <td>?1015</td></tr>
-<tr><th>xtIntepretMetaKey</th>    <td>?1034</td></tr>
-<tr><th>xtModifyAltNumlock</th>   <td>?1035</td></tr>
-<tr><th>xtMetaSendsEscape</th>    <td>?1036</td></tr>
-<tr><th>xtDeleteSendsDel</th>     <td>?1037</td></tr>
-<tr><th>xtAltSendsEscape</th>     <td>?1039</td></tr>
-<tr><th>xtKeepSelection</th>      <td>?1040</td></tr>
-<tr><th>xtSelectToClipboard</th>  <td>?1041</td></tr>
-<tr><th>xtBellIsUrgent</th>       <td>?1042</td></tr>
-<tr><th>xtPopOnBell</th>          <td>?1043</td></tr>
-<tr><th>xtKeepClipboard</th>      <td>?1044</td></tr>
-<tr><th>xtEnableAltScreen</th>    <td>?1046</td></tr>
-<tr><th>xtAltScreenClear</th>     <td>?1047</td></tr>
-<tr><th>xtSaveCursor</th>         <td>?1048</td></tr>
-<tr><th>xtAltScreenCursor</th>    <td>?1049</td></tr>
-<tr><th>xtTerminfoKey</th>        <td>?1050</td></tr>
-<tr><th>xtSunKey</th>             <td>?1051</td></tr>
-<tr><th>xtHpKey</th>              <td>?1052</td></tr>
-<tr><th>xtScoKey</th>             <td>?1053</td></tr>
-<tr><th>xtX11R6Key</th>           <td>?1060</td></tr>
-<tr><th>xtVt220Key</th>           <td>?1061</td></tr>
-<tr><th>smBracketedPasteMode</th> <td>?2004</td></tr>
 <tr><th>minttyAmbiguousWidthReport</th> <td>?7700</td></tr>
+<tr><th>minttyScrollMarker</th>         <td>?7711</td></tr>
 <tr><th>minttyAppEsc</th>               <td>?7727</td></tr>
 <tr><th>minttyEscFs</th>                <td>?7728</td></tr>
+<tr><th>minttySixelScrollEndPos</th>    <td>?7730</td></tr>
+<tr><th>minttyScrollbar</th>            <td>?7766</td></tr>
 <tr><th>minttyFontChangeReport</th>     <td>?7767</td></tr>
 <tr><th>minttyShortcutOverride</th>     <td>?7783</td></tr>
 <tr><th>minttyEnableMouseWheel</th>     <td>?7786</td></tr>
@@ -1438,45 +1450,10 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>minttyDisableBidiLine</th>      <td>?7796</td></tr>
 <tr><th>minttyDisableBidi</th>          <td>?77096</td></tr>
 <tr><th>minttyModifyKey</th>            <td>?77000-77031</td></tr>
-<tr><th>vteBidiBoxMirror</th>     <td>?2500 (tmp)</td></tr>
-<tr><th>vteBidiAutoDetect</th>    <td>?2501 (tmp)</td></tr>
-<tr><th>vteArrowKeySwap</th>      <td>?1243 (tmp)</td></tr>
+<tr><th>VTE_BIDI_BOX_MIRROR</th>        <td>?2500 (tmp)</td></tr>
+<tr><th>VTE_BIDI_AUTO</th>              <td>?2501 (tmp)</td></tr>
+<tr><th>VTE_BIDI_SWAP_ARROW_KEYS</th>   <td>?1243 (tmp)</td></tr>
 <tr><th>TTCTH</th>      <td>?8200</td></tr>
-</table>
-
-<table class="normal center">
-<caption>表: RLogin モード</caption>
-<tr><th>RLGCWA    </th><td>8400</td></tr>
-<tr><th>RLGNDW    </th><td>8401</td></tr>
-<tr><th>RLGAWL    </th><td>8402</td></tr>
-<tr><th>RLBOLD    </th><td>8403</td></tr>
-<tr><th>RLFONT    </th><td>8404</td></tr>
-<tr><th>RLBPLUS   </th><td>8405</td></tr>
-<tr><th>RLALTBDIS </th><td>8406</td></tr>
-<tr><th>RLADBELL  </th><td>8416</td></tr>
-<tr><th>RLVSBELL  </th><td>8417</td></tr>
-<tr><th>RLUNIAWH  </th><td>8428</td></tr>
-<tr><th>RLSPCTAB  </th><td>8429</td></tr>
-<tr><th>RLNORESZ  </th><td>8435</td></tr>
-<tr><th>RLKANAUTO </th><td>8437</td></tr>
-<tr><th>RLMOSWHL  </th><td>8438</td></tr>
-<tr><th>RLMSWAPP  </th><td>8439</td></tr>
-<tr><th>RLPNAM    </th><td>8440</td></tr>
-<tr><th>IMECTRL   </th><td>8441</td></tr>
-<tr><th>RLCKMESC  </th><td>8442 (7727)</td></tr>
-<tr><th>RLMSWAPE  </th><td>8443 (7786)</td></tr>
-<tr><th>RLTEKINWND</th><td>8446</td></tr>
-<tr><th>RLUNINOM  </th><td>8448</td></tr>
-<tr><th>RLUNIAHF  </th><td>8449</td></tr>
-<tr><th>RLMODKEY  </th><td>8450</td></tr>
-<tr><th>RLDRWLINE </th><td>8451</td></tr>
-<tr><th>RLSIXPOS  </th><td>8452</td></tr>
-<tr><th>DRCSMMv1  </th><td>8453 (8800)</td></tr>
-<tr><th>RLC1DIS   </th><td>8454</td></tr>
-<tr><th>RLCLSBACK </th><td>8455</td></tr>
-<tr><th>RLBRKMBCS </th><td>8456</td></tr>
-<tr><th>TTCTH     </th><td>8457 (8200)</td></tr>
-<tr><th>RLBOLDHC  </th><td>8458</td></tr>
 </table>
 
 <ul>
@@ -1505,12 +1482,13 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
     RLogin が 84xx を採用しているのは内部に 8x32 = 512bit のビットベクタがあって、
     その 400 番台を内部用に確保していて其処に切りの良い 8000 を足したからだろうか。</li>
   <li>実際のモードの定義は TextRam.h (文字コード: cp932) にある。
+    一連のモード名はここから取った。
     VTE のソースコードには RLogin が 14xx を使っていると書いているが、
     これは VTE の作者の勘違いである。RLogin 14xx は内部用途で DECSET とは直交している様に見える。
   </li>
-  <li>此処に一連のモード名が定義されている。</li>
   </ul>
 </li>
+<li>mintty は src/termout.c でモードを処理しているが特に名前は付けていない。</li>
 </ul>
 
 <pre>
@@ -1530,13 +1508,14 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 | contra    |** * ***** *       ***|***|
 | ECMA-48   |******************DD**|RRR| D=deprecated R=reserved
 
-| DEC       |         |        |       |     |        |  |       |      | | |     11111 1 11111111111|
-|   ? Modes |         |111 1 11|22 2 23|333 3|44444444|55|5 5 566|6 6666|7|8|9999900000 0 00011111111|
-|           |123456789|234 6 89|45 7 90|456 8|01234567|12|5 7 901|4 6789|3|0|5678901234 6 78901234567|
-|-----------|---------|--------|-------|-----|--------|--|-------|------|-|-|------------------------|
-| VTE       |* * *** *|   - -  | *- -  |   - |X  -   X|  | - -   | -*   | | |          - -           |
-| Tera Term |* * *****|*  - - *| *- -  |   -*|   -   X|  | - -*  | -** *| | |*         - -           |
-| contra    |* *******|*XX- -  | *- -  |   - |X  - X X|  | - -   | -** *| | |*         - -           |
+| DEC       |                   |       |     |        |  |       |      | | |     11111 1 11111111111|
+|   ? Modes |         1 111 1 11|22 2 23|333 3|44444444|55|5 5 566|6 6666|7|8|9999900000 0 00011111111|
+|           |1234567890 234 6 89|45 7 90|456 8|01234567|12|5 7 901|4 6789|3|0|5678901234 6 78901234567|
+|-----------|-------------------|-------|-----|--------|--|-------|------|-|-|------------------------|
+| xterm     |**********-*XX- -**| *- - *| * -*|XX*-XXXX|  | - -   | -** *| |*|*         - -           |
+| VTE       |* * *** * -   - -  | *- -  |   - |X  -   X|  | - -   | -*   | | |          - -           |
+| Tera Term |* * ***** -*  - - *| *- -  |   -*|   -   X|  | - -*  | -** *| | |*         - -           |
+| contra    |* ******* -*XX- -  | *- -  |   - |X  - X X|  | - -   | -** *| | |*         - -           |
 
 | Origin    |xterm   |rxvt|xterm                    |vte|mintty    |T|RLogin                 |#1   | T=Tera Term, #1=drcsterm
 |-----------|--------|----|-------------------------|---|----------|-|-----------------------|-----|
@@ -2148,7 +2127,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <p>
   </p>
 </li>
-<li>Mode ?45 <dfn class="cmode">xtBSBackLine</dfn>
+<li>Mode ?45 <dfn class="cmode">XTERM_REVERSEWRAP</dfn>
   <p>[xterm, RLogin] 設定されている時、行頭の BS で前の行に移動する。
   </p>
 </li>
@@ -3180,7 +3159,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     これの代わりに DECSCPP を用いる事が推奨されている。
   </p>
 </li>
-<li>Mode ?40 <dfn class="cmode">xtEnableColm</dfn>:
+<li>Mode ?40 <dfn class="cmode">XTERM_132COLS</dfn>:
   <p>設定した時 DECCOLM を有効にする。解除した時、DECCOLM を無効にする。</p>
 </li>
 <li>Mode ?95 <dfn class="cmode">DECNCSM</dfn>: Set/Reset No Clearing Screen On Column Change
@@ -3226,7 +3205,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </li>
   </ul>
 </li>
-<li>Mode 32 <dfn class="cmode">wySTCURM</dfn>: Steady Cursor Mode (Wyse)</li>
+<li>Mode 32 <dfn class="cmode">wyseSCM</dfn>: Steady Cursor Mode (Wyse)</li>
 <li>Mode 33 <dfn class="cmode">WYSTCURM</dfn>: Wyse Steady Cursor Mode (Wyse)
   <p>[all-escapes.txt] カーソルを点滅しない。</p>
   <ul>
@@ -3235,7 +3214,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </ul>
   <ul>
   <li>互換性: 2つある意味が分からないが、
-    取り敢えず contra では attCursorBlink, xtCursorBlink の反転と同値に実装する。
+    取り敢えず contra では ATT610_BLINK, XTERM_CURSOR_BLINK_OPS の反転と同値に実装する。
   </li>
   </ul>
 </li>
@@ -3255,17 +3234,17 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </li>
   </ul>
 </li>
-<li>Mode ?12 <dfn class="cmode">attCursorBlink</dfn>: Start Blinking Cursor (xterm AT&amp;T 610)</li>
-<li>Mode ?13 <dfn class="cmode">xtCursorBlink</dfn>: Enable Blinking Cursor (xterm menu) [既定値 RM]</li>
-<li>Mode ?14 <dfn class="cmode">xtCursorBlinkXOR</dfn>: Enable XOR of Blinking Cursor Sequence and Menu (xterm resource) [既定値 SM]
-  <p>[xterm] カーソルの点滅を制御する。xtCursorBlinkXOR が設定されている時、
-    attCursorBlink か xtCursorBlink のどちらか一方のみが設定されている時に点滅する。
-    xtCursorBlinkXOR が解除されている時、少なくとも一方が設定されていれば点滅する。
-    xtCursorBlink はエスケープシーケンスからは制御できずメニューから制御する。
-    xtCursorBlinkXOR は xterm 起動時に指定した物に固定されている。
+<li>Mode ?12 <dfn class="cmode">ATT610_BLINK</dfn>: Start Blinking Cursor (xterm AT&amp;T 610)</li>
+<li>Mode ?13 <dfn class="cmode">XTERM_CURSOR_BLINK_OPS</dfn>: Enable Blinking Cursor (xterm menu) [既定値 RM]</li>
+<li>Mode ?14 <dfn class="cmode">XTERM_XOR_CURSOR_BLINKS</dfn>: Enable XOR of Blinking Cursor Sequence and Menu (xterm resource) [既定値 SM]
+  <p>[xterm] カーソルの点滅を制御する。XTERM_XOR_CURSOR_BLINKS が設定されている時、
+    ATT610_BLINK か XTERM_CURSOR_BLINK_OPS のどちらか一方のみが設定されている時に点滅する。
+    XTERM_XOR_CURSOR_BLINKS が解除されている時、少なくとも一方が設定されていれば点滅する。
+    XTERM_CURSOR_BLINK_OPS はエスケープシーケンスからは制御できずメニューから制御する。
+    XTERM_XOR_CURSOR_BLINKS は xterm 起動時に指定した物に固定されている。
   </p>
   <ul>
-  <li>[xterm] attCursorBlink は AT&amp;T 610 と括弧書きされているのでそれが起源のようである。</li>
+  <li>[xterm] ATT610_BLINK は AT&amp;T 610 と括弧書きされているのでそれが起源のようである。</li>
   <li>互換性: RLogin の説明書には ?12 では逆にカーソルの点滅を禁止すると書かれている。</li>
   </ul>
 </li>
@@ -3286,25 +3265,25 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h3>代替画面 (Alternate Screen Buffer)</h3>
 <ul>
-<li>Mode ?47   <dfn class="cmode">xtAltScreen</dfn> (xterm) [既定値 RM]
+<li>Mode ?47   <dfn class="cmode">XTERM_ALTBUF</dfn> (xterm) [既定値 RM]
   <ul>
   <li>SM: 現在の画面を保存して代替画面に切り替える。代替画面は前回の代替画面の内容である。</li>
   <li>RM: 保存した画面を復元する。</li>
   </ul>
 </li>
-<li>Mode ?1047 <dfn class="cmode">xtAltScreenClear</dfn> (xterm) [既定値 RM]
+<li>Mode ?1047 <dfn class="cmode">XTERM_OPT_ALTBUF</dfn> (xterm) [既定値 RM]
   <ul>
   <li>SM: 現在の画面を保存して代替画面に切り替える。代替画面の内容はクリアする。</li>
   <li>RM: 保存した画面を復元する。</li>
   </ul>
 </li>
-<li>Mode ?1048 <dfn class="cmode">xtSaveCursor</dfn> (xterm) [既定値 RM]
+<li>Mode ?1048 <dfn class="cmode">XTERM_SAVE_CURSOR</dfn> (xterm) [既定値 RM]
   <ul>
   <li>SM: 現在のカーソル状態を保存 (DECSC と同様)</li>
   <li>RM: 保存したカーソル状態を復元 (DECRC と同様)</li>
   </ul>
 </li>
-<li>Mode ?1049 <dfn class="cmode">xtAltScreenCursor</dfn> (xterm) [既定値 RM]
+<li>Mode ?1049 <dfn class="cmode">XTERM_OPT_ALTBUF_CURSOR</dfn> (xterm) [既定値 RM]
   <ul>
   <li>SM: <kbd>SM(?1047)</kbd> と <kbd>SM(?1048)</kbd> の組み合わせ。</li>
   <li>RM: <kbd>RM(?1047)</kbd> と <kbd>RM(?1048)</kbd> の組み合わせ。</li>
@@ -4293,17 +4272,17 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     解除されている時、Back キーで <kbd>DEL</kbd> を送信する。
   </p>
 </li>
-<li>Mode ?2004 <dfn class="cmode">smBracketedPasteMode</dfn>: Bracketed Paste Mode
+<li>Mode ?2004 <dfn class="cmode">XTERM_PASTE_IN_BRACKET</dfn>: Bracketed Paste Mode
   <p>[xterm] 設定されている時、貼り付けによる入力内容を <kbd>CSI 2 0 0 ~</kbd> と
     <kbd>CSI 2 0 1 ~</kbd> で囲んでアプリケーションに送信する。
   </p>
 </li>
-<li>Mode ?1050 <dfn class="cmode">xtTerminfoKey</dfn>:</li>
-<li>Mode ?1051 <dfn class="cmode">xtSunKey</dfn>:</li>
-<li>Mode ?1052 <dfn class="cmode">xtHpKey</dfn>:</li>
-<li>Mode ?1053 <dfn class="cmode">xtScoKey</dfn>:</li>
-<li>Mode ?1060 <dfn class="cmode">xtX11R6Key</dfn>:</li>
-<li>Mode ?1061 <dfn class="cmode">xtVt220Key</dfn>:
+<li>Mode ?1050 <dfn class="cmode">XTERM_TCAP_FKEYS</dfn>:</li>
+<li>Mode ?1051 <dfn class="cmode">XTERM_SUN_FKEYS</dfn>:</li>
+<li>Mode ?1052 <dfn class="cmode">XTERM_HP_FKEYS</dfn>:</li>
+<li>Mode ?1053 <dfn class="cmode">XTERM_SCO_FKEYS</dfn>:</li>
+<li>Mode ?1060 <dfn class="cmode">XTERM_LEGACY_FKEYS</dfn>:</li>
+<li>Mode ?1061 <dfn class="cmode">XTERM_VT220_FKEYS</dfn>:
   <p>[xterm] マニュアルには書いてあるが手許の xterm#348 (cygwin),
     xterm#334 (fc30) では 1050,1051,1060,1061 しか実装されていない。
     少なくとも 1050,1051,1060,1061 は排他的であった。
@@ -4311,14 +4290,14 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     6つが全て排他的であると考えるのが自然だろう。
   </p>
   <ul>
-  <li>xtHpKey について、[xterm ctlseqs.pdf/HP-Style Function Keys] にはコンパイル時に有効にできるとある。
+  <li>XTERM_HP_FKEYS について、[xterm ctlseqs.pdf/HP-Style Function Keys] にはコンパイル時に有効にできるとある。
     詳細は terminfo で xterm-hp を見よとの事。
     コマンド <code>TERM=xterm-hp infocmp -d xterm | grep -v 'NULL\.$'</code> で
     xterm-hp 特有の設定を表示できる。
-    xtSunKey については同様に terminfo xterm-sun を見よと書かれている。
-    xtScoKey については何も書かれていないが terminfo xterm-sco があった。
-    xtX11R6Key については xterm-xfree86 及び xterm-xf86-* が対応する terminfo だろうか。
-    xtVt220Key については xterm-vt220 がある。
+    XTERM_SUN_FKEYS については同様に terminfo xterm-sun を見よと書かれている。
+    XTERM_SCO_FKEYS については何も書かれていないが terminfo xterm-sco があった。
+    XTERM_LEGACY_FKEYS については xterm-xfree86 及び xterm-xf86-* が対応する terminfo だろうか。
+    XTERM_VT220_FKEYS については xterm-vt220 がある。
   </li>
   <li>xterm-sun (terminfo): カーソルキーは以下の表に纏める。
     Fn key に関しては、terminfo を観察すると 10 毎に数値が連続しているので
@@ -4404,13 +4383,13 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     <kbd>f5</kbd>-<kbd>f12</kbd> については <kbd>CSI <i>Ps</i> ~</kbd> の形式である。
     修飾に関しては一貫して <kbd>CSI <i>Ps</i> ; <i>mod</i> <i>Ft</i></kbd> の形式である。
   </li>
-  <li>xterm (xtX11R6Key):
+  <li>xterm (XTERM_LEGACY_FKEYS):
     Cursor key は <kbd>delete</kbd> (<kbd>DEL</kbd>) が xterm からの変化。修飾は効かない。
     Fn key は全て <kbd>CSI <i>Ps</i> ~</kbd> の形式になる。
     但し C- 修飾は番号を +10 する。他の修飾は効かない。
     振る舞いを見ると terminfo xterm-xf86-v32,v33 に対応している様に見える。
   </li>
-  <li>xterm (xtVt220Key):
+  <li>xterm (XTERM_VT220_FKEYS):
     Cursor key については全て番号になる。修飾は一切効かない。
     Fn key は修飾が無い時は default と同じである。<kbd>S-</kbd> 修飾は無視される。
     <kbd>C-</kbd> 修飾は番号を +10 するのに対応する。
@@ -4420,12 +4399,12 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </li>
   </ul>
 </li>
-<li><dfn class="cfunc">xtModifyKeys</dfn> <kbd>CSI &gt; <i>Ps1</i> ; <i>Ps2</i> m</kbd>: Set key modifier options (xterm)</li>
-<li><dfn class="cfunc">xtDisableModifyKeys</dfn> <kbd>CSI &gt; <i>Ps1</i> n</kbd>: Disable key modifier options (xterm)
+<li><dfn class="cfunc">XTERM_SET_MOD_FKEYS</dfn> <kbd>CSI &gt; <i>Ps1</i> ; <i>Ps2</i> m</kbd>: Set key modifier options (xterm)</li>
+<li><dfn class="cfunc">XTERM_SET_MOD_FKEYS0</dfn> <kbd>CSI &gt; <i>Ps1</i> n</kbd>: Disable key modifier options (xterm)
   <p>[xterm] modifyOtherKeys 等に値を設定する。<i class="kbd">Ps1</i> には影響を受けるキーの種類を指定する。
     <i class="kbd">Ps2</i> には修飾の形式を指定する。
-    xtModifyKeys で <i class="kbd">Ps2</i> を省略すると初期値を設定する。
-    xtDisableModifyKeys は -1 (修飾無効) に設定する。
+    XTERM_SET_MOD_FKEYS で <i class="kbd">Ps2</i> を省略すると初期値を設定する。
+    XTERM_SET_MOD_FKEYS0 は -1 (修飾無効) に設定する。
     引数を全く指定しないと全ての設定を初期値にする。
   </p>
   <table class="normal">
@@ -4471,55 +4450,55 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 
 <h3>マウス追跡 (Mouse Tracking)</h3>
 <ul>
-<li>Mode ?9 <dfn class="cmode">xtMouseX10</dfn> Send Mouse X &amp; Y [xterm, 既定値 RM]</li>
-<li>Mode ?1000 <dfn class="cmode">xtMouseVt200</dfn> Send Mouse X &amp; Y [xterm, 既定値 RM]</li>
-<li>Mode ?1001 <dfn class="cmode">xtMouseHilite</dfn>: Use Hilite Mouse Tracking [xterm, 既定値 RM]</li>
-<li>Mode ?1002 <dfn class="cmode">xtMouseButton</dfn>: Use Cell Motion Mouse Tracking [xterm, 既定値 RM]</li>
-<li>Mode ?1003 <dfn class="cmode">xtMouseAll</dfn>: Use All Motion Mouse Tracking [xterm, 既定値 RM]
+<li>Mode ?9 <dfn class="cmode">XTERM_X10_MOUSE</dfn>: Send Mouse X &amp; Y [xterm, 既定値 RM]</li>
+<li>Mode ?1000 <dfn class="cmode">XTERM_VT200_MOUSE</dfn>: Send Mouse X &amp; Y [xterm, 既定値 RM]</li>
+<li>Mode ?1001 <dfn class="cmode">XTERM_VT200_HIGHLIGHT_MOUSE</dfn>: Use Hilite Mouse Tracking [xterm, 既定値 RM]</li>
+<li>Mode ?1002 <dfn class="cmode">XTERM_BTN_EVENT_MOUSE</dfn>: Use Cell Motion Mouse Tracking [xterm, 既定値 RM]</li>
+<li>Mode ?1003 <dfn class="cmode">XTERM_ANY_EVENT_MOUSE</dfn>: Use All Motion Mouse Tracking [xterm, 既定値 RM]
   <p>[xterm] これらはマウスイベントの通知を制御する。
     上記5つのモードは排他的であり、何れかを設定すると他の物は解除される。何れかの解除シーケンスを送ると全て解除される。
     それぞれどの範囲のマウスイベントまで通知するかで異なる。
-    xtMouseX10 はマウスボタンの押下が通知される。
-    xtMouseVt200 と xtMouseHilite はマウスボタンの押下・解放が通知される。
-    xtMouseHilite の場合にはマウスボタンを押している間は選択範囲がハイライトされ、
+    XTERM_X10_MOUSE はマウスボタンの押下が通知される。
+    XTERM_VT200_MOUSE と XTERM_VT200_HIGHLIGHT_MOUSE はマウスボタンの押下・解放が通知される。
+    XTERM_VT200_HIGHLIGHT_MOUSE の場合にはマウスボタンを押している間は選択範囲がハイライトされ、
     ボタンが解放された時には他のモードとは異なるシーケンス (選択イベント) を通知する。
-    xtMouseButton はマウスボタンを押下している間のマウス移動も通知する。
-    xtMouseAll は更にマウスボタンが離れている時の移動も通知する。
+    XTERM_BTN_EVENT_MOUSE はマウスボタンを押下している間のマウス移動も通知する。
+    XTERM_ANY_EVENT_MOUSE は更にマウスボタンが離れている時の移動も通知する。
     マウスイベントは以下のシーケンスを用いて送信される。
     全て解除されているとマウスイベントは通知されない。
   </p>
   <table class="normal center contra-cell-centered">
   <caption>表: 通知されるイベントの種類</caption>
   <tr><th>モード</th><th>押下</th><th>解放</th><th>選択</th><th>ドラッグ</th><th>移動</th></tr>
-  <tr><th>xtMouseX10</th>    <td>★</td><td>  </td><td>  </td><td>  </td><td>  </td></tr>
-  <tr><th>xtMouseVt200</th>  <td>★</td><td>★</td><td>  </td><td>  </td><td>  </td></tr>
-  <tr><th>xtMouseHilite</th><td>★</td><td>  </td><td>★</td><td>  </td><td>  </td></tr>
-  <tr><th>xtMouseButton</th> <td>★</td><td>★</td><td>  </td><td>★</td><td>  </td></tr>
-  <tr><th>xtMouseAll</th>    <td>★</td><td>★</td><td>  </td><td>★</td><td>★</td></tr>
+  <tr><th>XTERM_X10_MOUSE</th>            <td>★</td><td>  </td><td>  </td><td>  </td><td>  </td></tr>
+  <tr><th>XTERM_VT200_MOUSE</th>          <td>★</td><td>★</td><td>  </td><td>  </td><td>  </td></tr>
+  <tr><th>XTERM_VT200_HIGHLIGHT_MOUSE</th><td>★</td><td>  </td><td>★</td><td>  </td><td>  </td></tr>
+  <tr><th>XTERM_BTN_EVENT_MOUSE</th>      <td>★</td><td>★</td><td>  </td><td>★</td><td>  </td></tr>
+  <tr><th>XTERM_ANY_EVENT_MOUSE</th>      <td>★</td><td>★</td><td>  </td><td>★</td><td>★</td></tr>
   </table>
 </li>
-<li>Mode ?1005 <dfn class="cmode">xtExtMouseUtf8</dfn> Enable Extended Mouse Mode [xterm, 既定値 RM]</li>
-<li>Mode ?1006 <dfn class="cmode">xtExtMouseSgr</dfn> [xterm, 既定値 RM]</li>
-<li>Mode ?1015 <dfn class="cmode">rxvtExtMouseUrxvt</dfn> [urxvt, 既定値 RM]
+<li>Mode ?1005 <dfn class="cmode">XTERM_EXT_MODE_MOUSE</dfn>: Enable Extended Mouse Mode [xterm, 既定値 RM]</li>
+<li>Mode ?1006 <dfn class="cmode">XTERM_SGR_EXT_MODE_MOUSE</dfn>: [xterm, 既定値 RM]</li>
+<li>Mode ?1015 <dfn class="cmode">URXVT_EXT_MODE_MOUSE</dfn>: [urxvt, 既定値 RM]
   <p>[xterm] これらのモードはマウスイベントの通知に使われるシーケンスの形式を変更するのに使う。
     上記3つのモードはは排他的であり、
     何れかを設定すると他は解除されるし、何れかを解除しようとすると全て解除される。
-    xtExtMouseUtf8 は utf-8 形式を指定する。
-    rxvtExtMouseUrxvt は urxvt 形式を指定する。
-    xtExtMouseSgr は SGR 形式を指定する。
+    XTERM_EXT_MODE_MOUSE は utf-8 形式を指定する。
+    URXVT_EXT_MODE_MOUSE は urxvt 形式を指定する。
+    XTERM_SGR_EXT_MODE_MOUSE は SGR 形式を指定する。
     それぞれの形式に対して以下のようなシーケンスで (選択以外の) マウスイベントが通知される。
-    xtMouseR は何れも設定されていない時に使われる既定のシーケンスである。
+    XtermX10MouseR は何れも設定されていない時に使われる既定のシーケンスである。
   </p>
   <table class="normal center">
-  <tr><th>略号</th>                 <th>形式</th> <th>Sequence</th></tr>
-  <tr><th>xtMouseR</th>              <td>既定</td> <td><kbd>CSI M <i>C</i> <i>C</i> <i>C</i></kbd></td></tr>
-  <tr><th>xtExtMouseUtf8R</th>       <td>utf-8</td><td><kbd>CSI M <i>C8</i> <i>C8</i> <i>C8</i></kbd></td></tr>
-  <tr><th>rxvtExtMouseUrxvtR</th>    <td>urxvt</td><td><kbd>CSI <i>Ps</i> ; <i>Pn</i> ; <i>Pn</i> M</kbd></td></tr>
-  <tr><th>xtExtMouseSgrR</th>        <td>SGR</td>  <td><kbd>CSI &lt; <i>Ps</i> ; <i>Pn</i> ; <i>Pn</i> M</kbd></td></tr>
-  <tr><th>xtExtMouseSgrReleaseR</th> <td>SGR</td>  <td><kbd>CSI &lt; <i>Ps</i> ; <i>Pn</i> ; <i>Pn</i> m</kbd></td></tr>
+  <tr><th>略号</th>                        <th>形式</th> <th>Sequence</th></tr>
+  <tr><th>XtermX10MouseR</th>              <td>既定</td> <td><kbd>CSI M <i>C</i> <i>C</i> <i>C</i></kbd></td></tr>
+  <tr><th>XtermExtModeMouseR</th>          <td>utf-8</td><td><kbd>CSI M <i>C8</i> <i>C8</i> <i>C8</i></kbd></td></tr>
+  <tr><th>UrxvtExtModeMouseR</th>          <td>urxvt</td><td><kbd>CSI <i>Ps</i> ; <i>Pn</i> ; <i>Pn</i> M</kbd></td></tr>
+  <tr><th>XtermSgrExtModeMouseR</th>       <td>SGR</td>  <td><kbd>CSI &lt; <i>Ps</i> ; <i>Pn</i> ; <i>Pn</i> M</kbd></td></tr>
+  <tr><th>XtermSgrExtModeReleaseMouseR</th><td>SGR</td>  <td><kbd>CSI &lt; <i>Ps</i> ; <i>Pn</i> ; <i>Pn</i> m</kbd></td></tr>
   </table>
   <p>解放イベントを通知する時、
-    xtExtMouseSgr が設定されている場合は xtExtMouseSgrReleaseR が使われ、
+    XTERM_SGR_EXT_MODE_MOUSE が設定されている場合は XtermSgrExtModeReleaseMouseR が使われ、
     第一引数には離されたボタンに対応する値が使用される。
     それ以外の設定の時はイベントは第一引数を 3 として通知される
     (どのマウスボタンが離されたかを検知する手立てはない)。
@@ -4552,24 +4531,24 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <li><i>&lt;C8&gt;</i> は引数の整数値に 0x20 を加算した値を文字コードと見て UTF-8 形式で符号化したバイト列である。</li>
   <li><i>&lt;Ps&gt;</i> は引数の整数値を整数リテラルで表現した /[0-9]+/ の形式の文字列である。</li>
   </ul>
-  <p>xtMouseHilite が設定されている時、
+  <p>XTERM_VT200_HIGHLIGHT_MOUSE が設定されている時、
     マウスボタンを離した時に解放イベントの代わりに選択イベントが発生する。
     選択イベントは形式に応じて以下のシーケンスを用いて通知される。
     第1引数・第2引数はマウスボタンを離した位置 (選択の終点) を表す (その他の通知の第2引数・第3引数に対応する)。
   </p>
   <table class="normal center">
-  <tr><th>略号</th>                 <th>形式</th> <th>Sequence</th></tr>
-  <tr><th>xtMouseHiliteR</th>        <td>既定</td> <td><kbd>CSI t <i>C</i> <i>C</i></kbd></td></tr>
-  <tr><th>xtExtMouseUtf8HiliteR</th> <td>utf-8</td><td><kbd>CSI t <i>C8</i> <i>C8</i></kbd></td></tr>
-  <tr><th>rxvtExtMouseUrxvtHiliteR</th><td>urxvt</td><td><kbd>CSI <i>Pn</i> ; <i>Pn</i> t</kbd></td></tr>
-  <tr><th>xtExtMouseSgrHiliteR</th>  <td>SGR</td>  <td><kbd>CSI &lt; <i>Pn</i> ; <i>Pn</i> t</kbd></td></tr>
+  <tr><th>略号</th>                          <th>形式</th> <th>符号化表現</th></tr>
+  <tr><th>XtermX10HighlightMouseR</th>       <td>既定</td> <td><kbd>CSI t <i>C</i> <i>C</i></kbd></td></tr>
+  <tr><th>XtermExtModeHighlightMouseR</th>   <td>utf-8</td><td><kbd>CSI t <i>C8</i> <i>C8</i></kbd></td></tr>
+  <tr><th>UrxvtExtModeHighlightMouseR</th>   <td>urxvt</td><td><kbd>CSI <i>Pn</i> ; <i>Pn</i> t</kbd></td></tr>
+  <tr><th>XtermSgrExtModeHighlightMouseR</th><td>SGR</td>  <td><kbd>CSI &lt; <i>Pn</i> ; <i>Pn</i> t</kbd></td></tr>
   </table>
   <ul>
   <li>互換性: xterm, rxvt, mintty, RLogin, rosaterm</li>
   <li>rosaterm ではそれぞれのモードを独立に on/off できるように実装してしまった。
-    複数のモードが設定されている時、xtExtMouseSgr, rxvtExtMouseUrxvt, xtExtMouseUtf8 の順に優先される。
+    複数のモードが設定されている時、XTERM_SGR_EXT_MODE_MOUSE, URXVT_EXT_MODE_MOUSE, XTERM_EXT_MODE_MOUSE の順に優先される。
     より優先順位の高い形式が off になっている時に限り、その形式が実際に働く。
-    また、xtExtMouseSgr が設定されている時、マウスボタンが離された事を示すシーケンス (<var>B</var> = 3 | 修飾) の送信は省略される。
+    また、XTERM_SGR_EXT_MODE_MOUSE が設定されている時、マウスボタンが離された事を示すシーケンス (<var>B</var> = 3 | 修飾) の送信は省略される。
   </li>
   <li>xterm, mintty では左クリック・中クリック・右クリックが MB1, MB2, MB3 に対応する。
     RLogin では左クリック・右クリックが MB1, MB2 に対応する。
@@ -4581,7 +4560,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </li>
   </ul>
 </li>
-<li>Mode ?1004 <dfn class="cmode">xtSendFocus</dfn>: Send FocusIn/FocusOut Events [xterm]
+<li>Mode ?1004 <dfn class="cmode">XTERM_FOCUS_EVENT_MOUSE</dfn>: Send FocusIn/FocusOut Events [xterm]
   <p>xterm の振る舞いを見るとフォーカスを得ると <kbd>CSI O CSI I</kbd> を送る。フォーカスを失うと <kbd>CSI O</kbd> を送る。
     1000,1002,1003 とは独立の設定である。修飾キーによる修飾は行われない様である。
   </p>
