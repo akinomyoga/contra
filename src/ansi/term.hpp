@@ -551,8 +551,8 @@ namespace ansi {
 
   class term_t: public contra::idevice {
   private:
-    board_t m_board;
     tstate_t m_state {this};
+    board_t m_board;
   public:
     void reset_size(curpos_t width, curpos_t height) {
       m_board.reset_size(width, height);

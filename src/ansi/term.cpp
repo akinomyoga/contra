@@ -116,35 +116,6 @@ namespace ansi {
     return do_decrqm_impl(term, params, false);
   }
 
-  bool do_decscusr(term_t& term, csi_parameters& params) {
-    csi_single_param_t spec;
-    params.read_param(spec, 0);
-    tstate_t& s = term.state();
-    auto _set = [&s] (bool blink, int shape) {
-      s.set_mode(mode_Att610Blink, blink);
-      s.m_cursor_shape = shape;
-    };
-
-    switch (spec) {
-    case 0: _set(true ,   0); break;
-    case 1: _set(true , 100); break;
-    case 2: _set(false, 100); break;
-    case 3: _set(true ,   1); break;
-    case 4: _set(false,   1); break;
-    case 5: _set(true ,  -1); break;
-    case 6: _set(false,  -1); break;
-
-    default:
-      // Cygwin (mintty) percentage of cursor height
-      if (spec >= 100)
-        s.m_cursor_shape = 100; // block
-      else
-        s.m_cursor_shape = spec;
-      break;
-    }
-    return true;
-  }
-
   void do_altscreen(term_t& term, bool value) {
     tstate_t& s = term.state();
     board_t& b = term.board();
@@ -803,7 +774,7 @@ namespace ansi {
   }
 
   //---------------------------------------------------------------------------
-  // Cursor
+  // Cursor movement
 
   enum do_cux_direction {
     do_cux_prec_char = 0,
@@ -1105,6 +1076,9 @@ namespace ansi {
     b.cur.set_y(param - 1);
     return true;
   }
+
+  //---------------------------------------------------------------------------
+  // Scroll
 
   static void do_vertical_scroll(term_t& term, curpos_t shift, curpos_t tmargin, curpos_t bmargin, curpos_t lmargin, curpos_t rmargin, bool dcsm, bool transfer) {
     board_t& b = term.board();
@@ -1808,6 +1782,60 @@ namespace ansi {
   }
 
   //---------------------------------------------------------------------------
+  // Cursor appearance
+
+  // CSI SP q: DECSCUSR
+  bool do_decscusr(term_t& term, csi_parameters& params) {
+    csi_single_param_t spec;
+    params.read_param(spec, 0);
+    tstate_t& s = term.state();
+    auto _set = [&s] (bool blink, int shape) {
+      s.set_mode(mode_Att610Blink, blink);
+      s.m_cursor_shape = shape;
+    };
+
+    switch (spec) {
+    case 0: _set(true ,   0); break;
+    case 1: _set(true , 100); break;
+    case 2: _set(false, 100); break;
+    case 3: _set(true ,   1); break;
+    case 4: _set(false,   1); break;
+    case 5: _set(true ,  -1); break;
+    case 6: _set(false,  -1); break;
+
+    default:
+      // Cygwin (mintty) percentage of cursor height
+      if (spec >= 100)
+        s.m_cursor_shape = 100; // block
+      else
+        s.m_cursor_shape = spec;
+      break;
+    }
+    return true;
+  }
+
+  // Mode 33: WYSTCURM (Wyse Set Cursor Mode)
+  int do_rqm_wystcurm(term_t& term) {
+    return !term.state().get_mode(mode_XtermCursorBlinkOps) ? 1 : 2;
+  }
+  void do_sm_wystcurm(term_t& term, bool value) {
+    term.state().set_mode(mode_XtermCursorBlinkOps, !value);
+  }
+
+  // Mode 34: WYULCURM (Wyse Underline Cursor Mode)
+  int do_rqm_wyulcurm(term_t& term) {
+    return term.state().m_cursor_shape > 0 ? 1 : 2;
+  }
+  void do_sm_wyulcurm(term_t& term, bool value) {
+    auto& s = term.state();
+    if (value) {
+      if (s.m_cursor_shape <= 0) s.m_cursor_shape = 1;
+    } else {
+      if (s.m_cursor_shape > 0) s.m_cursor_shape = 0;
+    }
+  }
+
+  //---------------------------------------------------------------------------
   // Function key mode settings
 
   static void do_set_funckey_mode(term_t& term, std::uint32_t spec) {
@@ -1870,19 +1898,19 @@ namespace ansi {
   // Mouse report settings
 
   static void do_set_mouse_report(term_t& term, std::uint32_t spec) {
-    tstate_t& s = term.state();
+    auto& s = term.state();
     s.mouse_mode = (s.mouse_mode & ~mouse_report_mask) | spec;
   }
   static void do_set_mouse_sequence(term_t& term, std::uint32_t spec) {
-    tstate_t& s = term.state();
+    auto& s = term.state();
     s.mouse_mode = (s.mouse_mode & ~mouse_sequence_mask) | spec;
   }
   static int do_rqm_mouse_report(term_t& term, std::uint32_t spec) {
-    tstate_t& s = term.state();
+    auto& s = term.state();
     return (s.mouse_mode & mouse_report_mask) == spec ? 1 : 2;
   }
   static int do_rqm_mouse_sequence(term_t& term, std::uint32_t spec) {
-    tstate_t& s = term.state();
+    auto& s = term.state();
     return (s.mouse_mode & mouse_sequence_mask) == spec ? 1 : 2;
   }
   void do_sm_XtermX10Mouse           (term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_down : 0); }
@@ -2005,12 +2033,8 @@ namespace ansi {
     //   将来的にはunordered_map か何かで登録できる様にする。
     //   もしくは何らかの表からコードを自動生成する様にする。
     switch (modeSpec) {
-    case mode_wystcurm1: // Mode 32 (Set Cursor Mode (Wyse))
-      return !get_mode(mode_Att610Blink) ? 1 : 2;
-    case mode_wystcurm2: // Mode 33 WYSTCURM (Wyse Set Cursor Mode)
-      return !get_mode(mode_XtermCursorBlinkOps) ? 1 : 2;
-    case mode_wyulcurm: // Mode 34 WYULCURM (Wyse Underline Cursor Mode)
-      return m_cursor_shape > 0 ? 1 : 2;
+    case mode_wystcurm: return do_rqm_wystcurm(*m_term);
+    case mode_wyulcurm: return do_rqm_wyulcurm(*m_term);
     case mode_altscreen: // Mode ?47
       return rqm_mode(mode_altscr);
     case mode_altscreen_clr: // Mode ?1047
@@ -2048,22 +2072,9 @@ namespace ansi {
     //   将来的にはunordered_map か何かで登録できる様にする。
     //   もしくは何らかの表からコードを自動生成する様にする。
     switch (modeSpec) {
-    case mode_wystcurm1:
-      set_mode(mode_Att610Blink, !value);
-      break;
-    case mode_wystcurm2:
-      set_mode(mode_XtermCursorBlinkOps, !value);
-      break;
-    case mode_wyulcurm:
-      if (value) {
-        if (m_cursor_shape <= 0) m_cursor_shape = 1;
-      } else {
-        if (m_cursor_shape > 0) m_cursor_shape = 0;
-      }
-      break;
-    case mode_altscreen:
-      do_altscreen(*m_term, value);
-      break;
+    case mode_wystcurm: return do_sm_wystcurm(*m_term, value);
+    case mode_wyulcurm: return do_sm_wyulcurm(*m_term, value);
+    case mode_altscreen: return do_altscreen(*m_term, value);
     case mode_altscreen_clr:
       if (get_mode(mode_altscr) != value) {
         set_mode(mode_altscreen, value);

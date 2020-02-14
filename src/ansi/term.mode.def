@@ -44,8 +44,7 @@ flags     mode_XtermCursorBlinkOps  dec13       false
 flags     mode_XtermXorCursorBlinks dec14       true
 flags     mode_dectcem              dec25       true
 flags     mode_declrmm              dec69       false
-accessor  mode_wystcurm1            ansi32      -
-accessor  mode_wystcurm2            ansi33      -
+accessor  mode_wystcurm             ansi33      -
 accessor  mode_wyulcurm             ansi34      -
 
 # Alternate Screen Buffers
