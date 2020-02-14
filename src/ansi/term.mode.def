@@ -36,17 +36,17 @@ flags     mode_bracketedPasteMode dec2004     true
 # Implicit Movements
 flags     mode_decawm_            private     true
 accessor  mode_decawm             dec7        -
-flags     mode_xtBSBackLine       dec45       -
+flags     mode_XtermReversewrap   dec45       -
 
 # Cursor style
-flags     mode_attCursorBlink     dec12       true
-flags     resource_cursorBlink    dec13       false
-flags     resource_cursorBlinkXOR dec14       true
-flags     mode_dectcem            dec25       true
-flags     mode_declrmm            dec69       false
-accessor  mode_wystcurm1          ansi32      -
-accessor  mode_wystcurm2          ansi33      -
-accessor  mode_wyulcurm           ansi34      -
+flags     mode_Att610Blink          dec12       true
+flags     mode_XtermCursorBlinkOps  dec13       false
+flags     mode_XtermXorCursorBlinks dec14       true
+flags     mode_dectcem              dec25       true
+flags     mode_declrmm              dec69       false
+accessor  mode_wystcurm1            ansi32      -
+accessor  mode_wystcurm2            ansi33      -
+accessor  mode_wyulcurm             ansi34      -
 
 # Alternate Screen Buffers
 flags     mode_altscr             private     false
@@ -57,7 +57,7 @@ accessor  mode_altscreen_cur      dec1049     -
 
 # Column 132
 accessor  mode_deccolm            dec3        -
-flags     mode_xtEnableColm       dec40       false
+flags     mode_Xterm132cols       dec40       false
 flags     mode_decncsm            dec95       false
 
 # 既定の前景色・背景色の反転
@@ -65,24 +65,24 @@ flags     mode_decscnm_           private     false
 accessor  mode_decscnm            dec5        -
 
 # Function-Keys
-accessor  mode_xtTerminfoKey      dec1050     unsupported
-accessor  mode_xtSunKey           dec1051     -
-accessor  mode_xtHpKey            dec1052     -
-accessor  mode_xtScoKey           dec1053     -
-accessor  mode_xtX11R6Key         dec1060     -
-accessor  mode_xtVt220Key         dec1061     -
-accessor  mode_ctrTildeKey        dec9950     -
+accessor  mode_XtermTcapFkeys     dec1050     unsupported
+accessor  mode_XtermSunFkeys      dec1051     -
+accessor  mode_XtermHpFkeys       dec1052     -
+accessor  mode_XtermScoFkeys      dec1053     -
+accessor  mode_XtermLegacyFkeys   dec1060     -
+accessor  mode_XtermVt220Fkeys    dec1061     -
+accessor  mode_ContraTildeFkeys   dec9950     -
 
 # Mouse report
-accessor  mode_xtMouseX10         dec9        -
-accessor  mode_xtMouseVt200       dec1000     -
-accessor  mode_xtMouseHilite      dec1001     -
-accessor  mode_xtMouseButton      dec1002     -
-accessor  mode_xtMouseAll         dec1003     -
-accessor  mode_xtExtMouseUtf8     dec1005     -
-accessor  mode_xtExtMouseSgr      dec1006     -
-accessor  mode_xtExtMouseUrxvt    dec1015     -
-flags     mode_xtSendFocus        dec1004     false
+accessor  mode_XtermX10Mouse            dec9        -
+accessor  mode_UrxvtExtModeMouse        dec1000     -
+accessor  mode_XtermVt200Mouse          dec1001     -
+accessor  mode_XtermVt200HighlightMouse dec1002     -
+accessor  mode_XtermBtnEventMouse       dec1003     -
+accessor  mode_XtermFocusEventMouse     dec1005     -
+accessor  mode_XtermExtModeMouse        dec1006     -
+accessor  mode_XtermSgrExtModeMouse     dec1015     -
+flags     mode_XtermAnyEventMouse       dec1004     false
 
 #------------------------------------------------------------------------------
 # Contra original modes (inaccessible)

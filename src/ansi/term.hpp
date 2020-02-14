@@ -48,11 +48,11 @@ namespace ansi {
     mouse_report_drag   = 0x08,
     mouse_report_move   = 0x10,
 
-    mouse_report_xtMouseX10    = mouse_report_down,
-    mouse_report_xtMouseVt200  = mouse_report_down | mouse_report_up,
-    mouse_report_xtMouseHilite = mouse_report_down | mouse_report_select,
-    mouse_report_xtMouseButton = mouse_report_xtMouseVt200 | mouse_report_drag,
-    mouse_report_xtMouseAll    = mouse_report_xtMouseVt200 | mouse_report_drag | mouse_report_move,
+    mouse_report_XtermX10Mouse            = mouse_report_down,
+    mouse_report_UrxvtExtModeMouse        = mouse_report_down | mouse_report_up,
+    mouse_report_XtermVt200Mouse          = mouse_report_down | mouse_report_select,
+    mouse_report_XtermVt200HighlightMouse = mouse_report_UrxvtExtModeMouse | mouse_report_drag,
+    mouse_report_XtermBtnEventMouse       = mouse_report_UrxvtExtModeMouse | mouse_report_drag | mouse_report_move,
 
     mouse_sequence_mask  = 0xFF00,
     mouse_sequence_byte  = 0x0100,
@@ -531,9 +531,9 @@ namespace ansi {
 
     bool is_cursor_visible() const { return get_mode(mode_dectcem); }
     bool is_cursor_blinking() const {
-      bool const st = get_mode(mode_attCursorBlink);
-      bool const mn = get_mode(resource_cursorBlink);
-      return get_mode(resource_cursorBlinkXOR) ? st != mn : st || mn;
+      bool const st = get_mode(mode_Att610Blink);
+      bool const mn = get_mode(mode_XtermCursorBlinkOps);
+      return get_mode(mode_XtermXorCursorBlinks) ? st != mn : st || mn;
     }
     int get_cursor_shape() const { return m_cursor_shape; }
 

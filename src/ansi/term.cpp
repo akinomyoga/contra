@@ -121,7 +121,7 @@ namespace ansi {
     params.read_param(spec, 0);
     tstate_t& s = term.state();
     auto _set = [&s] (bool blink, int shape) {
-      s.set_mode(mode_attCursorBlink, blink);
+      s.set_mode(mode_Att610Blink, blink);
       s.m_cursor_shape = shape;
     };
 
@@ -179,7 +179,7 @@ namespace ansi {
 
   void do_sm_deccolm(term_t& term, bool value) {
     tstate_t& s = term.state();
-    if (s.get_mode(mode_xtEnableColm)) {
+    if (s.get_mode(mode_Xterm132cols)) {
       board_t& b = term.board();
       b.reset_size(value ? 132 : 80, b.height());
       if (!s.get_mode(mode_decncsm)) b.clear_screen();
@@ -325,7 +325,7 @@ namespace ansi {
   }
 
   void do_bs(term_t& term) {
-    // Note: mode_xenl, mode_decawm, mode_xtBSBackLine が絡んで来た時の振る舞いは適当である。
+    // Note: mode_xenl, mode_decawm, mode_XtermReversewrap が絡んで来た時の振る舞いは適当である。
     board_t& b = term.board();
     tstate_t const& s = term.state();
     line_t const& line = b.line();
@@ -335,7 +335,7 @@ namespace ansi {
       curpos_t x = b.cur.x(), y = b.cur.y();
       bool xenl = false;
       if (b.cur.xenl() || (!cap_xenl && (x == sll || x == b.width() - 1))) {
-        if (s.get_mode(mode_decawm) && s.get_mode(mode_xtBSBackLine) && y > 0) {
+        if (s.get_mode(mode_decawm) && s.get_mode(mode_XtermReversewrap) && y > 0) {
           y--;
           x = term.implicit_slh(b.line(y));
 
@@ -372,7 +372,7 @@ namespace ansi {
       curpos_t const slh = term.implicit_slh(line);
       if (x != slh && x > 0) {
         x--;
-      } else if (s.get_mode(mode_decawm) && s.get_mode(mode_xtBSBackLine) && y > 0) {
+      } else if (s.get_mode(mode_decawm) && s.get_mode(mode_XtermReversewrap) && y > 0) {
         y--;
         x = term.implicit_sll(b.line(y));
       }
@@ -1818,22 +1818,22 @@ namespace ansi {
     tstate_t& s = term.state();
     return (s.m_funckey_flags & funckey_mode_mask) == spec ? 1 : 2;
   }
-  void do_sm_xtTerminfoKey(term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_terminfo : 0); }
-  void do_sm_xtSunKey     (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_sun      : 0); }
-  void do_sm_xtHpKey      (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_hp       : 0); }
-  void do_sm_xtScoKey     (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_sco      : 0); }
-  void do_sm_xtX11R6Key   (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_x11r6    : 0); }
-  void do_sm_xtVt220Key   (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_vt220    : 0); }
-  void do_sm_ctrTildeKey  (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_contra   : 0); }
-  int do_rqm_xtTerminfoKey(term_t& term) { return do_rqm_funckey_mode(term, funckey_terminfo); }
-  int do_rqm_xtSunKey     (term_t& term) { return do_rqm_funckey_mode(term, funckey_sun     ); }
-  int do_rqm_xtHpKey      (term_t& term) { return do_rqm_funckey_mode(term, funckey_hp      ); }
-  int do_rqm_xtScoKey     (term_t& term) { return do_rqm_funckey_mode(term, funckey_sco     ); }
-  int do_rqm_xtX11R6Key   (term_t& term) { return do_rqm_funckey_mode(term, funckey_x11r6   ); }
-  int do_rqm_xtVt220Key   (term_t& term) { return do_rqm_funckey_mode(term, funckey_vt220   ); }
-  int do_rqm_ctrTildeKey  (term_t& term) { return do_rqm_funckey_mode(term, funckey_contra  ); }
+  void do_sm_XtermTcapFkeys  (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_terminfo : 0); }
+  void do_sm_XtermSunFkeys   (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_sun      : 0); }
+  void do_sm_XtermHpFkeys    (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_hp       : 0); }
+  void do_sm_XtermScoFkeys   (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_sco      : 0); }
+  void do_sm_XtermLegacyFkeys(term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_x11r6    : 0); }
+  void do_sm_XtermVt220Fkeys (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_vt220    : 0); }
+  void do_sm_ContraTildeFkeys(term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_contra   : 0); }
+  int do_rqm_XtermTcapFkeys  (term_t& term) { return do_rqm_funckey_mode(term, funckey_terminfo); }
+  int do_rqm_XtermSunFkeys   (term_t& term) { return do_rqm_funckey_mode(term, funckey_sun     ); }
+  int do_rqm_XtermHpFkeys    (term_t& term) { return do_rqm_funckey_mode(term, funckey_hp      ); }
+  int do_rqm_XtermScoFkeys   (term_t& term) { return do_rqm_funckey_mode(term, funckey_sco     ); }
+  int do_rqm_XtermLegacyFkeys(term_t& term) { return do_rqm_funckey_mode(term, funckey_x11r6   ); }
+  int do_rqm_XtermVt220Fkeys (term_t& term) { return do_rqm_funckey_mode(term, funckey_vt220   ); }
+  int do_rqm_ContraTildeFkeys(term_t& term) { return do_rqm_funckey_mode(term, funckey_contra  ); }
 
-  bool do_xtModifyKeys(term_t& term, csi_parameters& params) {
+  bool do_XtermSetModFkeys(term_t& term, csi_parameters& params) {
     csi_single_param_t category, value;
     params.read_param(category, 9900);
     params.read_param(value, 2); // contra 既定値
@@ -1850,7 +1850,7 @@ namespace ansi {
     }
     return false;
   }
-  bool do_xtDisableModifyKeys(term_t& term, csi_parameters& params) {
+  bool do_XtermSetModFkeys0(term_t& term, csi_parameters& params) {
     csi_single_param_t category;
     params.read_param(category, 9900);
     auto& s = term.state();
@@ -1885,23 +1885,23 @@ namespace ansi {
     tstate_t& s = term.state();
     return (s.mouse_mode & mouse_sequence_mask) == spec ? 1 : 2;
   }
-  void do_sm_xtMouseX10(term_t& term, bool value)      { do_set_mouse_report(term, value ? mouse_report_down : 0); }
-  void do_sm_xtMouseVt200(term_t& term, bool value)    { do_set_mouse_report(term, value ? mouse_report_xtMouseVt200 : 0); }
-  void do_sm_xtMouseHilite(term_t& term, bool value)   { do_set_mouse_report(term, value ? mouse_report_xtMouseHilite : 0); }
-  void do_sm_xtMouseButton(term_t& term, bool value)   { do_set_mouse_report(term, value ? mouse_report_xtMouseButton : 0); }
-  void do_sm_xtMouseAll(term_t& term, bool value)      { do_set_mouse_report(term, value ? mouse_report_xtMouseAll : 0); }
-  void do_sm_xtExtMouseUtf8(term_t& term, bool value)  { do_set_mouse_sequence(term, value ? mouse_sequence_utf8 : 0); }
-  void do_sm_xtExtMouseSgr(term_t& term, bool value)   { do_set_mouse_sequence(term, value ? mouse_sequence_sgr : 0); }
-  void do_sm_xtExtMouseUrxvt(term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_urxvt : 0); }
+  void do_sm_XtermX10Mouse           (term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_down : 0); }
+  void do_sm_UrxvtExtModeMouse       (term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_UrxvtExtModeMouse : 0); }
+  void do_sm_XtermVt200Mouse         (term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_XtermVt200Mouse : 0); }
+  void do_sm_XtermVt200HighlightMouse(term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_XtermVt200HighlightMouse : 0); }
+  void do_sm_XtermBtnEventMouse      (term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_XtermBtnEventMouse : 0); }
+  void do_sm_XtermFocusEventMouse    (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_utf8 : 0); }
+  void do_sm_XtermExtModeMouse       (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_sgr : 0); }
+  void do_sm_XtermSgrExtModeMouse    (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_urxvt : 0); }
 
-  int do_rqm_xtMouseX10(term_t& term)      { return do_rqm_mouse_report(term, mouse_report_down); }
-  int do_rqm_xtMouseVt200(term_t& term)    { return do_rqm_mouse_report(term, mouse_report_xtMouseVt200); }
-  int do_rqm_xtMouseHilite(term_t& term)   { return do_rqm_mouse_report(term, mouse_report_xtMouseHilite); }
-  int do_rqm_xtMouseButton(term_t& term)   { return do_rqm_mouse_report(term, mouse_report_xtMouseButton); }
-  int do_rqm_xtMouseAll(term_t& term)      { return do_rqm_mouse_report(term, mouse_report_xtMouseAll); }
-  int do_rqm_xtExtMouseUtf8(term_t& term)  { return do_rqm_mouse_sequence(term, mouse_sequence_utf8); }
-  int do_rqm_xtExtMouseSgr(term_t& term)   { return do_rqm_mouse_sequence(term, mouse_sequence_sgr); }
-  int do_rqm_xtExtMouseUrxvt(term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_urxvt); }
+  int do_rqm_XtermX10Mouse           (term_t& term) { return do_rqm_mouse_report(term, mouse_report_down); }
+  int do_rqm_UrxvtExtModeMouse       (term_t& term) { return do_rqm_mouse_report(term, mouse_report_UrxvtExtModeMouse); }
+  int do_rqm_XtermVt200Mouse         (term_t& term) { return do_rqm_mouse_report(term, mouse_report_XtermVt200Mouse); }
+  int do_rqm_XtermVt200HighlightMouse(term_t& term) { return do_rqm_mouse_report(term, mouse_report_XtermVt200HighlightMouse); }
+  int do_rqm_XtermBtnEventMouse      (term_t& term) { return do_rqm_mouse_report(term, mouse_report_XtermBtnEventMouse); }
+  int do_rqm_XtermFocusEventMouse    (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_utf8); }
+  int do_rqm_XtermExtModeMouse       (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_sgr); }
+  int do_rqm_XtermSgrExtModeMouse    (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_urxvt); }
 
   //---------------------------------------------------------------------------
   // device attributes
@@ -2006,9 +2006,9 @@ namespace ansi {
     //   もしくは何らかの表からコードを自動生成する様にする。
     switch (modeSpec) {
     case mode_wystcurm1: // Mode 32 (Set Cursor Mode (Wyse))
-      return !get_mode(mode_attCursorBlink) ? 1 : 2;
+      return !get_mode(mode_Att610Blink) ? 1 : 2;
     case mode_wystcurm2: // Mode 33 WYSTCURM (Wyse Set Cursor Mode)
-      return !get_mode(resource_cursorBlink) ? 1 : 2;
+      return !get_mode(mode_XtermCursorBlinkOps) ? 1 : 2;
     case mode_wyulcurm: // Mode 34 WYULCURM (Wyse Underline Cursor Mode)
       return m_cursor_shape > 0 ? 1 : 2;
     case mode_altscreen: // Mode ?47
@@ -2022,22 +2022,22 @@ namespace ansi {
     case mode_deccolm: return do_rqm_deccolm(*m_term);
     case mode_decscnm: return do_rqm_decscnm(*m_term);
     case mode_decawm : return do_rqm_decawm(*m_term);
-    case mode_xtMouseX10     : return do_rqm_xtMouseX10(*m_term);
-    case mode_xtMouseVt200   : return do_rqm_xtMouseVt200(*m_term);
-    case mode_xtMouseHilite  : return do_rqm_xtMouseHilite(*m_term);
-    case mode_xtMouseButton  : return do_rqm_xtMouseButton(*m_term);
-    case mode_xtMouseAll     : return do_rqm_xtMouseAll(*m_term);
-    case mode_xtExtMouseUtf8 : return do_rqm_xtExtMouseUtf8(*m_term);
-    case mode_xtExtMouseSgr  : return do_rqm_xtExtMouseSgr(*m_term);
-    case mode_xtExtMouseUrxvt: return do_rqm_xtExtMouseUrxvt(*m_term);
+    case mode_XtermX10Mouse           : return do_rqm_XtermX10Mouse           (*m_term);
+    case mode_UrxvtExtModeMouse       : return do_rqm_UrxvtExtModeMouse       (*m_term);
+    case mode_XtermVt200Mouse         : return do_rqm_XtermVt200Mouse         (*m_term);
+    case mode_XtermVt200HighlightMouse: return do_rqm_XtermVt200HighlightMouse(*m_term);
+    case mode_XtermBtnEventMouse      : return do_rqm_XtermBtnEventMouse      (*m_term);
+    case mode_XtermFocusEventMouse    : return do_rqm_XtermFocusEventMouse    (*m_term);
+    case mode_XtermExtModeMouse       : return do_rqm_XtermExtModeMouse       (*m_term);
+    case mode_XtermSgrExtModeMouse    : return do_rqm_XtermSgrExtModeMouse    (*m_term);
 
-    case mode_xtTerminfoKey: return do_rqm_xtTerminfoKey(*m_term);
-    case mode_xtSunKey     : return do_rqm_xtSunKey     (*m_term);
-    case mode_xtHpKey      : return do_rqm_xtHpKey      (*m_term);
-    case mode_xtScoKey     : return do_rqm_xtScoKey     (*m_term);
-    case mode_xtX11R6Key   : return do_rqm_xtX11R6Key   (*m_term);
-    case mode_xtVt220Key   : return do_rqm_xtVt220Key   (*m_term);
-    case mode_ctrTildeKey  : return do_rqm_ctrTildeKey  (*m_term);
+    case mode_XtermTcapFkeys  : return do_rqm_XtermTcapFkeys  (*m_term);
+    case mode_XtermSunFkeys   : return do_rqm_XtermSunFkeys   (*m_term);
+    case mode_XtermHpFkeys    : return do_rqm_XtermHpFkeys    (*m_term);
+    case mode_XtermScoFkeys   : return do_rqm_XtermScoFkeys   (*m_term);
+    case mode_XtermLegacyFkeys: return do_rqm_XtermLegacyFkeys(*m_term);
+    case mode_XtermVt220Fkeys : return do_rqm_XtermVt220Fkeys (*m_term);
+    case mode_ContraTildeFkeys: return do_rqm_ContraTildeFkeys(*m_term);
 
     default: return 0;
     }
@@ -2049,10 +2049,10 @@ namespace ansi {
     //   もしくは何らかの表からコードを自動生成する様にする。
     switch (modeSpec) {
     case mode_wystcurm1:
-      set_mode(mode_attCursorBlink, !value);
+      set_mode(mode_Att610Blink, !value);
       break;
     case mode_wystcurm2:
-      set_mode(resource_cursorBlink, !value);
+      set_mode(mode_XtermCursorBlinkOps, !value);
       break;
     case mode_wyulcurm:
       if (value) {
@@ -2086,22 +2086,22 @@ namespace ansi {
     case mode_deccolm: do_sm_deccolm(*m_term, value); break;
     case mode_decscnm: do_sm_decscnm(*m_term, value); break;
     case mode_decawm:  do_sm_decawm(*m_term, value);  break;
-    case mode_xtMouseX10     : do_sm_xtMouseX10(*m_term, value);      break;
-    case mode_xtMouseVt200   : do_sm_xtMouseVt200(*m_term, value);    break;
-    case mode_xtMouseHilite  : do_sm_xtMouseHilite(*m_term, value);   break;
-    case mode_xtMouseButton  : do_sm_xtMouseButton(*m_term, value);   break;
-    case mode_xtMouseAll     : do_sm_xtMouseAll(*m_term, value);      break;
-    case mode_xtExtMouseUtf8 : do_sm_xtExtMouseUtf8(*m_term, value);  break;
-    case mode_xtExtMouseSgr  : do_sm_xtExtMouseSgr(*m_term, value);   break;
-    case mode_xtExtMouseUrxvt: do_sm_xtExtMouseUrxvt(*m_term, value); break;
+    case mode_XtermX10Mouse           : do_sm_XtermX10Mouse           (*m_term, value); break;
+    case mode_UrxvtExtModeMouse       : do_sm_UrxvtExtModeMouse       (*m_term, value); break;
+    case mode_XtermVt200Mouse         : do_sm_XtermVt200Mouse         (*m_term, value); break;
+    case mode_XtermVt200HighlightMouse: do_sm_XtermVt200HighlightMouse(*m_term, value); break;
+    case mode_XtermBtnEventMouse      : do_sm_XtermBtnEventMouse      (*m_term, value); break;
+    case mode_XtermFocusEventMouse    : do_sm_XtermFocusEventMouse    (*m_term, value); break;
+    case mode_XtermExtModeMouse       : do_sm_XtermExtModeMouse       (*m_term, value); break;
+    case mode_XtermSgrExtModeMouse    : do_sm_XtermSgrExtModeMouse    (*m_term, value); break;
 
-    case mode_xtTerminfoKey: do_sm_xtTerminfoKey(*m_term, value); break;
-    case mode_xtSunKey     : do_sm_xtSunKey     (*m_term, value); break;
-    case mode_xtHpKey      : do_sm_xtHpKey      (*m_term, value); break;
-    case mode_xtScoKey     : do_sm_xtScoKey     (*m_term, value); break;
-    case mode_xtX11R6Key   : do_sm_xtX11R6Key   (*m_term, value); break;
-    case mode_xtVt220Key   : do_sm_xtVt220Key   (*m_term, value); break;
-    case mode_ctrTildeKey  : do_sm_ctrTildeKey  (*m_term, value); break;
+    case mode_XtermTcapFkeys  : do_sm_XtermTcapFkeys  (*m_term, value); break;
+    case mode_XtermSunFkeys   : do_sm_XtermSunFkeys   (*m_term, value); break;
+    case mode_XtermHpFkeys    : do_sm_XtermHpFkeys    (*m_term, value); break;
+    case mode_XtermScoFkeys   : do_sm_XtermScoFkeys   (*m_term, value); break;
+    case mode_XtermLegacyFkeys: do_sm_XtermLegacyFkeys(*m_term, value); break;
+    case mode_XtermVt220Fkeys : do_sm_XtermVt220Fkeys (*m_term, value); break;
+    case mode_ContraTildeFkeys: do_sm_ContraTildeFkeys(*m_term, value); break;
     default: ;
     }
   }
@@ -2217,8 +2217,8 @@ namespace ansi {
         if (seq.intermediate_size() == 0) {
           switch (seq.final()) {
           case ascii_c: return do_da2(term, params);
-          case ascii_m: return do_xtModifyKeys(term, params);
-          case ascii_n: return do_xtDisableModifyKeys(term, params);
+          case ascii_m: return do_XtermSetModFkeys(term, params);
+          case ascii_n: return do_XtermSetModFkeys0(term, params);
           }
         }
       }
@@ -2494,11 +2494,11 @@ namespace ansi {
       case key_begin : return send_app_modified(ascii_E);
 
       case key_focus :
-        if (s.get_mode(mode_xtSendFocus))
+        if (s.get_mode(mode_XtermAnyEventMouse))
           return send_ss3_modified(ascii_I);
         break;
       case key_blur  :
-        if (s.get_mode(mode_xtSendFocus))
+        if (s.get_mode(mode_XtermAnyEventMouse))
           return send_ss3_modified(ascii_O);
         break;
 
