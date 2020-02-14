@@ -129,21 +129,21 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 <table class="normal center">
 <tr><th colspan="2">名称</th><th>符号化表現</th><th>説明</th><th>関連規格</th></tr>
 <tr><th rowspan="3">制御文字</th>
-    <th>C0 制御文字</th><td><kbd><i>&lt;C0&gt;</i></kbd></td><td>制御機能の基本集合</td><td>ISO/IEC 646</td></tr>
-<tr><th>C1 制御文字</th><td><kbd><i>&lt;C1&gt;</i></kbd></td><td>制御機能の補助集合</td><td>ISO/IEC 6429 (ECMA-48)</td></tr>
-<tr><th>Unicode 制御文字</th><td><kbd><i>&lt;Cc&gt;</i></kbd></td><td>Unicode 制御機能</td><td>ISO/IEC 10646, Unicode UAXs</td></tr>
+    <th>C0 制御文字</th><td><kbd><i>C0</i></kbd></td><td>制御機能の基本集合</td><td>ISO/IEC 646</td></tr>
+<tr><th>C1 制御文字</th><td><kbd><i>C1</i></kbd></td><td>制御機能の補助集合</td><td>ISO/IEC 6429 (ECMA-48)</td></tr>
+<tr><th>Unicode 制御文字</th><td><kbd><i>Cc</i></kbd></td><td>Unicode 制御機能</td><td>ISO/IEC 10646, Unicode UAXs</td></tr>
 <tr><th colspan="2">DLE シーケンス</th>
-    <td><kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;F&gt;</i></kbd><br />
-        <kbd>DLE <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;C0&gt;</i></kbd></td><td>伝送の制御</td><td rowspan="2">ISO/IEC 1745 (ECMA-16, ECMA-37)</td></tr>
+    <td><kbd>DLE <i>I</i><strong>*</strong> <i>F</i></kbd><br />
+        <kbd>DLE <i>I</i><strong>*</strong> <i>C0</i></kbd></td><td>伝送の制御</td><td rowspan="2">ISO/IEC 1745 (ECMA-16, ECMA-37)</td></tr>
 <tr><th colspan="2">情報メッセージ<br/>情報ブロック</th>
     <td><kbd><strong>(</strong>SOH ...<strong>)?</strong> STX ... ETX</kbd><br/>
         <kbd><strong>(</strong>SOH ...<strong>)?</strong> STX ... ETB</kbd><br/>
         <kbd>SOH ... ETB</kbd></td><td>伝送</td></tr>
 <tr><th colspan="2" rowspan="2">エスケープシーケンス</th>
-    <td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>文字コードの制御</td><td rowspan="2">ISO/IEC 2022</td></tr>
-<tr><td><kbd>ESC <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Fp&gt;</i></kbd></td><td>私用の制御</td></tr>
+    <td><kbd>ESC <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>文字コードの制御</td><td rowspan="2">ISO/IEC 2022</td></tr>
+<tr><td><kbd>ESC <i>I</i><strong>*</strong> <i>Fp</i></kbd></td><td>私用の制御</td></tr>
 <tr><th colspan="2">制御シーケンス</th>
-    <td><kbd>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+    <td><kbd>CSI <i>P</i><strong>*</strong> <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <td>ANSI 制御機能</td><td rowspan="6">ISO/IEC 6429 (ECMA-48)</td></tr>
 <tr><th rowspan="5">制御列</th><th rowspan="4">コマンド列</th>
     <td><kbd>DCS ... ST</kbd></td><td>装置制御</td></tr>
@@ -455,35 +455,35 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <table class="normal center">
   <tr><th>種類</th><th>型</th><th>符号化表現</th><th>名称</th><th>規格</th></tr>
   <tr><th rowspan="3">制御機能</th>
-      <td>Fe</td><td><kbd>ESC <i>&lt;Fe&gt;</i></kbd></td>
+      <td>Fe</td><td><kbd>ESC <i>Fe</i></kbd></td>
       <td>制御機能の補助集合 (Supplementary sets of coded control functions)</td><td>ECMA-35/6.4.3</td></tr>
-  <tr><td>Fs</td><td><kbd>ESC <i>&lt;Fs&gt;</i></kbd></td>
+  <tr><td>Fs</td><td><kbd>ESC <i>Fs</i></kbd></td>
       <td>標準単独制御機能 (Standardized single control functions)</td><td>ECMA-35/6.5.1</td></tr>
-  <tr><td>3Ft</td><td><kbd>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Fs&gt;</i></kbd></td>
+  <tr><td>3Ft</td><td><kbd>ESC # <i>I</i><strong>*</strong> <i>Fs</i></kbd></td>
       <td>登録単独制御機能 (Registered single control functions)</td><td>ECMA-35/6.5.2</td></tr>
   <tr><th rowspan="13">符号識別機能</th>
-      <td>0Ft</td><td><kbd>ESC SP <i>&lt;Ft&gt;</i></kbd></td><td>ACS (ANNOUNCE CODE STRUCTURE)</td><td>ECMA-35/15.2</td></tr>
-  <tr><td>1Ft</td><td><kbd>ESC ! <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>CZD (C0-DESIGNATE)</td><td rowspan="2">ECMA-35/14.2</td></tr>
-  <tr><td>2Ft</td><td><kbd>ESC " <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>C1D (C1-DESIGNATE)</td></tr><!--"-->
-  <tr><td>4Ft</td><td><kbd>ESC $ <i>&lt;I&gt;</i> <i>&lt;Ft&gt;</i></kbd></td><td>Designation of multiple-byte graphic character sets</td><td>ECMA-35/13.2.3, 14.3</td></tr>
-  <tr><td>5Ft</td><td><kbd>ESC % <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>DOCS (DESIGNATE OTHER CODING SYSTEM)</td><td>ECMA-35/15.4</td></tr>
-  <tr><td>6Ft</td><td><kbd>ESC &amp; <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>IRR (IDENTIFY REVISED REGISTRATION)</td><td>ECMA-35/14.5</td></tr>
-  <tr><td>8Ft</td> <td><kbd>ESC ( <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>GZD4 (G0-DESIGNATE 94-SET)</td><td rowspan="7">ECMA-35/14.3</td></tr>
-  <tr><td>9Ft</td> <td><kbd>ESC ) <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>G1D4 (G1-DESIGNATE 94-SET)</td></tr>
-  <tr><td>10Ft</td><td><kbd>ESC * <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>G2D4 (G2-DESIGNATE 94-SET)</td></tr>
-  <tr><td>11Ft</td><td><kbd>ESC + <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>G3D4 (G3-DESIGNATE 94-SET)</td></tr>
-  <tr><td>13Ft</td><td><kbd>ESC - <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>G1D6 (G1-DESIGNATE 96-SET)</td></tr>
-  <tr><td>14Ft</td><td><kbd>ESC . <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>G2D6 (G2-DESIGNATE 96-SET)</td></tr>
-  <tr><td>15Ft</td><td><kbd>ESC / <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td>G3D6 (G3-DESIGNATE 96-SET)</td></tr>
+      <td>0Ft</td><td><kbd>ESC SP <i>Ft</i></kbd></td><td>ACS (ANNOUNCE CODE STRUCTURE)</td><td>ECMA-35/15.2</td></tr>
+  <tr><td>1Ft</td><td><kbd>ESC ! <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>CZD (C0-DESIGNATE)</td><td rowspan="2">ECMA-35/14.2</td></tr>
+  <tr><td>2Ft</td><td><kbd>ESC " <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>C1D (C1-DESIGNATE)</td></tr><!--"-->
+  <tr><td>4Ft</td><td><kbd>ESC $ <i>I</i> <i>Ft</i></kbd></td><td>Designation of multiple-byte graphic character sets</td><td>ECMA-35/13.2.3, 14.3</td></tr>
+  <tr><td>5Ft</td><td><kbd>ESC % <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>DOCS (DESIGNATE OTHER CODING SYSTEM)</td><td>ECMA-35/15.4</td></tr>
+  <tr><td>6Ft</td><td><kbd>ESC &amp; <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>IRR (IDENTIFY REVISED REGISTRATION)</td><td>ECMA-35/14.5</td></tr>
+  <tr><td>8Ft</td> <td><kbd>ESC ( <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>GZD4 (G0-DESIGNATE 94-SET)</td><td rowspan="7">ECMA-35/14.3</td></tr>
+  <tr><td>9Ft</td> <td><kbd>ESC ) <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>G1D4 (G1-DESIGNATE 94-SET)</td></tr>
+  <tr><td>10Ft</td><td><kbd>ESC * <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>G2D4 (G2-DESIGNATE 94-SET)</td></tr>
+  <tr><td>11Ft</td><td><kbd>ESC + <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>G3D4 (G3-DESIGNATE 94-SET)</td></tr>
+  <tr><td>13Ft</td><td><kbd>ESC - <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>G1D6 (G1-DESIGNATE 96-SET)</td></tr>
+  <tr><td>14Ft</td><td><kbd>ESC . <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>G2D6 (G2-DESIGNATE 96-SET)</td></tr>
+  <tr><td>15Ft</td><td><kbd>ESC / <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>G3D6 (G3-DESIGNATE 96-SET)</td></tr>
   <tr><th rowspan="3">私用の機能</th>
-      <td>Fp</td><td><kbd>ESC <i>&lt;Fp&gt;</i></kbd></td>
+      <td>Fp</td><td><kbd>ESC <i>Fp</i></kbd></td>
       <td rowspan="2">私用制御機能 (Private control functions)</td><td rowspan="2">ECMA-35/6.5.3</td></tr>
-  <tr><td>3Fp</td><td><kbd>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Fp&gt;</i></kbd></td></tr>
-  <tr><td>nFp</td><td><kbd>ESC <i>&lt;I&gt;</i><strong>+</strong> <i>&lt;Fp&gt;</i></kbd></td>
+  <tr><td>3Fp</td><td><kbd>ESC # <i>I</i><strong>*</strong> <i>Fp</i></kbd></td></tr>
+  <tr><td>nFp</td><td><kbd>ESC <i>I</i><strong>+</strong> <i>Fp</i></kbd></td>
       <td>私用の機能その他 (Reserved for Private use)</td><td>ECMA-35/13.2.2</td></tr>
   <tr><th rowspan="2">(予約)</th>
-      <td>7Ft</td> <td><kbd>ESC ' <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><td rowspan="2">-R- (予約)</td><td rowspan="2">-</td></tr><!--'-->
-  <tr><td>12Ft</td><td><kbd>ESC , <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td></tr>
+      <td>7Ft</td> <td><kbd>ESC ' <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td rowspan="2">-R- (予約)</td><td rowspan="2">-</td></tr><!--'-->
+  <tr><td>12Ft</td><td><kbd>ESC , <i>I</i><strong>*</strong> <i>Ft</i></kbd></td></tr>
   </table>
   <ul>
   <li><i>&lt;Fp&gt;</i> で終端するエスケープシーケンスは私用の為に保留されている。</li>
@@ -514,43 +514,43 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th></tr>
-<tr><th class="markB">ACS</th><td><kbd>ESC SP <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">ACS</th><td><kbd>ESC SP <i>Ft</i></kbd></td>
     <th>---</th><td><kbd>ESC 0</kbd></td>
     <th>(PAD)</th><td><kbd>ESC @</kbd></td>
     <th class="markB">DCS</th><td><kbd>ESC P</kbd></td>
     <th>DMI</th><td><kbd>ESC `</kbd></td>
     <th>PCD</th><td><kbd>ESC p</kbd></td></tr>
-<tr><th class="markB">CZD</th><td><kbd>ESC ! <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">CZD</th><td><kbd>ESC ! <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <th>DECHTS</th><td><kbd>ESC 1</kbd></td>
     <th>(HOP)</th><td><kbd>ESC A</kbd></td>
     <th>PU1</th><td><kbd>ESC Q</kbd></td>
     <th>INT</th><td><kbd>ESC a</kbd></td>
     <th>-R-</th><td><kbd>ESC q</kbd></td></tr>
-<tr><th class="markB">C1D</th><td><kbd>ESC " <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td><!--"-->
+<tr><th class="markB">C1D</th><td><kbd>ESC " <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><!--"-->
     <th>DECCAHT</th><td><kbd>ESC 2</kbd></td>
     <th>BPH</th><td><kbd>ESC B</kbd></td>
     <th>PU2</th><td><kbd>ESC R</kbd></td>
     <th>EMI</th><td><kbd>ESC b</kbd></td>
     <th>-R-</th><td><kbd>ESC r</kbd></td></tr>
-<tr><th class="markB">"RSCF"</th><td><kbd>ESC # <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">"RSCF"</th><td><kbd>ESC # <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <th>DECVTS</th><td><kbd>ESC 3</kbd></td>
     <th>NBH</th><td><kbd>ESC C</kbd></td>
     <th>STS</th><td><kbd>ESC S</kbd></td>
     <th>RIS</th><td><kbd>ESC c</kbd></td>
     <th>-R-</th><td><kbd>ESC s</kbd></td></tr>
-<tr><th class="markB">GnDMm</th><td><kbd>ESC $ <i>&lt;I&gt;</i> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">GnDMm</th><td><kbd>ESC $ <i>I</i> <i>Ft</i></kbd></td>
     <th>DECAVT</th><td><kbd>ESC 4</kbd></td>
     <th>IND<sup>廃</sup></th><td><kbd>ESC D</kbd></td>
     <th>CCH</th><td><kbd>ESC T</kbd></td>
     <th>CMD</th><td><kbd>ESC d</kbd></td>
     <th>-R-</th><td><kbd>ESC t</kbd></td></tr>
-<tr><th class="markB">DOCS</th><td><kbd>ESC % <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">DOCS</th><td><kbd>ESC % <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <th>---</th><td><kbd>ESC 5</kbd></td>
     <th>NEL</th><td><kbd>ESC E</kbd></td>
     <th>MW</th><td><kbd>ESC U</kbd></td>
     <th>-R-</th><td><kbd>ESC e</kbd></td>
     <th>-R-</th><td><kbd>ESC u</kbd></td></tr>
-<tr><th class="markB">IRR</th><td><kbd>ESC &amp; <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">IRR</th><td><kbd>ESC &amp; <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <th>DECBI</th><td><kbd>ESC 6</kbd></td>
     <th>SSA</th><td><kbd>ESC F</kbd></td>
     <th>SPA</th><td><kbd>ESC V</kbd></td>
@@ -563,25 +563,25 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>-R-</th><td><kbd>ESC g</kbd></td>
     <th>-R-</th><td><kbd>ESC w</kbd></td></tr>
 
-<tr><th class="markB">GZD4</th><td><kbd>ESC ( <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">GZD4</th><td><kbd>ESC ( <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <th>DECRC</th><td><kbd>ESC 8</kbd></td>
     <th>HTS</th><td><kbd>ESC H</kbd></td>
     <th>SOS</th><td><kbd>ESC X</kbd></td>
     <th>-R-</th><td><kbd>ESC h</kbd></td>
     <th>-R-</th><td><kbd>ESC x</kbd></td></tr>
-<tr><th class="markB">G1D4</th><td><kbd>ESC ) <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">G1D4</th><td><kbd>ESC ) <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <th>DECFI</th><td><kbd>ESC 9</kbd></td>
     <th>HTJ</th><td><kbd>ESC I</kbd></td>
     <th>(SGCI)</th><td><kbd>ESC Y</kbd></td>
     <th>-R-</th><td><kbd>ESC i</kbd></td>
     <th>-R-</th><td><kbd>ESC y</kbd></td></tr>
-<tr><th class="markB">G2D4</th><td><kbd>ESC * <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">G2D4</th><td><kbd>ESC * <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <th>---</th><td><kbd>ESC :</kbd></td>
     <th>VTS</th><td><kbd>ESC J</kbd></td>
     <th>SCI<br/>DECID</th><td><kbd>ESC Z</kbd></td>
     <th>-R-</th><td><kbd>ESC j</kbd></td>
     <th>-R-</th><td><kbd>ESC z</kbd></td></tr>
-<tr><th class="markB">G3D4</th><td><kbd>ESC + <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">G3D4</th><td><kbd>ESC + <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <th>---</th><td><kbd>ESC ;</kbd></td>
     <th>PLD</th><td><kbd>ESC K</kbd></td>
     <th class="markB">CSI</th><td><kbd>ESC [</kbd></td>
@@ -593,19 +593,19 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>ST</th><td><kbd>ESC \</kbd></td>
     <th>(LS2R)</th><td><kbd>ESC l</kbd></td>
     <th>LS3R</th><td><kbd>ESC |</kbd></td></tr>
-<tr><th class="markB">G1D6</th><td><kbd>ESC - <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">G1D6</th><td><kbd>ESC - <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <th>DECKPAM</th><td><kbd>ESC =</kbd></td>
     <th>RI</th><td><kbd>ESC M</kbd></td>
     <th class="markB">OSC</th><td><kbd>ESC ]</kbd></td>
     <th>(LS3R)</th><td><kbd>ESC m</kbd></td>
     <th>LS2R</th><td><kbd>ESC }</kbd></td></tr>
-<tr><th class="markB">G2D6</th><td><kbd>ESC . <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">G2D6</th><td><kbd>ESC . <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <th>DECKPNM</th><td><kbd>ESC &gt;</kbd></td>
     <th>SS2</th><td><kbd>ESC N</kbd></td>
     <th class="markB">PM</th><td><kbd>ESC ^</kbd></td>
     <th>LS2</th><td><kbd>ESC n</kbd></td>
     <th>LS1R</th><td><kbd>ESC ~</kbd></td></tr>
-<tr><th class="markB">G3D6</th><td><kbd>ESC / <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+<tr><th class="markB">G3D6</th><td><kbd>ESC / <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <th>---</th><td><kbd>ESC ?</kbd></td>
     <th>SS3</th><td><kbd>ESC O</kbd></td>
     <th class="markB">APC</th><td><kbd>ESC _</kbd></td>
@@ -648,7 +648,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <table class="normal center">
 <tr><th>先頭</th><th>符号化表現</th><th>名前</th></tr>
 <tr><th>CSI</th>
-  <td><kbd>CSI <i>&lt;P&gt;</i><strong>*</strong> <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i></kbd></td>
+  <td><kbd>CSI <i>P</i><strong>*</strong> <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
   <td><dfn>制御シーケンス</dfn> (control sequence)</td>
 </tr>
 </table>
@@ -1035,16 +1035,16 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <table class="normal center">
 <tr><th>開始</th><th>種類</th><th>符号化表現</th><th>名前</th></tr>
 <tr><th>OSC</th><td>コマンド列</td>
-  <td><kbd>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <i>&lt;GL'&gt;</i><strong>*</strong> BEL</kbd><br/>
-  <kbd>OSC <i>&lt;N&gt;</i><strong>*</strong> ; <i>&lt;GL'&gt;</i><strong>*</strong> ST</kbd>
+  <td><kbd>OSC <i>N</i><strong>*</strong> ; <i>GL'</i><strong>*</strong> BEL</kbd><br/>
+  <kbd>OSC <i>N</i><strong>*</strong> ; <i>GL'</i><strong>*</strong> ST</kbd>
   </td>
   <td>Operating System Command</td>
 </tr>
-<tr><th>DCS</th>   <td>コマンド列</td>   <td><kbd>DCS <i>&lt;GL'&gt;</i><strong>*</strong> ST</kbd></td><td>Device Control String</td></tr>
-<tr><th>SOS</th>   <td>キャラクタ列</td> <td><kbd>SOS <i>&lt;U&gt;</i><strong>*</strong> ST</kbd></td> <td>Start of String</td></tr>
-<tr><th>PM</th>    <td>コマンド列</td>   <td><kbd>PM <i>&lt;GL'&gt;</i><strong>*</strong> ST</kbd></td> <td>Privacy Message</td></tr>
-<tr><th>APC</th>   <td>コマンド列</td>   <td><kbd>APC <i>&lt;GL'&gt;</i><strong>*</strong> ST</kbd></td><td>Application Program Command</td></tr><!--'-->
-<tr><th>scrTDS</th><td>キャラクタ列?</td><td><kbd>ESC k <i>&lt;U&gt;</i><strong>*</strong> ST</kbd></td> <td>Title Definition String (GNU Screen)</td></tr>
+<tr><th>DCS</th>   <td>コマンド列</td>   <td><kbd>DCS <i>GL'</i><strong>*</strong> ST</kbd></td><td>Device Control String</td></tr>
+<tr><th>SOS</th>   <td>キャラクタ列</td> <td><kbd>SOS <i>U</i><strong>*</strong> ST</kbd></td> <td>Start of String</td></tr>
+<tr><th>PM</th>    <td>コマンド列</td>   <td><kbd>PM <i>GL'</i><strong>*</strong> ST</kbd></td> <td>Privacy Message</td></tr>
+<tr><th>APC</th>   <td>コマンド列</td>   <td><kbd>APC <i>GL'</i><strong>*</strong> ST</kbd></td><td>Application Program Command</td></tr><!--'-->
+<tr><th>scrTDS</th><td>キャラクタ列?</td><td><kbd>ESC k <i>U</i><strong>*</strong> ST</kbd></td> <td>Title Definition String (GNU Screen)</td></tr>
 </table>
 
 <ul>
@@ -1129,6 +1129,30 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </li>
 </ul>
 
+<h3>私用シーケンス</h3>
+<p>パラメータの先頭に <kbd>&lt;</kbd>, <kbd>=</kbd>, <kbd>&gt;</kbd>, <kbd>?</kbd> を含むもの。</p>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th></tr>
+<tr><th>DA2</th> <td><kbd>CSI > <i>Ps</i> c</kbd></td></tr>
+<tr><th>DA3</th> <td><kbd>CSI = <i>Ps</i> c</kbd></td></tr>
+<tr><th>xtModifyKeys       </th><td><kbd>CSI &gt; <i>Ps1</i> ; <i>Ps2</i> m</kbd></td></tr>
+<tr><th>xtDisableModifyKeys</th><td><kbd>CSI &gt; <i>Ps1</i> n</kbd>             </td></tr>
+<tr><th>xtGraphicsAttribute</th> <td><kbd>CSI &gt; <i>Ps</i> S</kbd></td></tr>
+<tr><th>xtSetTitle</th> <td><kbd>CSI &gt; <i>Ps</i> t</kbd></td></tr>
+<tr><th>xtRstTitle</th> <td><kbd>CSI &gt; <i>Ps</i> T</kbd></td></tr>
+<tr><th>xtPointerMode</th> <td><kbd>CSI &gt; <i>Ps</i> p</kbd></td></tr>
+<tr><th>DECSET</th> <td><kbd>CSI ? <i>Pm</i> h</kbd></td></tr>
+<tr><th>DECRST</th> <td><kbd>CSI ? <i>Pm</i> l</kbd></td></tr>
+<tr><th>DECRQM</th> <td><kbd>CSI ? <i>Ps</i> $ p</kbd></td></tr>
+<tr><th>DECRPM</th> <td><kbd>CSI ? <i>Ps</i> ; <i>Ps</i> $ y</kbd></td></tr>
+<tr><th>DECSED</th><td><kbd>CSI ? <i>Ps</i> J</kbd></td></tr>
+<tr><th>DECSEL</th><td><kbd>CSI ? <i>Ps</i> K</kbd></td></tr>
+<tr><th>XTREST</th> <td><kbd>CSI ? <i>Pm</i> r</kbd></td></tr>
+<tr><th>XTSAVE</th> <td><kbd>CSI ? <i>Pm</i> s</kbd></td></tr>
+<tr><th>DECMC (MC)</th>  <td><kbd>CSI ? <i>Pm</i> i</kbd></td></tr>
+<tr><th>DECDSR (DSR)</th> <td><kbd>CSI ? <i>Ps</i> n</kbd></td></tr>
+</table>
+
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h2>モード</h2>
 <p>モードは端末の動作方法を指定する2値の変数である。
@@ -1136,22 +1160,22 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </p>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th><th>備考</th></tr>
-<tr><th>SM</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> h</kbd></td><td></td></tr>
-<tr><th>DECSET</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> h</kbd></td><td></td></tr>
-<tr><th>RM</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> l</kbd></td><td></td></tr>
-<tr><th>DECRST</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> l</kbd></td><td></td></tr>
-<tr><th>DECRQM</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> $ p</kbd><br/><kbd>CSI ? <i>&lt;Ps&gt;</i> $ p</kbd></td><td></td></tr>
-<tr><th>DECRPM</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ y</kbd><br/><kbd>CSI ? <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ y</kbd></td><td>(応答)</td></tr>
+<tr><th>SM</th>     <td><kbd>CSI <i>Pm</i> h</kbd></td><td></td></tr>
+<tr><th>DECSET</th> <td><kbd>CSI ? <i>Pm</i> h</kbd></td><td></td></tr>
+<tr><th>RM</th>     <td><kbd>CSI <i>Pm</i> l</kbd></td><td></td></tr>
+<tr><th>DECRST</th> <td><kbd>CSI ? <i>Pm</i> l</kbd></td><td></td></tr>
+<tr><th>DECRQM</th> <td><kbd>CSI <i>Ps</i> $ p</kbd><br/><kbd>CSI ? <i>Ps</i> $ p</kbd></td><td></td></tr>
+<tr><th>DECRPM</th> <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> $ y</kbd><br/><kbd>CSI ? <i>Ps</i> ; <i>Ps</i> $ y</kbd></td><td>(応答)</td></tr>
 </table>
 <ul>
-<li><dfn class="cfunc">SM</dfn>: SET MODE <kbd>CSI <i>&lt;Pm&gt;</i> h</kbd>
+<li><dfn class="cfunc">SM</dfn>: SET MODE <kbd>CSI <i>Pm</i> h</kbd>
   <p>番号で指定されたモードを有効にする。</p>
   <ul>
   <li>互換性: [ECMA-48/8.3.125], vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT510: SM</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">RM</dfn>: RESET MODE <kbd>CSI <i>&lt;Pm&gt;</i> l</kbd>
+<li><dfn class="cfunc">RM</dfn>: RESET MODE <kbd>CSI <i>Pm</i> l</kbd>
   <p>番号で指定されたモードを無効にする。</p>
   <ul>
   <li>互換性: [ECMA-48/8.3.106], vt100, xterm</li>
@@ -1163,22 +1187,22 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   を用いて private モードを実装しても良い。
   例えば以下の DECSET, DECRST は ? で始まる引数による SM, RM の private モードである。
 </li>
-<li><dfn class="cfunc">DECSET</dfn>: Set DEC Mode <kbd>CSI ? <i>&lt;Pm&gt;</i> h</kbd>
+<li><dfn class="cfunc">DECSET</dfn>: Set DEC Mode <kbd>CSI ? <i>Pm</i> h</kbd>
   <ul>
   <li>互換性: vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT510: SM</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECRST</dfn>: Reset DEC Mode <kbd>CSI ? <i>&lt;Pm&gt;</i> l</kbd>
+<li><dfn class="cfunc">DECRST</dfn>: Reset DEC Mode <kbd>CSI ? <i>Pm</i> l</kbd>
   <ul>
   <li>互換性: vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/RM">VT510: RM</a></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DECRQM</dfn>: Request Mode
-  <kbd>CSI <i>&lt;Ps&gt;</i> $ p</kbd>, <kbd>CSI ? <i>&lt;Ps&gt;</i> $ p</kbd></li>
+  <kbd>CSI <i>Ps</i> $ p</kbd>, <kbd>CSI ? <i>Ps</i> $ p</kbd></li>
 <li><dfn class="cfunc">DECRPM</dfn>: Report Mode (応答)
-  <kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ y</kbd>, <kbd>CSI ? <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ y</kbd>
+  <kbd>CSI <i>Ps</i> ; <i>Ps</i> $ y</kbd>, <kbd>CSI ? <i>Ps</i> ; <i>Ps</i> $ y</kbd>
   <p>DECRQM で現在の状態を問い合わせる。
     一度に一つのモードについてのみ尋ねる事が可能である。
     端末から DECRPM によって現在の状態を応答する。
@@ -1198,7 +1222,8 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </li>
 </ul>
 
-<h4>一覧表</h4>
+<h3>一覧表</h3>
+
 <table class="normal center">
 <caption>表: ANSI モード</caption>
 <tr><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th></tr>
@@ -1234,35 +1259,35 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
     <th>-</th><td>?33</td></tr>
 <tr><th>DECSCLM</th><td>?4</td>
     <th>DECTEM<sup>*</sup><br/>xtCursorBlinkXOR</th><td>?14</td>
-    <th>-</th><td>?24</td>
+    <th>laPrintDensity<sup>*</sup></th><td>?24</td>
     <th>DECRLM</th><td>?34</td></tr>
 <tr><th>DECSCNM</th><td>?5</td>
     <th>-</th><td>?15</td>
     <th>DECTCEM</th><td>?25</td>
     <th>DECHEBM<br/>rxvtNoFontShift</th><td>?35</td></tr>
 <tr><th>DECOM</th><td>?6</td>
-    <th>-</th><td>?16</td>
+    <th>DECEKEM<sup>*</sup></th><td>?16</td>
     <th>-</th><td>?26</td>
     <th>DECHEM</th><td>?36</td></tr>
 <tr><th>DECAWM</th><td>?7</td>
     <th>-</th><td>?17</td>
-    <th>-</th><td>?27</td>
+    <th>DECPSP<sup>*</sup></th><td>?27</td>
     <th>-</th><td>?37</td></tr>
 <tr><th>DECARM</th><td>?8</td>
     <th>DECPFF</th><td>?18</td>
     <th>-</th><td>?28</td>
-    <th>rlTektronix</th><td>?38</td></tr>
+    <th>DECTEK</th><td>?38</td></tr>
 <tr><th>xtMouseX10</th><td>?9</td>
     <th>DECPEX</th><td>?19</td>
-    <th>-</th><td>?29</td>
+    <th>DECPSM<sup>*</sup></th><td>?29</td>
     <th>-</th><td>?39</td></tr>
 <tr><th>-</th><td>?10</td>
     <th>-</th><td>?20</td>
-    <th>rxvtHideScroll</th><td>?30</td>
-    <th>xtEnableColm</th><td>?40</td></tr>
+    <th>rxvtShowScroll</th><td>?30</td>
+    <th>DECCRNLM<sup>*</sup><br/>xtEnableColm</th><td>?40</td></tr>
 </table>
 <ul>
-<li>Note: DECSCFDM, DECTEM は all-espaces.txt に記述が見られるが他を探しても見つからない。</li>
+<li>Note: <sup>*</sup> を付した物はは all-espaces.txt にあった物で初期の VT シリーズの古いモードと思われる。</li>
 <li>?38 は rlogin に記述があった。</li>
 </ul>
 
@@ -1272,31 +1297,31 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
     <th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th></tr>
-<tr><th>xtMore1Fix</th><td>?41</td>
-    <th>-</th><td>?51</td>
+<tr><th>laPrintDirection<sup>*</sup><br/>xtMore1Fix</th><td>?41</td>
+    <th>DECBWRM<sup>*</sup></th><td>?51</td>
     <th>DECVCCM</th><td>?61</td>
     <th>-</th><td>?71</td></tr>
 <tr><th>DECNRCM</th><td>?42</td>
-    <th>-</th><td>?52</td>
+    <th>DECOPM<sup>*</sup></th><td>?52</td>
     <th>-</th><td>?62</td>
     <th>-</th><td>?72</td></tr>
-<tr><th>-</th><td>?43</td>
+<tr><th>DECGEPM<sup>*</sup></th><td>?43</td>
     <th>-</th><td>?53</td>
     <th>-</th><td>?63</td>
     <th>DECXRLMM</th><td>?73</td></tr>
-<tr><th>xtMarginBell</th><td>?44</td>
+<tr><th>DECGPCM<sup>*</sup><br/>xtMarginBell</th><td>?44</td>
     <th>-</th><td>?54</td>
     <th>DECPCCM</th><td>?64</td>
     <th>-</th><td>?74</td></tr>
-<tr><th>xtBSBackLine</th><td>?45</td>
-    <th>-</th><td>?55</td>
+<tr><th>DECGPCS<sup>*</sup><br/>xtBSBackLine</th><td>?45</td>
+    <th>DECBPM<sup>*</sup></th><td>?55</td>
     <th>-</th><td>?65</td>
     <th>-</th><td>?75</td></tr>
-<tr><th>xtLogging</th><td>?46</td>
+<tr><th>DECGPBM<sup>*</sup><br/>xtLogging</th><td>?46</td>
     <th>-</th><td>?56</td>
     <th>DECNKM</th><td>?66</td>
     <th>-</th><td>?76</td></tr>
-<tr><th>smAltScreen</th><td>?47</td>
+<tr><th>DECGRPM<sup>*</sup><br/>xtAltScreen</th><td>?47</td>
     <th>DECNAKB</th><td>?57</td>
     <th>DECBKM</th><td>?67</td>
     <th>-</th><td>?77</td></tr>
@@ -1305,7 +1330,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
     <th>DECKBUM</th><td>?68</td>
     <th>-</th><td>?78</td></tr>
 <tr><th>-</th><td>?49</td>
-    <th>-</th><td>?59</td>
+    <th>DECKDM<sup>*</sup></th><td>?59</td>
     <th>DECLRMM (DECVSSM)</th><td>?69</td>
     <th>-</th><td>?79</td></tr>
 <tr><th>-</th><td>?50</td>
@@ -1381,7 +1406,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>xtAlternateScroll</th>    <td>?1007</td></tr>
 <tr><th>rxvtScrollOnOutput</th>   <td>?1010</td></tr>
 <tr><th>rxvtScrollOnInput</th>    <td>?1011</td></tr>
-<tr><th>xtExtMouseUrxvt</th>      <td>?1015</td></tr>
+<tr><th>rxvtExtMouseUrxvt</th>    <td>?1015</td></tr>
 <tr><th>xtIntepretMetaKey</th>    <td>?1034</td></tr>
 <tr><th>xtModifyAltNumlock</th>   <td>?1035</td></tr>
 <tr><th>xtMetaSendsEscape</th>    <td>?1036</td></tr>
@@ -1392,10 +1417,10 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>xtBellIsUrgent</th>       <td>?1042</td></tr>
 <tr><th>xtPopOnBell</th>          <td>?1043</td></tr>
 <tr><th>xtKeepClipboard</th>      <td>?1044</td></tr>
-<tr><th>smEnableAltScreen</th>    <td>?1046</td></tr>
-<tr><th>smAltScreenClear</th>     <td>?1047</td></tr>
-<tr><th>smSaveCursor</th>         <td>?1048</td></tr>
-<tr><th>smAltScreenCursor</th>    <td>?1049</td></tr>
+<tr><th>xtEnableAltScreen</th>    <td>?1046</td></tr>
+<tr><th>xtAltScreenClear</th>     <td>?1047</td></tr>
+<tr><th>xtSaveCursor</th>         <td>?1048</td></tr>
+<tr><th>xtAltScreenCursor</th>    <td>?1049</td></tr>
 <tr><th>xtTerminfoKey</th>        <td>?1050</td></tr>
 <tr><th>xtSunKey</th>             <td>?1051</td></tr>
 <tr><th>xtHpKey</th>              <td>?1052</td></tr>
@@ -1403,7 +1428,90 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>xtX11R6Key</th>           <td>?1060</td></tr>
 <tr><th>xtVt220Key</th>           <td>?1061</td></tr>
 <tr><th>smBracketedPasteMode</th> <td>?2004</td></tr>
+<tr><th>minttyAmbiguousWidthReport</th> <td>?7700</td></tr>
+<tr><th>minttyAppEsc</th>               <td>?7727</td></tr>
+<tr><th>minttyEscFs</th>                <td>?7728</td></tr>
+<tr><th>minttyFontChangeReport</th>     <td>?7767</td></tr>
+<tr><th>minttyShortcutOverride</th>     <td>?7783</td></tr>
+<tr><th>minttyEnableMouseWheel</th>     <td>?7786</td></tr>
+<tr><th>minttyApplicationMouseWheel</th><td>?7787</td></tr>
+<tr><th>minttyDisableBidiLine</th>      <td>?7796</td></tr>
+<tr><th>minttyDisableBidi</th>          <td>?77096</td></tr>
+<tr><th>minttyModifyKey</th>            <td>?77000-77031</td></tr>
+<tr><th>vteBidiBoxMirror</th>     <td>?2500 (tmp)</td></tr>
+<tr><th>vteBidiAutoDetect</th>    <td>?2501 (tmp)</td></tr>
+<tr><th>vteArrowKeySwap</th>      <td>?1243 (tmp)</td></tr>
+<tr><th>TTCTH</th>      <td>?8200</td></tr>
 </table>
+
+<table class="normal center">
+<caption>表: RLogin モード</caption>
+<tr><th>RLGCWA    </th><td>8400</td></tr>
+<tr><th>RLGNDW    </th><td>8401</td></tr>
+<tr><th>RLGAWL    </th><td>8402</td></tr>
+<tr><th>RLBOLD    </th><td>8403</td></tr>
+<tr><th>RLFONT    </th><td>8404</td></tr>
+<tr><th>RLBPLUS   </th><td>8405</td></tr>
+<tr><th>RLALTBDIS </th><td>8406</td></tr>
+<tr><th>RLADBELL  </th><td>8416</td></tr>
+<tr><th>RLVSBELL  </th><td>8417</td></tr>
+<tr><th>RLUNIAWH  </th><td>8428</td></tr>
+<tr><th>RLSPCTAB  </th><td>8429</td></tr>
+<tr><th>RLNORESZ  </th><td>8435</td></tr>
+<tr><th>RLKANAUTO </th><td>8437</td></tr>
+<tr><th>RLMOSWHL  </th><td>8438</td></tr>
+<tr><th>RLMSWAPP  </th><td>8439</td></tr>
+<tr><th>RLPNAM    </th><td>8440</td></tr>
+<tr><th>IMECTRL   </th><td>8441</td></tr>
+<tr><th>RLCKMESC  </th><td>8442 (7727)</td></tr>
+<tr><th>RLMSWAPE  </th><td>8443 (7786)</td></tr>
+<tr><th>RLTEKINWND</th><td>8446</td></tr>
+<tr><th>RLUNINOM  </th><td>8448</td></tr>
+<tr><th>RLUNIAHF  </th><td>8449</td></tr>
+<tr><th>RLMODKEY  </th><td>8450</td></tr>
+<tr><th>RLDRWLINE </th><td>8451</td></tr>
+<tr><th>RLSIXPOS  </th><td>8452</td></tr>
+<tr><th>DRCSMMv1  </th><td>8453 (8800)</td></tr>
+<tr><th>RLC1DIS   </th><td>8454</td></tr>
+<tr><th>RLCLSBACK </th><td>8455</td></tr>
+<tr><th>RLBRKMBCS </th><td>8456</td></tr>
+<tr><th>TTCTH     </th><td>8457 (8200)</td></tr>
+<tr><th>RLBOLDHC  </th><td>8458</td></tr>
+</table>
+
+<ul>
+<li><a href="https://terminal-wg.pages.freedesktop.org/bidi/recommendation/escape-sequences.html">The escape sequences – BiDi in Terminal Emulators</a>
+  ここによると VTE が 2500, 2501 で Bidi のスイッチを実装しているらしい。
+  この番号は Box drawing characters (RTL で左右反転) のコードが U+2500 から始まるかららしい。
+  然し、元々16進表記なのにそれを10進表記と見て対応させるのはどうなんだと思っているらしい。
+  VTE は temporary と言っているが既に mintty が追随している。
+</li>
+</ul>
+
+<ul>
+<li>GNOME/vte ソースコード中に様々な(VTE未対応の)モードが図鑑になっている。。。
+  <a href="https://github.com/GNOME/vte/blob/416c41be417a051b1d20499754aaa0a827e43b6b/src/modes-private.hh">vte/modes-private.hh at 416c41b</a>
+  <a href="https://github.com/GNOME/vte/blob/mainline/src/modes-private.hh">vte/modes-private.hh at mainline</a>
+</li>
+<li>Tera Term source <a href="https://osdn.net/projects/ttssh2/scm/svn/blobs/head/trunk/teraterm/teraterm/vtterm.c">File Details: /trunk/teraterm/teraterm/vtterm.c (head) - ttssh2 (svn) - Tera Term - OSDN</a>
+  14001..14004 に NetTerm 由来のマウスモードがあるが実験的な実装だろうか。
+</li>
+<li>モードに名前を付けるならば origin のソースコードの中で割り当てられている物を使うのが良い。
+    xterm は xterm/ptyx.h にある。srm_X10_MOUSE (?9) などの識別子。
+</li>
+<li>RLogin はちょっと複雑だ。
+  <ul>
+  <li><code>TextRam.cpp:6072:int CTextRam::OptionToIndex(int value, BOOL bAnsi)</code> に内部番号との対応がある。
+    RLogin が 84xx を採用しているのは内部に 8x32 = 512bit のビットベクタがあって、
+    その 400 番台を内部用に確保していて其処に切りの良い 8000 を足したからだろうか。</li>
+  <li>実際のモードの定義は TextRam.h (文字コード: cp932) にある。
+    VTE のソースコードには RLogin が 14xx を使っていると書いているが、
+    これは VTE の作者の勘違いである。RLogin 14xx は内部用途で DECSET とは直交している様に見える。
+  </li>
+  <li>此処に一連のモード名が定義されている。</li>
+  </ul>
+</li>
+</ul>
 
 <pre>
 # 端末毎の対応モードの一覧
@@ -1420,13 +1528,27 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 | urxvt     |   *               *  |   |
 | vt510     | ***       *       *  |   |
 | contra    |** * ***** *       ***|***|
-| ECMA-48   |******************DD**|RRR|
+| ECMA-48   |******************DD**|RRR| D=deprecated R=reserved
 
-| DEC       |         |   |  | | |     |        | |  |      | | |     11111 1 11111111111|
-|   ? Modes |         |111|11|2|3|333 3|444 4444|5|66|6 6666|7|8|9999900000 0 00011111111|
-|           |123456789|234|89|5|0|456 8|012 4567|7|01|4 6789|3|0|5678901234 6 78901234567|
-|-----------|---------|---|--|-|-|-----|--------|-|--|------|-|-|------------------------|
-| contra    |* *******|***|  |*| |   - |*  - * *| |  | -*  *| | |*         - -           |
+| DEC       |         |        |       |     |        |  |       |      | | |     11111 1 11111111111|
+|   ? Modes |         |111 1 11|22 2 23|333 3|44444444|55|5 5 566|6 6666|7|8|9999900000 0 00011111111|
+|           |123456789|234 6 89|45 7 90|456 8|01234567|12|5 7 901|4 6789|3|0|5678901234 6 78901234567|
+|-----------|---------|--------|-------|-----|--------|--|-------|------|-|-|------------------------|
+| VTE       |* * *** *|   - -  | *- -  |   - |X  -   X|  | - -   | -*   | | |          - -           |
+| Tera Term |* * *****|*  - - *| *- -  |   -*|   -   X|  | - -*  | -** *| | |*         - -           |
+| contra    |* *******|*XX- -  | *- -  |   - |X  - X X|  | - -   | -** *| | |*         - -           |
+
+| Origin    |xterm   |rxvt|xterm                    |vte|mintty    |T|RLogin                 |#1   | T=Tera Term, #1=drcsterm
+|-----------|--------|----|-------------------------|---|----------|-|-----------------------|-----|
+| Modes?    |        |  | |                    |  | |   |        77| |                       |     |
+|           |11111111|11|1|1111 111111 11111111|11|2|122|7777777777|8|88888888888888888888888|88888|
+|           |00000000|00|0|0000 000000 00000000|00|0|255|7777777700|2|44444444444444444444444|88888|
+|           |00000000|11|1|3333 344444 44445555|66|0|400|02268889X9|0|00000023344444455555555|00000|
+|           |01234567|01|5|4567 901234 67890123|01|4|301|07873676X6|0|01235685701238901235678|01234|
+|-----------|--------|--|-|--------------------|--|-|---|----------|-|-----------------------|-----|
+| VTE       |***** **|  | |  * -      - ***    |  |*|***|          | |                       |     |
+| Tera Term |******* |  |*|    -      - ***    |  |*|   | *   *    |*|                       |     |
+| contra    |******* |  |*|    -      - *** ***|**|*|   |          | |                       |     |
 </pre>
 
 <ul>
@@ -1579,6 +1701,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <ul>
 <li><a href="http://fpcu.on.coocan.jp/dosvcmd/ansi.htm">ANSI.SYS - キーボードと画面の拡張制御のサポート [FPCU]DOS/V&amp;Windowsコマンド・プロンプト・リファレンス</a></li>
 <li>ANSI.SYS 日本語モードでは =3, =17, =18, =114, =115 のみ選択可能</li>
+<li>恐らく上記 ANSI.SYS の出典はここにもある <a href="http://ascii-table.com/ansi-escape-sequences.php">ASCII Table - ANSI Escape sequences</a></li>
 </ul>
 </div>
 
@@ -1662,9 +1785,9 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>SPD</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> SP S</kbd></td></tr>
-<tr><th>SCP</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> SP k</kbd></td></tr>
-<tr><th>SIMD</th><td><kbd>CSI <i>&lt;Ps1&gt;</i> ^</kbd></td></tr>
+<tr><th>SPD</th> <td><kbd>CSI <i>Ps1</i> ; <i>Ps2</i> SP S</kbd></td></tr>
+<tr><th>SCP</th> <td><kbd>CSI <i>Ps1</i> ; <i>Ps2</i> SP k</kbd></td></tr>
+<tr><th>SIMD</th><td><kbd>CSI <i>Ps1</i> ^</kbd></td></tr>
 </table>
 <ul>
 <li>Mode 8 <dfn class="cmode">BDSM</dfn>: BI-DIRECTIONAL SUPPORT MODE
@@ -1714,7 +1837,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </li>
 <li><dfn class="cfunc">SPD</dfn>: SELECT PRESENTATION DIRECTIONS
   <p>[ECMA-48/8.3.130]
-  一つ目の引数 <kbd><i>&lt;Ps1&gt;</i></kbd> は
+  一つ目の引数 <kbd><i>Ps1</i></kbd> は
   表示部の行の向き、行の追加方向、文字進路を設定する。既定値は 0 である。
   </p>
   <table class="normal center">
@@ -1728,7 +1851,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   <tr><td>6</td><td>横書き</td><td>上へ</td><td>右へ</td></tr>
   <tr><td>7</td><td>縦書き</td><td>左へ</td><td>上へ</td></tr>
   </table>
-  <p><kbd><i>&lt;Ps2&gt;</i></kbd> は表示部・データ部に含まれている既存の内容をどう更新するかを指定する。
+  <p><kbd><i>Ps2</i></kbd> は表示部・データ部に含まれている既存の内容をどう更新するかを指定する。
   1 を指定するとデータ部を保持して表示部を更新する。現在データ位置を最初の行の最初の文字に移動する。
   2 を指定すると表示部を保持してデータ部を更新する。現在表示位置を最初の行の最初の文字に移動する。
   0 を指定した場合は処理系依存である。
@@ -1739,12 +1862,12 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 </li>
 <li><dfn class="cfunc">SCP</dfn>: SELECT CHARACTER PATH
   <p>[ECMA-48/8.3.111] 現在表示行および以降の表示行の文字進路を変更する。</p>
-  <p><kbd><i>&lt;Ps1&gt;</i></kbd> は文字進路を指定する。
+  <p><kbd><i>Ps1</i></kbd> は文字進路を指定する。
   横書きの場合は 1 が左から右で 2 が右から左を意味する。
   縦書きの場合は 1 が上から下で 2 が下から上を意味する。
   既定値はない (no default value)。
   </p>
-  <p><kbd><i>&lt;Ps2&gt;</i></kbd> は、現在行に既に含まれている内容を、
+  <p><kbd><i>Ps2</i></kbd> は、現在行に既に含まれている内容を、
   文字進路の変更に伴ってどう更新するか指定する。
   1 を指定すると新しい文字進路に合わせて表示内容を更新し、現在データ位置を先頭に移動する。
   2 を指定すると表示内容を更新せず、対応するデータ部を辻褄があう様に更新する。現在表示位置を先頭に移動する。
@@ -1776,12 +1899,12 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <h3>行とページの範囲</h3>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>SLH</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> SP U</kbd></td></tr>
-<tr><th>SLL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> SP V</kbd></td></tr>
-<tr><th>SPH</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> SP i</kbd></td></tr>
-<tr><th>SPL</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> SP j</kbd></td></tr>
-<tr><th>DECSTBM</th> <td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> r</kbd></td></tr>
-<tr><th>DECSLRM</th> <td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> s</kbd></td></tr>
+<tr><th>SLH</th> <td><kbd>CSI <i>Ps</i> SP U</kbd></td></tr>
+<tr><th>SLL</th> <td><kbd>CSI <i>Ps</i> SP V</kbd></td></tr>
+<tr><th>SPH</th> <td><kbd>CSI <i>Pn</i> SP i</kbd></td></tr>
+<tr><th>SPL</th> <td><kbd>CSI <i>Pn</i> SP j</kbd></td></tr>
+<tr><th>DECSTBM</th> <td><kbd>CSI <i>Pn1</i> ; <i>Pn2</i> r</kbd></td></tr>
+<tr><th>DECSLRM</th> <td><kbd>CSI <i>Pn1</i> ; <i>Pn2</i> s</kbd></td></tr>
 </table>
 <ul>
 <li><dfn class="cfunc">SLH</dfn>: SET LINE HOME
@@ -1931,8 +2054,8 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <p>以下に関連する制御機能を挙げる。</p>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th><th>名称</th></tr>
-<tr><th>SDS</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> ]</kbd></td><td>Start Directed String</td></tr>
-<tr><th>SRS</th> <td><kbd>CSI <i>&lt;Ps1&gt;</i> [</kbd></td><td>Start Reversed String</td></tr>
+<tr><th>SDS</th> <td><kbd>CSI <i>Ps1</i> ]</kbd></td><td>Start Directed String</td></tr>
+<tr><th>SRS</th> <td><kbd>CSI <i>Ps1</i> [</kbd></td><td>Start Reversed String</td></tr>
 <tr><th>ALM</th><td><kbd>U+061C</kbd></td><td>Arabic letter mark</td></tr>
 <tr><th>LRM</th><td><kbd>U+200E</kbd></td><td>Left-to-right mark</td></tr>
 <tr><th>RLM</th><td><kbd>U+200F</kbd></td><td>Right-to-left mark</td></tr>
@@ -1949,20 +2072,20 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <ul>
 <li><dfn class="cfunc">SDS</dfn>: START DIRECTED STRING
   <p>[ECMA-48/8.3.114] 方向付き文字列 (directed string) の開始と終了を指定する。
-  <kbd><i>&lt;Ps&gt;</i></kbd> = 1, 2 の SDS は方向付き文字列の開始を指定する。
+  <kbd><i>Ps</i></kbd> = 1, 2 の SDS は方向付き文字列の開始を指定する。
   1 を指定すると方向は左から右で、2 を指定すると方向は右から左になる。
-  <kbd><i>&lt;Ps&gt;</i></kbd> = 0 の SDS は方向付き文字列の終了を指定する。
+  <kbd><i>Ps</i></kbd> = 0 の SDS は方向付き文字列の終了を指定する。
   現在データ位置は文字列の最後の位置の次に移動する。
-  <kbd><i>&lt;Ps&gt;</i></kbd> の既定値は 0 である。
+  <kbd><i>Ps</i></kbd> の既定値は 0 である。
   </p>
 </li>
 <li><dfn class="cfunc">SRS</dfn>: START REVERSED STRING
   <p>[ECMA-48/8.3.137] 反転文字列 (reversed string) の開始と終了を指定する。
-  <kbd><i>&lt;Ps&gt;</i></kbd> = 1 は反転文字列の開始を示し、
+  <kbd><i>Ps</i></kbd> = 1 は反転文字列の開始を示し、
   方向はそれまでの方向と逆の方向になる。
-  <kbd><i>&lt;Ps&gt;</i></kbd> = 0 は反転文字列の終了を示し、
+  <kbd><i>Ps</i></kbd> = 0 は反転文字列の終了を示し、
   現在データ位置は文字列の最後の位置の次に移動する。
-  <kbd><i>&lt;Ps&gt;</i></kbd> の既定値は 0 である。
+  <kbd><i>Ps</i></kbd> の既定値は 0 である。
   </p>
 </li>
 <li>その他 Unicode に方向を制御する文字がある。
@@ -2101,32 +2224,32 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th></tr>
-<tr><th>VPB</th><td><kbd>CSI <i>&lt;Pn&gt;</i> k</kbd></td>
-    <th>CPL</th><td><kbd>CSI <i>&lt;Pn&gt;</i> F</kbd></td>
-    <th>CUU</th><td><kbd>CSI <i>&lt;Pn&gt;</i> A</kbd></td>
+<tr><th>VPB</th><td><kbd>CSI <i>Pn</i> k</kbd></td>
+    <th>CPL</th><td><kbd>CSI <i>Pn</i> F</kbd></td>
+    <th>CUU</th><td><kbd>CSI <i>Pn</i> A</kbd></td>
     <td><i>&lt;Pn&gt;</i> 行上 (CPL は更に行頭)</td></tr>
-<tr><th>VPR</th><td><kbd>CSI <i>&lt;Pn&gt;</i> e</kbd></td>
-    <th>CNL</th><td><kbd>CSI <i>&lt;Pn&gt;</i> E</kbd></td>
-    <th>CUD</th><td><kbd>CSI <i>&lt;Pn&gt;</i> B</kbd></td>
+<tr><th>VPR</th><td><kbd>CSI <i>Pn</i> e</kbd></td>
+    <th>CNL</th><td><kbd>CSI <i>Pn</i> E</kbd></td>
+    <th>CUD</th><td><kbd>CSI <i>Pn</i> B</kbd></td>
     <td><i>&lt;Pn&gt;</i> 行下 (CNL は更に行頭)</td></tr>
-<tr><th>HPB</th><td><kbd>CSI <i>&lt;Pn&gt;</i> j</kbd></td>
+<tr><th>HPB</th><td><kbd>CSI <i>Pn</i> j</kbd></td>
     <td colspan="2">-</td>
-    <th>CUB</th><td><kbd>CSI <i>&lt;Pn&gt;</i> D</kbd></td>
+    <th>CUB</th><td><kbd>CSI <i>Pn</i> D</kbd></td>
     <td><i>&lt;Pn&gt;</i> 文字左</td></tr>
-<tr><th>HPR</th><td><kbd>CSI <i>&lt;Pn&gt;</i> a</kbd></td>
+<tr><th>HPR</th><td><kbd>CSI <i>Pn</i> a</kbd></td>
     <td colspan="2">-</td>
-    <th>CUF</th><td><kbd>CSI <i>&lt;Pn&gt;</i> C</kbd></td>
+    <th>CUF</th><td><kbd>CSI <i>Pn</i> C</kbd></td>
     <td><i>&lt;Pn&gt;</i> 文字右</td></tr>
-<tr><th>HVP</th><td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> f</kbd></td>
-    <th>CUP</th><td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> H</kbd></td>
+<tr><th>HVP</th><td><kbd>CSI <i>Pn1</i> ; <i>Pn2</i> f</kbd></td>
+    <th>CUP</th><td><kbd>CSI <i>Pn1</i> ; <i>Pn2</i> H</kbd></td>
     <td colspan="2">-</td>
     <td><i>&lt;Pn1&gt;</i> 行目の <i>&lt;Pn2&gt;</i> 文字目</td></tr>
-<tr><th>VPA</th><td><kbd>CSI <i>&lt;Pn&gt;</i> d</kbd></td>
+<tr><th>VPA</th><td><kbd>CSI <i>Pn</i> d</kbd></td>
     <td colspan="2">-</td>
     <td colspan="2">-</td>
     <td><i>&lt;Pn&gt;</i> 行目</td></tr>
-<tr><th>HPA</th><td><kbd>CSI <i>&lt;Pn&gt;</i> `</kbd></td>
-    <th>CHA</th><td><kbd>CSI <i>&lt;Pn&gt;</i> G</kbd></td>
+<tr><th>HPA</th><td><kbd>CSI <i>Pn</i> `</kbd></td>
+    <th>CHA</th><td><kbd>CSI <i>Pn</i> G</kbd></td>
     <td colspan="2">-</td>
     <td><i>&lt;Pn&gt;</i> 文字目</td></tr>
 </table>
@@ -2299,9 +2422,9 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>略号</th><th>用途</th><th>符号化表現</th><th>意味</th></tr>
 <tr><th>MW</th><td>制御</td><td><kbd>MW</kbd></td><td>メッセージ待ち表示の設定</td></tr>
 <tr><th>DSR(5)</th><td>制御</td><td><kbd>CSI 5 n</kbd></td><td rowspan="2">装置の状態を確認</td></tr>
-<tr><th>DSR</th><td>応答</td><td><kbd>CSI <i>&lt;Ps&gt;</i> n</kbd></td></tr>
+<tr><th>DSR</th><td>応答</td><td><kbd>CSI <i>Ps</i> n</kbd></td></tr>
 <tr><th>DSR(6)</th><td>制御</td><td><kbd>CSI 6 n</kbd></td><td rowspan="2">カーソル位置を取得</td></tr>
-<tr><th>CPR</th><td>応答</td><td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> R</kbd></td></tr>
+<tr><th>CPR</th><td>応答</td><td><kbd>CSI <i>Pn1</i> ; <i>Pn2</i> R</kbd></td></tr>
 </table>
 
 <ul>
@@ -2342,10 +2465,10 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <h3>スクロール</h3>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
-<tr><th>SU</th><td><kbd>CSI <i>&lt;Pn&gt;</i> S</kbd></td><td>上にスクロール</td></tr>
-<tr><th>SD</th><td><kbd>CSI <i>&lt;Pn&gt;</i> T</kbd></td><td>下にスクロール</td></tr>
-<tr><th>SL</th><td><kbd>CSI <i>&lt;Pn&gt;</i> SP @</kbd></td><td>左にスクロール</td></tr>
-<tr><th>SR</th><td><kbd>CSI <i>&lt;Pn&gt;</i> SP A</kbd></td><td>右にスクロール</td></tr>
+<tr><th>SU</th><td><kbd>CSI <i>Pn</i> S</kbd></td><td>上にスクロール</td></tr>
+<tr><th>SD</th><td><kbd>CSI <i>Pn</i> T</kbd></td><td>下にスクロール</td></tr>
+<tr><th>SL</th><td><kbd>CSI <i>Pn</i> SP @</kbd></td><td>左にスクロール</td></tr>
+<tr><th>SR</th><td><kbd>CSI <i>Pn</i> SP A</kbd></td><td>右にスクロール</td></tr>
 </table>
 <ul>
 <li><dfn class="cfunc">SU</dfn>: SCROLL UP</li>
@@ -2403,14 +2526,14 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
 <tr><th>HTS</th><td><kbd>HTS</kbd></td><td>現在表示位置に文字タブ位置を設置</td></tr>
 <tr><th>VTS</th><td><kbd>VTS</kbd></td><td>現在表示行に行タブ位置を設置</td></tr>
-<tr><th>HTSA<sup>廃</sup></th><td><kbd>CSI <i>&lt;Pn&gt;</i>... SP N</kbd></td><td>現在表示行の文字タブ位置を設定</td></tr>
-<tr><th>TATE</th><td><kbd>CSI <i>&lt;Pn1&gt;</i> SP `</kbd></td><td rowspan="4">現在表示行 <i>&lt;Pn1&gt;</i> 文字目に各属性のタブを設置</td></tr>
-<tr><th>TALE</th><td><kbd>CSI <i>&lt;Pn1&gt;</i> SP a</kbd></td></tr>
-<tr><th>TAC</th> <td><kbd>CSI <i>&lt;Pn1&gt;</i> SP b</kbd></td></tr>
-<tr><th>TCC</th> <td><kbd>CSI <i>&lt;Pn1&gt;</i> ; <i>&lt;Pn2&gt;</i> SP c</kbd></td></tr>
-<tr><th>TSR</th><td><kbd>CSI <i>&lt;Pn&gt;</i> SP d</kbd></td><td>現在表示行 <i>&lt;Pn&gt;</i> 文字目の文字タブ位置を解除</td></tr>
-<tr><th>CTC</th><td><kbd>CSI <i>&lt;Ps&gt;</i> W</kbd></td><td>タブ位置の操作</td></tr>
-<tr><th>TBC</th><td><kbd>CSI <i>&lt;Ps&gt;</i> g</kbd></td><td>タブ位置の解除</td></tr>
+<tr><th>HTSA<sup>廃</sup></th><td><kbd>CSI <i>Pn</i>... SP N</kbd></td><td>現在表示行の文字タブ位置を設定</td></tr>
+<tr><th>TATE</th><td><kbd>CSI <i>Pn1</i> SP `</kbd></td><td rowspan="4">現在表示行 <i>&lt;Pn1&gt;</i> 文字目に各属性のタブを設置</td></tr>
+<tr><th>TALE</th><td><kbd>CSI <i>Pn1</i> SP a</kbd></td></tr>
+<tr><th>TAC</th> <td><kbd>CSI <i>Pn1</i> SP b</kbd></td></tr>
+<tr><th>TCC</th> <td><kbd>CSI <i>Pn1</i> ; <i>Pn2</i> SP c</kbd></td></tr>
+<tr><th>TSR</th><td><kbd>CSI <i>Pn</i> SP d</kbd></td><td>現在表示行 <i>&lt;Pn&gt;</i> 文字目の文字タブ位置を解除</td></tr>
+<tr><th>CTC</th><td><kbd>CSI <i>Ps</i> W</kbd></td><td>タブ位置の操作</td></tr>
+<tr><th>TBC</th><td><kbd>CSI <i>Ps</i> g</kbd></td><td>タブ位置の解除</td></tr>
 </table>
 <ul>
 <li>Mode 18 <dfn class="cmode">TSM</dfn>: TABULATION STOP MODE
@@ -2494,10 +2617,10 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>HT</th> <td><kbd>HT</kbd></td><td>次の文字タブ位置</td></tr>
 <tr><th>HTJ</th><td><kbd>HTJ</kbd></td><td>フィールド右寄せ・次の文字タブ位置</td></tr>
 <tr><th>VT</th> <td><kbd>VT</kbd></td><td>次の行タブ位置</td></tr>
-<tr><th>CHT</th><td><kbd>CSI <i>&lt;Pn&gt;</i> I</kbd></td><td></td></tr>
-<tr><th>CBT</th><td><kbd>CSI <i>&lt;Pn&gt;</i> Z</kbd></td><td></td></tr>
-<tr><th>CVT</th><td><kbd>CSI <i>&lt;Pn&gt;</i> Y</kbd></td><td></td></tr>
-<tr><th>STAB</th><td><kbd>CSI <i>&lt;Pn&gt;</i> SP ^</kbd></td><td></td></tr>
+<tr><th>CHT</th><td><kbd>CSI <i>Pn</i> I</kbd></td><td></td></tr>
+<tr><th>CBT</th><td><kbd>CSI <i>Pn</i> Z</kbd></td><td></td></tr>
+<tr><th>CVT</th><td><kbd>CSI <i>Pn</i> Y</kbd></td><td></td></tr>
+<tr><th>STAB</th><td><kbd>CSI <i>Pn</i> SP ^</kbd></td><td></td></tr>
 </table>
 <ul>
 <li><dfn class="cfunc">HT</dfn>: CHARACTER TABULATION
@@ -2584,16 +2707,16 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
-<tr><th>SEE</th><td><kbd>CSI <i>&lt;Ps&gt;</i> Q</kbd></td><td>DCH, ICH, DL, IL のシフト範囲を規定</td></tr>
-<tr><th>DCH</th><td><kbd>CSI <i>&lt;Pn&gt;</i> P</kbd></td><td><i>&lt;Pn&gt;</i> 文字切除</td></tr>
-<tr><th>ECH</th><td><kbd>CSI <i>&lt;Pn&gt;</i> X</kbd></td><td><i>&lt;Pn&gt;</i> 文字消去</td></tr>
-<tr><th>ICH</th><td><kbd>CSI <i>&lt;Pn&gt;</i> @</kbd></td><td><i>&lt;Pn&gt;</i> 文字挿入</td></tr>
-<tr><th>DL</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> M</kbd></td><td><i>&lt;Pn&gt;</i> 行切除</td></tr>
-<tr><th>IL</th> <td><kbd>CSI <i>&lt;Pn&gt;</i> L</kbd></td><td><i>&lt;Pn&gt;</i> 行挿入</td></tr>
-<tr><th>EL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> K</kbd></td><td>行内の消去</td></tr>
-<tr><th>EF</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> N</kbd></td><td>フィールド内の消去</td></tr>
-<tr><th>EA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> O</kbd></td><td>領域内の消去</td></tr>
-<tr><th>ED</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> J</kbd></td><td>頁内の消去</td></tr>
+<tr><th>SEE</th><td><kbd>CSI <i>Ps</i> Q</kbd></td><td>DCH, ICH, DL, IL のシフト範囲を規定</td></tr>
+<tr><th>DCH</th><td><kbd>CSI <i>Pn</i> P</kbd></td><td><i>&lt;Pn&gt;</i> 文字切除</td></tr>
+<tr><th>ECH</th><td><kbd>CSI <i>Pn</i> X</kbd></td><td><i>&lt;Pn&gt;</i> 文字消去</td></tr>
+<tr><th>ICH</th><td><kbd>CSI <i>Pn</i> @</kbd></td><td><i>&lt;Pn&gt;</i> 文字挿入</td></tr>
+<tr><th>DL</th> <td><kbd>CSI <i>Pn</i> M</kbd></td><td><i>&lt;Pn&gt;</i> 行切除</td></tr>
+<tr><th>IL</th> <td><kbd>CSI <i>Pn</i> L</kbd></td><td><i>&lt;Pn&gt;</i> 行挿入</td></tr>
+<tr><th>EL</th> <td><kbd>CSI <i>Ps</i> K</kbd></td><td>行内の消去</td></tr>
+<tr><th>EF</th> <td><kbd>CSI <i>Ps</i> N</kbd></td><td>フィールド内の消去</td></tr>
+<tr><th>EA</th> <td><kbd>CSI <i>Ps</i> O</kbd></td><td>領域内の消去</td></tr>
+<tr><th>ED</th> <td><kbd>CSI <i>Ps</i> J</kbd></td><td>頁内の消去</td></tr>
 </table>
 <ul>
 <li>Mode 6 <dfn class="cmode">ERM</dfn>: ERASURE MODE
@@ -2781,8 +2904,8 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
  DECALN, DECAUPSS, DECBI,
  DECCARA, DECCIR, DECCKD, DECCKM, DECCKSR, DECCOLM, DECCRA, DECDC,
  DECDLD, DECDMAC, DECEKBD, DECELF, DECERA, DECFI, DECFNK, DECFRA,
- DECIC, DECINVM, DECIPEM, DECKBD, DECKPAM,
- DECKPM, DECKPNM, DECLANS, DECLBAN, DECLFKC, DECLL, DECLTOD, DECMSR,
+ DECIC, DECINVM, DECIPEM, DECKBD,
+ DECKPM, DECLANS, DECLBAN, DECLFKC, DECLL, DECLTOD, DECMSR,
  DECPAK, DECPCTERM,
  DECPFK, DECPKA, DECPKFMR, DECRARA, DECRPAK,
  DECRPDE, DECRPFK, DECRPKT, DECRPM, DECRPSS, DECRPTUI, DECRQCRA, DECRQDE, DECRQKD,
@@ -2809,36 +2932,36 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <p>■ 以下 xterm の CSI Sequence (未だ纏めていない物)</p>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>DECSED</th><td><kbd>CSI ? <i>&lt;Ps&gt;</i> J</kbd></td></tr>
-<tr><th>DECSEL</th><td><kbd>CSI ? <i>&lt;Ps&gt;</i> K</kbd></td></tr>
-<tr><th>(IHMT)</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> T</kbd></td></tr>
-<tr><th>REP</th>    <td><kbd>CSI <i>&lt;Pm&gt;</i> b</kbd></td></tr>
-<tr><th>MC</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> i</kbd></td></tr>
-<tr><th>DECMC</th>  <td><kbd>CSI ? <i>&lt;Pm&gt;</i> i</kbd></td></tr>
-<tr><th>DECDSR</th> <td><kbd>CSI ? <i>&lt;Ps&gt;</i> n</kbd></td></tr>
+<tr><th>DECSED</th><td><kbd>CSI ? <i>Ps</i> J</kbd></td></tr>
+<tr><th>DECSEL</th><td><kbd>CSI ? <i>Ps</i> K</kbd></td></tr>
+<tr><th>(IHMT)</th> <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> T</kbd></td></tr>
+<tr><th>REP</th>    <td><kbd>CSI <i>Pm</i> b</kbd></td></tr>
+<tr><th>MC</th>     <td><kbd>CSI <i>Pm</i> i</kbd></td></tr>
+<tr><th>DECMC</th>  <td><kbd>CSI ? <i>Pm</i> i</kbd></td></tr>
+<tr><th>DECDSR</th> <td><kbd>CSI ? <i>Ps</i> n</kbd></td></tr>
 <tr><th>DECSTR</th> <td><kbd>CSI ! p</kbd></td></tr>
-<tr><th>DECSCL</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> " p</kbd></td><!-- " --></tr>
-<tr><th>XTREST</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> r</kbd></td></tr>
-<tr><th>DECCARA</th><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ r</kbd></td></tr>
-<tr><th>XTSAVE</th> <td><kbd>CSI ? <i>&lt;Pm&gt;</i> s</kbd></td></tr>
-<tr><th>XTWOP</th>  <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> t</kbd></td></tr>
-<tr><th>DECRARA</th><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Pm&gt;</i> $ t</kbd></td></tr>
-<tr><th>DECCRA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ w</kbd></td></tr>
-<tr><th>DECEFR</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ' w</kbd></td></tr>
-<tr><th>DECREQTPARM</th><td><kbd>CSI <i>&lt;Ps&gt;</i> x</kbd></td></tr>
-<tr><th>DECSACE</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> * x</kbd></td></tr>
-<tr><th>DECFRA</th>     <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ x</kbd></td></tr>
-<tr><th>DECELR</th>     <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ' z</kbd></td></tr>
-<tr><th>DECERA</th>     <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ z</kbd></td></tr>
-<tr><th>DECSLE</th>     <td><kbd>CSI <i>&lt;Pm&gt;</i> ' {</kbd></td></tr>
-<tr><th>DECSERA</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> $ {</kbd></td></tr>
-<tr><th>DECRQLP</th>    <td><kbd>CSI <i>&lt;Ps&gt;</i> ' |</kbd></td></tr>
+<tr><th>DECSCL</th> <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> " p</kbd></td><!-- " --></tr>
+<tr><th>XTREST</th> <td><kbd>CSI ? <i>Pm</i> r</kbd></td></tr>
+<tr><th>DECCARA</th><td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Pm</i> $ r</kbd></td></tr>
+<tr><th>XTSAVE</th> <td><kbd>CSI ? <i>Pm</i> s</kbd></td></tr>
+<tr><th>XTWOP</th>  <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> t</kbd></td></tr>
+<tr><th>DECRARA</th><td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Pm</i> $ t</kbd></td></tr>
+<tr><th>DECCRA</th> <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> $ w</kbd></td></tr>
+<tr><th>DECEFR</th> <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ' w</kbd></td></tr><!--'-->
+<tr><th>DECREQTPARM</th><td><kbd>CSI <i>Ps</i> x</kbd></td></tr>
+<tr><th>DECSACE</th>    <td><kbd>CSI <i>Ps</i> * x</kbd></td></tr>
+<tr><th>DECFRA</th>     <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> $ x</kbd></td></tr>
+<tr><th>DECELR</th>     <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ' z</kbd></td></tr><!--'-->
+<tr><th>DECERA</th>     <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> $ z</kbd></td></tr>
+<tr><th>DECSLE</th>     <td><kbd>CSI <i>Pm</i> ' {</kbd></td></tr><!--'-->
+<tr><th>DECSERA</th>    <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> $ {</kbd></td></tr>
+<tr><th>DECRQLP</th>    <td><kbd>CSI <i>Ps</i> ' |</kbd></td></tr><!--'-->
 </table>
 
 <h3>端末適合レベル</h3>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>DECSCL</th><td><kbd>CSI <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> " p</kbd></td></tr><!--"-->
+<tr><th>DECSCL</th><td><kbd>CSI <i>Ps1</i> ; <i>Ps2</i> " p</kbd></td></tr><!--"-->
 <tr><th>S7C1T</th><td><kbd>ESC SP F</kbd></td></tr>
 <tr><th>S8C1T</th><td><kbd>ESC SP G</kbd></td></tr>
 </table>
@@ -2876,14 +2999,14 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <table class="normal center">
 <tr><th>略号</th><th>用途</th><th>符号化表現</th></tr>
 <tr><th>DA</th> <td>制御</td><td><kbd>CSI 0 c</kbd><br/><kbd>CSI c</kbd></td></tr>
-<tr><th>DA1</th> <td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> c</kbd></td></tr>
-<tr><th>DA1R</th><td>応答</td><td><kbd>CSI ? 6 4 ; <i>&lt;Pm&gt;</i> c</kbd></td></tr>
-<tr><th>DA2</th> <td>制御</td><td><kbd>CSI &gt; <i>&lt;Ps&gt;</i> c</kbd></td></tr>
-<tr><th>DA2R</th><td>応答</td><td><kbd>CSI &gt; 6 1 ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> c</kbd></td></tr>
-<tr><th>DA3</th> <td>制御</td><td><kbd>CSI = <i>&lt;Ps&gt;</i> c</kbd></td></tr>
-<tr><th>DA3R</th><td>応答</td><td><kbd>DCS ! | <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> ST</kbd></td></tr>
-<tr><th>DECRQTSR</th><td>制御</td><td><kbd>CSI <i>&lt;Ps&gt;</i> $ u</kbd></td></tr>
-<tr><th>DECTSR</th><td>応答</td><td><kbd>DCS 1 $ s <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> <i>&lt;hh&gt;</i> ST</kbd></td></tr>
+<tr><th>DA1</th> <td>制御</td><td><kbd>CSI <i>Ps</i> c</kbd></td></tr>
+<tr><th>DA1R</th><td>応答</td><td><kbd>CSI ? 6 4 ; <i>Pm</i> c</kbd></td></tr>
+<tr><th>DA2</th> <td>制御</td><td><kbd>CSI &gt; <i>Ps</i> c</kbd></td></tr>
+<tr><th>DA2R</th><td>応答</td><td><kbd>CSI &gt; 6 1 ; <i>Ps</i> ; <i>Ps</i> c</kbd></td></tr>
+<tr><th>DA3</th> <td>制御</td><td><kbd>CSI = <i>Ps</i> c</kbd></td></tr>
+<tr><th>DA3R</th><td>応答</td><td><kbd>DCS ! | <i>hh</i> <i>hh</i> <i>hh</i> <i>hh</i> ST</kbd></td></tr>
+<tr><th>DECRQTSR</th><td>制御</td><td><kbd>CSI <i>Ps</i> $ u</kbd></td></tr>
+<tr><th>DECTSR</th><td>応答</td><td><kbd>DCS 1 $ s <i>hh</i> <i>hh</i> <i>hh</i> <i>hh</i> ST</kbd></td></tr>
 <tr><th>DDD1</th><td>応答</td><td><kbd>ESC ) 1</kbd></td></tr>
 <tr><th>DDD2</th><td>応答</td><td><kbd>ESC ) B</kbd></td></tr>
 <tr><th>DDD3</th><td>応答</td><td><kbd>ESC ( 1</kbd></td></tr>
@@ -2939,7 +3062,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <li><dfn class="cfunc">DA2R</dfn>:
   <p>これに関しては <a href="https://qiita.com/kefir_/items/0bda5e55f43392420d66">DA2応答の見方 - Qiita</a> が詳しい。</p>
   <ul>
-  <li>VT510 は <kbd>CSI &gt; 6 1 ; <i>&lt;Ps1&gt;</i> ; <i>&lt;Ps2&gt;</i> c </kbd> の形式で応答する。
+  <li>VT510 は <kbd>CSI &gt; 6 1 ; <i>Ps1</i> ; <i>Ps2</i> c </kbd> の形式で応答する。
     Ps1 は 10 または 20 であり、それぞれファームウェアバージョン 1.0 及び 2.0 に対応する。
     Ps2 はキーボードの種類を指定し、0 が STD keyboard で 1 が PC keyboard である。</li>
   <li>contra は取り敢えず <kbd>CSI &gt; 6 7 ; 0 c</kbd> を返す事にする。
@@ -2968,8 +3091,8 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <h3>問い合わせ - 制御機能の状態</h3>
 <table class="normal center">
 <tr><th>略号</th><th>用途</th><th>符号化表現</th></tr>
-<tr><th>DECRQSS</th><td>制御</td><td><kbd>DCS $ q <i>&lt;Seq&gt;</i> ST</kbd></td></tr>
-<tr><th>DECRPSS</th><td>応答</td><td><kbd>DCS <i>&lt;Ps&gt;</i> $ r <i>&lt;Seq&gt;</i> ST</kbd></td></tr>
+<tr><th>DECRQSS</th><td>制御</td><td><kbd>DCS $ q <i>Seq</i> ST</kbd></td></tr>
+<tr><th>DECRPSS</th><td>応答</td><td><kbd>DCS <i>Ps</i> $ r <i>Seq</i> ST</kbd></td></tr>
 </table>
 <ul>
 <li><dfn class="cfunc">DECRQSS</dfn>: Request Selection or Setting
@@ -3035,7 +3158,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <h3>端末サイズ</h3>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>DECSCPP</th><td><kbd>CSI <i>&lt;Pn&gt;</i> $ |</kbd></td></tr>
+<tr><th>DECSCPP</th><td><kbd>CSI <i>Pn</i> $ |</kbd></td></tr>
 </table>
 <ul>
 <li><dfn class="cfunc">DECSCPP</dfn>: Select 80 or 132 Columns per Page
@@ -3076,7 +3199,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <h3>カーソル表示</h3>
 <table class="normal center">
 <tr><th>略号</th>    <th>符号化表現</th></tr>
-<tr><th>DECSCUSR</th><td><kbd>CSI <i>&lt;Ps&gt;</i> SP q</kbd></td></tr>
+<tr><th>DECSCUSR</th><td><kbd>CSI <i>Ps</i> SP q</kbd></td></tr>
 </table>
 
 <ul>
@@ -3163,25 +3286,25 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h3>代替画面 (Alternate Screen Buffer)</h3>
 <ul>
-<li>Mode ?47   <dfn class="cmode">smAltScreen</dfn> (xterm) [既定値 RM]
+<li>Mode ?47   <dfn class="cmode">xtAltScreen</dfn> (xterm) [既定値 RM]
   <ul>
   <li>SM: 現在の画面を保存して代替画面に切り替える。代替画面は前回の代替画面の内容である。</li>
   <li>RM: 保存した画面を復元する。</li>
   </ul>
 </li>
-<li>Mode ?1047 <dfn class="cmode">smAltScreenClear</dfn> (xterm) [既定値 RM]
+<li>Mode ?1047 <dfn class="cmode">xtAltScreenClear</dfn> (xterm) [既定値 RM]
   <ul>
   <li>SM: 現在の画面を保存して代替画面に切り替える。代替画面の内容はクリアする。</li>
   <li>RM: 保存した画面を復元する。</li>
   </ul>
 </li>
-<li>Mode ?1048 <dfn class="cmode">smSaveCursor</dfn> (xterm) [既定値 RM]
+<li>Mode ?1048 <dfn class="cmode">xtSaveCursor</dfn> (xterm) [既定値 RM]
   <ul>
   <li>SM: 現在のカーソル状態を保存 (DECSC と同様)</li>
   <li>RM: 保存したカーソル状態を復元 (DECRC と同様)</li>
   </ul>
 </li>
-<li>Mode ?1049 <dfn class="cmode">smAltScreenCursor</dfn> (xterm) [既定値 RM]
+<li>Mode ?1049 <dfn class="cmode">xtAltScreenCursor</dfn> (xterm) [既定値 RM]
   <ul>
   <li>SM: <kbd>SM(?1047)</kbd> と <kbd>SM(?1048)</kbd> の組み合わせ。</li>
   <li>RM: <kbd>RM(?1047)</kbd> と <kbd>RM(?1048)</kbd> の組み合わせ。</li>
@@ -3209,11 +3332,11 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <h3>文字挿入時の属性</h3>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>SGR</th> <td><kbd>CSI <i>&lt;Pm&gt;</i> m</kbd></td></tr>
+<tr><th>SGR</th> <td><kbd>CSI <i>Pm</i> m</kbd></td></tr>
 <tr><th>PLD</th> <td><kbd>PLD</kbd></td></tr>
 <tr><th>PLU</th> <td><kbd>PLU</kbd></td></tr>
-<tr><th>SCO</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> SP e</kbd></td></tr>
-<tr><th>DECSCA</th> <td><kbd>CSI <i>&lt;Ps&gt;</i> " q</kbd></td></tr><!-- " -->
+<tr><th>SCO</th> <td><kbd>CSI <i>Ps</i> SP e</kbd></td></tr>
+<tr><th>DECSCA</th> <td><kbd>CSI <i>Ps</i> " q</kbd></td></tr><!-- " -->
 </table>
 <ul>
 <li><dfn class="cfunc">SGR</dfn>: SELECT GRAPHIC RENDITION (Set Graphic Rendition)
@@ -3283,7 +3406,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </ul>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>DAQ</th><td><kbd>CSI <i>&lt;Ps&gt;</i> ; ... o</kbd></td></tr>
+<tr><th>DAQ</th><td><kbd>CSI <i>Ps</i> ; ... o</kbd></td></tr>
 <tr><th>SSA</th><td><kbd>SSA</kbd></td></tr>
 <tr><th>ESA</th><td><kbd>ESA</kbd></td></tr>
 <tr><th>SPA</th><td><kbd>SPA</kbd></td></tr>
@@ -3693,41 +3816,41 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <table class="normal center">
   <tr><th>番号</th><th>説明</th></tr>
   <tr>
-    <td>3 8 : 0</td>
+    <td><kbd>3 8 : 0</kbd></td>
     <td>前景色 実装依存</td></tr>
   <tr>
-    <td>3 8 : 1</td>
+    <td><kbd>3 8 : 1</kbd></td>
     <td>前景色 透明</td></tr>
   <tr>
-    <td>4 8 : 1</td>
+    <td><kbd>4 8 : 1</kbd></td>
     <td>背景色 透明</td></tr>
   <tr>
-    <td><kbd>3 8 : 2 : <i>&lt;s&gt;</i> : <i>&lt;R&gt;</i> : <i>&lt;G&gt;</i> : <i>&lt;B&gt;</i> : <i>&lt;dummy&gt;</i> : <i>&lt;tol&gt;</i> : <i>&lt;tols&gt;</i></kbd> (ISO 8613)<br/>
-        <kbd>3 8 ; 2 ; <i>&lt;R&gt;</i> ; <i>&lt;G&gt;</i> ; <i>&lt;B&gt;</i></kbd> (xterm, etc.)</td>
+    <td><kbd>3 8 : 2 : <i>s</i> : <i>R</i> : <i>G</i> : <i>B</i> : <i>dummy</i> : <i>tol</i> : <i>tols</i></kbd> (ISO 8613)<br/>
+        <kbd>3 8 ; 2 ; <i>R</i> ; <i>G</i> ; <i>B</i></kbd> (xterm, etc.)</td>
     <td>前景色 RGB</td></tr>
   <tr>
-    <td><kbd>4 8 : 2 : <i>&lt;s&gt;</i> : <i>&lt;R&gt;</i> : <i>&lt;G&gt;</i> : <i>&lt;B&gt;</i> : <i>&lt;dummy&gt;</i> : <i>&lt;tol&gt;</i> : <i>&lt;tols&gt;</i></kbd> (ISO 8613)<br/>
-        <kbd>4 8 ; 2 ; <i>&lt;R&gt;</i> ; <i>&lt;G&gt;</i> ; <i>&lt;B&gt;</i></kbd> (xterm, etc.)</td>
+    <td><kbd>4 8 : 2 : <i>s</i> : <i>R</i> : <i>G</i> : <i>B</i> : <i>dummy</i> : <i>tol</i> : <i>tols</i></kbd> (ISO 8613)<br/>
+        <kbd>4 8 ; 2 ; <i>R</i> ; <i>G</i> ; <i>B</i></kbd> (xterm, etc.)</td>
     <td>背景色 RGB</td></tr>
   <tr>
-    <td><kbd>3 8 : 3 : <i>&lt;s&gt;</i> : <i>&lt;C&gt;</i> : <i>&lt;M&gt;</i> : <i>&lt;Y&gt;</i> : <i>&lt;dummy&gt;</i> : <i>&lt;tol&gt;</i> : <i>&lt;tols&gt;</i></kbd> (ISO 8613)</td>
+    <td><kbd>3 8 : 3 : <i>s</i> : <i>C</i> : <i>M</i> : <i>Y</i> : <i>dummy</i> : <i>tol</i> : <i>tols</i></kbd> (ISO 8613)</td>
     <td>前景色 CMY</td></tr>
   <tr>
-    <td><kbd>4 8 : 3 : <i>&lt;s&gt;</i> : <i>&lt;C&gt;</i> : <i>&lt;M&gt;</i> : <i>&lt;Y&gt;</i> : <i>&lt;dummy&gt;</i> : <i>&lt;tol&gt;</i> : <i>&lt;tols&gt;</i></kbd> (ISO 8613)</td>
+    <td><kbd>4 8 : 3 : <i>s</i> : <i>C</i> : <i>M</i> : <i>Y</i> : <i>dummy</i> : <i>tol</i> : <i>tols</i></kbd> (ISO 8613)</td>
     <td>背景色 CMY</td></tr>
   <tr>
-    <td><kbd>3 8 : 4 : <i>&lt;s&gt;</i> : <i>&lt;C&gt;</i> : <i>&lt;M&gt;</i> : <i>&lt;Y&gt;</i> : <i>&lt;K&gt;</i> : <i>&lt;tol&gt;</i> : <i>&lt;tols&gt;</i></kbd> (ISO 8613)</td>
+    <td><kbd>3 8 : 4 : <i>s</i> : <i>C</i> : <i>M</i> : <i>Y</i> : <i>K</i> : <i>tol</i> : <i>tols</i></kbd> (ISO 8613)</td>
     <td>前景色 CMYK</td></tr>
   <tr>
-    <td><kbd>4 8 : 4 : <i>&lt;s&gt;</i> : <i>&lt;C&gt;</i> : <i>&lt;M&gt;</i> : <i>&lt;Y&gt;</i> : <i>&lt;K&gt;</i> : <i>&lt;tol&gt;</i> : <i>&lt;tols&gt;</i></kbd> (ISO 8613)</td>
+    <td><kbd>4 8 : 4 : <i>s</i> : <i>C</i> : <i>M</i> : <i>Y</i> : <i>K</i> : <i>tol</i> : <i>tols</i></kbd> (ISO 8613)</td>
     <td>背景色 CMYK</td></tr>
   <tr>
-    <td><kbd>3 8 : 5 : <i>&lt;index&gt;</i></kbd> (ISO 8613)<br/>
-        <kbd>3 8 ; 5 ; <i>&lt;index&gt;</i></kbd> (xterm, etc.)</td>
+    <td><kbd>3 8 : 5 : <i>index</i></kbd> (ISO 8613)<br/>
+        <kbd>3 8 ; 5 ; <i>index</i></kbd> (xterm, etc.)</td>
     <td>前景色 indexed colors</td></tr>
   <tr>
-    <td><kbd>4 8 : 5 : <i>&lt;index&gt;</i></kbd> (ISO 8613)<br/>
-        <kbd>4 8 ; 5 ; <i>&lt;index&gt;</i></kbd> (xterm, etc.)</td>
+    <td><kbd>4 8 : 5 : <i>index</i></kbd> (ISO 8613)<br/>
+        <kbd>4 8 ; 5 ; <i>index</i></kbd> (xterm, etc.)</td>
     <td>背景色 indexed colors</td></tr>
   </table>
 
@@ -3907,7 +4030,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <h4>Note</h4>
 <ul>
 <li>[ECMA-48/8.3.117] 可能な番号の組み合わせは処理系依存である。</li>
-<li>[T.416/13.1.8] 上付き(PUD)・下付き(PLD)の内部で下線・打ち消し線の類を設定した場合は、
+<li>[T.416/13.1.8] 上付き(PLU)・下付き(PLD)の内部で下線・打ち消し線の類を設定した場合は、
   それに合わせた位置に線を描画する様にする。
   [T.416/13.1.5] 上付き・下付きにする前から設定されている下線・打ち消し線の類はそのままの位置で描画する。
 </li>
@@ -4005,7 +4128,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </p>
   <ul>
   <li>SCOANSI (?) について幾つかの非標準の動作が記述されている。
-    <kbd>CSI 2 ; <i>&lt;Ps&gt;</i> ; <i>&lt;Ps&gt;</i> m</kbd> で前景色・背景色を指定する。
+    <kbd>CSI 2 ; <i>Ps</i> ; <i>Ps</i> m</kbd> で前景色・背景色を指定する。
     初めの <i>&lt;Ps&gt;</i> が前景色で、二つ目の <i>&lt;Ps&gt;</i> が背景色で、SCO color number で指定する。
     3 は後方互換モードで M6845 ビデオコントローラにおける 5 の意味を切り替える。
     <kbd>CSI 3 ; 1 m</kbd> は 5 を点滅の意味にし、
@@ -4043,7 +4166,62 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 
 <h2>ユーザ入力の設定</h2>
 
-<h3>ユーザ入力の設定</h3>
+<h3>キーボード入力</h3>
+<h4>キー入力の符号化表現</h4>
+<p>ここでは xterm に於ける実装を基本形としてキー入力の符号化表現について説明する。以下はカーソルキーである。</p>
+<table class="normal center">
+<caption>カーソルキー</caption>
+<tr><th>keyname</th><th>符号化表現</th></tr>
+<tr><td><kbd>insert</kbd></td><td><kbd>CSI 2 ~</kbd>                 </td></tr>
+<tr><td><kbd>delete</kbd></td><td><kbd>CSI 3 ~</kbd>                 </td></tr>
+<tr><td><kbd>home  </kbd></td><td><kbd>CSI H</kbd> / <kbd>SS3 H</kbd></td></tr>
+<tr><td><kbd>end   </kbd></td><td><kbd>CSI F</kbd> / <kbd>SS3 F</kbd></td></tr>
+<tr><td><kbd>prior </kbd></td><td><kbd>CSI 5 ~</kbd>                 </td></tr>
+<tr><td><kbd>next  </kbd></td><td><kbd>CSI 6 ~</kbd>                 </td></tr>
+<tr><td><kbd>up    </kbd></td><td><kbd>CSI A</kbd> / <kbd>SS3 A</kbd></td></tr>
+<tr><td><kbd>down  </kbd></td><td><kbd>CSI B</kbd> / <kbd>SS3 B</kbd></td></tr>
+<tr><td><kbd>right </kbd></td><td><kbd>CSI C</kbd> / <kbd>SS3 C</kbd></td></tr>
+<tr><td><kbd>left  </kbd></td><td><kbd>CSI D</kbd> / <kbd>SS3 D</kbd></td></tr>
+<tr><td><kbd>begin </kbd></td><td><kbd>CSI E</kbd> / <kbd>SS3 E</kbd></td></tr>
+</table>
+<ul>
+<li><kbd>begin</kbd> はテンキーの真ん中 (<kbd>5</kbd> の NumLock を外している時) である。</li>
+</ul>
+
+<table class="normal center">
+<caption>ファンクションキー</caption>
+<tr><th>keyname</th><th>符号化表現</th><th>keyname</th><th>符号化表現</th></tr>
+<tr><td><kbd>f1 </kbd></td><td><kbd>SS3 P</kbd>    </td><td><kbd>f11</kbd></td><td><kbd>CSI 2 3 ~</kbd></td></tr>
+<tr><td><kbd>f2 </kbd></td><td><kbd>SS3 Q</kbd>    </td><td><kbd>f12</kbd></td><td><kbd>CSI 2 4 ~</kbd></td></tr>
+<tr><td><kbd>f3 </kbd></td><td><kbd>SS3 R</kbd>    </td><td><kbd>f13</kbd></td><td><kbd>CSI 2 5 ~</kbd></td></tr>
+<tr><td><kbd>f4 </kbd></td><td><kbd>SS3 S</kbd>    </td><td><kbd>f14</kbd></td><td><kbd>CSI 2 6 ~</kbd></td></tr>
+<tr><td><kbd>f5 </kbd></td><td><kbd>CSI 1 5 ~</kbd></td><td><kbd>f15</kbd></td><td><kbd>CSI 2 8 ~</kbd></td></tr>
+<tr><td><kbd>f6 </kbd></td><td><kbd>CSI 1 7 ~</kbd></td><td><kbd>f16</kbd></td><td><kbd>CSI 2 9 ~</kbd></td></tr>
+<tr><td><kbd>f7 </kbd></td><td><kbd>CSI 1 8 ~</kbd></td><td><kbd>f17</kbd></td><td><kbd>CSI 3 1 ~</kbd></td></tr>
+<tr><td><kbd>f8 </kbd></td><td><kbd>CSI 1 9 ~</kbd></td><td><kbd>f18</kbd></td><td><kbd>CSI 3 2 ~</kbd></td></tr>
+<tr><td><kbd>f9 </kbd></td><td><kbd>CSI 2 0 ~</kbd></td><td><kbd>f19</kbd></td><td><kbd>CSI 3 3 ~</kbd></td></tr>
+<tr><td><kbd>f10</kbd></td><td><kbd>CSI 2 1 ~</kbd></td><td><kbd>f20</kbd></td><td><kbd>CSI 3 4 ~</kbd></td></tr>
+</table>
+<ul>
+<li>xterm では <kbd>CSI &gt; 2 n</kbd> とすれば修飾を番号増加に使える。
+  <kbd>S-</kbd> が +10 で <kbd>C-</kbd> が +20 である。
+  これにより <kbd>f21</kbd> 以降を調べることができて、
+  <kbd>f21</kbd>-<kbd>f42</kbd> は <kbd>CSI 4 2 ~</kbd>-<kbd>CSI 6 3 ~</kbd>
+  の連続する符号化表現が与えられていると分かる。
+</li>
+<li>urxvt では <kbd>f1</kbd>-<kbd>f4</kbd> に
+  <kbd>CSI 1 1 ~</kbd>-<kbd>CSI 1 4 ~</kbd> を割り当てている。
+  <kbd>S-</kbd> は +10 に対応して、<kbd>f21</kbd>, <kbd>f22</kbd> は
+  <kbd>CSI 2 3 $</kbd><sup>非ANSI</sup>, <kbd>CSI 2 4 $</kbd><sup>非ANSI</sup> である。
+  <kbd>C-</kbd> は <kbd>~</kbd>, <kbd>$</kbd> をそれぞれ
+  <kbd>^</kbd>, <kbd>@</kbd> に置き換える。
+</li>
+<li>cygwin は urxvt に近いが、<kbd>f1</kbd>-<kbd>f5</kbd> を
+  <kbd>CSI [ A</kbd>-<kbd>CSI [ E</kbd><sup>非ANSI</sup> に置き換えている。
+</li>
+</ul>
+
+<h4>キー入力の制御機能</h4>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th></tr>
 <tr><th>DECKPAM</th> <td><kbd>ESC =</kbd></td></tr>
@@ -4099,20 +4277,195 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     解除されている時、テンキーで通常の文字を送る (DECKPNM)。
   </p>
 </li>
-<li><dfn class="cfunc">DECKPAM</dfn>: Keypad Application Mode
+<li><dfn class="cfunc">DECKPAM</dfn> <kbd>ESC =</kbd>: Keypad Application Mode
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECKPAM">VT510/DECKPAM</a>]
    テンキーでエスケープシーケンスを送る。
   </p>
 </li>
-<li><dfn class="cfunc">DECKPNM</dfn>: Keypad Numeric Mode
+<li><dfn class="cfunc">DECKPNM</dfn> <kbd>ESC &gt;</kbd>: Keypad Numeric Mode
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECKPNM">VT510/DECKPNM</a>]
    テンキーで通常の文字を送る。
+  </p>
+</li>
+<li>Mode ?67 <dfn class="cmode">DECBKM</dfn>: Backarrow Keypad Mode [既定値 RM]
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECBKM">VT510/DECBKM</a>]
+    設定されている時、Back キーで <kbd>BS</kbd> を送信する。
+    解除されている時、Back キーで <kbd>DEL</kbd> を送信する。
   </p>
 </li>
 <li>Mode ?2004 <dfn class="cmode">smBracketedPasteMode</dfn>: Bracketed Paste Mode
   <p>[xterm] 設定されている時、貼り付けによる入力内容を <kbd>CSI 2 0 0 ~</kbd> と
     <kbd>CSI 2 0 1 ~</kbd> で囲んでアプリケーションに送信する。
   </p>
+</li>
+<li>Mode ?1050 <dfn class="cmode">xtTerminfoKey</dfn>:</li>
+<li>Mode ?1051 <dfn class="cmode">xtSunKey</dfn>:</li>
+<li>Mode ?1052 <dfn class="cmode">xtHpKey</dfn>:</li>
+<li>Mode ?1053 <dfn class="cmode">xtScoKey</dfn>:</li>
+<li>Mode ?1060 <dfn class="cmode">xtX11R6Key</dfn>:</li>
+<li>Mode ?1061 <dfn class="cmode">xtVt220Key</dfn>:
+  <p>[xterm] マニュアルには書いてあるが手許の xterm#348 (cygwin),
+    xterm#334 (fc30) では 1050,1051,1060,1061 しか実装されていない。
+    少なくとも 1050,1051,1060,1061 は排他的であった。
+    つまり、1つを SM/RM すると他は RM される。
+    6つが全て排他的であると考えるのが自然だろう。
+  </p>
+  <ul>
+  <li>xtHpKey について、[xterm ctlseqs.pdf/HP-Style Function Keys] にはコンパイル時に有効にできるとある。
+    詳細は terminfo で xterm-hp を見よとの事。
+    コマンド <code>TERM=xterm-hp infocmp -d xterm | grep -v 'NULL\.$'</code> で
+    xterm-hp 特有の設定を表示できる。
+    xtSunKey については同様に terminfo xterm-sun を見よと書かれている。
+    xtScoKey については何も書かれていないが terminfo xterm-sco があった。
+    xtX11R6Key については xterm-xfree86 及び xterm-xf86-* が対応する terminfo だろうか。
+    xtVt220Key については xterm-vt220 がある。
+  </li>
+  <li>xterm-sun (terminfo): カーソルキーは以下の表に纏める。
+    Fn key に関しては、terminfo を観察すると 10 毎に数値が連続しているので
+    恐らく <kbd>f1</kbd>-<kbd>f10</kbd> とその装飾だと推測したが、
+    xterm で確認すると装飾は mod で行われる様だ。
+    <kbd>f1</kbd>-<kbd>f10</kbd> は <kbd>CSI 2 2 4 z</kbd>-<kbd>CSI 2 3 3 z</kbd> である。
+    <kbd>f11</kbd>-<kbd>f20</kbd> は <kbd>CSI 1 9 2 z</kbd>-<kbd>CSI 2 0 1 z</kbd> である。
+    <kbd>f31</kbd>-<kbd>f40</kbd> は <kbd>CSI 2 0 8 z</kbd>-<kbd>CSI 2 1 7 z</kbd> である。
+    <kbd>f41</kbd>-<kbd>f50</kbd> は <kbd>CSI 2 1 8 z</kbd>-<kbd>CSI 2 2 2 z</kbd>, <kbd>CSI 2 3 4 z</kbd>-<kbd>CSI 2 3 8 z</kbd> である。
+    <kbd>f21</kbd>-<kbd>f30</kbd> は terminfo から還元に抜けている。
+    但し、<kbd>S-f6</kbd> (197), <kbd>C-f7</kbd> (214), <kbd>C-f9</kbd> (216), <kbd>C-S-f3</kbd> (220), <kbd>C-S-f1</kbd> (218)
+    はそれぞれ <kbd>copy</kbd>, <kbd>home</kbd>, <kbd>next</kbd>, <kbd>end</kbd>, <kbd>kb2</kbd> と重複するので terminfo では抜けている。
+    <kbd>undo</kbd> vs <kbd>S-f4</kbd> (195), <kbd>help</kbd> vs <kbd>S-f5</kbd> (196),
+    <kbd>find</kbd> vs <kbd>S-f9</kbd> (200), <kbd>prior</kbd> vs <kbd>C-S-f5</kbd> (222)
+    は重複したものが terminfo に登録されている。
+    他に <kbd>C-S-f8</kbd> (terminfo f48) 以降は terminfo に登録されていない。
+    (<kbd>kb2</kbd> は良くわからないキーだが一応 xterm に対して <kbd>SS3 u</kbd> が割り当てられている。)
+  </li>
+  <li>xterm-hp (terminfo): カーソルキーは以下の表に纏める。
+    Fn key に関しては <kbd>f1</kbd>-<kbd>f8</kbd> しかない。
+    それぞれ <kbd>ESC p</kbd>-<kbd>ESC w</kbd> が割り当てられている。
+    他に特有のキー <kbd>clear</kbd> (<kbd>ESC J</kbd>) がある。</li>
+  <li>xterm-sco (terminfo): カーソルキーは以下の表に纏める。
+    Fn key に関しては <kbd>f1</kbd>-<kbd>f14</kbd> が <kbd>CSI M</kbd>-<kbd>CSI Z</kbd> で、
+    <kbd>f15</kbd>-<kbd>f40</kbd> が <kbd>CSI a</kbd>-<kbd>CSI z</kbd> で、
+    <kbd>f41</kbd> (<kbd>CSI @</kbd>)
+    <kbd>f42</kbd> (<kbd>CSI [</kbd>)
+    <kbd>f43</kbd> (<kbd>CSI \</kbd>)
+    <kbd>f44</kbd> (<kbd>CSI ]</kbd>)
+    <kbd>f45</kbd> (<kbd>CSI ^</kbd>)
+    <kbd>f46</kbd> (<kbd>CSI _</kbd>)
+    <kbd>f47</kbd> (<kbd>CSI `</kbd>)
+    <kbd>f48</kbd> (<kbd>CSI {</kbd>) と延々と続く。
+    何処に切れ目が在るのか読み取れないが、
+    xterm の既定と同じく 12 周期で良いのだろうか。
+    他に特有のキー <kbd>begin</kbd> (<kbd>CSI E</kbd>) がある。</li>
+  </ul>
+  <table class="normal">
+  <tr><th>keyname</th><th>xterm</th><th>xterm-sun</th><th>xterm-hp</th><th>xterm-sco</th></tr>
+  <tr><td><kbd>up    </kbd></td><td><kbd>SS3 A  </kbd></td><td><kbd>SS3 A      </kbd></td><td><kbd>ESC A</kbd></td><td><kbd>CSI A</kbd></td></tr>
+  <tr><td><kbd>down  </kbd></td><td><kbd>SS3 B  </kbd></td><td><kbd>SS3 B      </kbd></td><td><kbd>ESC B</kbd></td><td><kbd>CSI B</kbd></td></tr>
+  <tr><td><kbd>right </kbd></td><td><kbd>SS3 C  </kbd></td><td><kbd>SS3 C      </kbd></td><td><kbd>ESC C</kbd></td><td><kbd>CSI C</kbd></td></tr>
+  <tr><td><kbd>left  </kbd></td><td><kbd>SS3 D  </kbd></td><td><kbd>SS3 D      </kbd></td><td><kbd>ESC D</kbd></td><td><kbd>CSI D</kbd></td></tr>
+  <tr><td><kbd>insert</kbd></td><td><kbd>CSI 2 ~</kbd></td><td><kbd>CSI 2 z    </kbd></td><td><kbd>ESC Q</kbd></td><td><kbd>CSI L</kbd></td></tr>
+  <tr><td><kbd>delete</kbd></td><td><kbd>CSI 3 ~</kbd></td><td><kbd>CSI 3 z    </kbd></td><td><kbd>ESC P</kbd></td><td><kbd>DEL  </kbd></td></tr>
+  <tr><td><kbd>home  </kbd></td><td><kbd>SS3 H  </kbd></td><td><kbd>CSI 2 1 4 z</kbd></td><td><kbd>ESC h</kbd></td><td><kbd>CSI H</kbd></td></tr>
+  <tr><td><kbd>end   </kbd></td><td><kbd>SS3 F  </kbd></td><td><kbd>CSI 2 2 0 z</kbd></td><td><kbd>ESC F</kbd></td><td><kbd>CSI F</kbd></td></tr>
+  <tr><td><kbd>prior </kbd></td><td><kbd>CSI 5 ~</kbd></td><td><kbd>CSI 2 2 2 z</kbd></td><td><kbd>ESC T</kbd></td><td><kbd>CSI I</kbd></td></tr>
+  <tr><td><kbd>next  </kbd></td><td><kbd>CSI 6 ~</kbd></td><td><kbd>CSI 2 1 6 z</kbd></td><td><kbd>ESC S</kbd></td><td><kbd>CSI G</kbd></td></tr>
+  <tr><td><kbd>mouse </kbd></td><td><kbd>CSI &lt;</kbd></td><td><kbd>CSI M</kbd></td><td><kbd>CSI M</kbd></td><td><kbd>CSI &gt; M</kbd></td></tr>
+  </table>
+  <ul>
+  <li>xterm-xf86-v44 (terminfo): カーソルキーは基本的には違いはない。
+    但し、xterm-xf86-v40 では修飾は <kbd>SS3 <i>mod</i> <i>A</i></kbd> の形式だった様だ。
+    xterm-xf86-v32,v33 では <kbd>delete</kbd> (<kbd>DEL</kbd>),
+    <kbd>find</kbd> (<kbd>CSI 1 ~</kbd>), <kbd>select</kbd> (<kbd>CSI 4 ~</kbd>) が登録されている。
+    他に <kbd>kb2</kbd> と <kbd>begin</kbd> は同じ <kbd>SS3 E</kbd> を出している。
+    Fn key に関しては元の xterm から <kbd>f1</kbd>-<kbd>f4</kbd> に対応する部分が変わっている。
+    xterm-{xfree86,xf86-v{40,43,44}} については <kbd>SS3 <i>mod</i> <i>A</i></kbd>
+    (A は <kbd>f1</kbd>-<kbd>f4</kbd> に対し <kbd>P</kbd>-<kbd>S</kbd>) の形式である。
+    xterm-xf86-v{32,33,333} については以下の表にまとめた。
+    <table class="normal">
+    <tr><th>keyname</th><th>v32,33</th><th>keyname</th><th>v32,33,333</th><th>keyname</th><th>v32,33,333</th></tr>
+    <tr><td><kbd>f1</kbd></td><td><kbd>CSI 1 1 ~</kbd></td><td><kbd>f13</kbd></td><td><kbd>CSI 2 5 ~</kbd></td><td><kbd>f17</kbd></td><td><kbd>CSI 3 1 ~</kbd></td></tr>
+    <tr><td><kbd>f2</kbd></td><td><kbd>CSI 1 2 ~</kbd></td><td><kbd>f14</kbd></td><td><kbd>CSI 2 6 ~</kbd></td><td><kbd>f18</kbd></td><td><kbd>CSI 3 2 ~</kbd></td></tr>
+    <tr><td><kbd>f3</kbd></td><td><kbd>CSI 1 3 ~</kbd></td><td><kbd>f15</kbd></td><td><kbd>CSI 2 8 ~</kbd></td><td><kbd>f19</kbd></td><td><kbd>CSI 3 3 ~</kbd></td></tr>
+    <tr><td><kbd>f4</kbd></td><td><kbd>CSI 1 4 ~</kbd></td><td><kbd>f16</kbd></td><td><kbd>CSI 2 9 ~</kbd></td><td><kbd>f20</kbd></td><td><kbd>CSI 3 4 ~</kbd></td></tr>
+    </table>
+  </li>
+  <li>xterm-vt220 (terminfo):
+    カーソルキーは <kbd>home</kbd> (<kbd>CSI 1 ~</kbd>), <kbd>end</kbd> (<kbd>CSI 4 ~</kbd>) が異なるのみ。
+    Fn キーについては <kbd>f13</kbd>-<kbd>f20</kbd> が異なるのみ?
+    <table class="normal">
+    <tr><th>keyname</th><th>xterm-vt220</th><th>keyname</th><th>xterm-vt220</th></tr>
+    <tr><td><kbd>f13</kbd></td><td><kbd>CSI 2 5 ~</kbd></td><td><kbd>f17</kbd></td><td><kbd>CSI 3 1 ~</kbd></td></tr>
+    <tr><td><kbd>f14</kbd></td><td><kbd>CSI 2 6 ~</kbd></td><td><kbd>f18</kbd></td><td><kbd>CSI 3 2 ~</kbd></td></tr>
+    <tr><td><kbd>f15</kbd></td><td><kbd>CSI 2 8 ~</kbd></td><td><kbd>f19</kbd></td><td><kbd>CSI 3 3 ~</kbd></td></tr>
+    <tr><td><kbd>f16</kbd></td><td><kbd>CSI 2 9 ~</kbd></td><td><kbd>f20</kbd></td><td><kbd>CSI 3 4 ~</kbd></td></tr>
+    </table>
+  </li>
+  <li>xterm (default):
+    Fn key に関しては <kbd>f1</kbd>-<kbd>f4</kbd> については <kbd>SS3 P</kbd> の形式である。
+    <kbd>f5</kbd>-<kbd>f12</kbd> については <kbd>CSI <i>Ps</i> ~</kbd> の形式である。
+    修飾に関しては一貫して <kbd>CSI <i>Ps</i> ; <i>mod</i> <i>Ft</i></kbd> の形式である。
+  </li>
+  <li>xterm (xtX11R6Key):
+    Cursor key は <kbd>delete</kbd> (<kbd>DEL</kbd>) が xterm からの変化。修飾は効かない。
+    Fn key は全て <kbd>CSI <i>Ps</i> ~</kbd> の形式になる。
+    但し C- 修飾は番号を +10 する。他の修飾は効かない。
+    振る舞いを見ると terminfo xterm-xf86-v32,v33 に対応している様に見える。
+  </li>
+  <li>xterm (xtVt220Key):
+    Cursor key については全て番号になる。修飾は一切効かない。
+    Fn key は修飾が無い時は default と同じである。<kbd>S-</kbd> 修飾は無視される。
+    <kbd>C-</kbd> 修飾は番号を +10 するのに対応する。
+    terminfo で <kbd>f13</kbd>-<kbd>f20</kbd> が上書きされているのは、
+    これにより <kbd>f20</kbd> 迄取り扱える様にする為だったのだろう。
+    <kbd>M-</kbd> 修飾 (Alt key) も無視されている。
+  </li>
+  </ul>
+</li>
+<li><dfn class="cfunc">xtModifyKeys</dfn> <kbd>CSI &gt; <i>Ps1</i> ; <i>Ps2</i> m</kbd>: Set key modifier options (xterm)</li>
+<li><dfn class="cfunc">xtDisableModifyKeys</dfn> <kbd>CSI &gt; <i>Ps1</i> n</kbd>: Disable key modifier options (xterm)
+  <p>[xterm] modifyOtherKeys 等に値を設定する。<i class="kbd">Ps1</i> には影響を受けるキーの種類を指定する。
+    <i class="kbd">Ps2</i> には修飾の形式を指定する。
+    xtModifyKeys で <i class="kbd">Ps2</i> を省略すると初期値を設定する。
+    xtDisableModifyKeys は -1 (修飾無効) に設定する。
+    引数を全く指定しないと全ての設定を初期値にする。
+  </p>
+  <table class="normal">
+  <tr><th><i class="kbd">Ps1</i></th><th>設定名</th></tr>
+  <tr><td>0</td><td>modifyKeyboard</td></tr>
+  <tr><td>1</td><td>modifyCursorKeys</td></tr>
+  <tr><td>2</td><td>modifyFunctionKeys</td></tr>
+  <tr><td>3</td><td>modifyKeypadKeys</td></tr>
+  <tr><td>4</td><td>modifyOtherKeys</td></tr>
+  <tr><td>5</td><td>modifyStringKeys</td></tr>
+  </table>
+  <table class="normal">
+  <tr><th><i class="kbd">Ps2</i></th>
+      <th><kbd>CSI <i>F</i></kbd></th><th><kbd>SS3 <i>F</i></kbd></th>
+      <th><kbd>CSI <i>Ps</i> <i>F</i></kbd></th>
+      <th><kbd>CSI 2 7 ; 1 ; <i>code</i> <i>F</i></kbd></th></tr>
+  <tr><td>-1</td><td colspan="4">修飾無効 (Fn key は修飾により番号がずれる)</td></tr>
+  <tr><td>0</td><td><kbd>CSI <i>mod</i> <i>F</i></kbd></td><td><kbd>SS3 <i>mod</i> <i>F</i></kbd></td>
+    <td rowspan="3"><kbd>CSI <i>Ps</i> ; <i>mod</i> <i>F</i></kbd></td>
+    <td rowspan="3"><kbd>CSI 2 7 ; <i>mod</i> ; <i>code</i> <i>F</i></kbd></td></tr>
+  <tr><td>1</td><td colspan="2"><kbd>CSI <i>mod</i> <i>F</i></kbd></td></tr>
+  <tr><td>2</td><td colspan="2"><kbd>CSI 1 ; <i>mod</i> <i>F</i></kbd></td></tr>
+  <tr><td>3</td><td colspan="2"><kbd>CSI &gt; 1 ; <i>mod</i> <i>F</i></kbd></td>
+    <td><kbd>CSI &gt; <i>Ps</i> ; <i>mod</i> <i>F</i></kbd></td>
+    <td><kbd>CSI &gt; 2 7 ; <i>mod</i> ; <i>code</i> <i>F</i></kbd></td></tr>
+  </table>
+  <ul>
+  <li>xterm: <i class="kbd">Ps1</i> = 0,1,2,4 に対応している。3,5 は予約。
+    0 (modifyKeyboard) は何か分からない。1 (modifyCursorKeys) は上下左右・insert,delete,home,end,next,prior を対象とする。
+    2 (modifyFunctionKeys) は fn key を対象とする。4 はその他のキー全般を対象とする。
+    マニュアルには <i class="kbd">Ps2</i> = 1 が Alt-/Meta- 修飾を行い、2 が全ての修飾を行うと書かれているが、
+    実際の xterm では振る舞いが異なる。単に修飾の形式を指定する様に見える。
+    <i class="kbd">Ps2</i> = 3 は modifyOtherKeys に対しては無修飾になっている。
+    引数を省略した時に初期値に戻すのは効いていない。
+  </li>
+  <li>RLogin: <i class="kbd">Ps1</i> = 1,2,3,4,5 に対応している。
+    3 (modifyKeypadKeys) は kp key を対象とする。4 は <kbd>BS</kbd>,<kbd>RET</kbd>,<kbd>ESC</kbd>,<kbd>TAB</kbd>,<kbd>SP</kbd> のみに作用する。
+    5 (modifyStringKeys) は数字とアルファベットに作用する。記号類は影響を受けない。設定で変更可能。
+  </li>
+  </ul>
 </li>
 </ul>
 
@@ -4147,23 +4500,23 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </li>
 <li>Mode ?1005 <dfn class="cmode">xtExtMouseUtf8</dfn> Enable Extended Mouse Mode [xterm, 既定値 RM]</li>
 <li>Mode ?1006 <dfn class="cmode">xtExtMouseSgr</dfn> [xterm, 既定値 RM]</li>
-<li>Mode ?1015 <dfn class="cmode">xtExtMouseUrxvt</dfn> [urxvt, 既定値 RM]
+<li>Mode ?1015 <dfn class="cmode">rxvtExtMouseUrxvt</dfn> [urxvt, 既定値 RM]
   <p>[xterm] これらのモードはマウスイベントの通知に使われるシーケンスの形式を変更するのに使う。
     上記3つのモードはは排他的であり、
     何れかを設定すると他は解除されるし、何れかを解除しようとすると全て解除される。
     xtExtMouseUtf8 は utf-8 形式を指定する。
-    xtExtMouseUrxvt は urxvt 形式を指定する。
+    rxvtExtMouseUrxvt は urxvt 形式を指定する。
     xtExtMouseSgr は SGR 形式を指定する。
     それぞれの形式に対して以下のようなシーケンスで (選択以外の) マウスイベントが通知される。
     xtMouseR は何れも設定されていない時に使われる既定のシーケンスである。
   </p>
   <table class="normal center">
   <tr><th>略号</th>                 <th>形式</th> <th>Sequence</th></tr>
-  <tr><th>xtMouseR</th>              <td>既定</td> <td><kbd>CSI M <i>&lt;C&gt;</i> <i>&lt;C&gt;</i> <i>&lt;C&gt;</i></kbd></td></tr>
-  <tr><th>xtExtMouseUtf8R</th>       <td>utf-8</td><td><kbd>CSI M <i>&lt;C8&gt;</i> <i>&lt;C8&gt;</i> <i>&lt;C8&gt;</i></kbd></td></tr>
-  <tr><th>xtExtMouseUrxvtR</th>      <td>urxvt</td><td><kbd>CSI <i>&lt;Ps&gt;</i> ; <i>&lt;Pn&gt;</i> ; <i>&lt;Pn&gt;</i> M</kbd></td></tr>
-  <tr><th>xtExtMouseSgrR</th>        <td>SGR</td>  <td><kbd>CSI &lt; <i>&lt;Ps&gt;</i> ; <i>&lt;Pn&gt;</i> ; <i>&lt;Pn&gt;</i> M</kbd></td></tr>
-  <tr><th>xtExtMouseSgrReleaseR</th> <td>SGR</td>  <td><kbd>CSI &lt; <i>&lt;Ps&gt;</i> ; <i>&lt;Pn&gt;</i> ; <i>&lt;Pn&gt;</i> m</kbd></td></tr>
+  <tr><th>xtMouseR</th>              <td>既定</td> <td><kbd>CSI M <i>C</i> <i>C</i> <i>C</i></kbd></td></tr>
+  <tr><th>xtExtMouseUtf8R</th>       <td>utf-8</td><td><kbd>CSI M <i>C8</i> <i>C8</i> <i>C8</i></kbd></td></tr>
+  <tr><th>rxvtExtMouseUrxvtR</th>    <td>urxvt</td><td><kbd>CSI <i>Ps</i> ; <i>Pn</i> ; <i>Pn</i> M</kbd></td></tr>
+  <tr><th>xtExtMouseSgrR</th>        <td>SGR</td>  <td><kbd>CSI &lt; <i>Ps</i> ; <i>Pn</i> ; <i>Pn</i> M</kbd></td></tr>
+  <tr><th>xtExtMouseSgrReleaseR</th> <td>SGR</td>  <td><kbd>CSI &lt; <i>Ps</i> ; <i>Pn</i> ; <i>Pn</i> m</kbd></td></tr>
   </table>
   <p>解放イベントを通知する時、
     xtExtMouseSgr が設定されている場合は xtExtMouseSgrReleaseR が使われ、
@@ -4206,15 +4559,15 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </p>
   <table class="normal center">
   <tr><th>略号</th>                 <th>形式</th> <th>Sequence</th></tr>
-  <tr><th>xtMouseHiliteR</th>        <td>既定</td> <td><kbd>CSI t <i>&lt;C&gt;</i> <i>&lt;C&gt;</i></kbd></td></tr>
-  <tr><th>xtExtMouseUtf8HiliteR</th> <td>utf-8</td><td><kbd>CSI t <i>&lt;C8&gt;</i> <i>&lt;C8&gt;</i></kbd></td></tr>
-  <tr><th>xtExtMouseUrxvtHiliteR</th><td>urxvt</td><td><kbd>CSI <i>&lt;Pn&gt;</i> ; <i>&lt;Pn&gt;</i> t</kbd></td></tr>
-  <tr><th>xtExtMouseSgrHiliteR</th>  <td>SGR</td>  <td><kbd>CSI &lt; <i>&lt;Pn&gt;</i> ; <i>&lt;Pn&gt;</i> t</kbd></td></tr>
+  <tr><th>xtMouseHiliteR</th>        <td>既定</td> <td><kbd>CSI t <i>C</i> <i>C</i></kbd></td></tr>
+  <tr><th>xtExtMouseUtf8HiliteR</th> <td>utf-8</td><td><kbd>CSI t <i>C8</i> <i>C8</i></kbd></td></tr>
+  <tr><th>rxvtExtMouseUrxvtHiliteR</th><td>urxvt</td><td><kbd>CSI <i>Pn</i> ; <i>Pn</i> t</kbd></td></tr>
+  <tr><th>xtExtMouseSgrHiliteR</th>  <td>SGR</td>  <td><kbd>CSI &lt; <i>Pn</i> ; <i>Pn</i> t</kbd></td></tr>
   </table>
   <ul>
   <li>互換性: xterm, rxvt, mintty, RLogin, rosaterm</li>
   <li>rosaterm ではそれぞれのモードを独立に on/off できるように実装してしまった。
-    複数のモードが設定されている時、xtExtMouseSgr, xtExtMouseUrxvt, xtExtMouseUtf8 の順に優先される。
+    複数のモードが設定されている時、xtExtMouseSgr, rxvtExtMouseUrxvt, xtExtMouseUtf8 の順に優先される。
     より優先順位の高い形式が off になっている時に限り、その形式が実際に働く。
     また、xtExtMouseSgr が設定されている時、マウスボタンが離された事を示すシーケンス (<var>B</var> = 3 | 修飾) の送信は省略される。
   </li>
@@ -4243,7 +4596,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <table class="normal center">
 <tr><th>略号</th><th>Sequence</th><th>C/R</th></tr>
 <tr><th>ACS</th>
-  <td><kbd>ESC SP <i>&lt;Ft&gt;</i></kbd></td>
+  <td><kbd>ESC SP <i>Ft</i></kbd></td>
   <td>1/11 2/0 <i>&lt;Ft&gt;</i></td>
   </tr>
 </table>
@@ -4460,11 +4813,11 @@ f.面クリ, CLS 　このコマンドはバッチファイルのみに利用で
 <p class="resume">等として見る事ができる。</p>
 
 <!--===================================================================================-->
-<h2>ISO/IEC 2022 文字集合制御</h2>
+<h2>古: ISO/IEC 2022 文字集合制御</h2>
 <!--...................................................................................-->
 <table class="normal center">
 <tr><td><code>\e!<i>&lt;I&gt; &lt;Ft&gt;</i></code></td><td>C0 への呼出</td></tr>
-<tr><td><code>\e"<i>&lt;I&gt; &lt;Ft&gt;</i></code></td><td>C1 への呼出</td></tr>
+<tr><td><code>\e"<i>&lt;I&gt; &lt;Ft&gt;</i></code></td><td>C1 への呼出</td></tr><!--"-->
 <tr><td><code>\e&amp;<i>&lt;Ft&gt;</i></code></td><td>改訂番号識別</td></tr>
 <tr><td><code>\17</code></td><td>G0 から GL へとシフト</td></tr>
 <tr><td><code>\16</code></td><td>G1 から GL へとシフト</td></tr>
@@ -4724,94 +5077,8 @@ f.面クリ, CLS 　このコマンドはバッチファイルのみに利用で
 </li>
 </ul>
 <!--===================================================================================-->
-<h2>エスケープキーシーケンス</h2>
+<h2>古: キーシーケンス</h2>
 <p>ターミナルからプログラムへ送られるデータ</p>
-<h3>Function Key 修飾</h3>
-<p>キーシーケンスが <code>\e[<strong>#c</strong></code> の形をしている時、
-それに Ctrl, Alt, Shift 等を添えた場合の修飾を指定することができる。</p>
-<table class="normal center">
-<tr><th>シーケンス</th><th>説明</th><th>実装</th></tr>
-<tr><td><code>\e[<strong>#c</strong></code></td><td>キー</td><td>-</td></tr>
-<tr><td><code>\e[<strong>c</strong></code></td><td>キー <strong>#</strong>=1</td><td>-</td></tr>
-<tr><td><code>\eO<strong>c</strong></code></td><td>キー <strong>#</strong>=1</td><td>-</td></tr>
-<tr><th>シーケンス</th><th>説明</th><th>実装</th></tr>
-<tr><td><code>\e[<strong>#</strong>;2<strong>c</strong></code></td><td>Shift+キー</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#</strong>;3<strong>c</strong></code></td><td>Alt+キー</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#</strong>;4<strong>c</strong></code></td><td>Alt+Shift+キー</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#</strong>;5<strong>c</strong></code></td><td>Control+キー</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#</strong>;6<strong>c</strong></code></td><td>Control+Shift+キー</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#</strong>;7<strong>c</strong></code></td><td>Alt+Control+キー</td><td>O</td></tr>
-<tr><td><code>\e[<strong>#</strong>;8<strong>c</strong></code></td><td>Alt+Control+Shift+キー</td><td>O</td></tr>
-<tr><td><code>\e\e[<strong>#c</strong></code></td><td>Meta+キー</td><td>O</td></tr>
-<tr><td><code>\e\e[<strong>#</strong>;2<strong>c</strong></code></td><td>Meta+Shift+キー</td><td>O</td></tr>
-<tr><td><code>\e\e[<strong>#</strong>;3<strong>c</strong></code></td><td>Meta+Alt+キー</td><td>O</td></tr>
-<tr><td><code>\e\e[<strong>#</strong>;4<strong>c</strong></code></td><td>Meta+Alt+Shift+キー</td><td>O</td></tr>
-<tr><td><code>\e\e[<strong>#</strong>;5<strong>c</strong></code></td><td>Meta+Control+キー</td><td>O</td></tr>
-<tr><td><code>\e\e[<strong>#</strong>;6<strong>c</strong></code></td><td>Meta+Control+Shift+キー</td><td>O</td></tr>
-<tr><td><code>\e\e[<strong>#</strong>;7<strong>c</strong></code></td><td>Meta+Alt+Control+キー</td><td>O</td></tr>
-<tr><td><code>\e\e[<strong>#</strong>;8<strong>c</strong></code></td><td>Meta+Alt+Control+Shift+キー</td><td>O</td></tr>
-</table>
-<!--.........................................................................-->
-<h3>Function キー</h3>
-<table class="normal center">
-<tr><th>修飾</th><th>rxvt</th>  <th>rxvt#1</th><th>vt100</th><th>xterm-pc</th><th>xterm-vt220</th><th>cygwin</th><th>rosaterm</th></tr>
-<tr><td>S-</td>  <td>+10</td>   <td>+10</td>   <td>-</td>    <td>+12#2</td>   <td>-</td>          <td>+10</td>   <td>+12</td>     </tr>
-<tr><td>C-</td>  <td>#3</td>    <td>+22#3</td> <td>-</td>    <td>+24#2</td>   <td>-</td>          <td>#3</td>    <td>+24#2</td>   </tr>
-<tr><td>A-</td>  <td>-</td>     <td>-</td>     <td>-</td>    <td>+48#2</td>   <td>-</td>          <td>-</td>     <td>+48#2</td>   </tr>
-<tr><th>キー</th><th>rxvt</th>  <th>rxvt#1</th><th>vt100</th><th>xterm-pc</th><th>xterm-vt220</th><th>cygwin</th><th>rosaterm</th></tr>
-<tr><td>F1</td>  <td>\e[11~</td><td>\e[11~</td><td>\eOP</td> <td>\eOP</td>    <td>\eOP</td>       <td>\e[[A</td> <td>\e[11~</td>  </tr>
-<tr><td>F2</td>  <td>\e[12~</td><td>\e[12~</td><td>\eOQ</td> <td>\eOQ</td>    <td>\eOQ</td>       <td>\e[[B</td> <td>\e[12~</td>  </tr>
-<tr><td>F3</td>  <td>\e[13~</td><td>\e[13~</td><td>\eOR</td> <td>\eOR</td>    <td>\eOR</td>       <td>\e[[C</td> <td>\e[13~</td>  </tr>
-<tr><td>F4</td>  <td>\e[14~</td><td>\e[14~</td><td>\eOS</td> <td>\eOS</td>    <td>\eOS</td>       <td>\e[[D</td> <td>\e[14~</td>  </tr>
-<tr><td>F5</td>  <td>\e[15~</td><td>\e[15~</td><td>\eOt</td> <td>\e[15~</td>  <td>\e[15~</td>     <td>\e[[E</td> <td>\e[15~</td>  </tr>
-<tr><td>F6</td>  <td>\e[17~</td><td>\e[17~</td><td>\eOu</td> <td>\e[17~</td>  <td>\e[17~</td>     <td>\e[17~</td><td>\e[17~</td>  </tr>
-<tr><td>F7</td>  <td>\e[18~</td><td>\e[18~</td><td>\eOv</td> <td>\e[18~</td>  <td>\e[18~</td>     <td>\e[18~</td><td>\e[18~</td>  </tr>
-<tr><td>F8</td>  <td>\e[19~</td><td>\e[19~</td><td>\eOl</td> <td>\e[19~</td>  <td>\e[19~</td>     <td>\e[19~</td><td>\e[19~</td>  </tr>
-<tr><td>F9</td>  <td>\e[20~</td><td>\e[20~</td><td>\eOw</td> <td>\e[20~</td>  <td>\e[20~</td>     <td>\e[20~</td><td>\e[20~</td>  </tr>
-<tr><td>F10</td> <td>\e[21~</td><td>\e[21~</td><td>\eOx</td> <td>\e[21~</td>  <td>\e[21~</td>     <td>\e[21~</td><td>\e[21~</td>  </tr>
-<tr><td>F11</td> <td>\e[23~</td><td>\e[23~</td><td></td>     <td>\e[23~</td>  <td>\e[23~</td>     <td>\e[23~</td><td>\e[23~</td>  </tr>
-<tr><td>F12</td> <td>\e[24~</td><td>\e[24~</td><td></td>     <td>\e[24~</td>  <td>\e[24~</td>     <td>\e[24~</td><td>\e[24~</td>  </tr>
-<tr><td>F13</td> <td>\e[25~</td><td>\e[25~</td><td></td>     <td>S-F1</td>    <td>\e[25~</td>     <td>\e[25~</td><td>\e[25~</td>  </tr>
-<tr><td>F14</td> <td>\e[26~</td><td>\e[26~</td><td></td>     <td>S-F2</td>    <td>\e[26~</td>     <td>\e[26~</td><td>\e[26~</td>  </tr>
-<tr><td>F15</td> <td>\e[28~</td><td>\e[28~</td><td></td>     <td>S-F3</td>    <td>\e[28~</td>     <td>\e[28~</td><td>\e[28~</td>  </tr>
-<tr><td>F16</td> <td>\e[29~</td><td>\e[29~</td><td></td>     <td>S-F4</td>    <td>\e[29~</td>     <td>\e[29~</td><td>\e[29~</td>  </tr>
-<tr><td>F17</td> <td>\e[31~</td><td>\e[31~</td><td></td>     <td>S-F5</td>    <td>\e[31~</td>     <td>\e[31~</td><td>\e[31~</td>  </tr>
-<tr><td>F18</td> <td>\e[32~</td><td>\e[32~</td><td></td>     <td>S-F6</td>    <td>\e[32~</td>     <td>\e[32~</td><td>\e[32~</td>  </tr>
-<tr><td>F19</td> <td>\e[33~</td><td>\e[33~</td><td></td>     <td>S-F7</td>    <td>\e[33~</td>     <td>\e[33~</td><td>\e[33~</td>  </tr>
-<tr><td>F20</td> <td>\e[34~</td><td>\e[34~</td><td></td>     <td>S-F8</td>    <td>\e[34~</td>     <td>\e[34~</td><td>\e[34~</td>  </tr>
-<tr><td>F21</td> <td>\e[23$</td><td>\e[23$</td><td></td>     <td>S-F9</td>    <td></td>           <td>\e[23$</td><td>\e[23$</td>  </tr>
-<tr><td>F22</td> <td>\e[24$</td><td>\e[24$</td><td></td>     <td>S-F10</td>   <td></td>           <td>\e[24$</td><td>\e[24$</td>  </tr>
-<tr><td>F23</td> <td>\e[25$</td><td>C-F1  </td><td></td>     <td>S-F11</td>   <td></td>           <td></td>      <td>\e[25$</td>  </tr>
-<tr><td>F24</td> <td>\e[26$</td><td>C-F2  </td><td></td>     <td>S-F12</td>   <td></td>           <td></td>      <td>\e[26$</td>  </tr>
-<tr><td>F25</td> <td>\e[28$</td><td>C-F3  </td><td></td>     <td>C-F1</td>    <td></td>           <td></td>      <td>C-F1</td>    </tr>
-<tr><td>F26</td> <td>\e[29$</td><td>C-F4  </td><td></td>     <td>C-F2</td>    <td></td>           <td></td>      <td>C-F2</td>    </tr>
-<tr><td>F27</td> <td>\e[31$</td><td>C-F5  </td><td></td>     <td>C-F3</td>    <td></td>           <td></td>      <td>C-F3</td>    </tr>
-<tr><td>F28</td> <td>\e[32$</td><td>C-F6  </td><td></td>     <td>C-F4</td>    <td></td>           <td></td>      <td>C-F4</td>    </tr>
-<tr><td>F29</td> <td>\e[33$</td><td>C-F7  </td><td></td>     <td>C-F5</td>    <td></td>           <td></td>      <td>C-F5</td>    </tr>
-<tr><td>F30</td> <td>\e[34$</td><td>C-F8  </td><td></td>     <td>C-F6</td>    <td></td>           <td></td>      <td>C-F6</td>    </tr>
-</table>
-<ul>
-<li>#1 : terminfo より</li>
-<li>#2 : Function Key 修飾(上述)で修飾される。</li>
-<li>#3 : Control キーが押されている時、~ が ^ に、$ が @ に変わる。\e[[A - \e[[E は \e[11^ - \e[15^ に変わる。</li>
-</ul>
-<!--.........................................................................-->
-<h3>矢印キー (Cursor keys)</h3>
-<p>矢印キーのキー入力は、モードによって送信されるシーケンスが異なる。</p>
-<ul>
-<li>DECCKM が設定されていない時: Normal</li>
-<li>DECCKM が設定されている時: Application</li>
-</ul>
-<table class="normal center">
-<tr><th>キー</th><th>Normal</th><th>Application</th></tr>
-<tr><td>Up</td>     <td><code>\e[A</code></td><td><code>\eOA</code></td></tr>
-<tr><td>Down</td>   <td><code>\e[B</code></td><td><code>\eOB</code></td></tr>
-<tr><td>Right</td>  <td><code>\e[C</code></td><td><code>\eOC</code></td></tr>
-<tr><td>Left</td>   <td><code>\e[D</code></td><td><code>\eOD</code></td></tr>
-<tr><td>Home</td>   <td><code>\e[H</code></td><td><code>\eOH</code></td></tr>
-<tr><td>End</td>    <td><code>\e[F</code></td><td><code>\eOF</code></td></tr>
-</table>
-<p>Function Key 修飾は、<code>\e[1A</code> 等に対して修飾した結果になる。</p>
 <!--.........................................................................-->
 <h3>他の操作キー</h3>
 <table class="normal center">
