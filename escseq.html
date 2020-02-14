@@ -154,30 +154,30 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
     <td><kbd>SOS ... ST</kbd></td><td>文字列</td></tr>
 </table>
 <p>但し、DLE, ESC, DCS, SOS, CSI, ST, OSC, PM, APC は C0 または C1 に含まれる制御文字である (後述)。</p>
-<p>[ECMA-48/5.4, ECMA-35/13.2.1] また、<i>&lt;Name&gt;</i> の表記で示したバイトは、Name に応じて特定の集合に含まれる。
+<p>[ECMA-48/5.4, ECMA-35/13.2.1] また、<i class="kbd">Name</i> の表記で示したバイトは、Name に応じて特定の集合に含まれる。
 </p>
 <table class="normal center">
-<tr><th colspan="3"><i>&lt;Name&gt;</i></th><th>範囲</th></tr>
-<tr><th colspan="3"><i>&lt;C0&gt;</i></th><td>00/00 - 01/15</td></tr>
-<tr><th colspan="3"><i>&lt;I&gt;</i></th><td>02/00 - 02/15</td></tr>
-<tr><th rowspan="3"><i>&lt;F&gt;</i></th>
-    <th colspan="2"><i>&lt;Fp&gt;</i>, <i>&lt;P&gt;</i></th><td>03/00 - 03/15</td></tr>
-<tr><th rowspan="2"><i>&lt;Ft&gt;</i></th>
-    <th><i>&lt;Fe&gt;</i></th><td>04/00 - 05/15</td></tr>
-<tr><th><i>&lt;Fs&gt;</i></th><td>06/00 - 07/14</td></tr>
-<tr><th colspan="3"><i>&lt;C1&gt;</i></th><td>08/00 - 09/15</td></tr>
-<tr><th colspan="3"><i>&lt;Cc&gt;</i></th>
+<tr><th colspan="3"><i class="kbd">Name</i></th><th>範囲</th></tr>
+<tr><th colspan="3"><i class="kbd">C0</i></th><td>00/00 - 01/15</td></tr>
+<tr><th colspan="3"><i class="kbd">I</i></th><td>02/00 - 02/15</td></tr>
+<tr><th rowspan="3"><i class="kbd">F</i></th>
+    <th colspan="2"><i class="kbd">Fp</i>, <i class="kbd">P</i></th><td>03/00 - 03/15</td></tr>
+<tr><th rowspan="2"><i class="kbd">Ft</i></th>
+    <th><i class="kbd">Fe</i></th><td>04/00 - 05/15</td></tr>
+<tr><th><i class="kbd">Fs</i></th><td>06/00 - 07/14</td></tr>
+<tr><th colspan="3"><i class="kbd">C1</i></th><td>08/00 - 09/15</td></tr>
+<tr><th colspan="3"><i class="kbd">Cc</i></th>
     <td>Unicode General Category "Cc" の文字 (C0, C1 以外)<br/>
     (特定の文字符号化方式でバイト列を Unicode 文字の列に変換した後)
     </td></tr>
 </table>
 <ul>
-<li>ECMA-35 では <i>&lt;F&gt;</i> を 03/00 - 07/14 と定義しているが、ECMA-48 では 04/00 - 07/14 と定義している。
+<li>ECMA-35 では <i class="kbd">F</i> を 03/00 - 07/14 と定義しているが、ECMA-48 では 04/00 - 07/14 と定義している。
   混乱を避ける為にこの文書では ECMA-35 での定義を採用し、
-  ECMA-48 の <i>&lt;F&gt;</i> は ECMA-35 に倣って <i>&lt;Ft&gt;</i> に置き換えて表記する。
+  ECMA-48 の <i class="kbd">F</i> は ECMA-35 に倣って <i class="kbd">Ft</i> に置き換えて表記する。
 </li>
-<li>エスケープシーケンス (ECMA-35) では 03/00 - 03/15 は終端バイト (final byte) として働き <i>&lt;Fp&gt;</i> と表記する。
-  制御シーケンス (ECMA-48) では 03/00 - 03/15 は引数バイト (parameter byte) として働き <i>&lt;P&gt;</i> と表記する。
+<li>エスケープシーケンス (ECMA-35) では 03/00 - 03/15 は終端バイト (final byte) として働き <i class="kbd">Fp</i> と表記する。
+  制御シーケンス (ECMA-48) では 03/00 - 03/15 は引数バイト (parameter byte) として働き <i class="kbd">P</i> と表記する。
   両者は役割が異なるので表記も異なっているが、文字集合としての区別はない。
 </li>
 </ul>
@@ -449,7 +449,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   エスケープシーケンスは<dfn>符号識別機能</dfn> (code-identification function) およびある種の制御機能の符号化表現となる。
   </p>
   <p>[ECMA-35/13.1] エスケープシーケンスは ESC で始まり終端バイト 03/00-07/15 で終わる。
-  間に 0 個以上の中間バイト <i>&lt;I&gt;</i> を含む。
+  間に 0 個以上の中間バイト <i class="kbd">I</i> を含む。
   その形式によって以下の様な型 (types) に分類される。
   </p>
   <table class="normal center">
@@ -486,15 +486,15 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <tr><td>12Ft</td><td><kbd>ESC , <i>I</i><strong>*</strong> <i>Ft</i></kbd></td></tr>
   </table>
   <ul>
-  <li><i>&lt;Fp&gt;</i> で終端するエスケープシーケンスは私用の為に保留されている。</li>
-  <li>2バイト目が <i>&lt;I&gt;</i> のエスケープシーケンスは符号識別機能に用いられ、
+  <li><i class="kbd">Fp</i> で終端するエスケープシーケンスは私用の為に保留されている。</li>
+  <li>2バイト目が <i class="kbd">I</i> のエスケープシーケンスは符号識別機能に用いられ、
     特に文字集合の設定に用いられる。</li>
-  <li>2バイト目が <i>&lt;Fe&gt;</i> にあるエスケープシーケンスは、
+  <li>2バイト目が <i class="kbd">Fe</i> にあるエスケープシーケンスは、
     C1 の文字を 7bit で符号化するのに用いられる。
     実際の端末の実装においては、
     歴史的な背景からこの領域の特定の文字に別の機能を割り当てている事がある。
   </li>
-  <li>2バイト目が範囲 <i>&lt;Fs&gt;</i> にあるシーケンスは ISO/IEC 2022 (ECMA-35) で規定される単独制御機能である。</li>
+  <li>2バイト目が範囲 <i class="kbd">Fs</i> にあるシーケンスは ISO/IEC 2022 (ECMA-35) で規定される単独制御機能である。</li>
   <li>(予約) とした物は現在は規定されていないが、将来の規格変更・文字集合登録の為に予約されている。</li>
   <li>[ECMA-35/6.4.4, 6.5.4] 00/00-01/15 の基本集合および Fe 型の補助集合および一部の標準単独制御機能は ECMA-48 で定義される。</li>
   </ul>
@@ -504,10 +504,10 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 例によって赤色で示したのが、続きのバイト列を持つシーケンスである。
 </p>
 <table class="normal center">
-<tr><th colspan="2">nFt型: 符号識別機能<br/>(第2バイト <i>&lt;I&gt;</i>)</th>
-    <th colspan="2">Fp型: 私用制御機能<br/>(第2バイト <i>&lt;Fp&gt;</i>)</th>
-    <th colspan="4">Fe型: 補助集合 C1<br/>(第2バイト <i>&lt;Fe&gt;</i>)</th>
-    <th colspan="4">Fs型: 標準単独制御機能<br/>(第2バイト <i>&lt;Fs&gt;</i>)</th></tr>
+<tr><th colspan="2">nFt型: 符号識別機能<br/>(第2バイト <i class="kbd">I</i>)</th>
+    <th colspan="2">Fp型: 私用制御機能<br/>(第2バイト <i class="kbd">Fp</i>)</th>
+    <th colspan="4">Fe型: 補助集合 C1<br/>(第2バイト <i class="kbd">Fe</i>)</th>
+    <th colspan="4">Fs型: 標準単独制御機能<br/>(第2バイト <i class="kbd">Fs</i>)</th></tr>
 <tr><th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
@@ -662,14 +662,14 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   </p>
   <p>CSI は 01/11 05/11 (<kbd>ESC [</kbd>)、または 09/11 で表現される。
   [ECMA-48/5.4]
-  <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i>
+  <i class="kbd">I</i><strong>*</strong> <i class="kbd">Ft</i>
   の組合せによって、その制御シーケンスが特にどの様な機能を持った物かを指定する。
   それぞれの組合せに対応する制御シーケンスの機能は、端末に依存する所が大きい。
-  特に <i>&lt;Ft&gt;</i> = 07/00 - 07/14 のシーケンスは私用・実験用のシーケンスとして使って良い。
-  <i>&lt;P&gt;</i> は 03/00 - 03/15 の範囲の文字を表す。
-  <i>&lt;P&gt;</i><strong>*</strong> の部分は、
+  特に <i class="kbd">Ft</i> = 07/00 - 07/14 のシーケンスは私用・実験用のシーケンスとして使って良い。
+  <i class="kbd">P</i> は 03/00 - 03/15 の範囲の文字を表す。
+  <i class="kbd">P</i><strong>*</strong> の部分は、
   引数列 (parameter bytes, parameter string) と呼ばれ、
-  <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i> で指定された機能に対する引数として働く。
+  <i class="kbd">I</i><strong>*</strong> <i class="kbd">Ft</i> で指定された機能に対する引数として働く。
   引数列が1文字以上あるとき、
   [ECMA-48/5.4.1a] 一番初めの文字が 03/12 - 03/15 ("&lt;", "=", "&gt;", "?") のものは
   私用・実験用の引数列であり形式は規定されない。
@@ -693,15 +693,15 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <p>[ECMA-48/5.4]</p>
   <p>以降では説明の為に以下の記号を用いる</p>
   <ul>
-  <li><i>&lt;Pn&gt;</i>: 整数引数。大きさに意味のある基数。</li>
-  <li><i>&lt;Ps&gt;</i>: 整数引数。番号で選択肢を選ぶ序数。</li>
-  <li><i>&lt;Pm&gt;</i>: 複数の整数を 03/11 (";")で区切った物。</li>
+  <li><i class="kbd">Pn</i>: 整数引数。大きさに意味のある基数。</li>
+  <li><i class="kbd">Ps</i>: 整数引数。番号で選択肢を選ぶ序数。</li>
+  <li><i class="kbd">Pm</i>: 複数の整数を 03/11 (";")で区切った物。</li>
   </ul>
 </li>
 </ul>
 
-<p>この文書ではエスケープシーケンスに倣って、制御シーケンスについても <i>&lt;I&gt;</i><strong>*</strong> <i>&lt;Ft&gt;</i> の部分により型を定めることにする。
-Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong> のないもの) を表にする。</p>
+<p>この文書ではエスケープシーケンスに倣って、制御シーケンスについても <i class="kbd">I</i><strong>*</strong> <i class="kbd">Ft</i> の部分により型を定めることにする。
+Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</strong> のないもの) を表にする。</p>
 <table class="normal center">
 <tr><th colspan="6">Ft型: 端末制御機能</th>
     <th colspan="2">Ft型: 私用制御機能</th>
@@ -776,7 +776,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
     <th>---</th>    <td>-</td></tr>
 </table>
 
-<p>0Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong> = <kbd>SP</kbd> のもの) を <i>&lt;Ft&gt;</i> に従って表にする。</p>
+<p>0Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</strong> = <kbd>SP</kbd> のもの) を <i class="kbd">Ft</i> に従って表にする。</p>
 <table class="normal center">
 <tr><th colspan="6">0Ft型: 端末制御機能</th>
     <th colspan="2">0Ft型: 私用制御機能</th>
@@ -1075,8 +1075,8 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   <p>OSC シーケンスはコマンド列の形式に従う。
   OSC は 01/11 05/13 (<kbd>ESC ]</kbd>) または 09/13 で表現される。
   ECMA-48 ではそれ以上は定められていないが、実際の実装では一番最初に数字の引数を取ることが多い。
-  <i>&lt;N&gt;</i> は [0-9] の文字を表す。
-  <i>&lt;N&gt;</i><strong>*</strong> はコマンドの種類を指定する番号である。
+  <i class="kbd">N</i> は [0-9] の文字を表す。
+  <i class="kbd">N</i><strong>*</strong> はコマンドの種類を指定する番号である。
   後に続く <strong>.*</strong> の部分は、コマンドの引数として与える文字列である。
   本来 ST で終端するはずだが BEL で終端することもある。
   </p>
@@ -1132,23 +1132,24 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <h3>私用シーケンス</h3>
 <p>パラメータの先頭に <kbd>&lt;</kbd>, <kbd>=</kbd>, <kbd>&gt;</kbd>, <kbd>?</kbd> を含むもの。</p>
 <table class="normal center">
+<caption>[*1 RLogin/mlterm による命名]</caption>
 <tr><th>略号</th><th>符号化表現</th></tr>
 <tr><th>DA2</th> <td><kbd>CSI > <i>Ps</i> c</kbd></td></tr>
 <tr><th>DA3</th> <td><kbd>CSI = <i>Ps</i> c</kbd></td></tr>
-<tr><th>XTERM_SET_MOD_FKEYS       </th><td><kbd>CSI &gt; <i>Ps1</i> ; <i>Ps2</i> m</kbd></td></tr>
-<tr><th>XTERM_SET_MOD_FKEYS0</th><td><kbd>CSI &gt; <i>Ps1</i> n</kbd>             </td></tr>
-<tr><th>xtGraphicsAttribute</th> <td><kbd>CSI &gt; <i>Ps</i> S</kbd></td></tr>
-<tr><th>xtSetTitle</th> <td><kbd>CSI &gt; <i>Ps</i> t</kbd></td></tr>
-<tr><th>xtRstTitle</th> <td><kbd>CSI &gt; <i>Ps</i> T</kbd></td></tr>
-<tr><th>xtPointerMode</th> <td><kbd>CSI &gt; <i>Ps</i> p</kbd></td></tr>
+<tr><th>XTERM_SET_MOD_FKEYS  (XTMDKEY<sup>*1</sup>)</th><td><kbd>CSI &gt; <i>Ps1</i> ; <i>Ps2</i> m</kbd></td></tr>
+<tr><th>XTERM_SET_MOD_FKEYS0 (XTMDKEYD<sup>*1</sup>)</th><td><kbd>CSI &gt; <i>Ps1</i> n</kbd>             </td></tr>
+<tr><th>XTCOLREG<sup>*1</sup></th> <td><kbd>CSI &gt; <i>Ps</i> S</kbd></td></tr>
+<tr><th>XTSMTT<sup>*1</sup></th> <td><kbd>CSI &gt; <i>Ps</i> t</kbd></td></tr>
+<tr><th>XTRMTT<sup>*1</sup></th> <td><kbd>CSI &gt; <i>Ps</i> T</kbd></td></tr>
+<tr><th>XTHDPT<sup>*1</sup></th> <td><kbd>CSI &gt; <i>Ps</i> p</kbd></td></tr>
 <tr><th>DECSET</th> <td><kbd>CSI ? <i>Pm</i> h</kbd></td></tr>
 <tr><th>DECRST</th> <td><kbd>CSI ? <i>Pm</i> l</kbd></td></tr>
 <tr><th>DECRQM</th> <td><kbd>CSI ? <i>Ps</i> $ p</kbd></td></tr>
 <tr><th>DECRPM</th> <td><kbd>CSI ? <i>Ps</i> ; <i>Ps</i> $ y</kbd></td></tr>
 <tr><th>DECSED</th><td><kbd>CSI ? <i>Ps</i> J</kbd></td></tr>
 <tr><th>DECSEL</th><td><kbd>CSI ? <i>Ps</i> K</kbd></td></tr>
-<tr><th>XTREST</th> <td><kbd>CSI ? <i>Pm</i> r</kbd></td></tr>
-<tr><th>XTSAVE</th> <td><kbd>CSI ? <i>Pm</i> s</kbd></td></tr>
+<tr><th>XTREST<sup>*</sup></th> <td><kbd>CSI ? <i>Pm</i> r</kbd></td></tr>
+<tr><th>XTSAVE<sup>*</sup></th> <td><kbd>CSI ? <i>Pm</i> s</kbd></td></tr>
 <tr><th>DECMC (MC)</th>  <td><kbd>CSI ? <i>Pm</i> i</kbd></td></tr>
 <tr><th>DECDSR (DSR)</th> <td><kbd>CSI ? <i>Ps</i> n</kbd></td></tr>
 </table>
@@ -1226,17 +1227,28 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 
 <table class="normal center">
 <caption>表: ANSI モード</caption>
-<tr><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th></tr>
-<tr><th>GATM</th> <td>1</td>   <th>PUM<sup>非推奨</sup></th>     <td>11</td>  <th>GRCM</th>                <td>21</td>  <th>wyseSLDM<sup>違反</sup></th><td>31</td></tr>
-<tr><th>KAM</th>  <td>2</td>   <th>SRM</th>                      <td>12</td>  <th>ZDM<sup>非推奨</sup></th><td>22</td>  <th>wyseSCM<sup>違反</sup></th><td>32</td></tr>
-<tr><th>CRM</th>  <td>3</td>   <th>FEAM</th>                     <td>13</td>  <th>-</th><td>23</td>                     <th>WYSTCURM<sup>違反</sup></th><td>33</td></tr>
-<tr><th>IRM</th>  <td>4</td>   <th>FETM</th>                     <td>14</td>  <th>-</th><td>24</td>                     <th>WYULCURM<sup>違反</sup></th><td>34</td></tr>
-<tr><th>SRTM</th> <td>5</td>   <th>MATM</th>                     <td>15</td>  <th>-</th><td>25</td><th>-</th><td>35</td></tr>
-<tr><th>ERM</th>  <td>6</td>   <th>TTM</th>                      <td>16</td>  <th>-</th><td>26</td><th>-</th><td>36</td></tr>
-<tr><th>VEM</th>  <td>7</td>   <th>SATM</th>                     <td>17</td>  <th>-</th><td>27</td><th>-</th><td>37</td></tr>
-<tr><th>BDSM</th> <td>8</td>   <th>TSM</th>                      <td>18</td>  <th>-</th><td>28</td><th>-</th><td>38</td></tr>
-<tr><th>DCSM</th> <td>9</td>   <th>EBM<sup>廃</sup></th>         <td>19</td>  <th>-</th><td>29</td><th>-</th><td>39</td></tr>
-<tr><th>HEM</th>  <td>10</td>  <th>LF/NL<sup>廃</sup> (LNM)</th> <td>20</td>  <th>wyseDDM<sup>違反</sup></th><td>30</td><th>-</th><td>40</td></tr>
+<tr><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th>
+    <th>略号</th><th>Mode</th><th>略号</th><th>Mode</th></tr>
+<tr><th>GATM                    </th><td>1 </td><th>PUM<sup>非推奨</sup></th>     <td>11</td>  <th>GRCM</th>                <td>21</td>
+    <th>WYSTLINM<sup>違反</sup> </th><td>31</td><th>-</th><td>-</td></tr>
+<tr><th>KAM                     </th><td>2 </td><th>SRM</th>                      <td>12</td>  <th>ZDM<sup>非推奨</sup></th><td>22</td>
+    <th>WYCRTSAVM<sup>違反</sup></th><td>32</td><th>WYASCII<sup>違反</sup></th><td>42</td></tr>
+<tr><th>CRM                     </th><td>3 </td><th>FEAM</th>                     <td>13</td>  <th>-</th><td>23</td>
+    <th>WYSTCURM<sup>違反</sup> </th><td>33</td><th>-</th><td>-</td></tr>
+<tr><th>IRM                     </th><td>4 </td><th>FETM</th>                     <td>14</td>  <th>-</th><td>24</td>
+    <th>WYULCURM<sup>違反</sup> </th><td>34</td><th>-</th><td>-</td></tr>
+<tr><th>SRTM                    </th><td>5 </td><th>MATM</th>                     <td>15</td>  <th>-</th><td>25</td>
+    <th>WYCLRM<sup>違反</sup>   </th><td>35</td><th>-</th><td>-</td></tr>
+<tr><th>ERM                     </th><td>6 </td><th>TTM</th>                      <td>16</td>  <th>-</th><td>26</td>
+    <th>WYDELKM<sup>違反</sup>  </th><td>36</td><th>-</th><td>-</td></tr>
+<tr><th>VEM                     </th><td>7 </td><th>SATM</th>                     <td>17</td>  <th>-</th><td>27</td>
+    <th>WYGATM<sup>違反</sup>   </th><td>37</td><th>-</th><td>-</td></tr>
+<tr><th>BDSM                    </th><td>8 </td><th>TSM</th>                      <td>18</td>  <th>-</th><td>28</td>
+    <th>WYTEXM<sup>違反</sup>   </th><td>38</td><th>-</th><td>-</td></tr>
+<tr><th>DCSM                    </th><td>9 </td><th>EBM<sup>廃</sup></th>         <td>19</td>  <th>-</th><td>29</td>
+    <th>-                       </th><td>- </td><th>-</th><td>-</td></tr>
+<tr><th>HEM                     </th><td>10</td><th>LF/NL<sup>廃</sup> (LNM)</th> <td>20</td>  <th>WYDSCM<sup>違反</sup></th><td>30</td>
+    <th>WYEXTDM<sup>違反</sup>  </th><td>40</td><th>-</th><td>-</td></tr>
 </table>
 
 <table class="normal center">
@@ -1264,7 +1276,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>DECSCNM</th><td>?5</td>
     <th>-</th><td>?15</td>
     <th>DECTCEM</th><td>?25</td>
-    <th>DECHEBM<br/>RXVT_FONTSIZE</th><td>?35</td></tr>
+    <th>DECHEBM<br/>RXVT_ShiftKeys</th><td>?35</td></tr>
 <tr><th>DECOM</th><td>?6</td>
     <th>DECEKEM<sup>*</sup></th><td>?16</td>
     <th>-</th><td>?26</td>
@@ -1281,9 +1293,9 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
     <th>DECPEX</th><td>?19</td>
     <th>DECPSM<sup>*</sup></th><td>?29</td>
     <th>-</th><td>?39</td></tr>
-<tr><th>RXVT_TOOLBAR</th><td>?10</td>
+<tr><th>RXVT_menuBar</th><td>?10</td>
     <th>-</th><td>?20</td>
-    <th>RXVT_SCROLLBAR</th><td>?30</td>
+    <th>RXVT_scrollBar</th><td>?30</td>
     <th>DECCRNLM<sup>*</sup><br/>XTERM_132COLS</th><td>?40</td></tr>
 </table>
 <ul>
@@ -1404,9 +1416,9 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>XTERM_EXT_MODE_MOUSE         </th><td>?1005</td><th>XTERM_TCAP_FKEYS             </th><td>?1050</td></tr>
 <tr><th>XTERM_SGR_EXT_MODE_MOUSE     </th><td>?1006</td><th>XTERM_SUN_FKEYS              </th><td>?1051</td></tr>
 <tr><th>XTERM_ALTERNATE_SCROLL       </th><td>?1007</td><th>XTERM_HP_FKEYS               </th><td>?1052</td></tr>
-<tr><th>RXVT_SCROLL_TTY_OUTPUT       </th><td>?1010</td><th>XTERM_SCO_FKEYS              </th><td>?1053</td></tr>
-<tr><th>RXVT_SCROLL_TTY_KEYPRESS     </th><td>?1011</td><th>XTERM_LEGACY_FKEYS           </th><td>?1060</td></tr>
-<tr><th>URXVT_EXT_MODE_MOUSE         </th><td>?1015</td><th>XTERM_VT220_FKEYS            </th><td>?1061</td></tr>
+<tr><th>RXVT_TtyOutputInh            </th><td>?1010</td><th>XTERM_SCO_FKEYS              </th><td>?1053</td></tr>
+<tr><th>RXVT_Keypress                </th><td>?1011</td><th>XTERM_LEGACY_FKEYS           </th><td>?1060</td></tr>
+<tr><th>URXVT_ExtMouseRight          </th><td>?1015</td><th>XTERM_VT220_FKEYS            </th><td>?1061</td></tr>
 <tr><th>XTERM_EIGHT_BIT_META         </th><td>?1034</td><th>XTERM_PRIVATE_COLOR_REGISTERS</th><td>?1070</td></tr>
 <tr><th>XTERM_REAL_NUMLOCK           </th><td>?1035</td><th>XTERM_BUTTON1_MOVE_POINT     </th><td>?2001</td></tr>
 <tr><th>XTERM_META_SENDS_ESC         </th><td>?1036</td><th>XTERM_BUTTON2_MOVE_POINT     </th><td>?2002</td></tr>
@@ -1415,7 +1427,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>XTERM_KEEP_SELECTION         </th><td>?1040</td><th>XTERM_PASTE_QUOTE            </th><td>?2005</td></tr>
 <tr><th>XTERM_SELECT_TO_CLIPBOARD    </th><td>?1041</td><th>XTERM_PASTE_LITERAL_NL       </th><td>?2006</td></tr>
 <tr><th>XTERM_BELL_IS_URGENT         </th><td>?1042</td><th>-</th><td>-</td></tr>
-<tr><th>XTERM_POP_ON_BELL            </th><td>?1043</td><th>-</th><td>-</td></tr>
+<tr><th>XTERM_POP_ON_BELL            </th><td>?1043</td><th>URXVT_intensityStyles</th><td>?1021</td></tr>
 </table>
 
 <table class="normal center">
@@ -1453,8 +1465,16 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <tr><th>VTE_BIDI_BOX_MIRROR</th>        <td>?2500 (tmp)</td></tr>
 <tr><th>VTE_BIDI_AUTO</th>              <td>?2501 (tmp)</td></tr>
 <tr><th>VTE_BIDI_SWAP_ARROW_KEYS</th>   <td>?1243 (tmp)</td></tr>
-<tr><th>TTCTH</th>      <td>?8200</td></tr>
+<tr><th>TTCTH (Tera Term)</th>      <td>?8200</td></tr>
+<tr><th>DRCSMMv1 (drcsterm)</th>      <td>?8800</td></tr>
+<tr><th>TNAMB (tanasinn)</th>      <td>?8840</td></tr>
 </table>
+
+
+<p>他</p>
+<ul>
+<li>GWREPT/OSC 8900 (yaft)</li>
+</ul>
 
 <ul>
 <li><a href="https://terminal-wg.pages.freedesktop.org/bidi/recommendation/escape-sequences.html">The escape sequences – BiDi in Terminal Emulators</a>
@@ -1469,6 +1489,10 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <li>GNOME/vte ソースコード中に様々な(VTE未対応の)モードが図鑑になっている。。。
   <a href="https://github.com/GNOME/vte/blob/416c41be417a051b1d20499754aaa0a827e43b6b/src/modes-private.hh">vte/modes-private.hh at 416c41b</a>
   <a href="https://github.com/GNOME/vte/blob/mainline/src/modes-private.hh">vte/modes-private.hh at mainline</a>
+  <ul>
+  <li>src/modes-ecma.hh 及び src/modes-private.hh</li>
+  <li>一連の WY* については此処に WY370 からの説明が載っている。</li>
+  </ul>
 </li>
 <li>Tera Term source <a href="https://osdn.net/projects/ttssh2/scm/svn/blobs/head/trunk/teraterm/teraterm/vtterm.c">File Details: /trunk/teraterm/teraterm/vtterm.c (head) - ttssh2 (svn) - Tera Term - OSDN</a>
   14001..14004 に NetTerm 由来のマウスモードがあるが実験的な実装だろうか。
@@ -1489,45 +1513,53 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   </ul>
 </li>
 <li>mintty は src/termout.c でモードを処理しているが特に名前は付けていない。</li>
+<li>mlterm は取り敢えず制御機能に名前を割り当てている様だ。
+  <a href="https://github.com/brunoduran/mlterm/blob/2cafed3f01960c75d3f10ddbe7b0c824edfbf6bd/doc/en/ControlSequences">ControlSequences</a>
+</li>
 </ul>
 
 <pre>
 # 端末毎の対応モードの一覧
 
-| ANSI      |         1111111111222|333|
-|   Modes   |1234567890123456789012|234|
-|-----------|----------------------|---|
-| xterm     | * *       *       *  |   |
-| RLogin    | * * *     *     * *  |   |
-| mintty    |   *   *   *     * *  | **|
-| screen    |   *               *  |  *|
-| Tera Term | * *       *       *  | **|
-| mlterm    | * *       *       *  | **|
-| urxvt     |   *               *  |   |
-| vt510     | ***       *       *  |   |
-| contra    |** * ***** *       ***|***|
-| ECMA-48   |******************DD**|RRR| D=deprecated R=reserved
+| ANSI      |         1111111111222|333333333 4 4|
+|   Modes   |1234567890123456789012|012345678 0 2|
+|-----------|----------------------|-------------|
+| xterm     | * *       *       *  |         - - |
+| RLogin    | * * *     *     * *  |         - - |
+| mintty    |   *   *   *     * *  |   **    - - |
+| screen    |   *               *  |    *    - - |
+| Tera Term | * *       *       *  |   **    - - |
+| mlterm    | * *       *       *  |   **    - - |
+| rxvt      |   *                  |         - - |
+| urxvt     |   *               *  |         - - |
+| vt510     | ***       *       *  |         - - |
+| contra    |** * ***** *       ***|  A**    - - |
+| ECMA-48   |******************DD**|RRRRRRRRR-R-R| D=deprecated R=reserved
 
-| DEC       |                   |       |     |        |  |       |      | | |     11111 1 11111111111|
-|   ? Modes |         1 111 1 11|22 2 23|333 3|44444444|55|5 5 566|6 6666|7|8|9999900000 0 00011111111|
-|           |1234567890 234 6 89|45 7 90|456 8|01234567|12|5 7 901|4 6789|3|0|5678901234 6 78901234567|
-|-----------|-------------------|-------|-----|--------|--|-------|------|-|-|------------------------|
-| xterm     |**********-*XX- -**| *- - *| * -*|XX*-XXXX|  | - -   | -** *| |*|*         - -           |
-| VTE       |* * *** * -   - -  | *- -  |   - |X  -   X|  | - -   | -*   | | |          - -           |
-| Tera Term |* * ***** -*  - - *| *- -  |   -*|   -   X|  | - -*  | -** *| | |*         - -           |
-| contra    |* ******* -*XX- -  | *- -  |   - |X  - X X|  | - -   | -** *| | |*         - -           |
+| DEC       |                   |       |              |  |       |      | | |     11111 1 11111111111|
+|   ? Modes |         1 111 1 11|22 2 23|333 3 44444444|55|5 5 566|6 6666|7|8|9999900000 0 00011111111|
+|           |1234567890 234 6 89|45 7 90|456 8 01234567|12|5 7 901|4 6789|3|0|5678901234 6 78901234567|
+|-----------|-------------------|-------|--------------|--|-------|------|-|-|------------------------|
+| rxvt      |******* **-   - -  | *- - *| r - -x  -   x|  | - -   | -**  | | |          - -           |
+| urxvt     |******* * -*  - -  | *- - *| r - -x  -   x|  | - -   | -**  | | |          - -           |
+| xterm     |**********-*xx- -**| *- - *| r -*-xx*-xxxx|  | - -   | -** *| |*|*         - -           |
+| VTE       |* * *** * -   - -  | *- -  |   - -x  -   x|  | - -   | -*   | | |          - -           |
+| Tera Term |* * ***** -*  - - *| *- -  |   -*-   -   x|  | - -*  | -** *| | |*         - -           |
+| contra    |* ******* -*xx- -  | *- -  |   - -x  - x x|  | - -   | -** *| | |*         - -           |
 
-| Origin    |xterm   |rxvt|xterm                    |vte|mintty    |T|RLogin                 |#1   | T=Tera Term, #1=drcsterm
-|-----------|--------|----|-------------------------|---|----------|-|-----------------------|-----|
-| Modes?    |        |  | |                    |  | |   |        77| |                       |     |
-|           |11111111|11|1|1111 111111 11111111|11|2|122|7777777777|8|88888888888888888888888|88888|
-|           |00000000|00|0|0000 000000 00000000|00|0|255|7777777700|2|44444444444444444444444|88888|
-|           |00000000|11|1|3333 344444 44445555|66|0|400|02268889X9|0|00000023344444455555555|00000|
-|           |01234567|01|5|4567 901234 67890123|01|4|301|07873676X6|0|01235685701238901235678|01234|
-|-----------|--------|--|-|--------------------|--|-|---|----------|-|-----------------------|-----|
-| VTE       |***** **|  | |  * -      - ***    |  |*|***|          | |                       |     |
-| Tera Term |******* |  |*|    -      - ***    |  |*|   | *   *    |*|                       |     |
-| contra    |******* |  |*|    -      - *** ***|**|*|   |          | |                       |     |
+| Origin    |xterm   |rxvt  |xterm                    |vte|mintty    |T|RLogin                 |#1   | T=Tera Term, #1=drcsterm
+|-----------|--------|------|-------------------------|---|----------|-|-----------------------|-----|
+| Modes?    |        |  | | |                    |  | |   |        77| |                       |     |
+|           |11111111|11|1|1|1111 111111 11111111|11|2|122|7777777777|8|88888888888888888888888|88888|
+|           |00000000|00|0|0|0000 000000 00000000|00|0|255|7777777700|2|44444444444444444444444|88888|
+|           |00000000|11|1|2|3333 344444 44445555|66|0|400|02268889X9|0|00000023344444455555555|00000|
+|           |01234567|01|5|1|4567 901234 67890123|01|4|301|07873676X6|0|01235685701238901235678|01234|
+|-----------|--------|--|-|-|--------------------|--|-|---|----------|-|-----------------------|-----|
+| rxvt      |*       |**| | |    -      - **     |  | |   |          | |                       |     |
+| urxvt     |* ****  |**|*|*|    -      - ***    |  |*|   |          | |                       |     |
+| VTE       |***** **|  | | |  * -      - ***    |  |*|***|          | |                       |     |
+| Tera Term |******* |  |*| |    -      - ***    |  |*|   | *   *    |*|                       |     |
+| contra    |******* |  |*| |    -      - *** ***|**|*|   |          | |                       |     |
 </pre>
 
 <ul>
@@ -1820,7 +1852,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   表示部の行の向き、行の追加方向、文字進路を設定する。既定値は 0 である。
   </p>
   <table class="normal center">
-  <tr><th><i>&lt;Ps1&gt;</i></th><th>行の向き</th><th>行の追加</th><th>文字進路</th></tr>
+  <tr><th><i class="kbd">Ps1</i></th><th>行の向き</th><th>行の追加</th><th>文字進路</th></tr>
   <tr><td>0</td><td>横書き</td><td>下へ</td><td>右へ</td></tr>
   <tr><td>1</td><td>縦書き</td><td>左へ</td><td>下へ</td></tr>
   <tr><td>2</td><td>縦書き</td><td>右へ</td><td>下へ</td></tr>
@@ -1892,7 +1924,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   または現在データ位置 (DCSM(DATA) のとき) が移動する先の列になる。
   DCSM(DATA) もしくは表示部とデータ部に区別のない装置の場合、
   設定された列は現在データ位置が暗黙的移動によって移動できる一番左の位置となる。
-  引数 <i>&lt;Pn&gt;</i> は列番号を指定し、既定値はない。
+  引数 <i class="kbd">Pn</i> は列番号を指定し、既定値はない。
   </p>
   <p>Note: どの瞬間の DCSM が効くのか規格には明記されていないが、
   CR の説明によると、DCSM は CR, DL, IL, NEL が呼び出された時の値が単に使用される。
@@ -1910,13 +1942,13 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
   CR, NEL による移動先の列になる。
   また、DCSM(DATA) もしくは表示部とデータ部に区別のない装置の場合、
   設定された列は現在データ位置が暗黙的移動によって移動できる一番右の位置になる。
-  引数 <i>&lt;Pn&gt;</i> は列番号を指定し、既定値はない。
+  引数 <i class="kbd">Pn</i> は列番号を指定し、既定値はない。
   </p>
 </li>
 <li><dfn class="cfunc">SPH</dfn>: SET PAGE HOME
   <p>[ECMA-48/8.3.131] <dfn>頁初期位置</dfn> (page home position) を設定する。
   現在頁と以降の頁に FF によって移動した後に、
-  現在表示位置または現在データ位置 (DCSM による) をおく行を <i>&lt;Pn&gt;</i> で指定する。
+  現在表示位置または現在データ位置 (DCSM による) をおく行を <i class="kbd">Pn</i> で指定する。
   DCSM(DATA) またはデータ部と表示部に区別のない装置の場合、
   暗黙的移動によってこの行より前に移動できない。
   この値は次に SPH が呼び出されるまで持続する。
@@ -1926,7 +1958,7 @@ Ft型の制御シーケンス (中間バイト <i>&lt;I&gt;</i><strong>*</strong
 <li><dfn class="cfunc">SPL</dfn>: SET PAGE LIMIT
   <p>[ECMA-48/8.3.133] <dfn>頁限界位置</dfn> (page limit position) を設定する。
   現在頁と以降の頁において
-  現在表示位置または現在データ位置 (DCSM による) がそれより下に移動できない行を <i>&lt;Pn&gt;</i> で指定する。
+  現在表示位置または現在データ位置 (DCSM による) がそれより下に移動できない行を <i class="kbd">Pn</i> で指定する。
   DCSM(DATA) またはデータ部と表示部に区別のない装置の場合、
   暗黙的移動によってこの行より下に移動することはない。
   この値は次に SPL が呼び出されるまで持続する。
@@ -2206,31 +2238,31 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>VPB</th><td><kbd>CSI <i>Pn</i> k</kbd></td>
     <th>CPL</th><td><kbd>CSI <i>Pn</i> F</kbd></td>
     <th>CUU</th><td><kbd>CSI <i>Pn</i> A</kbd></td>
-    <td><i>&lt;Pn&gt;</i> 行上 (CPL は更に行頭)</td></tr>
+    <td><i class="kbd">Pn</i> 行上 (CPL は更に行頭)</td></tr>
 <tr><th>VPR</th><td><kbd>CSI <i>Pn</i> e</kbd></td>
     <th>CNL</th><td><kbd>CSI <i>Pn</i> E</kbd></td>
     <th>CUD</th><td><kbd>CSI <i>Pn</i> B</kbd></td>
-    <td><i>&lt;Pn&gt;</i> 行下 (CNL は更に行頭)</td></tr>
+    <td><i class="kbd">Pn</i> 行下 (CNL は更に行頭)</td></tr>
 <tr><th>HPB</th><td><kbd>CSI <i>Pn</i> j</kbd></td>
     <td colspan="2">-</td>
     <th>CUB</th><td><kbd>CSI <i>Pn</i> D</kbd></td>
-    <td><i>&lt;Pn&gt;</i> 文字左</td></tr>
+    <td><i class="kbd">Pn</i> 文字左</td></tr>
 <tr><th>HPR</th><td><kbd>CSI <i>Pn</i> a</kbd></td>
     <td colspan="2">-</td>
     <th>CUF</th><td><kbd>CSI <i>Pn</i> C</kbd></td>
-    <td><i>&lt;Pn&gt;</i> 文字右</td></tr>
+    <td><i class="kbd">Pn</i> 文字右</td></tr>
 <tr><th>HVP</th><td><kbd>CSI <i>Pn1</i> ; <i>Pn2</i> f</kbd></td>
     <th>CUP</th><td><kbd>CSI <i>Pn1</i> ; <i>Pn2</i> H</kbd></td>
     <td colspan="2">-</td>
-    <td><i>&lt;Pn1&gt;</i> 行目の <i>&lt;Pn2&gt;</i> 文字目</td></tr>
+    <td><i class="kbd">Pn1</i> 行目の <i class="kbd">Pn2</i> 文字目</td></tr>
 <tr><th>VPA</th><td><kbd>CSI <i>Pn</i> d</kbd></td>
     <td colspan="2">-</td>
     <td colspan="2">-</td>
-    <td><i>&lt;Pn&gt;</i> 行目</td></tr>
+    <td><i class="kbd">Pn</i> 行目</td></tr>
 <tr><th>HPA</th><td><kbd>CSI <i>Pn</i> `</kbd></td>
     <th>CHA</th><td><kbd>CSI <i>Pn</i> G</kbd></td>
     <td colspan="2">-</td>
-    <td><i>&lt;Pn&gt;</i> 文字目</td></tr>
+    <td><i class="kbd">Pn</i> 文字目</td></tr>
 </table>
 <ul>
 <li>Mode 22 <dfn class="cmode">ZDM</dfn>: ZERO DEFAULT MODE
@@ -2256,7 +2288,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <li><dfn class="cfunc">CUF</dfn>: CURSOR RIGHT (vt510: Cursor Forward)</li>
 <li><dfn class="cfunc">CUB</dfn>: CURSOR LEFT (vt510: Cursor Backward)
   <p>[ECMA-48/8.3.22 CUU, 8.3.19 CUD, 8.3.18 CUB, 8.3.20 CUF]
-  CUU, CUD, CUB, CUF は、現在表示位置を &lt;Pn&gt; 行または &lt;Pn&gt; 字だけ、
+  CUU, CUD, CUB, CUF は、現在表示位置を <i class="kbd">Pn</i> 行または <i class="kbd">Pn</i> 字だけ、
   それぞれ上・下・左・右に移動する。既定値は 1 である。
   ZDM(DEFAULT) の場合は 0 を指定すると 1 と解釈する。
   </p>
@@ -2273,7 +2305,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </ul>
 </li>
 <li><dfn class="cfunc">CUP</dfn>: CURSOR POSITION
-  <p>[ECMA-48/8.3.21] 現在表示位置を &lt;Pn1&gt; 行目、&lt;Pn2&gt; 文字目に移動する。
+  <p>[ECMA-48/8.3.21] 現在表示位置を <i class="kbd">Pn1</i> 行目、<i class="kbd">Pn2</i> 文字目に移動する。
   両引数の既定値は共に 1 である。ZDM(DEFAULT) の場合は 0 を指定すると既定値 1 が使用される。
   </p>
   <ul>
@@ -2283,7 +2315,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </li>
 <li><dfn class="cfunc">CNL</dfn>: CURSOR NEXT LINE</li>
 <li><dfn class="cfunc">CPL</dfn>: CURSOR PRECEDING LINE (vt510: Cursor Previous Line)
-  <p>[ECMA-48/8.3.12 CNL, 8.3.13 CPL] 現在表示位置を <i>&lt;Pn&gt;</i> 行だけ次 (CNL の場合) または前 (CPL の場合) の行頭に移動する。
+  <p>[ECMA-48/8.3.12 CNL, 8.3.13 CPL] 現在表示位置を <i class="kbd">Pn</i> 行だけ次 (CNL の場合) または前 (CPL の場合) の行頭に移動する。
   引数の既定値は 1 である。ZDM(DEFAULT) の場合は 0 を指定すると既定値 1 が使用される。
   </p>
   <ul>
@@ -2294,7 +2326,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </ul>
 </li>
 <li><dfn class="cfunc">CHA</dfn>: CURSOR CHARACTER ABSOLUTE (vt510: Cursor Horizontal Absolute)
-  <p>[ECMA-48/8.3.9] 現在表示位置を現在行の <i>&lt;Pn&gt;</i> 文字目に移動する。引数の既定値は 1 であり、ZDM(DEFAULT) の場合は 0 は既定値 1 を意味する。</p>
+  <p>[ECMA-48/8.3.9] 現在表示位置を現在行の <i class="kbd">Pn</i> 文字目に移動する。引数の既定値は 1 であり、ZDM(DEFAULT) の場合は 0 は既定値 1 を意味する。</p>
   <ul>
   <li>xterm</li>
   <li>vt510: <a href="http://www.vt100.net/docs/vt510-rm/CHA">VT510: CHA</a></li>
@@ -2303,7 +2335,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <li><dfn class="cfunc">HPA</dfn>: CHARACTER POSITION ABSOLUTE (Horizontal Position Absolute)</li>
 <li><dfn class="cfunc">VPA</dfn>: LINE POSITION ABSOLUTE (Vertical Line Position Absolute)
   <p>[ECMA-48/8.3.57 HPA, 8.3.158 VPA]
-  現在データ位置を <i>&lt;Pn&gt;</i> 文字目 (の場合) または<i>&lt;Pn&gt;</i> 行目 (VPA の場合) に移動する。
+  現在データ位置を <i class="kbd">Pn</i> 文字目 (の場合) または<i class="kbd">Pn</i> 行目 (VPA の場合) に移動する。
   ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
   </p>
   <ul>
@@ -2318,7 +2350,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <li><dfn class="cfunc">VPB</dfn>: LINE POSITION BACKWARD</li>
 <li><dfn class="cfunc">VPR</dfn>: LINE POSITION FORWARD (Vertical Position Relative)
   <p>[ECMA-48/8.3.58 HPB, 8.3.59 HPR, 8.3.159 VPB, 8.3.160 VPR]
-  HPB, HPR, VPB, VPR はそれぞれ現在データ位置を左・右・上・下に <i>&lt;Pn&gt;</i> 行または <i>&lt;Pn&gt;</i> 文字だけ移動する。
+  HPB, HPR, VPB, VPR はそれぞれ現在データ位置を左・右・上・下に <i class="kbd">Pn</i> 行または <i class="kbd">Pn</i> 文字だけ移動する。
   ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
   </p>
   <ul>
@@ -2330,8 +2362,8 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </ul>
 </li>
 <li><dfn class="cfunc">HVP</dfn>: CHARACTER AND LINE POSITION (Horizontal and Vertical Position)
-  <p>[ECMA-48/8.3.63] 現在データ位置を <i>&lt;Pn1&gt;</i> 行目 <i>&lt;Pn2&gt;</i> 文字目に移動する。
-  <i>&lt;Pn1&gt;</i> と <i>&lt;Pn2&gt;</i> の既定値は共に 1 である。
+  <p>[ECMA-48/8.3.63] 現在データ位置を <i class="kbd">Pn1</i> 行目 <i class="kbd">Pn2</i> 文字目に移動する。
+  <i class="kbd">Pn1</i> と <i class="kbd">Pn2</i> の既定値は共に 1 である。
   ZDM(DEFAULT) のとき値 0 は既定値 1 を意味する。
   </p>
   <ul>
@@ -2506,11 +2538,11 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <tr><th>HTS</th><td><kbd>HTS</kbd></td><td>現在表示位置に文字タブ位置を設置</td></tr>
 <tr><th>VTS</th><td><kbd>VTS</kbd></td><td>現在表示行に行タブ位置を設置</td></tr>
 <tr><th>HTSA<sup>廃</sup></th><td><kbd>CSI <i>Pn</i>... SP N</kbd></td><td>現在表示行の文字タブ位置を設定</td></tr>
-<tr><th>TATE</th><td><kbd>CSI <i>Pn1</i> SP `</kbd></td><td rowspan="4">現在表示行 <i>&lt;Pn1&gt;</i> 文字目に各属性のタブを設置</td></tr>
+<tr><th>TATE</th><td><kbd>CSI <i>Pn1</i> SP `</kbd></td><td rowspan="4">現在表示行 <i class="kbd">Pn1</i> 文字目に各属性のタブを設置</td></tr>
 <tr><th>TALE</th><td><kbd>CSI <i>Pn1</i> SP a</kbd></td></tr>
 <tr><th>TAC</th> <td><kbd>CSI <i>Pn1</i> SP b</kbd></td></tr>
 <tr><th>TCC</th> <td><kbd>CSI <i>Pn1</i> ; <i>Pn2</i> SP c</kbd></td></tr>
-<tr><th>TSR</th><td><kbd>CSI <i>Pn</i> SP d</kbd></td><td>現在表示行 <i>&lt;Pn&gt;</i> 文字目の文字タブ位置を解除</td></tr>
+<tr><th>TSR</th><td><kbd>CSI <i>Pn</i> SP d</kbd></td><td>現在表示行 <i class="kbd">Pn</i> 文字目の文字タブ位置を解除</td></tr>
 <tr><th>CTC</th><td><kbd>CSI <i>Ps</i> W</kbd></td><td>タブ位置の操作</td></tr>
 <tr><th>TBC</th><td><kbd>CSI <i>Ps</i> g</kbd></td><td>タブ位置の解除</td></tr>
 </table>
@@ -2549,22 +2581,22 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <li><dfn class="cfunc">TAC</dfn>: TABULATION ALIGNED CENTRED</li>
 <li><dfn class="cfunc">TCC</dfn>: TABULATION CENTRED ON CHARACTER
   <p>[ECMA-48/8.3.153 TATE, 8.3.152 TALE, 8.3.151 TAC, 8.3.155 TCC]
-  現在行と以降の行の <i>&lt;Pn1&gt;</i> 個目の文字位置に、
+  現在行と以降の行の <i class="kbd">Pn1</i> 個目の文字位置に、
   それぞれの制御機能に対応した alignment を持つタブ位置を設置する。
-  TCC の場合は <i>&lt;Pn2&gt;</i> に揃える文字の文字コードを指定する。
+  TCC の場合は <i class="kbd">Pn2</i> に揃える文字の文字コードを指定する。
   文字コードの指定は、現在 GL, GR に呼び出されている文字について、その番号 32-127, 160-255 で行う。
   指定した文字位置に既にタブ位置が設定されている場合はそれを置き換える。
   引数の既定値は指定されない。
   </p>
 </li>
 <li><dfn class="cfunc">TSR</dfn>: TABULATION STOP REMOVE
-  <p>[ECMA-48/8.3.156] 現在行と以降の行の &lt;Pn&gt; 文字目にある文字タブ位置を削除する。引数の既定値は指定されない。</p>
+  <p>[ECMA-48/8.3.156] 現在行と以降の行の <i class="kbd">Pn</i> 文字目にある文字タブ位置を削除する。引数の既定値は指定されない。</p>
 </li>
 <li><dfn class="cfunc">CTC</dfn>: CURSOR TABULATION CONTROL
   <p>[ECMA-48/8.3.17] 引数に応じて表示部にある複数のタブ位置を設定または解除する。
   </p>
   <table class="normal center">
-  <tr><th><i>&lt;Ps&gt;</i></th><th>意味</th></tr>
+  <tr><th><i class="kbd">Ps</i></th><th>意味</th></tr>
   <tr><td>0 (既定値)</td><td>現在位置に文字タブ位置を設定する</td></tr>
   <tr><td>1</td><td>現在行に行タブ位置を設定する</td></tr>
   <tr><td>2</td><td>現在位置の文字タブ位置を解除する</td></tr>
@@ -2578,7 +2610,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <li><dfn class="cfunc">TBC</dfn>: TABULATION CLEAR
   <p>[ECMA-48/8.3.154] 引数に応じて表示部にある複数のタブ位置を解除する。</p>
   <table class="normal center">
-  <tr><th><i>&lt;Ps&gt;</i></th><th>意味</th></tr>
+  <tr><th><i class="kbd">Ps</i></th><th>意味</th></tr>
   <tr><td>0 (既定値)</td><td>現在位置の文字タブ位置を解除する</td></tr>
   <tr><td>1</td><td>現在行の行タブ位置を解除する</td></tr>
   <tr><td>2</td><td>現在行の全ての文字タブ位置を解除する</td></tr>
@@ -2629,14 +2661,14 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </li>
 <li><dfn class="cfunc">CVT</dfn>: CURSOR LINE TABULATION
   <p>[ECMA-48/8.3.23]
-  現在表示位置を <i>&lt;Pn&gt;</i> 個次の行タブ位置のある行の同じ列に移動する。
-  <i>&lt;Pn&gt;</i> の既定値は 1 で、ZDM(DEFAULT) のとき 0 は既定値を意味する。
+  現在表示位置を <i class="kbd">Pn</i> 個次の行タブ位置のある行の同じ列に移動する。
+  <i class="kbd">Pn</i> の既定値は 1 で、ZDM(DEFAULT) のとき 0 は既定値を意味する。
   </p>
 </li>
 <li><dfn class="cfunc">CHT</dfn>: CURSOR FORWARD TABULATION (Cursor Horizontal Forward Tabulation)
   <p>[ECMA-48/8.3.10]
-  現在表示位置を文字進路方向に <i>&lt;Pn&gt;</i> 個次の文字タブ位置に移動する。
-  <i>&lt;Pn&gt;</i> の既定値は 1 で、ZDM(DEFAULT) のとき 0 は既定値を意味する。
+  現在表示位置を文字進路方向に <i class="kbd">Pn</i> 個次の文字タブ位置に移動する。
+  <i class="kbd">Pn</i> の既定値は 1 で、ZDM(DEFAULT) のとき 0 は既定値を意味する。
   </p>
   <p>Note: 次の行の文字タブ位置まで移動できるかどうかは規格の文面からは不明瞭である。
   実際の実装ではどの実装も行内での移動になっている。
@@ -2652,8 +2684,8 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </li>
 <li><dfn class="cfunc">CBT</dfn>: CURSOR BACKWARD TABULATION
   <p>[ECMA-48/8.3.7]
-  現在表示位置を文字進路と逆方向に <i>&lt;Pn&gt;</i> 個次の文字タブ位置に移動する。
-  <i>&lt;Pn&gt;</i> の既定値は 1 で、ZDM(DEFAULT) のとき 0 は既定値を意味する。
+  現在表示位置を文字進路と逆方向に <i class="kbd">Pn</i> 個次の文字タブ位置に移動する。
+  <i class="kbd">Pn</i> の既定値は 1 で、ZDM(DEFAULT) のとき 0 は既定値を意味する。
   </p>
   <ul>
   <li>xterm, screen, mintty, RLogin, Poderosa が対応する。
@@ -2687,11 +2719,11 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
 <tr><th>SEE</th><td><kbd>CSI <i>Ps</i> Q</kbd></td><td>DCH, ICH, DL, IL のシフト範囲を規定</td></tr>
-<tr><th>DCH</th><td><kbd>CSI <i>Pn</i> P</kbd></td><td><i>&lt;Pn&gt;</i> 文字切除</td></tr>
-<tr><th>ECH</th><td><kbd>CSI <i>Pn</i> X</kbd></td><td><i>&lt;Pn&gt;</i> 文字消去</td></tr>
-<tr><th>ICH</th><td><kbd>CSI <i>Pn</i> @</kbd></td><td><i>&lt;Pn&gt;</i> 文字挿入</td></tr>
-<tr><th>DL</th> <td><kbd>CSI <i>Pn</i> M</kbd></td><td><i>&lt;Pn&gt;</i> 行切除</td></tr>
-<tr><th>IL</th> <td><kbd>CSI <i>Pn</i> L</kbd></td><td><i>&lt;Pn&gt;</i> 行挿入</td></tr>
+<tr><th>DCH</th><td><kbd>CSI <i>Pn</i> P</kbd></td><td><i class="kbd">Pn</i> 文字切除</td></tr>
+<tr><th>ECH</th><td><kbd>CSI <i>Pn</i> X</kbd></td><td><i class="kbd">Pn</i> 文字消去</td></tr>
+<tr><th>ICH</th><td><kbd>CSI <i>Pn</i> @</kbd></td><td><i class="kbd">Pn</i> 文字挿入</td></tr>
+<tr><th>DL</th> <td><kbd>CSI <i>Pn</i> M</kbd></td><td><i class="kbd">Pn</i> 行切除</td></tr>
+<tr><th>IL</th> <td><kbd>CSI <i>Pn</i> L</kbd></td><td><i class="kbd">Pn</i> 行挿入</td></tr>
 <tr><th>EL</th> <td><kbd>CSI <i>Ps</i> K</kbd></td><td>行内の消去</td></tr>
 <tr><th>EF</th> <td><kbd>CSI <i>Ps</i> N</kbd></td><td>フィールド内の消去</td></tr>
 <tr><th>EA</th> <td><kbd>CSI <i>Ps</i> O</kbd></td><td>領域内の消去</td></tr>
@@ -2730,7 +2762,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   設定は次の SEE が現れるまで有効である。既定値は 0 である。
   </p>
   <table class="normal center">
-  <tr><th><i>&lt;Ps&gt;</i></th><th>シフト対象</th></tr>
+  <tr><th><i class="kbd">Ps</i></th><th>シフト対象</th></tr>
   <tr><td>0</td><td>表示部の現在ページに限られる。</td></tr>
   <tr><td>1</td><td>表示部の現在行に限られる。</td></tr>
   <tr><td>2</td><td>表示部の現在のフィールドに限られる。</td></tr>
@@ -2743,8 +2775,8 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </li>
 <li><dfn class="cfunc">DCH</dfn>: DELETE CHARACTER
   <p>[ECMA-48/8.3.26]
-  現在位置および次 (HEM(FOLLOWING) のとき) または前 (HEM(PRECEDING) のとき) の <i>&lt;Pn&gt;</i> - 1 個の文字位置を行から除去する。
-  つまり、現在位置から <i>&lt;Pn&gt;</i> 文字次以降の内容が現在位置に向かってシフトされ、シフトによってできた余白は消去される。
+  現在位置および次 (HEM(FOLLOWING) のとき) または前 (HEM(PRECEDING) のとき) の <i class="kbd">Pn</i> - 1 個の文字位置を行から除去する。
+  つまり、現在位置から <i class="kbd">Pn</i> 文字次以降の内容が現在位置に向かってシフトされ、シフトによってできた余白は消去される。
   シフトの範囲は SEE によって指定される。シフトに依って選択領域・属性化領域・タブ位置がどう影響を受けるかは規格では指定されない。
   除去範囲およびシフトは DCSM に応じて表示部またはデータ部で決定される。
   引数の既定値は 1 で、ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
@@ -2756,7 +2788,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </li>
 <li><dfn class="cfunc">ECH</dfn>: ERASE CHARACTER
   <p>[ECMA-48/8.3.38]
-  現在位置に加えて後ろに続く <i>&lt;Pn&gt;</i> -1 個の文字位置を消去する。
+  現在位置に加えて後ろに続く <i class="kbd">Pn</i> -1 個の文字位置を消去する。
   消去の範囲は DCSM に応じて表示部またはデータ部で決定される。
   ERM に依存して保護領域の文字も消去するかどうかが決まる。
   引数の既定値は 1 で、ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
@@ -2768,9 +2800,9 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </li>
 <li><dfn class="cfunc">ICH</dfn>: INSERT CHARACTER
   <p>[ECMA-48/8.3.64]
-  現在位置および <i>&lt;Pn&gt;</i> - 1 個の文字位置を HEM に応じて後または前に挿入する。
-  つまり、現在位置とその後または前の部分が <i>&lt;Pn&gt;</i> 個だけシフトされ、
-  シフト部分の反対側の端にあった <i>&lt;Pn&gt;</i> 個の文字は失われる。
+  現在位置および <i class="kbd">Pn</i> - 1 個の文字位置を HEM に応じて後または前に挿入する。
+  つまり、現在位置とその後または前の部分が <i class="kbd">Pn</i> 個だけシフトされ、
+  シフト部分の反対側の端にあった <i class="kbd">Pn</i> 個の文字は失われる。
   現在位置は SLH に移動する。シフト対象は SEE によって設定される。
   現在位置およびシフト部分の決定は DCSM に応じて表示部またはデータ部で行われる。
   選択領域・属性化領域・文字タブ位置の上で ICH をした時の振る舞いは定義されない。
@@ -2796,8 +2828,8 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </li>
 <li><dfn class="cfunc">DL</dfn>: DELETE LINE
   <p>[ECMA-48/8.3.32]
-  現在行と、VEM に応じて前または後の <i>&lt;Pn&gt;</i> - 1 行を除去する。
-  つまり、<i>&lt;Pn&gt;</i> 行目以降を現在行の方向にシフトさせ、シフト部分の反対側の <i>&lt;Pn&gt;</i> 行の内容は消去される。
+  現在行と、VEM に応じて前または後の <i class="kbd">Pn</i> - 1 行を除去する。
+  つまり、<i class="kbd">Pn</i> 行目以降を現在行の方向にシフトさせ、シフト部分の反対側の <i class="kbd">Pn</i> 行の内容は消去される。
   引数の既定値は 1 で、ZDM(DEFAULT) のとき引数 0 は既定値 1 を意味する。
   シフト範囲は SEE による。現在位置は現在行の SLH に移動する。
   現在位置の移動およびシフトは DCSM に応じて表示部またはデータ部で実行される。
@@ -2811,9 +2843,9 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </ul>
 </li>
 <li><dfn class="cfunc">IL</dfn>: INSERT LINE
-  <p>[ECMA-48/8.3.67] 現在行の位置に空行を <i>&lt;Pn&gt;</i> 行挿入する。
-  つまり、現在行及び、VEM に応じて前または後の <i>&lt;Pn&gt;</i> - 1 行を <i>&lt;Pn&gt;</i> 行分だけ現在行から離れる方向にシフトし、
-  空いた行の内容を消去する。シフト範囲の反対側の <i>&lt;Pn&gt;</i> 行の内容は失われる。
+  <p>[ECMA-48/8.3.67] 現在行の位置に空行を <i class="kbd">Pn</i> 行挿入する。
+  つまり、現在行及び、VEM に応じて前または後の <i class="kbd">Pn</i> - 1 行を <i class="kbd">Pn</i> 行分だけ現在行から離れる方向にシフトし、
+  空いた行の内容を消去する。シフト範囲の反対側の <i class="kbd">Pn</i> 行の内容は失われる。
   引数の既定値は 1 で、ZDM(DEFAULT) のとき 0 は既定値 1 を意味する。
   現在位置は SLH に移動する。
   シフトの範囲は SEE によって決まる。
@@ -2835,7 +2867,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   引数に応じて対象範囲の一部または全ての文字を消去する。
   </p>
   <table class="normal center">
-  <tr><th><i>&lt;Ps&gt;</i></th><th>消去の対象</th></tr>
+  <tr><th><i class="kbd">Ps</i></th><th>消去の対象</th></tr>
   <tr><td>0</td><td>現在位置と対象範囲の末尾まで</td></tr>
   <tr><td>1</td><td>現在位置と対象範囲の先頭まで</td></tr>
   <tr><td>2</td><td>対象範囲の内容全て</td></tr>
@@ -2880,22 +2912,22 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <li>xterm: osc sequence, dsc sequence を列挙</li>
 <li>vt510 の頁でまだ列挙していない ASCII Control Functions を列挙、分類、version 確認</li>
 <li>
- DECALN, DECAUPSS, DECBI,
- DECCARA, DECCIR, DECCKD, DECCKM, DECCKSR, DECCOLM, DECCRA, DECDC,
+ DECAUPSS, DECBI,
+ DECCARA, DECCIR, DECCKD, DECCKSR, DECCRA, DECDC,
  DECDLD, DECDMAC, DECEKBD, DECELF, DECERA, DECFI, DECFNK, DECFRA,
  DECIC, DECINVM, DECIPEM, DECKBD,
  DECKPM, DECLANS, DECLBAN, DECLFKC, DECLL, DECLTOD, DECMSR,
  DECPAK, DECPCTERM,
  DECPFK, DECPKA, DECPKFMR, DECRARA, DECRPAK,
- DECRPDE, DECRPFK, DECRPKT, DECRPM, DECRPSS, DECRPTUI, DECRQCRA, DECRQDE, DECRQKD,
- DECRQKT, DECRQPKFM, DECRQPSR, DECRQSS, DECRQUPSS, DECRSPS, DECRSTS, DECSACE, DECSASD,
- DECSCL, DECSCP, DECSCPP, DECSCS, DECSDDT, DECSDPT,
- DECSED, DECSEL, DECSERA, DECSFC, DECSKCV, DECSLCK, DECSLPP, DECSLRM, DECSMBV, DECSMKR,
+ DECRPDE, DECRPFK, DECRPKT, DECRPTUI, DECRQCRA, DECRQDE, DECRQKD,
+ DECRQKT, DECRQPKFM, DECRQPSR, DECRQUPSS, DECRSPS, DECRSTS, DECSACE, DECSASD,
+ DECSCP, DECSCS, DECSDDT, DECSDPT,
+ DECSED, DECSEL, DECSERA, DECSFC, DECSKCV, DECSLCK, DECSLPP, DECSMBV, DECSMKR,
  DECSNLS, DECSPP, DECSPPCS, DECSPRTT, DECSR, DECSRC, DECSRFR, DECSSCLS, DECSSDT, DECSSL,
- DECST8C, DECSTBM, DECSTR, DECSTRL, DECSWBV, DECTABSR, DECTID, DECTME, DECTSR,
+ DECST8C, DECSTR, DECSTRL, DECSWBV, DECTABSR, DECTID, DECTME, DECTSR,
  DECTST, DECUDK, DECXCPR, DECXRLM, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR, DSR,
- HTS, HVP, IND, IRM, KAM, LNM, LS, MC, NP, PP, PPA, PPB, PPR, RIS, SCODFK,
- SCS, SD, SRM, SS, SU, TBC
+ LS, MC, NP, PP, PPA, PPB, PPR, RIS, SCODFK,
+ SCS, SS
 </li>
 <li>VT520
   <ul>
@@ -2948,11 +2980,11 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <li><dfn class="cfunc">DECSCL</dfn>: Select Conformance Level
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECSCL.html">VT510/DECSCL</a>]
     端末の適合レベルを指定する。
-    <i>&lt;Ps1&gt;</i> には 61-65 の値を指定する。
+    <i class="kbd">Ps1</i> には 61-65 の値を指定する。
     DECTID の表を考えると 61: vt100, 62: vt200, 63: vt300, 64: vt400, 65: vt500 という対応の筈であるが、
     実際には vt510, vt520 のマニュアルを見る限りは 61 を指定すると vt100 互換モードになり、
     62 以上を指定するとその装置で使える全ての機能が使えるようになると思われる。
-    <i>&lt;Ps2&gt;</i> (既定値 0) には C1 制御文字を 7bit 表現で送るか 8bit 表現で送るかの設定を指定する。
+    <i class="kbd">Ps2</i> (既定値 0) には C1 制御文字を 7bit 表現で送るか 8bit 表現で送るかの設定を指定する。
     1 を指定すると 7bit 表現になり、それ以外の時は 8bit 表現になる。
   </p>
 </li>
@@ -3082,9 +3114,9 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     以下のシーケンスが使える。
   </p>
   <table class="normal center">
-  <tr><th><i>&lt;Seq&gt;</i></th><th>制御機能</th>
-      <th><i>&lt;Seq&gt;</i></th><th>制御機能</th>
-      <th><i>&lt;Seq&gt;</i></th><th>制御機能</th></tr>
+  <tr><th><i class="kbd">Seq</i></th><th>制御機能</th>
+      <th><i class="kbd">Seq</i></th><th>制御機能</th>
+      <th><i class="kbd">Seq</i></th><th>制御機能</th></tr>
   <tr><td><kbd>m</kbd>   </td><td>SGR     </td> <td><kbd>$ s</kbd> </td><td>DECSPRTT</td> <td><kbd>* |</kbd> </td><td>DECSNLS </td></tr>
   <tr><td><kbd>p</kbd>   </td><td>DECSSL  </td> <td><kbd>$ |</kbd> </td><td>DECSCPP </td> <td><kbd>+ w</kbd> </td><td>DECSPP  </td></tr>
   <tr><td><kbd>r</kbd>   </td><td>DECSTBM </td> <td><kbd>$ ~</kbd> </td><td>DECSSDT </td> <td><kbd>SP p</kbd></td><td>DECSSCLS</td></tr>
@@ -3100,10 +3132,10 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <li><dfn class="cfunc">DECRPSS</dfn>: Report Selection or Setting
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECRPSS.html">VT510/DECRPSS</a>]
     DECRPSS に対する応答に使われる。
-    <i>&lt;Ps&gt;</i> が 0 の時は要求が有効で、
-    <i>&lt;Seq&gt;</i> には要求された制御機能の現在の設定を再現するのに使えるシーケンスを先頭の CSI を除いて指定する。
-    <i>&lt;Ps&gt;</i> が 1 の時は要求を認識できないか応答できないことを表し、
-    <i>&lt;Seq&gt;</i> は空文字列を指定する。
+    <i class="kbd">Ps</i> が 0 の時は要求が有効で、
+    <i class="kbd">Seq</i> には要求された制御機能の現在の設定を再現するのに使えるシーケンスを先頭の CSI を除いて指定する。
+    <i class="kbd">Ps</i> が 1 の時は要求を認識できないか応答できないことを表し、
+    <i class="kbd">Seq</i> は空文字列を指定する。
   </p>
 </li>
 </ul>
@@ -3205,7 +3237,6 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </li>
   </ul>
 </li>
-<li>Mode 32 <dfn class="cmode">wyseSCM</dfn>: Steady Cursor Mode (Wyse)</li>
 <li>Mode 33 <dfn class="cmode">WYSTCURM</dfn>: Wyse Steady Cursor Mode (Wyse)
   <p>[all-escapes.txt] カーソルを点滅しない。</p>
   <ul>
@@ -3213,8 +3244,10 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <li>(SM) カーソルは点滅しない。</li>
   </ul>
   <ul>
-  <li>互換性: 2つある意味が分からないが、
-    取り敢えず contra では ATT610_BLINK, XTERM_CURSOR_BLINK_OPS の反転と同値に実装する。
+  <li>互換性: all-escaptes.txt では 32 と 33 に同様に Steady cursor mode があるが、
+    32 の情報源として挙げられている <a href="https://web.archive.org/web/20061111180414/http://www.wyse.com/service/support/kbase/SEQwt.asp?Q=9">Wyse の頁</a>
+    によると 32 は別の機能 WYCRTSAV になっているので、単にall-escapes.txt の誤りである。
+    contra では当初、32 を ATT610_BLINK の反転エイリアスとして実装したが削除した。
   </li>
   </ul>
 </li>
@@ -3319,7 +3352,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </table>
 <ul>
 <li><dfn class="cfunc">SGR</dfn>: SELECT GRAPHIC RENDITION (Set Graphic Rendition)
-  <p><i>&lt;Pm&gt;</i> にはセミコロン ';' 区切りで複数の番号を指定する。
+  <p><i class="kbd">Pm</i> にはセミコロン ';' 区切りで複数の番号を指定する。
   各番号はそれぞれ対応する描画属性を設定したり解除したりするのに用いられる。
   パラメータを省略したときの既定値は 0 である。
   番号の詳細については後述する。
@@ -3840,7 +3873,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     区切にセミコロンを用いている場合、引数の終端を判断できないので省略はできない。
   </p>
 
-  <p>[T.416/13.1.8] RGB, CMY, CMYK の第2引数 &lt;s&gt; は色空間を指定する id で非負の整数<sup>[T.412/9.1.4.1]</sup> である。
+  <p>[T.416/13.1.8] RGB, CMY, CMYK の第2引数 <i class="kbd">s</i> は色空間を指定する id で非負の整数<sup>[T.412/9.1.4.1]</sup> である。
     <u>実際の実装では RGB に対応しているものがあるが、
     何れも第2引数には対応せず後続の引数の番号が 1 つずつ前にずれる</u>。
   </p>
@@ -4108,7 +4141,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <ul>
   <li>SCOANSI (?) について幾つかの非標準の動作が記述されている。
     <kbd>CSI 2 ; <i>Ps</i> ; <i>Ps</i> m</kbd> で前景色・背景色を指定する。
-    初めの <i>&lt;Ps&gt;</i> が前景色で、二つ目の <i>&lt;Ps&gt;</i> が背景色で、SCO color number で指定する。
+    初めの <i class="kbd">Ps</i> が前景色で、二つ目の <i class="kbd">Ps</i> が背景色で、SCO color number で指定する。
     3 は後方互換モードで M6845 ビデオコントローラにおける 5 の意味を切り替える。
     <kbd>CSI 3 ; 1 m</kbd> は 5 を点滅の意味にし、
     <kbd>CSI 3 ; 0 m</kbd> は 5 を明るい背景色の意味にする。
@@ -4527,9 +4560,9 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </li>
   <li>2つ目の引数 <var>X</var> はマウスポインタの横位置を表す列番号である。端末の最も左の列が 1 に対応する。</li>
   <li>3つ目の引数 <var>Y</var> はマウスポインタの縦位置を表す行番号である。端末の一番上の行が 1 に対応する。</li>
-  <li><i>&lt;C&gt;</i> は引数の整数値に 0x20 を加算した値をバイト値とする文字である。引数の値は最大 223 (= 0xFF-0x20) に制限される。</li>
-  <li><i>&lt;C8&gt;</i> は引数の整数値に 0x20 を加算した値を文字コードと見て UTF-8 形式で符号化したバイト列である。</li>
-  <li><i>&lt;Ps&gt;</i> は引数の整数値を整数リテラルで表現した /[0-9]+/ の形式の文字列である。</li>
+  <li><i class="kbd">C</i> は引数の整数値に 0x20 を加算した値をバイト値とする文字である。引数の値は最大 223 (= 0xFF-0x20) に制限される。</li>
+  <li><i class="kbd">C8</i> は引数の整数値に 0x20 を加算した値を文字コードと見て UTF-8 形式で符号化したバイト列である。</li>
+  <li><i class="kbd">Ps</i> は引数の整数値を整数リテラルで表現した /[0-9]+/ の形式の文字列である。</li>
   </ul>
   <p>XTERM_VT200_HIGHLIGHT_MOUSE が設定されている時、
     マウスボタンを離した時に解放イベントの代わりに選択イベントが発生する。
@@ -4576,13 +4609,13 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <tr><th>略号</th><th>Sequence</th><th>C/R</th></tr>
 <tr><th>ACS</th>
   <td><kbd>ESC SP <i>Ft</i></kbd></td>
-  <td>1/11 2/0 <i>&lt;Ft&gt;</i></td>
+  <td>1/11 2/0 <i class="kbd">Ft</i></td>
   </tr>
 </table>
 
-<p>ESC SP <i>&lt;Ft&gt;</i> の形式のシーケンスは ACS と呼ばれる。
+<p>ESC SP <i class="kbd">Ft</i> の形式のシーケンスは ACS と呼ばれる。
 通信の初めに、文字コードで有効な G0 G1 G2 G3 から GL GR へのシフトの構造を伝達する為の符号である。
-<i>&lt;Ft&gt;</i> に指定する文字で構造を指定する。
+<i class="kbd">Ft</i> に指定する文字で構造を指定する。
 </p>
 
 <table class="normal center">
@@ -4795,9 +4828,9 @@ f.面クリ, CLS 　このコマンドはバッチファイルのみに利用で
 <h2>古: ISO/IEC 2022 文字集合制御</h2>
 <!--...................................................................................-->
 <table class="normal center">
-<tr><td><code>\e!<i>&lt;I&gt; &lt;Ft&gt;</i></code></td><td>C0 への呼出</td></tr>
-<tr><td><code>\e"<i>&lt;I&gt; &lt;Ft&gt;</i></code></td><td>C1 への呼出</td></tr><!--"-->
-<tr><td><code>\e&amp;<i>&lt;Ft&gt;</i></code></td><td>改訂番号識別</td></tr>
+<tr><td><code>\e!<i class="kbd">I</i> <i class="kbd">Ft</i></code></td><td>C0 への呼出</td></tr>
+<tr><td><code>\e"<i class="kbd">I</i> <i class="kbd">Ft</i></code></td><td>C1 への呼出</td></tr><!--"-->
+<tr><td><code>\e&amp;<i class="kbd">Ft</i></code></td><td>改訂番号識別</td></tr>
 <tr><td><code>\17</code></td><td>G0 から GL へとシフト</td></tr>
 <tr><td><code>\16</code></td><td>G1 から GL へとシフト</td></tr>
 <tr><td><code>\en</code></td><td>G2 から GL へとシフト</td></tr>
