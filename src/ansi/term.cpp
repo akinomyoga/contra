@@ -1812,19 +1812,19 @@ namespace ansi {
 
   static void do_set_funckey_mode(term_t& term, std::uint32_t spec) {
     tstate_t& s = term.state();
-    s.m_funckey_mode = spec;
+    s.m_funckey_flags = (s.m_funckey_flags & ~funckey_mode_mask) | spec;
   }
   static int do_rqm_funckey_mode(term_t& term, std::uint32_t spec) {
     tstate_t& s = term.state();
-    return s.m_funckey_mode == spec ? 1 : 2;
+    return (s.m_funckey_flags & funckey_mode_mask) == spec ? 1 : 2;
   }
-  void do_sm_xtTerminfoKey(term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_terminfo : 0); }
-  void do_sm_xtSunKey     (term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_sun      : 0); }
-  void do_sm_xtHpKey      (term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_hp       : 0); }
-  void do_sm_xtScoKey     (term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_sco      : 0); }
-  void do_sm_xtX11R6Key   (term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_x11r6    : 0); }
-  void do_sm_xtVt220Key   (term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_vt220    : 0); }
-  void do_sm_ctrTildeKey  (term_t& term, bool value) { do_set_funckey_mode(term, value ? funckey_contra   : 0); }
+  void do_sm_xtTerminfoKey(term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_terminfo : 0); }
+  void do_sm_xtSunKey     (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_sun      : 0); }
+  void do_sm_xtHpKey      (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_hp       : 0); }
+  void do_sm_xtScoKey     (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_sco      : 0); }
+  void do_sm_xtX11R6Key   (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_x11r6    : 0); }
+  void do_sm_xtVt220Key   (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_vt220    : 0); }
+  void do_sm_ctrTildeKey  (term_t& term, bool value) { do_set_funckey_mode(term, value ? (std::uint32_t) funckey_contra   : 0); }
   int do_rqm_xtTerminfoKey(term_t& term) { return do_rqm_funckey_mode(term, funckey_terminfo); }
   int do_rqm_xtSunKey     (term_t& term) { return do_rqm_funckey_mode(term, funckey_sun     ); }
   int do_rqm_xtHpKey      (term_t& term) { return do_rqm_funckey_mode(term, funckey_hp      ); }
@@ -1832,6 +1832,39 @@ namespace ansi {
   int do_rqm_xtX11R6Key   (term_t& term) { return do_rqm_funckey_mode(term, funckey_x11r6   ); }
   int do_rqm_xtVt220Key   (term_t& term) { return do_rqm_funckey_mode(term, funckey_vt220   ); }
   int do_rqm_ctrTildeKey  (term_t& term) { return do_rqm_funckey_mode(term, funckey_contra  ); }
+
+  bool do_xtModifyKeys(term_t& term, csi_parameters& params) {
+    csi_single_param_t category, value;
+    params.read_param(category, 9900);
+    params.read_param(value, 2); // contra 既定値
+    if (value > 3) return false;
+    auto& s = term.state();
+    if (category <= 5) {
+      int const shift = 8 + 4 * category;
+      std::uint32_t mask = (std::uint32_t) funckey_mlevel_mask << shift;
+      s.m_funckey_flags = (s.m_funckey_flags & ~mask) | value << shift;
+      return true;
+    } else if (category == 9900) {
+      s.m_funckey_flags = (s.m_funckey_flags & ~funckey_modifyKeys_mask) | value * 0x11111100;
+      return true;
+    }
+    return false;
+  }
+  bool do_xtDisableModifyKeys(term_t& term, csi_parameters& params) {
+    csi_single_param_t category;
+    params.read_param(category, 9900);
+    auto& s = term.state();
+    if (category <= 5) {
+      int const shift = 8 + 4 * category;
+      std::uint32_t mask = (std::uint32_t) funckey_mlevel_mask << shift;
+      s.m_funckey_flags = (s.m_funckey_flags & ~mask) | funckey_mlevel_none << shift;
+      return true;
+    } else if (category == 9900) {
+      s.m_funckey_flags &= ~funckey_modifyKeys_mask;
+      return true;
+    }
+    return false;
+  }
 
   //---------------------------------------------------------------------------
   // Mouse report settings
@@ -2181,8 +2214,12 @@ namespace ansi {
       } else if (param[0] == '>') {
         csi_parameters params(param + 1, len - 1);
         if (!params) return false;
-        switch (seq.final()) {
-        case ascii_c: return do_da2(term, params);
+        if (seq.intermediate_size() == 0) {
+          switch (seq.final()) {
+          case ascii_c: return do_da2(term, params);
+          case ascii_m: return do_xtModifyKeys(term, params);
+          case ascii_n: return do_xtDisableModifyKeys(term, params);
+          }
         }
       }
     }
@@ -2316,343 +2353,420 @@ namespace ansi {
     print_unrecognized_sequence(seq);
   }
 
-  bool term_t::input_key(key_t key) {
-    auto const& s = this->state();
-    if (s.get_mode(mode_kam)) return false;
-    if (key & modifier_autorepeat) {
-      if (!s.get_mode(mode_decarm)) return true;
-      key &= ~modifier_autorepeat;
-    }
+  class term_input_key_impl {
+    term_t& term;
+    tstate_t const& s;
+    bool local_echo;
+    key_t mod;
+    int modification_level = 2;
+    int function_shift = 0;
+  public:
+    term_input_key_impl(term_t& term): term(term), s(term.state()) {}
 
-    bool local_echo = !this->state().get_mode(mode_srm);
-    key_t mod = key & _modifier_mask;
-    key_t code = key & _character_mask;
-
-    if (local_echo) input_flush();
-
-    // Meta は一律で ESC にする。
-    if (mod & modifier_meta) {
-      input_byte(ascii_esc);
-      mod &= ~modifier_meta;
-    }
-
-    // テンキーの文字 (!DECNKM の時)
-    if (!m_state.get_mode(ansi::mode_decnkm)) {
-      switch (code) {
-      case key_kp0  : code = ascii_0; break;
-      case key_kp1  : code = ascii_1; break;
-      case key_kp2  : code = ascii_2; break;
-      case key_kp3  : code = ascii_3; break;
-      case key_kp4  : code = ascii_4; break;
-      case key_kp5  : code = ascii_5; break;
-      case key_kp6  : code = ascii_6; break;
-      case key_kp7  : code = ascii_7; break;
-      case key_kp8  : code = ascii_8; break;
-      case key_kp9  : code = ascii_9; break;
-      case key_kpdec: code = ascii_dot     ; break;
-      case key_kpsep: code = ascii_comma   ; break;
-      case key_kpmul: code = ascii_asterisk; break;
-      case key_kpadd: code = ascii_plus    ; break;
-      case key_kpsub: code = ascii_minus   ; break;
-      case key_kpdiv: code = ascii_slash   ; break;
-      case key_kpeq : code = ascii_equals  ; break;
-      case key_kpent: code = ascii_cr      ; break;
-      default: ;
-      }
-    }
-
-    // 通常文字
-    if (mod == 0 && code < _key_base) {
-      // Note: ESC, RET, HT はそのまま (C-[, C-m, C-i) 送信される。
-      if (code == ascii_bs && !s.get_mode(mode_decbkm)) code = ascii_del;
-      contra::encoding::put_u8(code, input_buffer);
-      input_flush(local_echo);
+  private:
+    bool send_byte(byte code) {
+      term.input_byte(code);
+      term.input_flush(local_echo);
       return true;
     }
-
-    // C0 文字および DEL
-    if (mod == modifier_control) {
-      if (code == ascii_sp || code == ascii_a ||
-        (ascii_a < code && code <= ascii_z) ||
-        (ascii_left_bracket <= code && code <= ascii_underscore)
-      ) {
-        // C-@ ... C-_
-        input_byte(code & 0x1F);
-        input_flush(local_echo);
-        return true;
-      } else if (code == ascii_question) {
-        // C-? → ^? (DEL 0x7F)
-        input_byte(ascii_del);
-        input_flush(local_echo);
-        return true;
-      } else if (code == ascii_bs) {
-        // C-back → ^_ (US 0x1F)
-        input_byte(ascii_us);
-        input_flush(local_echo);
-        return true;
-      }
-    }
-
-    // BS CR(RET) HT(TAB) ESC
-    if (code < _key_base) {
-      // CSI <Unicode> ; <Modifier> u 形式
-      // input_c1(ascii_csi);
-      // input_unsigned(code);
-      // if (mod) {
-      //   input_byte(ascii_semicolon);
-      //   input_modifier(mod);
-      // }
-      // input_byte(ascii_u);
-
-      // CSI 27 ; <Modifier> ; <Unicode> ~ 形式
-      input_c1(ascii_csi);
-      input_byte(ascii_2);
-      input_byte(ascii_7);
-      input_byte(ascii_semicolon);
-      input_modifier(mod);
-      input_byte(ascii_semicolon);
-      input_unsigned(code);
-      input_byte(ascii_tilde);
-      input_flush(local_echo);
+    bool send_char(std::uint32_t code) {
+      term.input_uchar(code);
+      term.input_flush(local_echo);
       return true;
     }
-
-    bool use_tilde_for_f1_f4 = false;
-    int Ps1 = 0, F = 0;
-
-    switch (s.m_funckey_mode) {
-    case funckey_sun: // Mode ?1051 (Sun function-key mode)
-      F = ascii_z;
-      if (key_f1 <= code && code < key_f24) {
-        if (code <= key_f10)
-          Ps1 = 224 - key_f1 + code;
-        else if (code <= key_f20)
-          Ps1 = 182 - key_f11 + code;
-        else
-          Ps1 = 208;
-        goto input_csi_key;
+    bool send_csi_key(byte final_char) {
+      term.input_c1(ascii_csi);
+      term.input_byte(final_char);
+      term.input_flush(local_echo);
+      return true;
+    }
+    bool send_esc_key(byte final_char) {
+      term.input_byte(ascii_esc);
+      term.input_byte(final_char);
+      term.input_flush(local_echo);
+      return true;
+    }
+    bool send_key_modified(byte introducer, int param, byte final_char) {
+      if (mod) {
+        term.input_c1(modification_level >= 1 ? (byte) ascii_csi : introducer);
+        if (modification_level >= 3)
+          term.input_byte(ascii_greater);
+        if (param) {
+          term.input_unsigned(param);
+          term.input_byte(ascii_semicolon);
+        } else if (modification_level >= 2) {
+          term.input_byte(ascii_1);
+          term.input_byte(ascii_semicolon);
+        }
+        term.input_modifier(mod);
+      } else {
+        term.input_c1(introducer);
+        if (param)
+          term.input_unsigned(param);
       }
+      term.input_byte(final_char);
+      term.input_flush(local_echo);
+      return true;
+    }
+    // Normal/Application で CSI/SS3 F
+    bool send_app_modified(byte final_char) {
+      return send_key_modified(s.get_mode(mode_decckm) ? ascii_ss3 : ascii_csi, 0, final_char);
+    }
+    // Normal/Application 共に SS3 F
+    bool send_ss3_modified(byte final_char) {
+      return send_key_modified(ascii_ss3, 0, final_char);
+    }
+    // CSI Ps F
+    bool send_csi_modified(int param, byte final_char) {
+      return send_key_modified(ascii_csi, param, final_char);
+    }
+    bool send_other_tilde(key_t code) {
+      term.input_c1(ascii_csi);
+      if (modification_level == 3)
+        term.input_byte(ascii_greater);
+      term.input_byte(ascii_2);
+      term.input_byte(ascii_7);
+      term.input_byte(ascii_semicolon);
+      term.input_modifier(mod);
+      term.input_byte(ascii_semicolon);
+      term.input_unsigned(code);
+      term.input_byte(ascii_tilde);
+      term.input_flush(local_echo);
+      return true;
+    }
+    bool send_other_u(key_t code) {
+      term.input_c1(ascii_csi);
+      term.input_unsigned(code);
+      if (mod) {
+        term.input_byte(ascii_semicolon);
+        term.input_modifier(mod);
+      }
+      term.input_byte(ascii_u);
+      term.input_flush(local_echo);
+      return true;
+    }
+  private:
+    bool process_default_function_key(key_t code) {
+      // fn key の修飾が無効化されている時、番号を修飾でシフトする。
+      if (modification_level == funckey_mlevel_shift_function) {
+        if (mod & modifier_shift) code += 10;
+        if (mod & modifier_control) code += 20;
+        mod = 0;
+        if (code > key_f20)
+          return send_csi_modified(41 - key_f20 + code, ascii_tilde);
+      }
+
       switch (code) {
-      case key_insert: Ps1 = 2; goto input_csi_key;
-      case key_delete: Ps1 = 3; goto input_csi_key;
-      case key_home  : Ps1 = 214; goto input_csi_key;
-      case key_end   : Ps1 = 220; goto input_csi_key;
-      case key_prior : Ps1 = 222; goto input_csi_key;
-      case key_next  : Ps1 = 216; goto input_csi_key;
-      }
-      goto pc_style_function_key_mode;
+      case key_f1 : return send_csi_modified(11, ascii_tilde);
+      case key_f2 : return send_csi_modified(12, ascii_tilde);
+      case key_f3 : return send_csi_modified(13, ascii_tilde);
+      case key_f4 : return send_csi_modified(14, ascii_tilde);
+      case key_f5 : return send_csi_modified(15, ascii_tilde);
+      case key_f6 : return send_csi_modified(17, ascii_tilde);
+      case key_f7 : return send_csi_modified(18, ascii_tilde);
+      case key_f8 : return send_csi_modified(19, ascii_tilde);
+      case key_f9 : return send_csi_modified(20, ascii_tilde);
+      case key_f10: return send_csi_modified(21, ascii_tilde);
+      case key_f11: return send_csi_modified(23, ascii_tilde);
+      case key_f12: return send_csi_modified(24, ascii_tilde);
+      case key_f13: return send_csi_modified(25, ascii_tilde);
+      case key_f14: return send_csi_modified(26, ascii_tilde);
+      case key_f15: return send_csi_modified(28, ascii_tilde);
+      case key_f16: return send_csi_modified(29, ascii_tilde);
+      case key_f17: return send_csi_modified(31, ascii_tilde);
+      case key_f18: return send_csi_modified(32, ascii_tilde);
+      case key_f19: return send_csi_modified(33, ascii_tilde);
+      case key_f20: return send_csi_modified(34, ascii_tilde);
+      case key_f21: return send_csi_modified(42, ascii_tilde);
+      case key_f22: return send_csi_modified(43, ascii_tilde);
+      case key_f23: return send_csi_modified(44, ascii_tilde);
+      case key_f24: return send_csi_modified(45, ascii_tilde);
+      case key_insert: return send_csi_modified(2, ascii_tilde);
+      case key_delete: return send_csi_modified(3, ascii_tilde);
+      case key_home  : return send_csi_modified(1, ascii_tilde);
+      case key_end   : return send_csi_modified(4, ascii_tilde);
+      case key_prior : return send_csi_modified(5, ascii_tilde);
+      case key_next  : return send_csi_modified(6, ascii_tilde);
+      case key_up    : return send_app_modified(ascii_A);
+      case key_down  : return send_app_modified(ascii_B);
+      case key_right : return send_app_modified(ascii_C);
+      case key_left  : return send_app_modified(ascii_D);
+      case key_begin : return send_app_modified(ascii_E);
 
-    case funckey_hp: // Mode ?1052 (HP function-key mode)
-      if (mod == 0) {
+      case key_focus :
+        if (s.get_mode(mode_xtSendFocus))
+          return send_ss3_modified(ascii_I);
+        break;
+      case key_blur  :
+        if (s.get_mode(mode_xtSendFocus))
+          return send_ss3_modified(ascii_O);
+        break;
+
+      case key_kpmul: return send_ss3_modified(ascii_j);
+      case key_kpadd: return send_ss3_modified(ascii_k);
+      case key_kpsep: return send_ss3_modified(ascii_l);
+      case key_kpsub: return send_ss3_modified(ascii_m);
+      case key_kpdec: return send_ss3_modified(ascii_n);
+      case key_kpdiv: return send_ss3_modified(ascii_o);
+      case key_kp0  : return send_ss3_modified(ascii_p);
+      case key_kp1  : return send_ss3_modified(ascii_q);
+      case key_kp2  : return send_ss3_modified(ascii_r);
+      case key_kp3  : return send_ss3_modified(ascii_s);
+      case key_kp4  : return send_ss3_modified(ascii_t);
+      case key_kp5  : return send_ss3_modified(ascii_u);
+      case key_kp6  : return send_ss3_modified(ascii_v);
+      case key_kp7  : return send_ss3_modified(ascii_w);
+      case key_kp8  : return send_ss3_modified(ascii_x);
+      case key_kp9  : return send_ss3_modified(ascii_y);
+      case key_kpeq : return send_ss3_modified(ascii_X);
+      case key_kpent: return send_ss3_modified(ascii_M);
+      }
+      return false;
+    }
+
+    // xterm default
+    bool process_pc_style_function_key(key_t code) {
+      if (key_f1 <= code && code <= key_f4) {
+        bool use_tilde = false;
+        if (modification_level == funckey_mlevel_shift_function) {
+          if (mod & (modifier_shift | modifier_control))
+            use_tilde = true;
+          else
+            mod = 0;
+        }
+
+        if (!use_tilde) {
+          switch (code) {
+          case key_f1: return send_ss3_modified(ascii_P);
+          case key_f2: return send_ss3_modified(ascii_Q);
+          case key_f3: return send_ss3_modified(ascii_R);
+          case key_f4: return send_ss3_modified(ascii_S);
+          }
+        }
+      } else {
         switch (code) {
-        case key_f1    : F = ascii_p; goto input_esc_key;
-        case key_f2    : F = ascii_q; goto input_esc_key;
-        case key_f3    : F = ascii_r; goto input_esc_key;
-        case key_f4    : F = ascii_s; goto input_esc_key;
-        case key_f5    : F = ascii_t; goto input_esc_key;
-        case key_f6    : F = ascii_u; goto input_esc_key;
-        case key_f7    : F = ascii_v; goto input_esc_key;
-        case key_f8    : F = ascii_w; goto input_esc_key;
-        case key_up    : F = ascii_A; goto input_esc_key;
-        case key_down  : F = ascii_B; goto input_esc_key;
-        case key_right : F = ascii_C; goto input_esc_key;
-        case key_left  : F = ascii_D; goto input_esc_key;
-        case key_insert: F = ascii_Q; goto input_esc_key;
-        case key_delete: F = ascii_P; goto input_esc_key;
-        case key_home  : F = ascii_h; goto input_esc_key;
-        case key_end   : F = ascii_F; goto input_esc_key;
-        case key_prior : F = ascii_T; goto input_esc_key;
-        case key_next  : F = ascii_S; goto input_esc_key;
+        case key_home  : return send_app_modified(ascii_H);
+        case key_end   : return send_app_modified(ascii_F);
         }
       }
-      goto pc_style_function_key_mode;
+      return process_default_function_key(code);
+    }
 
-    case funckey_sco: // Mode ?1053 (SCO function-key mode)
+    // Mode ?1051 (Sun function-key mode)
+    bool process_sun_style_function_key(key_t code) {
+      if (key_f1 <= code && code < key_f24) {
+        if (modification_level == funckey_mlevel_shift_function) mod = 0;
+        if (code <= key_f10)
+          return send_csi_modified(224 - key_f1 + code, ascii_z);
+        else if (code <= key_f20)
+          return send_csi_modified(182 - key_f11 + code, ascii_z);
+        else
+          return send_csi_modified(208 - key_f21 + code, ascii_z);
+      }
+      switch (code) {
+      case key_insert: return send_csi_modified(2  , ascii_z);
+      case key_delete: return send_csi_modified(3  , ascii_z);
+      case key_home  : return send_csi_modified(214, ascii_z);
+      case key_end   : return send_csi_modified(220, ascii_z);
+      case key_prior : return send_csi_modified(222, ascii_z);
+      case key_next  : return send_csi_modified(216, ascii_z);
+      }
+      return process_pc_style_function_key(code);
+    }
+
+    // Mode ?1052 (HP function-key mode)
+    bool process_hp_style_function_key(key_t code) {
+      if (mod == 0) {
+        switch (code) {
+        case key_f1    : return send_esc_key(ascii_p);
+        case key_f2    : return send_esc_key(ascii_q);
+        case key_f3    : return send_esc_key(ascii_r);
+        case key_f4    : return send_esc_key(ascii_s);
+        case key_f5    : return send_esc_key(ascii_t);
+        case key_f6    : return send_esc_key(ascii_u);
+        case key_f7    : return send_esc_key(ascii_v);
+        case key_f8    : return send_esc_key(ascii_w);
+        case key_up    : return send_esc_key(ascii_A);
+        case key_down  : return send_esc_key(ascii_B);
+        case key_right : return send_esc_key(ascii_C);
+        case key_left  : return send_esc_key(ascii_D);
+        case key_insert: return send_esc_key(ascii_Q);
+        case key_delete: return send_esc_key(ascii_P);
+        case key_home  : return send_esc_key(ascii_h);
+        case key_end   : return send_esc_key(ascii_F);
+        case key_prior : return send_esc_key(ascii_T);
+        case key_next  : return send_esc_key(ascii_S);
+        }
+      }
+      return process_pc_style_function_key(code);
+    }
+
+    // Mode ?1053 (SCO function-key mode)
+    bool process_sco_style_function_key(key_t code) {
       if (mod == 0) {
         if (key_f1 <= code && code <= key_f24) {
           if (code <= key_f14)
-            F = ascii_M - key_f1 + code;
+            return send_csi_key(ascii_M - key_f1 + code);
           else
-            F = ascii_a - key_f15 + code;
-          goto input_csi_key;
+            return send_csi_key(ascii_a - key_f15 + code);
         }
         switch (code) {
-        case key_up    : F = ascii_A; goto input_esc_key;
-        case key_down  : F = ascii_B; goto input_esc_key;
-        case key_right : F = ascii_C; goto input_esc_key;
-        case key_left  : F = ascii_D; goto input_esc_key;
-        case key_insert: F = ascii_L; goto input_esc_key;
-        case key_delete: F = ascii_del; goto input_raw_char;
-        case key_home  : F = ascii_H; goto input_esc_key;
-        case key_end   : F = ascii_F; goto input_esc_key;
-        case key_prior : F = ascii_I; goto input_esc_key;
-        case key_next  : F = ascii_G; goto input_esc_key;
+        case key_up    : return send_esc_key(ascii_A);
+        case key_down  : return send_esc_key(ascii_B);
+        case key_right : return send_esc_key(ascii_C);
+        case key_left  : return send_esc_key(ascii_D);
+        case key_insert: return send_esc_key(ascii_L);
+        case key_delete: return send_byte(ascii_del);
+        case key_home  : return send_esc_key(ascii_H);
+        case key_end   : return send_esc_key(ascii_F);
+        case key_prior : return send_esc_key(ascii_I);
+        case key_next  : return send_esc_key(ascii_G);
         }
       }
-      goto pc_style_function_key_mode;
+      return process_pc_style_function_key(code);
+    }
 
-    case funckey_x11r6: // Mode ?1060 (X11R6 Legacy mode)
-      use_tilde_for_f1_f4 = true;
+    // Mode ?1060 (X11R6 Legacy mode)
+    bool process_x11r6_style_function_key(key_t code) {
       if ((mod & modifier_control) &&
         key_f1 <= code && code <= key_f10
       ) {
         mod &= ~modifier_control;
         code += 10;
-      } else if (code == key_delete && mod == 0) {
-        F = ascii_del;
-        goto input_raw_char;
+      } else {
+        switch (code) {
+        case key_delete: if (mod == 0) return send_byte(ascii_del); break;
+        case key_f1 : return send_csi_modified(11, ascii_tilde);
+        case key_f2 : return send_csi_modified(12, ascii_tilde);
+        case key_f3 : return send_csi_modified(13, ascii_tilde);
+        case key_f4 : return send_csi_modified(14, ascii_tilde);
+        }
       }
-      goto pc_style_function_key_mode;
+      return process_pc_style_function_key(code);
+    }
 
-    case funckey_vt220: // Mode ?1061 (VT220 Legacy mode)
+    // Mode ?1061 (VT220 Legacy mode)
+    bool process_vt220_style_function_key(key_t code) {
       if ((mod & modifier_control) &&
         key_f1 <= code && code <= key_f10
       ) {
         mod &= ~modifier_control;
         code += 10;
       } else if (code == key_home) {
-        Ps1 = 1;
-        goto tilde;
+        return send_csi_modified(1, ascii_tilde);
       } else if (code == key_end) {
-        Ps1 = 4;
-        goto tilde;
+        return send_csi_modified(4, ascii_tilde);
       }
-      goto pc_style_function_key_mode;
+      return process_pc_style_function_key(code);
+    }
 
-    pc_style_function_key_mode: // xterm default
-    case funckey_pc:
-      if (key_f1 <= code && code <= key_f4) {
-        if (!use_tilde_for_f1_f4) {
-          switch (code) {
-          case key_f1: F = ascii_P; goto alpha_ss3;
-          case key_f2: F = ascii_Q; goto alpha_ss3;
-          case key_f3: F = ascii_R; goto alpha_ss3;
-          case key_f4: F = ascii_S; goto alpha_ss3;
-          }
-        }
-      } else {
+  public:
+    bool process(key_t key) {
+      if (s.get_mode(mode_kam)) return false;
+      if (key & modifier_autorepeat) {
+        if (!s.get_mode(mode_decarm)) return true;
+        key &= ~modifier_autorepeat;
+      }
+
+      mod = key & _modifier_mask;
+      key_t code = key & _character_mask;
+
+      // Meta は一律で ESC にする。
+      local_echo = !s.get_mode(mode_srm);
+      if (local_echo) term.input_flush();
+      if (mod & modifier_meta) {
+        term.input_byte(ascii_esc);
+        mod &= ~modifier_meta;
+      }
+
+      // テンキーの文字 (!DECNKM の時)
+      if (!s.get_mode(ansi::mode_decnkm)) {
         switch (code) {
-        case key_home  : F = ascii_H; goto alpha;
-        case key_end   : F = ascii_F; goto alpha;
+        case key_kp0  : code = ascii_0; break;
+        case key_kp1  : code = ascii_1; break;
+        case key_kp2  : code = ascii_2; break;
+        case key_kp3  : code = ascii_3; break;
+        case key_kp4  : code = ascii_4; break;
+        case key_kp5  : code = ascii_5; break;
+        case key_kp6  : code = ascii_6; break;
+        case key_kp7  : code = ascii_7; break;
+        case key_kp8  : code = ascii_8; break;
+        case key_kp9  : code = ascii_9; break;
+        case key_kpdec: code = ascii_dot     ; break;
+        case key_kpsep: code = ascii_comma   ; break;
+        case key_kpmul: code = ascii_asterisk; break;
+        case key_kpadd: code = ascii_plus    ; break;
+        case key_kpsub: code = ascii_minus   ; break;
+        case key_kpdiv: code = ascii_slash   ; break;
+        case key_kpeq : code = ascii_equals  ; break;
+        case key_kpent: code = ascii_cr      ; break;
+        default: ;
         }
       }
-      goto contra_function_key_mode;
 
-    contra_function_key_mode:
-    default:
-      switch (code) {
-      case key_f1 : Ps1 = 11; goto tilde;
-      case key_f2 : Ps1 = 12; goto tilde;
-      case key_f3 : Ps1 = 13; goto tilde;
-      case key_f4 : Ps1 = 14; goto tilde;
-      case key_f5 : Ps1 = 15; goto tilde;
-      case key_f6 : Ps1 = 17; goto tilde;
-      case key_f7 : Ps1 = 18; goto tilde;
-      case key_f8 : Ps1 = 19; goto tilde;
-      case key_f9 : Ps1 = 20; goto tilde;
-      case key_f10: Ps1 = 21; goto tilde;
-      case key_f11: Ps1 = 23; goto tilde;
-      case key_f12: Ps1 = 24; goto tilde;
-      case key_f13: Ps1 = 25; goto tilde;
-      case key_f14: Ps1 = 26; goto tilde;
-      case key_f15: Ps1 = 28; goto tilde;
-      case key_f16: Ps1 = 29; goto tilde;
-      case key_f17: Ps1 = 31; goto tilde;
-      case key_f18: Ps1 = 32; goto tilde;
-      case key_f19: Ps1 = 33; goto tilde;
-      case key_f20: Ps1 = 34; goto tilde;
-      case key_f21: Ps1 = 36; goto tilde;
-      case key_f22: Ps1 = 37; goto tilde;
-      case key_f23: Ps1 = 38; goto tilde;
-      case key_f24: Ps1 = 39; goto tilde;
-      case key_insert: Ps1 = 2; goto tilde;
-      case key_delete: Ps1 = 3; goto tilde;
-      case key_home  : Ps1 = 1; goto tilde;
-      case key_end   : Ps1 = 4; goto tilde;
-      case key_prior : Ps1 = 5; goto tilde;
-      case key_next  : Ps1 = 6; goto tilde;
-      case key_up    : F = ascii_A; goto alpha;
-      case key_down  : F = ascii_B; goto alpha;
-      case key_right : F = ascii_C; goto alpha;
-      case key_left  : F = ascii_D; goto alpha;
-      case key_begin : F = ascii_E; goto alpha;
-      case key_focus : F = ascii_I; goto alpha_focus;
-      case key_blur  : F = ascii_O; goto alpha_focus;
+      // modifyOtherKeys 設定
+      if (mod) {
+        if (_key_cursor_first <= code && code <= _key_cursor_last) {
+          modification_level = s.m_funckey_flags >> funckey_modifyCursorKeys_shift & funckey_mlevel_mask;
+        } else if (_key_fn_first <= code && code <= _key_fn_last) {
+          modification_level = s.m_funckey_flags >> funckey_modifyFunctionKeys_shift & funckey_mlevel_mask;
+          if (modification_level == funckey_mlevel_none)
+            modification_level = funckey_mlevel_shift_function;
+        } else if (_key_kp_first <= code && code <= _key_kp_last) {
+          modification_level = s.m_funckey_flags >> funckey_modifyKeypadKeys_shift & funckey_mlevel_mask;
+        } else {
+          modification_level = s.m_funckey_flags >> funckey_modifyOtherKeys_shift & funckey_mlevel_mask;
+        }
+      }
 
-      case key_kpmul: F = ascii_j; goto alpha_ss3;
-      case key_kpadd: F = ascii_k; goto alpha_ss3;
-      case key_kpsep: F = ascii_l; goto alpha_ss3;
-      case key_kpsub: F = ascii_m; goto alpha_ss3;
-      case key_kpdec: F = ascii_n; goto alpha_ss3;
-      case key_kpdiv: F = ascii_o; goto alpha_ss3;
-      case key_kp0  : F = ascii_p; goto alpha_ss3;
-      case key_kp1  : F = ascii_q; goto alpha_ss3;
-      case key_kp2  : F = ascii_r; goto alpha_ss3;
-      case key_kp3  : F = ascii_s; goto alpha_ss3;
-      case key_kp4  : F = ascii_t; goto alpha_ss3;
-      case key_kp5  : F = ascii_u; goto alpha_ss3;
-      case key_kp6  : F = ascii_v; goto alpha_ss3;
-      case key_kp7  : F = ascii_w; goto alpha_ss3;
-      case key_kp8  : F = ascii_x; goto alpha_ss3;
-      case key_kp9  : F = ascii_y; goto alpha_ss3;
-      case key_kpeq : F = ascii_X; goto alpha_ss3;
-      case key_kpent: F = ascii_M; goto alpha_ss3;
+      // C0 文字および DEL (C-@...C-_, C-back)
+      if (modification_level == funckey_mlevel_none)
+        mod &= modifier_control;
+      if (mod == modifier_control) {
+        if (code == ascii_sp ||
+          (ascii_a <= code && code <= ascii_z) ||
+          (ascii_left_bracket <= code && code <= ascii_underscore)
+        ) {
+          // C-@ ... C-_
+          return send_byte(code & 0x1F);
+        } else if (code == ascii_question) {
+          // C-? → ^? (DEL 0x7F)
+          return send_byte(ascii_del);
+        } else if (code == ascii_bs) {
+          // C-back → ^_ (US 0x1F)
+          return send_byte(ascii_us);
+        }
+      }
+      if (modification_level == funckey_mlevel_none) mod = 0;
+
+      // 通常文字 および BS CR(RET) HT(TAB) ESC
+      if (code < _key_base) {
+        if (mod == 0) {
+          // Note: ESC, RET, HT はそのまま (C-[, C-m, C-i) 送信される。
+          if (code == ascii_bs && !s.get_mode(mode_decbkm)) code = ascii_del;
+          return send_char(code);
+        } else if (code < _key_base) {
+          // CSI <Unicode> ; <Modifier> u 形式
+          //return send_other_u(code);
+
+          // CSI 27 ; <Modifier> ; <Unicode> ~ 形式
+          return send_other_tilde(code);
+        }
+      }
+
+      switch (s.m_funckey_flags & funckey_mode_mask) {
+      case funckey_sun:   return process_sun_style_function_key(code);
+      case funckey_hp:    return process_hp_style_function_key(code);
+      case funckey_sco:   return process_sco_style_function_key(code);
+      case funckey_x11r6: return process_x11r6_style_function_key(code);
+      case funckey_vt220: return process_vt220_style_function_key(code);
+      case funckey_pc:    return process_pc_style_function_key(code);
+      default: return process_default_function_key(code);
       }
     }
-    return false;
-
-    // application key mode の時修飾なしの関数キーは \eOA 等にする。
-  alpha:
-    if (mod) {
-      input_c1(ascii_csi);
-      input_byte(ascii_1);
-      input_byte(ascii_semicolon);
-      input_modifier(mod);
-    } else {
-      input_c1(m_state.get_mode(mode_decckm) ? ascii_ss3 : ascii_csi);
-    }
-    input_byte(F);
-    input_flush(local_echo);
-    return true;
-
-  alpha_focus:
-    if (!m_state.get_mode(mode_xtSendFocus)) return false;
-  alpha_ss3:
-    if (mod) {
-      input_c1(ascii_csi);
-      input_byte(ascii_1);
-      input_byte(ascii_semicolon);
-      input_modifier(mod);
-    } else {
-      input_c1(ascii_ss3);
-    }
-    input_byte(F);
-    input_flush(local_echo);
-    return true;
-
-  tilde:
-    F = ascii_tilde;
-  input_csi_key:
-    input_c1(ascii_csi);
-    input_unsigned(Ps1);
-    if (mod) {
-      input_byte(ascii_semicolon);
-      input_modifier(mod);
-    }
-    input_byte(F);
-    input_flush(local_echo);
-    return true;
-
-  input_esc_key:
-    input_c1(ascii_esc);
-    input_byte(F);
-    input_flush(local_echo);
-    return true;
-
-  input_raw_char:
-    input_byte(F);
-    input_flush(local_echo);
-    return true;
+  };
+  bool term_t::input_key(key_t key) {
+    return term_input_key_impl(*this).process(key);
   }
 
   bool term_t::input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t const x, curpos_t const y) {

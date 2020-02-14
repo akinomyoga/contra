@@ -231,6 +231,9 @@ namespace contra {
     key_f22       = _key_base | 22,
     key_f23       = _key_base | 23,
     key_f24       = _key_base | 24,
+    _key_fn_first = key_f1,
+    _key_fn_last = key_f24,
+
     key_insert    = _key_base | 31,
     key_delete    = _key_base | 32,
     key_home      = _key_base | 33,
@@ -242,6 +245,9 @@ namespace contra {
     key_right     = _key_base | 39,
     key_up        = _key_base | 40,
     key_down      = _key_base | 41,
+    _key_cursor_first = key_insert,
+    _key_cursor_last = key_down,
+
     key_kp0       = _key_base | 42,
     key_kp1       = _key_base | 43,
     key_kp2       = _key_base | 44,
@@ -264,6 +270,8 @@ namespace contra {
     key_kpf4      = _key_base | 63,
     key_kpent     = _key_base | 64,
     key_kpeq      = _key_base | 65,
+    _key_kp_first = key_kp0,
+    _key_kp_last = key_kpeq,
 
     modifier_shift       = 0x01000000,
     modifier_meta        = 0x02000000,

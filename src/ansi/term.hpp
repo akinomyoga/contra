@@ -70,6 +70,19 @@ namespace ansi {
     funckey_x11r6    = 5, // xterm Mode ?1060
     funckey_vt220    = 6, // xterm Mode ?1061
     funckey_contra   = 7, // contra Mode ?9950
+    funckey_mode_mask = 0xFF,
+
+    funckey_modifyKeyboard_shift     =  8, // unsupported
+    funckey_modifyCursorKeys_shift   = 12,
+    funckey_modifyFunctionKeys_shift = 16,
+    funckey_modifyKeypadKeys_shift   = 20,
+    funckey_modifyOtherKeys_shift    = 24,
+    funckey_modifyStringKeys_shift   = 28, // unsupported
+    funckey_modifyKeys_mask = 0xFFFFFF00,
+
+    funckey_mlevel_mask = 0xF,
+    funckey_mlevel_shift_function = 0xE,
+    funckey_mlevel_none           = 0xF,
   };
 
   /*?lwiki
@@ -368,7 +381,7 @@ namespace ansi {
     color_t m_default_bg_color = 0;
 
     std::uint32_t mouse_mode = 0;
-    std::uint32_t m_funckey_mode = 0;
+    std::uint32_t m_funckey_flags = 0x22222200;
 
     tstate_t(term_t* term): m_term(term) {
       this->clear();
@@ -385,7 +398,7 @@ namespace ansi {
 
       this->lflags = 0;
       this->mouse_mode = 0;
-      this->m_funckey_mode = 0;
+      this->m_funckey_flags = 0x22222200;
       this->m_cursor_shape = 1;
 
       this->page_home = -1;

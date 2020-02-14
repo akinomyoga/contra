@@ -343,21 +343,6 @@
   ToDo
 ------------------------------------------------------------------------------
 
-2020-02-13
-
-* contra のキーボード入力の振る舞いは xterm のそれと微妙に異なる。
-  xterm がどの様に振る舞うのか詳細に調べる必要がある気がする。
-
-  xterm には様々な設定の項目が存在している。
-  modify*Keys もそうだし、DECSET(1050..1061) もそうである。
-
-  * done: DECSET(1050..1061) は対応した。
-  * done: DECKPAM の時の kp keys に対応した。
-  * done: DECBKM に対応。
-
-  * modify*Keys の振る舞いはどうなっているのか。
-
-
 2020-02-10
 
 * tx11: 日本語入力
@@ -2691,6 +2676,48 @@
 ------------------------------------------------------------------------------
 
 2020-02-13
+
+* ansi: contra のキーボード入力の振る舞いは xterm のそれと微妙に異なる [#D0243]
+  時々キーボードが効かなくなる。
+  xterm がどの様に振る舞うのか詳細に調べる必要がある気がする。
+
+  xterm には様々な設定の項目が存在している。
+  modify*Keys もそうだし、DECSET(1050..1061) もそうである。
+
+  * done: DECSET(1050..1061) は対応した。
+  * done: DECKPAM の時の kp keys に対応した。
+  * done: DECBKM に対応。
+
+  * modify*Keys の振る舞いはどうなっているのか。
+    これは文献は端末によって振る舞いが全然違う気がする。
+
+    先ず CSI > Ps1 ; PS2 m の Ps1 について。
+    RLogin は以下の様に説明している。
+      Ps1 = 1: modifyCursorKeys (cursor keys)
+      Ps1 = 2: modifyFunctionKeys (fn keys)
+      Ps1 = 3: modifyKeypadKeys (kp keys)
+      Ps1 = 4: modifyOtherKeys (ESC, RET, BS, TAB, SP)
+      Ps1 = 5: modifyStringKeys
+    xterm は 0,1,2,4 しかない。
+      Ps1 = 0: modifyKeyboard
+
+    詳細は escseq.html にまとめた。
+
+  実際に動かしてみると全然動いていない。
+
+  x fixed: 1050..1061 で矢印キー等が全く何も送信しない。
+    →これは最後に return pc_style... を呼び出すのを忘れていた。
+  x fixed: \e[>n が効いていない気がする。
+  x fixed: \e[>2n で fn shift が効いていない。
+  x fixed: \e[>2n の時の番号がずれている。
+  o ok: \e[>3n, \e[>3;Xm は動いている。
+  x fixed: \e[>4n だと C-q だとか普通の物まで修飾が消滅している。
+    然し、この取り扱いは違う気がする。実際に xterm ではその様な振る舞いはしていない。
+  x fixed: \e[>4n で C-S-q が q になってしまう。C-q になるべき。修正した。
+
+  更に改めて xterm を動かして気付いたのだが、
+  x 既存の f21..f24 は間違っている。
+  x 上で直した \e[>2n の番号のずれは実はずれていなかった。
 
 * ansi: DECKPAM の時の kp keys [#D0242]
 
