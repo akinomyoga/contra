@@ -40,14 +40,14 @@ namespace ansi {
     void set_ansi_mode(tstate_t& s, csi_single_param_t param, bool value) {
       auto const it = data_ansi.find(param);
       if (it != data_ansi.end())
-        s.set_mode(it->second, value);
+        s.sm_mode(it->second, value);
       else
         std::fprintf(stderr, "unrecognized ANSI mode %u\n", (unsigned) param);
     }
     void set_dec_mode(tstate_t& s, csi_single_param_t param, bool value) {
       auto const it = data_dec.find(param);
       if (it != data_dec.end())
-        s.set_mode(it->second, value);
+        s.sm_mode(it->second, value);
       else
         std::fprintf(stderr, "unrecognized DEC mode %u\n", (unsigned) param);
     }
@@ -62,6 +62,7 @@ namespace ansi {
   };
   static mode_dictionary_t mode_dictionary;
 
+  // CSI h: SM
   bool do_sm(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
     csi_single_param_t value;
@@ -69,6 +70,7 @@ namespace ansi {
       mode_dictionary.set_ansi_mode(s, value, true);
     return true;
   }
+  // CSI l: RM
   bool do_rm(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
     csi_single_param_t value;
@@ -76,6 +78,7 @@ namespace ansi {
       mode_dictionary.set_ansi_mode(s, value, false);
     return true;
   }
+  // CSI ? h: DECSET
   bool do_decset(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
     csi_single_param_t value;
@@ -83,6 +86,7 @@ namespace ansi {
       mode_dictionary.set_dec_mode(s, value, true);
     return true;
   }
+  // CSI ? l: DECRST
   bool do_decrst(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
     csi_single_param_t value;
@@ -90,6 +94,7 @@ namespace ansi {
       mode_dictionary.set_dec_mode(s, value, false);
     return true;
   }
+
   static bool do_decrqm_impl(term_t& term, csi_parameters& params, bool decmode) {
     tstate_t& s = term.state();
     csi_single_param_t value;
@@ -111,20 +116,25 @@ namespace ansi {
 
     return true;
   }
+  // CSI $ p: DECRQM (ANSI modes)
   bool do_decrqm_ansi(term_t& term, csi_parameters& params) {
     return do_decrqm_impl(term, params, false);
   }
+  // CSI ? $ p: DECRQM (DEC modes)
   bool do_decrqm_dec(term_t& term, csi_parameters& params) {
-    return do_decrqm_impl(term, params, false);
+    return do_decrqm_impl(term, params, true);
   }
 
+  // ESC =: DECKPAM
   void do_deckpam(term_t& term) {
     term.state().set_mode(mode_decnkm, true);
   }
+  // ESC >: DECKPNM
   void do_deckpnm(term_t& term) {
     term.state().set_mode(mode_decnkm, false);
   }
 
+  // Mode ?7: DECAWM
   void do_sm_decawm(term_t& term, bool value) {
     tstate_t& s = term.state();
     if (s.get_mode(mode_decawm_) == value) return;
@@ -138,6 +148,7 @@ namespace ansi {
     return term.state().get_mode(mode_decawm_) ? 1 : 2;
   }
 
+  // Mode ?3: DECCOLM
   void do_sm_deccolm(term_t& term, bool value) {
     tstate_t& s = term.state();
     if (s.get_mode(mode_Xterm132cols)) {
@@ -152,6 +163,8 @@ namespace ansi {
   int do_rqm_deccolm(term_t& term) {
     return term.board().width() == 132 ? 1 : 2;
   }
+
+  // CSI $ |: DECSCPP
   bool do_decscpp(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
     if (!s.cfg_decscpp_enabled) return true;
@@ -540,7 +553,6 @@ namespace ansi {
       b.cur.set_x(x, xenl);
     }
   }
-
 
   //---------------------------------------------------------------------------
   // Page and line settings
@@ -2074,14 +2086,14 @@ namespace ansi {
   }
 
   int tstate_t::rqm_mode_with_accessor(mode_t modeSpec) const {
-    switch (modeSpec) {
+    switch (mode_index(modeSpec)) {
 #include "../../out/gen/term.mode_rqm.hpp"
     default: return 0;
     }
   }
 
   void tstate_t::set_mode_with_accessor(mode_t modeSpec, bool value) {
-    switch (modeSpec) {
+    switch (mode_index(modeSpec)) {
 #include "../../out/gen/term.mode_set.hpp"
     default: ;
     }

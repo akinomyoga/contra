@@ -1,101 +1,119 @@
 # Modes
+#
+# Type Name Mode Value
+#   モードの宣言
+#   @param[in] Type
+#     Type が f で始まる mode は単純なビットフラグ。
+#     Type が a で始まる mode はアクセッサ関数 do_{rqm,sm}_${Name#mode_} を通して実装する。
+#     Type に r が含まれる物は DECRQM で読み取り可能
+#     Type に w が含まれる物は SM/RM, etc. で設定可能。
+#     Type に c が含まれる物は DECRQM の時に 3,4 を返す (実行時定数であるとの暗示)。
+#   @param[in] Name
+#     モード名 (プログラム内で使う識別子)。基本的に mode_* の形式。
+#   @param[in] Mode
+#     "ansi整数" は ANSI modes (SM/RM で設定) を表す。
+#     "dec整数" は DEC modes (DECSET/DECRST で設定) を表す。
+#     "private" は内部モード (制御機能でアクセスできない) を表す。
+#   @param[in] Value
+#     既定値
+#
 
-flags     mode_gatm               ansi1       false
-flags     mode_kam                ansi2       false
-flags     mode_crm                ansi3       unsupported
-flags     mode_irm                ansi4       false
-flags     mode_srtm               ansi5       unsupported
-flags     mode_erm                ansi6       false
-flags     mode_vem                ansi7       false
-flags     mode_bdsm               ansi8       false
-flags     mode_dcsm               ansi9       true
-flags     mode_hem                ansi10      false
-flags     mode_pum                ansi11      unsupported
-flags     mode_srm                ansi12      true
-flags     mode_feam               ansi13      unsupported
-flags     mode_fetm               ansi14      unsupported
-flags     mode_matm               ansi15      unsupported
-flags     mode_ttm                ansi16      unsupported
-flags     mode_satm               ansi17      unsupported
-flags     mode_tsm                ansi18      unsupported
-flags     mode_ebm                ansi19      unsupported
-flags     mode_lnm                ansi20      false
-flags     mode_grcm               ansi21      true
-flags     mode_zdm                ansi22      true
+frw-  mode_gatm                     ansi1       false
+frw-  mode_kam                      ansi2       false
+f---  mode_crm                      ansi3       unsupported
+frw-  mode_irm                      ansi4       false
+f---  mode_srtm                     ansi5       unsupported
+frw-  mode_erm                      ansi6       false
+frw-  mode_vem                      ansi7       false
+frw-  mode_bdsm                     ansi8       false
+frw-  mode_dcsm                     ansi9       true
+frw-  mode_hem                      ansi10      false
+f---  mode_pum                      ansi11      unsupported
+frw-  mode_srm                      ansi12      true
+f---  mode_feam                     ansi13      unsupported
+f---  mode_fetm                     ansi14      unsupported
+f---  mode_matm                     ansi15      unsupported
+f---  mode_ttm                      ansi16      unsupported
+f---  mode_satm                     ansi17      unsupported
+f---  mode_tsm                      ansi18      unsupported
+f---  mode_ebm                      ansi19      unsupported
+frw-  mode_lnm                      ansi20      false
+frw-  mode_grcm                     ansi21      true
+frw-  mode_zdm                      ansi22      true
 
-flags     mode_decckm             dec1        false
-flags     mode_decsclm            dec4        true
-flags     mode_decom              dec6        false
-flags     mode_decarm             dec8        true
-flags     mode_decnkm             dec66       false
-flags     mode_decbkm             dec67       false
+frw-  mode_decckm                   dec1        false
+frw-  mode_decsclm                  dec4        true
+frw-  mode_decom                    dec6        false
+frw-  mode_decarm                   dec8        true
+frw-  mode_decnkm                   dec66       false
+frw-  mode_decbkm                   dec67       false
 
 # Bracketed Paste Mode
-flags     mode_XtermPasteInBracket  dec2004     true
+frw-  mode_XtermPasteInBracket      dec2004     true
 
 # Implicit Movements
-flags     mode_decawm_              private     true
-accessor  mode_decawm               dec7        -
-flags     mode_XtermReversewrap     dec45       -
+f---  mode_decawm_                  private     true
+arw-  mode_decawm                   dec7        -
+frw-  mode_XtermReversewrap         dec45       -
 
 # Cursor style
-flags     mode_Att610Blink          dec12       true
-flags     mode_XtermCursorBlinkOps  dec13       false
-flags     mode_XtermXorCursorBlinks dec14       true
-flags     mode_dectcem              dec25       true
-flags     mode_declrmm              dec69       false
-accessor  mode_wystcurm             ansi33      -
-accessor  mode_wyulcurm             ansi34      -
+frw-  mode_Att610Blink              dec12       true
+frw-  mode_XtermCursorBlinkOps      dec13       false
+frw-  mode_XtermXorCursorBlinks     dec14       true
+frw-  mode_dectcem                  dec25       true
+frw-  mode_declrmm                  dec69       false
+arw-  mode_wystcurm                 ansi33      -
+arw-  mode_wyulcurm                 ansi34      -
 
 # Alternate Screen Buffers
-flags     mode_altscr               private     false
-accessor  mode_XtermAltbuf          dec47       -
-accessor  mode_XtermOptAltbuf       dec1047     -
-accessor  mode_XtermSaveCursor      dec1048     -
-accessor  mode_XtermOptAltbufCursor dec1049     -
+f---  mode_altscr                   private     false
+arw-  mode_XtermAltbuf              dec47       -
+arw-  mode_XtermOptAltbuf           dec1047     -
+arw-  mode_XtermSaveCursor          dec1048     -
+arw-  mode_XtermOptAltbufCursor     dec1049     -
 
 # Column 132
-accessor  mode_deccolm              dec3        -
-flags     mode_Xterm132cols         dec40       false
-flags     mode_decncsm              dec95       false
+arw-  mode_deccolm                  dec3        -
+frw-  mode_Xterm132cols             dec40       false
+frw-  mode_decncsm                  dec95       false
 
 # 既定の前景色・背景色の反転
-flags     mode_decscnm_             private     false
-accessor  mode_decscnm              dec5        -
+f---  mode_decscnm_                 private     false
+arw-  mode_decscnm                  dec5        -
 
 # Function-Keys
-accessor  mode_XtermTcapFkeys       dec1050     unsupported
-accessor  mode_XtermSunFkeys        dec1051     -
-accessor  mode_XtermHpFkeys         dec1052     -
-accessor  mode_XtermScoFkeys        dec1053     -
-accessor  mode_XtermLegacyFkeys     dec1060     -
-accessor  mode_XtermVt220Fkeys      dec1061     -
-accessor  mode_ContraTildeFkeys     dec9950     -
+arw-  mode_XtermTcapFkeys           dec1050     unsupported
+arw-  mode_XtermSunFkeys            dec1051     -
+arw-  mode_XtermHpFkeys             dec1052     -
+arw-  mode_XtermScoFkeys            dec1053     -
+arw-  mode_XtermLegacyFkeys         dec1060     -
+arw-  mode_XtermVt220Fkeys          dec1061     -
+a---  mode_ContraTildeFkeys         dec9950     -
 
 # Mouse report
-accessor  mode_XtermX10Mouse            dec9        -
-accessor  mode_UrxvtExtModeMouse        dec1000     -
-accessor  mode_XtermVt200Mouse          dec1001     -
-accessor  mode_XtermVt200HighlightMouse dec1002     -
-accessor  mode_XtermBtnEventMouse       dec1003     -
-accessor  mode_XtermFocusEventMouse     dec1005     -
-accessor  mode_XtermExtModeMouse        dec1006     -
-accessor  mode_XtermSgrExtModeMouse     dec1015     -
-flags     mode_XtermAnyEventMouse       dec1004     false
+arw-  mode_XtermX10Mouse            dec9        -
+arw-  mode_UrxvtExtModeMouse        dec1000     -
+arw-  mode_XtermVt200Mouse          dec1001     -
+arw-  mode_XtermVt200HighlightMouse dec1002     -
+arw-  mode_XtermBtnEventMouse       dec1003     -
+arw-  mode_XtermFocusEventMouse     dec1005     -
+arw-  mode_XtermExtModeMouse        dec1006     -
+arw-  mode_XtermSgrExtModeMouse     dec1015     -
+frw-  mode_XtermAnyEventMouse       dec1004     false
 
 #------------------------------------------------------------------------------
 # Contra original modes (inaccessible)
 
-flags     mode_simd               private     false
+f---  mode_simd                     private     false
 
 # 行末にカーソルがある時に ECH, ICH, DCH は行の最後の文字に作用します。
-flags     mode_xenl_ech           private     true
+f---  mode_xenl_ech                 private     true
 
 # ICH, IL, DL の後にカーソルを SPH で設定される行頭に移動します。
-flags     mode_home_il            private     false
+f---  mode_home_il                  private     false
 
-flags     mode_s7c1t              private     true
+f---  mode_s7c1t                    private     true
 
 # terminfo bce capability
-flags     mode_bce                private     true
-flags     mode_xenl               private     true
+f---  mode_bce                      private     true
+f---  mode_xenl                     private     true

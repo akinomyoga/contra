@@ -15,14 +15,16 @@ function sub:generate-mode-defs {
       sub(/^[[:space:]]+$/, "");
     }
 
-    $1 == "flags" {
+    $1 ~ /^f/ {
+      flags[flags_count, "Type"] = $1;
       flags[flags_count, "Name"] = $2;
       flags[flags_count, "Mode"] = $3;
       flags[flags_count, "Value"] = $4;
       flags_count++;
       next;
     }
-    $1 == "accessor" {
+    $1 ~ /^a/ {
+      accessors[accessor_count, "Type"] = $1;
       accessors[accessor_count, "Name"] = $2;
       accessors[accessor_count, "Mode"] = $3;
       accessors[accessor_count, "Value"] = $4;
@@ -30,12 +32,29 @@ function sub:generate-mode-defs {
       next;
     }
 
-    function save_def(file) {
+    function create_mode_flag(type, _, mode_flag) {
+      mode_flag = "";
+      if (type ~ /^a/)
+        mode_flag = " | mode_flag_accessor";
+      if (!(type ~ /r/))
+        mode_flag = mode_flag " | mode_flag_guarded";
+      if (!(type ~ /w/))
+        mode_flag = mode_flag " | mode_flag_protect";
+      if (type ~ /c/)
+        mode_flag = mode_flag " | mode_flag_const";
+      return mode_flag;
+    }
+
+    function save_def(file, _, i, mode_flag) {
       print "/* automatically generated from term.mode.def */" > file;
-      for (i = 0; i < flags_count; i++)
-        printf("%-25s = %5d,\n", flags[i, "Name"], i) > file;
-      for (i = 0; i < accessor_count; i++)
-        printf("%-25s = %5d | accessor_flag,\n", accessors[i, "Name"], i) > file;
+      for (i = 0; i < flags_count; i++) {
+        mode_flag = create_mode_flag(flags[i, "Type"]);
+        printf("%-25s = %5d%s,\n", flags[i, "Name"], i, mode_flag) > file;
+      }
+      for (i = 0; i < accessor_count; i++) {
+        mode_flag = create_mode_flag(accessors[i, "Type"]);
+        printf("%-25s = %5d%s,\n", accessors[i, "Name"], i, mode_flag) > file;
+      }
       close(file);
     }
     function print_reg_entry(file, name, mode, _, param) {
@@ -73,18 +92,20 @@ function sub:generate-mode-defs {
       close(file);
     }
     function save_dispatch_set(filename, _, i, name) {
+      print "/* automatically generated from term.mode.def */" > filename;
       for (i = 0; i < accessor_count; i++) {
         name = accessors[i, "Name"];
         sub(/^mode_/, "", name);
-        printf("case mode_%s: return do_sm_%s(*m_term, value);", name, name) > filename;
+        printf("case mode_index(mode_%s): return do_sm_%s(*m_term, value);\n", name, name) > filename;
       }
       close(filename);
     }
     function save_dispatch_rqm(filename) {
+      print "/* automatically generated from term.mode.def */" > filename;
       for (i = 0; i < accessor_count; i++) {
         name = accessors[i, "Name"];
         sub(/^mode_/, "", name);
-        printf("case mode_%s: return do_rqm_%s(*m_term);", name, name) > filename;
+        printf("case mode_index(mode_%s): return do_rqm_%s(*m_term);\n", name, name) > filename;
       }
       close(filename);
     }

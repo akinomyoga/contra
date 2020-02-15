@@ -29,10 +29,17 @@ namespace ansi {
     dec_mode    = 1, // CSI ? Ps h
     contra_mode = 2, // private mode
 
-    accessor_flag = 0x10000,
+    mode_index_mask    = 0x0FFFF,
+    mode_flag_accessor = 0x10000,
+    mode_flag_protect  = 0x20000,
+    mode_flag_guarded  = 0x40000,
+    mode_flag_const    = 0x80000,
 
 #include "../../out/gen/term.mode_def.hpp"
   };
+  constexpr mode_t mode_index(mode_t mode_spec) {
+    return mode_spec & mode_index_mask;
+  }
 
   struct tstate_t;
   class term_t;
@@ -484,11 +491,13 @@ namespace ansi {
     int rqm_mode_with_accessor(mode_t modeSpec) const;
   public:
     bool get_mode(mode_t modeSpec) const {
-      std::uint32_t const index = modeSpec;
-      if (!(index & accessor_flag)) {
-        std::uint32_t const bit = 1 << (index & 0x1F);
-        mwg_assert(index < CHAR_BIT * sizeof m_mode_flags, "invalid modeSpec");;
+      if (!(modeSpec & mode_flag_accessor)) {
+        std::uint32_t const index = mode_index(modeSpec);
+        mwg_assert(index < CHAR_BIT * sizeof m_mode_flags,
+          "modeSpec %05x overflow (m_mode_flags capacity 0x%x)",
+          modeSpec, CHAR_BIT * sizeof m_mode_flags);
 
+        std::uint32_t const bit = 1 << (index & 0x1F);
         std::uint32_t const& flags = m_mode_flags[index >> 5];
         return (flags & bit) != 0;
       } else {
@@ -496,15 +505,22 @@ namespace ansi {
       }
     }
     int rqm_mode(mode_t modeSpec) const {
-      std::uint32_t const index = modeSpec;
-      if (!(index & accessor_flag)) {
+      if (modeSpec & mode_flag_guarded) return 0;
+      if (!(modeSpec & mode_flag_accessor)) {
+        std::uint32_t const index = mode_index(modeSpec);
         std::uint32_t const bit = 1 << (index & 0x1F);
-        mwg_assert(index < CHAR_BIT * sizeof m_mode_flags, "invalid modeSpec");;
+        mwg_assert(index < CHAR_BIT * sizeof m_mode_flags,
+          "modeSpec %05x overflow (m_mode_flags capacity 0x%x)",
+          modeSpec, CHAR_BIT * sizeof m_mode_flags);
 
         std::uint32_t const& flags = m_mode_flags[index >> 5];
-        return (flags & bit) != 0 ? 1 : 2;
+        int result = (flags & bit) != 0 ? 1 : 2;
+        if (modeSpec & mode_flag_const) result += 2;
+        return result;
       } else {
-        return rqm_mode_with_accessor(modeSpec);
+        int result = rqm_mode_with_accessor(modeSpec);
+        if ((modeSpec & mode_flag_const) && (result == 1 || result == 2)) result += 2;
+        return result;
       }
     }
 
@@ -512,11 +528,13 @@ namespace ansi {
     void set_mode_with_accessor(mode_t modeSpec, bool value);
   public:
     void set_mode(mode_t modeSpec, bool value = true) {
-      std::uint32_t const index = modeSpec;
-      if (!(index & accessor_flag)) {
-        std::uint32_t const bit = 1 << (index & 0x1F);
-        mwg_assert(index < CHAR_BIT * sizeof m_mode_flags, "invalid modeSpec");;
+      if (!(modeSpec & mode_flag_accessor)) {
+        std::uint32_t const index = mode_index(modeSpec);
+        mwg_assert(index < CHAR_BIT * sizeof m_mode_flags,
+          "modeSpec %05x overflow (m_mode_flags capacity 0x%x)",
+          modeSpec, CHAR_BIT * sizeof m_mode_flags);
 
+        std::uint32_t const bit = 1 << (index & 0x1F);
         std::uint32_t& flags = m_mode_flags[index >> 5];
         if (value)
           flags |= bit;
@@ -525,6 +543,10 @@ namespace ansi {
       } else {
         set_mode_with_accessor(modeSpec, value);
       }
+    }
+    void sm_mode(mode_t modeSpec, bool value) {
+      if (modeSpec & mode_flag_protect) return;
+      set_mode(modeSpec, value);
     }
 
     bool dcsm() const { return get_mode(mode_bdsm) || get_mode(mode_dcsm); }

@@ -1,1 +1,1 @@
-term.mode.def
+term.mode.def --exclude=out
