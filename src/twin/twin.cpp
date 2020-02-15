@@ -1123,8 +1123,8 @@ namespace {
       if (::GetClientRect(hWnd, &rcClient)) {
         auto& view = manager.app().view();
         COMPOSITIONFORM form;
-        coord_t const x0 = rcClient.left + wstat.m_xframe + wstat.m_xpixel * view.x();
-        coord_t const y0 = rcClient.top + wstat.m_yframe + wstat.m_ypixel * view.y();
+        coord_t const x0 = rcClient.left + wstat.m_xframe + wstat.m_xpixel * view.client_x();
+        coord_t const y0 = rcClient.top + wstat.m_yframe + wstat.m_ypixel * view.client_y();
         form.dwStyle = CFS_POINT;
         form.ptCurrentPos.x = x0;
         form.ptCurrentPos.y = y0 + std::round(dy);

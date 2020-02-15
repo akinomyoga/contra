@@ -2028,7 +2028,7 @@ namespace ansi {
 
     term.input_c1(ascii_csi);
     term.input_byte(ascii_greater);
-    term.input_unsigned(67);
+    term.input_unsigned(99);
     term.input_byte(ascii_semicolon);
     term.input_unsigned(0);
     term.input_byte(ascii_c);

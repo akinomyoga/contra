@@ -242,21 +242,24 @@ namespace ansi {
     curpos_t m_cur_y = 0;
     bool m_cur_xenl = false;
     int m_cur_shape = 0;
+    bool m_cur_r2l = false;
   public:
     curpos_t cur_x() const { return m_cur_x; }
     curpos_t cur_y() const { return m_cur_y; }
     bool is_cursor_changed(window_state_t const& wstat, term_view_t const& view) const {
       if (m_cur_visible != wstat.is_cursor_visible(view)) return true;
-      if (m_cur_x != view.x() || m_cur_y != view.y() || m_cur_xenl != view.xenl()) return true;
+      if (m_cur_x != view.client_x() || m_cur_y != view.client_y() || m_cur_xenl != view.xenl()) return true;
+      if (m_cur_r2l != view.cur_r2l()) return true;
       if (m_cur_shape != view.cursor_shape()) return true;
       if (m_cur_blinking != view.is_cursor_blinking()) return true;
       return false;
     }
     void store_cursor(window_state_t const& wstat, term_view_t const& view) {
       m_cur_visible = wstat.is_cursor_visible(view);
-      m_cur_x = view.x();
-      m_cur_y = view.y();
+      m_cur_x = view.client_x();
+      m_cur_y = view.client_y();
       m_cur_xenl = view.xenl();
+      m_cur_r2l = view.cur_r2l();
       m_cur_shape = view.cursor_shape();
     }
   };
@@ -1261,7 +1264,7 @@ namespace ansi {
           line.previous_line_index = -1;
           line.is_invalidated = true;
           line.is_redraw_requested = true;
-          view.get_cells_in_presentation(line.cells, view.line(i));
+          view.order_cells_in(line.cells, position_client, view.line(i));
         }
       } else {
         line_tracer ltracer;
@@ -1274,7 +1277,7 @@ namespace ansi {
           line.is_invalidated = ltracer[i].invalidated;
           line.is_redraw_requested = ltracer[i].redraw;
           if (line.is_redraw_requested)
-            view.get_cells_in_presentation(line.cells, view.line(i));
+            view.order_cells_in(line.cells, position_client, view.line(i));
         }
       }
       return true;
@@ -1289,14 +1292,14 @@ namespace ansi {
       coord_t const ypixel = wstat.m_ypixel;
       coord_t const xpixel = wstat.m_xpixel;
 
-      coord_t x0 = xorigin + xpixel * view.x();
-      coord_t const y0 = yorigin + ypixel * view.y();
-
+      coord_t x0 = xorigin + xpixel * view.client_x();
+      coord_t const y0 = yorigin + ypixel * view.client_y();
+      bool const r2l = view.cur_r2l();
       coord_t size;
       bool underline = false;
       if (view.xenl()) {
         // 行末にいる時は設定に関係なく縦棒にする。
-        x0 -= 2;
+        x0 -= r2l ? -2 : 2;
         size = 2;
       } else if (cursor_shape == 0) {
         underline = true;
@@ -1314,6 +1317,7 @@ namespace ansi {
         graphics.invert_rectangle(x1, y1, x1 + xpixel, y1 + height);
       } else {
         coord_t const width = std::min(xpixel, std::max(size, wstat.m_caret_vertical_min_width));
+        if (r2l) x0 += xpixel - width;
         graphics.invert_rectangle(x0, y0, x0 + width, y0 + ypixel);
       }
     }

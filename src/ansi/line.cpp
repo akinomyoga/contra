@@ -402,32 +402,34 @@ curpos_t line_t::_prop_to_presentation_position(curpos_t x, bool line_r2l) const
   return a;
 }
 
-void line_t::get_cells_in_presentation(std::vector<cell_t>& buff, curpos_t width, bool line_r2l) const {
-  if (m_prop_enabled) {
-    return _prop_cells_in_presentation(buff, width, line_r2l);
+void line_t::order_cells_in(std::vector<cell_t>& buff, position_type to, curpos_t width, bool line_r2l) const {
+  if (m_prop_enabled && to != position_data) {
+    return _prop_order_cells_in(buff, to, width, line_r2l);
   } else {
     buff.clear();
     buff.reserve(m_cells.size());
     curpos_t w = 0;
     for (auto const& cell : m_cells) {
-      if (cell.character.is_extension()) continue;
+      if (cell.character.is_wide_extension()) continue;
       if (curpos_t(w + cell.width) > width) break;
       w += cell.width;
       buff.push_back(cell);
     }
-    if (line_r2l) {
+    if (to == position_client && line_r2l) {
       if (w < width) buff.insert(buff.end(), width - w, cell_t(ascii_nul));
       std::reverse(buff.begin(), buff.end());
     }
   }
 }
-void line_t::_prop_cells_in_presentation(std::vector<cell_t>& buff, curpos_t width, bool line_r2l) const {
+void line_t::_prop_order_cells_in(std::vector<cell_t>& buff, position_type to, curpos_t width, bool line_r2l) const {
+  mwg_assert(to != position_data);
   struct nest_t {
     std::size_t beg_index;
     std::uint32_t end_marker;
     bool outer_r2l;
   };
 
+  bool buff_r2l = to == position_presentation && line_r2l;
   bool r2l = line_r2l;
   std::vector<nest_t> stack;
 
@@ -487,16 +489,16 @@ void line_t::_prop_cells_in_presentation(std::vector<cell_t>& buff, curpos_t wid
     if (curpos_t(w + cell.width) > width) break;
     w += cell.width;
 
-    if (cell.character.is_extension() && r2l) {
+    if (r2l != buff_r2l && cell.character.is_extension()) {
       std::size_t j = buff.size();
-      while (j && buff[--j].character.is_extension());
+      if (j) while (--j && buff[j - 1].character.is_extension());
       buff.insert(buff.begin() + j, cell);
     } else
       buff.push_back(cell);
   }
   while (stack.size()) _pop();
 
-  if (line_r2l) {
+  if (to == position_client && line_r2l) {
     if (w < width) buff.insert(buff.end(), width - w, cell_t(ascii_nul));
     std::reverse(buff.begin(), buff.end());
   }

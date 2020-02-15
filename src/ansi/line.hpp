@@ -150,6 +150,12 @@ namespace ansi {
       || presentationDirection == presentation_direction_btrl;
   }
 
+  enum position_type {
+    position_client       = 0,
+    position_presentation = 1,
+    position_data         = 2,
+  };
+
   enum line_segment_flags {
     line_segment_slice,
     line_segment_erase,
@@ -505,7 +511,7 @@ namespace ansi {
     /// @param[in] toPresentationPosition
     ///   true の時データ位置から表示位置に変換します。false の時データ位置から表示位置に変換します。
     /// @param[in] srcX
-    ///   変換元のx座標です。
+    ///   変換元の文字位置です (見た目のx座標ではない事に注意)。
     /// @param[in] edge_type
     ///   0 の時文字の位置として変換します。-1 の時、文字の左端として変換します。1 の時文字の右端として変換します。
     /// @param[in] width
@@ -517,12 +523,12 @@ namespace ansi {
   public:
     curpos_t to_data_position(curpos_t x, curpos_t width, bool line_r2l) const {
       // !m_prop_enabled の時は SDS/SRS も Unicode bidi も存在しない。
-      if (!m_prop_enabled) return line_r2l ? width - 1 - x : x;
+      if (!m_prop_enabled) return x;
       return convert_position(false, x, 0, width, line_r2l);
     }
     curpos_t to_presentation_position(curpos_t x, curpos_t width, bool line_r2l) const {
       // !m_prop_enabled の時は SDS/SRS も Unicode bidi も存在しない。
-      if (!m_prop_enabled) return line_r2l ? width - 1 - x : x;
+      if (!m_prop_enabled) return x;
       // キャッシュがある時はそれを使った方が速いだろう。
       if (m_strings_version == m_version && m_strings_r2l == line_r2l)
         return convert_position(true, x, 0, width, line_r2l);
@@ -535,10 +541,34 @@ namespace ansi {
       return to_presentation_position(x, width, is_r2l(board_charpath));
     }
 
-  private:
-    void _prop_cells_in_presentation(std::vector<cell_t>& buff, curpos_t width, bool line_r2l) const;
   public:
-    void get_cells_in_presentation(std::vector<cell_t>& buff, curpos_t width, bool line_r2l) const;
+    curpos_t convert_position(position_type from, position_type to, curpos_t srcX, int edge_type, curpos_t width, bool line_r2l) const {
+      if (from == to) return srcX;
+      if (line_r2l && from == position_client)
+        srcX = edge_type == 0 ? width - 1 - srcX : width - srcX;
+
+      if (m_prop_enabled) {
+        if (from == position_data) {
+          if (edge_type == 0)
+            srcX = to_presentation_position(srcX, width, line_r2l);
+          else
+            srcX = convert_position(false, srcX, edge_type, width, line_r2l);
+        } else if (to == position_data)
+          srcX = convert_position(true, srcX, edge_type, width, line_r2l);
+      }
+
+      if (line_r2l && to == position_client)
+        srcX = edge_type == 0 ? width - 1 - srcX : width - srcX;
+      return srcX;
+    }
+    curpos_t convert_position(position_type from, position_type to, curpos_t srcX, int edge_type, curpos_t width, presentation_direction_t board_charpath) const {
+      return convert_position(from, to, srcX, edge_type, width, is_r2l(board_charpath));
+    }
+
+  private:
+    void _prop_order_cells_in(std::vector<cell_t>& buff, position_type to, curpos_t width, bool line_r2l) const;
+  public:
+    void order_cells_in(std::vector<cell_t>& buff, position_type to, curpos_t width, bool line_r2l) const;
 
   public:
     typedef std::vector<std::pair<curpos_t, curpos_t>> slice_ranges_t;

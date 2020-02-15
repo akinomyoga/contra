@@ -392,7 +392,7 @@ namespace ttty {
         line_buffer_t& line_buffer = screen_buffer[y];
         if (full_update || line_buffer.id != line.id() || line_buffer.version != line.version()) {
           go_to(0, y);
-          view->get_cells_in_presentation(buff, line);
+          view->order_cells_in(buff, position_client, line);
           this->apply_default_attribute(buff);
           this->render_line(buff, line_buffer.content);
 

@@ -248,6 +248,9 @@ namespace ansi {
     curpos_t to_presentation_position(curpos_t y, curpos_t x) const {
       return to_presentation_position(m_lines[y], x);
     }
+    curpos_t convert_position(position_type from, position_type to, line_t const& line, curpos_t x, int edge_type) const {
+      return line.convert_position(from, to, x, edge_type, m_width, m_presentation_direction);
+    }
 
   private:
     void transfer_lines(curpos_t y1, curpos_t y2, term_scroll_buffer_t& scroll_buffer) {
@@ -950,6 +953,12 @@ namespace ansi {
     curpos_t x() const { return m_x; }
     curpos_t y() const { return m_y; }
     bool xenl() const { return m_xenl; }
+    curpos_t client_x() const {
+      auto const& b = m_term->board();
+      return b.convert_position(position_data, position_client, b.line(m_y), m_x, 0);
+    }
+    curpos_t client_y() const { return m_y; }
+    bool cur_r2l() const { return m_term->board().line_r2l(m_y); }
 
     bool is_cursor_visible() const {
       return m_term->state().is_cursor_visible() &&
@@ -997,9 +1006,9 @@ namespace ansi {
     line_t& line(curpos_t y) {
       return this->lline(y - m_scroll_amount);
     }
-    void get_cells_in_presentation(std::vector<cell_t>& buffer, line_t const& line) const {
+    void order_cells_in(std::vector<cell_t>& buffer, position_type to, line_t const& line) const {
       bool const r2l = m_term->board().line_r2l(line);
-      line.get_cells_in_presentation(buffer, this->width(), r2l);
+      line.order_cells_in(buffer, to, this->width(), r2l);
     }
   };
 

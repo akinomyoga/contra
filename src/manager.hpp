@@ -520,8 +520,8 @@ namespace term {
       curpos_t y2 = m_sel_end_y;
       curpos_t const ybeg = view.logical_ybeg();
       curpos_t const yend = view.logical_yend();
-      if (y1 < yend) x1 = b.to_data_position(view.lline(y1), x1);
-      if (y2 < yend) x2 = b.to_data_position(view.lline(y2), x2);
+      if (y1 < yend) x1 = b.convert_position(position_client, position_data, view.lline(y1), x1, 0);
+      if (y2 < yend) x2 = b.convert_position(position_client, position_data, view.lline(y2), x2, 0);
 
       if (m_sel_type & modifier_meta) {
         // 矩形選択
@@ -630,8 +630,8 @@ namespace term {
         y1 = m_sel_beg_y;
         x2 = m_sel_end_x;
         y2 = m_sel_end_y;
-        if (y1 < yend) x1 = b.to_data_position(view.lline(y1), x1);
-        if (y2 < yend) x2 = b.to_data_position(view.lline(y2), x2);
+        if (y1 < yend) x1 = b.convert_position(position_client, position_data, view.lline(y1), x1, 0);
+        if (y2 < yend) x2 = b.convert_position(position_client, position_data, view.lline(y2), x2, 0);
         if (y1 > y2) {
           std::swap(y1, y2);
           std::swap(x1, x2);
@@ -778,12 +778,18 @@ namespace term {
           } else {
             switch (m_word_selection_level % 3) {
             case 0:
-              dirty = line.set_selection_word(b.to_data_position(line, x), word_selection_cword, gatm);
+              {
+                curpos_t const c = b.convert_position(position_client, position_data, line, x, 0);
+                dirty = line.set_selection_word(c, word_selection_cword, gatm);
+              }
               break;
             case 1:
-              dirty = line.set_selection_word(b.to_data_position(line, x), word_selection_sword, gatm);
-              if (dirty) break;
-              m_word_selection_level++;
+              {
+                curpos_t const c = b.convert_position(position_client, position_data, line, x, 0);
+                dirty = line.set_selection_word(c, word_selection_sword, gatm);
+                if (dirty) break;
+                m_word_selection_level++;
+              }
               [[fallthrough]];
             default:
               dirty = line.set_selection(0, term.width() + 1, key & modifier_shift, gatm, true);
