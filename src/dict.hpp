@@ -200,7 +200,7 @@ namespace dict {
       qualifier_mask = decsca_protected | spa_protected | ssa_selected | daq_guarded | daq_protected,
 
       // 以下に \e[m でクリアされない物を列挙する。
-      // SGR(6703)-SGR(6706) で提供している decdhl_mask については \e[m でクリアできる事にする。
+      // SGR(9903)-SGR(9906) で提供している decdhl_mask については \e[m でクリアできる事にする。
       non_sgr_xflags_mask = is_sub_set | is_sup_set | sco_mask | qualifier_mask,
     };
 

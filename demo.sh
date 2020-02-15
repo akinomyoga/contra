@@ -22,10 +22,10 @@ contra_demo_keys+=(plu)
 function contra/demo:plu {
   contra/demo/title 'PLU/PLD' 'PARTIAL LINE UP/DOWN'
   local esc=$'[Cu(H\eK2\eLO)\eK4\eL]\eL2+\eK'
-  printf '    \e[6705m%s\e[m\n' "$esc"
-  printf '    \e[6706m%s\e[m\n' "$esc"
-  printf '    \e[6703m%s\e[m\n' "$esc"
-  printf '    \e[6704m%s\e[m\n' "$esc"
+  printf '    \e[9905m%s\e[m\n' "$esc"
+  printf '    \e[9906m%s\e[m\n' "$esc"
+  printf '    \e[9903m%s\e[m\n' "$esc"
+  printf '    \e[9904m%s\e[m\n' "$esc"
 }
 
 contra_demo_keys+=(decslrm)
@@ -174,9 +174,9 @@ function contra/demo:sco {
 
   printf '\e[30;s\e[4;30H'
 
-  ble/util/sprintf line '\e[%dm\e[%%d eEnglish 日本語 +-*/\e[ e\n' 6703 6704
+  ble/util/sprintf line '\e[%dm\e[%%d eEnglish 日本語 +-*/\e[ e\n' 9903 9904
   printf "$line" {0..7}{,}
-  printf '\e[6705m'
+  printf '\e[9905m'
 
   printf '\e[?69l'
 }
@@ -187,7 +187,7 @@ function contra/demo:acs {
   local acsc=$'\e(0+,-.0`abcdefghijklmnopqrstuvwxyz{|}~\e(B'
 
   function acsc_decdhl {
-    printf '\e[%dm'"$acsc"'\e[6705m\n' 6705 6706 6703 6704
+    printf '\e[%dm'"$acsc"'\e[9905m\n' 9905 9906 9903 9904
     echo
   }
 

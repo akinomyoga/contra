@@ -1485,10 +1485,10 @@ namespace ansi {
     case 65: xflags = xflags & ~(xflags_t) _at::is_ideogram_mask; break;
 
     // contra 拡張 (画面の横分割に対応する為には DECDWL の類を属性として提供する必要がある)
-    case 6703: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_upper_half; break;
-    case 6704: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_lower_half; break;
-    case 6705: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_single_width; break;
-    case 6706: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_double_width; break;
+    case 9903: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_upper_half; break;
+    case 9904: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_lower_half; break;
+    case 9905: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_single_width; break;
+    case 9906: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_double_width; break;
 
     // RLogin 拡張 (RLogin では 60-65 で利用できる。JIS X 0211 の記述と異なるが便利そうなので対応する)
     case 8460: xflags = (xflags & ~(xflags_t) _at::rlogin_double_rline) | _at::rlogin_single_rline; break;
