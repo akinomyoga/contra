@@ -18,6 +18,8 @@ namespace ansi {
   static void do_vertical_scroll(term_t& term, curpos_t shift, curpos_t tmargin, curpos_t bmargin, curpos_t lmargin, curpos_t rmargin, bool dcsm, bool transfer);
   static void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm);
 
+  void do_ed(term_t& term, csi_single_param_t param);
+
   //---------------------------------------------------------------------------
   // Modes
 
@@ -114,18 +116,6 @@ namespace ansi {
   }
   bool do_decrqm_dec(term_t& term, csi_parameters& params) {
     return do_decrqm_impl(term, params, false);
-  }
-
-  void do_altscreen(term_t& term, bool value) {
-    tstate_t& s = term.state();
-    board_t& b = term.board();
-    if (value != s.get_mode(mode_altscr)) {
-      s.set_mode(mode_altscr, value);
-      s.altscreen.reset_size(b.width(), b.height());
-      s.altscreen.cur = b.cur;
-      s.altscreen.m_line_count = b.m_line_count;
-      std::swap(s.altscreen, b);
-    }
   }
 
   void do_deckpam(term_t& term) {
@@ -1269,6 +1259,61 @@ namespace ansi {
   }
 
   //---------------------------------------------------------------------------
+  // Alternate Screen Buffer
+
+  // Mode ?47: XTERM_ALTBUF
+  int do_rqm_XtermAltbuf(term_t& term) {
+    return term.state().rqm_mode(mode_altscr);
+  }
+  void do_sm_XtermAltbuf(term_t& term, bool value) {
+    tstate_t& s = term.state();
+    board_t& b = term.board();
+    if (value != s.get_mode(mode_altscr)) {
+      s.set_mode(mode_altscr, value);
+      s.altscreen.reset_size(b.width(), b.height());
+      s.altscreen.cur = b.cur;
+      s.altscreen.m_line_count = b.m_line_count;
+      std::swap(s.altscreen, b);
+    }
+  }
+
+  // Mode ?1047: XTERM_OPT_ALTBUF
+  int do_rqm_XtermOptAltbuf(term_t& term) {
+    return term.state().rqm_mode(mode_altscr);
+  }
+  void do_sm_XtermOptAltbuf(term_t& term, bool value) {
+    auto& s = term.state();
+    if (s.get_mode(mode_altscr) != value) {
+      s.set_mode(mode_XtermAltbuf, value);
+      if (value) do_ed(term, 2);
+    }
+  }
+
+  // Mode ?1048: XTERM_SAVE_CURSOR
+  int do_rqm_XtermSaveCursor(term_t& term) {
+    return term.state().m_decsc_cur.x() >= 0 ? 1 : 2;
+  }
+  void do_sm_XtermSaveCursor(term_t& term, bool value) {
+    if (value)
+      do_decsc(term);
+    else
+      do_decrc(term);
+  }
+
+  // Mode ?1049: XTERM_OPT_ALTBUF_CURSOR
+  int do_rqm_XtermOptAltbufCursor(term_t& term) {
+    return term.state().rqm_mode(mode_altscr);
+  }
+  void do_sm_XtermOptAltbufCursor(term_t& term, bool value) {
+    auto& s = term.state();
+    if (s.get_mode(mode_altscr) != value) {
+      s.set_mode(mode_XtermAltbuf, value);
+      s.set_mode(mode_XtermSaveCursor, value);
+      if (value) do_ed(term, 2);
+    }
+  }
+
+  //---------------------------------------------------------------------------
   // SGR and other graphics
 
   static void do_sgr_iso8613_colors(board_t& b, csi_parameters& params, bool isfg) {
@@ -2029,94 +2074,18 @@ namespace ansi {
   }
 
   int tstate_t::rqm_mode_with_accessor(mode_t modeSpec) const {
-    // Note: 現在は暫定的にハードコーディングしているが、
-    //   将来的にはunordered_map か何かで登録できる様にする。
-    //   もしくは何らかの表からコードを自動生成する様にする。
     switch (modeSpec) {
-    case mode_wystcurm: return do_rqm_wystcurm(*m_term);
-    case mode_wyulcurm: return do_rqm_wyulcurm(*m_term);
-    case mode_altscreen: // Mode ?47
-      return rqm_mode(mode_altscr);
-    case mode_altscreen_clr: // Mode ?1047
-      return rqm_mode(mode_altscr);
-    case mode_decsc: // Mode ?1048
-      return m_decsc_cur.x() >= 0 ? 1 : 2;
-    case mode_altscreen_cur: // Mode ?1049
-      return rqm_mode(mode_altscr);
-    case mode_deccolm: return do_rqm_deccolm(*m_term);
-    case mode_decscnm: return do_rqm_decscnm(*m_term);
-    case mode_decawm : return do_rqm_decawm(*m_term);
-    case mode_XtermX10Mouse           : return do_rqm_XtermX10Mouse           (*m_term);
-    case mode_UrxvtExtModeMouse       : return do_rqm_UrxvtExtModeMouse       (*m_term);
-    case mode_XtermVt200Mouse         : return do_rqm_XtermVt200Mouse         (*m_term);
-    case mode_XtermVt200HighlightMouse: return do_rqm_XtermVt200HighlightMouse(*m_term);
-    case mode_XtermBtnEventMouse      : return do_rqm_XtermBtnEventMouse      (*m_term);
-    case mode_XtermFocusEventMouse    : return do_rqm_XtermFocusEventMouse    (*m_term);
-    case mode_XtermExtModeMouse       : return do_rqm_XtermExtModeMouse       (*m_term);
-    case mode_XtermSgrExtModeMouse    : return do_rqm_XtermSgrExtModeMouse    (*m_term);
-
-    case mode_XtermTcapFkeys  : return do_rqm_XtermTcapFkeys  (*m_term);
-    case mode_XtermSunFkeys   : return do_rqm_XtermSunFkeys   (*m_term);
-    case mode_XtermHpFkeys    : return do_rqm_XtermHpFkeys    (*m_term);
-    case mode_XtermScoFkeys   : return do_rqm_XtermScoFkeys   (*m_term);
-    case mode_XtermLegacyFkeys: return do_rqm_XtermLegacyFkeys(*m_term);
-    case mode_XtermVt220Fkeys : return do_rqm_XtermVt220Fkeys (*m_term);
-    case mode_ContraTildeFkeys: return do_rqm_ContraTildeFkeys(*m_term);
-
+#include "../../out/gen/term.mode_rqm.hpp"
     default: return 0;
     }
   }
 
   void tstate_t::set_mode_with_accessor(mode_t modeSpec, bool value) {
-    // Note: 現在は暫定的にハードコーディングしているが、
-    //   将来的にはunordered_map か何かで登録できる様にする。
-    //   もしくは何らかの表からコードを自動生成する様にする。
     switch (modeSpec) {
-    case mode_wystcurm: return do_sm_wystcurm(*m_term, value);
-    case mode_wyulcurm: return do_sm_wyulcurm(*m_term, value);
-    case mode_altscreen: return do_altscreen(*m_term, value);
-    case mode_altscreen_clr:
-      if (get_mode(mode_altscr) != value) {
-        set_mode(mode_altscreen, value);
-        if (value) do_ed(*m_term, 2);
-      }
-      break;
-    case mode_decsc:
-      if (value)
-        do_decsc(*m_term);
-      else
-        do_decrc(*m_term);
-      break;
-    case mode_altscreen_cur:
-      if (get_mode(mode_altscr) != value) {
-        set_mode(mode_altscreen, value);
-        set_mode(mode_decsc, value);
-        if (value) do_ed(*m_term, 2);
-      }
-      break;
-    case mode_deccolm: do_sm_deccolm(*m_term, value); break;
-    case mode_decscnm: do_sm_decscnm(*m_term, value); break;
-    case mode_decawm:  do_sm_decawm(*m_term, value);  break;
-    case mode_XtermX10Mouse           : do_sm_XtermX10Mouse           (*m_term, value); break;
-    case mode_UrxvtExtModeMouse       : do_sm_UrxvtExtModeMouse       (*m_term, value); break;
-    case mode_XtermVt200Mouse         : do_sm_XtermVt200Mouse         (*m_term, value); break;
-    case mode_XtermVt200HighlightMouse: do_sm_XtermVt200HighlightMouse(*m_term, value); break;
-    case mode_XtermBtnEventMouse      : do_sm_XtermBtnEventMouse      (*m_term, value); break;
-    case mode_XtermFocusEventMouse    : do_sm_XtermFocusEventMouse    (*m_term, value); break;
-    case mode_XtermExtModeMouse       : do_sm_XtermExtModeMouse       (*m_term, value); break;
-    case mode_XtermSgrExtModeMouse    : do_sm_XtermSgrExtModeMouse    (*m_term, value); break;
-
-    case mode_XtermTcapFkeys  : do_sm_XtermTcapFkeys  (*m_term, value); break;
-    case mode_XtermSunFkeys   : do_sm_XtermSunFkeys   (*m_term, value); break;
-    case mode_XtermHpFkeys    : do_sm_XtermHpFkeys    (*m_term, value); break;
-    case mode_XtermScoFkeys   : do_sm_XtermScoFkeys   (*m_term, value); break;
-    case mode_XtermLegacyFkeys: do_sm_XtermLegacyFkeys(*m_term, value); break;
-    case mode_XtermVt220Fkeys : do_sm_XtermVt220Fkeys (*m_term, value); break;
-    case mode_ContraTildeFkeys: do_sm_ContraTildeFkeys(*m_term, value); break;
+#include "../../out/gen/term.mode_set.hpp"
     default: ;
     }
   }
-
 
   struct control_function_dictionary {
     control_function_t* data1[63];
@@ -2878,7 +2847,7 @@ namespace ansi {
   bool term_t::input_paste(std::u32string const& data) {
     // Note: data が空であったとしても paste_begin/end は送る事にする。
     //   空文字列でも vim 等でモードの変更などを引き起こしそうな気がする。
-    bool const bracketed_paste_mode = state().get_mode(mode_bracketedPasteMode);
+    bool const bracketed_paste_mode = state().get_mode(mode_XtermPasteInBracket);
     if (bracketed_paste_mode) {
       input_c1(ascii_csi);
       input_unsigned(200);

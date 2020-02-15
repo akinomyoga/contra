@@ -31,12 +31,12 @@ flags     mode_decnkm             dec66       false
 flags     mode_decbkm             dec67       false
 
 # Bracketed Paste Mode
-flags     mode_bracketedPasteMode dec2004     true
+flags     mode_XtermPasteInBracket  dec2004     true
 
 # Implicit Movements
-flags     mode_decawm_            private     true
-accessor  mode_decawm             dec7        -
-flags     mode_XtermReversewrap   dec45       -
+flags     mode_decawm_              private     true
+accessor  mode_decawm               dec7        -
+flags     mode_XtermReversewrap     dec45       -
 
 # Cursor style
 flags     mode_Att610Blink          dec12       true
@@ -48,29 +48,29 @@ accessor  mode_wystcurm             ansi33      -
 accessor  mode_wyulcurm             ansi34      -
 
 # Alternate Screen Buffers
-flags     mode_altscr             private     false
-accessor  mode_altscreen          dec47       -
-accessor  mode_altscreen_clr      dec1047     -
-accessor  mode_decsc              dec1048     -
-accessor  mode_altscreen_cur      dec1049     -
+flags     mode_altscr               private     false
+accessor  mode_XtermAltbuf          dec47       -
+accessor  mode_XtermOptAltbuf       dec1047     -
+accessor  mode_XtermSaveCursor      dec1048     -
+accessor  mode_XtermOptAltbufCursor dec1049     -
 
 # Column 132
-accessor  mode_deccolm            dec3        -
-flags     mode_Xterm132cols       dec40       false
-flags     mode_decncsm            dec95       false
+accessor  mode_deccolm              dec3        -
+flags     mode_Xterm132cols         dec40       false
+flags     mode_decncsm              dec95       false
 
 # 既定の前景色・背景色の反転
-flags     mode_decscnm_           private     false
-accessor  mode_decscnm            dec5        -
+flags     mode_decscnm_             private     false
+accessor  mode_decscnm              dec5        -
 
 # Function-Keys
-accessor  mode_XtermTcapFkeys     dec1050     unsupported
-accessor  mode_XtermSunFkeys      dec1051     -
-accessor  mode_XtermHpFkeys       dec1052     -
-accessor  mode_XtermScoFkeys      dec1053     -
-accessor  mode_XtermLegacyFkeys   dec1060     -
-accessor  mode_XtermVt220Fkeys    dec1061     -
-accessor  mode_ContraTildeFkeys   dec9950     -
+accessor  mode_XtermTcapFkeys       dec1050     unsupported
+accessor  mode_XtermSunFkeys        dec1051     -
+accessor  mode_XtermHpFkeys         dec1052     -
+accessor  mode_XtermScoFkeys        dec1053     -
+accessor  mode_XtermLegacyFkeys     dec1060     -
+accessor  mode_XtermVt220Fkeys      dec1061     -
+accessor  mode_ContraTildeFkeys     dec9950     -
 
 # Mouse report
 accessor  mode_XtermX10Mouse            dec9        -

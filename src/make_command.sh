@@ -30,7 +30,7 @@ function sub:generate-mode-defs {
       next;
     }
 
-    function print_def(file) {
+    function save_def(file) {
       print "/* automatically generated from term.mode.def */" > file;
       for (i = 0; i < flags_count; i++)
         printf("%-25s = %5d,\n", flags[i, "Name"], i) > file;
@@ -49,14 +49,14 @@ function sub:generate-mode-defs {
 
       printf("data_%s[%d] = %s;\n", mode, param, name) > file;
     }
-    function print_reg(file, _, i, mode, param) {
+    function save_reg(file, _, i, mode, param) {
       print "/* automatically generated from term.mode.def */" > file;
       for (i = 0; i < flags_count; i++)
         print_reg_entry(file, flags[i, "Name"], flags[i, "Mode"]);
       for (i = 0; i < accessor_count; i++)
         print_reg_entry(file, accessors[i, "Name"], accessors[i, "Mode"]);
     }
-    function print_init(file, _, i, name, value) {
+    function save_init(file, _, i, name, value) {
       print "/* automatically generated from term.mode.def */" > file;
       for (i = 0; i < flags_count; i++) {
         name = flags[i, "Name"];
@@ -72,11 +72,29 @@ function sub:generate-mode-defs {
       }
       close(file);
     }
+    function save_dispatch_set(filename, _, i, name) {
+      for (i = 0; i < accessor_count; i++) {
+        name = accessors[i, "Name"];
+        sub(/^mode_/, "", name);
+        printf("case mode_%s: return do_sm_%s(*m_term, value);", name, name) > filename;
+      }
+      close(filename);
+    }
+    function save_dispatch_rqm(filename) {
+      for (i = 0; i < accessor_count; i++) {
+        name = accessors[i, "Name"];
+        sub(/^mode_/, "", name);
+        printf("case mode_%s: return do_rqm_%s(*m_term);", name, name) > filename;
+      }
+      close(filename);
+    }
 
     END {
-      print_def("../out/gen/term.mode_def.hpp");
-      print_reg("../out/gen/term.mode_register.hpp");
-      print_init("../out/gen/term.mode_init.hpp");
+      save_def("../out/gen/term.mode_def.hpp");
+      save_reg("../out/gen/term.mode_register.hpp");
+      save_init("../out/gen/term.mode_init.hpp");
+      save_dispatch_set("../out/gen/term.mode_set.hpp");
+      save_dispatch_rqm("../out/gen/term.mode_rqm.hpp");
     }
   ' ansi/term.mode.def
 }
