@@ -1437,66 +1437,82 @@ namespace ansi {
     switch (param) {
     case 0: b.cur.attribute.clear_sgr(); break;
 
-    case 1 : aflags = (aflags & ~(aflags_t) _at::is_faint_set) | _at::is_bold_set; break;
-    case 2 : aflags = (aflags & ~(aflags_t) _at::is_bold_set) | _at::is_faint_set; break;
-    case 22: aflags = aflags & ~(aflags_t) (_at::is_bold_set | _at::is_faint_set); break;
+    case 1 : bitflag_reset(aflags, _at::aflags_weight_mask, _at::is_bold_set); break;
+    case 2 : bitflag_reset(aflags, _at::aflags_weight_mask, _at::is_faint_set); break;
+    case 22: bitflag_clear(aflags, _at::aflags_weight_mask); break;
 
-    case 3 : aflags = (aflags & ~(aflags_t) _at::is_fraktur_set) | _at::is_italic_set; break;
-    case 20: aflags = (aflags & ~(aflags_t) _at::is_italic_set) | _at::is_fraktur_set; break;
-    case 23: aflags = aflags & ~(aflags_t) (_at::is_italic_set | _at::is_fraktur_set); break;
+    case 3 : bitflag_reset(aflags, _at::aflags_shape_mask, _at::is_italic_set); break;
+    case 20: bitflag_reset(aflags, _at::aflags_shape_mask, _at::is_fraktur_set); break;
+    case 23: bitflag_clear(aflags, _at::aflags_shape_mask); break;
 
-    case 4 : aflags = (aflags & ~(aflags_t) _at::is_double_underline_set) | _at::is_underline_set; break;
-    case 21: aflags = (aflags & ~(aflags_t) _at::is_underline_set) | _at::is_double_underline_set; break;
-    case 24: aflags = aflags & ~(aflags_t) (_at::is_underline_set | _at::is_double_underline_set); break;
+    case 4:
+      if (!rest.read_arg(param, false, 0)) param = 1;
+      switch (param) {
+      default:
+      case 0: bitflag_clear(aflags, _at::aflags_underline_mask); break;
+      case 1: bitflag_reset(aflags, _at::aflags_underline_mask, _at::underline_single); break;
+      case 2: bitflag_reset(aflags, _at::aflags_underline_mask, _at::underline_double); break;
+      case 3: bitflag_reset(aflags, _at::aflags_underline_mask, _at::underline_curly); break;
+      case 4: bitflag_reset(aflags, _at::aflags_underline_mask, _at::underline_dotted); break;
+      case 5: bitflag_reset(aflags, _at::aflags_underline_mask, _at::underline_dashed); break;
+      }
+      break;
+    case 21: bitflag_reset(aflags, _at::aflags_underline_mask, _at::underline_double); break;
+    case 24: bitflag_clear(aflags, _at::aflags_underline_mask); break;
 
-    case 5 : aflags = (aflags & ~(aflags_t) _at::is_rapid_blink_set) | _at::is_blink_set; break;
-    case 6 : aflags = (aflags & ~(aflags_t) _at::is_blink_set) | _at::is_rapid_blink_set; break;
-    case 25: aflags = aflags & ~(aflags_t) (_at::is_blink_set | _at::is_rapid_blink_set); break;
+    case 5 : bitflag_reset(aflags, _at::aflags_blink_mask, _at::is_blink_set); break;
+    case 6 : bitflag_reset(aflags, _at::aflags_blink_mask, _at::is_rapid_blink_set); break;
+    case 25: bitflag_clear(aflags, _at::aflags_blink_mask); break;
 
-    case 7 : aflags = aflags | _at::is_inverse_set; break;
-    case 27: aflags = aflags & ~(aflags_t) _at::is_inverse_set; break;
+    case 7 : bitflag_set(aflags, _at::is_inverse_set); break;
+    case 27: bitflag_clear(aflags, _at::is_inverse_set); break;
 
-    case 8 : aflags = aflags | _at::is_invisible_set; break;
-    case 28: aflags = aflags & ~(aflags_t) _at::is_invisible_set; break;
+    case 8 : bitflag_set(aflags, _at::is_invisible_set); break;
+    case 28: bitflag_clear(aflags, _at::is_invisible_set); break;
 
-    case 9 : aflags = aflags | _at::is_strike_set; break;
-    case 29: aflags = aflags & ~(aflags_t) _at::is_strike_set; break;
+    case 9 : bitflag_set(aflags, _at::is_strike_set); break;
+    case 29: bitflag_clear(aflags, _at::is_strike_set); break;
 
-    case 26: xflags = xflags | _at::is_proportional_set; break;
-    case 50: xflags = xflags & ~(xflags_t) _at::is_proportional_set; break;
+    case 26: bitflag_set(xflags, _at::is_proportional_set); break;
+    case 50: bitflag_clear(xflags, _at::is_proportional_set); break;
 
-    case 51: xflags = (xflags & ~(xflags_t) _at::is_circle_set) | _at::is_frame_set; break;
-    case 52: xflags = (xflags & ~(xflags_t) _at::is_frame_set) | _at::is_circle_set; break;
-    case 54: xflags = xflags & ~(xflags_t) (_at::is_frame_set | _at::is_circle_set); break;
+    case 51: bitflag_reset(xflags, _at::xflags_frame_mask, _at::is_frame_set); break;
+    case 52: bitflag_reset(xflags, _at::xflags_frame_mask, _at::is_circle_set); break;
+    case 54: bitflag_clear(xflags, _at::xflags_frame_mask); break;
 
-    case 53: xflags = xflags | _at::is_overline_set; break;
-    case 55: xflags = xflags & ~(xflags_t) _at::is_overline_set; break;
+    case 53: bitflag_set(xflags, _at::is_overline_set); break;
+    case 55: bitflag_clear(xflags, _at::is_overline_set); break;
 
     // ECMA-48:1986 SGR(60-65) 及び JIS X 0211 & ISO/IEC 6429:1992 SGR(66-69)
-    case 60: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_single_rb; break;
-    case 61: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_double_rb; break;
-    case 62: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_single_lt; break;
-    case 63: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_double_lt; break;
-    case 66: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_single_lb; break;
-    case 67: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_double_lb; break;
-    case 68: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_single_rt; break;
-    case 69: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_line_double_rt; break;
-    case 64: xflags = (xflags & ~(xflags_t) _at::is_ideogram_mask) | _at::is_ideogram_stress   ; break;
-    case 65: xflags = xflags & ~(xflags_t) _at::is_ideogram_mask; break;
+    case 60: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_single_rb); break;
+    case 61: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_double_rb); break;
+    case 62: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_single_lt); break;
+    case 63: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_double_lt); break;
+    case 66: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_single_lb); break;
+    case 67: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_double_lb); break;
+    case 68: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_single_rt); break;
+    case 69: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_double_rt); break;
+    case 64: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_stress); break;
+    case 65: bitflag_clear(xflags, _at::is_ideogram_mask); break;
 
     // contra 拡張 (画面の横分割に対応する為には DECDWL の類を属性として提供する必要がある)
-    case 9903: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_upper_half; break;
-    case 9904: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_lower_half; break;
-    case 9905: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_single_width; break;
-    case 9906: xflags = (xflags & ~(xflags_t) _at::decdhl_mask) | _at::decdhl_double_width; break;
+    case 9903: bitflag_reset(xflags, _at::decdhl_mask, _at::decdhl_upper_half); break;
+    case 9904: bitflag_reset(xflags, _at::decdhl_mask, _at::decdhl_lower_half); break;
+    case 9905: bitflag_reset(xflags, _at::decdhl_mask, _at::decdhl_single_width); break;
+    case 9906: bitflag_reset(xflags, _at::decdhl_mask, _at::decdhl_double_width); break;
 
     // RLogin 拡張 (RLogin では 60-65 で利用できる。JIS X 0211 の記述と異なるが便利そうなので対応する)
-    case 8460: xflags = (xflags & ~(xflags_t) _at::rlogin_double_rline) | _at::rlogin_single_rline; break;
-    case 8461: xflags = (xflags & ~(xflags_t) _at::rlogin_single_rline) | _at::rlogin_double_rline; break;
-    case 8462: xflags = (xflags & ~(xflags_t) _at::rlogin_double_lline) | _at::rlogin_single_lline; break;
-    case 8463: xflags = (xflags & ~(xflags_t) _at::rlogin_single_lline) | _at::rlogin_double_lline; break;
-    case 8464: xflags = (xflags & ~(xflags_t) _at::rlogin_single_lline) | _at::rlogin_double_strike; break;
-    case 8465: xflags = xflags & ~(xflags_t) _at::rlogin_ideogram_mask; break;
+    case 8460: bitflag_reset(xflags, _at::rlogin_double_rline, _at::rlogin_single_rline); break;
+    case 8461: bitflag_reset(xflags, _at::rlogin_single_rline, _at::rlogin_double_rline); break;
+    case 8462: bitflag_reset(xflags, _at::rlogin_double_lline, _at::rlogin_single_lline); break;
+    case 8463: bitflag_reset(xflags, _at::rlogin_single_lline, _at::rlogin_double_lline); break;
+    case 8464: bitflag_set  (xflags, _at::rlogin_double_strike); break;
+    case 8465: bitflag_clear(xflags, _at::rlogin_ideogram_mask); break;
+
+    // Mintty 拡張
+    case 7773: case 73: bitflag_reset(xflags, _at::xflags_subsup_mask, _at::is_sup_set); break;
+    case 7774: case 74: bitflag_reset(xflags, _at::xflags_subsup_mask, _at::is_sub_set); break;
+    case 7775: case 75: bitflag_clear(xflags, _at::xflags_subsup_mask); break;
 
     default:
       std::fprintf(stderr, "unrecognized SGR value %d\n", param);

@@ -26,6 +26,13 @@ namespace contra {
   template<typename Integer>
   constexpr Integer ceil_div(Integer a, Integer b) { return (a + b - 1) / b; }
 
+  template<typename Flags>
+  void bitflag_set(Flags& flags, typename identity<Flags>::type bit) { flags |= bit; }
+  template<typename Flags>
+  void bitflag_reset(Flags& flags, typename identity<Flags>::type mask, typename identity<Flags>::type value) { flags = (flags & ~mask) | value; }
+  template<typename Flags>
+  void bitflag_clear(Flags& flags, typename identity<Flags>::type mask) { flags &= ~mask; }
+
   //---------------------------------------------------------------------------
   // Output devices
 

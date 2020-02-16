@@ -906,7 +906,7 @@ namespace contra {
     }
 
     bool read_arg(csi_single_param_t& result, bool toAllowSemicolon, csi_single_param_t defaultValue) {
-      if (m_index <m_data.size()
+      if (m_index < m_data.size()
         && (m_data[m_index].isColon || (toAllowSemicolon && !m_isColonAppeared))
       ) {
         csi_param_type const& param = m_data[m_index++];

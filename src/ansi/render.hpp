@@ -572,7 +572,7 @@ namespace ansi {
       if (xflags_t const face = (attr.xflags & attribute_t::ansi_font_mask) >> attribute_t::ansi_font_shift)
         ret |= font_face_mask & face << font_face_shft;
 
-      switch (attr.aflags & attribute_t::is_heavy_set) {
+      switch (attr.aflags & attribute_t::aflags_weight_mask) {
       case attribute_t::is_bold_set: ret |= font_weight_bold; break;
       case attribute_t::is_faint_set: ret |= font_weight_faint; break;
       case attribute_t::is_heavy_set: ret |= font_weight_heavy; break;
@@ -1793,7 +1793,8 @@ namespace ansi {
       color_t color0 = 0;
 
       decoration_horizontal_t dec_ul([&] (coord_t x1, coord_t x2, std::uint32_t style) {
-        coord_t h = (coord_t) std::ceil(ypixel * 0.05);
+        coord_t const u = (coord_t) std::ceil(ypixel * 0.05);
+        coord_t h = u;
         switch (style & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_upper_half: return;
         case attribute_t::decdhl_lower_half:
@@ -1801,9 +1802,60 @@ namespace ansi {
           break;
         }
 
-        g.fill_rectangle(x1, y + ypixel - h, x2, y + ypixel, color0);
-        if ((style & ~attribute_t::decdhl_mask) == 2)
+        coord_t pitch1, pitch2;
+        switch (style & ~attribute_t::decdhl_mask) {
+        case 4: // dotted
+          pitch1 = pitch2 = u;
+          goto dashed;
+        case 5: // dashed
+          pitch1 = xpixel * 3 / 4;
+          pitch2 = xpixel - pitch1;
+          goto dashed;
+        dashed:
+          if (style & attribute_t::decdhl_mask) {
+            pitch1 *= 2;
+            pitch2 *= 2;
+          }
+          for (coord_t x = x1; x < x2; x += pitch1 + pitch2)
+            g.fill_rectangle(x, y + ypixel - h, std::min(x2, x + pitch1), y + ypixel, color0);
+          break;
+        case 2: // double
           g.fill_rectangle(x1, y + ypixel - 3 * h, x2, y + ypixel - 2 * h, color0);
+          [[fallthrough]];
+        default: // single
+          g.fill_rectangle(x1, y + ypixel - h, x2, y + ypixel, color0);
+          break;
+        }
+      });
+
+      decoration_horizontal_t dec_cl([&] (coord_t x1, coord_t x2, std::uint32_t style) {
+        coord_t const u = (coord_t) std::ceil(ypixel * 0.05);
+        coord_t h = u;
+        switch (style & attribute_t::decdhl_mask) {
+        case attribute_t::decdhl_upper_half: return;
+        case attribute_t::decdhl_lower_half:
+          h *= 2;
+          break;
+        }
+
+        // 線には太さがあるので調整
+        x1 += h / 2;
+        x2 -= h / 2;
+        coord_t y1 = y + ypixel - h / 2;
+
+        coord_t p = h * 3;
+        if (style & attribute_t::decdhl_mask) p *= 2;
+        int const count = (x2 - x1) / p;
+        double const pitch = double(x2 - x1) / count;
+
+        coord_t fx1, fx2 = x1;
+        coord_t fy1 = y1 - h * 3 / 2, fy2 = y1;
+        for (int i = 0; i < count; i++) {
+          fx1 = fx2;
+          fx2 = std::round(x1 + (i + 1) * pitch);
+          g.draw_line(fx1, fy1, fx2, fy2, color0, h);
+          std::swap(fy1, fy2);
+        }
       });
 
       decoration_horizontal_t dec_sl([&] (coord_t x1, coord_t x2, std::uint32_t style) {
@@ -1925,47 +1977,53 @@ namespace ansi {
             color = _color.resolve_fg(cell.attribute);
           if (color != color0) {
             dec_ul.update(x, 0, (xflags_t) 0);
+            dec_cl.update(x, 0, (xflags_t) 0);
             dec_sl.update(x, 0, (xflags_t) 0);
             dec_ol.update(x, 0, (xflags_t) 0);
           }
 
           if (color) {
-            xflags_t const ideo = xflags & attribute_t::is_ideogram_mask & ~attribute_t::is_ideogram_line_left;
+            using _at = attribute_t;
+            xflags_t const ideo = xflags & (_at::is_ideogram_mask & ~_at::is_ideogram_line_left);
 
             // 下線
-            bool const ul2 = aflags & attribute_t::is_double_underline_set ||
-              ideo == attribute_t::is_ideogram_line_double_rb;
-            bool const ul1 = aflags & attribute_t::is_underline_set ||
-              xflags & attribute_t::is_frame_set ||
-              ideo == attribute_t::is_ideogram_line_single_rb;
-            dec_ul.update(x, ul2 ? 2 : ul1 ? 1 : 0, xflags);
+            bool const ul2 = (aflags & _at::aflags_underline_mask) == _at::underline_double ||
+              ideo == _at::is_ideogram_line_double_rb;
+            bool const ul1 = (aflags & _at::aflags_underline_mask) == _at::underline_single ||
+              xflags & _at::is_frame_set ||
+              ideo == _at::is_ideogram_line_single_rb;
+            bool const ul3 = (aflags & _at::aflags_underline_mask) == _at::underline_curly;
+            bool const ul4 = (aflags & _at::aflags_underline_mask) == _at::underline_dotted;
+            bool const ul5 = (aflags & _at::aflags_underline_mask) == _at::underline_dashed;
+            dec_ul.update(x, ul2 ? 2 : ul1 ? 1 : ul4 ? 4: ul5 ? 5 : 0, xflags);
+            dec_cl.update(x, ul3 ? 3 : 0, xflags);
 
             // 上線
-            bool const ol2 = ideo == attribute_t::is_ideogram_line_double_rt;
-            bool const ol1 = xflags & (attribute_t::is_overline_set | attribute_t::is_frame_set) ||
-              ideo == attribute_t::is_ideogram_line_single_rt;
+            bool const ol2 = ideo == _at::is_ideogram_line_double_rt;
+            bool const ol1 = xflags & (_at::is_overline_set | _at::is_frame_set) ||
+              ideo == _at::is_ideogram_line_single_rt;
             dec_ol.update(x, ol2 ? 2 : ol1 ? 1 : 0, xflags);
 
             // 打ち消し線
-            bool const sl2 = xflags & attribute_t::rlogin_double_strike;
-            bool const sl1 = aflags & attribute_t::is_strike_set;
+            bool const sl2 = xflags & _at::rlogin_double_strike;
+            bool const sl1 = aflags & _at::is_strike_set;
             dec_sl.update(x, sl2 ? 2 : sl1 ? 1 : 0, xflags);
 
             // 左線・右線
-            bool const ll2 = xflags & attribute_t::rlogin_double_lline;
-            bool const ll1 = xflags & (attribute_t::is_frame_set | attribute_t::rlogin_single_lline);
+            bool const ll2 = xflags & _at::rlogin_double_lline;
+            bool const ll1 = xflags & (_at::is_frame_set | _at::rlogin_single_lline);
             int const ll = ll2 ? 2 : ll1 ? 1 : 0;
-            bool const rl2 = xflags & attribute_t::rlogin_double_rline;
-            bool const rl1 = xflags & (attribute_t::is_frame_set | attribute_t::rlogin_single_rline);
+            bool const rl2 = xflags & _at::rlogin_double_rline;
+            bool const rl1 = xflags & (_at::is_frame_set | _at::rlogin_single_rline);
             int const rl = rl2 ? 2 : rl1 ? 1 : 0;
             _draw_frame(x, x + cell_width, xflags, ll, rl);
 
             // 丸
-            if (xflags & attribute_t::is_circle_set)
+            if (xflags & _at::is_circle_set)
               _draw_circle(x, x + cell_width, xflags);
 
             // 圏点
-            if (ideo == attribute_t::is_ideogram_stress)
+            if (ideo == _at::is_ideogram_stress)
               _draw_stress(x, x + cell_width, xflags);
           }
 
@@ -1973,6 +2031,7 @@ namespace ansi {
           x += cell_width;
         }
         dec_ul.update(x, 0, (xflags_t) 0);
+        dec_cl.update(x, 0, (xflags_t) 0);
         dec_sl.update(x, 0, (xflags_t) 0);
         dec_ol.update(x, 0, (xflags_t) 0);
       }

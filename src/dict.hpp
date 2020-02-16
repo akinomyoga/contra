@@ -94,21 +94,31 @@ namespace dict {
       color_space_cmyk         = 4,
       color_space_indexed      = 5,
 
+      aflags_weight_mask      = (aflags_t) 3 << 18, // bit 18-19
       is_bold_set             = (aflags_t) 1 << 18, // -+- SGR 1,2
-      is_faint_set            = (aflags_t) 1 << 19, //  |
+      is_faint_set            = (aflags_t) 2 << 18, //  |
       is_heavy_set            = (aflags_t) 3 << 18, // -' (contra拡張)
-      is_italic_set           = (aflags_t) 1 << 20, // -+- SGR 3,20
-      is_fraktur_set          = (aflags_t) 1 << 21, // -'
-      is_underline_set        = (aflags_t) 1 << 22, // -+- SGR 4,21
-      is_double_underline_set = (aflags_t) 1 << 23, // -'
-      is_blink_set            = (aflags_t) 1 << 24, // -+- SGR 5,6
-      is_rapid_blink_set      = (aflags_t) 1 << 25, // -'
-      is_inverse_set          = (aflags_t) 1 << 26, // SGR 7
-      is_invisible_set        = (aflags_t) 1 << 27, // SGR 8
-      is_strike_set           = (aflags_t) 1 << 28, // SGR 9
 
-      aflags_reserved_bit1    = (aflags_t) 1 << 29,
-      aflags_reserved_bit2    = (aflags_t) 1 << 30,
+      aflags_shape_mask       = (aflags_t) 3 << 20, // bit 19-20
+      is_italic_set           = (aflags_t) 1 << 20, // -+- SGR 3,20
+      is_fraktur_set          = (aflags_t) 2 << 20, // -'
+
+      aflags_underline_mask   = (aflags_t) 7 << 22, // bit 22-24
+      underline_single        = (aflags_t) 1 << 22, // -+- SGR 4,21
+      underline_double = (aflags_t) 2 << 22, //  |  SGR 21
+      underline_curly  = (aflags_t) 3 << 22, //  |  (kitty拡張)
+      underline_dotted = (aflags_t) 4 << 22, //  |  (mintty拡張)
+      underline_dashed = (aflags_t) 5 << 22, // -'  (mintty拡張)
+
+      aflags_blink_mask       = (aflags_t) 3 << 25, // bit 25-26
+      is_blink_set            = (aflags_t) 1 << 25, // -+- SGR 5,6
+      is_rapid_blink_set      = (aflags_t) 2 << 25, // -'
+
+      is_inverse_set          = (aflags_t) 1 << 27, // SGR 7
+      is_invisible_set        = (aflags_t) 1 << 28, // SGR 8
+      is_strike_set           = (aflags_t) 1 << 29, // SGR 9
+
+      aflags_reserved_bit1    = (aflags_t) 1 << 30,
 
       // only valid for attribute_t
       has_extended_attribute  = (aflags_t) 1 << 31,
@@ -120,6 +130,7 @@ namespace dict {
       ansi_font_shift = 0,
 
       // bit 4,5: PLD, PLU
+      xflags_subsup_mask = (xflags_t) 3 << 4,
       is_sub_set  = (xflags_t) 1 << 4,
       is_sup_set  = (xflags_t) 1 << 5,
 
@@ -146,6 +157,7 @@ namespace dict {
       decsca_protected = (xflags_t) 1 << 11,
 
       // bit 12-15: SGR(ECMA-48:1986)
+      xflags_frame_mask   = (xflags_t) 3 << 12,
       is_frame_set        = (xflags_t) 1 << 12, // -+- SGR 51,52
       is_circle_set       = (xflags_t) 1 << 13, // -'
       is_overline_set     = (xflags_t) 1 << 14, // --- SGR 53
@@ -236,11 +248,11 @@ namespace dict {
     void set_fg(color_t index, std::uint32_t colorSpace = color_space_indexed) {
       if (colorSpace == color_space_indexed) {
         aflags |= is_fg_indexed;
-        aflags = (aflags & ~fg_color_mask) | index << fg_color_shift;
+        aflags = (aflags & ~(aflags_t) fg_color_mask) | index << fg_color_shift;
         fg = 0;
       } else {
         aflags &= ~is_fg_indexed;
-        aflags = (aflags & ~fg_color_mask) | colorSpace << fg_color_shift;
+        aflags = (aflags & ~(aflags_t) fg_color_mask) | colorSpace << fg_color_shift;
         fg = index;
       }
     }
@@ -250,11 +262,11 @@ namespace dict {
     void set_bg(color_t index, std::uint32_t colorSpace = color_space_indexed) {
       if (colorSpace == color_space_indexed) {
         aflags |= is_bg_indexed;
-        aflags = (aflags & ~bg_color_mask) | index << bg_color_shift;
+        aflags = (aflags & ~(aflags_t) bg_color_mask) | index << bg_color_shift;
         bg = 0;
       } else {
         aflags &= ~is_bg_indexed;
-        aflags = (aflags & ~bg_color_mask) | colorSpace << bg_color_shift;
+        aflags = (aflags & ~(aflags_t) bg_color_mask) | colorSpace << bg_color_shift;
         bg = index;
       }
     }
@@ -363,7 +375,7 @@ namespace dict {
     // aflags
     termcap_sgrflag2 cap_bold         { _at::is_bold_set     , 1, _at::is_faint_set           ,  2, 22 };
     termcap_sgrflag2 cap_italic       { _at::is_italic_set   , 3, _at::is_fraktur_set         , 20, 23 };
-    termcap_sgrflag2 cap_underline    { _at::is_underline_set, 4, _at::is_double_underline_set, 21, 24 };
+    termcap_sgrflag2 cap_underline    { _at::underline_single, 4, _at::underline_double, 21, 24 };
     termcap_sgrflag2 cap_blink        { _at::is_blink_set    , 5, _at::is_rapid_blink_set     ,  6, 25 };
     termcap_sgrflag1 cap_inverse      { _at::is_inverse_set  , 7, 27 };
     termcap_sgrflag1 cap_invisible    { _at::is_invisible_set, 8, 28 };
