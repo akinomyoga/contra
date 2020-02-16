@@ -1328,17 +1328,18 @@ namespace ansi {
   //---------------------------------------------------------------------------
   // SGR and other graphics
 
-  static void do_sgr_iso8613_colors(board_t& b, csi_parameters& params, bool isfg) {
+  static void do_sgr_iso8613_colors(board_t& b, csi_parameters& params, int type) {
     csi_single_param_t colorSpace;
     params.read_arg(colorSpace, true, 0);
     color_t color;
     switch (colorSpace) {
     case attribute_t::color_space_default:
     default:
-      if (isfg)
-        b.cur.attribute.reset_fg();
-      else
-        b.cur.attribute.reset_bg();
+      switch (type) {
+      case 0: b.cur.attribute.reset_fg(); break;
+      case 1: b.cur.attribute.reset_bg(); break;
+      case 2: b.cur.attribute.reset_dc(); break;
+      }
       break;
 
     case attribute_t::color_space_transparent:
@@ -1387,10 +1388,11 @@ namespace ansi {
       break;
 
     set_color:
-      if (isfg)
-        b.cur.attribute.set_fg(color, colorSpace);
-      else
-        b.cur.attribute.set_bg(color, colorSpace);
+      switch (type) {
+      case 0: b.cur.attribute.set_fg(color, colorSpace); break;
+      case 1: b.cur.attribute.set_bg(color, colorSpace); break;
+      case 2: b.cur.attribute.set_dc(color, colorSpace); break;
+      }
       break;
     }
   }
@@ -1401,7 +1403,7 @@ namespace ansi {
       if (param < 38) {
         b.cur.attribute.set_fg(param - 30);
       } else if (param == 38) {
-        do_sgr_iso8613_colors(b, rest, true);
+        do_sgr_iso8613_colors(b, rest, 0);
       } else {
         b.cur.attribute.reset_fg();
       }
@@ -1410,7 +1412,7 @@ namespace ansi {
       if (param < 48) {
         b.cur.attribute.set_bg(param - 40);
       } else if (param == 48) {
-        do_sgr_iso8613_colors(b, rest, false);
+        do_sgr_iso8613_colors(b, rest, 1);
       } else {
         b.cur.attribute.reset_bg();
       }
@@ -1513,6 +1515,10 @@ namespace ansi {
     case 7773: case 73: bitflag_reset(xflags, _at::xflags_subsup_mask, _at::is_sup_set); break;
     case 7774: case 74: bitflag_reset(xflags, _at::xflags_subsup_mask, _at::is_sub_set); break;
     case 7775: case 75: bitflag_clear(xflags, _at::xflags_subsup_mask); break;
+
+    // Kitty 拡張
+    case 7758: case 58: do_sgr_iso8613_colors(b, rest, 2); break;
+    case 7759: case 59: b.cur.attribute.reset_dc(); break;
 
     default:
       std::fprintf(stderr, "unrecognized SGR value %d\n", param);

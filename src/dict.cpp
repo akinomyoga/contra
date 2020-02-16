@@ -17,7 +17,7 @@ static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrflag2 cons
 
 static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrcolor const& sgrcolor) {
   if (!sgrcolor.off && (sgrcolor.base || sgrcolor.iso8613.sgr))
-    flags = sgrcolor.bit;
+    flags |= sgrcolor.mask;
 }
 
 static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrideogram const& capIdeogram) {

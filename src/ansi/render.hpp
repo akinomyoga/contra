@@ -323,6 +323,14 @@ namespace ansi {
       }
       return {space, color};
     }
+    std::pair<byte, color_t> get_dc(attribute_t const& attr) {
+      byte const space = attr.dc_space();
+      color_t const color = attr.dc_color();
+      if (space == 0)
+        return get_fg(attr);
+      else
+        return {space, color};
+    }
   public:
     color_t resolve_fg(attribute_t const& attr) {
       bool const inverse = attr.aflags & attribute_t::is_inverse_set;
@@ -336,6 +344,14 @@ namespace ansi {
       bool const inverse = attr.aflags & attribute_t::is_inverse_set;
       bool const selected = attr.xflags & attribute_t::ssa_selected;
       auto [space, color] = inverse != selected ? get_fg(attr) : get_bg(attr);
+      if (space == m_space && color == m_color) return m_rgba;
+      return resolve(space, color);
+    }
+
+    color_t resolve_dc(attribute_t const& attr) {
+      byte const space = attr.dc_space();
+      if (space == 0) return resolve_fg(attr);
+      color_t const color = attr.dc_color();
       if (space == m_space && color == m_color) return m_rgba;
       return resolve(space, color);
     }
@@ -1974,7 +1990,7 @@ namespace ansi {
           coord_t const cell_width = cell.width * xunit;
           color_t color = 0;
           if (code != ascii_nul && !(aflags & invisible_flags))
-            color = _color.resolve_fg(cell.attribute);
+            color = _color.resolve_dc(cell.attribute);
           if (color != color0) {
             dec_ul.update(x, 0, (xflags_t) 0);
             dec_cl.update(x, 0, (xflags_t) 0);
