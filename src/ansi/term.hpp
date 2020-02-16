@@ -167,8 +167,8 @@ namespace ansi {
   private:
     curpos_t m_width;
     curpos_t m_height;
-    coord_t m_xpixel;
-    coord_t m_ypixel;
+    coord_t m_xunit;
+    coord_t m_yunit;
   public:
     // ToDo: altscreen で直接弄っている。直接触らなくても良い様に設計を見直したい。
     std::uint32_t m_line_count = 0;
@@ -178,19 +178,19 @@ namespace ansi {
   public:
     curpos_t width() const { return this->m_width; }
     curpos_t height() const { return this->m_height; }
-    coord_t xpixel() const { return this->m_xpixel; }
-    coord_t ypixel() const { return this->m_ypixel; }
+    coord_t xunit() const { return this->m_xunit; }
+    coord_t yunit() const { return this->m_yunit; }
     presentation_direction_t presentation_direction() const { return m_presentation_direction; }
     void set_presentation_direction(presentation_direction_t value) {
       m_presentation_direction = value;
     }
 
   public:
-    board_t(curpos_t width, curpos_t height, curpos_t xpixel = 7, curpos_t ypixel = 14) {
+    board_t(curpos_t width, curpos_t height, curpos_t xunit = 7, curpos_t yunit = 14) {
       m_width = limit::term_col.clamp(width);
       m_height = limit::term_row.clamp(height);
-      m_xpixel = limit::term_xpixel.clamp(xpixel);
-      m_ypixel = limit::term_ypixel.clamp(ypixel);
+      m_xunit = limit::term_xunit.clamp(xunit);
+      m_yunit = limit::term_yunit.clamp(yunit);
       this->cur.set(0, 0);
       this->m_lines.resize(m_height);
       for (line_t& line : m_lines)
@@ -217,10 +217,10 @@ namespace ansi {
       this->m_width = width;
       this->m_height = height;
     }
-    void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
+    void reset_size(curpos_t width, curpos_t height, coord_t xunit, coord_t yunit) {
       this->reset_size(width, height);
-      m_xpixel = limit::term_xpixel.clamp(xpixel);
-      m_ypixel = limit::term_ypixel.clamp(ypixel);
+      m_xunit = limit::term_xunit.clamp(xunit);
+      m_yunit = limit::term_yunit.clamp(yunit);
     }
 
   public:
@@ -582,8 +582,8 @@ namespace ansi {
     void reset_size(curpos_t width, curpos_t height) {
       m_board.reset_size(width, height);
     }
-    void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
-      m_board.reset_size(width, height, xpixel, ypixel);
+    void reset_size(curpos_t width, curpos_t height, coord_t xunit, coord_t yunit) {
+      m_board.reset_size(width, height, xunit, yunit);
     }
 
   public: // todo: make private
@@ -615,8 +615,8 @@ namespace ansi {
     std::vector<cell_t> m_buffer;
 
   public:
-    term_t(curpos_t width, curpos_t height, coord_t xpixel = 7, coord_t ypixel = 13):
-      m_board(width, height, xpixel, ypixel) {}
+    term_t(curpos_t width, curpos_t height, coord_t xunit = 7, coord_t yunit = 13):
+      m_board(width, height, xunit, yunit) {}
 
   public:
     curpos_t width() const { return this->m_board.width(); }

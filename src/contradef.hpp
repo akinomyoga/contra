@@ -33,6 +33,9 @@ namespace contra {
   template<typename Flags>
   void bitflag_clear(Flags& flags, typename identity<Flags>::type mask) { flags &= ~mask; }
 
+  // for debug
+  int fileprintf(const char* filename, const char* fmt, ...);
+
   //---------------------------------------------------------------------------
   // Output devices
 
@@ -363,8 +366,8 @@ namespace contra {
 
     constexpr range<ansi::curpos_t> term_col {1, 2048};
     constexpr range<ansi::curpos_t> term_row {1, 2048};
-    constexpr range<ansi::coord_t> term_xpixel {4, 512}; // SGR装飾の類で仮定?
-    constexpr range<ansi::coord_t> term_ypixel {4, 512}; // SGR装飾の類で仮定?
+    constexpr range<ansi::coord_t> term_xunit {4, 512}; // SGR装飾の類で仮定?
+    constexpr range<ansi::coord_t> term_yunit {4, 512}; // SGR装飾の類で仮定?
 
     constexpr std::size_t maximal_cells_per_line = term_col.max() * 5;
   }

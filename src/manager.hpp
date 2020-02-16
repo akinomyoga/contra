@@ -26,11 +26,11 @@ namespace term {
   public:
     virtual void reset_size(curpos_t width, curpos_t height) {
       mwg_assert(!!m_term);
-      this->reset_size(width, height, board().xpixel(), board().ypixel());
+      this->reset_size(width, height, board().xunit(), board().yunit());
     }
-    virtual void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
+    virtual void reset_size(curpos_t width, curpos_t height, coord_t xunit, coord_t yunit) {
       mwg_assert(!!m_term);
-      m_term->reset_size(width, height, xpixel, ypixel);
+      m_term->reset_size(width, height, xunit, yunit);
     }
 
   private:
@@ -50,9 +50,9 @@ namespace term {
     terminal_application() {}
     virtual ~terminal_application() {}
 
-    bool initialize(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
+    bool initialize(curpos_t width, curpos_t height, coord_t xunit, coord_t yunit) {
       if (m_term) return true;
-      m_term = std::make_unique<contra::ansi::term_t>(width, height, xpixel, ypixel);
+      m_term = std::make_unique<contra::ansi::term_t>(width, height, xunit, yunit);
       m_view.set_term(m_term.get());
       return true;
     }
@@ -241,8 +241,8 @@ namespace term {
     virtual bool request_change_size(
       [[maybe_unused]] curpos_t col,
       [[maybe_unused]] curpos_t row,
-      [[maybe_unused]] coord_t xpixel,
-      [[maybe_unused]] coord_t ypixel
+      [[maybe_unused]] coord_t xunit,
+      [[maybe_unused]] coord_t yunit
     ) { return false; }
     virtual bool create_new_session() { return false; }
   };
@@ -252,7 +252,7 @@ namespace term {
     terminal_events* m_events = nullptr;
 
     curpos_t m_width = 80, m_height = 24;
-    coord_t m_xpixel = 7, m_ypixel = 13;
+    coord_t m_xunit = 7, m_yunit = 13;
 
   public:
     terminal_manager() {
@@ -267,7 +267,7 @@ namespace term {
       if (!force_update && new_iapp == m_active_iapp) return;
       m_active_iapp = new_iapp;
       if (m_apps.size()) {
-        app().reset_size(m_width, m_height, m_xpixel, m_ypixel);
+        app().reset_size(m_width, m_height, m_xunit, m_yunit);
         m_dirty = true;
       }
     }
@@ -812,8 +812,8 @@ namespace term {
     }
 
   private:
-    coord_t m_zoom_xpixel0 = 7;
-    coord_t m_zoom_ypixel0 = 13;
+    coord_t m_zoom_xunit0 = 7;
+    coord_t m_zoom_yunit0 = 13;
     int m_zoom_level_min = 0;
     int m_zoom_level_max = 0;
     int m_zoom_level = 0;
@@ -823,28 +823,28 @@ namespace term {
       return std::ceil(base * std::pow(zoom_ratio, zoom_level) + zoom_level);
     }
   public:
-    void initialize_zoom(coord_t xpixel = -1, coord_t ypixel = -1) {
-      if (xpixel >= 0) m_zoom_xpixel0 = limit::term_xpixel.clamp(xpixel);
-      if (ypixel >= 0) m_zoom_ypixel0 = limit::term_ypixel.clamp(ypixel);
+    void initialize_zoom(coord_t xunit = -1, coord_t yunit = -1) {
+      if (xunit >= 0) m_zoom_xunit0 = limit::term_xunit.clamp(xunit);
+      if (yunit >= 0) m_zoom_yunit0 = limit::term_yunit.clamp(yunit);
 
-      coord_t const ypixel_min_from_xrange = contra::ceil_div((limit::term_xpixel.min() - 1) * m_zoom_ypixel0 + 1, m_zoom_xpixel0);
-      coord_t const ypixel_max_from_xrange = limit::term_xpixel.max() * m_zoom_ypixel0 / m_zoom_xpixel0;
-      coord_t const ypixel_min = std::max(limit::term_ypixel.min(), ypixel_min_from_xrange);
-      coord_t const ypixel_max = std::min(limit::term_ypixel.max(), ypixel_max_from_xrange);
-      m_zoom_level_min = std::ceil(std::log((double) ypixel_min / m_zoom_ypixel0) / std::log(zoom_ratio));
-      m_zoom_level_max = std::ceil(std::log((double) ypixel_max / m_zoom_ypixel0) / std::log(zoom_ratio));
-      while (calculate_zoom(m_zoom_ypixel0, m_zoom_level_max) > ypixel_max) m_zoom_level_max--;
-      while (calculate_zoom(m_zoom_ypixel0, m_zoom_level_min) < ypixel_min) m_zoom_level_min++;
+      coord_t const yunit_min_from_xrange = contra::ceil_div((limit::term_xunit.min() - 1) * m_zoom_yunit0 + 1, m_zoom_xunit0);
+      coord_t const yunit_max_from_xrange = limit::term_xunit.max() * m_zoom_yunit0 / m_zoom_xunit0;
+      coord_t const yunit_min = std::max(limit::term_yunit.min(), yunit_min_from_xrange);
+      coord_t const yunit_max = std::min(limit::term_yunit.max(), yunit_max_from_xrange);
+      m_zoom_level_min = std::ceil(std::log((double) yunit_min / m_zoom_yunit0) / std::log(zoom_ratio));
+      m_zoom_level_max = std::ceil(std::log((double) yunit_max / m_zoom_yunit0) / std::log(zoom_ratio));
+      while (calculate_zoom(m_zoom_yunit0, m_zoom_level_max) > yunit_max) m_zoom_level_max--;
+      while (calculate_zoom(m_zoom_yunit0, m_zoom_level_min) < yunit_min) m_zoom_level_min++;
       this->update_zoom(0);
     }
   private:
     void update_zoom(int zoom_level) {
       m_zoom_level = std::clamp(zoom_level, m_zoom_level_min, m_zoom_level_max);
-      coord_t const ypixel_zoom = calculate_zoom(m_zoom_ypixel0, m_zoom_level);
-      coord_t const xpixel_zoom = contra::ceil_div(ypixel_zoom * m_zoom_xpixel0, m_zoom_ypixel0);
-      coord_t const ypixel = limit::term_ypixel.clamp(ypixel_zoom);
-      coord_t const xpixel = limit::term_xpixel.clamp(xpixel_zoom);
-      if (m_events) m_events->request_change_size(-1, -1, xpixel, ypixel);
+      coord_t const yunit_zoom = calculate_zoom(m_zoom_yunit0, m_zoom_level);
+      coord_t const xunit_zoom = contra::ceil_div(yunit_zoom * m_zoom_xunit0, m_zoom_yunit0);
+      coord_t const yunit = limit::term_yunit.clamp(yunit_zoom);
+      coord_t const xunit = limit::term_xunit.clamp(xunit_zoom);
+      if (m_events) m_events->request_change_size(-1, -1, xunit, yunit);
     }
 
   public:
@@ -880,13 +880,13 @@ namespace term {
       if (m_apps.size())
         app().reset_size(width, height);
     }
-    void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
+    void reset_size(curpos_t width, curpos_t height, coord_t xunit, coord_t yunit) {
       this->m_width = width;
       this->m_height = height;
-      this->m_xpixel = xpixel;
-      this->m_ypixel = ypixel;
+      this->m_xunit = xunit;
+      this->m_yunit = yunit;
       if (m_apps.size())
-        app().reset_size(width, height, xpixel, ypixel);
+        app().reset_size(width, height, xunit, yunit);
     }
 
   };

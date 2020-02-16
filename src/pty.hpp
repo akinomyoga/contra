@@ -44,7 +44,7 @@ namespace term {
   typedef void (*exec_error_handler_t)(int errno_, std::uintptr_t param);
 
   struct terminal_session_parameters {
-    curpos_t col = 80, row = 24, xpixel = 7, ypixel = 13;
+    curpos_t col = 80, row = 24, xunit = 7, yunit = 13;
     curpos_t scroll_buffer_size = 1000;
     exec_error_handler_t exec_error_handler = nullptr;
     std::uintptr_t exec_error_param = 0u;

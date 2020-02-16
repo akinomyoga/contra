@@ -36,8 +36,8 @@ namespace ttty {
     contra::term::terminal_manager& manager() { return m_manager; }
     contra::term::terminal_manager const& manager() const { return m_manager; }
 
-    void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) {
-      m_manager.reset_size(width, height, xpixel, ypixel);
+    void reset_size(curpos_t width, curpos_t height, coord_t xunit, coord_t yunit) {
+      m_manager.reset_size(width, height, xunit, yunit);
       renderer->reset_size(width, height);
     }
 
@@ -116,7 +116,7 @@ namespace ttty {
   public:
     bool initialize(contra::term::terminal_session_parameters& params) {
       setup_tty();
-      m_manager.reset_size(params.col, params.row, params.xpixel, params.ypixel);
+      m_manager.reset_size(params.col, params.row, params.xunit, params.yunit);
 
       std::unique_ptr<contra::term::terminal_application> sess = contra::term::create_terminal_session(params);
       if (!sess) {

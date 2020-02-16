@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstring>
 #include <sstream>
+#include <cstdarg>
 #include "enc.utf8.hpp"
 
 namespace contra {
@@ -104,4 +105,13 @@ namespace contra {
     return true;
   }
 
+  int fileprintf(const char* filename, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    std::FILE* file = std::fopen(filename, "a");
+    int const ret = std::vfprintf(file, fmt, args);
+    va_end(args);
+    std::fclose(file);
+    return ret;
+  }
 }

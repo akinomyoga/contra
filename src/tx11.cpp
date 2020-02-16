@@ -503,14 +503,14 @@ namespace {
 
   public:
     tx11_graphics_buffer(contra::app::context& actx, ansi::window_state_t& wstat): m_text_drawer(actx) {
-      m_text_drawer.set_size(wstat.m_xpixel, wstat.m_ypixel);
+      m_text_drawer.set_size(wstat.m_xunit, wstat.m_yunit);
     }
     ~tx11_graphics_buffer() {
       release();
     }
 
     void reset_size(ansi::window_state_t const& wstat) {
-      m_text_drawer.set_size(wstat.m_xpixel, wstat.m_ypixel);
+      m_text_drawer.set_size(wstat.m_xunit, wstat.m_yunit);
     }
 
   public:
@@ -677,7 +677,7 @@ namespace {
     void draw_characters(coord_t x1, coord_t y1, character_buffer const& buff, font_t font, color_t color) {
       // set_foreground(color);
       // contra_unused(font);
-      // coord_t x = x1, y = y1 + wstat.m_ypixel - 1;
+      // coord_t x = x1, y = y1 + wstat.m_yunit - 1;
       // for (std::size_t i = 0, iN = buff.characters.size(); i < iN; i++) {
       //   ::XDrawString(m_display, m_drawable, m_gc, x, y, &buff.characters[i], 1);
       //   x += buff.progress[i];
@@ -719,7 +719,7 @@ namespace {
     tx11_window_t(contra::app::context& actx): actx(actx) {
       // size and dimension
       wstat.configure_metric(actx);
-      manager.reset_size(wstat.m_col, wstat.m_row, wstat.m_xpixel, wstat.m_ypixel);
+      manager.reset_size(wstat.m_col, wstat.m_row, wstat.m_xunit, wstat.m_yunit);
 
       // other settings
       settings.configure(actx);
@@ -757,8 +757,8 @@ namespace {
         double const dpiscale = std::max(1.0, dpi / 96.0);
         wstat.configure_metric(actx, dpiscale);
         gbuffer.reset_size(wstat);
-        manager.initialize_zoom(wstat.m_xpixel, wstat.m_ypixel);
-        manager.reset_size(wstat.m_col, wstat.m_row, wstat.m_xpixel, wstat.m_ypixel);
+        manager.initialize_zoom(wstat.m_xunit, wstat.m_yunit);
+        manager.reset_size(wstat.m_col, wstat.m_row, wstat.m_xunit, wstat.m_yunit);
       }
 #endif
 
@@ -809,8 +809,8 @@ namespace {
       this->m_window_width = attrs.width;
       this->m_window_height = attrs.height;
 
-      ansi::curpos_t const new_col = std::max(1, (attrs.width - 2 * wstat.m_xframe) / wstat.m_xpixel);
-      ansi::curpos_t const new_row = std::max(1, (attrs.height - 2 * wstat.m_yframe) / wstat.m_ypixel);
+      ansi::curpos_t const new_col = std::max(1, (attrs.width - 2 * wstat.m_xframe) / wstat.m_xunit);
+      ansi::curpos_t const new_row = std::max(1, (attrs.height - 2 * wstat.m_yframe) / wstat.m_yunit);
       if (new_col != wstat.m_col || new_row != wstat.m_row) {
         wstat.m_col = new_col;
         wstat.m_row = new_row;
@@ -1030,8 +1030,8 @@ namespace {
       term::terminal_session_parameters params;
       params.col = wstat.m_col;
       params.row = wstat.m_row;
-      params.xpixel = wstat.m_xpixel;
-      params.ypixel = wstat.m_ypixel;
+      params.xunit = wstat.m_xunit;
+      params.yunit = wstat.m_yunit;
       params.exec_error_handler = &exec_error_handler;
       actx.read("session_term", params.env["TERM"] = "xterm-256color");
       actx.read("session_shell", params.shell = "/bin/bash");

@@ -20,8 +20,8 @@ namespace ansi {
   struct window_state_t {
     curpos_t m_col = 80;
     curpos_t m_row = 30;
-    coord_t m_xpixel = 7;
-    coord_t m_ypixel = 13;
+    coord_t m_xunit = 7;
+    coord_t m_yunit = 13;
     coord_t m_xframe = 1;
     coord_t m_yframe = 1;
   public:
@@ -31,23 +31,23 @@ namespace ansi {
       this->m_col = limit::term_col.clamp(this->m_col);
       this->m_row = limit::term_row.clamp(this->m_row);
 
-      double xpixel, ypixel, xframe, yframe;
-      actx.read("term_xpixel", xpixel = 7);
-      actx.read("term_ypixel", ypixel = 13);
+      double xunit, yunit, xframe, yframe;
+      actx.read("term_xunit", xunit = 7);
+      actx.read("term_yunit", yunit = 13);
       actx.read("term_xframe", xframe = 1);
       actx.read("term_yframe", yframe = 1);
-      this->m_xpixel = limit::term_xpixel.clamp(std::round(xpixel * scale));
-      this->m_ypixel = limit::term_ypixel.clamp(std::round(ypixel * scale));
+      this->m_xunit = limit::term_xunit.clamp(std::round(xunit * scale));
+      this->m_yunit = limit::term_yunit.clamp(std::round(yunit * scale));
       this->m_xframe = std::round(xframe * scale);
       this->m_yframe = std::round(yframe * scale);
     }
 
   public:
     coord_t calculate_client_width() const {
-      return m_xpixel * m_col + 2 * m_xframe;
+      return m_xunit * m_col + 2 * m_xframe;
     }
     coord_t calculate_client_height() const {
-      return m_ypixel * m_row + 2 * m_yframe;
+      return m_yunit * m_row + 2 * m_yframe;
     }
 
     // 実際の幅 (要求した幅と実際の幅が異なるかもしれないので)
@@ -139,16 +139,16 @@ namespace ansi {
     coord_t m_yframe = 0;
     curpos_t m_col = 0;
     curpos_t m_row = 0;
-    coord_t m_xpixel = 0;
-    coord_t m_ypixel = 0;
+    coord_t m_xunit = 0;
+    coord_t m_yunit = 0;
     presentation_direction_t m_presentation_direction = presentation_direction_default;
     bool is_metric_changed(window_state_t const& wstat, term_view_t const& view) const {
       if (m_xframe != wstat.m_xframe) return true;
       if (m_yframe != wstat.m_yframe) return true;
       if (m_col != wstat.m_col) return true;
       if (m_row != wstat.m_row) return true;
-      if (m_xpixel != wstat.m_xpixel) return true;
-      if (m_ypixel != wstat.m_ypixel) return true;
+      if (m_xunit != wstat.m_xunit) return true;
+      if (m_yunit != wstat.m_yunit) return true;
       if (view.presentation_direction() != m_presentation_direction) return true;
       return false;
     }
@@ -157,8 +157,8 @@ namespace ansi {
       m_yframe = wstat.m_yframe;
       m_col = wstat.m_col;
       m_row = wstat.m_row;
-      m_xpixel = wstat.m_xpixel;
-      m_ypixel = wstat.m_ypixel;
+      m_xunit = wstat.m_xunit;
+      m_yunit = wstat.m_yunit;
       m_presentation_direction = view.presentation_direction();
     }
 
@@ -394,12 +394,12 @@ namespace ansi {
 
   public:
     font_metric_t() = default;
-    font_metric_t(coord_t xpixel, coord_t ypixel) {
-      this->initialize(xpixel, ypixel);
+    font_metric_t(coord_t xunit, coord_t yunit) {
+      this->initialize(xunit, yunit);
     }
-    void initialize(coord_t xpixel, coord_t ypixel) {
-      m_width = xpixel;
-      m_height = ypixel;
+    void initialize(coord_t xunit, coord_t yunit) {
+      m_width = xunit;
+      m_height = yunit;
     }
 
     coord_t width() const { return m_width; }
@@ -624,8 +624,8 @@ namespace ansi {
     double dx, dy, dxW;
 
   public:
-    void initialize(coord_t xpixel, coord_t ypixel) {
-      this->fmetric.initialize(xpixel, ypixel);
+    void initialize(coord_t xunit, coord_t yunit) {
+      this->fmetric.initialize(xunit, yunit);
     }
 
     void reserve(std::size_t size) {
@@ -664,15 +664,15 @@ namespace ansi {
 
   template<typename Graphics>
   class graphics_drawer {
-    coord_t xpixel, ypixel;
+    coord_t xunit, yunit;
     Graphics* g;
     coord_t x, y, w, h;
     color_t color;
     font_t font;
   public:
-    void initialize(coord_t xpixel, coord_t ypixel) {
-      this->xpixel = xpixel;
-      this->ypixel = ypixel;
+    void initialize(coord_t xunit, coord_t yunit) {
+      this->xunit = xunit;
+      this->yunit = yunit;
     }
     void set_parameters(Graphics* g, coord_t x, coord_t y, coord_t w, coord_t h, color_t color, font_t font) {
       this->g = g;
@@ -689,11 +689,11 @@ namespace ansi {
     bool bold() const { return font & font_weight_bold; }
 
     coord_t hline_width() const {
-      return std::ceil(ypixel / 20.0) * (1 + bold() + !!(font & font_decdhl));
+      return std::ceil(yunit / 20.0) * (1 + bold() + !!(font & font_decdhl));
     }
 
     coord_t vline_width() const {
-      return std::ceil(xpixel / 10.0) * (1 + bold() + !!(font & font_decdwl));
+      return std::ceil(xunit / 10.0) * (1 + bold() + !!(font & font_decdwl));
     }
 
   private:
@@ -715,7 +715,7 @@ namespace ansi {
   private:
     void impl_varrow(bool is_minus) {
       coord_t const xM = x + w / 2;
-      coord_t const vlw = std::ceil(ypixel / 20.0) * (1 + bold() + !!(font & font_decdwl));
+      coord_t const vlw = std::ceil(yunit / 20.0) * (1 + bold() + !!(font & font_decdwl));
       coord_t const h1 = std::max<coord_t>(5, (bold() ? h * 9 / 10 : std::min(h - 2, std::max(5, h * 4 / 5))) - (vlw - 1));
       coord_t const xwing = std::max<coord_t>(3, (w - vlw - 1) / 2);
       coord_t const ywing = !(font & font_decdwl) || (font & font_decdhl) ? xwing : (xwing + 1) / 2;
@@ -1289,11 +1289,11 @@ namespace ansi {
 
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;
-      coord_t const ypixel = wstat.m_ypixel;
-      coord_t const xpixel = wstat.m_xpixel;
+      coord_t const yunit = wstat.m_yunit;
+      coord_t const xunit = wstat.m_xunit;
 
-      coord_t x0 = xorigin + xpixel * view.client_x();
-      coord_t const y0 = yorigin + ypixel * view.client_y();
+      coord_t x0 = xorigin + xunit * view.client_x();
+      coord_t const y0 = yorigin + yunit * view.client_y();
       bool const r2l = view.cur_r2l();
       coord_t size;
       bool underline = false;
@@ -1305,20 +1305,20 @@ namespace ansi {
         underline = true;
         size = 3;
       } else if (cursor_shape < 0) {
-        size = (xpixel * std::min(100, -cursor_shape) + 99) / 100;
+        size = (xunit * std::min(100, -cursor_shape) + 99) / 100;
       } else if (cursor_shape) {
         underline = true;
-        size = (ypixel * std::min(100, cursor_shape) + 99) / 100;
+        size = (yunit * std::min(100, cursor_shape) + 99) / 100;
       }
 
       if (underline) {
-        coord_t const height = std::min(ypixel, std::max(size, wstat.m_caret_underline_min_height));
-        coord_t const x1 = x0, y1 = y0 + ypixel - height;
-        graphics.invert_rectangle(x1, y1, x1 + xpixel, y1 + height);
+        coord_t const height = std::min(yunit, std::max(size, wstat.m_caret_underline_min_height));
+        coord_t const x1 = x0, y1 = y0 + yunit - height;
+        graphics.invert_rectangle(x1, y1, x1 + xunit, y1 + height);
       } else {
-        coord_t const width = std::min(xpixel, std::max(size, wstat.m_caret_vertical_min_width));
-        if (r2l) x0 += xpixel - width;
-        graphics.invert_rectangle(x0, y0, x0 + width, y0 + ypixel);
+        coord_t const width = std::min(xunit, std::max(size, wstat.m_caret_vertical_min_width));
+        if (r2l) x0 += xunit - width;
+        graphics.invert_rectangle(x0, y0, x0 + width, y0 + yunit);
       }
     }
 
@@ -1326,8 +1326,8 @@ namespace ansi {
     void draw_background(Graphics& graphics, term_view_t const& view, content_update& update) {
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;
-      coord_t const ypixel = wstat.m_ypixel;
-      coord_t const xpixel = wstat.m_xpixel;
+      coord_t const yunit = wstat.m_yunit;
+      coord_t const xunit = wstat.m_xunit;
       curpos_t const height = view.height();
       tstate_t const& s = view.state();
       color_resolver_t _color(s);
@@ -1340,11 +1340,11 @@ namespace ansi {
         coord_t y2 = yorigin;
         for (curpos_t iline = 0; iline < height; iline++) {
           if (update.lines[iline].is_invalidated) {
-            y2 += ypixel;
+            y2 += yunit;
           } else {
             if (y1 < y2)
               graphics.fill_rectangle(0, y1, wstat.m_canvas_width, y2, bg);
-            y1 = y2 += ypixel;
+            y1 = y2 += yunit;
           }
         }
         if (update.is_bmargin_invalidated) y2 = wstat.m_canvas_height;
@@ -1357,10 +1357,10 @@ namespace ansi {
       color_t bg0 = 0;
       auto _fill = [=, &graphics, &x, &y, &x0, &bg0] () {
         if (x0 >= x || !bg0 || bg0 == bg) return;
-        graphics.fill_rectangle(x0, y, x, y + ypixel, bg0);
+        graphics.fill_rectangle(x0, y, x, y + yunit, bg0);
       };
 
-      for (curpos_t iline = 0; iline < height; iline++, y += ypixel) {
+      for (curpos_t iline = 0; iline < height; iline++, y += yunit) {
         // Note: はみ出ない事は自明なので is_redraw_requested
         //   ではなくて is_invalidated の時だけ描画でOK
         if (!update.lines[iline].is_invalidated) continue;
@@ -1378,7 +1378,7 @@ namespace ansi {
             bg0 = bg1;
             x0 = x;
           }
-          x += cell.width * xpixel;
+          x += cell.width * xunit;
         }
         _fill();
       }
@@ -1386,7 +1386,7 @@ namespace ansi {
 
   private:
     void clip_decdhl_upper(Graphics& g, coord_t y) {
-      g.clip_rectangle(0, 0, wstat.m_canvas_width, y + wstat.m_ypixel);
+      g.clip_rectangle(0, 0, wstat.m_canvas_width, y + wstat.m_yunit);
     }
     void clip_decdhl_lower(Graphics& g, coord_t y) {
       g.clip_rectangle(0, y, wstat.m_canvas_width, wstat.m_canvas_height);
@@ -1401,8 +1401,8 @@ namespace ansi {
 
       coord_t xorigin;
       coord_t yorigin;
-      coord_t xpixel;
-      coord_t ypixel;
+      coord_t xunit;
+      coord_t yunit;
       curpos_t height;
 
       color_resolver_t _color;
@@ -1447,7 +1447,7 @@ namespace ansi {
 
         if (code < 0x1000) {
           // 文字的な図形 (フォントと同様の変形を受ける)
-          font_metric_t fmetric(xpixel, ypixel);
+          font_metric_t fmetric(xunit, yunit);
           auto [dx, dy, dxW] = fmetric.get_displacement(font);
           coord_t const x = x1 + std::round(dx + dxW * cell.width);
           coord_t const y = y1 + std::round(dy);
@@ -1471,10 +1471,10 @@ namespace ansi {
           }
         } else {
           // 背景的な図形
-          coord_t w = xpixel, h = ypixel;
+          coord_t w = xunit, h = yunit;
           if (font & font_decdwl) w *= 2;
           if (font & font_decdhl) h *= 2;
-          if (font & font_layout_lower_half) y1 -= ypixel;
+          if (font & font_layout_lower_half) y1 -= yunit;
           if (0x1001 <= code && code < 0x1100) {
             m_graph.boxline(g, x1, y1, w, h, fg, font, code & 0xFF);
           } else {
@@ -1546,7 +1546,7 @@ namespace ansi {
 
           if (i == j) {
             i++;
-            x += cell2.width * xpixel;
+            x += cell2.width * xunit;
           } else
             cells[j].character.value |= flag_processed;
         }
@@ -1643,7 +1643,7 @@ namespace ansi {
         processed:
           if (i == j) {
             i++;
-            x += cell2.width * xpixel;
+            x += cell2.width * xunit;
           } else
             cells[j].character.value |= flag_processed;
         }
@@ -1661,12 +1661,12 @@ namespace ansi {
         auto const& wstat = renderer->wstat;
         this->xorigin = wstat.m_xframe;
         this->yorigin = wstat.m_yframe;
-        this->ypixel = wstat.m_ypixel;
-        this->xpixel = wstat.m_xpixel;
+        this->yunit = wstat.m_yunit;
+        this->xunit = wstat.m_xunit;
         this->height = view.height();
         this->_color = color_resolver_t(view.state());
-        this->m_str.initialize(wstat.m_xpixel, wstat.m_ypixel);
-        this->m_graph.initialize(wstat.m_xpixel, wstat.m_ypixel);
+        this->m_str.initialize(wstat.m_xunit, wstat.m_yunit);
+        this->m_graph.initialize(wstat.m_xunit, wstat.m_yunit);
 
         this->invisible_flags = attribute_t::is_invisible_set;
         if (wstat.m_blinking_count & 1) invisible_flags |= attribute_t::is_rapid_blink_set;
@@ -1677,7 +1677,7 @@ namespace ansi {
           auto& cells = content[iline].cells;
 
           coord_t x = xorigin;
-          coord_t const y = yorigin + iline * ypixel;
+          coord_t const y = yorigin + iline * yunit;
           m_str.reserve(cells.size());
 
           for (std::size_t i = 0; i < cells.size(); ) {
@@ -1685,7 +1685,7 @@ namespace ansi {
             coord_t const x1 = x;
             coord_t const& y1 = y;
             i++;
-            x += cell.width * xpixel;
+            x += cell.width * xunit;
 
             std::uint32_t code = cell.character.value;
             if (!_visible(code, cell.attribute.aflags)) continue;
@@ -1712,8 +1712,8 @@ namespace ansi {
     void draw_characters_mono(Graphics& g, term_view_t const& view, std::vector<line_content> const& content) {
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;
-      coord_t const ypixel = wstat.m_ypixel;
-      coord_t const xpixel = wstat.m_xpixel;
+      coord_t const yunit = wstat.m_yunit;
+      coord_t const xunit = wstat.m_xunit;
       curpos_t const height = view.height();
 
       std::vector<cell_t> cells;
@@ -1723,7 +1723,7 @@ namespace ansi {
         std::vector<cell_t> const& cells = content[iline].cells;
 
         coord_t xoffset = xorigin;
-        coord_t yoffset = yorigin + iline * ypixel;
+        coord_t yoffset = yorigin + iline * yunit;
         charbuff.clear();
         charbuff.reserve(cells.size());
         for (auto const& cell : cells) {
@@ -1732,11 +1732,11 @@ namespace ansi {
             code &= ~charflag_cluster_extension;
           if (code == ascii_nul || code == ascii_sp) {
             if (charbuff.empty())
-              xoffset += cell.width * xpixel;
+              xoffset += cell.width * xunit;
             else
-              charbuff.shift(cell.width * xpixel);
+              charbuff.shift(cell.width * xunit);
           } else if (code == (code & unicode_mask)) {
-            charbuff.add_char(code, cell.width * xpixel);
+            charbuff.add_char(code, cell.width * xunit);
           }
           // ToDo: その他の文字・マーカーに応じた処理。
         }
@@ -1778,8 +1778,8 @@ namespace ansi {
     void draw_decoration(Graphics& g, term_view_t const& view, std::vector<line_content>& content) {
       coord_t const xorigin = wstat.m_xframe;
       coord_t const yorigin = wstat.m_yframe;
-      coord_t const ypixel = wstat.m_ypixel;
-      coord_t const xpixel = wstat.m_xpixel;
+      coord_t const yunit = wstat.m_yunit;
+      coord_t const xunit = wstat.m_xunit;
       curpos_t const height = view.height();
       tstate_t const& s = view.state();
       color_resolver_t _color(s);
@@ -1793,7 +1793,7 @@ namespace ansi {
       color_t color0 = 0;
 
       decoration_horizontal_t dec_ul([&] (coord_t x1, coord_t x2, std::uint32_t style) {
-        coord_t const u = (coord_t) std::ceil(ypixel * 0.05);
+        coord_t const u = (coord_t) std::ceil(yunit * 0.05);
         coord_t h = u;
         switch (style & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_upper_half: return;
@@ -1808,8 +1808,8 @@ namespace ansi {
           pitch1 = pitch2 = u;
           goto dashed;
         case 5: // dashed
-          pitch1 = xpixel * 3 / 4;
-          pitch2 = xpixel - pitch1;
+          pitch1 = xunit * 3 / 4;
+          pitch2 = xunit - pitch1;
           goto dashed;
         dashed:
           if (style & attribute_t::decdhl_mask) {
@@ -1817,19 +1817,19 @@ namespace ansi {
             pitch2 *= 2;
           }
           for (coord_t x = x1; x < x2; x += pitch1 + pitch2)
-            g.fill_rectangle(x, y + ypixel - h, std::min(x2, x + pitch1), y + ypixel, color0);
+            g.fill_rectangle(x, y + yunit - h, std::min(x2, x + pitch1), y + yunit, color0);
           break;
         case 2: // double
-          g.fill_rectangle(x1, y + ypixel - 3 * h, x2, y + ypixel - 2 * h, color0);
+          g.fill_rectangle(x1, y + yunit - 3 * h, x2, y + yunit - 2 * h, color0);
           [[fallthrough]];
         default: // single
-          g.fill_rectangle(x1, y + ypixel - h, x2, y + ypixel, color0);
+          g.fill_rectangle(x1, y + yunit - h, x2, y + yunit, color0);
           break;
         }
       });
 
       decoration_horizontal_t dec_cl([&] (coord_t x1, coord_t x2, std::uint32_t style) {
-        coord_t const u = (coord_t) std::ceil(ypixel * 0.05);
+        coord_t const u = (coord_t) std::ceil(yunit * 0.05);
         coord_t h = u;
         switch (style & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_upper_half: return;
@@ -1841,7 +1841,7 @@ namespace ansi {
         // 線には太さがあるので調整
         x1 += h / 2;
         x2 -= h / 2;
-        coord_t y1 = y + ypixel - h / 2;
+        coord_t y1 = y + yunit - h / 2;
 
         coord_t p = h * 3;
         if (style & attribute_t::decdhl_mask) p *= 2;
@@ -1859,13 +1859,13 @@ namespace ansi {
       });
 
       decoration_horizontal_t dec_sl([&] (coord_t x1, coord_t x2, std::uint32_t style) {
-        coord_t h = (coord_t) std::ceil(ypixel * 0.05), y2 = y + ypixel / 2;
+        coord_t h = (coord_t) std::ceil(yunit * 0.05), y2 = y + yunit / 2;
         if ((style & ~attribute_t::decdhl_mask) != 2) {
           // 一重打ち消し線
           switch (style & attribute_t::decdhl_mask) {
           case attribute_t::decdhl_lower_half: return;
           case attribute_t::decdhl_upper_half:
-            h *= 2; y2 = y + ypixel;
+            h *= 2; y2 = y + yunit;
             break;
           }
         } else {
@@ -1874,7 +1874,7 @@ namespace ansi {
           case attribute_t::decdhl_lower_half:
             h *= 2; y2 = y + h; break;
           case attribute_t::decdhl_upper_half:
-            h *= 2; y2 = y + ypixel - h; break;
+            h *= 2; y2 = y + yunit - h; break;
           default:
             g.fill_rectangle(x1, y2 - 2 * h, x2, y2 - h, color0);
             y2 += h;
@@ -1885,7 +1885,7 @@ namespace ansi {
       });
 
       decoration_horizontal_t dec_ol([&] (coord_t x1, coord_t x2, std::uint32_t style) {
-        coord_t h = (coord_t) std::ceil(ypixel * 0.05);
+        coord_t h = (coord_t) std::ceil(yunit * 0.05);
         switch (style & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_lower_half: return;
         case attribute_t::decdhl_upper_half:
@@ -1899,37 +1899,37 @@ namespace ansi {
 
       auto _draw_frame = [&] (coord_t x1, coord_t x2, xflags_t xflags, int lline, int rline) {
         // 上の線と下の線は dec_ul, dec_ol に任せる。
-        coord_t w = (coord_t) std::ceil(ypixel * 0.05);
+        coord_t w = (coord_t) std::ceil(yunit * 0.05);
         if (xflags & attribute_t::decdhl_mask) w *= 2;
         if (lline) {
-          g.fill_rectangle(x1, y, x1 + w, y + ypixel, color0);
+          g.fill_rectangle(x1, y, x1 + w, y + yunit, color0);
           if (lline > 1)
-            g.fill_rectangle(x1 + 2 * w, y, x1 + 3 * w, y + ypixel, color0);
+            g.fill_rectangle(x1 + 2 * w, y, x1 + 3 * w, y + yunit, color0);
         }
         if (rline) {
-          g.fill_rectangle(x2 - w, y, x2, y + ypixel, color0);
+          g.fill_rectangle(x2 - w, y, x2, y + yunit, color0);
           if (rline > 1)
-            g.fill_rectangle(x2 - 3 * w, y, x2 - 2 * w, y + ypixel, color0);
+            g.fill_rectangle(x2 - 3 * w, y, x2 - 2 * w, y + yunit, color0);
         }
       };
 
       auto _draw_circle = [&] (coord_t x1, coord_t x2, xflags_t xflags) {
-        coord_t w = (coord_t) std::ceil(ypixel * 0.04);
-        coord_t y1 = y, y2 = y + ypixel;
+        coord_t w = (coord_t) std::ceil(yunit * 0.04);
+        coord_t y1 = y, y2 = y + yunit;
         bool is_clipped = false;
         switch (xflags & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_upper_half:
           is_clipped = true;
           this->clip_decdhl_upper(g, y);
           w *= 2;
-          y2 = y + 2 * ypixel;
+          y2 = y + 2 * yunit;
           break;
         case attribute_t::decdhl_lower_half:
           is_clipped = true;
           this->clip_decdhl_lower(g, y);
           w *= 2;
-          y1 = y - ypixel;
-          y2 = y + ypixel;
+          y1 = y - yunit;
+          y2 = y + yunit;
           break;
         }
         g.draw_ellipse(x1, y1, x2, y2, color0, w);
@@ -1938,7 +1938,7 @@ namespace ansi {
       };
 
       auto _draw_stress = [&] (coord_t x1, coord_t x2, xflags_t xflags) {
-        double w1 = ypixel * 0.15, h1 = ypixel * 0.15;
+        double w1 = yunit * 0.15, h1 = yunit * 0.15;
         switch (xflags & attribute_t::decdhl_mask) {
         case attribute_t::decdhl_lower_half: return;
         case attribute_t::decdhl_upper_half:
@@ -1958,7 +1958,7 @@ namespace ansi {
         g.fill_ellipse(xL, yT, xR + 1, yB + 1, color0);
       };
 
-      for (curpos_t iline = 0; iline < height; iline++, y += ypixel) {
+      for (curpos_t iline = 0; iline < height; iline++, y += yunit) {
         if (!content[iline].is_redraw_requested) continue;
 
         std::vector<cell_t>& cells = content[iline].cells;
@@ -1971,7 +1971,7 @@ namespace ansi {
           auto const& aflags = cell.attribute.aflags;
           auto const& xflags = cell.attribute.xflags;
           if (cell.width == 0) continue;
-          coord_t const cell_width = cell.width * xpixel;
+          coord_t const cell_width = cell.width * xunit;
           color_t color = 0;
           if (code != ascii_nul && !(aflags & invisible_flags))
             color = _color.resolve_fg(cell.attribute);
@@ -2046,15 +2046,15 @@ namespace ansi {
       std::vector<line_content> const& content
     ) {
       coord_t const yorigin = wstat.m_yframe;
-      coord_t const ypixel = wstat.m_ypixel;
+      coord_t const yunit = wstat.m_yunit;
 
       curpos_t y1dst = -1, y1src = -1;
       curpos_t y2dst = 0;
-      auto const _transfer = [&, yorigin, ypixel, width = wstat.m_canvas_width] () {
+      auto const _transfer = [&, yorigin, yunit, width = wstat.m_canvas_width] () {
         if (y1dst >= 0) {
-          coord_t const y1dst_pixel = yorigin + y1dst * ypixel;
-          coord_t const y1src_pixel = yorigin + y1src * ypixel;
-          coord_t const height = (y2dst - y1dst) * ypixel;
+          coord_t const y1dst_pixel = yorigin + y1dst * yunit;
+          coord_t const y1src_pixel = yorigin + y1src * yunit;
+          coord_t const height = (y2dst - y1dst) * yunit;
           gbuffer.bitblt(ctx0, 0, y1dst_pixel, width, height, ctx1, 0, y1src_pixel);
           y1dst = -1;
         }
@@ -2123,9 +2123,9 @@ namespace ansi {
         gbuffer.bitblt(ctx1, 0,0, gbuffer.width(), gbuffer.height(), ctx0, 0, 0);
       } else {
         // 前回のカーソル位置のセルをカーソルなしに戻す。
-        coord_t const old_x1 = wstat.m_xframe + wstat.m_xpixel * m_tracer.cur_x();
-        coord_t const old_y1 = wstat.m_yframe + wstat.m_ypixel * m_tracer.cur_y();
-        gbuffer.bitblt(ctx0, old_x1, old_y1, wstat.m_xpixel, wstat.m_ypixel, ctx1, old_x1, old_y1);
+        coord_t const old_x1 = wstat.m_xframe + wstat.m_xunit * m_tracer.cur_x();
+        coord_t const old_y1 = wstat.m_yframe + wstat.m_yunit * m_tracer.cur_y();
+        gbuffer.bitblt(ctx0, old_x1, old_y1, wstat.m_xunit, wstat.m_yunit, ctx1, old_x1, old_y1);
       }
 
       if (wstat.is_cursor_appearing(view)) {

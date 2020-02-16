@@ -130,8 +130,8 @@ namespace term {
         {
           ws.ws_col = params.col;
           ws.ws_row = params.row;
-          ws.ws_xpixel = params.xpixel;
-          ws.ws_ypixel = params.ypixel;
+          ws.ws_xpixel = params.xunit * params.col;
+          ws.ws_ypixel = params.yunit * params.row;
           fd_set_winsize(slavefd, &ws);
         }
         close(masterfd);
@@ -171,13 +171,13 @@ namespace term {
     bool is_active() const { return m_active; }
 
   public:
-    void set_winsize(curpos_t col, curpos_t row, curpos_t xpixel, curpos_t ypixel) {
+    void set_winsize(curpos_t col, curpos_t row, curpos_t xunit, curpos_t yunit) {
       if (ws.ws_col == col && ws.ws_row == row &&
-        ws.ws_xpixel == xpixel && ws.ws_ypixel == ypixel) return;
+        ws.ws_xpixel / ws.ws_col == xunit && ws.ws_ypixel / ws.ws_row == yunit) return;
       ws.ws_col = col;
       ws.ws_row = row;
-      ws.ws_xpixel = xpixel;
-      ws.ws_ypixel = ypixel;
+      ws.ws_xpixel = xunit * col;
+      ws.ws_ypixel = yunit * row;
       fd_set_winsize(m_fd, &ws);
     }
 
@@ -244,7 +244,7 @@ namespace term {
     bool initialize(terminal_session_parameters const& params) {
       if (m_pty.is_active()) return true;
 
-      if (!base::initialize(params.col, params.row, params.xpixel, params.ypixel)) return false;
+      if (!base::initialize(params.col, params.row, params.xunit, params.yunit)) return false;
 
       if (!m_pty.start(params)) return false;
 
@@ -266,10 +266,10 @@ namespace term {
     virtual void terminate() override { return m_pty.terminate(); }
 
   public:
-    virtual void reset_size(curpos_t width, curpos_t height, coord_t xpixel, coord_t ypixel) override {
-      base::reset_size(width, height, xpixel, ypixel);
+    virtual void reset_size(curpos_t width, curpos_t height, coord_t xunit, coord_t yunit) override {
+      base::reset_size(width, height, xunit, yunit);
       if (m_pty.is_active())
-        m_pty.set_winsize(width, height, xpixel, ypixel);
+        m_pty.set_winsize(width, height, xunit, yunit);
     }
   };
 

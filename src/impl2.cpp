@@ -17,8 +17,8 @@ int main() {
     ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &ws);
     params.col = ws.ws_col;
     params.row = ws.ws_row;
-    params.xpixel = ws.ws_xpixel;
-    params.ypixel = ws.ws_ypixel;
+    params.xunit = ws.ws_xpixel / ws.ws_col;
+    params.yunit = ws.ws_ypixel / ws.ws_row;
     params.termios = &screen.old_termios;
 
     params.dbg_fd_tee = STDOUT_FILENO;

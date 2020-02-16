@@ -610,8 +610,8 @@ namespace {
 
       // size and dimension
       wstat.configure_metric(actx, dpiscale);
-      manager.initialize_zoom(wstat.m_xpixel, wstat.m_ypixel);
-      manager.reset_size(wstat.m_col, wstat.m_row, wstat.m_xpixel, wstat.m_ypixel);
+      manager.initialize_zoom(wstat.m_xunit, wstat.m_yunit);
+      manager.reset_size(wstat.m_col, wstat.m_row, wstat.m_xunit, wstat.m_yunit);
 
       // other settings
       settings.configure(actx);
@@ -728,26 +728,26 @@ namespace {
       }
 
     private:
-      virtual bool request_change_size(curpos_t col, curpos_t row, coord_t xpixel, coord_t ypixel) override {
+      virtual bool request_change_size(curpos_t col, curpos_t row, coord_t xunit, coord_t yunit) override {
         auto& wm = win->wstat;
-        if (xpixel >= 0) xpixel = limit::term_xpixel.clamp(xpixel);
-        if (ypixel >= 0) ypixel = limit::term_ypixel.clamp(ypixel);
+        if (xunit >= 0) xunit = limit::term_xunit.clamp(xunit);
+        if (yunit >= 0) yunit = limit::term_yunit.clamp(yunit);
 
         if (col < 0 && row < 0) {
           // 文字サイズだけを変更→自動的に列・行を変えてウィンドウサイズを変えなくて済む様にする。
-          if (wm.m_xpixel != xpixel || wm.m_ypixel != ypixel) {
-            wm.m_xpixel = xpixel;
-            wm.m_ypixel = ypixel;
-            win->gbuffer.fstore().set_size(wm.m_xpixel, wm.m_ypixel);
+          if (wm.m_xunit != xunit || wm.m_yunit != yunit) {
+            wm.m_xunit = xunit;
+            wm.m_yunit = yunit;
+            win->gbuffer.fstore().set_size(wm.m_xunit, wm.m_yunit);
             win->adjust_terminal_size_using_current_client_size();
             return true;
           }
         }
 
         bool changed = false;
-        if (xpixel >= 0 && wm.m_xpixel != xpixel) { wm.m_xpixel = xpixel; changed = true; }
-        if (ypixel >= 0 && wm.m_ypixel != ypixel) { wm.m_ypixel = ypixel; changed = true; }
-        if (changed) win->gbuffer.fstore().set_size(wm.m_xpixel, wm.m_ypixel);
+        if (xunit >= 0 && wm.m_xunit != xunit) { wm.m_xunit = xunit; changed = true; }
+        if (yunit >= 0 && wm.m_yunit != yunit) { wm.m_yunit = yunit; changed = true; }
+        if (changed) win->gbuffer.fstore().set_size(wm.m_xunit, wm.m_yunit);
         if (col >= 0) {
           col = limit::term_col.clamp(col);
           if (col != wm.m_col) { wm.m_col = col; changed = true; }
@@ -758,7 +758,7 @@ namespace {
         }
         if (changed) {
           win->adjust_window_size();
-          win->manager.reset_size(wm.m_col, wm.m_row, wm.m_xpixel, wm.m_ypixel);
+          win->manager.reset_size(wm.m_col, wm.m_row, wm.m_xunit, wm.m_yunit);
         }
         return true;
       }
@@ -776,7 +776,7 @@ namespace {
     bool is_session_ready() { return hWnd && manager.is_active(); }
   public:
     HWND create_window(HINSTANCE hInstance) {
-      gbuffer.fstore().set_size(wstat.m_xpixel, wstat.m_ypixel);
+      gbuffer.fstore().set_size(wstat.m_xunit, wstat.m_yunit);
 
       static bool is_window_class_registered = false;
       if (!is_window_class_registered) {
@@ -844,8 +844,8 @@ namespace {
       auto& wm = wstat;
       coord_t const width = rcClient.right - rcClient.left;
       coord_t const height = rcClient.bottom - rcClient.top;
-      curpos_t const new_col = std::max(1, (width - 2 * wm.m_xframe) / wm.m_xpixel);
-      curpos_t const new_row = std::max(1, (height - 2 * wm.m_yframe) / wm.m_ypixel);
+      curpos_t const new_col = std::max(1, (width - 2 * wm.m_xframe) / wm.m_xunit);
+      curpos_t const new_row = std::max(1, (height - 2 * wm.m_yframe) / wm.m_yunit);
 
       if (new_col != wm.m_col || new_row != wm.m_row) {
         wm.m_col = new_col;
@@ -1091,8 +1091,8 @@ namespace {
       key |= modifiers & _modifier_mask;
       if (settings.m_disable_mouse_report_on_scrlock && (modifiers & toggle_scrolllock))
         key |= modifier_application;
-      curpos_t const x1 = (x - wstat.m_xframe) / wstat.m_xpixel;
-      curpos_t const y1 = (y - wstat.m_yframe) / wstat.m_ypixel;
+      curpos_t const x1 = (x - wstat.m_xframe) / wstat.m_xunit;
+      curpos_t const y1 = (y - wstat.m_yframe) / wstat.m_yunit;
       manager.input_mouse(key, x, y, x1, y1);
       if (manager.m_dirty) render_window();
     }
@@ -1123,8 +1123,8 @@ namespace {
       if (::GetClientRect(hWnd, &rcClient)) {
         auto& view = manager.app().view();
         COMPOSITIONFORM form;
-        coord_t const x0 = rcClient.left + wstat.m_xframe + wstat.m_xpixel * view.client_x();
-        coord_t const y0 = rcClient.top + wstat.m_yframe + wstat.m_ypixel * view.client_y();
+        coord_t const x0 = rcClient.left + wstat.m_xframe + wstat.m_xunit * view.client_x();
+        coord_t const y0 = rcClient.top + wstat.m_yframe + wstat.m_yunit * view.client_y();
         form.dwStyle = CFS_POINT;
         form.ptCurrentPos.x = x0;
         form.ptCurrentPos.y = y0 + std::round(dy);
@@ -1287,8 +1287,8 @@ namespace {
       term::terminal_session_parameters params;
       params.col = wstat.m_col;
       params.row = wstat.m_row;
-      params.xpixel = wstat.m_xpixel;
-      params.ypixel = wstat.m_ypixel;
+      params.xunit = wstat.m_xunit;
+      params.yunit = wstat.m_yunit;
       params.exec_error_handler = &exec_error_handler;
       actx.read("session_term", params.env["TERM"] = "xterm-256color");
       actx.read("session_shell", params.shell = "/bin/bash");

@@ -17,7 +17,7 @@ namespace contra::ttty {
     if (!g_screen) return;
     struct winsize ws;
     ::ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &ws);
-    g_screen->reset_size(ws.ws_col, ws.ws_row, ws.ws_xpixel, ws.ws_ypixel);
+    g_screen->reset_size(ws.ws_col, ws.ws_row, ws.ws_xpixel / ws.ws_col, ws.ws_ypixel / ws.ws_row);
   }
   static void initialize() {
     static bool initialized = false;
@@ -37,8 +37,8 @@ namespace contra::ttty {
       ::ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &ws);
       params.col = ws.ws_col;
       params.row = ws.ws_row;
-      params.xpixel = ws.ws_xpixel;
-      params.ypixel = ws.ws_ypixel;
+      params.xunit = ws.ws_xpixel / ws.ws_col;
+      params.yunit = ws.ws_ypixel / ws.ws_row;
       params.termios = &screen.old_termios;
 
       // params.dbg_fd_tee = STDOUT_FILENO;
