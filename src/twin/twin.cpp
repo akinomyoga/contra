@@ -1349,6 +1349,23 @@ namespace {
 }
 
   bool run(contra::app::context& actx, HINSTANCE hInstance, int nCmdShow) {
+#ifdef __CYGWIN__
+    static bool cygwin_initialized = false;
+    if (!cygwin_initialized) {
+      cygwin_initialized = true;
+      bool disable_pcon = false;
+      actx.read("twin_disable_pcon", disable_pcon);
+      if (disable_pcon) {
+        std::string value = "disable_pcon";
+        if (const char* env = std::getenv("CYWGIN"); env && *env) {
+          value += " ";
+          value += env;
+        }
+        ::setenv("CYGWIN", value.c_str(), 1);
+      }
+    }
+#endif
+
 #ifdef CONTRA_TWIN_SUPPORT_HIGHDPI
     SetProcessDPIAware();
 #endif

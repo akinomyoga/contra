@@ -49,7 +49,7 @@ frw-  mode_decnkm                   dec66       false
 frw-  mode_decbkm                   dec67       false
 
 # Bracketed Paste Mode
-frw-  mode_XtermPasteInBracket      dec2004     true
+frw-  mode_XtermPasteInBracket      dec2004     false
 
 # Implicit Movements
 f---  mode_decawm_                  private     true

@@ -69,6 +69,7 @@ namespace ansi {
   };
 
   enum funckey_mode_flags {
+    // bit 0-7 は Function-key mode
     funckey_pc       = 0, // xterm
     funckey_terminfo = 1, // xterm Mode ?1050
     funckey_sun      = 2, // xterm Mode ?1051
@@ -79,6 +80,7 @@ namespace ansi {
     funckey_contra   = 7, // contra Mode ?9950
     funckey_mode_mask = 0xFF,
 
+    // bit 8-31 は 4 bit ずつ 6 種類の modifyKeys 値
     funckey_modifyKeyboard_shift     =  8, // unsupported
     funckey_modifyCursorKeys_shift   = 12,
     funckey_modifyFunctionKeys_shift = 16,
