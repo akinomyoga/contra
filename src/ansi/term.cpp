@@ -1431,8 +1431,7 @@ namespace ansi {
     typedef attribute_t _at;
 
     if (10 <= param && param <= 19) {
-      xflags = (xflags & ~(xflags_t) _at::ansi_font_mask)
-        | ((param - 10) << _at::ansi_font_shift & _at::ansi_font_mask);
+      bitflag_reset(aflags, _at::ansi_font_mask, (param - 10) << _at::ansi_font_shift);
       return;
     }
 
@@ -1512,9 +1511,9 @@ namespace ansi {
     case 8465: bitflag_clear(xflags, _at::rlogin_ideogram_mask); break;
 
     // Mintty 拡張
-    case 7773: case 73: bitflag_reset(xflags, _at::xflags_subsup_mask, _at::is_sup_set); break;
-    case 7774: case 74: bitflag_reset(xflags, _at::xflags_subsup_mask, _at::is_sub_set); break;
-    case 7775: case 75: bitflag_clear(xflags, _at::xflags_subsup_mask); break;
+    case 7773: case 73: bitflag_reset(xflags, _at::mintty_subsup_mask, _at::mintty_sup); break;
+    case 7774: case 74: bitflag_reset(xflags, _at::mintty_subsup_mask, _at::mintty_sub); break;
+    case 7775: case 75: bitflag_clear(xflags, _at::mintty_subsup_mask); break;
 
     // Kitty 拡張
     case 7758: case 58: do_sgr_iso8613_colors(b, rest, 2); break;

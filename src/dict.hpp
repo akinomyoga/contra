@@ -90,7 +90,11 @@ namespace dict {
       color_space_cmyk         = 4,
       color_space_indexed      = 5,
 
-      // bit 12-17 is not used now
+      // bit 12-15: SGR 10-19
+      ansi_font_mask  = 0x0000F000,
+      ansi_font_shift = 12,
+
+      // bit 16,17 is not used now
 
       aflags_weight_mask      = (aflags_t) 3 << 18, // bit 18-19
       is_bold_set             = (aflags_t) 1 << 18, // -+- SGR 1,2
@@ -103,10 +107,10 @@ namespace dict {
 
       aflags_underline_mask   = (aflags_t) 7 << 22, // bit 22-24
       underline_single        = (aflags_t) 1 << 22, // -+- SGR 4,21
-      underline_double = (aflags_t) 2 << 22, //  |  SGR 21
-      underline_curly  = (aflags_t) 3 << 22, //  |  (kitty拡張)
-      underline_dotted = (aflags_t) 4 << 22, //  |  (mintty拡張)
-      underline_dashed = (aflags_t) 5 << 22, // -'  (mintty拡張)
+      underline_double        = (aflags_t) 2 << 22, //  |  SGR 21
+      underline_curly         = (aflags_t) 3 << 22, //  |  (kitty拡張)
+      underline_dotted        = (aflags_t) 4 << 22, //  |  (mintty拡張)
+      underline_dashed        = (aflags_t) 5 << 22, // -'  (mintty拡張)
 
       aflags_blink_mask       = (aflags_t) 3 << 25, // bit 25-26
       is_blink_set            = (aflags_t) 1 << 25, // -+- SGR 5,6
@@ -123,14 +127,13 @@ namespace dict {
     };
 
     enum extended_flags {
-      // bit 0-3: SGR 10-19
-      ansi_font_mask  = 0x0000000F,
-      ansi_font_shift = 0,
-
-      // bit 4,5: PLD, PLU
-      xflags_subsup_mask = (xflags_t) 3 << 4,
-      is_sub_set  = (xflags_t) 1 << 4,
-      is_sup_set  = (xflags_t) 1 << 5,
+      // bit 1-3: PLD, PLU
+      xflags_subsup_mask = (xflags_t) 3 << 0, // PLD,PLU
+      is_sub_set         = (xflags_t) 1 << 0, //   反対の PLD/PLU でクリア
+      is_sup_set         = (xflags_t) 2 << 0, //
+      mintty_subsup_mask = (xflags_t) 3 << 2, // mintty SGR 73,74
+      mintty_sup         = (xflags_t) 1 << 2, //   SGR(0) でクリア
+      mintty_sub         = (xflags_t) 2 << 2, //
 
       // bit 6,7: DECDHL, DECDWL, DECSWL
       decdhl_mask         = (xflags_t) 0x3 << 6,
@@ -211,7 +214,7 @@ namespace dict {
 
       // 以下に \e[m でクリアされない物を列挙する。
       // SGR(9903)-SGR(9906) で提供している decdhl_mask については \e[m でクリアできる事にする。
-      non_sgr_xflags_mask = is_sub_set | is_sup_set | sco_mask | qualifier_mask,
+      non_sgr_xflags_mask = xflags_subsup_mask | sco_mask | qualifier_mask,
     };
 
     aflags_t aflags = 0;

@@ -585,7 +585,7 @@ namespace ansi {
       if (attr.aflags == m_aflags && attr.xflags == m_xflags) return m_font;
 
       font_t ret = 0;
-      if (xflags_t const face = (attr.xflags & attribute_t::ansi_font_mask) >> attribute_t::ansi_font_shift)
+      if (xflags_t const face = (attr.aflags & attribute_t::ansi_font_mask) >> attribute_t::ansi_font_shift)
         ret |= font_face_mask & face << font_face_shft;
 
       switch (attr.aflags & attribute_t::aflags_weight_mask) {
@@ -602,6 +602,10 @@ namespace ansi {
       if (attr.xflags & attribute_t::is_sup_set)
         ret |= font_flag_small | font_layout_sup;
       else if (attr.xflags & attribute_t::is_sub_set)
+        ret |= font_flag_small | font_layout_sub;
+      else if (attr.xflags & attribute_t::mintty_sup)
+        ret |= font_flag_small | font_layout_sup;
+      else if (attr.xflags & attribute_t::mintty_sub)
         ret |= font_flag_small | font_layout_sub;
 
       if (attr.xflags & (attribute_t::is_frame_set | attribute_t::is_circle_set))

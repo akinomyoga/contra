@@ -273,7 +273,7 @@ namespace ansi {
     /// @param[in] y2 範囲の終端位置を指定します。
     /// @param[in] count 移動量を指定します。正の値を指定した時、
     ///   下方向にシフトします。負の値を指定した時、上方向にシフトします。
-    /// @param[in] fill_attr 新しく現れた行に適用する描画属性指定します。
+    /// @param[in] fill_attr 新しく現れた行に適用する描画属性を指定します。
     void shift_lines(curpos_t y1, curpos_t y2, curpos_t count, attribute_t const& fill_attr, term_scroll_buffer_t* scroll_buffer = nullptr) {
       y1 = contra::clamp(y1, 0, m_height);
       y2 = contra::clamp(y2, 0, m_height);
