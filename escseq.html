@@ -1360,7 +1360,7 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th></tr>
-<tr><th>-</th><td>?81</td>
+<tr><th>DECKPM</th><td>?81</td>
     <th>-</th><td>?91</td>
     <th>DECCANSM</th><td>?101</td>
     <th>DECFWM</th><td>?111</td></tr>
@@ -1402,7 +1402,7 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <th>-</th><td>?120</td></tr>
 </table>
 <ul>
-<li>?111-?117 は vt520 以降という話?</li>
+<li>?111-?117 は vt520 以降という話? 然し vt520 の PDF を見ても載っていない。</li>
 </ul>
 
 <table class="normal center">
@@ -1468,6 +1468,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>TTCTH (Tera Term)</th>      <td>?8200</td></tr>
 <tr><th>DRCSMMv1 (drcsterm)</th>      <td>?8800</td></tr>
 <tr><th>TNAMB (tanasinn)</th>      <td>?8840</td></tr>
+<tr><th>KITTY_STYLED_UNDERLINES       </th><td>?2016</td></tr>
+<tr><th>KITTY_EXTENDED_KEYBOARD       </th><td>?2017</td></tr>
 </table>
 
 
@@ -1516,6 +1518,16 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <li>mlterm は取り敢えず制御機能に名前を割り当てている様だ。
   <a href="https://github.com/brunoduran/mlterm/blob/2cafed3f01960c75d3f10ddbe7b0c824edfbf6bd/doc/en/ControlSequences">ControlSequences</a>
 </li>
+<li>tmux は input.c (input_csi_dispatch_sm, input_csi_dispatch_sm_private) にある。
+  vt100 は <a href="https://www.vt100.net/docs/vt100-ug/chapter3.html#S3.3.4">ここ</a> にある。
+  vt102 は <a href="https://www.vt100.net/docs/vt102-ug/table5-5.html">Table 5-5</a> と
+    <a href="https://www.vt100.net/docs/vt102-ug/table5-6.html">Table 5-6</a> にある。
+  vt220 は <a href="https://www.vt100.net/docs/vt220-rm/table4-7.html">Table 4-7</a> と、
+    <a href="https://www.vt100.net/docs/vt220-rm/table4-8.html">Table 4-8</a>。
+  vt320 は <a href="https://www.vt100.net/docs/vt320-uu/appendixe.html#TE-2">Table E-2, 3</a> より。
+  vt420 は <a href="https://www.vt100.net/docs/vt420-uu/chapter9.html#T9-2">Table 9-2, 3</a> より。
+  vt510 は <a href="https://www.vt100.net/docs/vt510-rm/DECRQM.html#T5-8">Table 5-8</a> より。
+</li>
 </ul>
 
 <pre>
@@ -1524,42 +1536,65 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 | ANSI      |         1111111111222|333333333 4 4|
 |   Modes   |1234567890123456789012|012345678 0 2|
 |-----------|----------------------|-------------|
-| xterm     | * *       *       *  |         - - |
-| RLogin    | * * *     *     * *  |         - - |
-| mintty    |   *   *   *     * *  |   **    - - |
-| screen    |   *               *  |    *    - - |
-| Tera Term | * *       *       *  |   **    - - |
-| mlterm    | * *       *       *  |   **    - - |
+| ECMA-48   |******************DD**|RRRRRRRRR-R-R| D=deprecated R=reserved
+| vt100     |                   *  |             |
+| vt102     | * *               *  |             |
+| vt220     | * *       *       *  |             |
+| vt320     | ***     * *       *  |             |
+| vt420     | ***       *       *  |             | vt510,vt520 は同じ。
+|-----------|----------------------|-------------|
 | rxvt      |   *                  |         - - |
 | urxvt     |   *               *  |         - - |
-| vt510     | ***       *       *  |         - - |
-| contra    |** * ***** *       ***|  A**    - - |
-| ECMA-48   |******************DD**|RRRRRRRRR-R-R| D=deprecated R=reserved
+| Kitty     |   *               *  |         - - |
+| tmux      |   *                  |    *    - - |
+| screen    |   *               *  |    *    - - |
+| xterm     | * *       *       *  |         - - |
+| RLogin    | * * *     *     * *  |         - - |
+| Tera Term | * *       *       *  |   **    - - |
+| mlterm    | * *       *       *  |   **    - - |
+| mintty    |   *   *   *     * *  |   **    - - |
+|-----------|----------------------|-------------|
+| contra    |** * ***** *       ***|   **    - - |
 
-| DEC       |                   |       |              |  |       |      | | |     11111 1 11111111111|
-|   ? Modes |         1 111 1 11|22 2 23|333 3 44444444|55|5 5 566|6 6666|7|8|9999900000 0 00011111111|
-|           |1234567890 234 6 89|45 7 90|456 8 01234567|12|5 7 901|4 6789|3|0|5678901234 6 78901234567|
-|-----------|-------------------|-------|--------------|--|-------|------|-|-|------------------------|
-| rxvt      |******* **-   - -  | *- - *| r - -x  -   x|  | - -   | -**  | | |          - -           |
-| urxvt     |******* * -*  - -  | *- - *| r - -x  -   x|  | - -   | -**  | | |          - -           |
-| xterm     |**********-*xx- -**| *- - *| r -*-xx*-xxxx|  | - -   | -** *| |*|*         - -           |
-| VTE       |* * *** * -   - -  | *- -  |   - -x  -   x|  | - -   | -*   | | |          - -           |
-| Tera Term |* * ***** -*  - - *| *- -  |   -*-   -   x|  | - -*  | -** *| | |*         - -           |
-| contra    |* ******* -*xx- -  | *- -  |   - -x  - x x|  | - -   | -** *| | |*         - -           |
+| DEC       |                   |       |              |  |       |      | |  |     11111 1 11111111111|
+|   ? Modes |         1 111 1 11|22 2 23|333 3 44444444|55|5 5 566|6 6666|7|88|9999900000 0 00011111111|
+|           |1234567890 234 6 89|45 7 90|456 8 01234567|12|5 7 901|4 6789|3|01|5678901234 6 78901234567|
+|-----------|-------------------|-------|--------------|--|-------|------|-|--|------------------------|
+| vt100     |********* -   - -  |  - -  |   - -   -    |  | - -   | -    | |  |          - -           |
+| vt102     |********  -   - -**|  - -  |   - -   -    |  | - -   | -    | |  |          - -           |
+| vt220     |********  -   - -**| *- -  |   - -  *-    |  | - -   | -    | |  |          - -           |
+| vt320     |********  -   - -**| *- -  |   - -  *-    |  | - -   | -* * | |  |          - -           |
+| vt420     |********  -   - -**| *- -  |   - -  *-    |  | - - **|*-****|*| *|          - -           |
+| vt510     |********  -   - -**| *- -  |***- -  *-    |  | -*- * |*-****|*| *|**********-*-           |
+| vt520     |********  -   - -**| *- -  |***- -  *-    |  | -*- * |*-****|*|  |**********-*-    *******|
+|-----------|-------------------|-------|--------------|--|-------|------|-|--|------------------------|
+| tmux      |* *  **   -*  - -  | *- -  |   - -   -   x|  | - -   | -    | |  |          - -           |
+| Kitty     |* ******* -*  - -  | *- -  |   - -  *-    |  | - -   | -    | |  |          - -           |
+| VTE       |* * *** * -   - -  | *- -  |   - -x  -   x|  | - -   | -*   | |  |          - -           |
+| rxvt      |******* **-   - -  | *- - *| r - -x  -   x|  | - -   | -**  | |  |          - -           |
+| urxvt     |******* * -*  - -  | *- - *| r - -x  -   x|  | - -   | -**  | |  |          - -           |
+| Tera Term |* * ***** -*  - - *| *- -  |   -*-   -   x|  | - -*  | -** *| |  |*         - -           |
+| xterm     |**********-*xx- -**| *- - *| r -*-xx*-xxxx|  | - -   | -** *| |* |*         - -           |
+|-----------|-------------------|-------|--------------|--|-------|------|-|--|------------------------|
+| contra    |* ******* -*xx- -  | *- -  |   - -x  - x x|  | - -   | -** *| |  |*         - -           |
 
-| Origin    |xterm   |rxvt  |xterm                    |vte|mintty    |T|RLogin                 |#1   | T=Tera Term, #1=drcsterm
-|-----------|--------|------|-------------------------|---|----------|-|-----------------------|-----|
-| Modes?    |        |  | | |                    |  | |   |        77| |                       |     |
-|           |11111111|11|1|1|1111 111111 11111111|11|2|122|7777777777|8|88888888888888888888888|88888|
-|           |00000000|00|0|0|0000 000000 00000000|00|0|255|7777777700|2|44444444444444444444444|88888|
-|           |00000000|11|1|2|3333 344444 44445555|66|0|400|02268889X9|0|00000023344444455555555|00000|
-|           |01234567|01|5|1|4567 901234 67890123|01|4|301|07873676X6|0|01235685701238901235678|01234|
-|-----------|--------|--|-|-|--------------------|--|-|---|----------|-|-----------------------|-----|
-| rxvt      |*       |**| | |    -      - **     |  | |   |          | |                       |     |
-| urxvt     |* ****  |**|*|*|    -      - ***    |  |*|   |          | |                       |     |
-| VTE       |***** **|  | | |  * -      - ***    |  |*|***|          | |                       |     |
-| Tera Term |******* |  |*| |    -      - ***    |  |*|   | *   *    |*|                       |     |
-| contra    |******* |  |*| |    -      - *** ***|**|*|   |          | |                       |     |
+| Origin    |xterm   |rxvt  |xterm                    | |vte|mintty    |T|RLogin                 |#1   | T=Tera Term, #1=drcsterm
+|-----------|--------|------|-------------------------|-|---|----------|-|-----------------------|-----|
+| Modes?    |        |  | | |                    |  | | |   |        77| |                       |     |
+|           |11111111|11|1|1|1111 111111 11111111|11|2|2|122|7777777777|8|88888888888888888888888|88888|
+|           |00000000|00|0|0|0000 000000 00000000|00|0|0|255|7777777700|2|44444444444444444444444|88888|
+|           |00000000|11|1|2|3333 344444 44445555|66|0|1|400|02268889X9|0|00000023344444455555555|00000|
+|           |01234567|01|5|1|4567 901234 67890123|01|4|7|301|07873676X6|0|01235685701238901235678|01234|
+|-----------|--------|--|-|-|--------------------|--|-|-|---|----------|-|-----------------------|-----|
+| tmux      |* ***** |  |*| |    -      - * *    |  |*| |   |          | |                       |     |
+| Kitty     |* ***** |  |*| |    -      -   *    |  |*|*|   |          | |                       |     |
+| rxvt      |*       |**| | |    -      - **     |  | | |   |          | |                       |     |
+| urxvt     |* ****  |**|*|*|    -      - ***    |  |*| |   |          | |                       |     |
+| VTE       |***** **|  | | |  * -      - ***    |  |*| |***|          | |                       |     |
+| Tera Term |******* |  |*| |    -      - ***    |  |*| |   | *   *    |*|                       |     |
+| xterm     |********|**|*| |****-******-********|**|*| |   | *   *    |*|                       |     |
+|-----------|--------|--|-|-|--------------------|--|-|-|---|----------|-|-----------------------|-----|
+| contra    |******* |  |*| |    -      - *** ***|**|*| |   |          | |                       |     |
 </pre>
 
 <ul>
@@ -1598,90 +1633,9 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
   <col style="width:40%;" />
 </colgroup>
 <tr><th>引数</th><th>環境</th><th>略号</th><th>有効</th><th>無効</th><th>実装</th></tr>
-<tr><td>1</td>     <td class="markA">-</td><td>GATM</td> <td>Guarded area transfer</td><td></td><td></td></tr>
-<tr><td>5</td>     <td class="markA">-</td><td>SRTM</td> <td>Status reporting transfer</td><td></td><td></td></tr>
-<tr><td>11</td>    <td class="markA">-</td><td>PUM</td>  <td>Positioning unit</td><td></td><td>X</td></tr>
-<tr><td>13</td>    <td class="markA">-</td><td>FEAM</td> <td>Format effector action</td><td></td><td>X</td></tr>
-<tr><td>14</td>    <td class="markA">-</td><td>FETM</td> <td>Format effector transfer</td><td></td><td>X</td></tr>
-<tr><td>15</td>    <td class="markA">-</td><td>MATM</td> <td>Multiple area transfer</td><td></td><td>X</td></tr>
-<tr><td>16</td>    <td class="markA">-</td><td>TTM</td>  <td>Transfer termination</td><td></td><td>X</td></tr>
-<tr><td>17</td>    <td class="markA">-</td><td>SATM</td> <td>Selected area transfer</td><td></td><td>X</td></tr>
-<tr><td>19</td>    <td class="markA">-</td><td>EBM</td>  <td>Editing boundary</td><td></td><td>X</td></tr>
-<tr><td>20</td>    <td>vx</td><td>LNM</td>       <td>Set new line mode (Automatic Newline)</td><td class="markB">Set line feed mode (Normal Linefeed)</td><td>X</td></tr>
-<tr><td>?2</td>    <td>vx</td><td>DECANM</td>    <td>Set ANSI (versus VT52)</td><td>Set VT52 (versus ANSI)</td><td>X</td></tr>
-<tr><td>?9</td>    <td>vxr</td><td>DECINLM</td>  <td>Set interlacing mode</td><td>Reset interlacing mode</td><td>X</td></tr>
-<tr><td>?10</td>   <td>rx</td><td></td>          <td>Show toolbar.</td><td>Hide toolbar.</td><td></td></tr>
-<tr><td>?12</td>   <td>x/att610</td><td></td>    <td>Start Blinking Cursor.</td><td>Stop Blinking Cursor.</td><td></td></tr>
-<tr><td>?18</td>   <td>vx</td><td>DECPFF</td>    <td>Print form feed.</td><td class="markB">Don’t print form feed.</td><td></td></tr>
-<tr><td>?19</td>   <td>vx</td><td>DECPEX</td>    <td>Set print extent to full screen.</td><td class="markB">Limit print to scrolling region.</td><td></td></tr>
-<tr><td>?30</td>   <td>rx</td><td></td>          <td>Show scrollbar.</td><td>Don’t show scrollbar.</td><td></td></tr>
-<tr><td>?34</td>   <td>5</td><td>DECRLM</td>     <td>Right-to-left Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?35</td>   <td>rx</td><td></td>          <td>Enable font-shifting functions.</td><td>Disable font-shifting functions.</td><td></td></tr>
-<tr><td>?35</td>   <td>4</td><td>DECHEBM</td>    <td>Hebrew Keyboard Map Mode (Hebrew Keyboard)</td><td class="markB">North American</td><td></td></tr>
-<tr><td>?36</td>   <td>4</td><td>DEMHEM</td>     <td class="markB">Hebrew Encoding Mode 8-bit char</td><td>Hebrew Encoding Mode 7-bit char</td><td></td></tr>
-<tr><td>?38</td>   <td>x</td><td>DECTEK</td>     <td>Enter Tektronix Mode.</td><td>-</td><td></td></tr>
-<tr><td>?40</td>   <td>xr</td><td></td>          <td>Allow 80 → 132 Mode.</td><td>Disallow 80 → 132 Mode.</td><td></td></tr>
-<tr><td>?41</td>   <td>x</td><td></td>           <td>more(1) fix (see curses resource).</td><td>No more(1) fix (see curses resource)</td><td></td></tr>
-<tr><td>?42</td>   <td>vx</td><td>DECNRCM</td>   <td>Enable National Replacement Character Set Mode.</td><td class="markB">Disable (Multinational)</td><td></td></tr>
-<tr><td>?44</td>   <td>x</td><td></td>           <td>Turn On Margin Bell.</td><td>Turn Off Margin Bell.</td><td></td></tr>
-<tr><td>?45</td>   <td>x</td><td></td>           <td>Reverse-wraparound Mode.</td><td>No Reverse-wraparound Mode.</td><td></td></tr>
-<tr><td>?46</td>   <td>x</td><td></td>           <td>Start Logging. This is normally disabled by a compile-time option.</td><td>Stop Logging. (This is normally disabled by a compile-time option).</td><td></td></tr>
-<tr><td>?47</td>   <td>xr</td><td></td>          <td>Use Alternate Screen Buffer. <br />(This may be disabled by the titeInhibit resource).</td><td>Use Normal Screen Buffer.</td><td></td></tr>
-<tr><td>?57</td>   <td>4</td><td>DECNAKB</td>    <td class="markB">North American/Greek Selection (North American)</td><td>Greek keyboard</td><td></td></tr>
-<tr><td>?58</td>   <td>5</td><td>DECIPEM</td>    <td>Enter/Return from IBM ProPrinter Emulation Mode</td><td></td><td></td></tr>
-<tr><td>?60</td>   <td class="markA">-</td><td>DECHCCM</td><td>Horiz cursor coupling</td><td></td><td>X</td></tr>
-<tr><td>?61</td>   <td>4</td><td>DECVCCM</td>    <td class="markB">Vertical Cursor Coupling</td><td></td><td></td></tr>
-<tr><td>?64</td>   <td>4</td><td>DECPCCM</td>    <td class="markB">Page Cursor Coupling</td><td></td><td></td></tr>
-<tr><td>?66</td>   <td>4xr</td><td>DECNKM</td>   <td>Application keypad.</td><td class="markB">Numeric keypad.</td><td></td></tr>
-<tr><td>?67</td>   <td>vxr</td><td>DECBKM</td>   <td>Backarrow key sends backspace.</td><td class="markB">Backarrow key sends delete.</td><td></td></tr>
-<tr><td>?68</td>   <td>4</td><td>DECKBUM</td>    <td>Keyboard Usage Mode (data processing)</td><td class="markB">typewriter</td><td></td></tr>
-<tr><td>?69</td>   <td>4</td><td>DECVSSM</td>    <td>Vertical Split Screen</td><td class="markB"></td><td></td></tr>
-<tr><td>?73</td>   <td>4</td><td>DECXRLM</td>    <td>Transmit Rate Limiting Mode (limited)</td><td class="markB">unlimited</td><td></td></tr>
-<tr><td>?81</td>   <td>4</td><td>DECKPM</td>     <td>Key Position Mode (key position)</td><td class="markB">char codes</td><td></td></tr>
-<tr><td>?95</td>   <td>5</td><td>DECNCSM</td>    <td>No clear screen on column change</td><td class="markB"></td><td></td></tr>
-<tr><td>?96</td>   <td>5</td><td>DECRLCM</td>    <td>Right-to-Left Copy</td><td class="markB"></td><td></td></tr>
-<tr><td>?97</td>   <td>5</td><td>DECRTSM</td>    <td class="markB">CRT Save Mode (Enable CRT Saver)</td><td>Disable CRT Saver</td><td></td></tr>
-<tr><td>?98</td>   <td>5</td><td>DECARSM</td>    <td>Auto Resize Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?99</td>   <td>5</td><td>DECMCM</td>     <td>Modem Control Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?100</td>  <td>v</td><td>DECAAM</td>     <td>Auto Answerback Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?101</td>  <td>5</td><td>DECCANSM</td>   <td>Conceal Answerback Message Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?102</td>  <td>5</td><td>DECNULM</td>    <td class="markB">Null Mode(ignore NUL)</td><td>accept NUL</td><td></td></tr>
-<tr><td>?103</td>  <td>5</td><td>DECHDPXM</td>   <td>Half-Duplex Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?104</td>  <td>4</td><td>DECESKM</td>    <td>Enable Secondary Keyboard Language Mode (secondary)</td><td class="markB">primary</td><td></td></tr>
-<tr><td>?106</td>  <td>5</td><td>DECOSCNM</td>   <td>Overscan Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?108</td>  <td>v</td><td>DECNUMLK</td>   <td>Num Lock Mode</td><td></td><td></td></tr>
-<tr><td>?109</td>  <td>v</td><td>DECCAPSLK</td>  <td>Caps Lock Mode</td><td></td><td></td></tr>
-<tr><td>?110</td>  <td>v</td><td>DECKLHIM</td>   <td>Keyboard LEDs Host Indicator Mode</td><td class="markB"></td><td></td></tr>
-<tr><td>?111</td>  <td>/vt520</td><td>DECFWM</td>  <td>Framed windows mode           </td><td></td></tr>
-<tr><td>?112</td>  <td>/vt520</td><td>DECRPL</td>  <td>Review previous lines         </td><td></td></tr>
-<tr><td>?113</td>  <td>/vt520</td><td>DECHWUM</td> <td>Host Wake-Up                  </td><td></td></tr>
-<tr><td>?114</td>  <td>/vt520</td><td>DECATCUM</td><td>Alternate text color underline</td><td></td></tr>
-<tr><td>?115</td>  <td>/vt520</td><td>DECATCBM</td><td>Alternate text color blink    </td><td></td></tr>
-<tr><td>?116</td>  <td>/vt520</td><td>DECBBSM</td> <td>Bold and blink style mode     </td><td></td></tr>
-<tr><td>?117</td>  <td>/vt520</td><td>DECECM</td>  <td>Erase color mode              </td><td></td></tr>
-<tr><td>?1010</td> <td>rx</td><td></td>          <td>Scroll to bottom on tty output.</td><td>Don’t scroll to bottom on tty output.</td><td></td></tr>
-<tr><td>?1011</td> <td>rx</td><td></td>          <td>Scroll to bottom on key press.</td><td>Don’t scroll to bottom on key press.</td><td></td></tr>
-<tr><td>?1034</td> <td>x</td><td></td>           <td>Interpret "meta" key, sets eighth bit. <br />(enables the eightBitInput resource).</td><td>Don’t interpret "meta" key. (This disables the eightBitInput resource).</td><td></td></tr>
-<tr><td>?1035</td> <td>x</td><td></td>           <td>Enable special modifiers for Alt and NumLock keys. <br />(This enables the numLock resource).</td><td>Disable special modifiers for Alt and NumLock keys. (This disables the numLock resource).</td><td></td></tr>
-<tr><td>?1036</td> <td>x</td><td></td>           <td>Send ESC when Meta modifies a key. <br />(This enables the metaSendsEscape resource).</td><td>Don’t send ESC when Meta modifies a key. (This disables the metaSendsEscape resource).</td><td></td></tr>
-<tr><td>?1037</td> <td>x</td><td></td>           <td>Send DEL from the editing-keypad Delete key.</td><td>Send VT220 Remove from the editing-keypad Delete key.</td><td></td></tr>
-<tr><td>?1039</td> <td>x</td><td></td>           <td>Send ESC when Alt modifies a key. <br />(This enables the altSendsEscape resource).</td><td>Don’t send ESC when Alt modifies a key. (This disables the altSendsEscape resource).</td><td></td></tr>
-<tr><td>?1040</td> <td>x</td><td></td>           <td>Keep selection even if not highlighted. <br />(This enables the keepSelection resource).</td><td>Do not keep selection when not highlighted. (This disables the keepSelection resource).</td><td></td></tr>
-<tr><td>?1041</td> <td>x</td><td></td>           <td>Use the CLIPBOARD selection. <br />(This enables the selectToClipboard resource).</td><td>Use the PRIMARY selection. (This disables the selectToClipboard resource).</td><td></td></tr>
-<tr><td>?1042</td> <td>x</td><td></td>           <td>Enable Urgency window manager hint when Control-G is received. <br />(This enables the bellIsUrgent resource).</td><td>Disable Urgency window manager hint when Control-G is received. (This disables the bellIsUrgent resource).</td><td></td></tr>
-<tr><td>?1043</td> <td>x</td><td></td>           <td>Enable raising of the window when Control-G is received. <br />(enables the popOnBell resource).</td><td>Disable raising of the window when Control-G is received. (This disables the popOnBell resource).</td><td></td></tr>
-<tr><td>?1047</td> <td>x</td><td></td>           <td>Use Alternate Screen Buffer. <br />(This may be disabled by the titeInhibit resource).</td><td>Use Normal Screen Buffer, clearing screen first if in the Alternate Screen. (This may be disabled by the titeInhibit resource).</td><td></td></tr>
-<tr><td>?1048</td> <td>x</td><td></td>           <td>Save cursor as in DECSC. <br />(This may be disabled by the titeInhibit resource).</td><td>Restore cursor as in DECRC. (This may be disabled by the titeInhibit resource).</td><td></td></tr>
-<tr><td>?1049</td> <td>x</td><td></td>
-  <td>Save cursor as in DECSC and use Alternate Screen Buffer, clearing it first. <br />(This may be disabled by the titeInhibit resource). This combines the effects of the 1047 and 1048 modes. Use this with terminfo-based applications rather than the 47 mode.</td>
-  <td>Use Normal Screen Buffer and restore cursor as in DECRC. (This may be disabled by the titeInhibit resource). This combines the effects of the 1 0 4 7 and 1 0 4 8 modes. Use this with terminfo-based applications rather than the 4 7 mode.</td><td></td></tr>
-<tr><td>?1050</td> <td>x</td><td></td>       <td>Set terminfo/termcap function-key mode.</td><td>Reset terminfo/termcap function-key mode.</td><td></td></tr>
-<tr><td>?1051</td> <td>x</td><td></td>       <td>Set Sun function-key mode.</td><td>Reset Sun function-key mode.</td><td></td></tr>
-<tr><td>?1052</td> <td>x</td><td></td>       <td>Set HP function-key mode.</td><td>Reset HP function-key mode.</td><td></td></tr>
-<tr><td>?1053</td> <td>x</td><td></td>       <td>Set SCO function-key mode.</td><td>Reset SCO function-key mode.</td><td></td></tr>
-<tr><td>?1060</td> <td>x</td><td></td>       <td>Set legacy keyboard emulation (X11R6).</td><td>Reset legacy keyboard emulation (X11R6).</td><td></td></tr>
-<tr><td>?1061</td> <td>x</td><td></td>       <td>Set VT220 keyboard emulation.</td><td>Reset keyboard emulation to Sun/PC style.</td><td></td></tr>
-<tr><td>?2004</td> <td>x</td><td></td>       <td>Set bracketed paste mode.</td><td>Reset bracketed paste mode.</td><td></td></tr>
+<tr><td>?108</td>  <td></td><td>DECNUMLK</td>   <td>Num Lock Mode</td><td></td><td></td></tr>
+<tr><td>?109</td>  <td></td><td>DECCAPSLK</td>  <td>Caps Lock Mode</td><td></td><td></td></tr>
+<tr><td>?110</td>  <td></td><td>DECKLHIM</td>   <td>Keyboard LEDs Host Indicator Mode</td><td class="markB"></td><td></td></tr>
 <tr><td>=0</td>    <td>/ansi.sys</td> <td></td>       <td>40列 x 25行 monochrome (text)</td><td></td><td>X</td></tr>
 <tr><td>=1</td>    <td>/ansi.sys</td> <td></td>       <td>40列 x 25行 color (text)</td><td></td><td>X</td></tr>
 <tr><td>=2</td>    <td>/ansi.sys</td> <td></td>       <td>80列 x 25行 monochrome (text)</td><td></td><td>X</td></tr>
@@ -1702,13 +1656,6 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><td>&gt;1</td><td></td><td></td>         <td>ファンクション有り</td><td>ファンクション無し</td><td>X</td></tr>
 <tr><td>&gt;5</td><td></td><td></td>         <td>カーソル有り</td><td>カーソル無し</td><td>X</td></tr>
 </table>
-<ul>
-<li>v: vt100</li>
-<li>4: vt420</li>
-<li>5: vt510</li>
-<li>x: xterm</li>
-<li>r: rxvt</li>
-</ul>
 <ul>
 <li><a href="http://fpcu.on.coocan.jp/dosvcmd/ansi.htm">ANSI.SYS - キーボードと画面の拡張制御のサポート [FPCU]DOS/V&amp;Windowsコマンド・プロンプト・リファレンス</a></li>
 <li>ANSI.SYS 日本語モードでは =3, =17, =18, =114, =115 のみ選択可能</li>
@@ -2916,7 +2863,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
  DECCARA, DECCIR, DECCKD, DECCKSR, DECCRA, DECDC,
  DECDLD, DECDMAC, DECEKBD, DECELF, DECERA, DECFI, DECFNK, DECFRA,
  DECIC, DECINVM, DECIPEM, DECKBD,
- DECKPM, DECLANS, DECLBAN, DECLFKC, DECLL, DECLTOD, DECMSR,
+ DECLANS, DECLBAN, DECLFKC, DECLL, DECLTOD, DECMSR,
  DECPAK, DECPCTERM,
  DECPFK, DECPKA, DECPKFMR, DECRARA, DECRPAK,
  DECRPDE, DECRPFK, DECRPKT, DECRPTUI, DECRQCRA, DECRQDE, DECRQKD,
@@ -3076,8 +3023,12 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <li>VT510 は <kbd>CSI &gt; 6 1 ; <i>Ps1</i> ; <i>Ps2</i> c </kbd> の形式で応答する。
     Ps1 は 10 または 20 であり、それぞれファームウェアバージョン 1.0 及び 2.0 に対応する。
     Ps2 はキーボードの種類を指定し、0 が STD keyboard で 1 が PC keyboard である。</li>
-  <li>contra は取り敢えず <kbd>CSI &gt; 6 7 ; 0 c</kbd> を返す事にする。
+  <li>contra は<del>取り敢えず <kbd>CSI &gt; 6 7 ; 0 c</kbd> を返す事にする。</del>
+    <kbd>CSI &gt; 9 9 ; 0 c</kbd> に変更した (99 = 'c')。
   </li>
+  <li>Cygwin が <kbd>CSI &gt; 6 7 ; 3 0 1 0 2 ; 0 c</kbd> (例 3.1.2) である (67 = 'C')。</li>
+  <li>Kitty の DA2R は <kbd>CSI > 1 ; MAJOR ; MINOR c</kbd>。
+    DA1R は <kbd>CSI ? 6 2 ; c</kbd> である。</li>
   </ul>
 </li>
 <li><dfn class="cfunc">DA3</dfn>: Tertiary Device Attributes
@@ -3360,13 +3311,14 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <ul>
   <li>[ECMA-48/8.3.117], vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SGR">VT510: SGR</a></li>
+  <li>[ECMA-48/8.3.117] 可能な番号の組み合わせは処理系依存である。</li>
+  <li>[T.416/13.1.8] default parameter value (0) は他の番号と一緒に用いることはできない。
+    実際の端末の実装では可能である。Mode 21 (GRCM) が無効の時、番号を指定した順番に適用されることになっているのが普通である。
+  </li>
+  <li>[T.416/13.1.8] sgrBold, sgrFaint, sgrItalic などはフォントが設定されていない時に有効である。
+    つまり、primary font (10) もしくはフォントが未指定の alternative font (11-19) の時のみに有効である。
+  </li>
   </ul>
-</li>
-<li><dfn class="cfunc">PLD</dfn>: PARTIAL LINE DOWN
-  <p>[ECMA-48/8.3.92] 下付き文字にする。PLU で解除する。</p>
-</li>
-<li><dfn class="cfunc">PLU</dfn>: PARTIAL LINE UP
-  <p>[ECMA-48/8.3.93] 上付き文字にする。PLD で解除する。</p>
 </li>
 <li>Mode 21 <dfn class="cmode">GRCM</dfn>: GRAPHIC RENDITION COMBINATION MODE
   <p>[ECMA-48/7.2.8] SGR でそれまでに設定されていた属性を持続するかどうかを決める。</p>
@@ -3501,56 +3453,94 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <h3>SGR 詳細</h3>
 <h4>一覧表</h4>
 <table class="normal center">
-<tr><th>名称</th>                <th>Sgr</th >          <th>ansi</th> <th>vt</th><th>xterm</th><th>rxvt</th></tr>
-<tr><th>sgrDefault</th>          <td>0</td>             <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrBold</th>             <td>1</td>             <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrFaint</th>            <td>2</td>             <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrItalic</th>           <td>3</td>             <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrUnderline</th>        <td>4</td>             <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrBlink</th>            <td>5</td>             <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrRapidBlink</th>       <td>6</td>             <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrNega</th>             <td>7</td>             <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrInvisible</th>        <td>8</td>             <td>*</td>    <td>*</td> <td>*</td>    <td>-</td>   </tr>
-<tr><th>sgrStrike</th>           <td>9</td>             <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrAnsiFont</th>         <td>10-19</td>         <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrCharsetASCII</th>     <td>10</td>            <td>-</td>    <td>*</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrCharsetL</th>         <td>11</td>            <td>-</td>    <td>*</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrCharsetR</th>         <td>12</td>            <td>-</td>    <td>*</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrFraktur</th>          <td>20</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrDoubleUnderline</th>  <td>21</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrBoldOff</th>          <td>22</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrItalicOff</th>        <td>23</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrUnderlineOff</th>     <td>24</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrBlinkOff</th>         <td>25</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrProportional</th>     <td>26</td>            <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrNegaOff</th>          <td>27</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrInvisibleOff</th>     <td>28</td>            <td>*</td>    <td>*</td> <td>*</td>    <td>-</td>   </tr>
-<tr><th>sgrStrikeOff</th>        <td>29</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrAnsiColor</th>        <td>30-37, 40-47</td>  <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrISO8613_6Color</th>   <td>38, 48</td>        <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrFgDefault</th>        <td>39</td>            <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrBgDefault</th>        <td>49</td>            <td>*</td>    <td>-</td> <td>*</td>    <td>*</td>   </tr>
-<tr><th>sgrProportionalOff</th>  <td>50</td>            <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrFrame</th>            <td>51</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrCircle</th>           <td>52</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrOverline</th>         <td>53</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrFrameOff</th>         <td>54</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrOverlineOff</th>      <td>55</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrAnsiReserved</th>     <td>56-59</td>         <td>-R-</td>  <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrIdeoDecoration</th>   <td>60-64</td>         <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrIdeoDecorationOff</th><td>65</td>            <td>*</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrIdeoDecoration2</th>  <td>66-69</td>         <td>-</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
-<tr><th>sgrAixColor</th>         <td>90-97, 100-107</td><td>-</td>    <td>-</td> <td>*</td>    <td>-</td>   </tr>
-<tr><th>sgrDefaultColor</th>     <td>100</td>           <td>-</td>    <td>-</td> <td>-</td>    <td>-</td>   </tr>
+<tr><th>名称</th>                <th>Sgr</th>  <th>名称</th>                <th>Sgr</th>           </tr>
+<tr><th>sgrDefault</th>          <td>0</td>    <th>sgrProportional</th>     <td>26</td>            </tr>
+<tr><th>sgrBold</th>             <td>1</td>    <th>sgrNegaOff</th>          <td>27</td>            </tr>
+<tr><th>sgrFaint</th>            <td>2</td>    <th>sgrInvisibleOff</th>     <td>28</td>            </tr>
+<tr><th>sgrItalic</th>           <td>3</td>    <th>sgrStrikeOff</th>        <td>29</td>            </tr>
+<tr><th>sgrUnderline</th>        <td>4</td>    <th>sgrAnsiColor</th>        <td>30-37, 40-47</td>  </tr>
+<tr><th>sgrBlink</th>            <td>5</td>    <th>sgrISO8613_6Color</th>   <td>38, 48</td>        </tr>
+<tr><th>sgrRapidBlink</th>       <td>6</td>    <th>sgrFgDefault</th>        <td>39</td>            </tr>
+<tr><th>sgrNega</th>             <td>7</td>    <th>sgrBgDefault</th>        <td>49</td>            </tr>
+<tr><th>sgrInvisible</th>        <td>8</td>    <th>sgrProportionalOff</th>  <td>50</td>            </tr>
+<tr><th>sgrStrike</th>           <td>9</td>    <th>sgrFrame</th>            <td>51</td>            </tr>
+<tr><th>sgrAnsiFont</th>         <td>10-19</td><th>sgrCircle</th>           <td>52</td>            </tr>
+<tr><th>sgrCharsetASCII</th>     <td>10</td>   <th>sgrOverline</th>         <td>53</td>            </tr>
+<tr><th>sgrCharsetL</th>         <td>11</td>   <th>sgrFrameOff</th>         <td>54</td>            </tr>
+<tr><th>sgrCharsetR</th>         <td>12</td>   <th>sgrOverlineOff</th>      <td>55</td>            </tr>
+<tr><th>sgrFraktur</th>          <td>20</td>   <th>sgrAnsiReserved</th>     <td>56-59</td>         </tr>
+<tr><th>sgrDoubleUnderline</th>  <td>21</td>   <th>sgrIdeoDecoration</th>   <td>60-64</td>         </tr>
+<tr><th>sgrBoldOff</th>          <td>22</td>   <th>sgrIdeoDecorationOff</th><td>65</td>            </tr>
+<tr><th>sgrItalicOff</th>        <td>23</td>   <th>sgrIdeoDecoration2</th>  <td>66-69</td>         </tr>
+<tr><th>sgrUnderlineOff</th>     <td>24</td>   <th>sgrAixColor</th>         <td>90-97, 100-107</td></tr>
+<tr><th>sgrBlinkOff</th>         <td>25</td>   <th>sgrDefaultColor</th>     <td>100</td>           </tr>
 </table>
+
+<table class="normal center">
+<tr><th>名称</th><th>SGR</th></tr>
+<tr><th>sgrKittyDecorationClear </th><td>4:0</td></tr>
+<tr><th>sgrKittyDecorationSingle</th><td>4:1</td></tr>
+<tr><th>sgrKittyDecorationDouble</th><td>4:2</td></tr>
+<tr><th>sgrKittyDecorationCurly </th><td>4:3</td></tr>
+<tr><th>sgrMinttyDecorationDotted</th><td>4:4</td></tr>
+<tr><th>sgrMinttyDecorationDashed</th><td>4:5</td></tr>
+<tr><th>sgrKittyDecorationFg    </th><td>58<sup>違反</sup></td></tr>
+<tr><th>sgrKittyDecorationFgOff </th><td>59<sup>違反</sup></td></tr>
+<tr><th>sgrMinttySHADOW         </th><td>1:2</td></tr>
+<tr><th>sgrMinttyOVERSTRIKE     </th><td>8:7</td></tr>
+<tr><th>sgrMinttySUPERSCR       </th><td>73</td></tr>
+<tr><th>sgrMinttySUBSCR         </th><td>74</td></tr>
+<tr><th>sgrMinttySUPSUB_CLEAR   </th><td>75</td></tr>
+</table>
+
+<pre>
+# 各端末の対応
+
+D=deprecated R=reserved -=undefined     vt102=vt100
+;=only_semicolon :=only_colon           vt320,vt420=vt220
+k=Kitty m=mintty r=RLogin u=urxvt       vt520=vt510
+
+|         |                                                                                              |   |        |11111111|
+|         |                  1111111111222222222233333333333333344444444444444455555555555555556666666666|777|99999999|00000000|
+|         |0112344444445678890123456789012345678901234567888888901234567888888901234567888888890123456789|345|01234567|01234567|
+|---------|--:---::::::----:-----------------------------::::::---------::::::----------::::::-----------|---|--------|--------|
+|         |  2   012345    7                             012345         012345          012345           |   |        |        |
+|---------|----------------------------------------------------------------------------------------------|---|--------|--------|
+| ECMA-48 |** ***      **** *****************D***********::::::********* :::::*D*****RRRRRRRRRR**********|   |        |        |
+| vt100   |**   *      * *                                                           ---                 |   |        |        |
+| vt220   |**   *      * *               * ** *                                      ---                 |   |        |        |
+| vt510   |**   *      * **  ***         * ** **                                     ---                 |   |        |        |
+| vt525   |**   *      * **  ***         * ** ** ********      *********      *      ---                 |   |        |        |
+|---------|----------------------------------------------------------------------------------------------|---|--------|--------|
+| rxvt    |**   *      * *               * ** *  ********     ;*********     ;*      ---                 |   |********|********|
+| urxvt   |**  **      ****             u****u*  ********  ;  ;*********  ;  ;*      ---                 |   |********|********|
+| iTerm2  |** ***      ***  *            **** * *********  *  **********  ;  ;*      ---                 |   |********|********|
+| xterm   |** ***      **** *           ***** ***********  *  **********  *  **      ---                 |   |********|********|
+| Kitty   |** ***kkkk    *  *           ****  * *********  *  **********  *  **      ---  k  kk          |   |********|********|
+| tmux    |** ***kkkkkk* ** *            **** ***********  *  **********  *  **   * *---  k  kk          |   |********|********|
+| mintty  |**m***kkkkkk****m***************** ***********  *::**********  *::** m****---  k::kk          |mmm|********|********|
+| RLogin  |** ***      **** *****************************  *  **********  *  **r*****---       rrrrrr    |   |********|********|
+| contra  |** ***kkkkkk**** *********************************************************---kkkkkkk**********|mmm|********|********|
+</pre>
+<ul>
+<li>xterm は charproc.c (CASE_SGR) にある。rxvt は command.c (rxvt_process_sgr_mode) にある。
+  RLogin は TextRamProc.cpp (CTextRam::fc_SGR) にある。
+  urxvt は command.C (rxvt_term::process_sgr_mode) にある。
+  iTerm2 は sources/VT100Terminal.m (executeSGR) にある。
+  tmux は input.c (input_csi_dispatch_sgr, input_csi_dispatch_sgr_colon) にある。
+  vt100 は<a href="https://www.vt100.net/docs/vt100-ug/chapter3.html#SGR">ここ</a>にある。
+  vt102 は<a href="https://www.vt100.net/docs/vt102-ug/chapter5.html#S5.5.2.17">5.5.2.17</a>。
+  vt220 は<a href="https://www.vt100.net/docs/vt220-rm/chapter4.html#S4.9.1">4.9.1</a> にある。
+  vt320 は<a href="https://www.vt100.net/docs/vt320-uu/appendixe.html#SE.7">E.7</a>より。
+  vt420 は <a href="https://www.vt100.net/docs/vt420-uu/chapter9.html#S9.7">9.7</a> より。
+  vt510 は <a href="https://www.vt100.net/docs/vt510-rm/SGR.html">SGR</a> より。
+</li>
+</ul>
 
 <h4>既定に戻す</h4>
 <ul>
 <li>SGR 0 <dfn class="sgr">sgrDefault</dfn>: All attributes off
   <p>設定されている全ての描画属性を無効にし、既定の状態に戻す。</p>
-  <ul>
-  <li>互換性: ansi, vt100, xterm</li>
-  </ul>
 </li>
 </ul>
 
@@ -3564,16 +3554,16 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </li>
 <li>SGR 2 <dfn class="sgr">sgrFaint</dfn>: faint, second color, dim
   <p>細字、低輝度の文字、もしくは代替色の文字。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
+</li>
+<li>SGR 1:2 <dfn class="sgr">sgrMinttySHADOW</dfn>
+  <p>[<a href="https://github.com/mintty/mintty/wiki/Changelog#301-28-may-2019">mintty 3.0.1</a>] 影付き文字。</p>
 </li>
 <li>SGR 22 <dfn class="sgr">sgrBoldOff</dfn>: bold off, normal color/intensity
   <p>太字・低輝度属性を解除する。
   ansi, xterm では sgrBold/sgrFaint の両方を解除する。
   </p>
   <ul>
-  <li>互換性: vt100, ansi (bold/faint off), xterm (bold/faint off)</li>
+  <li>互換性: ansi (bold/faint off), xterm (bold/faint off)</li>
   </ul>
 </li>
 </ul>
@@ -3582,43 +3572,59 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <ul>
 <li>SGR 3 <dfn class="sgr">sgrItalic</dfn>: Italicized
   <p>イタリック体。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
 </li>
 <li>SGR 20 <dfn class="sgr">sgrFraktur</dfn>: Fraktur
   <p>Fraktur フォントまたは Gothic フォント。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
 </li>
 <li>SGR 23 <dfn class="sgr">sgrItalicOff</dfn>: not italicized/fraktur
   <p>sgrItalic, sgrFraktur を解除。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
 </li>
 </ul>
 
 <h4>下線</h4>
 <ul>
-<li>SGR 4 <dfn class="sgr">sgrUnderline</dfn>: underline, singly underlined
+<li>SGR 4 <dfn class="sgr">sgrUnderline</dfn>: underline, singly underlined</li>
+<li>SGR 4:1 <dfn class="sgr">sgrKittyDecorationSingle</dfn>
   <p>下線。</p>
-  <ul>
-  <li>互換性: ansi, vt100, xterm</li>
-  </ul>
 </li>
-<li>SGR 21 <dfn class="sgr">sgrDoubleUnderline</dfn>: doubly underlined
+<li>SGR 21 <dfn class="sgr">sgrDoubleUnderline</dfn>: doubly underlined</li>
+<li>SGR 4:2 <dfn class="sgr">sgrKittyDecorationDouble</dfn>
   <p>二重下線。</p>
   <ul>
-  <li>互換性: ansi</li>
+  <li>4:2 の形式は Kitty 由来
+    (Ref. <a href="https://github.com/kovidgoyal/kitty/issues/226">kovidgoyal/kitty#226</a>)
+  </li>
   </ul>
 </li>
-<li>SGR 24 <dfn class="sgr">sgrUnderlineOff</dfn>: Underline off
+<li>SGR 4:3 <dfn class="sgr">sgrKittyDecorationCurly</dfn>
+  <p>[Kitty] 波線。</p>
+</li>
+<li>SGR 4:4 <dfn class="sgr">sgrMinttyDecorationDotted</dfn></li>
+<li>SGR 4:5 <dfn class="sgr">sgrMinttyDecorationDashed</dfn>
+  <p>[mintty <a href="https://github.com/kovidgoyal/kitty/issues/226#issuecomment-381665023">comment by mintty @ kovidgoyal/kitty#226</a>] それぞれ点線と破線。</p>
+</li>
+<li>SGR 24 <dfn class="sgr">sgrUnderlineOff</dfn>: Underline off</li>
+<li>SGR 4:0 <dfn class="sgr">sgrKittyDecorationClear</dfn>
   <p>sgrUnderline, sgrDoubleUnderline (対応していれば) を解除。</p>
-  <ul>
-  <li>互換性: ansi, vt100, xterm</li>
-  </ul>
+</li>
+<li>SGR 58<sup>違反</sup> <dfn class="sgr">sgrKittyDecorationFg</dfn>:
+  <p>[Kitty] 下線の色を ISO 8613-6 形式 (以下 SGR 38, SGR 48 を参照) で指定する。mintty が追随した。
+    iTerm2 も対応している様なコメントを何処かで見たが iTerm2 は対応していない。tmux が追随している。</p>
+</li>
+<li>SGR 59<sup>違反</sup> <dfn class="sgr">sgrKittyDecorationFgOff</dfn>:
+  <p>[Kitty] 下線の色を解除。</p>
+</li>
+<li><a href="https://github.com/vim-jp/vimdoc-ja/blob/master/doc/options.jax">vimdoc-ja/options.jax at master · vim-jp/vimdoc-ja</a>
+  mintty が波線等に対応しているアプリケーションはあるのだろうかと調べたら出てきた。
+  vim では termcap Cs Ce を下波線に使うらしい。然し ncurses には Cs, Ce という項目はそもそもない様だ。
+  また、mintty についても言及されていない。
+  https://gitlab.com/gnachman/iterm2/issues/6382
+</li>
+<li><a href="https://gitlab.com/gnachman/iterm2/issues/6382">Curly and colored underlines (#6382) · Issues · George Nachman / iterm2 · GitLab</a>
+  ここによるとこれらの機能は Kitty 由来らしい。vim は既に色々使っているとの事。
+</li>
+<li><a href="https://sw.kovidgoyal.net/kitty/protocol-extensions.html">Extensions to the xterm protocol — kitty 0.16.0 documentation</a>
+  ここを見ると 4:* 58 59 は Kitty による物で、58 59 は Reserved と分かっていて使っている様だ。
 </li>
 </ul>
 
@@ -3628,7 +3634,6 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <p>遅い点滅。</p>
   <p>[ECMA-48/8.3.117] 150/min 未満の速さで点滅させる。</p>
   <ul>
-  <li>互換性: vt100, xterm</li>
   <li>xterm, mintty は前景の表示・非表示を切り替える。
     RLogin は前景色と背景色を反転させて点滅を表現する。
     contra では前者に倣う。
@@ -3647,7 +3652,6 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <p>速い点滅。</p>
   <p>[ECMA-48/8.3.117] 150/min 以上の速さで点滅させる。</p>
   <ul>
-  <li>互換性: ansi</li>
   <li>xterm は SGR(5) と同じ速さで点滅する。
     RLogin は2倍の速さで点滅する。
     mintty は定数倍ではないが微妙に速く点滅する。
@@ -3656,9 +3660,6 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </li>
 <li>SGR 25 <dfn class="sgr">sgrBlinkOff</dfn>: blinking off, steady, not blinking
   <p>点滅属性を解除する。</p>
-  <ul>
-  <li>互換性: ansi, vt100, xterm</li>
-  </ul>
 </li>
 </ul>
 
@@ -3666,29 +3667,38 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <ul>
 <li>SGR 7 <dfn class="sgr">sgrNega</dfn>: negative image, inverse
   <p>ネガ反転、もしくは、前景色と背景色を反転させる。</p>
-  <ul>
-  <li>互換性: ansi, vt100, xterm</li>
-  </ul>
 </li>
 <li>SGR 27 <dfn class="sgr">sgrNegaOff</dfn>: negative image off, positive image
   <p>反転属性を解除する。</p>
-  <ul>
-  <li>互換性: ansi, vt100, xterm</li>
-  </ul>
 </li>
 </ul>
 
 <h4>不可視</h4>
 <ul>
 <li>SGR 8 <dfn class="sgr">sgrInvisible</dfn>: invisible image, hidden, concealed
+  <p>不可視。文字を表示しない。</p>
+</li>
+<li>SGR 8:7 <dfn class="sgr">sgrMinttyOVERSTRIKE</dfn>:
+  <p>[<a href="https://github.com/mintty/mintty/wiki/Changelog#301-28-may-2019">mintty 3.0.1</a>]
+    既存の文字を消去せずに上に重ねて描画する。
+    例えば <code>printf 'hello\r\e[8:7mworld\n'</code> とすると、hello と world が重なって出力される。
+  </p>
   <ul>
-  <li>互換性: ansi, vt100, xterm</li>
+  <li>以下は mintty の詳細な振る舞いである。
+    <ul>
+    <li>全角文字を重ね書きする時は現在位置の文字に挿入され、
+      各文字についてカーソルは半角分しか前進しない様だ (<code>printf '日本語\r\e[8:7ma今日は\n'</code>)。</li>
+    <li>何文字でも重ね書きできる (<code>printf '\e[8:7m_\b^\b+\b=\b|\b/\e[m\n'</code>)。
+      上限があるのか実験したらクラッシュした。脆弱性である。</li>
+    <li>(nroff 等で使っている様な) 同じ文字を重ね書きしても
+      太字にはならない (<code>printf '\e[8:7maa\baxx\bx\e[m\n'</code>)。</li>
+    <li>異なる色の文字も重ねる事ができる (<code>printf '\e[8:7m\e[31mA\e[32m\bx\e[m\n'</code>)。</li>
+    </ul>
+  </li>
   </ul>
 </li>
 <li>SGR 28 <dfn class="sgr">sgrInvisibleOff</dfn>: invisible image off, visible image, revealed characters
-  <ul>
-  <li>互換性: ansi, vt100, xterm</li>
-  </ul>
+  <p>不可視属性を解除する。</p>
 </li>
 </ul>
 
@@ -3696,15 +3706,9 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <ul>
 <li>SGR 9 <dfn class="sgr">sgrStrike</dfn>: crossed-out
   <p>打ち消し線。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
 </li>
 <li>SGR 29 <dfn class="sgr">sgrStrikeOff</dfn>: not crossed out
   <p>打ち消し線解除。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
 </li>
 </ul>
 
@@ -3726,9 +3730,6 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <tr><td>18</td><td>代替フォント8 (8th alternative font)</td></tr>
   <tr><td>19</td><td>代替フォント9 (9th alternative font)</td></tr>
   </table>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
 </li>
 <li>SGR 10 <dfn class="sgr">sgrCharsetASCII</dfn>: ASCII char set
   <p>sgrCharsetL, sgrCharsetR で設定された C0:GL に割り当てられた文字を、
@@ -3770,17 +3771,11 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     T.61 は International Teletex Services の為の仕様であるが teletex service 自体が終了した為に失効した様だ。
     現在は最新版 (1993 年) の文書自体が手に入らない状態にあるようだが、改訂前の 1988 年版は手に入る。
   </p>
-  <p>[T.416/13.18] deprecated</p>
-  <ul>
-  <li>互換性: ansi (reserved)</li>
-  </ul>
+  <p>[T.416/13.18] deprecated と指定されている。</p>
 </li>
 <li>SGR 50 <dfn class="sgr">sgrProportionalOff</dfn>: (reserved)
   <p>sgrProportional (SGR 26) の効果を打ち消す為に使用する。</p>
   <p>[T.416/13.18] deprecated</p>
-  <ul>
-  <li>互換性: ansi (reserved)</li>
-  </ul>
 </li>
 </ul>
 
@@ -3799,9 +3794,6 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <tr><td>36</td><td>cyan foreground</td>   <td>前景碧色</td><td>46</td><td>cyan background</td>   <td>背景碧色</td></tr>
   <tr><td>37</td><td>white foreground</td>  <td>前景灰色</td><td>47</td><td>white background</td>  <td>背景灰色</td></tr>
   </table>
-  <ul>
-  <li>互換性: ANSI, xterm</li>
-  </ul>
 </li>
 <li>SGR 90-97, 100-107 <dfn class="sgr">sgrAixColor</dfn>: 高輝度背景色・前景色
   <p>30-37, 40-47 の前景色・背景色を高輝度にした物。</p>
@@ -3868,14 +3860,33 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 
   <p>ANSI では 38, 48 は reserved とされ、[T.416] に内容を委ねている。
     [T.416/13.1.8] 規格では引数の区切はコロン ":" (3/10) とされているが、
-    <u>実際の実装では ";" が用いられる事が多い。</u>
+    xterm実装 <code>38;5;index</code> (1999) に影響を受けて <u>実際の実装では ";" が用いられる事が多い。</u>
     規格では末端にある空引数は任意に省略可能だが、
     区切にセミコロンを用いている場合、引数の終端を判断できないので省略はできない。
   </p>
 
+  <p>[T.416/13.1.8] 引数 38, 48 の直後の区切りが : なのか ; なのかについては議論が分かれる。</p>
+  <ul>
+  <li>規格の "38, 48 に続く parameter substring" なる記述の parameter substring を
+    ECMA-48/5.4.2 の parameter sub-string の事と解釈すれば、
+    38, 48 の引数は ; で区切って新しい別のパラメータとして指定する必要がある。
+    つまり、<code>38;5:1</code> や <code>38;2::255:0:0</code> などの様になる。</li>
+  <li>然し、上の解釈は不合理である。わざわざ明示的に : を使いながら、
+    38, 48 と区切る時にだけ ; を使う設計にする動機が全くない。
+    ECMA-48 で使われている parameter string 等の別の単語は T.416 では現れない。
+    また、T.416 で使われている parameter element という語は、ECMA-48 には現れない。
+    T.416 parameter substring は単にパラメータ内のサブの文字列と解釈するのが自然に思われる。
+    総合的に見て ECMA-47/5.4.2 parameter sub-string とは関係ないと判断する。
+  </li>
+  </ul>
+
   <p>[T.416/13.1.8] RGB, CMY, CMYK の第2引数 <i class="kbd">s</i> は色空間を指定する id で非負の整数<sup>[T.412/9.1.4.1]</sup> である。
     <u>実際の実装では RGB に対応しているものがあるが、
     何れも第2引数には対応せず後続の引数の番号が 1 つずつ前にずれる</u>。
+    →どうやら mintty は第2引数を色深度の情報に使うらしい。つまり100%の時の値。
+    つまり 0-255 ならば 255 で 0-100 ならば 100 という事なのだろう。
+    xterm はサブパラメータが3つの場合には RGB で解釈し、
+    パラメータが4つ以上の時は ISO-8613-6 で解釈する。
   </p>
 
   <p>[T.416/13.1.8]
@@ -3900,7 +3911,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </p>
 
   <p>[T.416/13.1.8] R, G, B, C, M, Y, K のそれぞれの強度の指定方法について述べられていない。
-    実際の実装では R, G, B は 0-255 の値で指定すると解釈している。
+    実際の実装では R, G, B は 0-255 の値で指定すると解釈している?
   </p>
 
   <ul>
@@ -3919,21 +3930,16 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     それ以外の場合は読み取られた 3/3/4 個の引数をそれぞれ RGB/CMY/CMYK とみなす。
     ISO 8613-6 に従った解釈の場合、tolerance およびその色空間は使用しない。
   </li>
+  <li>Kitty の SGR の設定は cursor.c (cursor_from_sgr) にある。</li>
   </ul>
 </li>
 <li>SGR 39 <dfn class="sgr">sgrFgDefault</dfn>: default display/foreground color
   <p>前景色を既定色に戻す。</p>
   <p>[ECMA-48] 処理系依存</p>
-  <ul>
-  <li>互換性: ansi, xterm</li>
-  </ul>
 </li>
 <li>SGR 49 <dfn class="sgr">sgrBgDefault</dfn>: default background color
   <p>背景色を既定色に戻す。</p>
   <p>[ECMA-48] 処理系依存</p>
-  <ul>
-  <li>互換性: ansi, xterm</li>
-  </ul>
 </li>
 <li>SGR 100 <dfn class="sgr">sgrDefaultColor</dfn>: default color
   <p>前景色及び背景色を既定色に戻す。
@@ -3952,21 +3958,12 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <ul>
 <li>SGR 51 <dfn class="sgr">sgrFrame</dfn>: framed
   <p>四角形の枠線。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
 </li>
 <li>SGR 52 <dfn class="sgr">sgrCircle</dfn>: encircled
   <p>丸囲み線。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
 </li>
 <li>SGR 54 <dfn class="sgr">sgrFrameOff</dfn>: not framed/encircled
   <p>枠線・丸囲み線解除。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
 </li>
 </ul>
 
@@ -3974,15 +3971,9 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <ul>
 <li>SGR 53 <dfn class="sgr">sgrOverline</dfn>: overlined
   <p>上線。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
 </li>
 <li>SGR 55 <dfn class="sgr">sgrOverlineOff</dfn>: not overlined
   <p>上線解除。</p>
-  <ul>
-  <li>互換性: ansi</li>
-  </ul>
 </li>
 </ul>
 
@@ -3999,7 +3990,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <h4>CJK装飾</h4>
 <ul>
 <li>SGR 60-64 <dfn class="sgr">sgrIdeoDecoration</dfn>: CJK装飾(ANSI)
-  <p>CJK文字に対する装飾を有効にする。ECMA-48 では下線または右側に線というような曖昧な記述であるが、
+  <p>[ECMA-48] CJK文字に対する装飾を有効にする。ECMA-48 では下線または右側に線というような曖昧な記述であるが、
   JIS X 0211 によれば横書きの場合は下線で、縦書きの場合には右側に傍線といった意味である。
   これらを組み合わせた場合にどの様な表示になるかについては既定されていない。
   </p>
@@ -4012,11 +4003,11 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <tr><td>64</td><td>傍点・強調</td><td colspan="2">ideogram stress marking</td></tr>
   </table>
   <ul>
-  <li>互換性: ansi</li>
+  <li>互換性: ECMA-48</li>
   </ul>
 </li>
 <li>SGR 66-69 <dfn class="sgr">sgrIdeoDecoration2</dfn>: CJK装飾2
-  <p>CJK文字に対する装飾で 60-64 の時とは、縦書き・横書きの切り替わり方が異なる物である。</p>
+  <p>[JIS X 0211] CJK文字に対する装飾で 60-64 の時とは、縦書き・横書きの切り替わり方が異なる物である。</p>
   <p>Note: ECMA-48 5th edition (1991) には書かれていないが JIS X 0211 にはある。
   恐らく、ISO/IEC 6429:1992 で導入された物だろう。
   </p>
@@ -4032,25 +4023,29 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </ul>
 </li>
 <li>SGR 65 <dfn class="sgr">sgrIdeoDecorationOff</dfn>: CJK装飾解除
-  <p>CJK装飾 60-64, 66-69 で設定された属性を解除する。</p>
+  <p>[ECMA-48] CJK装飾 60-64, 66-69 で設定された属性を解除する。</p>
   <ul>
-  <li>互換性: ansi, JIS X 0211</li>
+  <li>互換性: ECMA-48, JIS X 0211</li>
   </ul>
 </li>
 </ul>
 
-<h4>Note</h4>
+<h4>上付き・下付き</h4>
 <ul>
-<li>[ECMA-48/8.3.117] 可能な番号の組み合わせは処理系依存である。</li>
+<li><dfn class="cfunc">PLD</dfn>: PARTIAL LINE DOWN
+  <p>[ECMA-48/8.3.92] 下付き文字にする。PLU で解除する。</p>
+</li>
+<li><dfn class="cfunc">PLU</dfn>: PARTIAL LINE UP
+  <p>[ECMA-48/8.3.93] 上付き文字にする。PLD で解除する。</p>
+</li>
+<li>SGR 73 <dfn class="sgr">sgrMinttySUPERSCR</dfn>: 上付き</li>
+<li>SGR 74 <dfn class="sgr">sgrMinttySUBSCR</dfn>: 下付き</li>
+<li>SGR 75 <dfn class="sgr">sgrMinttySUPSUB_CLEAR</dfn>: 上付き・下付き解除
+  <p>[<a href="https://github.com/mintty/mintty/wiki/Changelog#301-28-may-2019">mintty 3.0.1</a>] 上付き・下付きの解除</p>
+</li>
 <li>[T.416/13.1.8] 上付き(PLU)・下付き(PLD)の内部で下線・打ち消し線の類を設定した場合は、
   それに合わせた位置に線を描画する様にする。
   [T.416/13.1.5] 上付き・下付きにする前から設定されている下線・打ち消し線の類はそのままの位置で描画する。
-</li>
-<li>[T.416/13.1.8] default parameter value (0) は他の番号と一緒に用いることはできない。
-  実際の端末の実装では可能である。Mode 21 (GRCM) が無効の時、番号を指定した順番に適用されることになっているのが普通である。
-</li>
-<li>[T.416/13.1.8] sgrBold, sgrFaint, sgrItalic などはフォントが設定されていない時に有効である。
-  つまり、primary font (10) もしくはフォントが未指定の alternative font (11-19) の時のみに有効である。
 </li>
 </ul>
 
@@ -5169,7 +5164,7 @@ f.面クリ, CLS 　このコマンドはバッチファイルのみに利用で
 <tr><td><code>1</code></td>          <td><code>\e[27;5;49~</code></td><td><code>\e[27;13;49~</code></td><td><code>\e[27;7;49~</code></td>
     <td><code>!</code></td>          <td><code>\e[27;6;33~</code></td><td><code>\e[27;14;33~</code></td><td><code>\e[27;8;33~</code></td></tr>
 <tr><td><code>2</code></td>          <td>--</td>                      <td><code>\e[27;13;50~</code></td><td><code>\e[27;7;50~</code></td>
-    <td><code>"</code></td>          <td><code>\e[27;6;34~</code></td><td><code>\e[27;14;34~</code></td><td><code>\e[27;8;34~</code></td></tr>
+    <td><code>"</code></td>          <td><code>\e[27;6;34~</code></td><td><code>\e[27;14;34~</code></td><td><code>\e[27;8;34~</code></td></tr><!--"-->
 <tr><td><code>3</code></td>          <td>--</td>                      <td><code>\e[27;13;51~</code></td><td><code>\e[27;7;51~</code></td>
     <td><code>#</code></td>          <td><code>\e[27;6;35~</code></td><td><code>\e[27;14;35~</code></td><td><code>\e[27;8;35~</code></td></tr>
 <tr><td><code>4</code></td>          <td>--</td>                      <td><code>\e[27;13;52~</code></td><td><code>\e[27;7;52~</code></td>
@@ -5179,7 +5174,7 @@ f.面クリ, CLS 　このコマンドはバッチファイルのみに利用で
 <tr><td><code>6</code></td>          <td>--</td>                      <td><code>\e[27;13;54~</code></td><td><code>\e[27;7;54~</code></td>
     <td><code>&amp;</code></td>      <td><code>\e[27;6;38~</code></td><td><code>\e[27;14;38~</code></td><td><code>\e[27;8;38~</code></td></tr>
 <tr><td><code>7</code></td>          <td>--</td>                      <td><code>\e[27;13;55~</code></td><td><code>\e[27;7;55~</code></td>
-    <td><code>'</code></td>          <td><code>\e[27;5;39~</code></td><td><code>\e[27;13;39~</code></td><td><code>\e[27;7;39~</code></td></tr>
+    <td><code>'</code></td>          <td><code>\e[27;5;39~</code></td><td><code>\e[27;13;39~</code></td><td><code>\e[27;7;39~</code></td></tr><!--'-->
 <tr><td><code>8</code></td>          <td>--</td>                      <td><code>\e[27;13;56~</code></td><td><code>\e[27;7;56~</code></td>
     <td><code>(</code></td>          <td><code>\e[27;6;40~</code></td><td><code>\e[27;14;40~</code></td><td><code>\e[27;8;40~</code></td></tr>
 <tr><td><code>9</code></td>          <td><code>\e[27;5;57~</code></td><td><code>\e[27;13;57~</code></td><td><code>\e[27;7;57~</code></td>
@@ -5222,12 +5217,12 @@ f.面クリ, CLS 　このコマンドはバッチファイルのみに利用で
 <tr><td>@</td>  <td><code>@</code></td> <td><code>\C-@</code></td>   <td><code>`</code></td><td><code>\e[96;5^</code> <!--<code>\C-@</code>--></td>  </tr>
 <tr><td>0</td>  <td><code>0</code></td> <td><code>\e[0;5^</code></td><td>--</td>            <td>--</td>                               </tr>
 <tr><td>1</td>  <td><code>1</code></td> <td><code>\e[1;5^</code></td><td><code>!</code></td><td><code>\e[33;5^</code></td>  </tr>
-<tr><td>2</td>  <td><code>2</code></td> <td><code>\e[2;5^</code></td><td><code>"</code></td><td><code>\e[34;5^</code></td>  </tr>
+<tr><td>2</td>  <td><code>2</code></td> <td><code>\e[2;5^</code></td><td><code>"</code></td><td><code>\e[34;5^</code></td>  </tr><!--"-->
 <tr><td>3</td>  <td><code>3</code></td> <td><code>\e[3;5^</code></td><td><code>#</code></td><td><code>\e[35;5^</code></td>  </tr>
 <tr><td>4</td>  <td><code>4</code></td> <td><code>\e[4;5^</code></td><td><code>$</code></td><td><code>\e[36;5^</code></td>  </tr>
 <tr><td>5</td>  <td><code>5</code></td> <td><code>\e[5;5^</code></td><td><code>%</code></td><td><code>\e[37;5^</code></td>  </tr>
 <tr><td>6</td>  <td><code>6</code></td> <td><code>\e[6;5^</code></td><td><code>&</code></td><td><code>\e[38;5^</code></td>  </tr>
-<tr><td>7</td>  <td><code>7</code></td> <td><code>\e[7;5^</code></td><td><code>'</code></td><td><code>\e[39;5^</code></td>  </tr>
+<tr><td>7</td>  <td><code>7</code></td> <td><code>\e[7;5^</code></td><td><code>'</code></td><td><code>\e[39;5^</code></td>  </tr><!--'-->
 <tr><td>8</td>  <td><code>8</code></td> <td><code>\e[8;5^</code></td><td><code>(</code></td><td><code>\e[40;5^</code></td>  </tr>
 <tr><td>9</td>  <td><code>9</code></td> <td><code>\e[9;5^</code></td><td><code>)</code></td><td><code>\e[41;5^</code></td>  </tr>
 <tr><td>A-Z</td><td><code>a</code></td> <td><code>\C-a</code></td>   <td><code>A</code></td><td><code>\e[97;6^</code></td></tr>
