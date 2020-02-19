@@ -217,9 +217,15 @@ namespace dict {
       non_sgr_xflags_mask = xflags_subsup_mask | sco_mask | qualifier_mask,
     };
 
+  public:
     aflags_t aflags = 0;
     xflags_t xflags = 0;
+  private:
+    color_t fg = 0; // foreground color
+    color_t bg = 0; // background color
+    color_t dc = 0; // decoration color
 
+  public:
     constexpr attribute_t() {}
     constexpr attribute_t(std::uint32_t value): aflags(value) {}
 
@@ -230,11 +236,6 @@ namespace dict {
       return aflags == rhs.aflags && xflags == rhs.xflags && fg == rhs.fg && bg == rhs.bg && dc == rhs.dc;
     }
     constexpr bool operator!=(attribute_t const& rhs) const { return !(*this == rhs); }
-
-  private:
-    color_t fg = 0; // foreground color
-    color_t bg = 0; // background color
-    color_t dc = 0; // decoration color
 
   public:
     constexpr byte fg_space() const { return (aflags & fg_color_mask) >> fg_color_shift; }

@@ -130,6 +130,7 @@ contra_objs += \
 
 contra_LIBS := -lgdi32 -limm32 $(contra_LIBS)
 contra_LDFLAGS += -mwindows
+#contra_LDFLAGS += -static-libstdc++ -static-libgcc
 
 endif
 

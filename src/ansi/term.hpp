@@ -135,12 +135,14 @@ namespace ansi {
       this->m_capacity = value;
     }
 
-    void push(value_type&& line) {
+    void transfer(value_type&& line) {
       if (m_capacity == 0) return;
       if (data.size() < m_capacity) {
         data.emplace_back(std::move(line));
       } else {
-        data[m_rotate] = std::move(line);
+        auto check = data[m_rotate].cells().capacity();
+        data[m_rotate].transfer_from(line);
+        mwg_check(check == line.cells().capacity(),"%zu %zu", check, line.cells().capacity());
         m_rotate = (m_rotate + 1) % m_capacity;
       }
     }
@@ -257,7 +259,7 @@ namespace ansi {
   private:
     void transfer_lines(curpos_t y1, curpos_t y2, term_scroll_buffer_t& scroll_buffer) {
       for (curpos_t y = y1; y < y2; y++)
-        scroll_buffer.push(std::move(m_lines[y]));
+        scroll_buffer.transfer(std::move(m_lines[y]));
     }
     void initialize_lines(curpos_t y1, curpos_t y2, attribute_t const& fill_attr) {
       for (curpos_t y = y1; y < y2; y++) {
@@ -323,7 +325,7 @@ namespace ansi {
     // FF 等によって "次ページに移動" した時に使う。
     void clear_screen(term_scroll_buffer_t& scroll_buffer) {
       for (auto& line : m_lines) {
-        scroll_buffer.push(std::move(line));
+        scroll_buffer.transfer(std::move(line));
         line.clear();
         line.set_id(m_line_count++);
       }
@@ -777,32 +779,8 @@ namespace ansi {
     decoder_type m_seqdecoder {this, &this->m_state.m_sequence_decoder_config};
     friend decoder_type;
 
-    void print_unrecognized_sequence(sequence const& seq) {
-      return; //取り敢えず off
+    void print_unrecognized_sequence(sequence const& seq);
 
-      const char* name = "sequence";
-      switch (seq.type()) {
-      case ascii_csi:
-        name = "control sequence";
-        break;
-      case ascii_esc:
-        name = "escape sequence";
-        break;
-      case ascii_sos:
-        name = "character string";
-        break;
-      case ascii_pm:
-      case ascii_apc:
-      case ascii_dcs:
-      case ascii_osc:
-        name = "command string";
-        break;
-      }
-
-      std::fprintf(stderr, "unrecognized %s: ", name);
-      seq.print(stderr);
-      std::fputc('\n', stderr);
-    }
     void process_invalid_sequence(sequence const& seq) {
       // ToDo: 何処かにログ出力
       print_unrecognized_sequence(seq);

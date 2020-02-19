@@ -83,7 +83,7 @@ namespace contra {
     }
 
   public:
-    void print(std::FILE* file) const {
+    void print(std::FILE* file, int limit = -1) const {
       switch (m_type) {
       case ascii_csi:
       case ascii_esc:
@@ -92,6 +92,7 @@ namespace contra {
         for (char32_t ch: m_content) {
           print_char(file, ch);
           std::putc(' ', file);
+          if (--limit == 0) break;
         }
         print_char(file, m_final);
         break;
@@ -101,6 +102,7 @@ namespace contra {
         for (char32_t ch: m_content) {
           print_char(file, ch);
           std::putc(' ', file);
+          if (--limit == 0) break;
         }
         std::fprintf(file, "ST");
         break;
@@ -663,15 +665,29 @@ namespace contra {
     }
     static constexpr bool is_ctrl(std::uint32_t uchar) {
       std::uint32_t u = uchar & ~(std::uint32_t) 0x80;
-      return u < 0x20;
+      return u < 0x20 || uchar == ascii_del;
     }
     void decode(char32_t const* beg, char32_t const* end) {
       while (beg != end) {
-        if (m_dstate == decode_default && !is_ctrl(*beg)) {
-          char32_t const* const batch_begin = beg;
-          do beg++; while (beg != end && !is_ctrl(*beg));
-          char32_t const* const batch_end = beg;
-          m_proc->process_chars(batch_begin, batch_end);
+        if (m_dstate == decode_default) {
+          char32_t const uchar = *beg;
+          if (!is_ctrl(uchar)) {
+            // 通常文字の連続
+            char32_t const* const batch_begin = beg;
+            do beg++; while (beg != end && !is_ctrl(*beg));
+            char32_t const* const batch_end = beg;
+            m_proc->process_chars(batch_begin, batch_end);
+          } else {
+            if (uchar < 0x20 && (0xF7FF3FFEu & 1 << uchar)) {
+              // 速度のため頻出制御文字は先に分岐
+              // Note: 0xF7FF3FFEu は sequence_decoder で特別に
+              //   処理する必要のある NUL, SO, SI, ESC を除いた物。
+              m_proc->process_control_character(uchar);
+            } else if (uchar != ascii_nul && uchar != ascii_del) {
+              process_char_default(uchar);
+            }
+            beg++;
+          }
         } else
           decode_char(*beg++);
       }

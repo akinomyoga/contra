@@ -19,6 +19,12 @@ array#push mconf_cxx_options -Os
 # array#push mconf_cxx_options -O3 -s -DNDEBUG
 # array#push mconf_cxx_options -O2 -s -DNDEBUG
 
+# Note: 以下は殆ど効果がなくファイルサイズが巨大になるだけ
+# array#push mconf_cxx_options -static-libstdc++ -static-libgcc
+
+# Note: 以下は効果が微妙にあるが、専用バイナリになる。
+#array#push mconf_cxx_options -march=native
+
 #------------------------------------------------------------------------------
 echo "CHECKS"
 

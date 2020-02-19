@@ -2240,6 +2240,33 @@ namespace ansi {
     return false;
   }
 
+  void term_t::print_unrecognized_sequence(sequence const& seq) {
+    return; // 今は表示しない (後でロギングの枠組みを整理する)
+
+    const char* name = "sequence";
+    switch (seq.type()) {
+    case ascii_csi:
+      name = "control sequence";
+      break;
+    case ascii_esc:
+      name = "escape sequence";
+      break;
+    case ascii_sos:
+      name = "character string";
+      break;
+    case ascii_pm:
+    case ascii_apc:
+    case ascii_dcs:
+    case ascii_osc:
+      name = "command string";
+      break;
+    }
+
+    std::fprintf(stderr, "unrecognized %s: ", name);
+    seq.print(stderr, 100);
+    std::fputc('\n', stderr);
+  }
+
   void term_t::process_control_sequence(sequence const& seq) {
     // check cursor state
 #ifndef NDEBUG
@@ -2287,30 +2314,37 @@ namespace ansi {
   }
 
   void term_t::process_control_character(char32_t uchar) {
-    switch (uchar) {
-    case ascii_bel: do_bel(); break;
-    case ascii_bs : do_bs(*this);  break;
-    case ascii_ht : do_ht(*this);  break;
-    case ascii_lf : do_lf(*this);  break;
-    case ascii_ff : do_ff(*this);  break;
-    case ascii_vt : do_vt(*this);  break;
-    case ascii_cr : do_cr(*this);  break;
+    // 頻出制御文字
+    if (uchar == ascii_lf) {
+      do_lf(*this);
+    } else if (uchar == ascii_cr) {
+      do_cr(*this);
+    } else {
+      switch (uchar) {
+      case ascii_bel: do_bel(); break;
+      case ascii_bs : do_bs(*this);  break;
+      case ascii_ht : do_ht(*this);  break;
+      //case ascii_lf : do_lf(*this);  break;
+      case ascii_ff : do_ff(*this);  break;
+      case ascii_vt : do_vt(*this);  break;
+      //case ascii_cr : do_cr(*this);  break;
 
-    case ascii_fs: do_adm3_fs(*this); break;
-    case ascii_gs: do_adm3_gs(*this); break;
-    case ascii_rs: do_adm3_rs(*this); break;
-    case ascii_us: do_adm3_us(*this); break;
+      case ascii_fs: do_adm3_fs(*this); break;
+      case ascii_gs: do_adm3_gs(*this); break;
+      case ascii_rs: do_adm3_rs(*this); break;
+      case ascii_us: do_adm3_us(*this); break;
 
-    case ascii_ind: do_ind(*this); break;
-    case ascii_nel: do_nel(*this); break;
-    case ascii_ri : do_ri(*this) ; break;
+      case ascii_ind: do_ind(*this); break;
+      case ascii_nel: do_nel(*this); break;
+      case ascii_ri : do_ri(*this) ; break;
 
-    case ascii_pld: do_pld(*this); break;
-    case ascii_plu: do_plu(*this); break;
-    case ascii_spa: do_spa(*this); break;
-    case ascii_epa: do_epa(*this); break;
-    case ascii_ssa: do_ssa(*this); break;
-    case ascii_esa: do_esa(*this); break;
+      case ascii_pld: do_pld(*this); break;
+      case ascii_plu: do_plu(*this); break;
+      case ascii_spa: do_spa(*this); break;
+      case ascii_epa: do_epa(*this); break;
+      case ascii_ssa: do_ssa(*this); break;
+      case ascii_esa: do_esa(*this); break;
+      }
     }
 
 #ifndef NDEBUG
