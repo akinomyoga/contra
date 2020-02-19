@@ -8,8 +8,8 @@
 #include <algorithm>
 #include <tuple>
 #include "../contradef.hpp"
-#include "../dict.hpp"
 #include "../util.hpp"
+#include "attr.hpp"
 
 // debugging
 #include <cstdio>
@@ -17,10 +17,6 @@
 
 namespace contra {
 namespace ansi {
-  using ::contra::dict::attribute_t;
-  using ::contra::dict::color_t;
-  using ::contra::dict::xflags_t;
-  using ::contra::dict::aflags_t;
 
   struct character_t {
     std::uint32_t value;

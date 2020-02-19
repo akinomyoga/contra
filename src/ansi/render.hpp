@@ -288,13 +288,13 @@ namespace ansi {
         rgba = s->m_rgba256[color & 0xFF];
         break;
       case attribute_t::color_space_rgb:
-        rgba = contra::dict::rgb2rgba(color);
+        rgba = contra::ansi::rgb2rgba(color);
         break;
       case attribute_t::color_space_cmy:
-        rgba = contra::dict::cmy2rgba(color);
+        rgba = contra::ansi::cmy2rgba(color);
         break;
       case attribute_t::color_space_cmyk:
-        rgba = contra::dict::cmyk2rgba(color);
+        rgba = contra::ansi::cmyk2rgba(color);
         break;
       }
 
@@ -536,7 +536,6 @@ namespace ansi {
     }
   public:
     font_type get_font(font_t font) {
-      using namespace contra::ansi;
       font &= ~font_layout_mask;
       if (!(font & ~font_basic_mask)) {
         // basic fonts
@@ -572,10 +571,6 @@ namespace ansi {
   };
 
   class font_resolver_t {
-    using attribute_t = contra::dict::attribute_t;
-    using xflags_t = contra::dict::xflags_t;
-    using aflags_t = contra::dict::aflags_t;
-
   private:
     aflags_t m_aflags = 0;
     xflags_t m_xflags = 0;

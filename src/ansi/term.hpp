@@ -434,22 +434,22 @@ namespace ansi {
 
       // rosaterm palette (rgba format)
       int index = 0;
-      m_rgba256[index++] = contra::dict::rgba(0x00, 0x00, 0x00);
-      m_rgba256[index++] = contra::dict::rgba(0x80, 0x00, 0x00);
-      m_rgba256[index++] = contra::dict::rgba(0x00, 0x80, 0x00);
-      m_rgba256[index++] = contra::dict::rgba(0x80, 0x80, 0x00);
-      m_rgba256[index++] = contra::dict::rgba(0x00, 0x00, 0x80);
-      m_rgba256[index++] = contra::dict::rgba(0x80, 0x00, 0x80);
-      m_rgba256[index++] = contra::dict::rgba(0x00, 0x80, 0x80);
-      m_rgba256[index++] = contra::dict::rgba(0xC0, 0xC0, 0xC0);
-      m_rgba256[index++] = contra::dict::rgba(0x80, 0x80, 0x80);
-      m_rgba256[index++] = contra::dict::rgba(0xFF, 0x00, 0x00);
-      m_rgba256[index++] = contra::dict::rgba(0x32, 0xCD, 0x32);
-      m_rgba256[index++] = contra::dict::rgba(0xFF, 0xD7, 0x00);
-      m_rgba256[index++] = contra::dict::rgba(0x00, 0x00, 0xFF);
-      m_rgba256[index++] = contra::dict::rgba(0xFF, 0x00, 0xFF);
-      m_rgba256[index++] = contra::dict::rgba(0x40, 0xE0, 0xD0);
-      m_rgba256[index++] = contra::dict::rgba(0xFF, 0xFF, 0xFF);
+      m_rgba256[index++] = contra::ansi::rgba(0x00, 0x00, 0x00);
+      m_rgba256[index++] = contra::ansi::rgba(0x80, 0x00, 0x00);
+      m_rgba256[index++] = contra::ansi::rgba(0x00, 0x80, 0x00);
+      m_rgba256[index++] = contra::ansi::rgba(0x80, 0x80, 0x00);
+      m_rgba256[index++] = contra::ansi::rgba(0x00, 0x00, 0x80);
+      m_rgba256[index++] = contra::ansi::rgba(0x80, 0x00, 0x80);
+      m_rgba256[index++] = contra::ansi::rgba(0x00, 0x80, 0x80);
+      m_rgba256[index++] = contra::ansi::rgba(0xC0, 0xC0, 0xC0);
+      m_rgba256[index++] = contra::ansi::rgba(0x80, 0x80, 0x80);
+      m_rgba256[index++] = contra::ansi::rgba(0xFF, 0x00, 0x00);
+      m_rgba256[index++] = contra::ansi::rgba(0x32, 0xCD, 0x32);
+      m_rgba256[index++] = contra::ansi::rgba(0xFF, 0xD7, 0x00);
+      m_rgba256[index++] = contra::ansi::rgba(0x00, 0x00, 0xFF);
+      m_rgba256[index++] = contra::ansi::rgba(0xFF, 0x00, 0xFF);
+      m_rgba256[index++] = contra::ansi::rgba(0x40, 0xE0, 0xD0);
+      m_rgba256[index++] = contra::ansi::rgba(0xFF, 0xFF, 0xFF);
 
       // 6x6x6 cube
       //   xterm は i == 0 ? 0 : i * 40 + 55 という式を使っている。

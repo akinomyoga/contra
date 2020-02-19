@@ -306,7 +306,7 @@ namespace {
       if (m_color != color) release();
       m_color = color;
       if (!m_brush)
-        m_brush = ::CreateSolidBrush(contra::dict::rgba2rgb(color));
+        m_brush = ::CreateSolidBrush(contra::ansi::rgba2rgb(color));
       return m_brush;
     }
     HPEN get_pen(color_t color, int width) {
@@ -315,7 +315,7 @@ namespace {
       if (!m_pen || m_pen_width != width) {
         if (m_pen) ::DeleteObject(m_pen);
         m_pen_width = width;
-        m_pen = ::CreatePen(PS_SOLID, width, contra::dict::rgba2rgb(color));
+        m_pen = ::CreatePen(PS_SOLID, width, contra::ansi::rgba2rgb(color));
       }
       return m_pen;
     }
@@ -538,13 +538,13 @@ namespace {
 
     void draw_text(coord_t x1, coord_t y1, character_buffer& buff, font_t font, color_t color) {
       if (buff.empty()) return;
-      ::SetTextColor(hdc, contra::dict::rgba2rgb(color));
+      ::SetTextColor(hdc, contra::ansi::rgba2rgb(color));
       ::SelectObject(hdc, fstore.get_font(font));
       ::TextOut(hdc, x1 + buff.position[0], y1, &buff.characters[0], buff.characters.size());
     }
     void draw_characters(coord_t x1, coord_t y1, character_buffer& buff, font_t font, color_t color) {
       if (buff.empty()) return;
-      ::SetTextColor(hdc, contra::dict::rgba2rgb(color));
+      ::SetTextColor(hdc, contra::ansi::rgba2rgb(color));
       ::SelectObject(hdc, fstore.get_font(font));
       buff.resolve(x1);
       ::ExtTextOut(hdc, x1, y1, 0, NULL, &buff.characters[0], buff.characters.size(), &buff.position[0]);
@@ -556,7 +556,7 @@ namespace {
       if (buff.empty()) return;
       buff.resolve(dx);
 
-      ::SetTextColor(hdc, contra::dict::rgba2rgb(color));
+      ::SetTextColor(hdc, contra::ansi::rgba2rgb(color));
       ::SelectObject(hdc, fstore.get_font(font));
 
       font_t const sco = (font & font_rotation_mask) >> font_rotation_shft;
@@ -1296,12 +1296,12 @@ namespace {
       if (!sess) return false;
 
       contra::ansi::tstate_t& s = sess->state();
-      s.m_default_fg_space = contra::dict::attribute_t::color_space_rgb;
-      s.m_default_bg_space = contra::dict::attribute_t::color_space_rgb;
-      s.m_default_fg_color = contra::dict::rgb(0x00, 0x00, 0x00);
-      s.m_default_bg_color = contra::dict::rgb(0xFF, 0xFF, 0xFF);
-      // s.m_default_fg_color = contra::dict::rgb(0xD0, 0xD0, 0xD0);//@color
-      // s.m_default_bg_color = contra::dict::rgb(0x00, 0x00, 0x00);
+      s.m_default_fg_space = contra::ansi::attribute_t::color_space_rgb;
+      s.m_default_bg_space = contra::ansi::attribute_t::color_space_rgb;
+      s.m_default_fg_color = contra::ansi::rgb(0x00, 0x00, 0x00);
+      s.m_default_bg_color = contra::ansi::rgb(0xFF, 0xFF, 0xFF);
+      // s.m_default_fg_color = contra::ansi::rgb(0xD0, 0xD0, 0xD0);//@color
+      // s.m_default_bg_color = contra::ansi::rgb(0x00, 0x00, 0x00);
       manager.add_app(std::move(sess));
       return true;
     }

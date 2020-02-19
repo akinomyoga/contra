@@ -74,7 +74,7 @@ namespace {
         xcolor.green = g | g << 8;
         xcolor.blue  = b | b << 8;
         XAllocColor(m_display, m_cmap, &xcolor);
-        color256[index] = contra::dict::rgb(
+        color256[index] = contra::ansi::rgb(
           (xcolor.red + 128) / 257,
           (xcolor.green + 128) / 257,
           (xcolor.blue + 128) / 257);
@@ -127,9 +127,9 @@ namespace {
     }
   public:
     int index(ansi::color_t color) {
-      byte r = contra::dict::rgba2r(color);
-      byte g = contra::dict::rgba2g(color);
-      byte b = contra::dict::rgba2b(color);
+      byte r = contra::ansi::rgba2r(color);
+      byte g = contra::ansi::rgba2g(color);
+      byte b = contra::ansi::rgba2b(color);
       auto [mn, mx] = get_minmax3(r, g, b);
       if (mx - mn < 20) {
         byte k = (r + g + b) / 3;
@@ -358,10 +358,10 @@ namespace {
   private:
     void render(coord_t x, coord_t y, xft_character_buffer const& buff, XftFont* xftFont, color_t color) {
       XftColor xftcolor;
-      xftcolor.pixel = m_color_manager ? m_color_manager->pixel(color) : contra::dict::rgba2bgr(color);
-      xftcolor.color.red   = 257 * contra::dict::rgba2r(color);
-      xftcolor.color.green = 257 * contra::dict::rgba2g(color);
-      xftcolor.color.blue  = 257 * contra::dict::rgba2b(color);
+      xftcolor.pixel = m_color_manager ? m_color_manager->pixel(color) : contra::ansi::rgba2bgr(color);
+      xftcolor.color.red   = 257 * contra::ansi::rgba2r(color);
+      xftcolor.color.green = 257 * contra::ansi::rgba2g(color);
+      xftcolor.color.blue  = 257 * contra::ansi::rgba2b(color);
       xftcolor.color.alpha = 0xFFFF;
 
       std::size_t index = 0;
@@ -584,7 +584,7 @@ namespace {
 
   private:
     unsigned long color2pixel(color_t color) const {
-      return color_manager ? color_manager->pixel(color) : contra::dict::rgba2bgr(color);
+      return color_manager ? color_manager->pixel(color) : contra::ansi::rgba2bgr(color);
     }
     void set_foreground(color_t color) {
       XSetForeground(m_display, m_gc, color2pixel(color));
@@ -1039,12 +1039,12 @@ namespace {
       if (!sess) return false;
 
       contra::ansi::tstate_t& s = sess->state();
-      s.m_default_fg_space = contra::dict::attribute_t::color_space_rgb;
-      s.m_default_bg_space = contra::dict::attribute_t::color_space_rgb;
-      s.m_default_fg_color = contra::dict::rgb(0x00, 0x00, 0x00);
-      s.m_default_bg_color = contra::dict::rgb(0xFF, 0xFF, 0xFF);
-      // s.m_default_fg_color = contra::dict::rgb(0xD0, 0xD0, 0xD0);//@color
-      // s.m_default_bg_color = contra::dict::rgb(0x00, 0x00, 0x00);
+      s.m_default_fg_space = contra::ansi::attribute_t::color_space_rgb;
+      s.m_default_bg_space = contra::ansi::attribute_t::color_space_rgb;
+      s.m_default_fg_color = contra::ansi::rgb(0x00, 0x00, 0x00);
+      s.m_default_bg_color = contra::ansi::rgb(0xFF, 0xFF, 0xFF);
+      // s.m_default_fg_color = contra::ansi::rgb(0xD0, 0xD0, 0xD0);//@color
+      // s.m_default_bg_color = contra::ansi::rgb(0x00, 0x00, 0x00);
       manager.add_app(std::move(sess));
       return true;
     }
