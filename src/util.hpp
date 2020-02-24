@@ -152,15 +152,20 @@ namespace util {
     template<typename Flags, typename Other>
     using enable_lhs = typename std::enable_if<is_rhs<Flags, Other>, Flags>::type;
 
-    template<typename Flags1, typename Flags2>
+    struct auto_tag {};
+    template<typename Flags1, typename Flags2, typename R = auto_tag>
     using result_t = typename std::enable_if<
       is_rhs<Flags1, Flags2> || is_rhs<Flags2, Flags1>,
-      typename std::conditional<is_rhs<Flags1, Flags2>, Flags1, Flags2>::type>::type;
+      std::conditional_t<!std::is_same_v<R, auto_tag>, R,
+        typename std::conditional<is_rhs<Flags1, Flags2>, Flags1, Flags2>::type>
+        >::type;
 
-    template<typename Flags, bool = is_flags<Flags> >
+    template<typename Flags, int = is_flags<Flags> ? 1 : std::is_signed_v<Flags> ? 2 : 0>
     struct underlying { typedef Flags type; };
     template<typename Flags>
-    struct underlying<Flags, true> { typedef typename Flags::underlying_type type; };
+    struct underlying<Flags, 1> { typedef typename Flags::underlying_type type; };
+    template<typename Flags>
+    struct underlying<Flags, 2> { typedef std::make_unsigned_t<Flags> type; };
 
     template<typename Flags, bool = is_flags<Flags> >
     constexpr auto peel(Flags const& value) { return (typename underlying<Flags>::type) value; }
@@ -174,41 +179,53 @@ namespace util {
     template<typename Flags1, typename Flags2>
     constexpr flags_detail::result_t<Flags1, Flags2>
     operator^(Flags1 const& lhs, Flags2 const& rhs) { return { peel(lhs) ^ peel(rhs)}; }
+    template<typename Flags1, typename Flags2>
+    constexpr flags_detail::result_t<Flags1, Flags2, bool>
+    operator==(Flags1 const& lhs, Flags2 const& rhs) { return peel(lhs) == peel(rhs); }
+    template<typename Flags1, typename Flags2>
+    constexpr flags_detail::result_t<Flags1, Flags2, bool>
+    operator!=(Flags1 const& lhs, Flags2 const& rhs) { return peel(lhs) != peel(rhs); }
   }
 
   template<typename Unsigned, typename Tag>
   class flags_t: flags_detail::flags_base {
-    Unsigned value;
+    Unsigned m_value;
   public:
     typedef Unsigned underlying_type;
 
     template<typename Other, typename = flags_detail::enable_lhs<flags_t, Other> >
-    constexpr flags_t(Other const& value): value((Unsigned) value) {}
+    constexpr flags_t(Other const& value): m_value((Unsigned) value) {}
 
-    constexpr explicit operator Unsigned() const { return value; }
-    constexpr explicit operator bool() const { return value; }
-    constexpr bool operator!() const { return !value; }
-    constexpr flags_t operator~() const { return { ~value }; }
+    constexpr explicit operator Unsigned() const { return m_value; }
+    constexpr explicit operator bool() const { return m_value; }
+    constexpr bool operator!() const { return !m_value; }
+    constexpr flags_t operator~() const { return { ~m_value }; }
 
     template<typename Other>
     constexpr flags_detail::enable_lhs<flags_t, Other>&
-    operator&=(Other const& rhs) { value &= (Unsigned) rhs; return *this; }
+    operator&=(Other const& rhs) { m_value &= (Unsigned) rhs; return *this; }
     template<typename Other>
     constexpr flags_detail::enable_lhs<flags_t, Other>&
-    operator|=(Other const& rhs) { value |= (Unsigned) rhs; return *this; }
+    operator|=(Other const& rhs) { m_value |= (Unsigned) rhs; return *this; }
     template<typename Other>
     constexpr flags_detail::enable_lhs<flags_t, Other>&
-    operator^=(Other const& rhs) { value ^= (Unsigned) rhs; return *this; }
+    operator^=(Other const& rhs) { m_value ^= (Unsigned) rhs; return *this; }
+
+    flags_t operator>>(int shift) const { return { m_value >> shift }; }
+    flags_t operator<<(int shift) const { return { m_value << shift }; }
 
     flags_t& reset(flags_t mask, flags_t value) {
-      this->value = this->value & ~(Unsigned) mask | (Unsigned) value;
+      this->m_value = (this->m_value & ~(Unsigned) mask) | (Unsigned) value;
       return *this;
     }
+    constexpr Unsigned value() const { return m_value; }
   };
 
   using flags_detail::operator|;
   using flags_detail::operator^;
   using flags_detail::operator&;
+  using flags_detail::operator==;
+  using flags_detail::operator!=;
 }
 }
 

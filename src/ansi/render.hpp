@@ -266,7 +266,7 @@ namespace ansi {
 
   class color_resolver_t {
     tstate_t const* s = nullptr;
-    byte m_space = (byte) attribute_t::color_space_default;
+    byte m_space = (byte) color_space_default;
     color_t m_color = color_t(-1);
     color_t m_rgba = 0;
 
@@ -278,22 +278,22 @@ namespace ansi {
     color_t resolve(byte space, color_t color) {
       color_t rgba = 0;
       switch (space) {
-      case attribute_t::color_space_default:
-      case attribute_t::color_space_transparent:
+      case color_space_default:
+      case color_space_transparent:
       default:
         // transparent なので色はない。
         rgba = 0x00000000; // black
         break;
-      case attribute_t::color_space_indexed:
+      case color_space_indexed:
         rgba = s->m_rgba256[color & 0xFF];
         break;
-      case attribute_t::color_space_rgb:
+      case color_space_rgb:
         rgba = contra::ansi::rgb2rgba(color);
         break;
-      case attribute_t::color_space_cmy:
+      case color_space_cmy:
         rgba = contra::ansi::cmy2rgba(color);
         break;
-      case attribute_t::color_space_cmyk:
+      case color_space_cmyk:
         rgba = contra::ansi::cmyk2rgba(color);
         break;
       }
@@ -333,16 +333,16 @@ namespace ansi {
     }
   public:
     color_t resolve_fg(attribute_t const& attr) {
-      bool const inverse = attr.aflags & attribute_t::is_inverse_set;
-      bool const selected = attr.xflags & attribute_t::ssa_selected;
+      bool const inverse = bool(attr.aflags & attr_inverse_set);
+      bool const selected = bool(attr.xflags & xflags_ssa_selected);
       auto [space, color] = inverse != selected ? get_bg(attr) : get_fg(attr);
       if (space == m_space && color == m_color) return m_rgba;
       return resolve(space, color);
     }
 
     color_t resolve_bg(attribute_t const& attr) {
-      bool const inverse = attr.aflags & attribute_t::is_inverse_set;
-      bool const selected = attr.xflags & attribute_t::ssa_selected;
+      bool const inverse = bool(attr.aflags & attr_inverse_set);
+      bool const selected = bool(attr.xflags & xflags_ssa_selected);
       auto [space, color] = inverse != selected ? get_fg(attr) : get_bg(attr);
       if (space == m_space && color == m_color) return m_rgba;
       return resolve(space, color);
@@ -580,46 +580,46 @@ namespace ansi {
       if (attr.aflags == m_aflags && attr.xflags == m_xflags) return m_font;
 
       font_t ret = 0;
-      if (xflags_t const face = (attr.aflags & attribute_t::ansi_font_mask) >> attribute_t::ansi_font_shift)
+      if (std::uint32_t const face = std::uint32_t(attr.aflags & aflags_font_mask) >> aflags_font_shift)
         ret |= font_face_mask & face << font_face_shft;
 
-      switch (attr.aflags & attribute_t::aflags_weight_mask) {
-      case attribute_t::is_bold_set: ret |= font_weight_bold; break;
-      case attribute_t::is_faint_set: ret |= font_weight_faint; break;
-      case attribute_t::is_heavy_set: ret |= font_weight_heavy; break;
+      switch ((attr.aflags & attr_weight_mask).value()) {
+      case attr_bold_set.value():  ret |= font_weight_bold; break;
+      case attr_faint_set.value(): ret |= font_weight_faint; break;
+      case attr_heavy_set.value(): ret |= font_weight_heavy; break;
       }
 
-      if (attr.aflags & attribute_t::is_italic_set)
+      if (attr.aflags & attr_italic_set)
         ret |= font_flag_italic;
-      else if (attr.aflags & attribute_t::is_fraktur_set)
+      else if (attr.aflags & attr_fraktur_set)
         ret = (ret & ~font_face_mask) | font_face_fraktur;
 
-      if (attr.xflags & attribute_t::is_sup_set)
+      if (attr.xflags & xflags_sup_set)
         ret |= font_flag_small | font_layout_sup;
-      else if (attr.xflags & attribute_t::is_sub_set)
+      else if (attr.xflags & xflags_sub_set)
         ret |= font_flag_small | font_layout_sub;
-      else if (attr.xflags & attribute_t::mintty_sup)
+      else if (attr.xflags & xflags_mintty_sup)
         ret |= font_flag_small | font_layout_sup;
-      else if (attr.xflags & attribute_t::mintty_sub)
+      else if (attr.xflags & xflags_mintty_sub)
         ret |= font_flag_small | font_layout_sub;
 
-      if (attr.xflags & (attribute_t::is_frame_set | attribute_t::is_circle_set))
+      if (attr.xflags & (xflags_frame_set | xflags_circle_set))
         ret |= font_flag_small | font_layout_framed;
 
-      if (attr.xflags & attribute_t::is_proportional_set)
+      if (attr.xflags & xflags_proportional_set)
         ret |= font_layout_proportional;
 
-      if (xflags_t const sco = (attr.xflags & attribute_t::sco_mask) >> attribute_t::sco_shift)
+      if (std::uint32_t const sco = std::uint32_t(attr.xflags & xflags_sco_mask) >> xflags_sco_shift)
         ret |= font_rotation_mask & sco << font_rotation_shft;
 
-      switch (attr.xflags & attribute_t::decdhl_mask) {
-      case attribute_t::decdhl_double_width:
+      switch ((attr.xflags & xflags_decdhl_mask).value()) {
+      case xflags_decdhl_double_width.value():
         ret |= font_decdwl;
         break;
-      case attribute_t::decdhl_upper_half:
+      case xflags_decdhl_upper_half.value():
         ret |= font_decdwl | font_decdhl | font_layout_upper_half;
         break;
-      case attribute_t::decdhl_lower_half:
+      case xflags_decdhl_lower_half.value():
         ret |= font_decdwl | font_decdhl | font_layout_lower_half;
         break;
       }
@@ -1430,7 +1430,7 @@ namespace ansi {
       character_drawer() {}
 
     private:
-      aflags_t invisible_flags;
+      aflags_t invisible_flags = 0;
       bool _visible(std::uint32_t code, aflags_t aflags, bool sp_visible = false) const {
         return code != ascii_nul && (sp_visible || code != ascii_sp)
           && !(code & flag_processed)
@@ -1683,9 +1683,9 @@ namespace ansi {
         this->m_str.initialize(wstat.m_xunit, wstat.m_yunit);
         this->m_graph.initialize(wstat.m_xunit, wstat.m_yunit);
 
-        this->invisible_flags = attribute_t::is_invisible_set;
-        if (wstat.m_blinking_count & 1) invisible_flags |= attribute_t::is_rapid_blink_set;
-        if (wstat.m_blinking_count & 2) invisible_flags |= attribute_t::is_blink_set;
+        this->invisible_flags = attr_invisible_set;
+        if (wstat.m_blinking_count & 1) invisible_flags |= attr_rapid_blink_set;
+        if (wstat.m_blinking_count & 2) invisible_flags |= attr_blink_set;
 
         for (curpos_t iline = 0; iline < height; iline++) {
           if (!content[iline].is_redraw_requested) continue;
@@ -1773,12 +1773,12 @@ namespace ansi {
     public:
       void update(curpos_t x, std::uint32_t new_style, xflags_t xflags) {
         if (new_style) {
-          switch (xflags & attribute_t::decdhl_mask) {
-          case attribute_t::decdhl_upper_half:
-            new_style |= attribute_t::decdhl_upper_half;
+          switch ((xflags & xflags_decdhl_mask).value()) {
+          case xflags_decdhl_upper_half.value():
+            new_style |= (std::uint32_t) xflags_decdhl_upper_half;
             break;
-          case attribute_t::decdhl_lower_half:
-            new_style |= attribute_t::decdhl_lower_half;
+          case xflags_decdhl_lower_half.value():
+            new_style |= (std::uint32_t) xflags_decdhl_lower_half;
             break;
           }
         }
@@ -1799,9 +1799,9 @@ namespace ansi {
       tstate_t const& s = view.state();
       color_resolver_t _color(s);
 
-      aflags_t invisible_flags = attribute_t::is_invisible_set;
-      if (wstat.m_blinking_count & 1) invisible_flags |= attribute_t::is_rapid_blink_set;
-      if (wstat.m_blinking_count & 2) invisible_flags |= attribute_t::is_blink_set;
+      aflags_t invisible_flags = attr_invisible_set;
+      if (wstat.m_blinking_count & 1) invisible_flags |= attr_rapid_blink_set;
+      if (wstat.m_blinking_count & 2) invisible_flags |= attr_blink_set;
 
       coord_t x = xorigin, y = yorigin;
 
@@ -1810,15 +1810,15 @@ namespace ansi {
       decoration_horizontal_t dec_ul([&] (coord_t x1, coord_t x2, std::uint32_t style) {
         coord_t const u = (coord_t) std::ceil(yunit * 0.05);
         coord_t h = u;
-        switch (style & attribute_t::decdhl_mask) {
-        case attribute_t::decdhl_upper_half: return;
-        case attribute_t::decdhl_lower_half:
+        switch ((style & xflags_decdhl_mask).value()) {
+        case xflags_decdhl_upper_half.value(): return;
+        case xflags_decdhl_lower_half.value():
           h *= 2;
           break;
         }
 
         coord_t pitch1, pitch2;
-        switch (style & ~attribute_t::decdhl_mask) {
+        switch ((style & ~xflags_decdhl_mask).value()) {
         case 4: // dotted
           pitch1 = pitch2 = u;
           goto dashed;
@@ -1827,7 +1827,7 @@ namespace ansi {
           pitch2 = xunit - pitch1;
           goto dashed;
         dashed:
-          if (style & attribute_t::decdhl_mask) {
+          if (style & xflags_decdhl_mask) {
             pitch1 *= 2;
             pitch2 *= 2;
           }
@@ -1846,9 +1846,9 @@ namespace ansi {
       decoration_horizontal_t dec_cl([&] (coord_t x1, coord_t x2, std::uint32_t style) {
         coord_t const u = (coord_t) std::ceil(yunit * 0.05);
         coord_t h = u;
-        switch (style & attribute_t::decdhl_mask) {
-        case attribute_t::decdhl_upper_half: return;
-        case attribute_t::decdhl_lower_half:
+        switch ((style & xflags_decdhl_mask).value()) {
+        case xflags_decdhl_upper_half.value(): return;
+        case xflags_decdhl_lower_half.value():
           h *= 2;
           break;
         }
@@ -1859,7 +1859,7 @@ namespace ansi {
         coord_t y1 = y + yunit - h / 2;
 
         coord_t p = h * 3;
-        if (style & attribute_t::decdhl_mask) p *= 2;
+        if (style & xflags_decdhl_mask) p *= 2;
         int const count = (x2 - x1) / p;
         double const pitch = double(x2 - x1) / count;
 
@@ -1875,20 +1875,20 @@ namespace ansi {
 
       decoration_horizontal_t dec_sl([&] (coord_t x1, coord_t x2, std::uint32_t style) {
         coord_t h = (coord_t) std::ceil(yunit * 0.05), y2 = y + yunit / 2;
-        if ((style & ~attribute_t::decdhl_mask) != 2) {
+        if ((style & ~xflags_decdhl_mask) != 2) {
           // 一重打ち消し線
-          switch (style & attribute_t::decdhl_mask) {
-          case attribute_t::decdhl_lower_half: return;
-          case attribute_t::decdhl_upper_half:
+          switch ((style & xflags_decdhl_mask).value()) {
+          case xflags_decdhl_lower_half.value(): return;
+          case xflags_decdhl_upper_half.value():
             h *= 2; y2 = y + yunit;
             break;
           }
         } else {
           // 二重打ち消し線
-          switch (style & attribute_t::decdhl_mask) {
-          case attribute_t::decdhl_lower_half:
+          switch ((style & xflags_decdhl_mask).value()) {
+          case xflags_decdhl_lower_half.value():
             h *= 2; y2 = y + h; break;
-          case attribute_t::decdhl_upper_half:
+          case xflags_decdhl_upper_half.value():
             h *= 2; y2 = y + yunit - h; break;
           default:
             g.fill_rectangle(x1, y2 - 2 * h, x2, y2 - h, color0);
@@ -1901,21 +1901,21 @@ namespace ansi {
 
       decoration_horizontal_t dec_ol([&] (coord_t x1, coord_t x2, std::uint32_t style) {
         coord_t h = (coord_t) std::ceil(yunit * 0.05);
-        switch (style & attribute_t::decdhl_mask) {
-        case attribute_t::decdhl_lower_half: return;
-        case attribute_t::decdhl_upper_half:
+        switch ((style & xflags_decdhl_mask).value()) {
+        case xflags_decdhl_lower_half.value(): return;
+        case xflags_decdhl_upper_half.value():
           h *= 2;
           return;
         }
         g.fill_rectangle(x1, y, x2, y + h, color0);
-        if ((style & ~attribute_t::decdhl_mask) == 2)
+        if ((style & ~xflags_decdhl_mask) == 2)
           g.fill_rectangle(x1, y + 2 * h, x2, y + 3 * h, color0);
       });
 
       auto _draw_frame = [&] (coord_t x1, coord_t x2, xflags_t xflags, int lline, int rline) {
         // 上の線と下の線は dec_ul, dec_ol に任せる。
         coord_t w = (coord_t) std::ceil(yunit * 0.05);
-        if (xflags & attribute_t::decdhl_mask) w *= 2;
+        if (xflags & xflags_decdhl_mask) w *= 2;
         if (lline) {
           g.fill_rectangle(x1, y, x1 + w, y + yunit, color0);
           if (lline > 1)
@@ -1932,14 +1932,14 @@ namespace ansi {
         coord_t w = (coord_t) std::ceil(yunit * 0.04);
         coord_t y1 = y, y2 = y + yunit;
         bool is_clipped = false;
-        switch (xflags & attribute_t::decdhl_mask) {
-        case attribute_t::decdhl_upper_half:
+        switch ((xflags & xflags_decdhl_mask).value()) {
+        case xflags_decdhl_upper_half.value():
           is_clipped = true;
           this->clip_decdhl_upper(g, y);
           w *= 2;
           y2 = y + 2 * yunit;
           break;
-        case attribute_t::decdhl_lower_half:
+        case xflags_decdhl_lower_half.value():
           is_clipped = true;
           this->clip_decdhl_lower(g, y);
           w *= 2;
@@ -1954,13 +1954,13 @@ namespace ansi {
 
       auto _draw_stress = [&] (coord_t x1, coord_t x2, xflags_t xflags) {
         double w1 = yunit * 0.15, h1 = yunit * 0.15;
-        switch (xflags & attribute_t::decdhl_mask) {
-        case attribute_t::decdhl_lower_half: return;
-        case attribute_t::decdhl_upper_half:
+        switch ((xflags & xflags_decdhl_mask).value()) {
+        case xflags_decdhl_lower_half.value(): return;
+        case xflags_decdhl_upper_half.value():
           w1 *= 2.0;
           h1 *= 2.0;
           break;
-        case attribute_t::decdhl_double_width:
+        case xflags_decdhl_double_width.value():
           w1 *= 2.0;
           break;
         }
@@ -1998,47 +1998,46 @@ namespace ansi {
           }
 
           if (color) {
-            using _at = attribute_t;
-            xflags_t const ideo = xflags & (_at::is_ideogram_mask & ~_at::is_ideogram_line_left);
+            xflags_t const ideo = xflags & (xflags_ideogram_mask & ~xflags_ideogram_line_left);
 
             // 下線
-            bool const ul2 = (aflags & _at::aflags_underline_mask) == _at::underline_double ||
-              ideo == _at::is_ideogram_line_double_rb;
-            bool const ul1 = (aflags & _at::aflags_underline_mask) == _at::underline_single ||
-              xflags & _at::is_frame_set ||
-              ideo == _at::is_ideogram_line_single_rb;
-            bool const ul3 = (aflags & _at::aflags_underline_mask) == _at::underline_curly;
-            bool const ul4 = (aflags & _at::aflags_underline_mask) == _at::underline_dotted;
-            bool const ul5 = (aflags & _at::aflags_underline_mask) == _at::underline_dashed;
+            bool const ul2 = (aflags & attr_underline_mask) == attr_underline_double ||
+              ideo == xflags_ideogram_line_double_rb;
+            bool const ul1 = (aflags & attr_underline_mask) == attr_underline_single ||
+              xflags & xflags_frame_set ||
+              ideo == xflags_ideogram_line_single_rb;
+            bool const ul3 = (aflags & attr_underline_mask) == attr_underline_curly;
+            bool const ul4 = (aflags & attr_underline_mask) == attr_underline_dotted;
+            bool const ul5 = (aflags & attr_underline_mask) == attr_underline_dashed;
             dec_ul.update(x, ul2 ? 2 : ul1 ? 1 : ul4 ? 4: ul5 ? 5 : 0, xflags);
             dec_cl.update(x, ul3 ? 3 : 0, xflags);
 
             // 上線
-            bool const ol2 = ideo == _at::is_ideogram_line_double_rt;
-            bool const ol1 = xflags & (_at::is_overline_set | _at::is_frame_set) ||
-              ideo == _at::is_ideogram_line_single_rt;
+            bool const ol2 = ideo == xflags_ideogram_line_double_rt;
+            bool const ol1 = xflags & (xflags_overline_set | xflags_frame_set) ||
+              ideo == xflags_ideogram_line_single_rt;
             dec_ol.update(x, ol2 ? 2 : ol1 ? 1 : 0, xflags);
 
             // 打ち消し線
-            bool const sl2 = xflags & _at::rlogin_double_strike;
-            bool const sl1 = aflags & _at::is_strike_set;
+            bool const sl2 = xflags & xflags_rlogin_double_strike;
+            bool const sl1 = aflags & attr_strike_set;
             dec_sl.update(x, sl2 ? 2 : sl1 ? 1 : 0, xflags);
 
             // 左線・右線
-            bool const ll2 = xflags & _at::rlogin_double_lline;
-            bool const ll1 = xflags & (_at::is_frame_set | _at::rlogin_single_lline);
+            bool const ll2 = xflags & xflags_rlogin_double_lline;
+            bool const ll1 = xflags & (xflags_frame_set | xflags_rlogin_single_lline);
             int const ll = ll2 ? 2 : ll1 ? 1 : 0;
-            bool const rl2 = xflags & _at::rlogin_double_rline;
-            bool const rl1 = xflags & (_at::is_frame_set | _at::rlogin_single_rline);
+            bool const rl2 = xflags & xflags_rlogin_double_rline;
+            bool const rl1 = xflags & (xflags_frame_set | xflags_rlogin_single_rline);
             int const rl = rl2 ? 2 : rl1 ? 1 : 0;
             _draw_frame(x, x + cell_width, xflags, ll, rl);
 
             // 丸
-            if (xflags & _at::is_circle_set)
+            if (xflags & xflags_circle_set)
               _draw_circle(x, x + cell_width, xflags);
 
             // 圏点
-            if (ideo == _at::is_ideogram_stress)
+            if (ideo == xflags_ideogram_stress)
               _draw_stress(x, x + cell_width, xflags);
           }
 

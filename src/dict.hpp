@@ -13,12 +13,12 @@ namespace dict {
   using namespace ::contra::ansi;
 
   enum termcap_constants {
-    color_space_default_bit     = 1 << attribute_t::color_space_default    ,
-    color_space_transparent_bit = 1 << attribute_t::color_space_transparent,
-    color_space_rgb_bit         = 1 << attribute_t::color_space_rgb        ,
-    color_space_cmy_bit         = 1 << attribute_t::color_space_cmy        ,
-    color_space_cmyk_bit        = 1 << attribute_t::color_space_cmyk       ,
-    color_space_indexed_bit     = 1 << attribute_t::color_space_indexed    ,
+    color_space_default_bit     = 1 << color_space_default    ,
+    color_space_transparent_bit = 1 << color_space_transparent,
+    color_space_rgb_bit         = 1 << color_space_rgb        ,
+    color_space_cmy_bit         = 1 << color_space_cmy        ,
+    color_space_cmyk_bit        = 1 << color_space_cmyk       ,
+    color_space_indexed_bit     = 1 << color_space_indexed    ,
   };
 
   //-----------------------------------------------------------------------------
@@ -30,16 +30,18 @@ namespace dict {
   //   (但し、端末が SGR 自体に対応していない場合はこの限りではない。)
   //
 
+  template<typename Flags>
   struct termcap_sgrflag1 {
-    aflags_t bit;
+    Flags bit;
     unsigned on;
     unsigned off;
   };
 
+  template<typename Flags>
   struct termcap_sgrflag2 {
-    aflags_t bit1;
+    Flags bit1;
     unsigned on1;
-    aflags_t bit2;
+    Flags bit2;
     unsigned on2;
     unsigned off;
   };
@@ -90,30 +92,30 @@ namespace dict {
   struct termcap_sgr_type {
     typedef attribute_t _at;
     // aflags
-    termcap_sgrflag2 cap_bold         { _at::is_bold_set     , 1, _at::is_faint_set           ,  2, 22 };
-    termcap_sgrflag2 cap_italic       { _at::is_italic_set   , 3, _at::is_fraktur_set         , 20, 23 };
-    termcap_sgrflag2 cap_underline    { _at::underline_single, 4, _at::underline_double, 21, 24 };
-    termcap_sgrflag2 cap_blink        { _at::is_blink_set    , 5, _at::is_rapid_blink_set     ,  6, 25 };
-    termcap_sgrflag1 cap_inverse      { _at::is_inverse_set  , 7, 27 };
-    termcap_sgrflag1 cap_invisible    { _at::is_invisible_set, 8, 28 };
-    termcap_sgrflag1 cap_strike       { _at::is_strike_set   , 9, 29 };
+    termcap_sgrflag2<aflags_t> cap_bold         { attr_bold_set        , 1, attr_faint_set           ,  2, 22 };
+    termcap_sgrflag2<aflags_t> cap_italic       { attr_italic_set      , 3, attr_fraktur_set         , 20, 23 };
+    termcap_sgrflag2<aflags_t> cap_underline    { attr_underline_single, 4, attr_underline_double    , 21, 24 };
+    termcap_sgrflag2<aflags_t> cap_blink        { attr_blink_set       , 5, attr_rapid_blink_set     ,  6, 25 };
+    termcap_sgrflag1<aflags_t> cap_inverse      { attr_inverse_set     , 7, 27 };
+    termcap_sgrflag1<aflags_t> cap_invisible    { attr_invisible_set   , 8, 28 };
+    termcap_sgrflag1<aflags_t> cap_strike       { attr_strike_set      , 9, 29 };
 
     // xflags
-    termcap_sgrflag2 cap_framed       { _at::is_frame_set       , 51, _at::is_circle_set, 52, 54 };
+    termcap_sgrflag2<xflags_t> cap_framed       { xflags_frame_set     , 51, xflags_circle_set, 52, 54 };
 
-    termcap_sgrflag1 cap_proportional { _at::is_proportional_set, 26, 50 };
-    termcap_sgrflag1 cap_overline     { _at::is_overline_set    , 53, 55 };
+    termcap_sgrflag1<xflags_t> cap_proportional { xflags_proportional_set, 26, 50 };
+    termcap_sgrflag1<xflags_t> cap_overline     { xflags_overline_set    , 53, 55 };
 
     termcap_sgrideogram cap_ideogram;
 
     // colors
     termcap_sgrcolor cap_fg {
-      _at::fg_color_mask, 30, 39,  90,
+      aflags_fg_space_mask, 30, 39,  90,
       { 38, color_space_indexed_bit | color_space_rgb_bit, ascii_semicolon, false, 255 },
       0, 0
     };
     termcap_sgrcolor cap_bg {
-      _at::bg_color_mask, 40, 49, 100,
+      aflags_bg_space_mask, 40, 49, 100,
       { 48, color_space_indexed_bit | color_space_rgb_bit, ascii_semicolon, false, 255 },
       0, 0
     };
@@ -160,13 +162,14 @@ namespace dict {
     attribute_t m_attr;
     bool sgr_isOpen;
 
+    template<typename Flags>
     void update_sgrflag1(
-      aflags_t aflagsNew, aflags_t aflagsOld,
-      termcap_sgrflag1 const& sgrflag);
-
+      Flags aflagsNew, Flags aflagsOld,
+      termcap_sgrflag1<Flags> const& sgrflag);
+    template<typename Flags>
     void update_sgrflag2(
-      aflags_t aflagsNew, aflags_t aflagsOld,
-      termcap_sgrflag2 const& sgrflag);
+      Flags aflagsNew, Flags aflagsOld,
+      termcap_sgrflag2<Flags> const& sgrflag);
 
     void update_ideogram_decoration(
       xflags_t xflagsNew, xflags_t xflagsOld,

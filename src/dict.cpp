@@ -4,11 +4,20 @@ using namespace ::contra::dict;
 
 typedef attribute_t _at;
 
-static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrflag1 const& sgrflag) {
+static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrflag1<aflags_t> const& sgrflag) {
   if (!sgrflag.off && sgrflag.on) flags |= sgrflag.bit;
 }
+static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrflag2<aflags_t> const& sgrflag) {
+  if (!sgrflag.off) {
+    if (sgrflag.on1) flags |= sgrflag.bit1;
+    if (sgrflag.on2) flags |= sgrflag.bit2;
+  }
+}
 
-static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrflag2 const& sgrflag) {
+static void initialize_unresettable_flags(xflags_t& flags, termcap_sgrflag1<xflags_t> const& sgrflag) {
+  if (!sgrflag.off && sgrflag.on) flags |= sgrflag.bit;
+}
+static void initialize_unresettable_flags(xflags_t& flags, termcap_sgrflag2<xflags_t> const& sgrflag) {
   if (!sgrflag.off) {
     if (sgrflag.on1) flags |= sgrflag.bit1;
     if (sgrflag.on2) flags |= sgrflag.bit2;
@@ -20,9 +29,9 @@ static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrcolor cons
     flags |= sgrcolor.mask;
 }
 
-static void initialize_unresettable_flags(aflags_t& flags, termcap_sgrideogram const& capIdeogram) {
+static void initialize_unresettable_flags(xflags_t& flags, termcap_sgrideogram const& capIdeogram) {
   if (!capIdeogram.reset)
-    flags |= _at::is_ideogram_mask;
+    flags |= xflags_ideogram_mask;
 }
 
 void termcap_sgr_type::initialize() {
@@ -45,9 +54,10 @@ void termcap_sgr_type::initialize() {
 }
 
 
+template<typename Flags>
 void tty_writer::update_sgrflag1(
-  aflags_t aflagsNew, aflags_t aflagsOld,
-  termcap_sgrflag1 const& sgrflag
+  Flags aflagsNew, Flags aflagsOld,
+  termcap_sgrflag1<Flags> const& sgrflag
 ) {
   // when the attribute is not changed
   if (((aflagsNew ^ aflagsOld) & sgrflag.bit) == 0) return;
@@ -61,14 +71,17 @@ void tty_writer::update_sgrflag1(
     sgr_put(sgrflag.off);
   }
 }
+template void tty_writer::update_sgrflag1<aflags_t>(aflags_t aflagsNew, aflags_t aflagsOld, termcap_sgrflag1<aflags_t> const& sgrflag);
+template void tty_writer::update_sgrflag1<xflags_t>(xflags_t aflagsNew, xflags_t aflagsOld, termcap_sgrflag1<xflags_t> const& sgrflag);
 
+template<typename Flags>
 void tty_writer::update_sgrflag2(
-  aflags_t aflagsNew, aflags_t aflagsOld,
-  termcap_sgrflag2 const& sgrflag
+  Flags aflagsNew, Flags aflagsOld,
+  termcap_sgrflag2<Flags> const& sgrflag
 ) {
   // when the attribute is not changed
-  aflags_t bit1 = sgrflag.bit1;
-  aflags_t bit2 = sgrflag.bit2;
+  Flags bit1 = sgrflag.bit1;
+  Flags bit2 = sgrflag.bit2;
   if (((aflagsNew ^ aflagsOld) & (bit1 | bit2)) == 0) return;
 
   // when the attribute is not supported by TERM
@@ -78,8 +91,8 @@ void tty_writer::update_sgrflag2(
   if (!sgr2) bit2 = 0;
   if (!(bit1 | bit2)) return;
 
-  aflags_t const added = aflagsNew & ~aflagsOld;
-  aflags_t const removed = ~aflagsNew & aflagsOld;
+  Flags const added = aflagsNew & ~aflagsOld;
+  Flags const removed = ~aflagsNew & aflagsOld;
 
   if (removed & (bit1 | bit2)) {
     sgr_put(sgrflag.off);
@@ -94,22 +107,24 @@ void tty_writer::update_sgrflag2(
       sgr_put(sgr1);
   }
 }
+template void tty_writer::update_sgrflag2<aflags_t>(aflags_t aflagsNew, aflags_t aflagsOld, termcap_sgrflag2<aflags_t> const& sgrflag);
+template void tty_writer::update_sgrflag2<xflags_t>(xflags_t aflagsNew, xflags_t aflagsOld, termcap_sgrflag2<xflags_t> const& sgrflag);
 
 void tty_writer::update_ideogram_decoration(xflags_t xflagsNew, xflags_t xflagsOld, termcap_sgrideogram const& cap) {
-  if (((xflagsNew ^ xflagsOld) & _at::is_ideogram_mask) == 0) return;
+  if (((xflagsNew ^ xflagsOld) & xflags_ideogram_mask) == 0) return;
 
   int sgr = 0;
-  if (xflagsNew & _at::is_ideogram_mask) {
-    switch (xflagsNew & _at::is_ideogram_mask) {
-    case _at::is_ideogram_line_single_rb: sgr = cap.single_rb; break;
-    case _at::is_ideogram_line_double_rb: sgr = cap.double_rb; break;
-    case _at::is_ideogram_line_single_lt: sgr = cap.single_lt; break;
-    case _at::is_ideogram_line_double_lt: sgr = cap.double_lt; break;
-    case _at::is_ideogram_line_single_lb: sgr = cap.single_lb; break;
-    case _at::is_ideogram_line_double_lb: sgr = cap.double_lb; break;
-    case _at::is_ideogram_line_single_rt: sgr = cap.single_rt; break;
-    case _at::is_ideogram_line_double_rt: sgr = cap.double_rt; break;
-    case _at::is_ideogram_stress: sgr = cap.stress; break;
+  if (xflagsNew & xflags_ideogram_mask) {
+    switch ((xflagsNew & xflags_ideogram_mask).value()) {
+    case xflags_ideogram_line_single_rb.value(): sgr = cap.single_rb; break;
+    case xflags_ideogram_line_double_rb.value(): sgr = cap.double_rb; break;
+    case xflags_ideogram_line_single_lt.value(): sgr = cap.single_lt; break;
+    case xflags_ideogram_line_double_lt.value(): sgr = cap.double_lt; break;
+    case xflags_ideogram_line_single_lb.value(): sgr = cap.single_lb; break;
+    case xflags_ideogram_line_double_lb.value(): sgr = cap.double_lb; break;
+    case xflags_ideogram_line_single_rt.value(): sgr = cap.single_rt; break;
+    case xflags_ideogram_line_double_rt.value(): sgr = cap.double_rt; break;
+    case xflags_ideogram_stress.value(): sgr = cap.stress; break;
     default:
       mwg_assert(0, "(xflagsNew & is_ideogram_mask) has invalid value");
     }
@@ -129,7 +144,7 @@ void tty_writer::update_sgrcolor(
   if (colorSpaceNew == colorSpaceOld && colorNew == colorOld) return;
 
   // sgrAnsiColor, sgrAixColor
-  if (colorSpaceNew == _at::color_space_indexed) {
+  if (colorSpaceNew == color_space_indexed) {
     if (colorNew < 8) {
       if (sgrcolor.base) {
         // e.g \e[31m
@@ -152,7 +167,7 @@ void tty_writer::update_sgrcolor(
     }
   }
 
-  if (colorSpaceNew == _at::color_space_default && sgrcolor.off) {
+  if (colorSpaceNew == color_space_default && sgrcolor.off) {
     sgr_put(sgrcolor.off);
     return;
   }
@@ -165,7 +180,7 @@ void tty_writer::update_sgrcolor(
     put(sgrcolor.iso8613.separater);
     put_unsigned(colorSpaceNew);
 
-    if (colorSpaceNew == _at::color_space_indexed) {
+    if (colorSpaceNew == color_space_indexed) {
       if (colorNew <= sgrcolor.iso8613.max_index) {
         put(sgrcolor.iso8613.separater);
         put_unsigned(colorNew);
@@ -174,9 +189,9 @@ void tty_writer::update_sgrcolor(
     } else {
       int numberOfComponents = 0;
       switch (colorSpaceNew) {
-      case _at::color_space_rgb:
-      case _at::color_space_cmy:  numberOfComponents = 3; break;
-      case _at::color_space_cmyk: numberOfComponents = 4; break;
+      case color_space_rgb:
+      case color_space_cmy:  numberOfComponents = 3; break;
+      case color_space_cmyk: numberOfComponents = 4; break;
       }
 
       // for ISO 8613-6 compatibility,

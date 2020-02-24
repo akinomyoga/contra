@@ -372,7 +372,7 @@ namespace ansi {
     term.initialize_line(line);
 
     int char_width = s.c2w(u); // ToDo 文字幅
-    if (b.cur.attribute.xflags & attribute_t::decdhl_mask) char_width *= 2;
+    if (b.cur.abuild.is_double_width()) char_width *= 2;
     if (char_width <= 0) {
       std::exit(1); // ToDo: control chars, etc.
     }
@@ -413,7 +413,7 @@ namespace ansi {
 
     cell_t cell;
     cell.character = u;
-    cell.attribute = b.cur.attribute;
+    cell.attribute = b.cur.abuild.attr();
     cell.width = char_width;
     b.line().write_cells(xL, &cell, 1, 1, dir);
 
@@ -447,7 +447,7 @@ namespace ansi {
     curpos_t const dir = simd ? -1 : 1;
     bool const decawm = s.get_mode(mode_decawm);
     bool const cap_xenl = s.get_mode(mode_xenl);
-    int const width_multiplier = b.cur.attribute.xflags & attribute_t::decdhl_mask ? 2 : 1;
+    int const width_multiplier = b.cur.abuild.is_double_width() ? 2 : 1;
 
     curpos_t x = b.cur.x();
 
@@ -478,7 +478,7 @@ namespace ansi {
 
     cell_t cell;
     cell.character = ascii_nul;
-    cell.attribute = b.cur.attribute;
+    cell.attribute = b.cur.abuild.attr();
     cell.width = 1;
 
     std::vector<cell_t>& buffer = term.m_buffer;
@@ -1257,7 +1257,7 @@ namespace ansi {
     auto& b = term.board();
     if (s.m_decsc_cur.x() >= 0) {
       do_restore_cursor(term, s.m_decsc_cur.x(), s.m_decsc_cur.y(), s.m_decsc_cur.xenl());
-      b.cur.attribute = s.m_decsc_cur.attribute;
+      b.cur.abuild = s.m_decsc_cur.abuild;
       s.set_mode(mode_decawm, s.m_decsc_decawm);
       s.set_mode(mode_decom, s.m_decsc_decom);
     }
@@ -1333,26 +1333,26 @@ namespace ansi {
     params.read_arg(colorSpace, true, 0);
     color_t color;
     switch (colorSpace) {
-    case attribute_t::color_space_default:
+    case color_space_default:
     default:
       switch (type) {
-      case 0: b.cur.attribute.reset_fg(); break;
-      case 1: b.cur.attribute.reset_bg(); break;
-      case 2: b.cur.attribute.reset_dc(); break;
+      case 0: b.cur.abuild.reset_fg(); break;
+      case 1: b.cur.abuild.reset_bg(); break;
+      case 2: b.cur.abuild.reset_dc(); break;
       }
       break;
 
-    case attribute_t::color_space_transparent:
+    case color_space_transparent:
       color = 0;
       goto set_color;
 
-    case attribute_t::color_space_rgb:
-    case attribute_t::color_space_cmy:
-    case attribute_t::color_space_cmyk:
+    case color_space_rgb:
+    case color_space_cmy:
+    case color_space_cmyk:
       {
         color = 0;
 
-        int const ncomp = colorSpace == attribute_t::color_space_cmyk ? 4 : 3;
+        int const ncomp = colorSpace == color_space_cmyk ? 4 : 3;
         csi_single_param_t comp;
         for (int i = 0; i < ncomp; i++) {
           params.read_arg(comp, true, 0);
@@ -1380,7 +1380,7 @@ namespace ansi {
         goto set_color;
       }
 
-    case attribute_t::color_space_indexed:
+    case color_space_indexed:
       if (params.read_arg(color, true, 0))
         goto set_color;
       else
@@ -1389,9 +1389,9 @@ namespace ansi {
 
     set_color:
       switch (type) {
-      case 0: b.cur.attribute.set_fg(color, colorSpace); break;
-      case 1: b.cur.attribute.set_bg(color, colorSpace); break;
-      case 2: b.cur.attribute.set_dc(color, colorSpace); break;
+      case 0: b.cur.abuild.set_fg(color, colorSpace); break;
+      case 1: b.cur.abuild.set_bg(color, colorSpace); break;
+      case 2: b.cur.abuild.set_dc(color, colorSpace); break;
       }
       break;
     }
@@ -1401,123 +1401,118 @@ namespace ansi {
     board_t& b = term.board();
     if (30 <= param && param < 40) {
       if (param < 38) {
-        b.cur.attribute.set_fg(param - 30);
+        b.cur.abuild.set_fg(param - 30);
       } else if (param == 38) {
         do_sgr_iso8613_colors(b, rest, 0);
       } else {
-        b.cur.attribute.reset_fg();
+        b.cur.abuild.reset_fg();
       }
       return;
     } else if (40 <= param && param < 50) {
       if (param < 48) {
-        b.cur.attribute.set_bg(param - 40);
+        b.cur.abuild.set_bg(param - 40);
       } else if (param == 48) {
         do_sgr_iso8613_colors(b, rest, 1);
       } else {
-        b.cur.attribute.reset_bg();
+        b.cur.abuild.reset_bg();
       }
       return;
     } else if (90 <= param && param <= 97) {
-      b.cur.attribute.set_fg(8 + (param - 90));
+      b.cur.abuild.set_fg(8 + (param - 90));
       return;
     } else if (100 <= param && param <= 107) {
-      b.cur.attribute.set_bg(8 + (param - 100));
+      b.cur.abuild.set_bg(8 + (param - 100));
       return;
     }
 
-    aflags_t& aflags = b.cur.attribute.aflags;
-    xflags_t& xflags = b.cur.attribute.xflags;
-
-    typedef attribute_t _at;
-
     if (10 <= param && param <= 19) {
-      bitflag_reset(aflags, _at::ansi_font_mask, (param - 10) << _at::ansi_font_shift);
+      b.cur.abuild.set_font((param - 10) << aflags_font_shift);
       return;
     }
 
     switch (param) {
-    case 0: b.cur.attribute.clear_sgr(); break;
+    case 0: b.cur.abuild.clear_sgr(); break;
 
-    case 1 : bitflag_reset(aflags, _at::aflags_weight_mask, _at::is_bold_set); break;
-    case 2 : bitflag_reset(aflags, _at::aflags_weight_mask, _at::is_faint_set); break;
-    case 22: bitflag_clear(aflags, _at::aflags_weight_mask); break;
+    case 1 : b.cur.abuild.set_weight(attr_bold_set); break;
+    case 2 : b.cur.abuild.set_weight(attr_faint_set); break;
+    case 22: b.cur.abuild.clear_weight(); break;
 
-    case 3 : bitflag_reset(aflags, _at::aflags_shape_mask, _at::is_italic_set); break;
-    case 20: bitflag_reset(aflags, _at::aflags_shape_mask, _at::is_fraktur_set); break;
-    case 23: bitflag_clear(aflags, _at::aflags_shape_mask); break;
+    case 3 : b.cur.abuild.set_shape(attr_italic_set); break;
+    case 20: b.cur.abuild.set_shape(attr_fraktur_set); break;
+    case 23: b.cur.abuild.clear_shape(); break;
 
     case 4:
       if (!rest.read_arg(param, false, 0)) param = 1;
       switch (param) {
       default:
-      case 0: bitflag_clear(aflags, _at::aflags_underline_mask); break;
-      case 1: bitflag_reset(aflags, _at::aflags_underline_mask, _at::underline_single); break;
-      case 2: bitflag_reset(aflags, _at::aflags_underline_mask, _at::underline_double); break;
-      case 3: bitflag_reset(aflags, _at::aflags_underline_mask, _at::underline_curly); break;
-      case 4: bitflag_reset(aflags, _at::aflags_underline_mask, _at::underline_dotted); break;
-      case 5: bitflag_reset(aflags, _at::aflags_underline_mask, _at::underline_dashed); break;
+      case 0: b.cur.abuild.clear_underline(); break;
+      case 1: b.cur.abuild.set_underline(attr_underline_single); break;
+      case 2: b.cur.abuild.set_underline(attr_underline_double); break;
+      case 3: b.cur.abuild.set_underline(attr_underline_curly); break;
+      case 4: b.cur.abuild.set_underline(attr_underline_dotted); break;
+      case 5: b.cur.abuild.set_underline(attr_underline_dashed); break;
       }
       break;
-    case 21: bitflag_reset(aflags, _at::aflags_underline_mask, _at::underline_double); break;
-    case 24: bitflag_clear(aflags, _at::aflags_underline_mask); break;
+    case 21: b.cur.abuild.set_underline(attr_underline_double); break;
+    case 24: b.cur.abuild.clear_underline(); break;
 
-    case 5 : bitflag_reset(aflags, _at::aflags_blink_mask, _at::is_blink_set); break;
-    case 6 : bitflag_reset(aflags, _at::aflags_blink_mask, _at::is_rapid_blink_set); break;
-    case 25: bitflag_clear(aflags, _at::aflags_blink_mask); break;
+    case 5 : b.cur.abuild.set_blink(attr_blink_set); break;
+    case 6 : b.cur.abuild.set_blink(attr_rapid_blink_set); break;
+    case 25: b.cur.abuild.clear_blink(); break;
 
-    case 7 : bitflag_set(aflags, _at::is_inverse_set); break;
-    case 27: bitflag_clear(aflags, _at::is_inverse_set); break;
+    case 7 : b.cur.abuild.set_inverse(); break;
+    case 27: b.cur.abuild.clear_inverse(); break;
 
-    case 8 : bitflag_set(aflags, _at::is_invisible_set); break;
-    case 28: bitflag_clear(aflags, _at::is_invisible_set); break;
+    case 8 : b.cur.abuild.set_invisible(); break;
+    case 28: b.cur.abuild.clear_invisible(); break;
 
-    case 9 : bitflag_set(aflags, _at::is_strike_set); break;
-    case 29: bitflag_clear(aflags, _at::is_strike_set); break;
+    case 9 : b.cur.abuild.set_strike(); break;
+    case 29: b.cur.abuild.clear_strike(); break;
 
-    case 26: bitflag_set(xflags, _at::is_proportional_set); break;
-    case 50: bitflag_clear(xflags, _at::is_proportional_set); break;
+    case 26: b.cur.abuild.set_proportional(); break;
+    case 50: b.cur.abuild.clear_proportional(); break;
 
-    case 51: bitflag_reset(xflags, _at::xflags_frame_mask, _at::is_frame_set); break;
-    case 52: bitflag_reset(xflags, _at::xflags_frame_mask, _at::is_circle_set); break;
-    case 54: bitflag_clear(xflags, _at::xflags_frame_mask); break;
+    case 51: b.cur.abuild.set_frame(xflags_frame_set); break;
+    case 52: b.cur.abuild.set_frame(xflags_circle_set); break;
+    case 54: b.cur.abuild.clear_frame(); break;
 
-    case 53: bitflag_set(xflags, _at::is_overline_set); break;
-    case 55: bitflag_clear(xflags, _at::is_overline_set); break;
+    case 53: b.cur.abuild.set_overline(); break;
+    case 55: b.cur.abuild.clear_overline(); break;
 
     // ECMA-48:1986 SGR(60-65) 及び JIS X 0211 & ISO/IEC 6429:1992 SGR(66-69)
-    case 60: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_single_rb); break;
-    case 61: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_double_rb); break;
-    case 62: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_single_lt); break;
-    case 63: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_double_lt); break;
-    case 66: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_single_lb); break;
-    case 67: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_double_lb); break;
-    case 68: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_single_rt); break;
-    case 69: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_line_double_rt); break;
-    case 64: bitflag_reset(xflags, _at::is_ideogram_mask, _at::is_ideogram_stress); break;
-    case 65: bitflag_clear(xflags, _at::is_ideogram_mask); break;
+    case 60: b.cur.abuild.set_ideogram(xflags_ideogram_line_single_rb); break;
+    case 61: b.cur.abuild.set_ideogram(xflags_ideogram_line_double_rb); break;
+    case 62: b.cur.abuild.set_ideogram(xflags_ideogram_line_single_lt); break;
+    case 63: b.cur.abuild.set_ideogram(xflags_ideogram_line_double_lt); break;
+    case 66: b.cur.abuild.set_ideogram(xflags_ideogram_line_single_lb); break;
+    case 67: b.cur.abuild.set_ideogram(xflags_ideogram_line_double_lb); break;
+    case 68: b.cur.abuild.set_ideogram(xflags_ideogram_line_single_rt); break;
+    case 69: b.cur.abuild.set_ideogram(xflags_ideogram_line_double_rt); break;
+    case 64: b.cur.abuild.set_ideogram(xflags_ideogram_stress); break;
+    case 65: b.cur.abuild.clear_ideogram(); break;
 
     // contra 拡張 (画面の横分割に対応する為には DECDWL の類を属性として提供する必要がある)
-    case 9903: bitflag_reset(xflags, _at::decdhl_mask, _at::decdhl_upper_half); break;
-    case 9904: bitflag_reset(xflags, _at::decdhl_mask, _at::decdhl_lower_half); break;
-    case 9905: bitflag_reset(xflags, _at::decdhl_mask, _at::decdhl_single_width); break;
-    case 9906: bitflag_reset(xflags, _at::decdhl_mask, _at::decdhl_double_width); break;
+    case 9903: b.cur.abuild.set_decdhl(xflags_decdhl_upper_half); break;
+    case 9904: b.cur.abuild.set_decdhl(xflags_decdhl_lower_half); break;
+    case 9905: b.cur.abuild.set_decdhl(xflags_decdhl_single_width); break;
+    case 9906: b.cur.abuild.set_decdhl(xflags_decdhl_double_width); break;
 
     // RLogin 拡張 (RLogin では 60-65 で利用できる。JIS X 0211 の記述と異なるが便利そうなので対応する)
-    case 8460: bitflag_reset(xflags, _at::rlogin_double_rline, _at::rlogin_single_rline); break;
-    case 8461: bitflag_reset(xflags, _at::rlogin_single_rline, _at::rlogin_double_rline); break;
-    case 8462: bitflag_reset(xflags, _at::rlogin_double_lline, _at::rlogin_single_lline); break;
-    case 8463: bitflag_reset(xflags, _at::rlogin_single_lline, _at::rlogin_double_lline); break;
-    case 8464: bitflag_set  (xflags, _at::rlogin_double_strike); break;
-    case 8465: bitflag_clear(xflags, _at::rlogin_ideogram_mask); break;
+    case 8460: b.cur.abuild.set_rlogin_rline(xflags_rlogin_single_rline); break;
+    case 8461: b.cur.abuild.set_rlogin_rline(xflags_rlogin_double_rline); break;
+    case 8462: b.cur.abuild.set_rlogin_lline(xflags_rlogin_single_lline); break;
+    case 8463: b.cur.abuild.set_rlogin_lline(xflags_rlogin_double_lline); break;
+    case 8464: b.cur.abuild.set_rlogin_double_strike(); break;
+    case 8465: b.cur.abuild.clear_rlogin_ideogram(); break;
 
     // Mintty 拡張
-    case 7773: case 73: bitflag_reset(xflags, _at::mintty_subsup_mask, _at::mintty_sup); break;
-    case 7774: case 74: bitflag_reset(xflags, _at::mintty_subsup_mask, _at::mintty_sub); break;
-    case 7775: case 75: bitflag_clear(xflags, _at::mintty_subsup_mask); break;
+    case 7773: case 73: b.cur.abuild.set_mintty_subsup(xflags_mintty_sup); break;
+    case 7774: case 74: b.cur.abuild.set_mintty_subsup(xflags_mintty_sub); break;
+    case 7775: case 75: b.cur.abuild.clear_mintty_subsup(); break;
 
     // Kitty 拡張
     case 7758: case 58: do_sgr_iso8613_colors(b, rest, 2); break;
-    case 7759: case 59: b.cur.attribute.reset_dc(); break;
+    case 7759: case 59: b.cur.abuild.reset_dc(); break;
 
     default:
       std::fprintf(stderr, "unrecognized SGR value %d\n", param);
@@ -1541,25 +1536,16 @@ namespace ansi {
     params.read_param(param, 0);
     if (param > 7) return false;
 
-    xflags_t& xflags = term.board().cur.attribute.xflags;
-    xflags = (xflags & ~(xflags_t) attribute_t::sco_mask) | param << attribute_t::sco_shift;
+    term.board().cur.abuild.set_sco(param << xflags_sco_shift);
     return true;
   }
 
   void do_plu(term_t& term) {
-    xflags_t& xflags = term.board().cur.attribute.xflags;
-    if (xflags & attribute_t::is_sub_set)
-      xflags &= ~(xflags_t) attribute_t::is_sub_set;
-    else
-      xflags |= attribute_t::is_sup_set;
+    term.board().cur.abuild.plu();
   }
 
   void do_pld(term_t& term) {
-    xflags_t& xflags = term.board().cur.attribute.xflags;
-    if (xflags & attribute_t::is_sup_set)
-      xflags &= ~(xflags_t) attribute_t::is_sup_set;
-    else
-      xflags |= attribute_t::is_sub_set;
+    term.board().cur.abuild.pld();
   }
 
   bool do_decsca(term_t& term, csi_parameters& params) {
@@ -1567,25 +1553,24 @@ namespace ansi {
     params.read_param(param, 0);
     if (param > 2) return false;
 
-    xflags_t& xflags = term.board().cur.attribute.xflags;
     if (param == 1)
-      xflags |= (xflags_t) attribute_t::decsca_protected;
+      term.board().cur.abuild.set_decsca();
     else
-      xflags &= ~(xflags_t) attribute_t::decsca_protected;
+      term.board().cur.abuild.clear_decsca();
     return true;
   }
 
   void do_spa(term_t& term) {
-    term.board().cur.attribute.xflags |= (xflags_t) attribute_t::spa_protected;
+    term.board().cur.abuild.set_spa();
   }
   void do_epa(term_t& term) {
-    term.board().cur.attribute.xflags &= ~(xflags_t) attribute_t::spa_protected;
+    term.board().cur.abuild.clear_spa();
   }
   void do_ssa(term_t& term) {
-    term.board().cur.attribute.xflags |= (xflags_t) attribute_t::ssa_selected;
+    term.board().cur.abuild.set_ssa();
   }
   void do_esa(term_t& term) {
-    term.board().cur.attribute.xflags &= ~(xflags_t) attribute_t::ssa_selected;
+    term.board().cur.abuild.clear_ssa();
   }
 
   void do_sm_decscnm(term_t& term, bool value) {
@@ -2085,7 +2070,7 @@ namespace ansi {
         case ascii_q:
           // DECSCA
           _start();
-          if (term.board().cur.attribute.is_decsca_protected())
+          if (term.board().cur.abuild.attr().is_decsca_protected())
             term.input_byte(ascii_1);
           term.input_byte(ascii_double_quote);
           term.input_byte(ascii_q);

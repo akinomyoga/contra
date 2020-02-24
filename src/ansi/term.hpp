@@ -704,7 +704,7 @@ namespace ansi {
 
     attribute_t fill_attr() const {
       if (m_state.get_mode(mode_bce)) {
-        attribute_t const& src = m_board.cur.attribute;
+        attribute_t const& src = m_board.cur.abuild.attr();
         attribute_t ret;
         ret.set_bg(src.bg_space(), src.bg_color());
         return ret;
@@ -725,7 +725,7 @@ namespace ansi {
 
       cell_t cell;
       cell.character = marker | charflag_marker;
-      cell.attribute = m_board.cur.attribute;
+      cell.attribute = m_board.cur.abuild.attr();
       cell.width = 0;
       initialize_line(m_board.line());
       m_board.line().write_cells(m_board.cur.x(), &cell, 1, 1, dir);

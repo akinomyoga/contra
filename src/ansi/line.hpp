@@ -66,11 +66,11 @@ namespace ansi {
     }
   };
 
-  typedef attribute_t attr_t;
+  typedef attribute_t cattr_t;
 
   struct cell_t {
     character_t   character;
-    attr_t        attribute;
+    cattr_t        attribute;
     std::uint32_t width;
 
     cell_t() {}
@@ -87,7 +87,7 @@ namespace ansi {
       return width == 0 && !character.is_extension();
     }
     bool is_protected() const {
-      return attribute.xflags & (attribute_t::spa_protected | attribute_t::daq_protected);
+      return (bool) (attribute.xflags & (xflags_spa_protected | xflags_daq_protected));
     }
     bool is_decsca_protected() const {
       return attribute.is_decsca_protected();
@@ -269,14 +269,14 @@ namespace ansi {
     void set_id(std::uint32_t value) { this->m_id = value; }
 
     bool has_blinking_cells() const {
-      constexpr aflags_t flags = attribute_t::is_blink_set | attribute_t::is_rapid_blink_set;
+      constexpr aflags_t flags = attr_blink_set | attr_rapid_blink_set;
       for (cell_t const& cell : m_cells)
         if (cell.attribute.aflags & flags) return true;
       return false;
     }
 
   private:
-    void _initialize_content(curpos_t width, attr_t const& attr) {
+    void _initialize_content(curpos_t width, cattr_t const& attr) {
       if (attr.is_default()) return;
       cell_t fill;
       fill.character = ascii_nul;
@@ -292,7 +292,7 @@ namespace ansi {
       this->m_home = -1;
       this->m_limit = -1;
     }
-    void clear(curpos_t width, attr_t const& attr) {
+    void clear(curpos_t width, cattr_t const& attr) {
       this->clear();
       this->_initialize_content(width, attr);
     }
@@ -307,7 +307,7 @@ namespace ansi {
       this->m_strings_r2l = false;
       this->m_version++;
     }
-    void clear_content(curpos_t width, attr_t const& attr) {
+    void clear_content(curpos_t width, cattr_t const& attr) {
       this->clear_content();
       this->_initialize_content(width, attr);
     }
@@ -618,12 +618,12 @@ namespace ansi {
     }
 
   private:
-    void _mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, attr_t const& fill_attr, bool line_r2l, bool dcsm);
-    void _prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, attr_t const& fill_attr, bool line_r2l, bool dcsm);
+    void _mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, cattr_t const& fill_attr, bool line_r2l, bool dcsm);
+    void _prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, cattr_t const& fill_attr, bool line_r2l, bool dcsm);
   public:
-    /// @fn void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, attr_t const& fill_attr);
+    /// @fn void compose_segments(line_segment_t const* comp, int count, curpos_t width, bool line_r2l, cattr_t const& fill_attr);
     /// 表示部に於ける範囲を組み合わせて新しく行の内容を再構築します。
-    void compose_segments(line_segment_t const* comp, int count, curpos_t width, attr_t const& fill_attr, bool line_r2l, bool dcsm = false) {
+    void compose_segments(line_segment_t const* comp, int count, curpos_t width, cattr_t const& fill_attr, bool line_r2l, bool dcsm = false) {
       if (!m_prop_enabled)
         _mono_compose_segments(comp, count, width, fill_attr, line_r2l, dcsm);
       else
@@ -631,13 +631,13 @@ namespace ansi {
     }
     void truncate(curpos_t width, bool line_r2l, bool dcsm) {
       line_segment_t const seg = {0, width, line_segment_slice};
-      compose_segments(&seg, 1, width, attr_t {}, line_r2l, dcsm);
+      compose_segments(&seg, 1, width, cattr_t {}, line_r2l, dcsm);
     }
 
   private:
-    void _mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr);
-    void _bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr);
-    void _prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr);
+    void _mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, cattr_t const& fill_attr);
+    void _bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, cattr_t const& fill_attr);
+    void _prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, cattr_t const& fill_attr);
   public:
     /*?lwiki
      * @fn void shift_cells(p1, p2, shift, flags, width, fill_atr);
@@ -649,10 +649,10 @@ namespace ansi {
      *   細かい動作を制御するフラグを指定します。
      * @param[in] curpos_t width;
      *   行の幅を指定します。境界を超えて出て行った内容は失われます。
-     * @param[in] attr_t const& fill_attr;
+     * @param[in] cattr_t const& fill_attr;
      *   移動後に残る余白を埋める描画属性を指定します。
      */
-    void shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr) {
+    void shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, cattr_t const& fill_attr) {
       if (!m_prop_enabled)
         _mono_shift_cells(p1, p2, shift, flags, width, fill_attr);
       else if (!(flags & lshift_dcsm))
@@ -746,7 +746,7 @@ namespace ansi {
     bool m_xenl = false;
 
   public:
-    attribute_t attribute;
+    attribute_builder abuild;
 
   public:
     curpos_t x() const { return m_x; }

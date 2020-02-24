@@ -2,172 +2,10 @@
 #include <vector>
 #include <type_traits>
 #include "../util.hpp"
-
-namespace contra::ansi {
-  typedef std::uint32_t color_t;
-  typedef contra::util::flags_t<std::uint32_t, struct attr0_tag> attr0_t;
-  typedef contra::util::flags_t<std::uint32_t, struct attr_tag>  attr_t;
-  typedef contra::util::flags_t<std::uint32_t, struct aflags_tag> aflags_t;
-  typedef contra::util::flags_t<std::uint32_t, struct xflags_tag> xflags_t;
-}
-namespace contra::util::flags_detail {
-  template<> struct import_from<contra::ansi::attr_t, contra::ansi::attr0_t>: std::true_type {};
-  template<> struct import_from<contra::ansi::aflags_t, contra::ansi::attr0_t>: std::true_type {};
-}
+#include "attr.hpp"
 
 namespace contra {
 namespace ansi {
-
-  // attr_t, aflags_t 共通属性
-
-  constexpr attr0_t attr_weight_mask      = 3 << 18; // bit 18-19
-  constexpr attr0_t attr_bold_set         = 1 << 18; // -+- SGR 1,2
-  constexpr attr0_t attr_faint_set        = 2 << 18; //  |
-  constexpr attr0_t attr_heavy_set        = 3 << 18; // -' (contra拡張)
-
-  constexpr attr0_t attr_shape_mask       = 3 << 20; // bit 20-21
-  constexpr attr0_t attr_italic_set       = 1 << 20; // -+- SGR 3,20
-  constexpr attr0_t attr_fraktur_set      = 2 << 20; // -'
-
-  constexpr attr0_t attr_underline_mask   = 7 << 22; // bit 22-24
-  constexpr attr0_t attr_underline_single = 1 << 22; // -+- SGR 4,21
-  constexpr attr0_t attr_underline_double = 2 << 22; //  |  SGR 21
-  constexpr attr0_t attr_underline_curly  = 3 << 22; //  |  (kitty拡張)
-  constexpr attr0_t attr_underline_dotted = 4 << 22; //  |  (mintty拡張)
-  constexpr attr0_t attr_underline_dashed = 5 << 22; // -'  (mintty拡張)
-
-  constexpr attr0_t attr_blink_mask       = 3 << 25; // bit 25-26
-  constexpr attr0_t attr_blink_set        = 1 << 25; // -+- SGR 5,6
-  constexpr attr0_t attr_rapid_blink_set  = 2 << 25; // -'
-
-  constexpr attr0_t attr_inverse_set      = 1 << 27; // SGR 7
-  constexpr attr0_t attr_invisible_set    = 1 << 28; // SGR 8
-  constexpr attr0_t attr_strike_set       = 1 << 29; // SGR 9
-
-  constexpr attr0_t attr_common_mask      = 0x3FFF0000;
-
-  // attr_t
-  constexpr attr_t attr_fg_mask  = 0x0000FF;
-  constexpr attr_t attr_bg_mask  = 0x00FF00;
-  constexpr int    attr_fg_shift = 0;
-  constexpr int    attr_bg_shift = 8;
-  constexpr attr_t attr_fg_set   = 0x010000;
-  constexpr attr_t attr_bg_set   = 0x020000;
-  constexpr attr_t attr_reserved_bit1 = 1 << 30;
-  constexpr attr_t attr_extended = 1 << 31;
-  constexpr int color_space_default      = 0;
-  constexpr int color_space_transparent  = 1;
-  constexpr int color_space_rgb          = 2;
-  constexpr int color_space_cmy          = 3;
-  constexpr int color_space_cmyk         = 4;
-  constexpr int color_space_indexed      = 5;
-
-  // aflags_t
-  constexpr aflags_t aflags_fg_space_mask = 0x00000F;
-  constexpr aflags_t aflags_bg_space_mask = 0x0000F0;
-  constexpr aflags_t aflags_dc_space_mask = 0x000F00;
-  constexpr int      aflags_fg_space_shift = 0;
-  constexpr int      aflags_bg_space_shift = 4;
-  constexpr int      aflags_dc_space_shift = 8;
-  constexpr aflags_t aflags_reserved_bit1 = 1 << 16;
-  constexpr aflags_t aflags_reserved_bit2 = 1 << 17;
-  constexpr aflags_t aflags_reserved_bit3 = 1 << 30;
-  constexpr aflags_t aflags_reserved_bit4 = 1 << 31;
-
-  // xflags_t
-
-  // bit 0-3: sup/sub
-  constexpr xflags_t xflags_subsup_mask        = 3 << 0; // PLD,PLU
-  constexpr xflags_t xflags_sub_set            = 1 << 0; //   反対の PLD/PLU でクリア
-  constexpr xflags_t xflags_sup_set            = 2 << 0; //
-  constexpr xflags_t xflags_mintty_subsup_mask = 3 << 2; // mintty SGR 73,74
-  constexpr xflags_t xflags_mintty_sup         = 1 << 2; //   SGR(0) でクリア
-  constexpr xflags_t xflags_mintty_sub         = 2 << 2; //
-
-  // bit 6,7: DECDHL, DECDWL, DECSWL
-  constexpr xflags_t xflags_decdhl_mask         = 0x3 << 6;
-  constexpr xflags_t xflags_decdhl_single_width = 0x0 << 6;
-  constexpr xflags_t xflags_decdhl_double_width = 0x1 << 6;
-  constexpr xflags_t xflags_decdhl_upper_half   = 0x2 << 6;
-  constexpr xflags_t xflags_decdhl_lower_half   = 0x3 << 6;
-
-  // bit 8-10: SCO
-  constexpr int     xflags_sco_shift      = 8;
-  constexpr xflags_t xflags_sco_mask      = 0x7 << xflags_sco_shift;
-  constexpr xflags_t xflags_sco_default   = 0x0 << xflags_sco_shift;
-  constexpr xflags_t xflags_sco_rotate45  = 0x1 << xflags_sco_shift;
-  constexpr xflags_t xflags_sco_rotate90  = 0x2 << xflags_sco_shift;
-  constexpr xflags_t xflags_sco_rotate135 = 0x3 << xflags_sco_shift;
-  constexpr xflags_t xflags_sco_rotate180 = 0x4 << xflags_sco_shift;
-  constexpr xflags_t xflags_sco_rotate225 = 0x5 << xflags_sco_shift;
-  constexpr xflags_t xflags_sco_rotate270 = 0x6 << xflags_sco_shift;
-  constexpr xflags_t xflags_sco_rotate315 = 0x7 << xflags_sco_shift;
-
-  // bit 11: DECSCA
-  constexpr xflags_t xflags_decsca_protected = 1 << 11;
-
-  // bit 12-15: SGR(ECMA-48:1986)
-  constexpr xflags_t xflags_frame_mask       = 3 << 12;
-  constexpr xflags_t xflags_frame_set        = 1 << 12; // -+- SGR 51,52
-  constexpr xflags_t xflags_circle_set       = 2 << 12; // -'
-  constexpr xflags_t xflags_overline_set     = 1 << 14; // --- SGR 53
-  constexpr xflags_t xflags_proportional_set = 1 << 15; // --- SGR 26 (deprecated)
-
-  // bit 16-19: SGR(ECMA-48:1986) ideogram decorations
-  constexpr xflags_t xflags_ideogram_mask           = 0xF0000;
-  constexpr xflags_t xflags_ideogram_line           = 0x80000;
-  constexpr xflags_t xflags_ideogram_line_double    = 0x10000;
-  constexpr xflags_t xflags_ideogram_line_left      = 0x20000;
-  constexpr xflags_t xflags_ideogram_line_over      = 0x40000;
-  constexpr xflags_t xflags_ideogram_line_single_rb = xflags_ideogram_line | 0x0 << 16; // -+- SGR 60-63
-  constexpr xflags_t xflags_ideogram_line_double_rb = xflags_ideogram_line | 0x1 << 16; //  |      66-69
-  constexpr xflags_t xflags_ideogram_line_single_lt = xflags_ideogram_line | 0x6 << 16; //  |
-  constexpr xflags_t xflags_ideogram_line_double_lt = xflags_ideogram_line | 0x7 << 16; //  |
-  constexpr xflags_t xflags_ideogram_line_single_lb = xflags_ideogram_line | 0x2 << 16; //  |
-  constexpr xflags_t xflags_ideogram_line_double_lb = xflags_ideogram_line | 0x3 << 16; //  |
-  constexpr xflags_t xflags_ideogram_line_single_rt = xflags_ideogram_line | 0x4 << 16; //  |
-  constexpr xflags_t xflags_ideogram_line_double_rt = xflags_ideogram_line | 0x5 << 16; // -'
-  constexpr xflags_t xflags_ideogram_stress         = 0x10000; // --- SGR 64
-
-  // bit 20-23: RLogin SGR(60-63) 左右の線
-  constexpr xflags_t xflags_rlogin_ideogram_mask  = 0x1F << 20;
-  constexpr xflags_t xflags_rlogin_single_rline   = 1 << 20; // SGR 8460
-  constexpr xflags_t xflags_rlogin_double_rline   = 1 << 21; // SGR 8461
-  constexpr xflags_t xflags_rlogin_single_lline   = 1 << 22; // SGR 8462
-  constexpr xflags_t xflags_rlogin_double_lline   = 1 << 23; // SGR 8463
-  // bit 24: RLogin SGR(64) 二重打ち消し線
-  constexpr xflags_t xflags_rlogin_double_strike  = 1 << 24; // SGR 8464
-
-  // bit 25,26: SPA, SSA
-  constexpr xflags_t xflags_spa_protected         = 1 << 25;
-  constexpr xflags_t xflags_ssa_selected          = 1 << 26;
-  // bit 27,28: DAQ
-  constexpr xflags_t xflags_daq_guarded           = 1 << 27;
-  constexpr xflags_t xflags_daq_protected         = 1 << 28;
-  // constexpr int      xflags_daq_shift = 29;
-  // constexpr xflags_t xflags_daq_mask  = (xflags_t) 0x3 << daq_shift;
-  // constexpr xflags_t xflags_daq_character_input   = (xflags_t) 2  << daq_shift;
-  // constexpr xflags_t xflags_daq_numeric_input     = (xflags_t) 3  << daq_shift;
-  // constexpr xflags_t xflags_daq_alphabetic_input  = (xflags_t) 4  << daq_shift;
-  // constexpr xflags_t xflags_daq_input_align_right = (xflags_t) 6  << daq_shift;
-  // constexpr xflags_t xflags_daq_input_reversed    = (xflags_t) 7  << daq_shift;
-  // constexpr xflags_t xflags_daq_zero_fill         = (xflags_t) 8  << daq_shift;
-  // constexpr xflags_t xflags_daq_space_fill        = (xflags_t) 9  << daq_shift;
-  // constexpr xflags_t xflags_daq_tabstop           = (xflags_t) 10 << daq_shift;
-
-  constexpr xflags_t xflags_reserved_bit1 = 1 << 4;
-  constexpr xflags_t xflags_reserved_bit2 = 1 << 5;
-
-  constexpr xflags_t xflags_fg_extended = 1 << 29;
-  constexpr xflags_t xflags_bg_extended = 1 << 30;
-  constexpr xflags_t xflags_dc_extended = 1 << 31;
-
-  constexpr xflags_t xflags_qualifier_mask = xflags_decsca_protected | xflags_spa_protected | xflags_ssa_selected | xflags_daq_guarded | xflags_daq_protected;
-
-  // 以下に \e[m でクリアされない物を列挙する。
-  // SGR(9903)-SGR(9906) で提供している decdhl_mask については \e[m でクリアできる事にする。
-  constexpr xflags_t xflags_non_sgr_mask = xflags_subsup_mask | xflags_sco_mask | xflags_qualifier_mask;
-
   struct attribute {
     aflags_t aflags = 0;
     xflags_t xflags = 0;
@@ -211,7 +49,7 @@ namespace ansi {
   };
 
   struct attribute_builder {
-    attribute_table&    m_table;
+    attribute_table& m_table;
     attribute     m_attribute;
     std::uint32_t m_attribute_version = 0;
     mutable attr_t        m_attr = 0;
@@ -227,15 +65,11 @@ namespace ansi {
       if (m_attribute_version == m_attr_version)
         return m_attr;
 
-      if (m_attribute.xflags) {
+      if ((m_attribute.aflags & aflags_extension_mask) || m_attribute.xflags) {
         m_attr = m_table.save(m_attribute);
         m_attr_version = m_attribute_version;
       } else {
-        m_attr = (std::uint32_t) m_attribute.aflags & attr_common_mask;
-        if (m_attribute.aflags & aflags_fg_space_mask)
-          m_attr |= attr_fg_set | m_attribute.fg << attr_fg_shift;
-        if (m_attribute.aflags & aflags_bg_space_mask)
-          m_attr |= attr_bg_set | m_attribute.bg << attr_bg_shift;
+        reduce();
       }
       return m_attr;
     }
@@ -255,6 +89,13 @@ namespace ansi {
       m_attr_version = 0;
       m_attribute_version = 0;
     }
+    void reduce() const {
+      m_attr = (std::uint32_t) m_attribute.aflags & attr_common_mask;
+      if (m_attribute.aflags & aflags_fg_space_mask)
+        m_attr |= attr_fg_set | m_attribute.fg << attr_fg_shift;
+      if (m_attribute.aflags & aflags_bg_space_mask)
+        m_attr |= attr_bg_set | m_attribute.bg << attr_bg_shift;
+    }
 
   public:
     void set_fg(color_t fg, int space) {
@@ -271,10 +112,6 @@ namespace ansi {
 
       m_attribute.fg = fg;
       m_attribute.aflags.reset(aflags_fg_space_mask, space << aflags_fg_space_shift);
-      if (space == color_space_default || space == color_space_indexed)
-        m_attribute.xflags &= ~xflags_fg_extended;
-      else
-        m_attribute.xflags |= xflags_fg_extended;
       m_attribute_version++;
     }
     void set_bg(color_t bg, int space) {
@@ -291,10 +128,6 @@ namespace ansi {
 
       m_attribute.bg = bg;
       m_attribute.aflags.reset(aflags_bg_space_mask, space << aflags_bg_space_shift);
-      if (space == color_space_default || space == color_space_indexed)
-        m_attribute.xflags &= ~xflags_bg_extended;
-      else
-        m_attribute.xflags |= xflags_bg_extended;
       m_attribute_version++;
     }
     void set_dc(color_t dc, int space) {
@@ -305,12 +138,100 @@ namespace ansi {
 
       m_attribute.dc = dc;
       m_attribute.aflags.reset(aflags_dc_space_mask, space << aflags_dc_space_shift);
-      if (space == color_space_default)
-        m_attribute.xflags &= ~xflags_dc_extended;
-      else
-        m_attribute.xflags |= xflags_dc_extended;
       m_attribute_version++;
     }
+
+  private:
+    void reset_common_attr(attr0_t mask, attr0_t value) {
+      if (m_attr & attr_extended) {
+        m_attribute.aflags.reset(mask, value);
+        m_attribute_version++;
+      } else {
+        m_attr.reset(mask, value);
+      }
+    }
+    void set_common_attr(attr0_t bit) {
+      if (m_attr & attr_extended) {
+        m_attribute.aflags |= bit;
+        m_attribute_version++;
+      } else {
+        m_attr |= bit;
+      }
+    }
+    void clear_common_attr(attr0_t bit) {
+      if (m_attr & attr_extended) {
+        m_attribute.aflags &= ~bit;
+        m_attribute_version++;
+      } else {
+        m_attr &= ~bit;
+      }
+    }
+
+    void reset_aflags(aflags_t mask, aflags_t value) {
+      if (!(m_attr & attr_extended)) extend();
+      m_attribute.aflags.reset(mask, value);
+      m_attribute_version++;
+    }
+    void clear_aflags(aflags_t mask) {
+      if (!(m_attr & attr_extended)) return;
+      m_attribute.aflags &= ~mask;
+      m_attribute_version++;
+    }
+
+    void reset_xflags(xflags_t mask, xflags_t value) {
+      if (!(m_attr & attr_extended)) extend();
+      m_attribute.xflags.reset(mask, value);
+      m_attribute_version++;
+    }
+    void set_xflags(xflags_t value) {
+      if (!(m_attr & attr_extended)) extend();
+      m_attribute.xflags |= value;
+      m_attribute_version++;
+    }
+    void clear_xflags(xflags_t mask) {
+      if (!(m_attr & attr_extended)) return;
+      m_attribute.xflags &= ~mask;
+      m_attribute_version++;
+    }
+
+  public:
+    void set_weight(attr0_t weight)          { reset_common_attr(attr_weight_mask, weight); }
+    void clear_weight()                      { clear_common_attr(attr_weight_mask); }
+    void set_shape(attr0_t shape)            { reset_common_attr(attr_shape_mask, shape); }
+    void clear_shape()                       { clear_common_attr(attr_shape_mask); }
+    void set_underline(attr0_t underline)    { reset_common_attr(attr_underline_mask, underline); }
+    void clear_underline()                   { clear_common_attr(attr_underline_mask); }
+    void set_blink(attr0_t blink)            { reset_common_attr(attr_blink_mask, blink); }
+    void clear_blink()                       { clear_common_attr(attr_blink_mask); }
+    void set_inverse()                       { set_common_attr(attr_inverse_set); }
+    void clear_inverse()                     { clear_common_attr(attr_inverse_set); }
+    void set_invisible()                     { set_common_attr(attr_invisible_set); }
+    void clear_invisible()                   { clear_common_attr(attr_invisible_set); }
+    void set_strike()                        { set_common_attr(attr_strike_set); }
+    void clear_strike()                      { clear_common_attr(attr_strike_set); }
+
+    void set_font(aflags_t font)             { reset_aflags(aflags_font_mask, font); }
+    void clear_font()                        { clear_aflags(aflags_font_mask); }
+
+    void set_proportional()                  { set_xflags(xflags_proportional_set); }
+    void clear_proportional()                { clear_xflags(xflags_proportional_set); }
+    void set_frame(xflags_t frame)           { reset_xflags(xflags_frame_mask, frame); }
+    void clear_frame()                       { clear_xflags(xflags_frame_mask); }
+    void set_overline()                      { set_xflags(xflags_overline_set); }
+    void clear_overline()                    { clear_xflags(xflags_overline_set); }
+    void set_ideogram(xflags_t ideogram)     { reset_xflags(xflags_ideogram_mask, ideogram); }
+    void clear_ideogram()                    { clear_xflags(xflags_ideogram_mask); }
+
+    void set_decdhl(xflags_t decdhl)         { reset_xflags(xflags_decdhl_mask, decdhl); }
+    void clear_decdhl()                      { clear_xflags(xflags_decdhl_mask); }
+
+    void set_rlogin_rline(xflags_t ideogram) { reset_xflags(xflags_rlogin_rline_mask, ideogram); }
+    void set_rlogin_lline(xflags_t ideogram) { reset_xflags(xflags_rlogin_lline_mask, ideogram); }
+    void set_rlogin_double_strike()          { set_xflags(xflags_rlogin_double_strike); }
+    void clear_rlogin_ideogram()             { clear_xflags(xflags_rlogin_ideogram_mask); }
+
+    void set_mintty_subsup(xflags_t subsup)  { reset_xflags(xflags_mintty_subsup_mask, subsup); }
+    void clear_mintty_subsup()               { clear_xflags(xflags_mintty_subsup_mask); }
 
   };
 

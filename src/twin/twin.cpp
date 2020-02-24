@@ -1111,7 +1111,7 @@ namespace {
 
       win_font_manager_t& font_manager = gbuffer.fstore();
 
-      font_t const current_font = font_resolver_t().resolve_font(manager.app().term().cursor().attribute) & ~font_rotation_mask;
+      font_t const current_font = font_resolver_t().resolve_font(manager.app().term().cursor().abuild.attr()) & ~font_rotation_mask;
       auto const [dx, dy, dxW] = font_manager.get_displacement(current_font);
       contra_unused(dx);
       contra_unused(dxW);
@@ -1296,8 +1296,8 @@ namespace {
       if (!sess) return false;
 
       contra::ansi::tstate_t& s = sess->state();
-      s.m_default_fg_space = contra::ansi::attribute_t::color_space_rgb;
-      s.m_default_bg_space = contra::ansi::attribute_t::color_space_rgb;
+      s.m_default_fg_space = contra::ansi::color_space_rgb;
+      s.m_default_bg_space = contra::ansi::color_space_rgb;
       s.m_default_fg_color = contra::ansi::rgb(0x00, 0x00, 0x00);
       s.m_default_bg_color = contra::ansi::rgb(0xFF, 0xFF, 0xFF);
       // s.m_default_fg_color = contra::ansi::rgb(0xD0, 0xD0, 0xD0);//@color

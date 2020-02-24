@@ -574,7 +574,7 @@ void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, 
   }
 }
 
-void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, attr_t const& fill_attr, bool line_r2l, bool dcsm) {
+void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, cattr_t const& fill_attr, bool line_r2l, bool dcsm) {
   struct slice_t {
     curpos_t p1, p2;
     curpos_t shift;
@@ -719,7 +719,7 @@ void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpo
   m_version++;
 }
 
-void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, attr_t const& fill_attr, bool line_r2l, bool dcsm) {
+void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, cattr_t const& fill_attr, bool line_r2l, bool dcsm) {
   cell_t fill;
   fill.character = ascii_nul;
   fill.attribute = 0;
@@ -910,7 +910,7 @@ void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpo
   m_prop_x = 0;
 }
 
-void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr) {
+void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, cattr_t const& fill_attr) {
   contra_unused(flags);
   if (shift == 0) return;
   p1 = contra::clamp(p1, 0, width);
@@ -982,7 +982,7 @@ void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   m_version++;
 }
 
-void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr) {
+void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, cattr_t const& fill_attr) {
   // m_prop_enabled && !get_mode(mode_dcsm) の時
   mwg_assert(!(flags & lshift_dcsm));
 
@@ -1058,7 +1058,7 @@ void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   _prop_compose_segments(segs, iseg, width, fill_attr, bool(flags & lshift_r2l), false);
 }
 
-void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr) {
+void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, cattr_t const& fill_attr) {
   if (shift == 0) return;
   p1 = contra::clamp(p1, 0, width);
   p2 = contra::clamp(p2, 0, width);
@@ -1087,7 +1087,7 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
 
   std::size_t i1, i2;
   curpos_t w1, w2;
-  attr_t attr1, attr2;
+  cattr_t attr1, attr2;
   {
     std::tie(i1, w1) = _prop_glb(p1, (bool) (flags & lshift_left_inclusive));
     std::tie(i2, w2) = _prop_lub(p2, (bool) (flags & lshift_right_inclusive));
@@ -1099,7 +1099,7 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
 
   std::size_t iL = 0, iR = 0;
   curpos_t wL = 0, wR = 0;
-  attr_t attrL, attrR;
+  cattr_t attrL, attrR;
   curpos_t wlfill = 0, wrfill = 0;
   bool flag_erase_unprotected = false;
   if (std::abs(shift) >= p2 - p1) {
@@ -1191,7 +1191,7 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
     }
 
     // 余白の書き込み
-    auto _write_space = [&] (curpos_t w, attr_t const& attr) {
+    auto _write_space = [&] (curpos_t w, cattr_t const& attr) {
       if (w <= 0) return;
       fill.character = ascii_sp;
       fill.attribute = attr;
@@ -1230,16 +1230,16 @@ bool line_t::set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool
   xflags_t dirty = false;
   auto _unset = [&dirty, &x] (cell_t& cell) {
     dirty |= cell.attribute.xflags;
-    cell.attribute.xflags &= ~attribute_t::ssa_selected;
+    cell.attribute.unselect();
     x += cell.width;
   };
   auto _set = [&dirty, &x] (cell_t& cell) {
     dirty |= ~cell.attribute.xflags;
-    cell.attribute.xflags |= attribute_t::ssa_selected;
+    cell.attribute.select();
     x += cell.width;
   };
   auto _guarded = [gatm] (cell_t const& cell) {
-    return !gatm && cell.attribute.xflags & (attribute_t::spa_protected | attribute_t::daq_guarded);
+    return !gatm && cell.attribute.guarded();
   };
   auto _truncated = [trunc] (cell_t const& cell) {
     return trunc && (cell.character.value == ascii_nul || cell.character.value == ascii_sp);
@@ -1276,13 +1276,13 @@ bool line_t::set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool
   }
 
   while (i < iN) _unset(m_cells[i++]);
-  if (dirty & attribute_t::ssa_selected) m_version++;
-  return dirty & attribute_t::ssa_selected;
+  if (dirty & xflags_ssa_selected) m_version++;
+  return bool(dirty & xflags_ssa_selected);
 }
 
 bool line_t::set_selection_word(curpos_t x, word_selection_type type, bool gatm) {
   auto _guarded = [gatm] (cell_t const& cell) {
-    return !gatm && cell.attribute.xflags & (attribute_t::spa_protected | attribute_t::daq_guarded);
+    return !gatm && cell.attribute.guarded();
   };
   curpos_t const ncell = m_cells.size();
   if (x >= ncell || _guarded(m_cells[x])) return false;
@@ -1334,7 +1334,7 @@ curpos_t line_t::extract_selection(std::u32string& data) const {
   curpos_t space_count = 0;
   std::vector<char32_t> buff;
   for (cell_t const& cell : this->m_cells) {
-    if (cell.attribute.xflags & attribute_t::ssa_selected) {
+    if (cell.attribute.xflags & xflags_ssa_selected) {
       if (cell.character.get_unicode_representation(buff)) {
         if (data.empty())
           head_x = space_count;
@@ -1346,7 +1346,7 @@ curpos_t line_t::extract_selection(std::u32string& data) const {
           if (value == ascii_nul) value = U' ';
         data.append(buff.begin(), buff.end());
 
-        if ((cell.attribute.xflags & attribute_t::decdhl_mask) && cell.width / 2)
+        if ((cell.attribute.xflags & xflags_decdhl_mask) && cell.width / 2)
           data.append(cell.width / 2, U' ');
         continue;
       }
