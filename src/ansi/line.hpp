@@ -94,40 +94,38 @@ namespace ansi {
     }
   };
 
-  struct line_attr_t: contra::util::flags<std::uint32_t, line_attr_t> {
-    using base = contra::util::flags<std::uint32_t, line_attr_t>;
-    using def = base::def;
+  //---------------------------------------------------------------------------
+  // line_attr_t
 
-    template<typename... Args>
-    line_attr_t(Args&&... args): base(std::forward<Args>(args)...) {}
+  typedef contra::util::flags_t<std::uint32_t, struct lattr_tag> line_attr_t;
+  constexpr line_attr_t lattr_none = 0x0000;
 
-    static constexpr def none = 0;
+  // bit 0
+  constexpr line_attr_t lattr_used = 0x0001;
 
-    // bit 0
-    static constexpr def is_line_used = 0x0001;
+  // bit 1-2
+  /*?lwiki
+   * @const is_character_path_rtol
+   * If this flag is set, the character path of the line
+   * is right-to-left in the case of a horizontal line
+   * or bottom-top-top in the case of a vertical line.
+   * @const is_character_path_ltor
+   * If this flag is set, the character path of the line
+   * is left-to-right in the case of a horizontal line
+   * or top-to-bottom in the case of a vertical line.
+   *
+   * If neither bits are set, the default character path
+   * defined by SPD is used.
+   */
+  constexpr line_attr_t lattr_rtol = 0x0002;
+  constexpr line_attr_t lattr_ltor = 0x0004;
+  constexpr line_attr_t lattr_charpath_mask = lattr_rtol | lattr_ltor;
 
-    // bit 1-2
-    /*?lwiki
-     * @const is_character_path_rtol
-     * If this flag is set, the character path of the line
-     * is right-to-left in the case of a horizontal line
-     * or bottom-top-top in the case of a vertical line.
-     * @const is_character_path_ltor
-     * If this flag is set, the character path of the line
-     * is left-to-right in the case of a horizontal line
-     * or top-to-bottom in the case of a vertical line.
-     *
-     * If neither bits are set, the default character path
-     * defined by SPD is used.
-     */
-    static constexpr def is_character_path_rtol = 0x0002;
-    static constexpr def is_character_path_ltor = 0x0004;
-    static constexpr def character_path_mask    = is_character_path_rtol | is_character_path_ltor;
+  // bit 6-7: DECDHL, DECDWL, DECSWL
+  // The same values are used as in `xflags_t`.
+  // The related constants are defined in `enum extended_flags`.
 
-    // bit 6-7: DECDHL, DECDWL, DECSWL
-    // The same values are used as in `xflags_t`.
-    // The related constants are defined in `enum extended_flags`.
-  };
+  //---------------------------------------------------------------------------
 
   enum presentation_direction_t {
     presentation_direction_default = 0,
@@ -175,25 +173,23 @@ namespace ansi {
     bool source_r2l = false;
   };
 
+  //---------------------------------------------------------------------------
+  // line_shift_flags
+
   // for line_t::shift_cells()
-  struct line_shift_flags: contra::util::flags<std::uint32_t, line_shift_flags> {
-    using base = contra::util::flags<std::uint32_t, line_shift_flags>;
-    using def = base::def;
+  typedef contra::util::flags_t<std::uint32_t, struct lshift_tag> line_shift_flags;
+  constexpr line_shift_flags lshift_none            = 0x00;
+  constexpr line_shift_flags lshift_left_inclusive  = 0x01;
+  constexpr line_shift_flags lshift_right_inclusive = 0x02;
+  constexpr line_shift_flags lshift_dcsm            = 0x04;
+  constexpr line_shift_flags lshift_r2l             = 0x08;
 
-    template<typename... Args>
-    line_shift_flags(Args&&... args): base(std::forward<Args>(args)...) {}
+  /// @var lshift_erm_protect
+  /// 消去の時 (abs(shift) >= p2 - p1 の時) に保護領域を消去しない事を表すフラグです。
+  /// シフトの場合 (abs(shift) < p2 - p1 の時) には使われません。
+  constexpr line_shift_flags lshift_erm_protect     = 0x10;
 
-    static constexpr def none            = 0x00;
-    static constexpr def left_inclusive  = 0x01;
-    static constexpr def right_inclusive = 0x02;
-    static constexpr def dcsm            = 0x04;
-    static constexpr def r2l             = 0x08;
-
-    /// @var line_shift_flags::erm_protect
-    /// 消去の時 (abs(shift) >= p2 - p1 の時) に保護領域を消去しない事を表すフラグです。
-    /// シフトの場合 (abs(shift) < p2 - p1 の時) には使われません。
-    static constexpr def erm_protect             = 0x10;
-  };
+  //---------------------------------------------------------------------------
 
   enum word_selection_type {
     word_selection_cword,
@@ -510,9 +506,9 @@ namespace ansi {
 
   public:
     bool is_r2l(presentation_direction_t board_charpath) const {
-      if (m_lflags & line_attr_t::is_character_path_ltor)
+      if (m_lflags & lattr_ltor)
         return false;
-      else if (m_lflags & line_attr_t::is_character_path_rtol)
+      else if (m_lflags & lattr_rtol)
         return true;
       else
         return is_charpath_rtol(board_charpath);
@@ -659,7 +655,7 @@ namespace ansi {
     void shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr) {
       if (!m_prop_enabled)
         _mono_shift_cells(p1, p2, shift, flags, width, fill_attr);
-      else if (!(flags & line_shift_flags::dcsm))
+      else if (!(flags & lshift_dcsm))
         _bdsm_shift_cells(p1, p2, shift, flags, width, fill_attr);
       else
         _prop_shift_cells(p1, p2, shift, flags, width, fill_attr);

@@ -127,51 +127,88 @@ namespace util {
         mid = src;
     }
   }
+}
+}
 
-  template<typename Value, typename CRTP>
-  struct flags_def {
-    Value value;
+namespace contra {
+namespace util {
 
-    constexpr flags_def() {}
-    constexpr flags_def(Value value): value(value) {}
+  namespace flags_detail {
+    template<typename Flags, typename Extends>
+    struct import_from: std::false_type {};
 
-    // bitwise operators
-    constexpr flags_def operator~() const { return {~this->value}; }
-    constexpr flags_def operator|(flags_def const& rhs) const { return {this->value | rhs.value}; }
-    constexpr flags_def operator&(flags_def const& rhs) const { return {this->value & rhs.value}; }
-    constexpr flags_def operator^(flags_def const& rhs) const { return {this->value ^ rhs.value}; }
-    constexpr flags_def& operator|=(flags_def const& rhs) { this->value |= rhs.value; return *this; }
-    constexpr flags_def& operator&=(flags_def const& rhs) { this->value &= rhs.value; return *this; }
-    constexpr flags_def& operator^=(flags_def const& rhs) { this->value ^= rhs.value; return *this; }
+    struct flags_base {};
+    template<typename Flags>
+    constexpr bool is_flags = std::is_base_of<flags_base, Flags>::value;
+    template<typename Flags, typename T = void>
+    using enable_flags = typename std::enable_if<is_flags<Flags>, T>::type;
 
-    // boolean operators
-    constexpr operator bool() const { return value != 0; }
-    constexpr bool operator!() const { return value == 0; }
+    template<typename Flags, typename Other>
+    constexpr bool is_rhs = is_flags<Flags> && (
+      std::is_same<Other, Flags>::value ||
+      std::is_integral<Other>::value && (sizeof(Other) <= sizeof(Flags)) ||
+      import_from<Flags, Other>::value);
+
+    template<typename Flags, typename Other>
+    using enable_lhs = typename std::enable_if<is_rhs<Flags, Other>, Flags>::type;
+
+    template<typename Flags1, typename Flags2>
+    using result_t = typename std::enable_if<
+      is_rhs<Flags1, Flags2> || is_rhs<Flags2, Flags1>,
+      typename std::conditional<is_rhs<Flags1, Flags2>, Flags1, Flags2>::type>::type;
+
+    template<typename Flags, bool = is_flags<Flags> >
+    struct underlying { typedef Flags type; };
+    template<typename Flags>
+    struct underlying<Flags, true> { typedef typename Flags::underlying_type type; };
+
+    template<typename Flags, bool = is_flags<Flags> >
+    constexpr auto peel(Flags const& value) { return (typename underlying<Flags>::type) value; }
+
+    template<typename Flags1, typename Flags2>
+    constexpr flags_detail::result_t<Flags1, Flags2>
+    operator|(Flags1 const& lhs, Flags2 const& rhs) { return { peel(lhs) | peel(rhs)}; }
+    template<typename Flags1, typename Flags2>
+    constexpr flags_detail::result_t<Flags1, Flags2>
+    operator&(Flags1 const& lhs, Flags2 const& rhs) { return { peel(lhs) & peel(rhs)}; }
+    template<typename Flags1, typename Flags2>
+    constexpr flags_detail::result_t<Flags1, Flags2>
+    operator^(Flags1 const& lhs, Flags2 const& rhs) { return { peel(lhs) ^ peel(rhs)}; }
+  }
+
+  template<typename Unsigned, typename Tag>
+  class flags_t: flags_detail::flags_base {
+    Unsigned value;
+  public:
+    typedef Unsigned underlying_type;
+
+    template<typename Other, typename = flags_detail::enable_lhs<flags_t, Other> >
+    constexpr flags_t(Other const& value): value((Unsigned) value) {}
+
+    constexpr explicit operator Unsigned() const { return value; }
+    constexpr explicit operator bool() const { return value; }
+    constexpr bool operator!() const { return !value; }
+    constexpr flags_t operator~() const { return { ~value }; }
+
+    template<typename Other>
+    constexpr flags_detail::enable_lhs<flags_t, Other>&
+    operator&=(Other const& rhs) { value &= (Unsigned) rhs; return *this; }
+    template<typename Other>
+    constexpr flags_detail::enable_lhs<flags_t, Other>&
+    operator|=(Other const& rhs) { value |= (Unsigned) rhs; return *this; }
+    template<typename Other>
+    constexpr flags_detail::enable_lhs<flags_t, Other>&
+    operator^=(Other const& rhs) { value ^= (Unsigned) rhs; return *this; }
+
+    flags_t& reset(flags_t mask, flags_t value) {
+      this->value = this->value & ~(Unsigned) mask | (Unsigned) value;
+      return *this;
+    }
   };
 
-  template<typename Value, typename CRTP>
-  struct flags {
-    Value value;
-
-    typedef flags_def<Value, CRTP> def;
-
-    constexpr flags() {}
-    constexpr flags(def flags): value(flags.value) {}
-    constexpr explicit flags(Value value): value(value) {}
-
-    // bitwise operators
-    constexpr flags operator~() const { return flags {~this->value}; }
-    constexpr flags operator|(flags const& rhs) const { return flags {this->value | rhs.value}; }
-    constexpr flags operator&(flags const& rhs) const { return flags {this->value & rhs.value}; }
-    constexpr flags operator^(flags const& rhs) const { return flags {this->value ^ rhs.value}; }
-    constexpr flags& operator|=(flags const& rhs) { this->value |= rhs.value; return *this; }
-    constexpr flags& operator&=(flags const& rhs) { this->value &= rhs.value; return *this; }
-    constexpr flags& operator^=(flags const& rhs) { this->value ^= rhs.value; return *this; }
-
-    // boolean operators
-    constexpr operator bool() const { return value != 0; }
-    constexpr bool operator!() const { return value == 0; }
-  };
+  using flags_detail::operator|;
+  using flags_detail::operator^;
+  using flags_detail::operator&;
 }
 }
 

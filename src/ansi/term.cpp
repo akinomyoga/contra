@@ -390,9 +390,9 @@ namespace ansi {
     // IRM: 書き込み時ではなくて先に shift して置く
     if (s.get_mode(mode_irm)) {
       if (simd)
-        line.shift_cells(slh, b.cur.x() + 1, -char_width, line_shift_flags::dcsm, b.width(), term.fill_attr());
+        line.shift_cells(slh, b.cur.x() + 1, -char_width, lshift_dcsm, b.width(), term.fill_attr());
       else
-        line.shift_cells(b.cur.x(), sll + 1, char_width, line_shift_flags::dcsm, b.width(), term.fill_attr());
+        line.shift_cells(b.cur.x(), sll + 1, char_width, lshift_dcsm, b.width(), term.fill_attr());
     }
 
     if (simd) std::swap(slh, sll);
@@ -488,12 +488,12 @@ namespace ansi {
       if (simd) {
         mwg_assert(sll <= x + 1 && x < xbeg, "slh=%d sll=%d xbeg=%d x=%d", slh, sll, xbeg, x);
         if (s.get_mode(mode_irm))
-          line->shift_cells(sll, xbeg + 1, x - xbeg, line_shift_flags::dcsm, b.width(), term.fill_attr());
+          line->shift_cells(sll, xbeg + 1, x - xbeg, lshift_dcsm, b.width(), term.fill_attr());
         std::reverse(buffer.begin(), buffer.end());
         line->write_cells(x + 1, &buffer[0], buffer.size(), 1, dir);
       } else {
         if (s.get_mode(mode_irm))
-          line->shift_cells(xbeg, sll + 1, x - xbeg, line_shift_flags::dcsm, b.width(), term.fill_attr());
+          line->shift_cells(xbeg, sll + 1, x - xbeg, lshift_dcsm, b.width(), term.fill_attr());
         line->write_cells(xbeg, &buffer[0], buffer.size(), 1, dir);
       }
       buffer.clear();
@@ -583,7 +583,7 @@ namespace ansi {
     if (oldRToL != newRToL && update == 2) {
       for (curpos_t y = 0, yN = b.height(); y < yN; y++) {
         line_t& line = b.m_lines[y];
-        if (!(line.lflags() & line_attr_t::character_path_mask))
+        if (!(line.lflags() & lattr_charpath_mask))
           line.reverse(b.width());
       }
     }
@@ -608,16 +608,16 @@ namespace ansi {
 
     // update line attributes
     term.initialize_line(line);
-    line.lflags() &= ~line_attr_t::character_path_mask;
-    s.lflags &= ~line_attr_t::character_path_mask;
+    line.lflags() &= ~lattr_charpath_mask;
+    s.lflags &= ~lattr_charpath_mask;
     switch (charPath) {
     case 1:
-      line.lflags() |= line_attr_t::is_character_path_ltor;
-      s.lflags |= line_attr_t::is_character_path_ltor;
+      line.lflags() |= lattr_ltor;
+      s.lflags |= lattr_ltor;
       break;
     case 2:
-      line.lflags() |= line_attr_t::is_character_path_rtol;
-      s.lflags |= line_attr_t::is_character_path_rtol;
+      line.lflags() |= lattr_rtol;
+      s.lflags |= lattr_rtol;
       break;
     }
 
@@ -1157,8 +1157,8 @@ namespace ansi {
     shift_cells:
       {
         curpos_t const p = isPresentation ? b.to_presentation_position(y, b.cur.x()) : -1;
-        line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
-        if (dcsm) flags |= line_shift_flags::dcsm;
+        line_shift_flags flags = b.line_r2l() ? lshift_r2l : lshift_none;
+        if (dcsm) flags |= lshift_dcsm;
         curpos_t const tmargin = term.tmargin();
         curpos_t const bmargin = term.bmargin();
         curpos_t const lmargin = term.lmargin();
@@ -1615,14 +1615,14 @@ namespace ansi {
     }
 
     board_t& b = term.board();
-    line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
-    if (!s.get_mode(mode_erm)) flags |= line_shift_flags::erm_protect;
+    line_shift_flags flags = b.line_r2l() ? lshift_r2l : lshift_none;
+    if (!s.get_mode(mode_erm)) flags |= lshift_erm_protect;
 
     curpos_t x1;
     if (s.get_mode(mode_xenl_ech)) b.cur.adjust_xenl();
     if (s.dcsm()) {
       // DCSM(DATA)
-      flags |= line_shift_flags::dcsm;
+      flags |= lshift_dcsm;
       x1 = b.cur.x();
     } else {
       // DCSM(PRESENTATION)
@@ -1644,13 +1644,13 @@ namespace ansi {
   static void do_ich_impl(term_t& term, curpos_t shift) {
     board_t& b = term.board();
     tstate_t const& s = term.state();
-    line_shift_flags flags = b.line_r2l() ? line_shift_flags::r2l : line_shift_flags::none;
+    line_shift_flags flags = b.line_r2l() ? lshift_r2l : lshift_none;
 
     curpos_t x1;
     if (s.get_mode(mode_xenl_ech)) b.cur.adjust_xenl();
     if (s.dcsm()) {
       // DCSM(DATA)
-      flags |= line_shift_flags::dcsm;
+      flags |= lshift_dcsm;
       x1 = b.cur.x();
     } else {
       // DCSM(PRESENTATION)
@@ -1716,9 +1716,9 @@ namespace ansi {
     tstate_t& s = term.state();
     if (param != 0 && param != 1) {
       if (!s.get_mode(mode_erm) && line.has_protected_cells()) {
-        line_shift_flags flags = line_shift_flags::erm_protect;
-        if (line.is_r2l(b.presentation_direction())) flags |= line_shift_flags::r2l;
-        if (s.dcsm()) flags |= line_shift_flags::dcsm;
+        line_shift_flags flags = lshift_erm_protect;
+        if (line.is_r2l(b.presentation_direction())) flags |= lshift_r2l;
+        if (s.dcsm()) flags |= lshift_dcsm;
         line.shift_cells(0, b.width(), b.width(), flags, b.width(), fill_attr);
       } else
         line.clear_content(b.width(), fill_attr);
@@ -1726,9 +1726,9 @@ namespace ansi {
     }
 
     line_shift_flags flags = 0;
-    if (!s.get_mode(mode_erm)) flags |= line_shift_flags::erm_protect;
-    if (line.is_r2l(b.presentation_direction())) flags |= line_shift_flags::r2l;
-    if (s.dcsm()) flags |= line_shift_flags::dcsm;
+    if (!s.get_mode(mode_erm)) flags |= lshift_erm_protect;
+    if (line.is_r2l(b.presentation_direction())) flags |= lshift_r2l;
+    if (s.dcsm()) flags |= lshift_dcsm;
 
     if (s.get_mode(mode_xenl_ech)) b.cur.adjust_xenl();
     curpos_t x1 = b.cur.x();

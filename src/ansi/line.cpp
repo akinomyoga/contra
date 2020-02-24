@@ -950,7 +950,7 @@ void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   };
 
   if (std::abs(shift) >= p2 - p1) {
-    protect = flags & line_shift_flags::erm_protect;
+    protect = (bool) (flags & lshift_erm_protect);
     _erase_wide_left(p1);
     _erase_wide_right(p2);
     if (protect) {
@@ -984,7 +984,7 @@ void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
 
 void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr) {
   // m_prop_enabled && !get_mode(mode_dcsm) の時
-  mwg_assert(!(flags & line_shift_flags::dcsm));
+  mwg_assert(!(flags & lshift_dcsm));
 
   if (shift == 0) return;
   p1 = contra::clamp(p1, 0, width);
@@ -994,11 +994,11 @@ void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   line_segment_t segs[4];
   int iseg = 0;
 
-  if (std::abs(shift) >= p2 - p1 && (flags & line_shift_flags::erm_protect) && has_protected_cells()) {
+  if (std::abs(shift) >= p2 - p1 && (flags & lshift_erm_protect) && has_protected_cells()) {
     // erase unprotected cells
 
     // protected な cell が端にかかっている時にはそれを消去領域に含む様に拡張
-    bool line_r2l = flags & line_shift_flags::r2l;
+    bool line_r2l = (bool) (flags & lshift_r2l);
     if (p1 > 0) {
       curpos_t const x1 = convert_position(false, p1, -1, width, line_r2l);
       auto [i, x] = _prop_glb(x1, false);
@@ -1055,7 +1055,7 @@ void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
     if (p2 < width)
       segs[iseg++] = line_segment_t({p2, width, line_segment_slice});
   }
-  _prop_compose_segments(segs, iseg, width, fill_attr, flags & line_shift_flags::r2l, false);
+  _prop_compose_segments(segs, iseg, width, fill_attr, bool(flags & lshift_r2l), false);
 }
 
 void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr) {
@@ -1089,8 +1089,8 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   curpos_t w1, w2;
   attr_t attr1, attr2;
   {
-    std::tie(i1, w1) = _prop_glb(p1, flags & line_shift_flags::left_inclusive);
-    std::tie(i2, w2) = _prop_lub(p2, flags & line_shift_flags::right_inclusive);
+    std::tie(i1, w1) = _prop_glb(p1, (bool) (flags & lshift_left_inclusive));
+    std::tie(i2, w2) = _prop_lub(p2, (bool) (flags & lshift_right_inclusive));
     if ((w1 = std::max(0, p1 - w1)))
       attr1 = m_cells[i1].attribute;
     if ((w2 = std::max(0, w2 - p2)))
@@ -1103,7 +1103,7 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   curpos_t wlfill = 0, wrfill = 0;
   bool flag_erase_unprotected = false;
   if (std::abs(shift) >= p2 - p1) {
-    if ((flags & line_shift_flags::erm_protect) && has_protected_cells()) {
+    if ((flags & lshift_erm_protect) && has_protected_cells()) {
       if (w1 && m_cells[i1].is_protected()) {
         p1 += m_cells[i1].width - w1;
         w1 = 0;
@@ -1134,7 +1134,7 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   } else if (shift > 0) {
     wlfill = shift;
     curpos_t pL = p1, pR = p2 - shift;
-    std::tie(iL, wL) = _prop_lub(pL, !(flags & line_shift_flags::left_inclusive));
+    std::tie(iL, wL) = _prop_lub(pL, !(flags & lshift_left_inclusive));
     std::tie(iR, wR) = _prop_glb(pR, false);
     if ((wL = std::max(0, wL - pL)))
       attrL = m_cells[iL - 1].attribute;
@@ -1144,7 +1144,7 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
     wrfill = -shift;
     curpos_t pL = p1 - shift, pR = p2;
     std::tie(iL, wL) = _prop_lub(pL, false);
-    std::tie(iR, wR) = _prop_glb(pR, !(flags & line_shift_flags::right_inclusive));
+    std::tie(iR, wR) = _prop_glb(pR, !(flags & lshift_right_inclusive));
     if ((wL = std::max(0, wL - pL)))
       attrL = m_cells[iL - 1].attribute;
     if ((wR = std::max(0, pR - wR)))

@@ -1,88 +1,7 @@
 #include <cstdint>
 #include <vector>
 #include <type_traits>
-
-namespace contra {
-namespace util {
-
-  namespace flags_detail {
-    template<typename Flags, typename Extends>
-    struct import_from: std::false_type {};
-
-    struct flags_base {};
-    template<typename Flags>
-    constexpr bool is_flags = std::is_base_of<flags_base, Flags>::value;
-    template<typename Flags, typename T = void>
-    using enable_flags = typename std::enable_if<is_flags<Flags>, T>::type;
-
-    template<typename Flags, typename Other>
-    constexpr bool is_rhs = is_flags<Flags> && (
-      std::is_same<Other, Flags>::value ||
-      std::is_integral<Other>::value && (sizeof(Other) <= sizeof(Flags)) ||
-      import_from<Flags, Other>::value);
-
-    template<typename Flags, typename Other>
-    using enable_lhs = typename std::enable_if<is_rhs<Flags, Other>, Flags>::type;
-
-    template<typename Flags1, typename Flags2>
-    using result_t = typename std::enable_if<
-      is_rhs<Flags1, Flags2> || is_rhs<Flags2, Flags1>,
-      typename std::conditional<is_rhs<Flags1, Flags2>, Flags1, Flags2>::type>::type;
-
-    template<typename Flags, bool = is_flags<Flags> >
-    struct underlying { typedef Flags type; };
-    template<typename Flags>
-    struct underlying<Flags, true> { typedef typename Flags::underlying_type type; };
-
-    template<typename Flags, bool = is_flags<Flags> >
-    constexpr auto peel(Flags const& value) { return (typename underlying<Flags>::type) value; }
-
-    template<typename Flags1, typename Flags2>
-    constexpr flags_detail::result_t<Flags1, Flags2>
-    operator|(Flags1 const& lhs, Flags2 const& rhs) { return { peel(lhs) | peel(rhs)}; }
-    template<typename Flags1, typename Flags2>
-    constexpr flags_detail::result_t<Flags1, Flags2>
-    operator&(Flags1 const& lhs, Flags2 const& rhs) { return { peel(lhs) & peel(rhs)}; }
-    template<typename Flags1, typename Flags2>
-    constexpr flags_detail::result_t<Flags1, Flags2>
-    operator^(Flags1 const& lhs, Flags2 const& rhs) { return { peel(lhs) ^ peel(rhs)}; }
-  }
-
-  template<typename Unsigned, typename Tag>
-  class flags_t: flags_detail::flags_base {
-    Unsigned value;
-  public:
-    typedef Unsigned underlying_type;
-
-    template<typename Other, typename = flags_detail::enable_lhs<flags_t, Other> >
-    constexpr flags_t(Other const& value): value((Unsigned) value) {}
-
-    constexpr explicit operator Unsigned() const { return value; }
-    constexpr explicit operator bool() const { return value; }
-    constexpr bool operator!() const { return !value; }
-    constexpr flags_t operator~() const { return { ~value }; }
-
-    template<typename Other>
-    constexpr flags_detail::enable_lhs<flags_t, Other>&
-    operator&=(Other const& rhs) { value &= (Unsigned) rhs; return *this; }
-    template<typename Other>
-    constexpr flags_detail::enable_lhs<flags_t, Other>&
-    operator|=(Other const& rhs) { value |= (Unsigned) rhs; return *this; }
-    template<typename Other>
-    constexpr flags_detail::enable_lhs<flags_t, Other>&
-    operator^=(Other const& rhs) { value ^= (Unsigned) rhs; return *this; }
-
-    flags_t& reset(flags_t mask, flags_t value) {
-      this->value = this->value & ~(Unsigned) mask | (Unsigned) value;
-      return *this;
-    }
-  };
-
-  using flags_detail::operator|;
-  using flags_detail::operator^;
-  using flags_detail::operator&;
-}
-}
+#include "../util.hpp"
 
 namespace contra::ansi {
   typedef std::uint32_t color_t;
@@ -211,13 +130,13 @@ namespace ansi {
   constexpr xflags_t xflags_ideogram_stress         = 0x10000; // --- SGR 64
 
   // bit 20-23: RLogin SGR(60-63) 左右の線
-  constexpr xflags_t xflags_rlogin_ideogram_mask = 0x1F << 20;
-  constexpr xflags_t xflags_rlogin_single_rline  = 1 << 20; // SGR 8460
-  constexpr xflags_t xflags_rlogin_double_rline  = 1 << 21; // SGR 8461
-  constexpr xflags_t xflags_rlogin_single_lline  = 1 << 22; // SGR 8462
-  constexpr xflags_t xflags_rlogin_double_lline  = 1 << 23; // SGR 8463
+  constexpr xflags_t xflags_rlogin_ideogram_mask  = 0x1F << 20;
+  constexpr xflags_t xflags_rlogin_single_rline   = 1 << 20; // SGR 8460
+  constexpr xflags_t xflags_rlogin_double_rline   = 1 << 21; // SGR 8461
+  constexpr xflags_t xflags_rlogin_single_lline   = 1 << 22; // SGR 8462
+  constexpr xflags_t xflags_rlogin_double_lline   = 1 << 23; // SGR 8463
   // bit 24: RLogin SGR(64) 二重打ち消し線
-  constexpr xflags_t xflags_rlogin_double_strike = 1 << 24; // SGR 8464
+  constexpr xflags_t xflags_rlogin_double_strike  = 1 << 24; // SGR 8464
 
   // bit 25,26: SPA, SSA
   constexpr xflags_t xflags_spa_protected         = 1 << 25;
@@ -225,7 +144,7 @@ namespace ansi {
   // bit 27,28: DAQ
   constexpr xflags_t xflags_daq_guarded           = 1 << 27;
   constexpr xflags_t xflags_daq_protected         = 1 << 28;
-  // constexpr int     xflags_daq_shift = 29;
+  // constexpr int      xflags_daq_shift = 29;
   // constexpr xflags_t xflags_daq_mask  = (xflags_t) 0x3 << daq_shift;
   // constexpr xflags_t xflags_daq_character_input   = (xflags_t) 2  << daq_shift;
   // constexpr xflags_t xflags_daq_numeric_input     = (xflags_t) 3  << daq_shift;
@@ -238,6 +157,7 @@ namespace ansi {
 
   constexpr xflags_t xflags_reserved_bit1 = 1 << 4;
   constexpr xflags_t xflags_reserved_bit2 = 1 << 5;
+
   constexpr xflags_t xflags_fg_extended = 1 << 29;
   constexpr xflags_t xflags_bg_extended = 1 << 30;
   constexpr xflags_t xflags_dc_extended = 1 << 31;
@@ -256,7 +176,7 @@ namespace ansi {
     color_t dc = 0;
   };
 
-  class attr_table {
+  class attribute_table {
     struct entry {
       attribute attr;
       attr_t listp;
@@ -291,14 +211,14 @@ namespace ansi {
   };
 
   struct attribute_builder {
-    attr_table&    m_table;
+    attribute_table&    m_table;
     attribute     m_attribute;
     std::uint32_t m_attribute_version = 0;
     mutable attr_t        m_attr = 0;
     mutable std::uint32_t m_attr_version = 0;
 
   public:
-    attribute_builder(attr_table& table): m_table(table) {}
+    attribute_builder(attribute_table& table): m_table(table) {}
 
   public:
     attr_t attr() const {
@@ -421,10 +341,10 @@ namespace test_flags {
 using namespace contra::ansi;
 
 int main() {
-  attr_table table;
+  attribute_table table;
   attribute_builder buffer(table);
   buffer.set_fg(10, 5);
-  buffer.set_fg(0, 0);
+  buffer.set_bg(0, 0);
 
   return 0;
 }

@@ -334,7 +334,7 @@ namespace ansi {
   public:
     void debug_print(std::FILE* file) {
       for (auto const& line : m_lines) {
-        if (line.lflags() & line_attr_t::is_line_used) {
+        if (line.lflags() & lattr_used) {
           for (auto const& cell : line.cells()) {
             if (cell.character.is_wide_extension()) continue;
             char32_t c = (char32_t) (cell.character.value & unicode_mask);
@@ -608,8 +608,8 @@ namespace ansi {
     }
   public:
     void initialize_line(line_t& line) const {
-      if (line.lflags() & line_attr_t::is_line_used) return;
-      line.lflags() = line_attr_t::is_line_used | m_state.lflags;
+      if (line.lflags() & lattr_used) return;
+      line.lflags() = lattr_used | m_state.lflags;
       line.home() = m_state.line_home;
       line.limit() = m_state.line_limit;
     }
