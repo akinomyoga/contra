@@ -7,6 +7,8 @@ namespace contra {
 namespace ansi {
 
   typedef std::uint32_t color_t;
+  typedef std::uint32_t aflags_t;
+  typedef std::uint32_t xflags_t;
 
   // bgra 0xAARRGGBB GDI+
   // rgb  0x00BBGGRR 38:2, GDI (COLORREF)
@@ -49,9 +51,6 @@ namespace ansi {
   constexpr byte rgba2g(color_t value) { return value >> 8 & 0xFF; }
   constexpr byte rgba2b(color_t value) { return value >> 16 & 0xFF; }
   constexpr byte rgba2a(color_t value) { return value >> 24 & 0xFF; }
-
-  typedef std::uint32_t aflags_t;
-  typedef std::uint32_t xflags_t;
 
   struct attribute_t {
     enum attribute_flags {
@@ -201,9 +200,9 @@ namespace ansi {
       // daq_space_fill        = (xflags_t) 9  << daq_shift,
       // daq_tabstop           = (xflags_t) 10 << daq_shift,
 
-      xflags_reserverd_bit1 = (xflags_t) 1 << 29,
-      xflags_reserverd_bit2 = (xflags_t) 1 << 30,
-      xflags_reserverd_bit3 = (xflags_t) 1 << 31,
+      xflags_reserved_bit1 = (xflags_t) 1 << 29,
+      xflags_reserved_bit2 = (xflags_t) 1 << 30,
+      xflags_reserved_bit3 = (xflags_t) 1 << 31,
 
       qualifier_mask = decsca_protected | spa_protected | ssa_selected | daq_guarded | daq_protected,
 
