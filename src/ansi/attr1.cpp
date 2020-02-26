@@ -45,15 +45,17 @@ namespace ansi {
       }
     }
 
+    //attribute& get(attr_t attr) {
+    //}
+
     // todo: mark/sweep
   };
 
   struct attribute_builder {
     attribute_table& m_table;
-    attribute     m_attribute;
-    std::uint32_t m_attribute_version = 0;
-    mutable attr_t        m_attr = 0;
-    mutable std::uint32_t m_attr_version = 0;
+    attribute        m_attribute;
+    mutable bool     m_attribute_dirty = false;
+    mutable attr_t   m_attr = 0;
 
   public:
     attribute_builder(attribute_table& table): m_table(table) {}
@@ -62,12 +64,12 @@ namespace ansi {
     attr_t attr() const {
       if (!(m_attr & attr_extended))
         return m_attr;
-      if (m_attribute_version == m_attr_version)
+      if (!m_attribute_dirty)
         return m_attr;
 
       if ((m_attribute.aflags & aflags_extension_mask) || m_attribute.xflags) {
         m_attr = m_table.save(m_attribute);
-        m_attr_version = m_attribute_version;
+        m_attribute_dirty = false;
       } else {
         reduce();
       }
@@ -86,8 +88,8 @@ namespace ansi {
         m_attribute.aflags |= color_space_indexed << aflags_bg_space_shift;
         m_attribute.bg = (std::uint32_t) (m_attr & attr_bg_mask) >> attr_bg_shift;
       }
-      m_attr_version = 0;
-      m_attribute_version = 0;
+      m_attr = attr_extended;
+      m_attribute_dirty = true;
     }
     void reduce() const {
       m_attr = (std::uint32_t) m_attribute.aflags & attr_common_mask;
@@ -112,7 +114,7 @@ namespace ansi {
 
       m_attribute.fg = fg;
       m_attribute.aflags.reset(aflags_fg_space_mask, space << aflags_fg_space_shift);
-      m_attribute_version++;
+      m_attribute_dirty = true;
     }
     void set_bg(color_t bg, int space) {
       if (!(m_attr & attr_extended)) {
@@ -128,7 +130,7 @@ namespace ansi {
 
       m_attribute.bg = bg;
       m_attribute.aflags.reset(aflags_bg_space_mask, space << aflags_bg_space_shift);
-      m_attribute_version++;
+      m_attribute_dirty = true;
     }
     void set_dc(color_t dc, int space) {
       if (!(m_attr & attr_extended)) {
@@ -138,14 +140,14 @@ namespace ansi {
 
       m_attribute.dc = dc;
       m_attribute.aflags.reset(aflags_dc_space_mask, space << aflags_dc_space_shift);
-      m_attribute_version++;
+      m_attribute_dirty = true;
     }
 
   private:
     void reset_common_attr(attr0_t mask, attr0_t value) {
       if (m_attr & attr_extended) {
         m_attribute.aflags.reset(mask, value);
-        m_attribute_version++;
+        m_attribute_dirty = true;
       } else {
         m_attr.reset(mask, value);
       }
@@ -153,7 +155,7 @@ namespace ansi {
     void set_common_attr(attr0_t bit) {
       if (m_attr & attr_extended) {
         m_attribute.aflags |= bit;
-        m_attribute_version++;
+        m_attribute_dirty = true;
       } else {
         m_attr |= bit;
       }
@@ -161,7 +163,7 @@ namespace ansi {
     void clear_common_attr(attr0_t bit) {
       if (m_attr & attr_extended) {
         m_attribute.aflags &= ~bit;
-        m_attribute_version++;
+        m_attribute_dirty = true;
       } else {
         m_attr &= ~bit;
       }
@@ -170,28 +172,28 @@ namespace ansi {
     void reset_aflags(aflags_t mask, aflags_t value) {
       if (!(m_attr & attr_extended)) extend();
       m_attribute.aflags.reset(mask, value);
-      m_attribute_version++;
+      m_attribute_dirty = true;
     }
     void clear_aflags(aflags_t mask) {
       if (!(m_attr & attr_extended)) return;
       m_attribute.aflags &= ~mask;
-      m_attribute_version++;
+      m_attribute_dirty = true;
     }
 
     void reset_xflags(xflags_t mask, xflags_t value) {
       if (!(m_attr & attr_extended)) extend();
       m_attribute.xflags.reset(mask, value);
-      m_attribute_version++;
+      m_attribute_dirty = true;
     }
     void set_xflags(xflags_t value) {
       if (!(m_attr & attr_extended)) extend();
       m_attribute.xflags |= value;
-      m_attribute_version++;
+      m_attribute_dirty = true;
     }
     void clear_xflags(xflags_t mask) {
       if (!(m_attr & attr_extended)) return;
       m_attribute.xflags &= ~mask;
-      m_attribute_version++;
+      m_attribute_dirty = true;
     }
 
   public:
@@ -232,7 +234,6 @@ namespace ansi {
 
     void set_mintty_subsup(xflags_t subsup)  { reset_xflags(xflags_mintty_subsup_mask, subsup); }
     void clear_mintty_subsup()               { clear_xflags(xflags_mintty_subsup_mask); }
-
   };
 
 }

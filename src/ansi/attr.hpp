@@ -70,8 +70,8 @@ namespace contra::ansi {
   constexpr int    attr_bg_shift = 8;
   constexpr attr_t attr_fg_set   = 0x010000;
   constexpr attr_t attr_bg_set   = 0x020000;
-  constexpr attr_t attr_reserved_bit1 = 1 << 30;
-  constexpr attr_t attr_extended      = 1 << 31;
+  constexpr attr_t attr_selected = 1 << 30;
+  constexpr attr_t attr_extended = 1 << 31;
 
   // Note: color_space 2以上が attr_extended を必要とする物とする。
   constexpr int color_space_default      = 0;
@@ -387,7 +387,9 @@ namespace ansi {
       else
         m_attribute.xflags |= xflags_sub_set;
     }
+  };
 
+  struct attribute_table {
   };
 
 }

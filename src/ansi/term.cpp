@@ -1331,6 +1331,12 @@ namespace ansi {
   static void do_sgr_iso8613_colors(board_t& b, csi_parameters& params, int type) {
     csi_single_param_t colorSpace;
     params.read_arg(colorSpace, true, 0);
+    // Note: セル表現の都合で入れ替えている
+    switch (colorSpace) {
+    case 1: colorSpace = color_space_transparent; break;
+    case 5: colorSpace = color_space_indexed; break;
+    }
+
     color_t color;
     switch (colorSpace) {
     case color_space_default:
