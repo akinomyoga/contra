@@ -390,6 +390,24 @@ namespace ansi {
   };
 
   struct attribute_table {
+    static byte fg_space(attribute_t const& attr) { return attr.fg_space(); }
+    static color_t fg_color(attribute_t const& attr) { return attr.fg_color(); }
+    static byte bg_space(attribute_t const& attr) { return attr.bg_space(); }
+    static color_t bg_color(attribute_t const& attr) { return attr.bg_color(); }
+    static byte dc_space(attribute_t const& attr) { return attr.dc_space(); }
+    static color_t dc_color(attribute_t const& attr) { return attr.dc_color(); }
+    static bool is_inverse(attribute_t const& attr) {
+      return bool(attr.aflags & attr_inverse_set);
+    }
+    static bool is_invisible(attribute_t const& attr) {
+      return bool(attr.aflags & attr_invisible_set);
+    }
+    static bool is_selected(attribute_t const& attr) {
+      return bool(attr.xflags & xflags_ssa_selected);
+    }
+
+    static xflags_t xflags(attribute_t const& attr) { return attr.xflags; }
+    static aflags_t aflags(attribute_t const& attr) { return attr.aflags; }
   };
 
 }

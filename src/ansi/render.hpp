@@ -266,13 +266,14 @@ namespace ansi {
 
   class color_resolver_t {
     tstate_t const* s = nullptr;
+    attribute_table const* atable = nullptr;
     byte m_space = (byte) color_space_default;
     color_t m_color = color_t(-1);
     color_t m_rgba = 0;
 
   public:
     color_resolver_t() {}
-    color_resolver_t(tstate_t const& s): s(&s) {}
+    color_resolver_t(tstate_t const& s, attribute_table const& atable): s(&s), atable(&atable) {}
 
   public:
     color_t resolve(byte space, color_t color) {
@@ -305,53 +306,53 @@ namespace ansi {
     }
 
   private:
-    std::pair<byte, color_t> get_fg(attribute_t const& attr) {
-      byte space = attr.fg_space();
-      color_t color = attr.fg_color();
+    std::pair<byte, color_t> get_fg(cattr_t const& attr) {
+      byte space = atable->fg_space(attr);
+      color_t color = atable->fg_color(attr);
       if (space == 0) {
         space = s->m_default_fg_space;
         color = s->m_default_fg_color;
       }
       return {space, color};
     }
-    std::pair<byte, color_t> get_bg(attribute_t const& attr) {
-      byte space = attr.bg_space();
-      color_t color = attr.bg_color();
+    std::pair<byte, color_t> get_bg(cattr_t const& attr) {
+      byte space = atable->bg_space(attr);
+      color_t color = atable->bg_color(attr);
       if (space == 0) {
         space = s->m_default_bg_space;
         color = s->m_default_bg_color;
       }
       return {space, color};
     }
-    std::pair<byte, color_t> get_dc(attribute_t const& attr) {
-      byte const space = attr.dc_space();
-      color_t const color = attr.dc_color();
+    std::pair<byte, color_t> get_dc(cattr_t const& attr) {
+      byte const space = atable->dc_space(attr);
+      color_t const color = atable->dc_color(attr);
       if (space == 0)
         return get_fg(attr);
       else
         return {space, color};
     }
   public:
-    color_t resolve_fg(attribute_t const& attr) {
-      bool const inverse = bool(attr.aflags & attr_inverse_set);
-      bool const selected = bool(attr.xflags & xflags_ssa_selected);
+    color_t resolve_fg(cattr_t const& attr) {
+      bool const inverse = atable->is_inverse(attr);
+      bool const selected = atable->is_selected(attr);
       auto [space, color] = inverse != selected ? get_bg(attr) : get_fg(attr);
       if (space == m_space && color == m_color) return m_rgba;
       return resolve(space, color);
     }
 
-    color_t resolve_bg(attribute_t const& attr) {
-      bool const inverse = bool(attr.aflags & attr_inverse_set);
-      bool const selected = bool(attr.xflags & xflags_ssa_selected);
+    color_t resolve_bg(cattr_t const& attr) {
+      bool const inverse = atable->is_inverse(attr);
+      bool const selected = atable->is_selected(attr);
       auto [space, color] = inverse != selected ? get_fg(attr) : get_bg(attr);
       if (space == m_space && color == m_color) return m_rgba;
       return resolve(space, color);
     }
 
-    color_t resolve_dc(attribute_t const& attr) {
-      byte const space = attr.dc_space();
+    color_t resolve_dc(cattr_t const& attr) {
+      byte const space = atable->dc_space(attr);
       if (space == 0) return resolve_fg(attr);
-      color_t const color = attr.dc_color();
+      color_t const color = atable->dc_color(attr);
       if (space == m_space && color == m_color) return m_rgba;
       return resolve(space, color);
     }
@@ -575,44 +576,50 @@ namespace ansi {
     aflags_t m_aflags = 0;
     xflags_t m_xflags = 0;
     font_t m_font = 0;
+    attribute_table const* atable = nullptr;
+  public:
+    font_resolver_t() {}
+    font_resolver_t(attribute_table const& atable): atable(&atable) {}
   public:
     font_t resolve_font(attribute_t const& attr) {
-      if (attr.aflags == m_aflags && attr.xflags == m_xflags) return m_font;
+      aflags_t const aflags = atable->aflags(attr);
+      xflags_t const xflags = atable->xflags(attr);
+      if (aflags == m_aflags && xflags == m_xflags) return m_font;
 
       font_t ret = 0;
-      if (std::uint32_t const face = std::uint32_t(attr.aflags & aflags_font_mask) >> aflags_font_shift)
+      if (std::uint32_t const face = std::uint32_t(aflags & aflags_font_mask) >> aflags_font_shift)
         ret |= font_face_mask & face << font_face_shft;
 
-      switch ((attr.aflags & attr_weight_mask).value()) {
+      switch ((aflags & attr_weight_mask).value()) {
       case attr_bold_set.value():  ret |= font_weight_bold; break;
       case attr_faint_set.value(): ret |= font_weight_faint; break;
       case attr_heavy_set.value(): ret |= font_weight_heavy; break;
       }
 
-      if (attr.aflags & attr_italic_set)
+      if (aflags & attr_italic_set)
         ret |= font_flag_italic;
-      else if (attr.aflags & attr_fraktur_set)
+      else if (aflags & attr_fraktur_set)
         ret = (ret & ~font_face_mask) | font_face_fraktur;
 
-      if (attr.xflags & xflags_sup_set)
+      if (xflags & xflags_sup_set)
         ret |= font_flag_small | font_layout_sup;
-      else if (attr.xflags & xflags_sub_set)
+      else if (xflags & xflags_sub_set)
         ret |= font_flag_small | font_layout_sub;
-      else if (attr.xflags & xflags_mintty_sup)
+      else if (xflags & xflags_mintty_sup)
         ret |= font_flag_small | font_layout_sup;
-      else if (attr.xflags & xflags_mintty_sub)
+      else if (xflags & xflags_mintty_sub)
         ret |= font_flag_small | font_layout_sub;
 
-      if (attr.xflags & (xflags_frame_set | xflags_circle_set))
+      if (xflags & (xflags_frame_set | xflags_circle_set))
         ret |= font_flag_small | font_layout_framed;
 
-      if (attr.xflags & xflags_proportional_set)
+      if (xflags & xflags_proportional_set)
         ret |= font_layout_proportional;
 
-      if (std::uint32_t const sco = std::uint32_t(attr.xflags & xflags_sco_mask) >> xflags_sco_shift)
+      if (std::uint32_t const sco = std::uint32_t(xflags & xflags_sco_mask) >> xflags_sco_shift)
         ret |= font_rotation_mask & sco << font_rotation_shft;
 
-      switch ((attr.xflags & xflags_decdhl_mask).value()) {
+      switch ((xflags & xflags_decdhl_mask).value()) {
       case xflags_decdhl_double_width.value():
         ret |= font_decdwl;
         break;
@@ -624,8 +631,8 @@ namespace ansi {
         break;
       }
 
-      m_aflags = attr.aflags;
-      m_xflags = attr.xflags;
+      m_aflags = aflags;
+      m_xflags = xflags;
       m_font = ret;
       return ret;
     }
@@ -1345,7 +1352,7 @@ namespace ansi {
       coord_t const xunit = wstat.m_xunit;
       curpos_t const height = view.height();
       tstate_t const& s = view.state();
-      color_resolver_t _color(s);
+      color_resolver_t _color(s, view.atable());
 
       color_t const bg = _color.resolve(s.m_default_bg_space, s.m_default_bg_color);
       if (update.is_full_update) {
@@ -1420,6 +1427,7 @@ namespace ansi {
       coord_t yunit;
       curpos_t height;
 
+      attribute_table const* _atable = nullptr;
       color_resolver_t _color;
       font_resolver_t _font;
 
@@ -1431,10 +1439,10 @@ namespace ansi {
 
     private:
       aflags_t invisible_flags = 0;
-      bool _visible(std::uint32_t code, aflags_t aflags, bool sp_visible = false) const {
+      bool _visible(std::uint32_t code, cattr_t const& attr, bool sp_visible = false) const {
         return code != ascii_nul && (sp_visible || code != ascii_sp)
           && !(code & flag_processed)
-          && !(aflags & invisible_flags);
+          && !_atable->is_invisible(attr);
       }
 
       // DECDHL用の制限
@@ -1452,9 +1460,8 @@ namespace ansi {
 
     private:
       void draw_iso2022_graphics(coord_t x1, coord_t y1, char32_t code, cell_t const& cell) {
-        auto const& attr = cell.attribute;
-        color_t const fg = _color.resolve_fg(attr);
-        font_t const font = _font.resolve_font(attr);
+        color_t const fg = _color.resolve_fg(cell.attribute);
+        font_t const font = _font.resolve_font(cell.attribute);
 
         this->clip(font, y1);
 
@@ -1545,7 +1552,7 @@ namespace ansi {
           color_t const fg2 = _color.resolve_fg(cell2.attribute);
           font_t const font2 = _font.resolve_font(cell2.attribute);
           code2 &= ~charflag_cluster_extension;
-          if (!_visible(code2, cell2.attribute.aflags, font & font_layout_proportional)) {
+          if (!_visible(code2, cell2.attribute, font & font_layout_proportional)) {
             if (font & font_layout_proportional) break;
             m_str.skip(cell2.width);
           } else if (!character_t::is_char(code2)) {
@@ -1619,7 +1626,7 @@ namespace ansi {
           font_t const font2 = _font.resolve_font(cell2.attribute);
 
           code2 &= ~charflag_cluster_extension;
-          if (!_visible(code2, cell2.attribute.aflags, font & font_layout_proportional)) {
+          if (!_visible(code2, cell2.attribute, font & font_layout_proportional)) {
             goto discard;
           } else if (is_cluster) {
             m_str.push(code2, cell2.width);
@@ -1679,7 +1686,9 @@ namespace ansi {
         this->yunit = wstat.m_yunit;
         this->xunit = wstat.m_xunit;
         this->height = view.height();
-        this->_color = color_resolver_t(view.state());
+        this->_atable = &view.atable();
+        this->_color = color_resolver_t(view.state(), view.atable());
+        this->_font = font_resolver_t(view.atable());
         this->m_str.initialize(wstat.m_xunit, wstat.m_yunit);
         this->m_graph.initialize(wstat.m_xunit, wstat.m_yunit);
 
@@ -1703,7 +1712,7 @@ namespace ansi {
             x += cell.width * xunit;
 
             std::uint32_t code = cell.character.value;
-            if (!_visible(code, cell.attribute.aflags)) continue;
+            if (!_visible(code, cell.attribute)) continue;
 
             if (character_t::is_char(code)) {
               draw_unicode_extended(x1, y1, cell, cells, i, x);
@@ -1797,7 +1806,7 @@ namespace ansi {
       coord_t const xunit = wstat.m_xunit;
       curpos_t const height = view.height();
       tstate_t const& s = view.state();
-      color_resolver_t _color(s);
+      color_resolver_t _color(s, view.atable());
 
       aflags_t invisible_flags = attr_invisible_set;
       if (wstat.m_blinking_count & 1) invisible_flags |= attr_rapid_blink_set;
@@ -1983,8 +1992,8 @@ namespace ansi {
         for (std::size_t i = 0; i < cells.size(); ) {
           auto const& cell = cells[i++];
           auto const& code = cell.character.value;
-          auto const& aflags = cell.attribute.aflags;
-          auto const& xflags = cell.attribute.xflags;
+          aflags_t const aflags = view.atable().aflags(cell.attribute);
+          xflags_t const xflags = view.atable().xflags(cell.attribute);
           if (cell.width == 0) continue;
           coord_t const cell_width = cell.width * xunit;
           color_t color = 0;
@@ -2019,16 +2028,16 @@ namespace ansi {
             dec_ol.update(x, ol2 ? 2 : ol1 ? 1 : 0, xflags);
 
             // 打ち消し線
-            bool const sl2 = xflags & xflags_rlogin_double_strike;
-            bool const sl1 = aflags & attr_strike_set;
+            bool const sl2(xflags & xflags_rlogin_double_strike);
+            bool const sl1(aflags & attr_strike_set);
             dec_sl.update(x, sl2 ? 2 : sl1 ? 1 : 0, xflags);
 
             // 左線・右線
-            bool const ll2 = xflags & xflags_rlogin_double_lline;
-            bool const ll1 = xflags & (xflags_frame_set | xflags_rlogin_single_lline);
+            bool const ll2(xflags & xflags_rlogin_double_lline);
+            bool const ll1(xflags & (xflags_frame_set | xflags_rlogin_single_lline));
             int const ll = ll2 ? 2 : ll1 ? 1 : 0;
-            bool const rl2 = xflags & xflags_rlogin_double_rline;
-            bool const rl1 = xflags & (xflags_frame_set | xflags_rlogin_single_rline);
+            bool const rl2(xflags & xflags_rlogin_double_rline);
+            bool const rl1(xflags & (xflags_frame_set | xflags_rlogin_single_rline));
             int const rl = rl2 ? 2 : rl1 ? 1 : 0;
             _draw_frame(x, x + cell_width, xflags, ll, rl);
 

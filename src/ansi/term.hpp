@@ -582,6 +582,7 @@ namespace ansi {
   private:
     tstate_t m_state {this};
     board_t m_board;
+    attribute_table m_atable;
   public:
     void reset_size(curpos_t width, curpos_t height) {
       m_board.reset_size(width, height);
@@ -645,6 +646,7 @@ namespace ansi {
     board_t const& board() const { return this->m_board; }
     tstate_t& state() { return this->m_state; }
     tstate_t const& state() const { return this->m_state; }
+    attribute_table const& atable() const { return this->m_atable; }
 
     curpos_t tmargin() const {
       curpos_t const b = m_state.dec_tmargin;
@@ -953,6 +955,7 @@ namespace ansi {
 
     // Note: インターフェイスを小さくする為に将来的には廃止したい。
     tstate_t const& state() const { return m_term->state(); }
+    attribute_table const& atable() const { return m_term->atable(); }
 
   public:
     byte fg_space() const { return m_fg_space; }
