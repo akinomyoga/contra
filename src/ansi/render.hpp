@@ -208,11 +208,12 @@ namespace ansi {
     void store_content(term_view_t const& view) {
       curpos_t const height = view.height();
       m_lines.resize(height);
+      attribute_table const& atable = view.atable();
       for (curpos_t i = 0; i < height; i++) {
         line_t const& original_line = view.line(i);
         m_lines[i].id = original_line.id();
         m_lines[i].version = original_line.version();
-        m_lines[i].has_blinking = original_line.has_blinking_cells();
+        m_lines[i].has_blinking = original_line.has_blinking_cells(atable);
       }
     }
     std::vector<line_trace_t> const& lines() const { return m_lines; }
@@ -582,8 +583,11 @@ namespace ansi {
     font_resolver_t(attribute_table const& atable): atable(&atable) {}
   public:
     font_t resolve_font(attribute_t const& attr) {
-      aflags_t const aflags = atable->aflags(attr);
-      xflags_t const xflags = atable->xflags(attr);
+      constexpr aflags_t aflags_mask = attr_weight_mask | attr_shape_mask | aflags_font_mask;
+      constexpr xflags_t xflags_mask = xflags_subsup_mask | xflags_mintty_subsup_mask
+        | xflags_frame_mask | xflags_proportional_set | xflags_sco_shift | xflags_decdhl_mask;
+      aflags_t const aflags = atable->aflags(attr) & aflags_mask;
+      xflags_t const xflags = atable->xflags(attr) & xflags_mask;
       if (aflags == m_aflags && xflags == m_xflags) return m_font;
 
       font_t ret = 0;
@@ -610,7 +614,7 @@ namespace ansi {
       else if (xflags & xflags_mintty_sub)
         ret |= font_flag_small | font_layout_sub;
 
-      if (xflags & (xflags_frame_set | xflags_circle_set))
+      if (xflags & xflags_frame_mask)
         ret |= font_flag_small | font_layout_framed;
 
       if (xflags & xflags_proportional_set)

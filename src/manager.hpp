@@ -589,7 +589,7 @@ namespace term {
         bool started = false;
         std::u32string line_data;
         for (curpos_t iline = ybeg; iline < yend; iline++) {
-          curpos_t const x = view.lline(iline).extract_selection(line_data);
+          curpos_t const x = view.lline(iline).extract_selection(line_data, view.atable());
           if (line_data.size() || (y1 <= iline && iline <= y2)) {
             if (started && skipped_line_count)
               lines.resize(lines.size() + skipped_line_count, std::make_pair(0, std::u32string()));
@@ -646,7 +646,7 @@ namespace term {
         curpos_t skipped_line_count = 0;
         std::u32string line_data;
         for (curpos_t iline = ybeg; iline < yend; iline++) {
-          curpos_t x = view.lline(iline).extract_selection(line_data);
+          curpos_t x = view.lline(iline).extract_selection(line_data, view.atable());
           if (line_data.size() || (y1 <= iline && iline <= y2)) {
             if (started) result.append(skipped_line_count + 1, U'\n');
             //if (iline == y1 && x >= x1) x = 0;

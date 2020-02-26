@@ -6,6 +6,7 @@
 
 namespace contra {
 namespace ansi {
+
   struct attribute {
     aflags_t aflags = 0;
     xflags_t xflags = 0;
@@ -26,11 +27,19 @@ namespace ansi {
 
     std::uint32_t max_size = 0x1000;
 
+  private:
+    entry& resolve(attr_t const& attr) {
+      return table[std::uint32_t(attr & attr_extended_refmask)];
+    }
+    entry const& resolve(attr_t const& attr) const {
+      return table[std::uint32_t(attr & attr_extended_refmask)];
+    }
+
   public:
     attr_t save(attribute const& attr) {
       if (freep) {
         attr_t const ret = freep;
-        entry& ent = table[(std::uint32_t) (ret & ~attr_extended)];
+        entry& ent = resolve(ret);
         freep = ent.listp;
         ent.attr = attr;
         ent.listp = 0;
@@ -45,8 +54,78 @@ namespace ansi {
       }
     }
 
-    //attribute& get(attr_t attr) {
-    //}
+  public:
+    byte fg_space(attr_t const& attr) const {
+      if (attr & attr_extended) {
+        return std::uint32_t(resolve(attr).aflags & aflags_fg_space_mask) >> aflags_fg_space_shift;
+      } else if (attr & attr_fg_set) {
+        return color_space_indexed;
+      } else {
+        return color_space_default;
+      }
+    }
+    color_t fg_color(attr_t const& attr) const {
+      if (attr & attr_extended) {
+        return resolve(attr).fg;
+      } else {
+        return std::uint32_t(attr & attr_fg_mask) >> attr_fg_shift;
+      }
+    }
+    byte bg_space(attr_t const& attr) const {
+      if (attr & attr_extended) {
+        return std::uint32_t(resolve(attr).aflags & aflags_bg_space_mask) >> aflags_bg_space_shift;
+      } else if (attr & attr_bg_set) {
+        return color_space_indexed;
+      } else {
+        return color_space_default;
+      }
+    }
+    color_t bg_color(attr_t const& attr) const {
+      if (attr & attr_extended) {
+        return resolve(attr).bg;
+      } else {
+        return std::uint32_t(attr & attr_bg_mask) >> attr_bg_shift;
+      }
+    }
+    byte dc_space(attr_t const& attr) const {
+      if (attr & attr_extended) {
+        return std::uint32_t(resolve(attr).aflags & aflags_dc_space_mask) >> aflags_dc_space_shift;
+      } else {
+        return color_space_default;
+      }
+    }
+    color_t dc_color(attr_t const& attr) const {
+      if (attr & attr_extended) {
+        return resolve(attr).dc;
+      } else {
+        return 0;
+      }
+    }
+
+    aflags_t aflags(attr_t const& attr) {
+      if (attr & attr_extended) return resolve(attr).aflags;
+      return attr & attr_common_mask;
+    }
+    xflags_t xflags(attr_t const& attr) {
+      if (attr & attr_extended) return resolve(attr).xflags;
+      return 0;
+    }
+
+    bool is_inverse(attr_t const& attr) const {
+      std::uint32_t aflags = attr & attr_extended ? resolve(attr).aflags.value() : attr.value();
+      return bool(aflags & attr_inverse_set);
+    }
+    bool is_invisible(attr_t const& attr) const {
+      std::uint32_t aflags = attr & attr_extended ? resolve(attr).aflags.value() : attr.value();
+      return bool(aflags & attr_invisible_set);
+    }
+    bool is_selected(attr_t const& attr) const {
+      return bool(attr & attr_selected);
+    }
+    bool is_blinking(attr_t const& attr) const {
+      std::uint32_t aflags = attr & attr_extended ? resolve(attr).aflags.value() : attr.value();
+      return aflags & attr_blink_mask;
+    }
 
     // todo: mark/sweep
   };

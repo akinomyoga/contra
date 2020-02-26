@@ -50,9 +50,9 @@ namespace contra::ttty {
     }
 
     // auto& app = screen.manager().app();
-    // app.state().m_default_fg_space = contra::ansi::attribute_t::color_space_indexed;
+    // app.state().m_default_fg_space = contra::ansi::color_space_indexed;
     // app.state().m_default_fg_color = 0;
-    // app.state().m_default_bg_space = contra::ansi::attribute_t::color_space_indexed;
+    // app.state().m_default_bg_space = contra::ansi::color_space_indexed;
     // app.state().m_default_bg_color = 255;
 
     g_screen = &screen;

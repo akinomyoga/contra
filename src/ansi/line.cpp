@@ -1227,14 +1227,14 @@ bool line_t::set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool
   mwg_check(dcsm, "not yet implemented");
 
   curpos_t x = 0;
-  xflags_t dirty = false;
+  aflags_t dirty = 0;
   auto _unset = [&dirty, &x] (cell_t& cell) {
-    dirty |= cell.attribute.xflags;
+    dirty |= cell.attribute.aflags;
     cell.attribute.unselect();
     x += cell.width;
   };
   auto _set = [&dirty, &x] (cell_t& cell) {
-    dirty |= ~cell.attribute.xflags;
+    dirty |= ~cell.attribute.aflags;
     cell.attribute.select();
     x += cell.width;
   };
@@ -1276,8 +1276,11 @@ bool line_t::set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool
   }
 
   while (i < iN) _unset(m_cells[i++]);
-  if (dirty & xflags_ssa_selected) m_version++;
-  return bool(dirty & xflags_ssa_selected);
+  if (dirty & attr_selected) {
+    m_version++;
+    return true;
+  } else
+    return false;
 }
 
 bool line_t::set_selection_word(curpos_t x, word_selection_type type, bool gatm) {
@@ -1328,13 +1331,13 @@ bool line_t::set_selection_word(curpos_t x, word_selection_type type, bool gatm)
   }
 }
 
-curpos_t line_t::extract_selection(std::u32string& data) const {
+curpos_t line_t::extract_selection(std::u32string& data, attribute_table const& atable) const {
   data.clear();
   curpos_t head_x = 0;
   curpos_t space_count = 0;
   std::vector<char32_t> buff;
   for (cell_t const& cell : this->m_cells) {
-    if (cell.attribute.xflags & xflags_ssa_selected) {
+    if (cell.attribute.aflags & attr_selected) {
       if (cell.character.get_unicode_representation(buff)) {
         if (data.empty())
           head_x = space_count;
@@ -1346,7 +1349,7 @@ curpos_t line_t::extract_selection(std::u32string& data) const {
           if (value == ascii_nul) value = U' ';
         data.append(buff.begin(), buff.end());
 
-        if ((cell.attribute.xflags & xflags_decdhl_mask) && cell.width / 2)
+        if ((atable.xflags(cell.attribute) & xflags_decdhl_mask) && cell.width / 2)
           data.append(cell.width / 2, U' ');
         continue;
       }

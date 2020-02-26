@@ -70,31 +70,33 @@ namespace contra::ansi {
   constexpr int    attr_bg_shift = 8;
   constexpr attr_t attr_fg_set   = 0x010000;
   constexpr attr_t attr_bg_set   = 0x020000;
-  constexpr attr_t attr_selected = 1 << 30;
+  constexpr attr0_t attr_selected = 1 << 30;
   constexpr attr_t attr_extended = 1 << 31;
+  constexpr attr_t attr_extended_refmask = 0x3FFFFFFF;
 
   // Note: color_space 2以上が attr_extended を必要とする物とする。
-  constexpr int color_space_default      = 0;
-  constexpr int color_space_indexed      = 1;
-  constexpr int color_space_rgb          = 2;
-  constexpr int color_space_cmy          = 3;
-  constexpr int color_space_cmyk         = 4;
-  constexpr int color_space_transparent  = 5;
+  constexpr int color_space_default     = 0;
+  constexpr int color_space_indexed     = 1;
+  constexpr int color_space_rgb         = 2;
+  constexpr int color_space_cmy         = 3;
+  constexpr int color_space_cmyk        = 4;
+  constexpr int color_space_transparent = 5;
 
   // aflags_t [cccc cccc cccc ffff --ww ssuu ubbR HS--]
-  constexpr aflags_t aflags_fg_space_mask  = 0x00000F;
-  constexpr aflags_t aflags_bg_space_mask  = 0x0000F0;
-  constexpr aflags_t aflags_dc_space_mask  = 0x000F00;
+  constexpr aflags_t aflags_fg_space_mask  = 0x0000000F;
+  constexpr aflags_t aflags_bg_space_mask  = 0x000000F0;
+  constexpr aflags_t aflags_dc_space_mask  = 0x00000F00;
   constexpr int      aflags_fg_space_shift = 0;
   constexpr int      aflags_bg_space_shift = 4;
   constexpr int      aflags_dc_space_shift = 8;
-  constexpr aflags_t aflags_font_mask      = 0x00F000;
+  constexpr aflags_t aflags_font_mask      = 0x0000F000;
   constexpr int      aflags_font_shift     = 12;
   constexpr aflags_t aflags_reserved_bit1  = 1 << 16;
   constexpr aflags_t aflags_reserved_bit2  = 1 << 17;
   constexpr aflags_t aflags_reserved_bit3  = 1 << 30;
   constexpr aflags_t aflags_reserved_bit4  = 1 << 31;
   constexpr aflags_t aflags_extension_mask = 0x0000FFEE;
+  constexpr aflags_t aflags_non_sgr_mask   = 0xC0000000;
 
   // xflags_t [uudd --hh oooQ ffOP iiii rrrr rQQQ Q---]
 
@@ -164,7 +166,6 @@ namespace contra::ansi {
 
   // bit 25,26: SPA, SSA
   constexpr xflags_t xflags_spa_protected         = 1 << 25;
-  constexpr xflags_t xflags_ssa_selected          = 1 << 26;
   // bit 27,28: DAQ
   constexpr xflags_t xflags_daq_guarded           = 1 << 27;
   constexpr xflags_t xflags_daq_protected         = 1 << 28;
@@ -184,8 +185,9 @@ namespace contra::ansi {
   constexpr xflags_t xflags_reserved_bit3 = 1 << 29;
   constexpr xflags_t xflags_reserved_bit4 = 1 << 30;
   constexpr xflags_t xflags_reserved_bit5 = 1 << 31;
+  constexpr xflags_t xflags_reserved_bit6 = 1 << 26;
 
-  constexpr xflags_t xflags_qualifier_mask = xflags_decsca_protected | xflags_spa_protected | xflags_ssa_selected | xflags_daq_guarded | xflags_daq_protected;
+  constexpr xflags_t xflags_qualifier_mask = xflags_decsca_protected | xflags_spa_protected | xflags_daq_guarded | xflags_daq_protected;
 
   // 以下に \e[m でクリアされない物を列挙する。
   // SGR(9903)-SGR(9906) で提供している decdhl_mask については \e[m でクリアできる事にする。
@@ -296,7 +298,7 @@ namespace ansi {
       this->dc = 0;
     }
     void clear_sgr() {
-      this->aflags = 0;
+      this->aflags &= aflags_non_sgr_mask;
       this->xflags &= xflags_non_sgr_mask;
       this->fg = 0;
       this->bg = 0;
@@ -307,8 +309,8 @@ namespace ansi {
     constexpr bool is_decsca_protected() const {
       return (bool) (xflags & xflags_decsca_protected);
     }
-    void unselect() { xflags &= ~xflags_ssa_selected; }
-    void select()   { xflags &= ~xflags_ssa_selected; }
+    void unselect() { aflags &= ~attr_selected; }
+    void select()   { aflags |= attr_selected; }
     constexpr bool guarded() const {
       return bool(xflags & (xflags_spa_protected | xflags_daq_guarded));
     }
@@ -373,8 +375,8 @@ namespace ansi {
     void clear_decsca()        { m_attribute.xflags &= ~xflags_decsca_protected; }
     void set_spa()             { m_attribute.xflags |= xflags_spa_protected; }
     void clear_spa()           { m_attribute.xflags &= ~xflags_spa_protected; }
-    void set_ssa()             { m_attribute.xflags |= xflags_ssa_selected; }
-    void clear_ssa()           { m_attribute.xflags &= ~xflags_ssa_selected; }
+    void set_ssa()             { m_attribute.aflags |= attr_selected; }
+    void clear_ssa()           { m_attribute.aflags &= ~attr_selected; }
     void plu() {
       if (m_attribute.xflags & xflags_sub_set)
         m_attribute.xflags &= ~xflags_sub_set;
@@ -403,7 +405,10 @@ namespace ansi {
       return bool(attr.aflags & attr_invisible_set);
     }
     static bool is_selected(attribute_t const& attr) {
-      return bool(attr.xflags & xflags_ssa_selected);
+      return bool(attr.aflags & attr_selected);
+    }
+    static bool is_blinking(attribute_t const& attr) {
+      return bool(attr.aflags & attr_blink_mask);
     }
 
     static xflags_t xflags(attribute_t const& attr) { return attr.xflags; }

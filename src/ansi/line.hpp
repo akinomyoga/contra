@@ -70,12 +70,12 @@ namespace ansi {
 
   struct cell_t {
     character_t   character;
-    cattr_t        attribute;
+    cattr_t       attribute;
     std::uint32_t width;
 
     cell_t() {}
     constexpr cell_t(std::uint32_t c):
-      character(c), attribute(0),
+      character(c),
       width(character.is_extension() || character.is_marker() ? 0 : 1) {}
 
     bool operator==(cell_t const& rhs) const {
@@ -268,10 +268,9 @@ namespace ansi {
     std::uint32_t id() const { return m_id; }
     void set_id(std::uint32_t value) { this->m_id = value; }
 
-    bool has_blinking_cells() const {
-      constexpr aflags_t flags = attr_blink_set | attr_rapid_blink_set;
+    bool has_blinking_cells(attribute_table const& atable) const {
       for (cell_t const& cell : m_cells)
-        if (cell.attribute.aflags & flags) return true;
+        if (atable.is_blinking(cell.attribute)) return true;
       return false;
     }
 
@@ -674,12 +673,12 @@ namespace ansi {
     bool clear_selection() { return set_selection(0, 0, false, true, true); }
 
     /*?lwiki
-     * @fn curpos_t extract_selection(std::u32string& data);
+     * @fn curpos_t extract_selection(std::u32string& data, attribute_table const& atable);
      * @param[in] x
      *   ここに指定した x データ位置以降の選択済みセルを取得します。
      * @return 最初の選択セルのデータ部における x 位置を返します。
      */
-    curpos_t extract_selection(std::u32string& data) const;
+    curpos_t extract_selection(std::u32string& data, attribute_table const& atable) const;
 
   public:
     void debug_string_nest(curpos_t width, presentation_direction_t board_charpath) const {
