@@ -244,7 +244,6 @@ namespace ansi {
   public:
     aflags_t aflags = 0;
     xflags_t xflags = 0;
-  private:
     color_t fg = 0; // foreground color
     color_t bg = 0; // background color
     color_t dc = 0; // decoration color
@@ -316,7 +315,31 @@ namespace ansi {
     }
   };
 
-  struct attribute_builder {
+  struct attribute1_table {
+    static byte fg_space(attribute_t const& attr) { return attr.fg_space(); }
+    static color_t fg_color(attribute_t const& attr) { return attr.fg_color(); }
+    static byte bg_space(attribute_t const& attr) { return attr.bg_space(); }
+    static color_t bg_color(attribute_t const& attr) { return attr.bg_color(); }
+    static byte dc_space(attribute_t const& attr) { return attr.dc_space(); }
+    static color_t dc_color(attribute_t const& attr) { return attr.dc_color(); }
+    static bool is_inverse(attribute_t const& attr) {
+      return bool(attr.aflags & attr_inverse_set);
+    }
+    static bool is_invisible(attribute_t const& attr) {
+      return bool(attr.aflags & attr_invisible_set);
+    }
+    static bool is_selected(attribute_t const& attr) {
+      return bool(attr.aflags & attr_selected);
+    }
+    static bool is_blinking(attribute_t const& attr) {
+      return bool(attr.aflags & attr_blink_mask);
+    }
+
+    static xflags_t xflags(attribute_t const& attr) { return attr.xflags; }
+    static aflags_t aflags(attribute_t const& attr) { return attr.aflags; }
+  };
+
+  struct attribute1_builder {
     attribute_t m_attribute;
     attribute_t const& attr() const { return m_attribute; }
 
@@ -391,29 +414,315 @@ namespace ansi {
     }
   };
 
-  struct attribute_table {
-    static byte fg_space(attribute_t const& attr) { return attr.fg_space(); }
-    static color_t fg_color(attribute_t const& attr) { return attr.fg_color(); }
-    static byte bg_space(attribute_t const& attr) { return attr.bg_space(); }
-    static color_t bg_color(attribute_t const& attr) { return attr.bg_color(); }
-    static byte dc_space(attribute_t const& attr) { return attr.dc_space(); }
-    static color_t dc_color(attribute_t const& attr) { return attr.dc_color(); }
-    static bool is_inverse(attribute_t const& attr) {
-      return bool(attr.aflags & attr_inverse_set);
+  class attribute2_table {
+    struct entry {
+      attribute_t attr;
+      attr_t listp;
+      entry(attribute_t const& attr): attr(attr), listp(0) {}
+    };
+
+    std::vector<entry> table;
+    attr_t freep = 0;
+
+    std::uint32_t max_size = 0x1000;
+
+  private:
+    entry& resolve(attr_t const& attr) {
+      return table[std::uint32_t(attr & attr_extended_refmask)];
     }
-    static bool is_invisible(attribute_t const& attr) {
-      return bool(attr.aflags & attr_invisible_set);
+    entry const& resolve(attr_t const& attr) const {
+      return table[std::uint32_t(attr & attr_extended_refmask)];
     }
-    static bool is_selected(attribute_t const& attr) {
-      return bool(attr.aflags & attr_selected);
-    }
-    static bool is_blinking(attribute_t const& attr) {
-      return bool(attr.aflags & attr_blink_mask);
+    attribute_t& extended(attr_t const& attr) { return resolve(attr).attr; }
+    attribute_t const& extended(attr_t const& attr) const { return resolve(attr).attr; }
+
+  public:
+    attr_t save(attribute_t const& attr) {
+      if (freep) {
+        attr_t const ret = freep;
+        entry& ent = resolve(ret);
+        freep = ent.listp;
+        ent.attr = attr;
+        ent.listp = 0;
+        return ret;
+      } else if (table.size() < max_size) {
+        attr_t const ret = attr_extended | (std::uint32_t) table.size();
+        table.emplace_back(attr);
+        return ret;
+      } else {
+        // todo: 容量不足
+        return 0;
+      }
     }
 
-    static xflags_t xflags(attribute_t const& attr) { return attr.xflags; }
-    static aflags_t aflags(attribute_t const& attr) { return attr.aflags; }
+  public:
+    byte fg_space(attr_t const& attr) const {
+      if (attr & attr_extended) {
+        return std::uint32_t(extended(attr).aflags & aflags_fg_space_mask) >> aflags_fg_space_shift;
+      } else if (attr & attr_fg_set) {
+        return color_space_indexed;
+      } else {
+        return color_space_default;
+      }
+    }
+    color_t fg_color(attr_t const& attr) const {
+      if (attr & attr_extended) {
+        return extended(attr).fg;
+      } else {
+        return std::uint32_t(attr & attr_fg_mask) >> attr_fg_shift;
+      }
+    }
+    byte bg_space(attr_t const& attr) const {
+      if (attr & attr_extended) {
+        return std::uint32_t(extended(attr).aflags & aflags_bg_space_mask) >> aflags_bg_space_shift;
+      } else if (attr & attr_bg_set) {
+        return color_space_indexed;
+      } else {
+        return color_space_default;
+      }
+    }
+    color_t bg_color(attr_t const& attr) const {
+      if (attr & attr_extended) {
+        return extended(attr).bg;
+      } else {
+        return std::uint32_t(attr & attr_bg_mask) >> attr_bg_shift;
+      }
+    }
+    byte dc_space(attr_t const& attr) const {
+      if (attr & attr_extended) {
+        return std::uint32_t(extended(attr).aflags & aflags_dc_space_mask) >> aflags_dc_space_shift;
+      } else {
+        return color_space_default;
+      }
+    }
+    color_t dc_color(attr_t const& attr) const {
+      if (attr & attr_extended) {
+        return extended(attr).dc;
+      } else {
+        return 0;
+      }
+    }
+
+    aflags_t aflags(attr_t const& attr) {
+      if (attr & attr_extended) return extended(attr).aflags;
+      return (std::uint32_t) attr & attr_common_mask;
+    }
+    xflags_t xflags(attr_t const& attr) {
+      if (attr & attr_extended) return extended(attr).xflags;
+      return 0;
+    }
+
+    bool is_inverse(attr_t const& attr) const {
+      std::uint32_t aflags = attr & attr_extended ? extended(attr).aflags.value() : attr.value();
+      return bool(aflags & attr_inverse_set);
+    }
+    bool is_invisible(attr_t const& attr) const {
+      std::uint32_t aflags = attr & attr_extended ? extended(attr).aflags.value() : attr.value();
+      return bool(aflags & attr_invisible_set);
+    }
+    bool is_selected(attr_t const& attr) const {
+      return bool(attr & attr_selected);
+    }
+    bool is_blinking(attr_t const& attr) const {
+      std::uint32_t aflags = attr & attr_extended ? extended(attr).aflags.value() : attr.value();
+      return bool(aflags & attr_blink_mask);
+    }
+
+    // todo: mark/sweep
   };
+
+  struct attribute2_builder {
+    attribute2_table& m_table;
+    attribute_t       m_attribute;
+    mutable bool      m_attribute_dirty = false;
+    mutable attr_t    m_attr = 0;
+
+  public:
+    attribute2_builder(attribute2_table& table): m_table(table) {}
+
+  public:
+    attr_t attr() const {
+      if (!(m_attr & attr_extended))
+        return m_attr;
+      if (!m_attribute_dirty)
+        return m_attr;
+
+      if ((m_attribute.aflags & aflags_extension_mask) || m_attribute.xflags) {
+        m_attr = m_table.save(m_attribute);
+        m_attribute_dirty = false;
+      } else {
+        reduce();
+      }
+      return m_attr;
+    }
+
+  private:
+    void extend() {
+      m_attribute.aflags = (std::uint32_t) m_attr & attr_common_mask;
+      m_attribute.xflags = 0;
+      if (m_attr & attr_fg_set) {
+        m_attribute.aflags |= color_space_indexed << aflags_fg_space_shift;
+        m_attribute.fg = (std::uint32_t) (m_attr & attr_fg_mask) >> attr_fg_shift;
+      }
+      if (m_attr & attr_bg_set) {
+        m_attribute.aflags |= color_space_indexed << aflags_bg_space_shift;
+        m_attribute.bg = (std::uint32_t) (m_attr & attr_bg_mask) >> attr_bg_shift;
+      }
+      m_attr = attr_extended;
+      m_attribute_dirty = true;
+    }
+    void reduce() const {
+      m_attr = (std::uint32_t) m_attribute.aflags & attr_common_mask;
+      if (m_attribute.aflags & aflags_fg_space_mask)
+        m_attr |= attr_fg_set | m_attribute.fg << attr_fg_shift;
+      if (m_attribute.aflags & aflags_bg_space_mask)
+        m_attr |= attr_bg_set | m_attribute.bg << attr_bg_shift;
+    }
+
+  public:
+    void set_fg(color_t fg, int space) {
+      if (!(m_attr & attr_extended)) {
+        if (space == color_space_default) {
+          m_attr &= ~(attr_fg_set | attr_fg_mask);
+          return;
+        } else if (space == color_space_indexed) {
+          m_attr = (m_attr & ~attr_fg_mask) | attr_fg_set | fg << attr_fg_shift;
+          return;
+        }
+        extend();
+      }
+
+      m_attribute.fg = fg;
+      m_attribute.aflags.reset(aflags_fg_space_mask, space << aflags_fg_space_shift);
+      m_attribute_dirty = true;
+    }
+    void set_bg(color_t bg, int space) {
+      if (!(m_attr & attr_extended)) {
+        if (space == color_space_default) {
+          m_attr &= ~(attr_bg_set | attr_bg_mask);
+          return;
+        } else if (space == color_space_indexed) {
+          m_attr = (m_attr & ~attr_bg_mask) | attr_bg_set | bg << attr_bg_shift;
+          return;
+        }
+        extend();
+      }
+
+      m_attribute.bg = bg;
+      m_attribute.aflags.reset(aflags_bg_space_mask, space << aflags_bg_space_shift);
+      m_attribute_dirty = true;
+    }
+    void set_dc(color_t dc, int space) {
+      if (!(m_attr & attr_extended)) {
+        if (space == color_space_default) return;
+        extend();
+      }
+
+      m_attribute.dc = dc;
+      m_attribute.aflags.reset(aflags_dc_space_mask, space << aflags_dc_space_shift);
+      m_attribute_dirty = true;
+    }
+
+  private:
+    void reset_common_attr(attr0_t mask, attr0_t value) {
+      if (m_attr & attr_extended) {
+        m_attribute.aflags.reset(mask, value);
+        m_attribute_dirty = true;
+      } else {
+        m_attr.reset(mask, value);
+      }
+    }
+    void set_common_attr(attr0_t bit) {
+      if (m_attr & attr_extended) {
+        m_attribute.aflags |= bit;
+        m_attribute_dirty = true;
+      } else {
+        m_attr |= bit;
+      }
+    }
+    void clear_common_attr(attr0_t bit) {
+      if (m_attr & attr_extended) {
+        m_attribute.aflags &= ~bit;
+        m_attribute_dirty = true;
+      } else {
+        m_attr &= ~bit;
+      }
+    }
+
+    void reset_aflags(aflags_t mask, aflags_t value) {
+      if (!(m_attr & attr_extended)) extend();
+      m_attribute.aflags.reset(mask, value);
+      m_attribute_dirty = true;
+    }
+    void clear_aflags(aflags_t mask) {
+      if (!(m_attr & attr_extended)) return;
+      m_attribute.aflags &= ~mask;
+      m_attribute_dirty = true;
+    }
+
+    void reset_xflags(xflags_t mask, xflags_t value) {
+      if (!(m_attr & attr_extended)) extend();
+      m_attribute.xflags.reset(mask, value);
+      m_attribute_dirty = true;
+    }
+    void set_xflags(xflags_t value) {
+      if (!(m_attr & attr_extended)) extend();
+      m_attribute.xflags |= value;
+      m_attribute_dirty = true;
+    }
+    void clear_xflags(xflags_t mask) {
+      if (!(m_attr & attr_extended)) return;
+      m_attribute.xflags &= ~mask;
+      m_attribute_dirty = true;
+    }
+
+  public:
+    void set_weight(attr0_t weight)          { reset_common_attr(attr_weight_mask, weight); }
+    void clear_weight()                      { clear_common_attr(attr_weight_mask); }
+    void set_shape(attr0_t shape)            { reset_common_attr(attr_shape_mask, shape); }
+    void clear_shape()                       { clear_common_attr(attr_shape_mask); }
+    void set_underline(attr0_t underline)    { reset_common_attr(attr_underline_mask, underline); }
+    void clear_underline()                   { clear_common_attr(attr_underline_mask); }
+    void set_blink(attr0_t blink)            { reset_common_attr(attr_blink_mask, blink); }
+    void clear_blink()                       { clear_common_attr(attr_blink_mask); }
+    void set_inverse()                       { set_common_attr(attr_inverse_set); }
+    void clear_inverse()                     { clear_common_attr(attr_inverse_set); }
+    void set_invisible()                     { set_common_attr(attr_invisible_set); }
+    void clear_invisible()                   { clear_common_attr(attr_invisible_set); }
+    void set_strike()                        { set_common_attr(attr_strike_set); }
+    void clear_strike()                      { clear_common_attr(attr_strike_set); }
+
+    void set_font(aflags_t font)             { reset_aflags(aflags_font_mask, font); }
+    void clear_font()                        { clear_aflags(aflags_font_mask); }
+
+    void set_proportional()                  { set_xflags(xflags_proportional_set); }
+    void clear_proportional()                { clear_xflags(xflags_proportional_set); }
+    void set_frame(xflags_t frame)           { reset_xflags(xflags_frame_mask, frame); }
+    void clear_frame()                       { clear_xflags(xflags_frame_mask); }
+    void set_overline()                      { set_xflags(xflags_overline_set); }
+    void clear_overline()                    { clear_xflags(xflags_overline_set); }
+    void set_ideogram(xflags_t ideogram)     { reset_xflags(xflags_ideogram_mask, ideogram); }
+    void clear_ideogram()                    { clear_xflags(xflags_ideogram_mask); }
+
+    void set_decdhl(xflags_t decdhl)         { reset_xflags(xflags_decdhl_mask, decdhl); }
+    void clear_decdhl()                      { clear_xflags(xflags_decdhl_mask); }
+
+    void set_rlogin_rline(xflags_t ideogram) { reset_xflags(xflags_rlogin_rline_mask, ideogram); }
+    void set_rlogin_lline(xflags_t ideogram) { reset_xflags(xflags_rlogin_lline_mask, ideogram); }
+    void set_rlogin_double_strike()          { set_xflags(xflags_rlogin_double_strike); }
+    void clear_rlogin_ideogram()             { clear_xflags(xflags_rlogin_ideogram_mask); }
+
+    void set_mintty_subsup(xflags_t subsup)  { reset_xflags(xflags_mintty_subsup_mask, subsup); }
+    void clear_mintty_subsup()               { clear_xflags(xflags_mintty_subsup_mask); }
+  };
+
+  typedef attribute1_table attribute_table;
+  typedef attribute1_builder attribute_builder;
+  typedef attribute_t cattr_t;
+
+  // typedef attribute2_table attribute_table;
+  // typedef attribute2_builder attribute_builder;
+  // typedef attr_t cattr_t;
 
 }
 }

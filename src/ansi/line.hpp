@@ -66,8 +66,6 @@ namespace ansi {
     }
   };
 
-  typedef attribute_t cattr_t;
-
   struct cell_t {
     character_t   character;
     cattr_t       attribute;
