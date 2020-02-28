@@ -4893,7 +4893,7 @@ k=Kitty m=mintty r=RLogin u=urxvt       vt520=vt510
 <!--************************************************************************-->
 <h2>古い物: ISO/IEC 2022 関連</h2>
 
-<h3><dfn class="cfunc">ACS</dfn>: ANNOUNCER CODE STRUCTURE</h3>
+<h3><dfn class="cfunc">ACS</dfn>: ANNOUNCE CODE STRUCTURE</h3>
 <table class="normal center">
 <tr><th>略号</th><th>Sequence</th><th>C/R</th></tr>
 <tr><th>ACS</th>
@@ -4907,36 +4907,37 @@ k=Kitty m=mintty r=RLogin u=urxvt       vt520=vt510
 <i class="kbd">Ft</i> に指定する文字で構造を指定する。
 </p>
 
-<table class="normal center">
-<tr><th>符号化表現</th><th>C/R</th><th>機能</th></tr>
-<tr><td><kbd>ESC SP A</kbd></td><td>1/11 2/0 4/1 </td><td></td></tr>
-<tr><td><kbd>ESC SP B</kbd></td><td>1/11 2/0 4/2 </td><td></td></tr>
-<tr><td><kbd>ESC SP C</kbd></td><td>1/11 2/0 4/3 </td><td></td></tr>
-<tr><td><kbd>ESC SP D</kbd></td><td>1/11 2/0 4/4 </td><td></td></tr>
-<tr><td><kbd>ESC SP E</kbd></td><td>1/11 2/0 4/5 </td><td></td></tr>
-<tr><td><kbd>ESC SP F</kbd></td><td>1/11 2/0 4/6 </td><td>S7C1T</td></tr>
-<tr><td><kbd>ESC SP G</kbd></td><td>1/11 2/0 4/7 </td><td>S8C1T</td></tr>
-<tr><td><kbd>ESC SP H</kbd></td><td>1/11 2/0 4/8 </td><td></td></tr>
-<tr><td><kbd>ESC SP I</kbd></td><td>1/11 2/0 4/9 </td><td></td></tr>
-<tr><td><kbd>ESC SP J</kbd></td><td>1/11 2/0 4/10</td><td></td></tr>
-<tr><td><kbd>ESC SP K</kbd></td><td>1/11 2/0 4/11</td><td></td></tr>
-<tr><td><kbd>ESC SP L</kbd></td><td>1/11 2/0 4/12</td><td>ANSI conformance Lv1 (dpANS X3.134.1), ECMA-43 Lv1</td></tr>
-<tr><td><kbd>ESC SP M</kbd></td><td>1/11 2/0 4/13</td><td>ANSI conformance Lv2 (dpANS X3.134.1), ECMA-43 Lv2</td></tr>
-<tr><td><kbd>ESC SP N</kbd></td><td>1/11 2/0 4/14</td><td>ANSI conformance Lv3 (dpANS X3.134.1), ECMA-43 Lv3</td></tr>
-<tr><td><kbd>ESC SP O</kbd></td><td>1/11 2/0 4/15</td><td>-</td></tr>
-<tr><td><kbd>ESC SP P</kbd></td><td>1/11 2/0 5/0 </td><td></td></tr>
-<tr><td><kbd>ESC SP Q</kbd></td><td>1/11 2/0 5/1 </td><td>-</td></tr>
-<tr><td><kbd>ESC SP R</kbd></td><td>1/11 2/0 5/2 </td><td></td></tr>
-<tr><td><kbd>ESC SP S</kbd></td><td>1/11 2/0 5/3 </td><td></td></tr>
-<tr><td><kbd>ESC SP T</kbd></td><td>1/11 2/0 5/4 </td><td></td></tr>
-<tr><td><kbd>ESC SP U</kbd></td><td>1/11 2/0 5/5 </td><td></td></tr>
-<tr><td><kbd>ESC SP V</kbd></td><td>1/11 2/0 5/6 </td><td></td></tr>
-<tr><td><kbd>ESC SP W</kbd></td><td>1/11 2/0 5/7 </td><td></td></tr>
-<tr><td><kbd>ESC SP X</kbd></td><td>1/11 2/0 5/8 </td><td>-</td></tr>
-<tr><td><kbd>ESC SP Y</kbd></td><td>1/11 2/0 5/9 </td><td>-</td></tr>
-<tr><td><kbd>ESC SP Z</kbd></td><td>1/11 2/0 5/10</td><td></td></tr>
-<tr><td><kbd>ESC SP [</kbd></td><td>1/11 2/0 5/11</td><td></td></tr>
-<tr><td><kbd>ESC SP \</kbd></td><td>1/11 2/0 5/12</td><td></td></tr>
+<table class="normal center contra-cell-center">
+<tr><th>番号</th><th>符号化表現</th><th>機能(7bit)</th><th>機能(8bit)</th></tr>
+<tr><td> 1</td><td><kbd>ESC SP A</kbd></td><td colspan="2">(GL=G0 固定)</td></tr>
+<tr><td> 2</td><td><kbd>ESC SP B</kbd></td><td>SI,SO</td><td>LS0,LS1R</td></tr>
+<tr><td> 3</td><td><kbd>ESC SP C</kbd></td><td>使用不可</td><td rowspan="2">(GL=G0, GR=G1 固定)</td></tr>
+<tr><td> 4</td><td><kbd>ESC SP D</kbd></td><td>SI,SO</td></tr>
+<tr><td> 5</td><td><kbd>ESC SP E</kbd></td><td colspan="2">ECMA-35/11 にある 7/8bit 変換完全対応?</td></tr>
+<tr><td> 6</td><td><kbd>ESC SP F</kbd></td><td rowspan="2">C1 を <kbd>ESC <i>Fe</i></kbd> で符号化</td><td colspan="2">S7C1T: C1 を <kbd>ESC <i>Fe</i></kbd> で符号化</td></tr>
+<tr><td> 7</td><td><kbd>ESC SP G</kbd></td><td colspan="2">S8C1T: C1 を <kbd><i>CR</i></kbd> で符号化</td></tr>
+<tr><td> 8</td><td><kbd>ESC SP H</kbd></td><td colspan="2">94文字集合のみ使用可能</td></tr>
+<tr><td> 9</td><td><kbd>ESC SP I</kbd></td><td colspan="2">94/96文字集合の何れも使用可能</td></tr>
+<tr><td>10</td><td><kbd>ESC SP J</kbd></td><td colspan="2">(8bitでも)7bit符号を使用</td></tr>
+<tr><td>11</td><td><kbd>ESC SP K</kbd></td><td>使用不可</td><td colspan="2">8bit符号を使用</td></tr>
+<tr><td>12</td><td><kbd>ESC SP L</kbd></td><td colspan="2">ANSI conformance Lv1 (dpANS X3.134.1), ECMA-43 Lv1</td></tr>
+<tr><td>13</td><td><kbd>ESC SP M</kbd></td><td colspan="2">ANSI conformance Lv2 (dpANS X3.134.1), ECMA-43 Lv2</td></tr>
+<tr><td>14</td><td><kbd>ESC SP N</kbd></td><td colspan="2">ANSI conformance Lv3 (dpANS X3.134.1), ECMA-43 Lv3</td></tr>
+<tr><td>15</td><td><kbd>ESC SP O</kbd></td><td colspan="2">(予約)</td></tr>
+<tr><td>16</td><td><kbd>ESC SP P</kbd></td><td>SI</td><td>LS0</td></tr>
+<tr><td>17</td><td><kbd>ESC SP Q</kbd></td><td colspan="2">(予約)</td></tr>
+<tr><td>18</td><td><kbd>ESC SP R</kbd></td><td rowspan="2">SO</td><td>LS1</td></tr>
+<tr><td>19</td><td><kbd>ESC SP S</kbd></td><td>LS1R</td></tr>
+<tr><td>20</td><td><kbd>ESC SP T</kbd></td><td rowspan="2">LS2</td><td>LS2</td></tr>
+<tr><td>21</td><td><kbd>ESC SP U</kbd></td><td>LS2R</td></tr>
+<tr><td>22</td><td><kbd>ESC SP V</kbd></td><td rowspan="2">LS3</td><td>LS3</td></tr>
+<tr><td>23</td><td><kbd>ESC SP W</kbd></td><td>LS3R</td></tr>
+<tr><td>24</td><td><kbd>ESC SP X</kbd></td><td colspan="2">(予約)</td></tr>
+<tr><td>25</td><td><kbd>ESC SP Y</kbd></td><td colspan="2">(予約)</td></tr>
+<tr><td>26</td><td><kbd>ESC SP Z</kbd></td><td colspan="2">SS2 (GL)</td></tr>
+<tr><td>27</td><td><kbd>ESC SP [</kbd></td><td colspan="2">SS3 (GL)</td></tr>
+<tr><td>28</td><td><kbd>ESC SP \</kbd></td><td>-</td><td>SS2,SS3(GR)</td></tr>
+<tr><td>29-63</td><td>...</td><td colspan="2">(予約)</td></tr>
 </table>
 
 <ul>
