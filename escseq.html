@@ -2400,31 +2400,158 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
     受信装置は例えば MW を受信したことに対応する応答として DSR を返すなどする。
   </p>
 </li>
-<li><dfn class="cfunc">DSR(5)</dfn>: DEVICE STATUS REPORT 5
-  <p>[ECMA-48/8.3.35] 装置の状態を問い合わせる。</p>
-</li>
-<li><dfn class="cfunc">DSR</dfn>: DEVICE STATUS REPORT [DSR(5) に対する応答]
+<li>DSR 5 <dfn class="cfunc">DSR</dfn>: DEVICE STATUS REPORT (Operating Status)
   <p>[ECMA-48/8.3.35] 現在の装置の状態を応答するのに使われる。
     DSR(5) や MW に対する応答として送られる事もあれば、それとは独立に送られる事もある。
   </p>
   <table class="normal center">
-  <tr><th>引数</th><th>意味</th></tr>
+  <tr><th>種類</th><th>符号化表現</th><th>意味</th></tr>
+  <tr><td>要求</td><td><kbd>CSI 5 n</kbd></td><td>現在の装置の状態を問い合わせ。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI <i>Ps</i> n</kbd></td><td>現在の装置の状態を応答。</td></tr>
+  </table>
+  <p><i class="kbd">Ps</i> は以下の状態を示す。</p>
+  <table class="normal center">
+  <tr><th><i class="kbd">Ps</i></th><th>意味</th></tr>
   <tr><td>0 (既定値)</td><td>準備完了・機能不全なし</td></tr>
   <tr><td>1</td><td>ビジー状態・応答は再送されない</td></tr>
   <tr><td>2</td><td>ビジー状態・後で応答を再送する</td></tr>
   <tr><td>3</td><td>機能不全あり・応答を再送しない</td></tr>
   <tr><td>4</td><td>機能不全あり・後で応答を再送する</td></tr>
   </table>
+  <ul>
+  <li>[<a href="https://www.vt100.net/docs/vt510-rm/DSR-OS.html">VT510: DSR-OS</a>]</li>
+  </ul>
 </li>
-<li><dfn class="cfunc">DSR(6)</dfn>: DEVICE STATUS REPORT 6
-  <p>[ECMA-48/8.3.35] 表示位置またはデータ位置を問い合わせる。</p>
-</li>
-<li><dfn class="cfunc">CPR</dfn>: ACTIVE POSITION REPORT (Cursor Position Report) [DSR(6) に対する応答]
-  <p>ZDM(DEFAULT) のとき 0 は既定値を意味する。</p>
+<li>DSR 6 <dfn class="cfunc">CPR</dfn>: ACTIVE POSITION REPORT (Cursor Position Report)
+  <p>[ECMA-48/8.3.35] 表示位置またはデータ位置を問い合わせる。
+    DCSM(PRESENTATION) の時表示位置を返し、DCSM(DATA)の時データ位置を返す。
+    既定値は <i class="kbd">Pl</i> = 1, <i class="kbd">Pc</i> = 1 で、
+    ZDM(DEFAULT) のとき 0 は既定値を意味する。
+  </p>
+  <table class="normal center">
+  <tr><th>種類</th><th>符号化表現</th><th>意味</th></tr>
+  <tr><td>要求</td><td><kbd>CSI 6 n</kbd></td><td>現在位置問い合わせ。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI <i>Pl</i> ; <i>Pc</i> R</kbd></td>
+      <td>現在位置が <i class="kbd">Pl</i> 行 <i class="kbd">Pc</i> 列にある事を示す。</td></tr>
+  </table>
   <ul>
   <li>互換性: vt100, xterm</li>
   <li>[<a href="http://www.vt100.net/docs/vt510-rm/CPR">VT510: CPR</a>, <a href="http://www.vt100.net/docs/vt510-rm/DSR-CPR">VT510: DSR-CPR</a>]</li>
   <li>Poderosa は CPR ではなくて DSR(Pn;Pn) で応答する。</li>
+  </ul>
+</li>
+<li>DSR ?6 <dfn class="cfunc">DECXCPR</dfn>: Extended Cursor Position Report
+  <p>[VT510] 現在頁番号も含めて現在位置を問い合わせる。</p>
+  <table class="normal center">
+  <tr><th>種類</th><th>符号化表現</th><th>意味</th></tr>
+  <tr><td>要求</td><td><kbd>CSI ? 6 n</kbd></td><td>現在位置問い合わせ。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI ? <i>Pl</i> ; <i>Pc</i> ; <i>Pp</i> R</kbd></td>
+      <td>現在位置が <i class="kbd">Pp</i> 頁目の <i class="kbd">Pl</i> 行 <i class="kbd">Pc</i> 列にある事を示す。</td></tr>
+  </table>
+  <ul>
+  <li>[VT510: <a href="https://www.vt100.net/docs/vt510-rm/DSR-XCPR.html">DSR-XCPR</a>,
+    <a href="https://www.vt100.net/docs/vt510-rm/DECXCPR.html">DECXCPR</a>]</li>
+  </ul>
+</li>
+<li>DSR ?15 <dfn class="cfunc">DSR-PP</dfn>: Printer Port
+  <p>[VT510] プリンタの状態を問い合わせる。</p>
+  <table class="normal center">
+  <tr><th>種類</th><th>符号化表現</th><th>状態</th><th>意味</th></tr>
+  <tr><td>要求</td><td><kbd>CSI ? 1 5 n</kbd></td><td>問い合わせ</td><td></td></tr>
+  <tr><td>応答</td><td><kbd>CSI ? 1 3 n</kbd></td><td>プリンタ未接続  </td><td>再起動またはリセットの後 DTR信号がプリンタポートに確認されていない。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI ? 1 0 n</kbd></td><td>プリンタ準備完了</td><td>DTR信号がプリンタポートで確認されている。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI ? 1 1 n</kbd></td><td>プリンタ準備中  </td><td>DTR信号がプリンタポートで確認できていない。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI ? 1 8 n</kbd></td><td>プリンタ使用中  </td><td>DTR信号は確認できるが他のセッションが使っている。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI ? 1 9 n</kbd></td><td>プリンタ利用不可</td><td>DTR信号は確認できるが他のセッションに割り当てられている。</td></tr>
+  </table>
+  <ul>
+  <li>VT Level 1 ではプリンタ使用中の時にプリンタ準備中の応答を行う。
+    VT100モードではプリンタ使用中(利用不可)はプリンタ未接続の応答を行う。</li>
+  </ul>
+</li>
+<li>DSR ?25 <dfn class="cfunc">DSR-UDK</dfn>: User-Defined Keys
+  <p>[VT510] UDK (ユーザー定義キー) がロックされているかどうかを問い合わせる。VT Level 4 のみ。</p>
+  <table class="normal center">
+  <tr><th>種類</th><th>符号化表現</th><th>意味</th></tr>
+  <tr><td>要求</td><td><kbd>CSI ? 2 5 n</kbd></td><td>問い合わせ。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI ? 2 0 n</kbd></td><td>UDK はアンロックされている。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI ? 2 1 n</kbd></td><td>UDK はロックされている。</td></tr>
+  </table>
+  <ul>
+  <li>[VT510: <a href="https://www.vt100.net/docs/vt510-rm/DSR-UDK.html">DSR-UDK</a>]</li>
+  </ul>
+</li>
+<li>DSR ?26 <dfn class="cfunc">DSR-KBD</dfn>: Keyboard
+  <p>[VT510] キーボードの言語・状態・タイプを問い合わせる。</p>
+  <table class="normal center">
+  <tr><th>種類</th><th>符号化表現</th><th>意味</th></tr>
+  <tr><td>要求</td><td><kbd>CSI ? 2 6 n</kbd></td><td>問い合わせ。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI ? 2 7 ; <i>Pn</i> ; <i>Pst</i> ; <i>Ptyp</i> n</kbd></td><td>キーボードの言語・状態・タイプの通知。</td></tr>
+  </table>
+  <p><i class="kbd">Pn</i> は以下の表にあるようにキーボード言語を指定する。
+    <i class="kbd">Pst</i> は VT Level 4 以降で利用可能で、キーボード状態を表す。
+    0 がキーボード準備完了、1 がキーボード未接続、8 がキーボードは他のセッションが使用中である事を表す。
+    <i class="kbd">Ptyp</i> はキーボードのタイプを表す。4 が LK450 で 5 が PCXAL である。
+  </p>
+  <table class="normal center">
+  <caption>表: キーボード言語</caption>
+  <tr><th><i class="kbd">Pn</i></th><th>言語</th>
+      <th><i class="kbd">Pn</i></th><th>言語</th>
+      <th><i class="kbd">Pn</i></th><th>言語</th></tr>
+  <tr><td>0</td><td>不明                </td><td>10</td><td>Swiss French       </td><td>29</td><td>Turkish-Q/Turkish  </td></tr>
+  <tr><td>1</td><td>North American      </td><td>11</td><td>Swiss German       </td><td>30</td><td>Turkish-F/Turkish  </td></tr>
+  <tr><td>2</td><td>British             </td><td>12</td><td>Swedish            </td><td>31</td><td>Hungarian          </td></tr>
+  <tr><td>3</td><td>Belgian (Flemish)   </td><td>13</td><td>Norwegian          </td><td>33</td><td>Slovak             </td></tr>
+  <tr><td>4</td><td>French Canadian     </td><td>14</td><td>French             </td><td>35</td><td>Polish             </td></tr>
+  <tr><td>5</td><td>Danish              </td><td>15</td><td>Spanish            </td><td>36</td><td>Romanian           </td></tr>
+  <tr><td>6</td><td>Finnish             </td><td>16</td><td>Portuguese         </td><td>38</td><td>SCS                </td></tr>
+  <tr><td>7</td><td>German              </td><td>19</td><td>Hebrew             </td><td>39</td><td>Russian            </td></tr>
+  <tr><td>8</td><td>Dutch               </td><td>22</td><td>Greek              </td><td>40</td><td>Latin American     </td></tr>
+  <tr><td>9</td><td>Italian             </td><td>28</td><td>Canadian (English) </td><td>- </td><td>-                  </td></tr>
+  </table>
+  <ul>
+  <li>[VT510: <a href="https://www.vt100.net/docs/vt510-rm/DSR-KBD.html">DSR-KBD</a>]</li>
+  </ul>
+</li>
+<li>DSR ?62 <dfn class="cfunc">DECMSR</dfn>: Macro Space Report
+  <p>[VT510] マクロ定義に使うことのできるメモリ量を問い合わせる。
+    <i class="kbd">Pn</i> は使えるバイト数を16で割ったもの (切り捨て)。</p>
+  <table class="normal center">
+  <tr><th>種類</th><th>符号化表現</th><th>意味</th></tr>
+  <tr><td>要求</td><td><kbd>CSI ? 6 2 n</kbd></td><td>問い合わせ。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI <i>Pn</i> * {</kbd></td><td>16 * <i>Pn</i> バイト使うことができる。</td></tr>
+  </table>
+  <ul>
+  <li>[VT510: <a href="https://www.vt100.net/docs/vt510-rm/DSR-MSR.html">DSR-MSR</a>,
+    <a href="https://www.vt100.net/docs/vt510-rm/DECMSR.html">DECMSR</a>]</li>
+  </ul>
+</li>
+<li>DSR ?63 <dfn class="cfunc">DECCKSR</dfn>: Memory Checksum
+  <p>[VT510] マクロデータのチェックサムを計算する。
+    これは保存したマクロが他のアプリケーションによって書き換えられていないか
+    確認する為に使うことができる。
+  </p>
+  <table class="normal center">
+  <tr><th>種類</th><th>符号化表現</th><th>意味</th></tr>
+  <tr><td>要求</td><td><kbd>CSI ? 6 3 ; <i>Pid</i> n</kbd></td><td>問い合わせ。<i class="kbd">Pid</i> は対応する応答を識別する為の番号</td></tr>
+  <tr><td>応答</td><td><kbd>DCS <i>Pid</i> ! ~ <i>D..D</i> ST</kbd></td><td><i class="kbd">D..D</i> は16進4桁のチェックサム</td></tr>
+  </table>
+  <ul>
+  <li>[VT510: <a href="https://www.vt100.net/docs/vt510-rm/DSR-DECCKSR.html">DSR-DECCKSR</a>,
+    <a href="https://www.vt100.net/docs/vt510-rm/DECCKSR.html">DECCKSR</a>]</li>
+  </ul>
+</li>
+<li>DSR ?75 <dfn class="cfunc">DSR-DIR</dfn>: Data Integrity Report
+  <p>[VT510] データ完全性のチェックに用いる。前回の応答以降に通信エラーがあったかどうかをチェックする。</p>
+  <table class="normal center">
+  <tr><th>種類</th><th>符号化表現</th><th>意味</th></tr>
+  <tr><td>要求</td><td><kbd>CSI ? 7 5 n</kbd></td><td>問い合わせ。データ完全性フラグのクリア。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI ? 7 0 n</kbd></td><td>異常なし。前回の応答以降、通信エラーも再起動もなかった。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI ? 7 1 n</kbd></td><td>異常あり。前回の応答以降、通信エラーがあった。</td></tr>
+  <tr><td>応答</td><td><kbd>CSI ? 7 3 n</kbd></td><td>チェック開始。前回の再起動またはリセット (RIS) 以降で初めての応答。</td></tr>
+  </table>
+  <ul>
+  <li>[VT510: <a href="https://www.vt100.net/docs/vt510-rm/DSR-DIR.html">DSR-DIR</a>]</li>
   </ul>
 </li>
 </ul>
@@ -2872,7 +2999,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
  DECCARA, DECCIR, DECCKD, DECCKSR, DECCRA, DECDC,
  DECDLD, DECDMAC, DECEKBD, DECELF, DECERA, DECFI, DECFNK, DECFRA,
  DECIC, DECINVM, DECIPEM, DECKBD,
- DECLANS, DECLBAN, DECLFKC, DECLL, DECLTOD, DECMSR,
+ DECLANS, DECLBAN, DECLL, DECLTOD, DECMSR,
  DECPAK, DECPCTERM,
  DECPFK, DECPKA, DECPKFMR, DECRARA, DECRPAK,
  DECRPDE, DECRPFK, DECRPKT, DECRPTUI, DECRQCRA, DECRQDE, DECRQKD,
@@ -4022,7 +4149,8 @@ k=Kitty m=mintty r=RLogin u=urxvt       vt520=vt510
 <li>SGR 66-69 <dfn class="sgr">sgrIdeoDecoration2</dfn>: CJK装飾2
   <p>[JIS X 0211] CJK文字に対する装飾で 60-64 の時とは、縦書き・横書きの切り替わり方が異なる物である。</p>
   <p>Note: ECMA-48 5th edition (1991) には書かれていないが JIS X 0211 にはある。
-  恐らく、ISO/IEC 6429:1992 で導入された物だろう。
+  恐らく、ISO/IEC 6429:1992 で導入された物だろう
+  (JIS X 0211 は ISO/IEC 6429:1992 に "IDT" [ISO/IEC GUIDE 21-1:2005(E) 4.2] と書かれている)。
   </p>
   <table class="normal center">
   <tr><th>番号</th><th>機能</th>    <th>横書き</th>  <th>縦書き</th>  </tr>
@@ -4032,7 +4160,7 @@ k=Kitty m=mintty r=RLogin u=urxvt       vt520=vt510
   <tr><td>69</td><td>右二重傍線</td><td>上二重線</td><td>右二重線</td></tr>
   </table>
   <ul>
-  <li>互換性: JIS X 0211</li>
+  <li>互換性: JIS X 0211, ISO/IEC 6429:1992</li>
   </ul>
 </li>
 <li>SGR 65 <dfn class="sgr">sgrIdeoDecorationOff</dfn>: CJK装飾解除
