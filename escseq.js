@@ -13,10 +13,10 @@
     return dict;
   }
 
-  agh.scripts.wait(["event:onload","agh.dom.js"],function(){
+  agh.scripts.wait(["event:onload", "agh.dom.js"], function() {
     var dict = {};
     var idcount = 0;
-    agh.Array.each(document.getElementsByTagName("dfn"),function(dfn){
+    agh.Array.each(document.getElementsByTagName("dfn"), function(dfn){
       if (/(?:^|\s)(?:cfunc|cmode|sgr)(?:\s|$)/.test(dfn.className)) {
         var word = agh.dom.getInnerText(dfn);
         if (word in dict) return;
@@ -27,7 +27,7 @@
           id = "dfnx:" + idcount++;
         }
         dfn.id = id;
-        dict[word]=id;
+        dict[word] = id;
       }
     });
 
@@ -37,9 +37,9 @@
       var data = text.data;
       var result = data.replace(/[&<>]|\b[A-Za-z0-9/_]+\b/g,function($0){
         if (/[&<>]/.test($0))
-          return {'&':'&amp;','<':'&lt;','>':'&gt'}[$0];
+          return {'&': '&amp;', '<': '&lt;', '>': '&gt'}[$0];
         else if ($0 in dict)
-          return '<a class="contra-autolink" href="#'+dict[$0]+'">'+$0+'</a>';
+          return '<a class="contra-autolink" href="#' + dict[$0] + '">' + $0 + '</a>';
         else
           return $0;
       });
@@ -49,16 +49,22 @@
       }
     });
 
-    // agh.Array.each(document.getElementsByTagName("th"),function(th){
+    // agh.Array.each(document.getElementsByTagName("th"), function(th) {
     //   var word = agh.dom.getInnerText(th);
     //   if (word in dict) {
     //     var id = dict[word];
     //     var a = document.createElement("a");
     //     a.className = "contra-autolink";
     //     a.href = "#" + id;
-    //     agh.Array.each(agh(th.childNodes, Array), function(node){a.appendChild(node);});
+    //     agh.Array.each(agh(th.childNodes, Array), function(node) { a.appendChild(node); });
     //     th.appendChild(a);
     //   }
     // });
+    
+    if (window.location.hash) {
+      var hash = window.location.hash;
+      window.location.href = "#";
+      window.location.href = hash;
+    }
   });
 })(window.agh);

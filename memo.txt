@@ -216,6 +216,38 @@
   Done
 ------------------------------------------------------------------------------
 
+2020-02-29
+
+* URL の #... でページ内自動生成 id にジャンプする様にする。
+
+  現在、自動生成したページ内 id にジャンプできる様にしている。
+  然し単純にそれをクリックしても、思うようにジャンプしてくれない。
+
+  | a 試しに自分でリンクを生成して a.click() を呼び出してみる。然し動かない。
+  |   var hash = window.location.hash;
+  |   var a = document.createElement('a');
+  |   document.body.appendChild(a);
+  |   a.href = "#";
+  |   a.click();
+  |   a.href = hash;
+  |   a.click();
+  |   document.body.removeChild(a);
+  |
+  | b location.href に代入する方法
+  |   https://stackoverflow.com/questions/5007530/how-do-i-scroll-to-an-element-using-javascript
+  |   ここに書かれている方法を試してみたがこれも動かない。
+  |   コメントに書かれている内容から推測して "#" の代入をしない様にしてみたがそれでも動かない。
+  |
+  |   →実はその頁に居て F5 を押しても効かない様だ。他の頁から飛んだ時にはちゃんと動いた。
+  |
+  | c DOMContentLoaded で id の割り当てを実行するべきなのでは。
+  |   そうすれば特別な処置をしなくてもちゃんと飛んでくれる可能性。
+  |   →と思って確認してみたが実は元から DOMContentLoaded を使っていた。
+  |   然し、現在の実装では agh.dom.js を使っている。
+  |   これによって処理が遅延されている事により動いていないのでは。
+
+  取り敢えず b の方針で動いている。
+
 2020-02-14
 
 * Kitty のソースコードを少し確認した。
