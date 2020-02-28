@@ -4722,6 +4722,51 @@ k=Kitty m=mintty r=RLogin u=urxvt       vt520=vt510
     5 (modifyStringKeys) は数字とアルファベットに作用する。記号類は影響を受けない。設定で変更可能。
   </li>
   </ul>
+  <p>実際の実装で様々なキーの組み合わせに対してどのようなコードを送るかはまちまちである。</p>
+  <ul>
+  <li>xterm: 既定で <kbd>CSI 2 7 ~</kbd> 形式を使う。
+    <kbd>S-a</kbd> に対しては <kbd>A</kbd> ではなく <kbd>S-A</kbd> が送信される。
+    CapsLock が入っている時には <kbd>S-A</kbd> に対して <kbd>S-a</kbd> が送信される。
+    (日本語キーボードで) <kbd>S-1</kbd> とすると <kbd>S-!</kbd> ではなく <kbd>!</kbd> が送信される。
+    しかし <kbd>C-S-1</kbd> に対しては <kbd>C-!</kbd> ではなくて <kbd>C-S-!</kbd> が送信される。
+    <kbd>M-</kbd> 修飾は <kbd>A-</kbd> 修飾として加算される。
+  </li>
+  <li>mintty: 基本的に <kbd>CSI u</kbd> 形式を使う。
+    <kbd>M-</kbd> 修飾だけの場合は <kbd>ESC</kbd> を前置するが、
+    それ以外の修飾が混ざると <kbd>M-</kbd> は <kbd>A-</kbd> 修飾を加算する。
+    文字と修飾の組み合わせは xterm と殆ど同じだが、<kbd>M-S-a</kbd> に対して
+    <kbd>M-A</kbd> を送る (xterm は <kbd>M-S-A</kbd> である)。
+    <kbd>C-M-S-a</kbd> に対しては　<kbd>C-M-S-A</kbd> を送る。
+  </li>
+  <li>RLogin: <kbd>CSI 2 7 ~</kbd> 形式を使う。
+    既定では modifyStringKeys (<kbd>CSI > 5 m</kbd>)まで指定しないとアルファベットや数字の修飾は有効にならない。
+    RLogin の場合は <kbd>S-1</kbd> 等をアプリケーション側で記号に変換しなければならない。
+    つまりアプリケーション側でキーボード配列を想定しなければならず不便である。
+    純粋な記号の修飾 (例えば <kbd>C-:</kbd>) は入力できない (何も送信されない)。
+  </li>
+  <li>contra: 現在の実装では以下の様に実装している。アルファベットキーについては、
+    CapsLock の状態によってショートカットキーの意味が変化するのは不自然なので、
+    S 以外の修飾が入っている場合には CapsLock の状態に拘らずアルファベットは小文字にし、S は修飾に含める。
+    それ以外の場合は CapsLock に従って大文字か小文字を通常の文字として送信する。
+    数字または記号キーについては、S によって別の記号に変化する場合には、その記号に置き換えて S は修飾に含めない。
+    <kbd>M-</kbd> は常に前置 <kbd>ESC</kbd> で実装している。
+  </li>
+  <li>gnome-terminal: そもそも対応していない。</li>
+  </ul>
+  <table class="normal contra-cell-center">
+  <tr><th>入力            </th><th>xterm                            </th><th>RLogin                       </th><th>contra                   </th></tr>
+  <tr><td><kbd>a</kbd>    </td><td><kbd>a</kbd>/<kbd>A</kbd>        </td><td><kbd>a</kbd>/<kbd>A</kbd>    </td><td><kbd>a</kbd>/<kbd>A</kbd></td></tr>
+  <tr><td><kbd>S-a</kbd>  </td><td><kbd>S-A</kbd>/<kbd>S-a</kbd>    </td><td><kbd>S-A</kbd>               </td><td><kbd>A</kbd>/<kbd>a</kbd></td></tr>
+  <tr><td><kbd>C-a</kbd>  </td><td><kbd>C-a</kbd>/<kbd>C-A</kbd>    </td><td><kbd>C-A</kbd>               </td><td><kbd>C-a</kbd>           </td></tr>
+  <tr><td><kbd>C-S-a</kbd></td><td><kbd>C-S-A</kbd>/<kbd>C-S-a</kbd></td><td><kbd>C-S-A</kbd>             </td><td><kbd>C-S-a</kbd>         </td></tr>
+  <tr><td><kbd>1</kbd>    </td><td><kbd>1</kbd>                     </td><td><kbd>1</kbd>                 </td><td><kbd>1</kbd>             </td></tr>
+  <tr><td><kbd>S-1</kbd>  </td><td><kbd>!</kbd>                     </td><td><kbd>S-1</kbd>               </td><td><kbd>!</kbd>             </td></tr>
+  <tr><td><kbd>C-1</kbd>  </td><td><kbd>C-1</kbd>                   </td><td><kbd>C-1</kbd><sup>*1</sup>  </td><td><kbd>C-1</kbd>           </td></tr>
+  <tr><td><kbd>C-S-1</kbd></td><td><kbd>C-S-!</kbd>                 </td><td><kbd>C-S-1</kbd><sup>*1</sup></td><td><kbd>C-!</kbd>           </td></tr>
+  </table>
+  <ul>
+  <li>*1 = RLogin [オプション]-[キーコード] の下部にあるチェックボックスにチェックを入れる必要がある。</li>
+  </ul>
 </li>
 </ul>
 

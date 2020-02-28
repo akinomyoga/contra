@@ -13,3 +13,7 @@ i.kbd:before,
 kbd>i:before { content: '<'; }
 i.kbd:after,
 kbd>i:after { content: '>'; }
+
+
+table.contra-cell-center td,
+table.contra-cell-center th { text-align: center; }
