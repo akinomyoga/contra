@@ -5,6 +5,7 @@ kbd {
   border: 1px solid silver; border-bottom: 2px solid gray; border-radius: 3px;
   display: inline-block; text-indent: 0; line-height: 1.2;
   /* line-height: 1.8; */
+  text-decoration: inherit;
 }
 
 i.kbd,
@@ -13,7 +14,6 @@ i.kbd:before,
 kbd>i:before { content: '<'; }
 i.kbd:after,
 kbd>i:after { content: '>'; }
-
 
 table.contra-cell-center td,
 table.contra-cell-center th { text-align: center; }

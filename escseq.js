@@ -1,15 +1,20 @@
 (function(agh){
 
-  function getTextNodes(parent, dict) {
-    if (dict == null) dict = [];
-    var nodes = parent.childNodes;
-    for (var i = 0, iN = nodes.length; i < iN; i++) {
-      var node = nodes[i];
-      if (node.nodeType == document.TEXT_NODE)
-        dict.push(node);
-      else if (node.nodeType == document.ELEMENT_NODE)
-        getTextNodes(node, dict);
+  function getTextNodes(parent, element_filter) {
+    function impl(parent, dict) {
+      var nodes = parent.childNodes;
+      for (var i = 0, iN = nodes.length; i < iN; i++) {
+        var node = nodes[i];
+        if (node.nodeType == document.TEXT_NODE)
+          dict.push(node);
+        else if (node.nodeType == document.ELEMENT_NODE) {
+          if (element_filter && !element_filter(node)) continue;
+          impl(node, dict);
+        }
+      }
     }
+    var dict = [];
+    impl(parent, dict);
     return dict;
   }
 
@@ -31,7 +36,10 @@
       }
     });
 
-    agh.Array.each(getTextNodes(document.body), function(text){
+    var element_filter = function(elem) {
+      return !/^(?:dfn|a|kbd|h[1-6]|pre)$/i.test(elem.tagName);
+    };
+    agh.Array.each(getTextNodes(document.body, element_filter), function(text){
       if (/^(?:dfn|a|kbd|h[1-6])$/i.test(text.parentNode.tagName)) return;
 
       var data = text.data;
