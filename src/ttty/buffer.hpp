@@ -39,7 +39,7 @@ namespace ttty {
 
   public:
     tty_observer(term_view_t& view, std::FILE* file, termcap_sgr_type* sgrcap):
-      view(&view), w(file, sgrcap) {}
+      view(&view), w(view.atable(), file, sgrcap) {}
 
     tty_writer& writer() { return w; }
     tty_writer const& writer() const { return w; }
@@ -255,92 +255,6 @@ namespace ttty {
         "total_delete=%d total_insert=%d clear=%d", dbgD, dbgI, dbgC);
 #endif
     }
-    void erase_until_eol() {
-      curpos_t const width = view->width();
-      if (remote_x >= width) return;
-
-      attribute_t attr;
-      w.apply_attr(attr);
-      if (w.termcap_bce || attr.is_default()) {
-        put_ech(width - remote_x);
-      } else {
-        for (; remote_x < width; remote_x++) w.put(' ');
-      }
-    }
-
-    void render_line(std::vector<cell_t> const& new_content, std::vector<cell_t> const& old_content) {
-      // 更新の必要のある範囲を決定する
-
-      // 一致する先頭部分の長さを求める。
-      std::size_t i1 = 0;
-      curpos_t x1 = 0;
-      for (; i1 < new_content.size(); i1++) {
-        cell_t const& cell = new_content[i1];
-        if (i1 < old_content.size()) {
-          if (cell != old_content[i1]) break;
-        } else {
-          if (!(cell.character == ascii_nul && cell.attribute.is_default())) break;
-        }
-        x1 += cell.width;
-      }
-      // Note: cluster_extension や marker に違いがある時は
-      //   その前の有限幅の文字まで後退する。
-      //   (出力先の端末がどの様に零幅文字を扱うのかに依存するが、)
-      //   contra では古い marker を消す為には前の有限幅の文字を書く必要がある為。
-      while (i1 && new_content[i1].width == 0) i1--;
-
-      // 一致する末端部分のインデックスと長さを求める。
-      auto _find_upper_bound_non_empty = [] (std::vector<cell_t> const& cells, std::size_t lower_bound) {
-        std::size_t ret = cells.size();
-        while (ret > lower_bound && cells[ret - 1].character == ascii_nul && cells[ret - 1].attribute.is_default()) ret--;
-        return ret;
-      };
-      curpos_t w3 = 0;
-      std::size_t i2 = _find_upper_bound_non_empty(new_content, i1);
-      std::size_t j2 = _find_upper_bound_non_empty(old_content, i1);
-      for (; j2 > i1 && i2 > i1; j2--, i2--) {
-        cell_t const& cell = new_content[i2 - 1];
-        if (new_content[i2 - 1] != old_content[j2 - 1]) break;
-        w3 += cell.width;
-      }
-      // Note: cluster_extension や marker も本体の文字と共に再出力する。
-      //   (出力先の端末がどの様に零幅文字を扱うのかに依存するが、)
-      //   contra ではcluster_extension や marker は暗黙移動で潰される為。
-      while (i2 < new_content.size() && new_content[i2].width == 0) i2++;
-
-      // 間の部分の幅を求める。
-      curpos_t new_w2 = 0, old_w2 = 0;
-      for (std::size_t i = i1; i < i2; i++) new_w2 += new_content[i].width;
-      for (std::size_t j = i1; j < j2; j++) old_w2 += old_content[j].width;
-
-      move_to_column(x1);
-      if (new_w2 || old_w2) {
-        if (w3) {
-          if (new_w2 > old_w2)
-            put_ich(new_w2 - old_w2);
-          else if (new_w2 < old_w2)
-            put_dch(old_w2 - new_w2);
-        }
-
-        for (std::size_t i = i1; i < i2; i++) {
-          cell_t const& cell = new_content[i];
-          std::uint32_t code = cell.character.value;
-          if (code == ascii_nul) code = ascii_sp;
-          if (remote_x + (curpos_t) cell.width > remote_w) return;
-          w.apply_attr(cell.attribute);
-          w.put_u32(code);
-          remote_x += cell.width;
-          if (!remote_xenl && remote_x == remote_w) {
-            remote_y++;
-            remote_x = 0;
-            return;
-          }
-        }
-      }
-
-      move_to_column(remote_x + w3);
-      erase_until_eol();
-    }
 
     struct apply_default_attribute_impl {
       term_view_t* view;
@@ -352,7 +266,7 @@ namespace ttty {
       attribute_table& atable;
 
       bool hasprev = false;
-      cattr_t prev_attr;
+      cattr_t prev_attr = 0;
       attribute_builder abuild;
 
       bool hasfill = false;
@@ -407,6 +321,93 @@ namespace ttty {
       }
     };
 
+    void erase_until_eol(cattr_t const& fill_attr) {
+      curpos_t const width = view->width();
+      if (remote_x >= width) return;
+
+      w.apply_attr(fill_attr);
+      if (w.termcap_bce || view->atable().is_default(fill_attr)) {
+        put_ech(width - remote_x);
+      } else {
+        for (; remote_x < width; remote_x++) w.put(' ');
+      }
+    }
+
+    void render_line(std::vector<cell_t> const& new_content, std::vector<cell_t> const& old_content, cattr_t const& fill_attr) {
+      // 更新の必要のある範囲を決定する
+      auto& atable = view->atable();
+
+      // 一致する先頭部分の長さを求める。
+      std::size_t i1 = 0;
+      curpos_t x1 = 0;
+      for (; i1 < new_content.size(); i1++) {
+        cell_t const& cell = new_content[i1];
+        if (i1 < old_content.size()) {
+          if (cell != old_content[i1]) break;
+        } else {
+          if (!(cell.character == ascii_nul && atable.is_default(cell.attribute))) break;
+        }
+        x1 += cell.width;
+      }
+      // Note: cluster_extension や marker に違いがある時は
+      //   その前の有限幅の文字まで後退する。
+      //   (出力先の端末がどの様に零幅文字を扱うのかに依存するが、)
+      //   contra では古い marker を消す為には前の有限幅の文字を書く必要がある為。
+      while (i1 && new_content[i1].width == 0) i1--;
+
+      // 一致する末端部分のインデックスと長さを求める。
+      auto _find_upper_bound_non_empty = [&atable] (std::vector<cell_t> const& cells, std::size_t lower_bound) {
+        std::size_t ret = cells.size();
+        while (ret > lower_bound && cells[ret - 1].character == ascii_nul && atable.is_default(cells[ret - 1].attribute)) ret--;
+        return ret;
+      };
+      curpos_t w3 = 0;
+      std::size_t i2 = _find_upper_bound_non_empty(new_content, i1);
+      std::size_t j2 = _find_upper_bound_non_empty(old_content, i1);
+      for (; j2 > i1 && i2 > i1; j2--, i2--) {
+        cell_t const& cell = new_content[i2 - 1];
+        if (new_content[i2 - 1] != old_content[j2 - 1]) break;
+        w3 += cell.width;
+      }
+      // Note: cluster_extension や marker も本体の文字と共に再出力する。
+      //   (出力先の端末がどの様に零幅文字を扱うのかに依存するが、)
+      //   contra ではcluster_extension や marker は暗黙移動で潰される為。
+      while (i2 < new_content.size() && new_content[i2].width == 0) i2++;
+
+      // 間の部分の幅を求める。
+      curpos_t new_w2 = 0, old_w2 = 0;
+      for (std::size_t i = i1; i < i2; i++) new_w2 += new_content[i].width;
+      for (std::size_t j = i1; j < j2; j++) old_w2 += old_content[j].width;
+
+      move_to_column(x1);
+      if (new_w2 || old_w2) {
+        if (w3) {
+          if (new_w2 > old_w2)
+            put_ich(new_w2 - old_w2);
+          else if (new_w2 < old_w2)
+            put_dch(old_w2 - new_w2);
+        }
+
+        for (std::size_t i = i1; i < i2; i++) {
+          cell_t const& cell = new_content[i];
+          std::uint32_t code = cell.character.value;
+          if (code == ascii_nul) code = ascii_sp;
+          if (remote_x + (curpos_t) cell.width > remote_w) return;
+          w.apply_attr(cell.attribute);
+          w.put_u32(code);
+          remote_x += cell.width;
+          if (!remote_xenl && remote_x == remote_w) {
+            remote_y++;
+            remote_x = 0;
+            return;
+          }
+        }
+      }
+
+      move_to_column(remote_x + w3);
+      erase_until_eol(fill_attr);
+    }
+
     bool is_content_changed() const {
       curpos_t const height = view->height();
       if ((curpos_t) snapshot.lines.size() != height) return true;
@@ -416,6 +417,12 @@ namespace ttty {
         if (snapshot_line.id != line.id() || snapshot_line.version != line.version()) return true;
       }
       return false;
+    }
+
+    cattr_t create_fill_attr() {
+      attribute_builder abuild(view->atable());
+      abuild.set_bg(view->bg_color(), view->bg_space());
+      return abuild.fill_attr();
     }
 
     void render_content(bool full_update) {
@@ -429,6 +436,7 @@ namespace ttty {
       if (is_terminal_fullwidth)
         trace_line_scroll();
 
+      cattr_t const fill_attr = create_fill_attr();
       apply_default_attribute_impl default_attribute(view);
       for (curpos_t y = 0; y < height; y++) {
         line_t const& line = view->line(y);
@@ -437,14 +445,14 @@ namespace ttty {
           go_to(0, y);
           view->order_cells_in(buff, position_client, line);
           default_attribute.apply(buff);
-          this->render_line(buff, snapshot_line.content);
+          this->render_line(buff, snapshot_line.content, fill_attr);
 
           snapshot_line.version = line.version();
           snapshot_line.id = line.id();
           snapshot_line.content.swap(buff);
         }
       }
-      w.apply_attr(attribute_t {});
+      w.apply_attr(0);
     }
 
     void update_remote_dectcem(bool value) {

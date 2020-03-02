@@ -1096,7 +1096,7 @@ namespace ansi {
       if (rmargin < b.width())
         segs[iseg++] = line_segment_t({rmargin, b.width(), line_segment_slice});
 
-      attribute_t const fill_attr = term.fill_attr();
+      cattr_t const fill_attr = term.fill_attr();
       if (shift > 0) {
         curpos_t ydst = bmargin - 1;
         curpos_t ysrc = ydst - shift;
@@ -1163,7 +1163,7 @@ namespace ansi {
         curpos_t const bmargin = term.bmargin();
         curpos_t const lmargin = term.lmargin();
         curpos_t const rmargin = term.rmargin();
-        attribute_t const fill_attr = term.fill_attr();
+        cattr_t const fill_attr = term.fill_attr();
         for (curpos_t y = tmargin; y < bmargin; y++)
           b.line(y).shift_cells(lmargin, rmargin, shift, flags, b.width(), fill_attr);
         if (isPresentation)
@@ -1403,7 +1403,7 @@ namespace ansi {
     board_t& b = term.board();
     if (30 <= param && param < 40) {
       if (param < 38) {
-        b.cur.abuild.set_fg(param - 30);
+        b.cur.abuild.set_fg(param - 30, color_space_indexed);
       } else if (param == 38) {
         do_sgr_iso8613_colors(b, rest, 0);
       } else {
@@ -1412,7 +1412,7 @@ namespace ansi {
       return;
     } else if (40 <= param && param < 50) {
       if (param < 48) {
-        b.cur.abuild.set_bg(param - 40);
+        b.cur.abuild.set_bg(param - 40, color_space_indexed);
       } else if (param == 48) {
         do_sgr_iso8613_colors(b, rest, 1);
       } else {
@@ -1420,10 +1420,10 @@ namespace ansi {
       }
       return;
     } else if (90 <= param && param <= 97) {
-      b.cur.abuild.set_fg(8 + (param - 90));
+      b.cur.abuild.set_fg(8 + (param - 90), color_space_indexed);
       return;
     } else if (100 <= param && param <= 107) {
-      b.cur.abuild.set_bg(8 + (param - 100));
+      b.cur.abuild.set_bg(8 + (param - 100), color_space_indexed);
       return;
     }
 
@@ -1698,7 +1698,7 @@ namespace ansi {
   //---------------------------------------------------------------------------
   // EL, IL, DL
 
-  static void do_el(term_t& term, line_t& line, csi_single_param_t param, attribute_t const& fill_attr) {
+  static void do_el(term_t& term, line_t& line, csi_single_param_t param, cattr_t const& fill_attr) {
     board_t& b = term.board();
     tstate_t& s = term.state();
     if (param != 0 && param != 1) {
@@ -1741,7 +1741,7 @@ namespace ansi {
   void do_ed(term_t& term, csi_single_param_t param) {
     tstate_t& s = term.state();
     board_t& b = term.board();
-    attribute_t const fill_attr = term.fill_attr();
+    cattr_t const fill_attr = term.fill_attr();
     curpos_t y1 = 0, y2 = 0;
     if (param != 0 && param != 1) {
       y1 = 0;
@@ -2072,7 +2072,7 @@ namespace ansi {
         case ascii_q:
           // DECSCA
           _start();
-          if (term.board().cur.abuild.attr().is_decsca_protected())
+          if (term.board().cur.abuild.is_decsca_protected())
             term.input_byte(ascii_1);
           term.input_byte(ascii_double_quote);
           term.input_byte(ascii_q);

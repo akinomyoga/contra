@@ -130,14 +130,20 @@ namespace dict {
   //-----------------------------------------------------------------------------
 
   struct tty_writer {
+    attribute_table* atable;
+
     std::FILE* file;
 
     // 出力先端末の性質
     termcap_sgr_type const* sgrcap;
     bool termcap_bce = false;
 
-    tty_writer(std::FILE* file, termcap_sgr_type* sgrcap): file(file), sgrcap(sgrcap) {
-      m_attr.clear();
+    cattr_t m_attr = 0;
+    attribute_t m_attribute = 0;
+    bool sgr_isOpen;
+
+    tty_writer(attribute_table& atable, std::FILE* file, termcap_sgr_type* sgrcap): atable(&atable), file(file), sgrcap(sgrcap) {
+      m_attr = 0;
     }
 
   private:
@@ -159,9 +165,6 @@ namespace dict {
       if (value) put_unsigned(value);
     }
 
-    attribute_t m_attr;
-    bool sgr_isOpen;
-
     template<typename Flags>
     void update_sgrflag1(
       Flags aflagsNew, Flags aflagsOld,
@@ -181,7 +184,7 @@ namespace dict {
       termcap_sgrcolor const& sgrcolor);
 
   public:
-    void apply_attr(attribute_t newAttr);
+    void apply_attr(cattr_t const& newAttr);
 
     void put_u32(char32_t c) const { contra::encoding::put_u8(c, file); }
     void put(char c) const { std::fputc(c, file); }
@@ -199,7 +202,7 @@ namespace dict {
 
   private:
     void put_skip(curpos_t& wskip) {
-      if (m_attr.is_default() && wskip <= 4) {
+      if (atable->is_default(m_attr) && wskip <= 4) {
         while (wskip--) put(' ');
       } else {
         put(ascii_esc);
@@ -210,7 +213,6 @@ namespace dict {
       wskip = 0;
     }
   public:
-    // test implementation
     // ToDo: output encoding
     void print_screen(board_t const& b);
   };

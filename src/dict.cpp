@@ -220,50 +220,55 @@ void tty_writer::update_sgrcolor(
     sgr_put(sgrcolor.off);
 }
 
-void tty_writer::apply_attr(attribute_t new_attr) {
-  attribute_t& old_attr = this->m_attr;
+void tty_writer::apply_attr(cattr_t const& new_attr) {
+  cattr_t const& old_attr = this->m_attr;
   if (old_attr == new_attr) return;
 
-  if (new_attr.is_default()) {
+  attribute_t new_attribute;
+  atable->get_extended(new_attribute, new_attr);
+  attribute_t& old_attribute = this->m_attribute;
+
+  if (new_attribute.is_default()) {
     sgr_clear();
-    old_attr.clear();
+    old_attribute.clear();
   } else {
     this->sgr_isOpen = false;
 
-    aflags_t const aremoved = ~new_attr.aflags & old_attr.aflags;
-    xflags_t const xremoved = ~new_attr.xflags & old_attr.xflags;
+    aflags_t const aremoved = ~new_attribute.aflags & old_attribute.aflags;
+    xflags_t const xremoved = ~new_attribute.xflags & old_attribute.xflags;
     if (aremoved & sgrcap->aflagsNotResettable
       || xremoved & sgrcap->xflagsNotResettable
     ) {
       sgr_put(0);
-      old_attr.clear_sgr();
+      old_attribute.clear_sgr();
     }
 
-    update_sgrflag2(new_attr.aflags, old_attr.aflags, sgrcap->cap_bold     );
-    update_sgrflag2(new_attr.aflags, old_attr.aflags, sgrcap->cap_italic   );
-    update_sgrflag2(new_attr.aflags, old_attr.aflags, sgrcap->cap_underline);
-    update_sgrflag2(new_attr.aflags, old_attr.aflags, sgrcap->cap_blink    );
+    update_sgrflag2(new_attribute.aflags, old_attribute.aflags, sgrcap->cap_bold     );
+    update_sgrflag2(new_attribute.aflags, old_attribute.aflags, sgrcap->cap_italic   );
+    update_sgrflag2(new_attribute.aflags, old_attribute.aflags, sgrcap->cap_underline);
+    update_sgrflag2(new_attribute.aflags, old_attribute.aflags, sgrcap->cap_blink    );
 
-    update_sgrflag1(new_attr.aflags, old_attr.aflags, sgrcap->cap_inverse  );
-    update_sgrflag1(new_attr.aflags, old_attr.aflags, sgrcap->cap_invisible);
-    update_sgrflag1(new_attr.aflags, old_attr.aflags, sgrcap->cap_strike   );
+    update_sgrflag1(new_attribute.aflags, old_attribute.aflags, sgrcap->cap_inverse  );
+    update_sgrflag1(new_attribute.aflags, old_attribute.aflags, sgrcap->cap_invisible);
+    update_sgrflag1(new_attribute.aflags, old_attribute.aflags, sgrcap->cap_strike   );
 
-    update_sgrflag2(new_attr.xflags, old_attr.xflags, sgrcap->cap_framed);
-    update_sgrflag1(new_attr.xflags, old_attr.xflags, sgrcap->cap_proportional);
-    update_sgrflag1(new_attr.xflags, old_attr.xflags, sgrcap->cap_overline);
-    update_ideogram_decoration(new_attr.xflags, old_attr.xflags, sgrcap->cap_ideogram);
+    update_sgrflag2(new_attribute.xflags, old_attribute.xflags, sgrcap->cap_framed);
+    update_sgrflag1(new_attribute.xflags, old_attribute.xflags, sgrcap->cap_proportional);
+    update_sgrflag1(new_attribute.xflags, old_attribute.xflags, sgrcap->cap_overline);
+    update_ideogram_decoration(new_attribute.xflags, old_attribute.xflags, sgrcap->cap_ideogram);
 
     update_sgrcolor(
-      new_attr.fg_space(), new_attr.fg_color(),
-      old_attr.fg_space(), old_attr.fg_color(),
+      new_attribute.fg_space(), new_attribute.fg_color(),
+      old_attribute.fg_space(), old_attribute.fg_color(),
       sgrcap->cap_fg);
 
     update_sgrcolor(
-      new_attr.bg_space(), new_attr.bg_color(),
-      old_attr.bg_space(), old_attr.bg_color(),
+      new_attribute.bg_space(), new_attribute.bg_color(),
+      old_attribute.bg_space(), old_attribute.bg_color(),
       sgrcap->cap_bg);
 
     this->m_attr = new_attr;
+    this->m_attribute = new_attribute;
     if (this->sgr_isOpen) put(ascii_m);
   }
 }
@@ -294,5 +299,5 @@ void tty_writer::print_screen(board_t const& b) {
 
     put('\n');
   }
-  apply_attr(attribute_t {});
+  apply_attr(0);
 }

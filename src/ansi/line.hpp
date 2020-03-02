@@ -68,7 +68,7 @@ namespace ansi {
 
   struct cell_t {
     character_t   character;
-    cattr_t       attribute;
+    cattr_t       attribute = 0;
     std::uint32_t width;
 
     cell_t() {}
@@ -83,12 +83,6 @@ namespace ansi {
 
     bool is_zero_width_body() const {
       return width == 0 && !character.is_extension();
-    }
-    bool is_protected() const {
-      return (bool) (attribute.xflags & (xflags_spa_protected | xflags_daq_protected));
-    }
-    bool is_decsca_protected() const {
-      return attribute.is_decsca_protected();
     }
   };
 
@@ -197,6 +191,7 @@ namespace ansi {
   class line_t {
   private:
     std::vector<cell_t> m_cells;
+    attribute_table* atable;
     line_attr_t m_lflags = {0};
     curpos_t m_home  {-1};
     curpos_t m_limit {-1};
@@ -229,6 +224,9 @@ namespace ansi {
     mutable std::uint32_t m_strings_version = (std::uint32_t) -1;
 
   public:
+    line_t(attribute_table& atable): atable(&atable) {}
+
+  public:
     // 既定の move assignment は swap ではなくて解放&Moveになっている。
     // 後、キャッシュまで一緒に transfer する必要は全くないので省略。
     void transfer_from(line_t& line) {
@@ -259,22 +257,22 @@ namespace ansi {
 
     bool has_protected_cells() const {
       return std::any_of(m_cells.begin(), m_cells.end(),
-        [] (cell_t const& cell) { return cell.is_protected(); });
+        [this] (cell_t const& cell) { return atable->is_protected(cell.attribute); });
     }
 
     std::uint32_t version() const { return this->m_version; }
     std::uint32_t id() const { return m_id; }
     void set_id(std::uint32_t value) { this->m_id = value; }
 
-    bool has_blinking_cells(attribute_table const& atable) const {
+    bool has_blinking_cells() const {
       for (cell_t const& cell : m_cells)
-        if (atable.is_blinking(cell.attribute)) return true;
+        if (atable->is_blinking(cell.attribute)) return true;
       return false;
     }
 
   private:
     void _initialize_content(curpos_t width, cattr_t const& attr) {
-      if (attr.is_default()) return;
+      if (attr == 0) return;
       cell_t fill;
       fill.character = ascii_nul;
       fill.attribute = attr;
@@ -628,7 +626,7 @@ namespace ansi {
     }
     void truncate(curpos_t width, bool line_r2l, bool dcsm) {
       line_segment_t const seg = {0, width, line_segment_slice};
-      compose_segments(&seg, 1, width, cattr_t {}, line_r2l, dcsm);
+      compose_segments(&seg, 1, width, (cattr_t) 0, line_r2l, dcsm);
     }
 
   private:
@@ -671,12 +669,12 @@ namespace ansi {
     bool clear_selection() { return set_selection(0, 0, false, true, true); }
 
     /*?lwiki
-     * @fn curpos_t extract_selection(std::u32string& data, attribute_table const& atable);
+     * @fn curpos_t extract_selection(std::u32string& data);
      * @param[in] x
      *   ここに指定した x データ位置以降の選択済みセルを取得します。
      * @return 最初の選択セルのデータ部における x 位置を返します。
      */
-    curpos_t extract_selection(std::u32string& data, attribute_table const& atable) const;
+    curpos_t extract_selection(std::u32string& data) const;
 
   public:
     void debug_string_nest(curpos_t width, presentation_direction_t board_charpath) const {
@@ -744,6 +742,9 @@ namespace ansi {
 
   public:
     attribute_builder abuild;
+
+  public:
+    cursor_t(attribute_table& atable): abuild(atable) {}
 
   public:
     curpos_t x() const { return m_x; }

@@ -208,12 +208,11 @@ namespace ansi {
     void store_content(term_view_t const& view) {
       curpos_t const height = view.height();
       m_lines.resize(height);
-      attribute_table const& atable = view.atable();
       for (curpos_t i = 0; i < height; i++) {
         line_t const& original_line = view.line(i);
         m_lines[i].id = original_line.id();
         m_lines[i].version = original_line.version();
-        m_lines[i].has_blinking = original_line.has_blinking_cells(atable);
+        m_lines[i].has_blinking = original_line.has_blinking_cells();
       }
     }
     std::vector<line_trace_t> const& lines() const { return m_lines; }
@@ -582,7 +581,7 @@ namespace ansi {
     font_resolver_t() {}
     font_resolver_t(attribute_table const& atable): atable(&atable) {}
   public:
-    font_t resolve_font(attribute_t const& attr) {
+    font_t resolve_font(cattr_t const& attr) {
       constexpr aflags_t aflags_mask = attr_weight_mask | attr_shape_mask | aflags_font_mask;
       constexpr xflags_t xflags_mask = xflags_subsup_mask | xflags_mintty_subsup_mask
         | xflags_frame_mask | xflags_proportional_set | xflags_sco_shift | xflags_decdhl_mask;

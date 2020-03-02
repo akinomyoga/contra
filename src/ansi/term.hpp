@@ -108,12 +108,13 @@ namespace ansi {
     typedef term_scroll_buffer_t self;
     typedef line_t value_type;
 
+    attribute_table* atable;
     std::vector<value_type> data;
     std::size_t m_rotate = 0;
     std::size_t m_capacity;
 
   public:
-    term_scroll_buffer_t(std::size_t capacity = 0): m_capacity(capacity) {}
+    term_scroll_buffer_t(attribute_table* atable, std::size_t capacity = 0): atable(atable), m_capacity(capacity) {}
 
   public:
     std::size_t capacity() const {
@@ -130,7 +131,7 @@ namespace ansi {
         std::size_t const new_begin = (m_rotate - value + m_capacity) % m_capacity;
         if (new_begin)
           contra::util::partial_rotate(data.begin(), data.begin() + new_begin, data.end(), value);
-        data.resize(value);
+        data.resize(value, line_t(*this->atable));
       }
       this->m_capacity = value;
     }
@@ -165,6 +166,7 @@ namespace ansi {
   };
 
   struct board_t {
+    attribute_table* atable;
     contra::util::ring_buffer<line_t> m_lines;
     cursor_t cur;
 
@@ -190,17 +192,17 @@ namespace ansi {
     }
 
   public:
-    board_t(curpos_t width, curpos_t height, curpos_t xunit = 7, curpos_t yunit = 14) {
+    board_t(attribute_table& atable, curpos_t width, curpos_t height, curpos_t xunit = 7, curpos_t yunit = 14): atable(&atable), cur(atable) {
       m_width = limit::term_col.clamp(width);
       m_height = limit::term_row.clamp(height);
       m_xunit = limit::term_xunit.clamp(xunit);
       m_yunit = limit::term_yunit.clamp(yunit);
       this->cur.set(0, 0);
-      this->m_lines.resize(m_height);
+      this->m_lines.resize(m_height, line_t(atable));
       for (line_t& line : m_lines)
         line.set_id(m_line_count++);
     }
-    board_t(): board_t(80, 24, 7, 14) {}
+    board_t(attribute_table& atable): board_t(atable, 80, 24, 7, 14) {}
 
   public:
     void reset_size(curpos_t width, curpos_t height) {
@@ -210,7 +212,7 @@ namespace ansi {
       if (this->cur.x() >= width) cur.set_x(width - 1);
       if (this->cur.y() >= height) cur.set_y(height - 1);
 
-      m_lines.resize(height);
+      m_lines.resize(height, line_t(*this->atable));
       for (curpos_t y = this->m_height; y < height; y++)
         m_lines[y].set_id(m_line_count++);
 
@@ -261,7 +263,7 @@ namespace ansi {
       for (curpos_t y = y1; y < y2; y++)
         scroll_buffer.transfer(std::move(m_lines[y]));
     }
-    void initialize_lines(curpos_t y1, curpos_t y2, attribute_t const& fill_attr) {
+    void initialize_lines(curpos_t y1, curpos_t y2, cattr_t const& fill_attr) {
       for (curpos_t y = y1; y < y2; y++) {
         m_lines[y].clear(m_width, fill_attr);
         m_lines[y].set_id(m_line_count++);
@@ -276,7 +278,7 @@ namespace ansi {
     /// @param[in] count 移動量を指定します。正の値を指定した時、
     ///   下方向にシフトします。負の値を指定した時、上方向にシフトします。
     /// @param[in] fill_attr 新しく現れた行に適用する描画属性を指定します。
-    void shift_lines(curpos_t y1, curpos_t y2, curpos_t count, attribute_t const& fill_attr, term_scroll_buffer_t* scroll_buffer = nullptr) {
+    void shift_lines(curpos_t y1, curpos_t y2, curpos_t count, cattr_t const& fill_attr, term_scroll_buffer_t* scroll_buffer = nullptr) {
       y1 = contra::clamp(y1, 0, m_height);
       y2 = contra::clamp(y2, 0, m_height);
       if (y1 >= y2 || count == 0) return;
@@ -397,7 +399,7 @@ namespace ansi {
     std::uint32_t mouse_mode = 0;
     std::uint32_t m_funckey_flags = 0x22222200;
 
-    tstate_t(term_t* term): m_term(term) {
+    tstate_t(term_t* term, attribute_table& atable): m_term(term), m_decsc_cur(atable), altscreen(atable) {
       this->clear();
     }
 
@@ -600,9 +602,9 @@ namespace ansi {
 
   class term_t: public contra::idevice {
   private:
-    tstate_t m_state {this};
-    board_t m_board;
     attribute_table m_atable;
+    tstate_t m_state {this, this->m_atable};
+    board_t m_board;
     frame_snapshot_list m_snapshots;
   public:
     tstate_t& state() { return this->m_state; }
@@ -623,7 +625,7 @@ namespace ansi {
     }
 
   public: // todo: make private
-    term_scroll_buffer_t m_scroll_buffer;
+    term_scroll_buffer_t m_scroll_buffer {&this->m_atable};
   public:
     term_scroll_buffer_t const& scroll_buffer() const {
       return this->m_scroll_buffer;
@@ -652,7 +654,7 @@ namespace ansi {
 
   public:
     term_t(curpos_t width, curpos_t height, coord_t xunit = 7, coord_t yunit = 13):
-      m_board(width, height, xunit, yunit) {}
+      m_board(m_atable, width, height, xunit, yunit) {}
 
   public:
     curpos_t width() const { return this->m_board.width(); }
@@ -673,7 +675,6 @@ namespace ansi {
     }
 
   public:
-
     curpos_t tmargin() const {
       curpos_t const b = m_state.dec_tmargin;
       return 0 <= b && b < m_board.height() ? b : 0;
@@ -730,14 +731,11 @@ namespace ansi {
       return implicit_slh(m_board.line(m_board.cur.y()));
     }
 
-    attribute_t fill_attr() const {
+    cattr_t fill_attr() const {
       if (m_state.get_mode(mode_bce)) {
-        attribute_t const& src = m_board.cur.abuild.attr();
-        attribute_t ret;
-        ret.set_bg(src.bg_space(), src.bg_color());
-        return ret;
+        return m_board.cur.abuild.fill_attr();
       } else {
-        return {};
+        return 0;
       }
     }
 

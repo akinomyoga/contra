@@ -358,7 +358,6 @@ namespace ansi {
     attribute_t const& attr() const { return m_attribute; }
     void set_attr(attribute_t const& attr) { this->m_attribute = attr; }
 
-    attribute1_builder() {}
     attribute1_builder(attribute1_table&) {}
 
   public:
@@ -443,7 +442,7 @@ namespace ansi {
     std::vector<entry> table;
     attr_t freep = 0;
 
-    std::uint32_t max_size = 0x1000;
+    std::uint32_t max_size = 0x100000;
 
   private:
     entry& resolve(attr_t const& attr) {
@@ -455,6 +454,26 @@ namespace ansi {
   public:
     attribute_t& extended(attr_t const& attr) { return resolve(attr).attr; }
     attribute_t const& extended(attr_t const& attr) const { return resolve(attr).attr; }
+
+    void get_extended(attribute_t& exattr, attr_t const& attr) const {
+      if (attr & attr_extended) {
+        exattr = resolve(attr).attr;
+      } else {
+        exattr.aflags = (std::uint32_t) attr & attr_common_mask;
+        exattr.xflags = 0;
+        exattr.fg = 0;
+        exattr.bg = 0;
+        exattr.dc = 0;
+        if (attr & attr_fg_set) {
+          exattr.aflags |= color_space_indexed << aflags_fg_space_shift;
+          exattr.fg = (std::uint32_t) (attr & attr_fg_mask) >> attr_fg_shift;
+        }
+        if (attr & attr_bg_set) {
+          exattr.aflags |= color_space_indexed << aflags_bg_space_shift;
+          exattr.bg = (std::uint32_t) (attr & attr_bg_mask) >> attr_bg_shift;
+        }
+      }
+    }
 
   public:
     attr_t save(attribute_t const& attr) {
@@ -476,6 +495,7 @@ namespace ansi {
     }
 
   public:
+    bool is_default(attr_t const& attr) const { return attr == 0; }
     byte fg_space(attr_t const& attr) const {
       if (attr & attr_extended) {
         return std::uint32_t(extended(attr).aflags & aflags_fg_space_mask) >> aflags_fg_space_shift;
@@ -523,11 +543,11 @@ namespace ansi {
       }
     }
 
-    aflags_t aflags(attr_t const& attr) {
+    aflags_t aflags(attr_t const& attr) const {
       if (attr & attr_extended) return extended(attr).aflags;
       return (std::uint32_t) attr & attr_common_mask;
     }
-    xflags_t xflags(attr_t const& attr) {
+    xflags_t xflags(attr_t const& attr) const {
       if (attr & attr_extended) return extended(attr).xflags;
       return 0;
     }
@@ -548,14 +568,29 @@ namespace ansi {
       return bool(aflags & attr_blink_mask);
     }
 
+    bool is_protected(attr_t const& attr) const {
+      return (attr & attr_extended) &&
+        (extended(attr).xflags & (xflags_spa_protected | xflags_daq_protected));
+    }
+    bool is_guarded(attr_t const& attr) const {
+      return (attr & attr_extended) &&
+        (extended(attr).xflags & (xflags_spa_protected | xflags_daq_guarded));
+    }
+
     // todo: mark/sweep
   };
 
   struct attribute2_builder {
     attribute2_table* m_table = nullptr;
     attribute_t       m_attribute;
-    mutable bool      m_attribute_dirty = false;
+
+    attr_t m_attr_selected = 0;
+
     mutable attr_t    m_attr = 0;
+    mutable bool      m_attribute_dirty = false;
+
+    mutable attr_t    m_fill_attr = 0;
+    mutable bool      m_fill_dirty = false;
 
   public:
     attribute2_builder(attribute2_table& table): m_table(&table) {}
@@ -563,21 +598,46 @@ namespace ansi {
   public:
     attr_t attr() const {
       if (!(m_attr & attr_extended))
-        return m_attr;
+        return m_attr | m_attr_selected;
       if (!m_attribute_dirty)
-        return m_attr;
+        return m_attr | m_attr_selected;
 
       if ((m_attribute.aflags & aflags_extension_mask) || m_attribute.xflags) {
         m_attr = m_table->save(m_attribute);
         m_attribute_dirty = false;
       } else {
-        reduce();
+        reduce(m_attr, m_attribute);
       }
-      return m_attr;
+      return m_attr | m_attr_selected;
     }
+
+    attr_t fill_attr() const {
+      if (m_fill_dirty) {
+        m_fill_dirty = false;
+        int const space = m_attribute.bg_space();
+        color_t const bg = m_attribute.bg_color();
+        switch (space) {
+        case color_space_default: m_fill_attr = 0; break;
+        case color_space_indexed: m_fill_attr = attr_bg_set | bg << attr_bg_shift; break;
+        default:
+          {
+            attribute_t attribute;
+            attribute.aflags = space << aflags_bg_space_shift & aflags_bg_space_mask;
+            attribute.bg = bg;
+            m_fill_attr = m_table->save(attribute);
+          }
+          break;
+        }
+      }
+
+      return m_fill_attr;
+    }
+
     void set_attr(attr_t attr) {
       m_attr = attr;
+      m_fill_dirty = true;
       if (attr & attr_extended) {
+        m_attr = attr;
         m_attribute = m_table->extended(attr);
         m_attribute_dirty = false;
       }
@@ -585,25 +645,30 @@ namespace ansi {
 
   private:
     void extend() {
-      m_attribute.aflags = (std::uint32_t) m_attr & attr_common_mask;
-      m_attribute.xflags = 0;
-      if (m_attr & attr_fg_set) {
-        m_attribute.aflags |= color_space_indexed << aflags_fg_space_shift;
-        m_attribute.fg = (std::uint32_t) (m_attr & attr_fg_mask) >> attr_fg_shift;
-      }
-      if (m_attr & attr_bg_set) {
-        m_attribute.aflags |= color_space_indexed << aflags_bg_space_shift;
-        m_attribute.bg = (std::uint32_t) (m_attr & attr_bg_mask) >> attr_bg_shift;
-      }
+      m_table->get_extended(m_attribute, m_attr);
       m_attr = attr_extended;
       m_attribute_dirty = true;
     }
-    void reduce() const {
-      m_attr = (std::uint32_t) m_attribute.aflags & attr_common_mask;
-      if (m_attribute.aflags & aflags_fg_space_mask)
-        m_attr |= attr_fg_set | m_attribute.fg << attr_fg_shift;
-      if (m_attribute.aflags & aflags_bg_space_mask)
-        m_attr |= attr_bg_set | m_attribute.bg << attr_bg_shift;
+    void reduce(attr_t& attr, attribute_t const& attribute) const {
+      attr = (std::uint32_t) attribute.aflags & attr_common_mask;
+      if (attribute.aflags & aflags_fg_space_mask)
+        attr |= attr_fg_set | attribute.fg << attr_fg_shift;
+      if (attribute.aflags & aflags_bg_space_mask)
+        attr |= attr_bg_set | attribute.bg << attr_bg_shift;
+    }
+
+  public:
+    void set_ssa()   { m_attr_selected |= attr_selected; }
+    void clear_ssa() { m_attr_selected &= ~attr_selected; }
+
+  public:
+    void clear_sgr() {
+      if (!(m_attr & attr_extended)) {
+        m_attr = 0;
+      } else {
+        m_attribute.clear_sgr();
+        m_attribute_dirty = true;
+      }
     }
 
   public:
@@ -624,6 +689,7 @@ namespace ansi {
       m_attribute_dirty = true;
     }
     void set_bg(color_t bg, int space) {
+      m_fill_dirty = true;
       if (!(m_attr & attr_extended)) {
         if (space == color_space_default) {
           m_attr &= ~(attr_bg_set | attr_bg_mask);
@@ -649,6 +715,10 @@ namespace ansi {
       m_attribute.aflags.reset(aflags_dc_space_mask, space << aflags_dc_space_shift);
       m_attribute_dirty = true;
     }
+
+    void reset_fg() { set_fg(0, color_space_default); }
+    void reset_bg() { set_bg(0, color_space_default); }
+    void reset_dc() { set_dc(0, color_space_default); }
 
   private:
     void reset_common_attr(attr0_t mask, attr0_t value) {
@@ -741,15 +811,45 @@ namespace ansi {
 
     void set_mintty_subsup(xflags_t subsup)  { reset_xflags(xflags_mintty_subsup_mask, subsup); }
     void clear_mintty_subsup()               { clear_xflags(xflags_mintty_subsup_mask); }
+
+    void set_sco(xflags_t sco) { reset_xflags(xflags_sco_mask, sco); }
+    void clear_sco()           { clear_xflags(xflags_sco_mask); }
+    void set_decsca()          { set_xflags(xflags_decsca_protected); }
+    void clear_decsca()        { clear_xflags(xflags_decsca_protected); }
+    void set_spa()             { set_xflags(xflags_spa_protected); }
+    void clear_spa()           { clear_xflags(xflags_spa_protected); }
+
+    void plu() {
+      if (m_attribute.xflags & xflags_sub_set)
+        clear_xflags(xflags_sub_set);
+      else
+        set_xflags(xflags_sup_set);
+    }
+    void pld() {
+      if (m_attribute.xflags & xflags_sup_set)
+        clear_xflags(xflags_sup_set);
+      else
+        set_xflags(xflags_sub_set);
+    }
+
+  public:
+    bool is_decsca_protected() const {
+      return (m_attr & attr_extended) &&
+        (m_attribute.xflags & xflags_decsca_protected);
+    }
+    bool is_double_width() const {
+      return (m_attr & attr_extended) &&
+        (m_attribute.xflags & xflags_decdhl_mask);
+    }
   };
 
-  typedef attribute1_table attribute_table;
-  typedef attribute1_builder attribute_builder;
-  typedef attribute_t cattr_t;
+  // typedef attribute1_table attribute_table;
+  // typedef attribute1_builder attribute_builder;
+  // typedef attribute_t cattr_t;
 
-  // typedef attribute2_table attribute_table;
-  // typedef attribute2_builder attribute_builder;
-  // typedef attr_t cattr_t;
+  typedef attribute2_table attribute_table;
+  typedef attribute2_builder attribute_builder;
+  typedef attr_t cattr_t;
 
 }
 }
