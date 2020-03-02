@@ -70,7 +70,7 @@ namespace contra::ansi {
   constexpr int    attr_bg_shift = 8;
   constexpr attr_t attr_fg_set   = 0x010000;
   constexpr attr_t attr_bg_set   = 0x020000;
-  constexpr attr0_t attr_selected = 1 << 30;
+  constexpr attr_t attr_selected = 1 << 30;
   constexpr attr_t attr_extended = 1 << 31;
   constexpr attr_t attr_extended_refmask = 0x3FFFFFFF;
 
@@ -107,10 +107,9 @@ namespace contra::ansi {
   constexpr int      aflags_font_shift     = 12;
   constexpr aflags_t aflags_reserved_bit1  = 1 << 16;
   constexpr aflags_t aflags_reserved_bit2  = 1 << 17;
-  constexpr aflags_t aflags_reserved_bit3  = 1 << 30;
-  constexpr aflags_t aflags_reserved_bit4  = 1 << 31;
   constexpr aflags_t aflags_extension_mask = 0x0000FFEE;
   constexpr aflags_t aflags_non_sgr_mask   = 0xC0000000;
+  constexpr aflags_t aflags_gcmark         = 1 << 30;
 
   // xflags_t [uudd --hh oooQ ffOP iiii rrrr rQQQ Q---]
 
@@ -317,132 +316,25 @@ namespace ansi {
       this->bg = 0;
       this->dc = 0;
     }
-
-  public:
-    constexpr bool is_decsca_protected() const {
-      return (bool) (xflags & xflags_decsca_protected);
-    }
-    void unselect() { aflags &= ~attr_selected; }
-    void select()   { aflags |= attr_selected; }
-    constexpr bool guarded() const {
-      return bool(xflags & (xflags_spa_protected | xflags_daq_guarded));
-    }
-  };
-
-  struct attribute1_table {
-    static byte fg_space(attribute_t const& attr) { return attr.fg_space(); }
-    static color_t fg_color(attribute_t const& attr) { return attr.fg_color(); }
-    static byte bg_space(attribute_t const& attr) { return attr.bg_space(); }
-    static color_t bg_color(attribute_t const& attr) { return attr.bg_color(); }
-    static byte dc_space(attribute_t const& attr) { return attr.dc_space(); }
-    static color_t dc_color(attribute_t const& attr) { return attr.dc_color(); }
-    static bool is_inverse(attribute_t const& attr) {
-      return bool(attr.aflags & attr_inverse_set);
-    }
-    static bool is_invisible(attribute_t const& attr) {
-      return bool(attr.aflags & attr_invisible_set);
-    }
-    static bool is_selected(attribute_t const& attr) {
-      return bool(attr.aflags & attr_selected);
-    }
-    static bool is_blinking(attribute_t const& attr) {
-      return bool(attr.aflags & attr_blink_mask);
-    }
-
-    static xflags_t xflags(attribute_t const& attr) { return attr.xflags; }
-    static aflags_t aflags(attribute_t const& attr) { return attr.aflags; }
-  };
-
-  struct attribute1_builder {
-    attribute_t m_attribute;
-    attribute_t const& attr() const { return m_attribute; }
-    void set_attr(attribute_t const& attr) { this->m_attribute = attr; }
-
-    attribute1_builder(attribute1_table&) {}
-
-  public:
-    bool is_double_width() const { return (bool) (m_attribute.xflags & xflags_decdhl_mask); }
-
-    void reset_fg() { m_attribute.reset_fg(); }
-    void reset_bg() { m_attribute.reset_bg(); }
-    void reset_dc() { m_attribute.reset_dc(); }
-    void set_fg(color_t index, std::uint32_t colorSpace = color_space_indexed) { m_attribute.set_fg(index, colorSpace); }
-    void set_bg(color_t index, std::uint32_t colorSpace = color_space_indexed) { m_attribute.set_bg(index, colorSpace); }
-    void set_dc(color_t index, std::uint32_t colorSpace = color_space_indexed) { m_attribute.set_dc(index, colorSpace); }
-    void clear_sgr() { m_attribute.clear_sgr(); }
-    void clear() { m_attribute.clear(); }
-
-    void set_weight(attr0_t weight)       { m_attribute.aflags.reset(attr_weight_mask, weight); }
-    void clear_weight()                   { m_attribute.aflags &= ~attr_weight_mask; }
-    void set_shape(attr0_t shape)         { m_attribute.aflags.reset(attr_shape_mask, shape); }
-    void clear_shape()                    { m_attribute.aflags &= ~attr_shape_mask; }
-    void set_underline(attr0_t underline) { m_attribute.aflags.reset(attr_underline_mask, underline); }
-    void clear_underline()                { m_attribute.aflags &= ~attr_underline_mask; }
-    void set_blink(attr0_t blink)         { m_attribute.aflags.reset(attr_blink_mask, blink); }
-    void clear_blink()                    { m_attribute.aflags &= ~attr_blink_mask; }
-    void set_inverse()                    { m_attribute.aflags |= attr_inverse_set; }
-    void clear_inverse()                  { m_attribute.aflags &= ~attr_inverse_set; }
-    void set_invisible()                  { m_attribute.aflags |= attr_invisible_set; }
-    void clear_invisible()                { m_attribute.aflags &= ~attr_invisible_set; }
-    void set_strike()                     { m_attribute.aflags |= attr_strike_set; }
-    void clear_strike()                   { m_attribute.aflags &= ~attr_strike_set; }
-
-    void set_font(aflags_t font)             { m_attribute.aflags.reset(aflags_font_mask, font); }
-    void clear_font()                        { m_attribute.aflags &= ~aflags_font_mask; }
-
-    void set_proportional()                  { m_attribute.xflags |= xflags_proportional_set; }
-    void clear_proportional()                { m_attribute.xflags &= ~xflags_proportional_set; }
-    void set_frame(xflags_t frame)           { m_attribute.xflags.reset(xflags_frame_mask, frame); }
-    void clear_frame()                       { m_attribute.xflags &= ~xflags_frame_mask; }
-    void set_overline()                      { m_attribute.xflags |= xflags_overline_set; }
-    void clear_overline()                    { m_attribute.xflags &= ~xflags_overline_set; }
-    void set_ideogram(xflags_t ideogram)     { m_attribute.xflags.reset(xflags_ideogram_mask, ideogram); }
-    void clear_ideogram()                    { m_attribute.xflags &= ~xflags_ideogram_mask; }
-
-    void set_decdhl(xflags_t decdhl)         { m_attribute.xflags.reset(xflags_decdhl_mask, decdhl); }
-    void clear_decdhl()                      { m_attribute.xflags &= ~xflags_decdhl_mask; }
-
-    void set_rlogin_rline(xflags_t ideogram) { m_attribute.xflags.reset(xflags_rlogin_rline_mask, ideogram); }
-    void set_rlogin_lline(xflags_t ideogram) { m_attribute.xflags.reset(xflags_rlogin_lline_mask, ideogram); }
-    void set_rlogin_double_strike()          { m_attribute.xflags |= xflags_rlogin_double_strike; }
-    void clear_rlogin_ideogram()             { m_attribute.xflags &= ~xflags_rlogin_ideogram_mask; }
-
-    void set_mintty_subsup(xflags_t subsup)  { m_attribute.xflags.reset(xflags_mintty_subsup_mask, subsup); }
-    void clear_mintty_subsup()               { m_attribute.xflags &= ~xflags_mintty_subsup_mask; }
-
-    void set_sco(xflags_t sco) { m_attribute.xflags.reset(xflags_sco_mask, sco); }
-    void clear_sco()           { m_attribute.xflags &= ~xflags_sco_mask; }
-    void set_decsca()          { m_attribute.xflags |= xflags_decsca_protected; }
-    void clear_decsca()        { m_attribute.xflags &= ~xflags_decsca_protected; }
-    void set_spa()             { m_attribute.xflags |= xflags_spa_protected; }
-    void clear_spa()           { m_attribute.xflags &= ~xflags_spa_protected; }
-    void set_ssa()             { m_attribute.aflags |= attr_selected; }
-    void clear_ssa()           { m_attribute.aflags &= ~attr_selected; }
-    void plu() {
-      if (m_attribute.xflags & xflags_sub_set)
-        m_attribute.xflags &= ~xflags_sub_set;
-      else
-        m_attribute.xflags |= xflags_sup_set;
-    }
-    void pld() {
-      if (m_attribute.xflags & xflags_sup_set)
-        m_attribute.xflags &= ~xflags_sup_set;
-      else
-        m_attribute.xflags |= xflags_sub_set;
-    }
   };
 
   class attribute2_table {
     struct entry {
       attribute_t attr;
-      attr_t listp;
-      entry(attribute_t const& attr): attr(attr), listp(0) {}
+      entry(attribute_t const& attr): attr(attr) {}
     };
 
     std::vector<entry> table;
-    attr_t freep = 0;
 
     std::uint32_t max_size = 0x100000;
+
+    std::vector<attr_t*> gc_references;
+    std::uint32_t m_gc_count = 0;
+
+  public:
+    std::uint32_t gc_count() const {
+      return m_gc_count;
+    }
 
   private:
     entry& resolve(attr_t const& attr) {
@@ -477,14 +369,8 @@ namespace ansi {
 
   public:
     attr_t save(attribute_t const& attr) {
-      if (freep) {
-        attr_t const ret = freep;
-        entry& ent = resolve(ret);
-        freep = ent.listp;
-        ent.attr = attr;
-        ent.listp = 0;
-        return ret;
-      } else if (table.size() < max_size) {
+      if (table.size() < max_size) {
+        m_gc_count++;
         attr_t const ret = attr_extended | (std::uint32_t) table.size();
         table.emplace_back(attr);
         return ret;
@@ -577,7 +463,34 @@ namespace ansi {
         (extended(attr).xflags & (xflags_spa_protected | xflags_daq_guarded));
     }
 
-    // todo: mark/sweep
+  public:
+    void mark(attr_t* attr) {
+      if (*attr & attr_extended) {
+        extended(*attr).aflags |= aflags_gcmark;
+        gc_references.push_back(attr);
+      }
+    }
+
+    void sweep() {
+      // sweep&compaction
+      std::vector<attr_t> gc_compaction_map(table.size(), 0);
+      std::size_t j = 0;
+      for (std::size_t i = 0; i < table.size(); i++) {
+        entry& ent = table[i];
+        if (ent.attr.aflags & aflags_gcmark) {
+          ent.attr.aflags &= ~aflags_gcmark;
+          if (i != j) table[j] = table[i];
+          gc_compaction_map[i] = (std::uint32_t) j | attr_extended;
+          j++;
+        }
+      }
+
+      // 参照の書き換え
+      for (attr_t* ref : gc_references)
+        *ref = gc_compaction_map[(std::uint32_t)(*ref & attr_extended_refmask)];
+      gc_references.clear();
+      m_gc_count = 0;
+    }
   };
 
   struct attribute2_builder {
@@ -641,6 +554,13 @@ namespace ansi {
         m_attribute = m_table->extended(attr);
         m_attribute_dirty = false;
       }
+    }
+
+    void gc_mark() {
+      if (!m_attribute_dirty)
+        m_table->mark(&m_attr);
+      if (!m_fill_dirty)
+        m_table->mark(&m_fill_attr);
     }
 
   private:

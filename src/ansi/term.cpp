@@ -1526,6 +1526,8 @@ namespace ansi {
     if (params.size() == 0 || !term.state().get_mode(mode_grcm))
       do_sgr_parameter(term, 0, params);
 
+    term.gc(0x100000);
+
     csi_single_param_t value;
     while (params.read_param(value, 0))
       do_sgr_parameter(term, value, params);
@@ -1538,15 +1540,18 @@ namespace ansi {
     params.read_param(param, 0);
     if (param > 7) return false;
 
+    term.gc(0x100000);
     term.board().cur.abuild.set_sco(param << xflags_sco_shift);
     return true;
   }
 
   void do_plu(term_t& term) {
+    term.gc(0x100000);
     term.board().cur.abuild.plu();
   }
 
   void do_pld(term_t& term) {
+    term.gc(0x100000);
     term.board().cur.abuild.pld();
   }
 
@@ -1555,6 +1560,7 @@ namespace ansi {
     params.read_param(param, 0);
     if (param > 2) return false;
 
+    term.gc(0x100000);
     if (param == 1)
       term.board().cur.abuild.set_decsca();
     else
@@ -1563,15 +1569,19 @@ namespace ansi {
   }
 
   void do_spa(term_t& term) {
+    term.gc(0x100000);
     term.board().cur.abuild.set_spa();
   }
   void do_epa(term_t& term) {
+    term.gc(0x100000);
     term.board().cur.abuild.clear_spa();
   }
   void do_ssa(term_t& term) {
+    term.gc(0x100000);
     term.board().cur.abuild.set_ssa();
   }
   void do_esa(term_t& term) {
+    term.gc(0x100000);
     term.board().cur.abuild.clear_ssa();
   }
 
@@ -2927,7 +2937,18 @@ namespace ansi {
   }
   frame_snapshot_list::~frame_snapshot_list() {
     std::vector<frame_snapshot_t*> snapshots(std::move(m_data));
-    for (frame_snapshot_t* snapshot : snapshots) snapshot->reset();
+    for (frame_snapshot_t* snapshot: snapshots) snapshot->reset();
+  }
+
+  void term_t::gc(std::uint32_t threshold) {
+    if (m_atable.gc_count() < threshold) return;
+    m_board.gc_mark();
+    m_scroll_buffer.gc_mark();
+    state().m_decsc_cur.abuild.gc_mark();
+    state().altscreen.gc_mark();
+    for (frame_snapshot_t* snapshot: m_snapshots.m_data)
+      snapshot->gc_mark(m_atable);
+    m_atable.sweep();
   }
 
 }

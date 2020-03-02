@@ -247,6 +247,7 @@ namespace ansi {
     }
 
   public:
+    std::vector<cell_t>& cells() { return m_cells; }
     std::vector<cell_t> const& cells() const { return m_cells; }
     line_attr_t& lflags() { return m_lflags; }
     line_attr_t const& lflags() const { return m_lflags; }
@@ -255,6 +256,7 @@ namespace ansi {
     curpos_t& limit() { return m_limit; }
     curpos_t const& limit() const { return m_limit; }
 
+  public:
     bool has_protected_cells() const {
       return std::any_of(m_cells.begin(), m_cells.end(),
         [this] (cell_t const& cell) { return atable->is_protected(cell.attribute); });
@@ -305,6 +307,11 @@ namespace ansi {
     void clear_content(curpos_t width, cattr_t const& attr) {
       this->clear_content();
       this->_initialize_content(width, attr);
+    }
+
+    void gc_mark() {
+      for (auto& cell : m_cells)
+        atable->mark(&cell.attribute);
     }
 
   private:

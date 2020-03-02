@@ -2162,6 +2162,8 @@ namespace ansi {
 
       // ToDo: 二重チェックになっている気がする。もっと効率的な実装?
       m_tracer.store(wstat, view);
+
+      view.term().gc(0x1000);
     }
 
   };

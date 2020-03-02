@@ -163,6 +163,11 @@ namespace ansi {
     iterator end() { return {this, data.size()}; }
     const_iterator begin() const { return {this, (std::size_t) 0}; }
     const_iterator end() const { return {this, data.size()}; }
+
+  public:
+    void gc_mark() {
+      for (auto& line : data) line.gc_mark();
+    }
   };
 
   struct board_t {
@@ -331,6 +336,12 @@ namespace ansi {
         line.clear();
         line.set_id(m_line_count++);
       }
+    }
+
+  public:
+    void gc_mark() {
+      cur.abuild.gc_mark();
+      for (auto& line : m_lines) line.gc_mark();
     }
 
   public:
@@ -615,6 +626,8 @@ namespace ansi {
     attribute_table const& atable() const { return this->m_atable; }
     frame_snapshot_list& snapshots() { return m_snapshots; }
     frame_snapshot_list const& snapshots() const { return m_snapshots; }
+
+    void gc(std::uint32_t threshold = 0);
 
   public:
     void reset_size(curpos_t width, curpos_t height) {
@@ -1058,6 +1071,14 @@ namespace ansi {
     }
     ~frame_snapshot_t() {
       this->set_parent(nullptr);
+    }
+
+    void gc_mark(attribute_table& atable) {
+      for (auto& line: lines) {
+        for (auto& cell: line.content) {
+          atable.mark(&cell.attribute);
+        }
+      }
     }
   };
 
