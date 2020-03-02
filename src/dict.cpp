@@ -178,7 +178,7 @@ void tty_writer::update_sgrcolor(
   ) {
     sgr_put(sgrcolor.iso8613.sgr);
     put(sgrcolor.iso8613.separater);
-    put_unsigned(colorSpaceNew);
+    put_unsigned(color_space_tosgr(colorSpaceNew));
 
     if (colorSpaceNew == color_space_indexed) {
       if (colorNew <= sgrcolor.iso8613.max_index) {

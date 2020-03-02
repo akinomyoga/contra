@@ -55,16 +55,16 @@ namespace dict {
      *   その場合には、一貫した動作をさせる為には必ず既に設定されている装飾を解除する必要がある。
      *   この設定項目は出力先の端末で ideogram decorations が排他的かどうかを保持する。
      */
-    unsigned single_rb {60};
-    unsigned double_rb {61};
-    unsigned single_lt {62};
-    unsigned double_lt {63};
-    unsigned single_lb {66};
-    unsigned double_lb {67};
-    unsigned single_rt {68};
-    unsigned double_rt {69};
-    unsigned stress    {64};
-    unsigned reset     {65};
+    unsigned single_rb { 60 };
+    unsigned double_rb { 61 };
+    unsigned single_lt { 62 };
+    unsigned double_lt { 63 };
+    unsigned single_lb { 66 };
+    unsigned double_lb { 67 };
+    unsigned single_rt { 68 };
+    unsigned double_rt { 69 };
+    unsigned stress    { 64 };
+    unsigned reset     { 65 };
   };
 
   struct termcap_sgrcolor {

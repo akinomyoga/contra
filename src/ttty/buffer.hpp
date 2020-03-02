@@ -17,13 +17,9 @@ namespace ttty {
     term_view_t* view;
 
     // 端末の状態追跡の為の変数
-    struct line_buffer_t {
-      std::uint32_t id = (std::uint32_t) -1;
-      std::uint32_t version = 0;
-      std::vector<cell_t> content;
-      int delta;
-    };
-    std::vector<line_buffer_t> screen_buffer;
+    frame_snapshot_t snapshot;
+    std::vector<int> snapshot_delta;
+
     bool prev_decscnm = false;
 
     byte prev_fg_space = 0;
@@ -138,12 +134,13 @@ namespace ttty {
      */
     void trace_line_scroll() {
       curpos_t const height = view->height();
+      snapshot_delta.resize(height, -1);
       curpos_t j = 0;
       for (curpos_t i = 0; i < height; i++) {
-        screen_buffer[i].delta = height;
+        snapshot_delta[i] = height;
         for (curpos_t k = j; k < height; k++) {
-          if (view->line(k).id() == screen_buffer[i].id) {
-            screen_buffer[i].delta = k - i;
+          if (view->line(k).id() == snapshot.lines[i].id) {
+            snapshot_delta[i] = k - i;
             j = k + 1;
             break;
           }
@@ -152,10 +149,10 @@ namespace ttty {
 
 #ifndef NDEBUG
       // for (curpos_t i = 0; i < height; i++) {
-      //   if (screen_buffer[i].id != (std::uint32_t) -1) {
+      //   if (snapshot.lines[i].id != (std::uint32_t) -1) {
       //     for (curpos_t k = i + 1; k < height; k++) {
-      //       if (screen_buffer[i].id == screen_buffer[k].id) {
-      //         std::fprintf(file, "ERROR DUPID: screen_buffer[%d] and screen_buffer[%d] has same id %d\n", i, k, screen_buffer[i].id);
+      //       if (snapshot.lines[i].id == snapshot.dat[k].id) {
+      //         std::fprintf(file, "ERROR DUPID: snapshot.lines[%d] and snapshot.lines[%d] has same id %d\n", i, k, snapshot.lines[i].id);
       //         break;
       //       }
       //     }
@@ -170,8 +167,8 @@ namespace ttty {
       int previous_shift = 0;
       int total_shift = 0;
       for (curpos_t i = 0; i < height; i++) {
-        if (screen_buffer[i].delta == height) continue;
-        int const new_shift = screen_buffer[i].delta - previous_shift;
+        if (snapshot_delta[i] == height) continue;
+        int const new_shift = snapshot_delta[i] - previous_shift;
         if (new_shift < 0) {
           move_to_line(i + new_shift + total_shift);
           put_dl(-new_shift);
@@ -180,7 +177,7 @@ namespace ttty {
           dbgD -= new_shift;
 #endif
         }
-        previous_shift = screen_buffer[i].delta;
+        previous_shift = snapshot_delta[i];
       }
       if (previous_shift > 0) {
         move_to_line(height - previous_shift + total_shift);
@@ -193,8 +190,8 @@ namespace ttty {
       // IL による行追加
       previous_shift = 0;
       for (curpos_t i = 0; i < height; i++) {
-        if (screen_buffer[i].delta == height) continue;
-        int const new_shift = screen_buffer[i].delta - previous_shift;
+        if (snapshot_delta[i] == height) continue;
+        int const new_shift = snapshot_delta[i] - previous_shift;
         if (new_shift > 0) {
           move_to_line(i + previous_shift);
           put_il(new_shift);
@@ -202,7 +199,7 @@ namespace ttty {
           dbgI += new_shift;
 #endif
         }
-        previous_shift = screen_buffer[i].delta;
+        previous_shift = snapshot_delta[i];
       }
       if (!is_terminal_bottom && previous_shift < 0) {
         move_to_line(height + previous_shift);
@@ -212,27 +209,27 @@ namespace ttty {
 #endif
       }
 
-      // screen_buffer の更新
+      // snapshot の更新
       previous_shift = 0;
       for (curpos_t i = 0; i < height; i++) {
-        if (screen_buffer[i].delta == height) {
-          screen_buffer[i].delta = previous_shift;
+        if (snapshot_delta[i] == height) {
+          snapshot_delta[i] = previous_shift;
           continue;
         }
-        int const new_shift = screen_buffer[i].delta - previous_shift;
+        int const new_shift = snapshot_delta[i] - previous_shift;
         for (curpos_t j = i + new_shift; j < i; j++) {
-          screen_buffer[j].delta = height;
-          screen_buffer[j].content.clear();
+          snapshot_delta[j] = height;
+          snapshot.lines[j].content.clear();
 #ifndef NDEBUG
           dbgC++;
 #endif
         }
-        previous_shift = screen_buffer[i].delta;
+        previous_shift = snapshot_delta[i];
       }
       if (previous_shift > 0) {
         for (curpos_t j = height - previous_shift; j < height; j++) {
-          screen_buffer[j].delta = height;
-          screen_buffer[j].content.clear();
+          snapshot_delta[j] = height;
+          snapshot.lines[j].content.clear();
 #ifndef NDEBUG
           dbgC++;
 #endif
@@ -241,17 +238,16 @@ namespace ttty {
       for (curpos_t i = 0; i < height; i++) {
         curpos_t const i0 = i;
         for (curpos_t j = i0; j <= i; j++) {
-          if (screen_buffer[j].delta == height) continue;
-          if (j + screen_buffer[j].delta >= i)
-            i = j + screen_buffer[j].delta;
+          if (snapshot_delta[j] == height) continue;
+          if (j + snapshot_delta[j] >= i)
+            i = j + snapshot_delta[j];
         }
         for (curpos_t j = i; i0 <= j; j--) {
-          int const delta = screen_buffer[j].delta;
+          int const delta = snapshot_delta[j];
           if (delta == height || delta == 0) continue;
           // j -> j + delta に移動して j にあった物は消去する
-          std::swap(screen_buffer[j + delta], screen_buffer[j]);
-          screen_buffer[j].id = -1;
-          //screen_buffer[j].content.clear();
+          std::swap(snapshot.lines[j + delta], snapshot.lines[j]);
+          snapshot.lines[j].id = -1;
         }
       }
 #ifndef NDEBUG
@@ -346,31 +342,78 @@ namespace ttty {
       erase_until_eol();
     }
 
-    void apply_default_attribute(std::vector<cell_t>& content) {
-      if (!view->fg_space() && !view->bg_space()) return;
-      for (auto& cell : content) {
-        if (view->fg_space() && cell.attribute.is_fg_default())
-          cell.attribute.set_fg(view->fg_color(), view->fg_space());
-        if (view->bg_space() && cell.attribute.is_bg_default())
-          cell.attribute.set_bg(view->bg_color(), view->bg_space());
+    struct apply_default_attribute_impl {
+      term_view_t* view;
+      byte fgspace;
+      byte bgspace;
+      color_t fgcolor;
+      color_t bgcolor;
+
+      attribute_table& atable;
+
+      bool hasprev = false;
+      cattr_t prev_attr;
+      attribute_builder abuild;
+
+      bool hasfill = false;
+      cell_t fill;
+
+      apply_default_attribute_impl(term_view_t* view):
+        view(view), atable(view->atable()), abuild(view->atable())
+      {
+        fgspace = view->fg_space();
+        bgspace = view->bg_space();
+        fgcolor = view->fg_color();
+        bgcolor = view->bg_color();
       }
-      curpos_t const width = view->width();
-      if (content.size() < (std::size_t) view->width() && (view->fg_space() || view->bg_space())) {
-        cell_t fill = ascii_nul;
-        fill.attribute.set_fg(view->fg_color(), view->fg_space());
-        fill.attribute.set_bg(view->bg_color(), view->bg_space());
+
+      void initialize_fill() {
+        if (hasfill) return;
+        hasfill = true;
+
+        attribute_builder abuild(atable);
+        abuild.set_fg(fgcolor, fgspace);
+        abuild.set_bg(bgcolor, bgspace);
+        fill.character = ascii_nul;
+        fill.attribute = abuild.attr();
         fill.width = 1;
-        content.resize(width, fill);
       }
-    }
+
+      void apply(std::vector<cell_t>& content) {
+        if (!fgspace && !bgspace) return;
+        for (auto& cell : content) {
+          if (hasprev && cell.attribute == prev_attr) {
+            cell.attribute = abuild.attr();
+            continue;
+          }
+
+          bool const setfg = fgspace && !atable.fg_space(cell.attribute);
+          bool const setbg = bgspace && !atable.bg_space(cell.attribute);
+          if (!setfg && !setbg) continue;
+
+          hasprev = true;
+          prev_attr = cell.attribute;
+          abuild.set_attr(cell.attribute);
+          if (setfg) abuild.set_fg(fgcolor, fgspace);
+          if (setbg) abuild.set_bg(bgcolor, bgspace);
+          cell.attribute = abuild.attr();
+        }
+
+        curpos_t const width = view->width();
+        if (content.size() < (std::size_t) view->width() && (fgspace || bgspace)) {
+          initialize_fill();
+          content.resize(width, fill);
+        }
+      }
+    };
 
     bool is_content_changed() const {
       curpos_t const height = view->height();
-      if ((curpos_t) screen_buffer.size() != height) return true;
+      if ((curpos_t) snapshot.lines.size() != height) return true;
       for (curpos_t y = 0; y < height; y++) {
         line_t const& line = view->line(y);
-        line_buffer_t const& line_buffer = screen_buffer[y];
-        if (line_buffer.id != line.id() || line_buffer.version != line.version()) return true;
+        auto const& snapshot_line = snapshot.lines[y];
+        if (snapshot_line.id != line.id() || snapshot_line.version != line.version()) return true;
       }
       return false;
     }
@@ -380,28 +423,26 @@ namespace ttty {
 
       curpos_t const height = view->height();
       if (full_update) {
-        screen_buffer.clear();
-        screen_buffer.resize(height, line_buffer_t());
+        snapshot.setup(*view);
         put_csiseq_pn1(2, ascii_J);
       }
       if (is_terminal_fullwidth)
         trace_line_scroll();
 
+      apply_default_attribute_impl default_attribute(view);
       for (curpos_t y = 0; y < height; y++) {
         line_t const& line = view->line(y);
-        line_buffer_t& line_buffer = screen_buffer[y];
-        if (full_update || line_buffer.id != line.id() || line_buffer.version != line.version()) {
+        auto& snapshot_line = snapshot.lines[y];
+        if (full_update || snapshot_line.id != line.id() || snapshot_line.version != line.version()) {
           go_to(0, y);
           view->order_cells_in(buff, position_client, line);
-          this->apply_default_attribute(buff);
-          this->render_line(buff, line_buffer.content);
+          default_attribute.apply(buff);
+          this->render_line(buff, snapshot_line.content);
 
-          line_buffer.version = line.version();
-          line_buffer.id = line.id();
-          line_buffer.content.swap(buff);
+          snapshot_line.version = line.version();
+          snapshot_line.id = line.id();
+          snapshot_line.content.swap(buff);
         }
-
-        if (y + 1 == height) break;
       }
       w.apply_attr(attribute_t {});
     }
@@ -415,6 +456,7 @@ namespace ttty {
       w.put_unsigned(25);
       w.put(value ? ascii_h : ascii_l);
     }
+
   public:
     void update() {
       view->update();

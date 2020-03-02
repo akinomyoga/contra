@@ -81,6 +81,20 @@ namespace contra::ansi {
   constexpr int color_space_cmy         = 3;
   constexpr int color_space_cmyk        = 4;
   constexpr int color_space_transparent = 5;
+  constexpr int color_space_tosgr(int colorSpace) {
+    switch (colorSpace) {
+    case color_space_indexed    : return 5; break;
+    case color_space_transparent: return 1; break;
+    default: return colorSpace;
+    }
+  }
+  constexpr int color_space_fromsgr(int sgr) {
+    switch (sgr) {
+    case 5: return color_space_indexed    ; break;
+    case 1: return color_space_transparent; break;
+    default: return sgr;
+    }
+  }
 
   // aflags_t [cccc cccc cccc ffff --ww ssuu ubbR HS--]
   constexpr aflags_t aflags_fg_space_mask  = 0x0000000F;
@@ -342,6 +356,10 @@ namespace ansi {
   struct attribute1_builder {
     attribute_t m_attribute;
     attribute_t const& attr() const { return m_attribute; }
+    void set_attr(attribute_t const& attr) { this->m_attribute = attr; }
+
+    attribute1_builder() {}
+    attribute1_builder(attribute1_table&) {}
 
   public:
     bool is_double_width() const { return (bool) (m_attribute.xflags & xflags_decdhl_mask); }
@@ -353,6 +371,7 @@ namespace ansi {
     void set_bg(color_t index, std::uint32_t colorSpace = color_space_indexed) { m_attribute.set_bg(index, colorSpace); }
     void set_dc(color_t index, std::uint32_t colorSpace = color_space_indexed) { m_attribute.set_dc(index, colorSpace); }
     void clear_sgr() { m_attribute.clear_sgr(); }
+    void clear() { m_attribute.clear(); }
 
     void set_weight(attr0_t weight)       { m_attribute.aflags.reset(attr_weight_mask, weight); }
     void clear_weight()                   { m_attribute.aflags &= ~attr_weight_mask; }
@@ -433,6 +452,7 @@ namespace ansi {
     entry const& resolve(attr_t const& attr) const {
       return table[std::uint32_t(attr & attr_extended_refmask)];
     }
+  public:
     attribute_t& extended(attr_t const& attr) { return resolve(attr).attr; }
     attribute_t const& extended(attr_t const& attr) const { return resolve(attr).attr; }
 
@@ -532,13 +552,13 @@ namespace ansi {
   };
 
   struct attribute2_builder {
-    attribute2_table& m_table;
+    attribute2_table* m_table = nullptr;
     attribute_t       m_attribute;
     mutable bool      m_attribute_dirty = false;
     mutable attr_t    m_attr = 0;
 
   public:
-    attribute2_builder(attribute2_table& table): m_table(table) {}
+    attribute2_builder(attribute2_table& table): m_table(&table) {}
 
   public:
     attr_t attr() const {
@@ -548,12 +568,19 @@ namespace ansi {
         return m_attr;
 
       if ((m_attribute.aflags & aflags_extension_mask) || m_attribute.xflags) {
-        m_attr = m_table.save(m_attribute);
+        m_attr = m_table->save(m_attribute);
         m_attribute_dirty = false;
       } else {
         reduce();
       }
       return m_attr;
+    }
+    void set_attr(attr_t attr) {
+      m_attr = attr;
+      if (attr & attr_extended) {
+        m_attribute = m_table->extended(attr);
+        m_attribute_dirty = false;
+      }
     }
 
   private:

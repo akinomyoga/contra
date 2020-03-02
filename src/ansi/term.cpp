@@ -1329,13 +1329,9 @@ namespace ansi {
   // SGR and other graphics
 
   static void do_sgr_iso8613_colors(board_t& b, csi_parameters& params, int type) {
-    csi_single_param_t colorSpace;
-    params.read_arg(colorSpace, true, 0);
-    // Note: セル表現の都合で入れ替えている
-    switch (colorSpace) {
-    case 1: colorSpace = color_space_transparent; break;
-    case 5: colorSpace = color_space_indexed; break;
-    }
+    csi_single_param_t param2;
+    params.read_arg(param2, true, 0);
+    int colorSpace = color_space_fromsgr(param2);
 
     color_t color;
     switch (colorSpace) {
@@ -2212,7 +2208,7 @@ namespace ansi {
           case ascii_l: return do_decrst(term, params);
           }
         } else if (seq.intermediate_size() == 1) {
-          if (seq.intermediate()[0] == ascii_dollar && seq.final() == ascii_y)
+          if (seq.intermediate()[0] == ascii_dollar && seq.final() == ascii_p)
             return do_decrqm_dec(term, params);
         }
       } else if (param[0] == '>') {
@@ -2374,8 +2370,8 @@ namespace ansi {
 
   void term_t::process_command_string(sequence const& seq) {
     auto _check2 = [&seq] (char32_t a, char32_t b) {
-                     return seq.parameter_size() >= 2 && seq.parameter()[0] == a && seq.parameter()[1] == b;
-                   };
+      return seq.parameter_size() >= 2 && seq.parameter()[0] == a && seq.parameter()[1] == b;
+    };
 
     if (seq.type() == ascii_osc) {
       if (_check2(ascii_0, ascii_semicolon)) {
@@ -2921,6 +2917,17 @@ namespace ansi {
     }
     input_flush();
     return true;
+  }
+
+  void frame_snapshot_list::remove(frame_snapshot_t* snapshot) {
+    m_data.erase(std::remove(m_data.begin(), m_data.end(), snapshot), m_data.end());
+  }
+  void frame_snapshot_list::add(frame_snapshot_t* snapshot) {
+    m_data.push_back(snapshot);
+  }
+  frame_snapshot_list::~frame_snapshot_list() {
+    std::vector<frame_snapshot_t*> snapshots(std::move(m_data));
+    for (frame_snapshot_t* snapshot : snapshots) snapshot->reset();
   }
 
 }

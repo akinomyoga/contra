@@ -578,11 +578,42 @@ namespace ansi {
     }
   };
 
+  /*?lwiki
+   * @class class frame_snapshot_t;
+   * @class struct frame_snapshot_list;
+   *   在る時点に於ける行の集合と状態を記録する為のクラスです。表示の
+   *   部分更新等を行う為に前回の表示内容を記録するのに使います。
+   *
+   *   セルの attr_t を通した拡張属性の参照を含む為、拡張属性の寿命管
+   *   理の為に term_t の側で文字列を比較する必要があります。その為に
+   *   各 frame_snapshot_t インスタンスを term_t のメンバである
+   *   frame_snapshot_list に登録を行います。
+   *
+   */
+  class frame_snapshot_t;
+  struct frame_snapshot_list {
+    std::vector<frame_snapshot_t*> m_data;
+    ~frame_snapshot_list();
+    void remove(frame_snapshot_t* snapshot);
+    void add(frame_snapshot_t* snapshot);
+  };
+
   class term_t: public contra::idevice {
   private:
     tstate_t m_state {this};
     board_t m_board;
     attribute_table m_atable;
+    frame_snapshot_list m_snapshots;
+  public:
+    tstate_t& state() { return this->m_state; }
+    tstate_t const& state() const { return this->m_state; }
+    board_t& board() { return this->m_board; }
+    board_t const& board() const { return this->m_board; }
+    attribute_table& atable() { return this->m_atable; }
+    attribute_table const& atable() const { return this->m_atable; }
+    frame_snapshot_list& snapshots() { return m_snapshots; }
+    frame_snapshot_list const& snapshots() const { return m_snapshots; }
+
   public:
     void reset_size(curpos_t width, curpos_t height) {
       m_board.reset_size(width, height);
@@ -642,11 +673,6 @@ namespace ansi {
     }
 
   public:
-    board_t& board() { return this->m_board; }
-    board_t const& board() const { return this->m_board; }
-    tstate_t& state() { return this->m_state; }
-    tstate_t const& state() const { return this->m_state; }
-    attribute_table const& atable() const { return this->m_atable; }
 
     curpos_t tmargin() const {
       curpos_t const b = m_state.dec_tmargin;
@@ -896,6 +922,9 @@ namespace ansi {
     term_view_t() {}
     term_view_t(term_t* term): m_term(term) {}
 
+  public:
+    term_t& term() const { return *m_term; }
+
   private:
     curpos_t m_scroll_amount = 0;
     curpos_t m_x, m_y;
@@ -955,7 +984,7 @@ namespace ansi {
 
     // Note: インターフェイスを小さくする為に将来的には廃止したい。
     tstate_t const& state() const { return m_term->state(); }
-    attribute_table const& atable() const { return m_term->atable(); }
+    attribute_table& atable() const { return m_term->atable(); }
 
   public:
     byte fg_space() const { return m_fg_space; }
@@ -992,6 +1021,45 @@ namespace ansi {
     void order_cells_in(std::vector<cell_t>& buffer, position_type to, line_t const& line) const {
       bool const r2l = m_term->board().line_r2l(line);
       line.order_cells_in(buffer, to, this->width(), r2l);
+    }
+  };
+
+  class frame_snapshot_t {
+    term_t* parent = nullptr;
+
+  public:
+    struct snapshot_line_t {
+      std::uint32_t id = (std::uint32_t) -1;
+      std::uint32_t version = 0;
+      std::vector<cell_t> content;
+    };
+    std::vector<snapshot_line_t> lines;
+
+  private:
+    void clear_content() {
+      for (auto& line : lines) {
+        line.id = -1;
+        line.content.clear();
+      }
+    }
+    void set_parent(term_t* parent) {
+      if (parent == this->parent) return;
+
+      if (this->parent) this->parent->snapshots().remove(this);
+      this->parent = parent;
+      if (this->parent) this->parent->snapshots().add(this);
+    }
+  public:
+    void setup(term_view_t const& view) {
+      clear_content();
+      this->set_parent(&view.term());
+      lines.resize(view.height(), snapshot_line_t());
+    }
+    void reset() {
+      this->set_parent(nullptr);
+    }
+    ~frame_snapshot_t() {
+      this->set_parent(nullptr);
     }
   };
 
