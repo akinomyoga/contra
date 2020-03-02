@@ -220,12 +220,12 @@ void tty_writer::update_sgrcolor(
     sgr_put(sgrcolor.off);
 }
 
-void tty_writer::apply_attr(cattr_t const& new_attr) {
-  cattr_t const& old_attr = this->m_attr;
+void tty_writer::apply_attr(attr_t const& new_attr) {
+  attr_t const& old_attr = this->m_attr;
   if (old_attr == new_attr) return;
 
   attribute_t new_attribute;
-  atable->get_extended(new_attribute, new_attr);
+  m_atable->get_extended(new_attribute, new_attr);
   attribute_t& old_attribute = this->m_attribute;
 
   if (new_attribute.is_default()) {

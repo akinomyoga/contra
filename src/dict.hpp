@@ -130,7 +130,7 @@ namespace dict {
   //-----------------------------------------------------------------------------
 
   struct tty_writer {
-    attribute_table* atable;
+    attr_table* m_atable;
 
     std::FILE* file;
 
@@ -138,11 +138,11 @@ namespace dict {
     termcap_sgr_type const* sgrcap;
     bool termcap_bce = false;
 
-    cattr_t m_attr = 0;
+    attr_t m_attr = 0;
     attribute_t m_attribute = 0;
     bool sgr_isOpen;
 
-    tty_writer(attribute_table& atable, std::FILE* file, termcap_sgr_type* sgrcap): atable(&atable), file(file), sgrcap(sgrcap) {
+    tty_writer(attr_table* atable, std::FILE* file, termcap_sgr_type* sgrcap): m_atable(atable), file(file), sgrcap(sgrcap) {
       m_attr = 0;
     }
 
@@ -184,7 +184,7 @@ namespace dict {
       termcap_sgrcolor const& sgrcolor);
 
   public:
-    void apply_attr(cattr_t const& newAttr);
+    void apply_attr(attr_t const& newAttr);
 
     void put_u32(char32_t c) const { contra::encoding::put_u8(c, file); }
     void put(char c) const { std::fputc(c, file); }
@@ -202,7 +202,7 @@ namespace dict {
 
   private:
     void put_skip(curpos_t& wskip) {
-      if (atable->is_default(m_attr) && wskip <= 4) {
+      if (m_atable->is_default(m_attr) && wskip <= 4) {
         while (wskip--) put(' ');
       } else {
         put(ascii_esc);

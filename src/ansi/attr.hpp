@@ -318,7 +318,7 @@ namespace ansi {
     }
   };
 
-  class attribute2_table {
+  class attr_table {
     struct entry {
       attribute_t attr;
       entry(attribute_t const& attr): attr(attr) {}
@@ -493,8 +493,8 @@ namespace ansi {
     }
   };
 
-  struct attribute2_builder {
-    attribute2_table* m_table = nullptr;
+  struct attr_builder {
+    attr_table* m_atable = nullptr;
     attribute_t       m_attribute;
 
     attr_t m_attr_selected = 0;
@@ -506,7 +506,7 @@ namespace ansi {
     mutable bool      m_fill_dirty = false;
 
   public:
-    attribute2_builder(attribute2_table& table): m_table(&table) {}
+    attr_builder(attr_table* atable): m_atable(atable) {}
 
   public:
     attr_t attr() const {
@@ -516,7 +516,7 @@ namespace ansi {
         return m_attr | m_attr_selected;
 
       if ((m_attribute.aflags & aflags_extension_mask) || m_attribute.xflags) {
-        m_attr = m_table->save(m_attribute);
+        m_attr = m_atable->save(m_attribute);
         m_attribute_dirty = false;
       } else {
         reduce(m_attr, m_attribute);
@@ -537,7 +537,7 @@ namespace ansi {
             attribute_t attribute;
             attribute.aflags = space << aflags_bg_space_shift & aflags_bg_space_mask;
             attribute.bg = bg;
-            m_fill_attr = m_table->save(attribute);
+            m_fill_attr = m_atable->save(attribute);
           }
           break;
         }
@@ -551,21 +551,21 @@ namespace ansi {
       m_fill_dirty = true;
       if (attr & attr_extended) {
         m_attr = attr;
-        m_attribute = m_table->extended(attr);
+        m_attribute = m_atable->extended(attr);
         m_attribute_dirty = false;
       }
     }
 
     void gc_mark() {
       if (!m_attribute_dirty)
-        m_table->mark(&m_attr);
+        m_atable->mark(&m_attr);
       if (!m_fill_dirty)
-        m_table->mark(&m_fill_attr);
+        m_atable->mark(&m_fill_attr);
     }
 
   private:
     void extend() {
-      m_table->get_extended(m_attribute, m_attr);
+      m_atable->get_extended(m_attribute, m_attr);
       m_attr = attr_extended;
       m_attribute_dirty = true;
     }
@@ -762,14 +762,6 @@ namespace ansi {
         (m_attribute.xflags & xflags_decdhl_mask);
     }
   };
-
-  // typedef attribute1_table attribute_table;
-  // typedef attribute1_builder attribute_builder;
-  // typedef attribute_t cattr_t;
-
-  typedef attribute2_table attribute_table;
-  typedef attribute2_builder attribute_builder;
-  typedef attr_t cattr_t;
 
 }
 }

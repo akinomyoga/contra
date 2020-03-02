@@ -266,14 +266,14 @@ namespace ansi {
 
   class color_resolver_t {
     tstate_t const* s = nullptr;
-    attribute_table const* atable = nullptr;
+    attr_table const* m_atable = nullptr;
     byte m_space = (byte) color_space_default;
     color_t m_color = color_t(-1);
     color_t m_rgba = 0;
 
   public:
     color_resolver_t() {}
-    color_resolver_t(tstate_t const& s, attribute_table const& atable): s(&s), atable(&atable) {}
+    color_resolver_t(tstate_t const& s, attr_table const* atable): s(&s), m_atable(atable) {}
 
   public:
     color_t resolve(byte space, color_t color) {
@@ -306,53 +306,53 @@ namespace ansi {
     }
 
   private:
-    std::pair<byte, color_t> get_fg(cattr_t const& attr) {
-      byte space = atable->fg_space(attr);
-      color_t color = atable->fg_color(attr);
+    std::pair<byte, color_t> get_fg(attr_t const& attr) {
+      byte space = m_atable->fg_space(attr);
+      color_t color = m_atable->fg_color(attr);
       if (space == 0) {
         space = s->m_default_fg_space;
         color = s->m_default_fg_color;
       }
       return {space, color};
     }
-    std::pair<byte, color_t> get_bg(cattr_t const& attr) {
-      byte space = atable->bg_space(attr);
-      color_t color = atable->bg_color(attr);
+    std::pair<byte, color_t> get_bg(attr_t const& attr) {
+      byte space = m_atable->bg_space(attr);
+      color_t color = m_atable->bg_color(attr);
       if (space == 0) {
         space = s->m_default_bg_space;
         color = s->m_default_bg_color;
       }
       return {space, color};
     }
-    std::pair<byte, color_t> get_dc(cattr_t const& attr) {
-      byte const space = atable->dc_space(attr);
-      color_t const color = atable->dc_color(attr);
+    std::pair<byte, color_t> get_dc(attr_t const& attr) {
+      byte const space = m_atable->dc_space(attr);
+      color_t const color = m_atable->dc_color(attr);
       if (space == 0)
         return get_fg(attr);
       else
         return {space, color};
     }
   public:
-    color_t resolve_fg(cattr_t const& attr) {
-      bool const inverse = atable->is_inverse(attr);
-      bool const selected = atable->is_selected(attr);
+    color_t resolve_fg(attr_t const& attr) {
+      bool const inverse = m_atable->is_inverse(attr);
+      bool const selected = m_atable->is_selected(attr);
       auto [space, color] = inverse != selected ? get_bg(attr) : get_fg(attr);
       if (space == m_space && color == m_color) return m_rgba;
       return resolve(space, color);
     }
 
-    color_t resolve_bg(cattr_t const& attr) {
-      bool const inverse = atable->is_inverse(attr);
-      bool const selected = atable->is_selected(attr);
+    color_t resolve_bg(attr_t const& attr) {
+      bool const inverse = m_atable->is_inverse(attr);
+      bool const selected = m_atable->is_selected(attr);
       auto [space, color] = inverse != selected ? get_fg(attr) : get_bg(attr);
       if (space == m_space && color == m_color) return m_rgba;
       return resolve(space, color);
     }
 
-    color_t resolve_dc(cattr_t const& attr) {
-      byte const space = atable->dc_space(attr);
+    color_t resolve_dc(attr_t const& attr) {
+      byte const space = m_atable->dc_space(attr);
       if (space == 0) return resolve_fg(attr);
-      color_t const color = atable->dc_color(attr);
+      color_t const color = m_atable->dc_color(attr);
       if (space == m_space && color == m_color) return m_rgba;
       return resolve(space, color);
     }
@@ -576,17 +576,17 @@ namespace ansi {
     aflags_t m_aflags = 0;
     xflags_t m_xflags = 0;
     font_t m_font = 0;
-    attribute_table const* atable = nullptr;
+    attr_table const* m_atable = nullptr;
   public:
     font_resolver_t() {}
-    font_resolver_t(attribute_table const& atable): atable(&atable) {}
+    font_resolver_t(attr_table const* atable): m_atable(atable) {}
   public:
-    font_t resolve_font(cattr_t const& attr) {
+    font_t resolve_font(attr_t const& attr) {
       constexpr aflags_t aflags_mask = attr_weight_mask | attr_shape_mask | aflags_font_mask;
       constexpr xflags_t xflags_mask = xflags_subsup_mask | xflags_mintty_subsup_mask
         | xflags_frame_mask | xflags_proportional_set | xflags_sco_shift | xflags_decdhl_mask;
-      aflags_t const aflags = atable->aflags(attr) & aflags_mask;
-      xflags_t const xflags = atable->xflags(attr) & xflags_mask;
+      aflags_t const aflags = m_atable->aflags(attr) & aflags_mask;
+      xflags_t const xflags = m_atable->xflags(attr) & xflags_mask;
       if (aflags == m_aflags && xflags == m_xflags) return m_font;
 
       font_t ret = 0;
@@ -1430,7 +1430,7 @@ namespace ansi {
       coord_t yunit;
       curpos_t height;
 
-      attribute_table const* _atable = nullptr;
+      attr_table const* _atable = nullptr;
       color_resolver_t _color;
       font_resolver_t _font;
 
@@ -1442,7 +1442,7 @@ namespace ansi {
 
     private:
       aflags_t invisible_flags = 0;
-      bool _visible(std::uint32_t code, cattr_t const& attr, bool sp_visible = false) const {
+      bool _visible(std::uint32_t code, attr_t const& attr, bool sp_visible = false) const {
         return code != ascii_nul && (sp_visible || code != ascii_sp)
           && !(code & flag_processed)
           && !_atable->is_invisible(attr);
@@ -1689,7 +1689,7 @@ namespace ansi {
         this->yunit = wstat.m_yunit;
         this->xunit = wstat.m_xunit;
         this->height = view.height();
-        this->_atable = &view.atable();
+        this->_atable = view.atable();
         this->_color = color_resolver_t(view.state(), view.atable());
         this->_font = font_resolver_t(view.atable());
         this->m_str.initialize(wstat.m_xunit, wstat.m_yunit);
@@ -1995,8 +1995,8 @@ namespace ansi {
         for (std::size_t i = 0; i < cells.size(); ) {
           auto const& cell = cells[i++];
           auto const& code = cell.character.value;
-          aflags_t const aflags = view.atable().aflags(cell.attribute);
-          xflags_t const xflags = view.atable().xflags(cell.attribute);
+          aflags_t const aflags = view.atable()->aflags(cell.attribute);
+          xflags_t const xflags = view.atable()->xflags(cell.attribute);
           if (cell.width == 0) continue;
           coord_t const cell_width = cell.width * xunit;
           color_t color = 0;

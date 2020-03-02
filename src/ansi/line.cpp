@@ -574,7 +574,7 @@ void line_t::calculate_data_ranges_from_presentation_range(slice_ranges_t& ret, 
   }
 }
 
-void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, cattr_t const& fill_attr, bool line_r2l, bool dcsm) {
+void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpos_t width, attr_t const& fill_attr, bool line_r2l, bool dcsm) {
   struct slice_t {
     curpos_t p1, p2;
     curpos_t shift;
@@ -672,7 +672,7 @@ void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpo
     case line_segment_erase_unprotected:
       fill.character = ascii_nul;
       for (curpos_t p = x, pN = x + delta; p < pN; p++)
-        if (!atable->is_protected(m_cells[p].attribute))
+        if (!m_atable->is_protected(m_cells[p].attribute))
           m_cells[p] = fill;
       break;
     case line_segment_transfer:
@@ -719,7 +719,7 @@ void line_t::_mono_compose_segments(line_segment_t const* comp, int count, curpo
   m_version++;
 }
 
-void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, cattr_t const& fill_attr, bool line_r2l, bool dcsm) {
+void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpos_t width, attr_t const& fill_attr, bool line_r2l, bool dcsm) {
   cell_t fill;
   fill.character = ascii_nul;
   fill.attribute = 0;
@@ -856,7 +856,7 @@ void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpo
         contra_unused(x2);
         curpos_t x = p1 + (x1 - xL);
         for (std::size_t i = i1; i < i2; i++) {
-          if (atable->is_protected(src_cells[i].attribute)) {
+          if (m_atable->is_protected(src_cells[i].attribute)) {
             if (xwrite < x) cells.insert(cells.end(), x - xwrite, fill);
             cells.push_back(src_cells[i]);
             xwrite = x + src_cells[i].width;
@@ -910,7 +910,7 @@ void line_t::_prop_compose_segments(line_segment_t const* comp, int count, curpo
   m_prop_x = 0;
 }
 
-void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, cattr_t const& fill_attr) {
+void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr) {
   contra_unused(flags);
   if (shift == 0) return;
   p1 = contra::clamp(p1, 0, width);
@@ -927,7 +927,7 @@ void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   bool protect = false;
   auto _erase_wide_left = [this, &protect] (curpos_t p1) {
     if (m_cells[p1].character.is_wide_extension()) {
-      if (protect && atable->is_protected(m_cells[p1].attribute)) return;
+      if (protect && m_atable->is_protected(m_cells[p1].attribute)) return;
       curpos_t c = p1;
       if (c > 0) c--;
       while (c > 0 && m_cells[c].character.is_wide_extension()) c--;
@@ -940,7 +940,7 @@ void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
 
   auto _erase_wide_right = [this, &protect] (curpos_t p) {
     if (p < (curpos_t) m_cells.size() && m_cells[p].character.is_wide_extension()) {
-      if (protect && atable->is_protected(m_cells[p].attribute)) return;
+      if (protect && m_atable->is_protected(m_cells[p].attribute)) return;
       do {
         m_cells[p].character = ascii_sp;
         m_cells[p].width = 1;
@@ -955,7 +955,7 @@ void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
     _erase_wide_right(p2);
     if (protect) {
       while (p1 < p2) {
-        if (!atable->is_protected(m_cells[p1].attribute))
+        if (!m_atable->is_protected(m_cells[p1].attribute))
           m_cells[p1] = fill;
         p1++;
       }
@@ -982,7 +982,7 @@ void line_t::_mono_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   m_version++;
 }
 
-void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, cattr_t const& fill_attr) {
+void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr) {
   // m_prop_enabled && !get_mode(mode_dcsm) の時
   mwg_assert(!(flags & lshift_dcsm));
 
@@ -1002,7 +1002,7 @@ void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
     if (p1 > 0) {
       curpos_t const x1 = convert_position(false, p1, -1, width, line_r2l);
       auto [i, x] = _prop_glb(x1, false);
-      if (x < x1 && i < m_cells.size() && atable->is_protected(m_cells[i].attribute)) {
+      if (x < x1 && i < m_cells.size() && m_atable->is_protected(m_cells[i].attribute)) {
         curpos_t const xL = x, xR = x + m_cells[i].width;
         if (x1 - xL == xR - x1) {
           p1 -= x1 - xL;
@@ -1019,7 +1019,7 @@ void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
     if (p2 < width) {
       curpos_t const x2 = convert_position(false, p2, -1, width, line_r2l);
       auto [i, x] = _prop_glb(x2, false);
-      if (x < x2 && i < m_cells.size() && atable->is_protected(m_cells[i].attribute)) {
+      if (x < x2 && i < m_cells.size() && m_atable->is_protected(m_cells[i].attribute)) {
         curpos_t const xL = x, xR = x + m_cells[i].width;
         if (xR - x2 == x2 - xL) {
           p2 += xR - x2;
@@ -1058,7 +1058,7 @@ void line_t::_bdsm_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
   _prop_compose_segments(segs, iseg, width, fill_attr, bool(flags & lshift_r2l), false);
 }
 
-void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, cattr_t const& fill_attr) {
+void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_shift_flags flags, curpos_t width, attr_t const& fill_attr) {
   if (shift == 0) return;
   p1 = contra::clamp(p1, 0, width);
   p2 = contra::clamp(p2, 0, width);
@@ -1087,7 +1087,7 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
 
   std::size_t i1, i2;
   curpos_t w1, w2;
-  cattr_t attr1 = 0, attr2 = 0;
+  attr_t attr1 = 0, attr2 = 0;
   {
     std::tie(i1, w1) = _prop_glb(p1, (bool) (flags & lshift_left_inclusive));
     std::tie(i2, w2) = _prop_lub(p2, (bool) (flags & lshift_right_inclusive));
@@ -1099,17 +1099,17 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
 
   std::size_t iL = 0, iR = 0;
   curpos_t wL = 0, wR = 0;
-  cattr_t attrL = 0, attrR = 0;
+  attr_t attrL = 0, attrR = 0;
   curpos_t wlfill = 0, wrfill = 0;
   bool flag_erase_unprotected = false;
   if (std::abs(shift) >= p2 - p1) {
     if ((flags & lshift_erm_protect) && has_protected_cells()) {
-      if (w1 && atable->is_protected(m_cells[i1].attribute)) {
+      if (w1 && m_atable->is_protected(m_cells[i1].attribute)) {
         p1 += m_cells[i1].width - w1;
         w1 = 0;
         i1++;
       }
-      if (w2 && atable->is_protected(m_cells[i2 - 1].attribute)) {
+      if (w2 && m_atable->is_protected(m_cells[i2 - 1].attribute)) {
         p2 -= m_cells[i2].width - w2;
         w2 = 0;
         i2--;
@@ -1119,7 +1119,7 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
       curpos_t protected_count = 0;
       curpos_t total_protected_width = 0;
       for (curpos_t i = p1; i < p2; i++) {
-        if (atable->is_protected(m_cells[i].attribute)) {
+        if (m_atable->is_protected(m_cells[i].attribute)) {
           protected_count++;
           total_protected_width += m_cells[i].width;
         }
@@ -1165,10 +1165,10 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
       fill.character = ascii_nul;
       fill.attribute = fill_attr;
       auto src = std::remove_if(m_cells.begin() + i1, m_cells.begin() + i2,
-        [&] (auto const& cell) { return !atable->is_protected(cell.attribute) && cell.width == 0; });
+        [&] (auto const& cell) { return !m_atable->is_protected(cell.attribute) && cell.width == 0; });
       auto dst = m_cells.begin() + i;
       while (src-- != m_cells.begin()) {
-        if (atable->is_protected(src->attribute)) {
+        if (m_atable->is_protected(src->attribute)) {
           if (--dst != src)
             *dst = std::move(*src);
         } else {
@@ -1191,7 +1191,7 @@ void line_t::_prop_shift_cells(curpos_t p1, curpos_t p2, curpos_t shift, line_sh
     }
 
     // 余白の書き込み
-    auto _write_space = [&] (curpos_t w, cattr_t const& attr) {
+    auto _write_space = [&] (curpos_t w, attr_t const& attr) {
       if (w <= 0) return;
       fill.character = ascii_sp;
       fill.attribute = attr;
@@ -1239,7 +1239,7 @@ bool line_t::set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool
     x += cell.width;
   };
   auto _guarded = [gatm, this] (cell_t const& cell) {
-    return !gatm && atable->is_guarded(cell.attribute);
+    return !gatm && m_atable->is_guarded(cell.attribute);
   };
   auto _truncated = [trunc] (cell_t const& cell) {
     return trunc && (cell.character.value == ascii_nul || cell.character.value == ascii_sp);
@@ -1285,7 +1285,7 @@ bool line_t::set_selection(curpos_t x1, curpos_t x2, bool trunc, bool gatm, bool
 
 bool line_t::set_selection_word(curpos_t x, word_selection_type type, bool gatm) {
   auto _guarded = [gatm, this] (cell_t const& cell) {
-    return !gatm && atable->is_guarded(cell.attribute);
+    return !gatm && m_atable->is_guarded(cell.attribute);
   };
   curpos_t const ncell = m_cells.size();
   if (x >= ncell || _guarded(m_cells[x])) return false;
@@ -1349,7 +1349,7 @@ curpos_t line_t::extract_selection(std::u32string& data) const {
           if (value == ascii_nul) value = U' ';
         data.append(buff.begin(), buff.end());
 
-        if ((atable->xflags(cell.attribute) & xflags_decdhl_mask) && cell.width / 2)
+        if ((m_atable->xflags(cell.attribute) & xflags_decdhl_mask) && cell.width / 2)
           data.append(cell.width / 2, U' ');
         continue;
       }

@@ -9,6 +9,8 @@
 #include <mwg/except.h>
 #include "../sequence.hpp"
 
+#define contra_ansi_term_abuild_gc_threshold 0x100000
+
 namespace contra {
 namespace ansi {
 
@@ -1096,7 +1098,7 @@ namespace ansi {
       if (rmargin < b.width())
         segs[iseg++] = line_segment_t({rmargin, b.width(), line_segment_slice});
 
-      cattr_t const fill_attr = term.fill_attr();
+      attr_t const fill_attr = term.fill_attr();
       if (shift > 0) {
         curpos_t ydst = bmargin - 1;
         curpos_t ysrc = ydst - shift;
@@ -1163,7 +1165,7 @@ namespace ansi {
         curpos_t const bmargin = term.bmargin();
         curpos_t const lmargin = term.lmargin();
         curpos_t const rmargin = term.rmargin();
-        cattr_t const fill_attr = term.fill_attr();
+        attr_t const fill_attr = term.fill_attr();
         for (curpos_t y = tmargin; y < bmargin; y++)
           b.line(y).shift_cells(lmargin, rmargin, shift, flags, b.width(), fill_attr);
         if (isPresentation)
@@ -1526,7 +1528,7 @@ namespace ansi {
     if (params.size() == 0 || !term.state().get_mode(mode_grcm))
       do_sgr_parameter(term, 0, params);
 
-    term.gc(0x100000);
+    term.gc(contra_ansi_term_abuild_gc_threshold);
 
     csi_single_param_t value;
     while (params.read_param(value, 0))
@@ -1540,18 +1542,18 @@ namespace ansi {
     params.read_param(param, 0);
     if (param > 7) return false;
 
-    term.gc(0x100000);
+    term.gc(contra_ansi_term_abuild_gc_threshold);
     term.board().cur.abuild.set_sco(param << xflags_sco_shift);
     return true;
   }
 
   void do_plu(term_t& term) {
-    term.gc(0x100000);
+    term.gc(contra_ansi_term_abuild_gc_threshold);
     term.board().cur.abuild.plu();
   }
 
   void do_pld(term_t& term) {
-    term.gc(0x100000);
+    term.gc(contra_ansi_term_abuild_gc_threshold);
     term.board().cur.abuild.pld();
   }
 
@@ -1560,7 +1562,7 @@ namespace ansi {
     params.read_param(param, 0);
     if (param > 2) return false;
 
-    term.gc(0x100000);
+    term.gc(contra_ansi_term_abuild_gc_threshold);
     if (param == 1)
       term.board().cur.abuild.set_decsca();
     else
@@ -1569,19 +1571,19 @@ namespace ansi {
   }
 
   void do_spa(term_t& term) {
-    term.gc(0x100000);
+    term.gc(contra_ansi_term_abuild_gc_threshold);
     term.board().cur.abuild.set_spa();
   }
   void do_epa(term_t& term) {
-    term.gc(0x100000);
+    term.gc(contra_ansi_term_abuild_gc_threshold);
     term.board().cur.abuild.clear_spa();
   }
   void do_ssa(term_t& term) {
-    term.gc(0x100000);
+    term.gc(contra_ansi_term_abuild_gc_threshold);
     term.board().cur.abuild.set_ssa();
   }
   void do_esa(term_t& term) {
-    term.gc(0x100000);
+    term.gc(contra_ansi_term_abuild_gc_threshold);
     term.board().cur.abuild.clear_ssa();
   }
 
@@ -1708,7 +1710,7 @@ namespace ansi {
   //---------------------------------------------------------------------------
   // EL, IL, DL
 
-  static void do_el(term_t& term, line_t& line, csi_single_param_t param, cattr_t const& fill_attr) {
+  static void do_el(term_t& term, line_t& line, csi_single_param_t param, attr_t const& fill_attr) {
     board_t& b = term.board();
     tstate_t& s = term.state();
     if (param != 0 && param != 1) {
@@ -1751,7 +1753,7 @@ namespace ansi {
   void do_ed(term_t& term, csi_single_param_t param) {
     tstate_t& s = term.state();
     board_t& b = term.board();
-    cattr_t const fill_attr = term.fill_attr();
+    attr_t const fill_attr = term.fill_attr();
     curpos_t y1 = 0, y2 = 0;
     if (param != 0 && param != 1) {
       y1 = 0;

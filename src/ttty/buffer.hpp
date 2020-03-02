@@ -263,17 +263,17 @@ namespace ttty {
       color_t fgcolor;
       color_t bgcolor;
 
-      attribute_table& atable;
+      attr_table* m_atable;
 
       bool hasprev = false;
-      cattr_t prev_attr = 0;
-      attribute_builder abuild;
+      attr_t prev_attr = 0;
+      attr_builder abuild;
 
       bool hasfill = false;
       cell_t fill;
 
       apply_default_attribute_impl(term_view_t* view):
-        view(view), atable(view->atable()), abuild(view->atable())
+        view(view), m_atable(view->atable()), abuild(view->atable())
       {
         fgspace = view->fg_space();
         bgspace = view->bg_space();
@@ -285,7 +285,7 @@ namespace ttty {
         if (hasfill) return;
         hasfill = true;
 
-        attribute_builder abuild(atable);
+        attr_builder abuild(m_atable);
         abuild.set_fg(fgcolor, fgspace);
         abuild.set_bg(bgcolor, bgspace);
         fill.character = ascii_nul;
@@ -301,8 +301,8 @@ namespace ttty {
             continue;
           }
 
-          bool const setfg = fgspace && !atable.fg_space(cell.attribute);
-          bool const setbg = bgspace && !atable.bg_space(cell.attribute);
+          bool const setfg = fgspace && !m_atable->fg_space(cell.attribute);
+          bool const setbg = bgspace && !m_atable->bg_space(cell.attribute);
           if (!setfg && !setbg) continue;
 
           hasprev = true;
@@ -321,21 +321,21 @@ namespace ttty {
       }
     };
 
-    void erase_until_eol(cattr_t const& fill_attr) {
+    void erase_until_eol(attr_t const& fill_attr) {
       curpos_t const width = view->width();
       if (remote_x >= width) return;
 
       w.apply_attr(fill_attr);
-      if (w.termcap_bce || view->atable().is_default(fill_attr)) {
+      if (w.termcap_bce || view->atable()->is_default(fill_attr)) {
         put_ech(width - remote_x);
       } else {
         for (; remote_x < width; remote_x++) w.put(' ');
       }
     }
 
-    void render_line(std::vector<cell_t> const& new_content, std::vector<cell_t> const& old_content, cattr_t const& fill_attr) {
+    void render_line(std::vector<cell_t> const& new_content, std::vector<cell_t> const& old_content, attr_t const& fill_attr) {
       // 更新の必要のある範囲を決定する
-      auto& atable = view->atable();
+      attr_table* const atable = view->atable();
 
       // 一致する先頭部分の長さを求める。
       std::size_t i1 = 0;
@@ -345,7 +345,7 @@ namespace ttty {
         if (i1 < old_content.size()) {
           if (cell != old_content[i1]) break;
         } else {
-          if (!(cell.character == ascii_nul && atable.is_default(cell.attribute))) break;
+          if (!(cell.character == ascii_nul && atable->is_default(cell.attribute))) break;
         }
         x1 += cell.width;
       }
@@ -356,9 +356,9 @@ namespace ttty {
       while (i1 && new_content[i1].width == 0) i1--;
 
       // 一致する末端部分のインデックスと長さを求める。
-      auto _find_upper_bound_non_empty = [&atable] (std::vector<cell_t> const& cells, std::size_t lower_bound) {
+      auto _find_upper_bound_non_empty = [atable] (std::vector<cell_t> const& cells, std::size_t lower_bound) {
         std::size_t ret = cells.size();
-        while (ret > lower_bound && cells[ret - 1].character == ascii_nul && atable.is_default(cells[ret - 1].attribute)) ret--;
+        while (ret > lower_bound && cells[ret - 1].character == ascii_nul && atable->is_default(cells[ret - 1].attribute)) ret--;
         return ret;
       };
       curpos_t w3 = 0;
@@ -419,8 +419,8 @@ namespace ttty {
       return false;
     }
 
-    cattr_t create_fill_attr() {
-      attribute_builder abuild(view->atable());
+    attr_t create_fill_attr() {
+      attr_builder abuild(view->atable());
       abuild.set_bg(view->bg_color(), view->bg_space());
       return abuild.fill_attr();
     }
@@ -436,7 +436,7 @@ namespace ttty {
       if (is_terminal_fullwidth)
         trace_line_scroll();
 
-      cattr_t const fill_attr = create_fill_attr();
+      attr_t const fill_attr = create_fill_attr();
       apply_default_attribute_impl default_attribute(view);
       for (curpos_t y = 0; y < height; y++) {
         line_t const& line = view->line(y);
