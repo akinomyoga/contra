@@ -322,6 +322,7 @@ namespace ansi {
     struct entry {
       attribute_t attr;
       entry(attribute_t const& attr): attr(attr) {}
+      entry() {}
     };
 
     std::vector<entry> table;
@@ -484,6 +485,7 @@ namespace ansi {
           j++;
         }
       }
+      table.resize(j);
 
       // 参照の書き換え
       for (attr_t* ref : gc_references)
