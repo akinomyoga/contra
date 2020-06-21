@@ -1,3 +1,4 @@
+@charset "utf-8";
 
 kbd {
   font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", "Courier", monospace;
@@ -15,5 +16,8 @@ kbd>i:before { content: '<'; }
 i.kbd:after,
 kbd>i:after { content: '>'; }
 
-table.contra-cell-center td,
-table.contra-cell-center th { text-align: center; }
+table.contra-cell-centered>tbody>tr>td,
+table.contra-cell-centered>tbody>tr>th { text-align: center; }
+
+a.contra-autolink { text-decoration: none; color: #48d; }
+a.contra-autolink:hover { text-decoration: underline; }
