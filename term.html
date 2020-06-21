@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <title>Terminals - akinomyoga/contra</title>
+  <meta name="agh-fly-type" content="color" />
+  <!-- <script type="text/javascript" charset="utf-8" src="https://akinomyoga.github.io/agh/agh.fly.js"></script> -->
+  <link rel="stylesheet" type="text/css" href="https://akinomyoga.github.io/agh/mwg.slide.css" />
+  <link rel="stylesheet" type="text/css" href="https://akinomyoga.github.io/agh/prog.std.css" />
+  <script type="text/javascript" charset="utf-8" src="https://akinomyoga.github.io/agh/agh.fly.js"></script>
+  <script type="text/javascript" charset="utf-8" src="escseq.js"></script>
+  <link rel="stylesheet" type="text/css" href="escseq.css" />
+  <style type="text/css">
+  sup.violation { color: red; font-weight: bold; }
+  </style>
+</head>
+<body class="tex:math_bqd">
+<div id="pagetopholder">
+  <div class="linkbar2" id="pagetop">
+    <span class="left">-- ≪</span>
+    <span class="right">≫ --</span>
+    <span class="center">
+    <a href="index.html">akinomyoga/contra</a> :: Terminals
+    </span>
+  </div>
+  <div>
+  <p></p>
+  </div>
+</div>
+
+<h1>akinomyoga/contra :: Terminals</h1>
+
+<h2>SCO OpenServer 5.0.6 screen(HW)</h2>
+
+<ul>
+<li>all-escapes.html</li>
+<li><a href="http://osr507doc.sco.com/en/man/html.HW/screen.HW.html">http://osr507doc.sco.com/en/man/html.HW/screen.HW.html</a></li>
+</ul>
+
+<p>以下は ANSI シーケンスであるが企画に反している物が沢山ある。</p>
+<ul>
+<li><kbd>CSI A</kbd> CUU</li>
+<li><kbd>CSI B</kbd> CUD</li>
+<li><kbd>CSI C</kbd> CUF</li>
+<li><kbd>CSI D</kbd> CUB</li>
+<li><kbd>CSI E</kbd> CNL</li>
+<li><kbd>CSI F</kbd> CPL</li>
+<li><kbd>CSI G</kbd> CHA (HPA<sup>SCO</sup>)</li>
+<li><kbd>CSI H</kbd> CUP</li>
+<li><kbd>CSI I</kbd> CHT (CFT<sup>SCO</sup>)</li>
+<li><kbd>CSI J</kbd> ED</li>
+<li><kbd>CSI K</kbd> EL</li>
+<li><kbd>CSI L</kbd> IL</li>
+<li><kbd>CSI M</kbd> DL</li>
+<li><kbd>CSI P</kbd> DCH</li>
+<li><kbd>CSI R</kbd><sup class="violation">×</sup> DL</li>
+<li><kbd>CSI S</kbd> SU</li>
+<li><kbd>CSI T</kbd> SD</li>
+<li><kbd>CSI U</kbd><sup class="violation">×</sup> RIS</li>
+<li><kbd>CSI V</kbd><sup class="violation">×</sup> _SCOER★ (ER<sup>SCO</sup>)</li>
+<li><kbd>CSI X</kbd> ECH</li>
+<li><kbd>CSI Z</kbd> CBT</li>
+<li><kbd>CSI a</kbd> HPR</li>
+<li><kbd>CSI b</kbd> REP (RCH<sup>SCO</sup>)</li>
+<li><kbd>CSI d</kbd> VPA</li>
+<li><kbd>CSI e</kbd> VPR</li>
+<li><kbd>CSI f</kbd> HVP</li>
+<li><kbd>CSI g</kbd><sup class="violation">×</sup> _SCODGC★ (DGC<sup>SCO</sup>)</li>
+<li><kbd>CSI h</kbd> SM</li>
+<li><kbd>CSI l</kbd> RM
+  <ul>
+  <li>2 は ECMA-48 と同じ。</li>
+  <li>3, 4, 6, 7, 25, 30, 44, 48, 1048 は独自<sup class="violation">×</sup></li>
+  </ul>
+</li>
+<li><kbd>CSI i</kbd> MC</li>
+<li><kbd>CSI k</kbd><sup class="violation">×</sup> _SCOEDK★ (EDK<sup>SCO</sup>)</li>
+<li><kbd>CSI m</kbd> SGR
+  <ul>
+  <li>0, 1, 3, 4, 5, 7, 8, 10-13, 23, 24, 25, 27, 28, 30-49 は標準。90-97, 100-107 は普通。</li>
+  <li>2, 6, 21, 26, 50, 51 は独自の物<sup class="violation">×</sup></li>
+  </ul>
+</li>
+<li><kbd>CSI n</kbd><sup class="violation">×</sup> _SCOTCP★ (TCP<sup>SCO</sup>)
+  <p>要求内容は <kbd>DSR(6)</kbd> に似ているが、何と <kbd><i>Pn</i> SP <i>Pn</i> LF</kbd> で返す。</p>
+</li>
+<li><kbd>CSI <i>Ps</i> o</kbd><sup class="violation">×</sup> _SCOTMP★ (TMP<sup>SCO</sup>)
+  <p>これも <kbd>SP</kbd> 区切り <kbd>LF</kbd> 終端の文字列で返す。
+    0 は TBLR の全ての値を返し、1,2,3,4 はそれぞれ TBLR を一つ返す。
+  </p>
+</li>
+<li><kbd>CSI r</kbd> _SCOCSR★ (CSR<sup>SCO</sup>)
+  <p>DECSTBM は2個しか引数を受け付けないが、
+    _SCOCSR は 4 つまで引数を受け付け、TBLR の margin を設定する。
+  </p>
+</li>
+<li><kbd>CSI s</kbd> SCOSC★ (SCP<sup>SCO</sup>)</li>
+<li><kbd>CSI u</kbd> SCORC★ (RCP<sup>SCO</sup>)</li>
+<li><kbd>CSI z</kbd> _SCOSSW★ (SSW<sup>SCO</sup>)</li>
+<li><kbd>CSI `</kbd> HPA (HPA2<sup>SCO</sup>)</li>
+<li><kbd>CSI @</kbd> ICH</li>
+<li><kbd>CSI SP</kbd><sup class="violation">×</sup> CUB</li>
+
+<li><kbd>ESC 7</kbd> DECSC (SCP<sup>SCO</sup>) ※但し属性は保存しない</li>
+<li><kbd>ESC 8</kbd> DECRC (RCP<sup>SCO</sup>) ※但し属性は復元しない</li>
+<li><kbd>ESC D</kbd> IND (CFI<sup>SCO</sup>)</li>
+<li><kbd>ESC E</kbd> NEL (CBNL<sup>SCO</sup>)</li>
+<li><kbd>ESC H</kbd> HTS (SHT<sup>SCO</sup>)</li>
+<li><kbd>ESC I</kbd><sup class="violation">×</sup> _SCOCBPL (CBPL<sup>SCO</sup>)</li>
+<li><kbd>ESC M</kbd> RI (CRI<sup>SCO</sup>)</li>
+<li><kbd>ESC Q <i>C1</i> <i>Cq</i> ... <i>Cq</i></kbd> _SCOSFK★ (SFK<sup>SCO</sup>)</li>
+<li><kbd>ESC c</kbd> RIS</li>
+<li><kbd>ESC l</kbd> _SCOLMA★ (CRI<sup>LMA</sup>)</li>
+<li><kbd>ESC m</kbd> _SCOUSR★ (CRI<sup>USR</sup>)</li>
+
+<li><kbd>CSI = A</kbd> _SCOSBC★ (SBC<sup>SCO</sup>)</li>
+<li><kbd>CSI = B</kbd> _SCOSBP★ (SBP<sup>SCO</sup>)</li>
+<li><kbd>CSI = C</kbd> _SCOSCS★ (SCS<sup>SCO</sup>)</li>
+<li><kbd>CSI = D</kbd> _SCOSBI★ (SBI<sup>SCO</sup>)</li>
+<li><kbd>CSI = E</kbd> _SCOSBB★ (SBB<sup>SCO</sup>)</li>
+<li><kbd>CSI = F</kbd> _SCOSNF★ (SNF<sup>SCO</sup>)</li>
+<li><kbd>CSI = G</kbd> _SCOSNB★ (SNB<sup>SCO</sup>)</li>
+<li><kbd>CSI = H</kbd> _SCOSRF★ (SRF<sup>SCO</sup>)</li>
+<li><kbd>CSI = I</kbd> _SCOSRB★ (SRB<sup>SCO</sup>)</li>
+<li><kbd>CSI = J</kbd> _SCOSGF★ (SGF<sup>SCO</sup>)</li>
+<li><kbd>CSI = K</kbd> _SCOSGB★ (SGB<sup>SCO</sup>)</li>
+<li><kbd>CSI = L</kbd> _SCOSEF★ (SEF<sup>SCO</sup>)</li>
+<li><kbd>CSI = M</kbd> _SCORAS★ (RAS<sup>SCO</sup>)</li>
+<li><kbd>CSI = c</kbd> _SCOHSC★ (HSC<sup>SCO</sup>)</li>
+<li><kbd>CSI = g</kbd> _SCOPRC★ (PRC<sup>SCO</sup>)</li>
+<li><kbd>CSI = l</kbd> _SCOCHC★ (CHC<sup>SCO</sup>)</li>
+<li><kbd>CSI = m</kbd> _SCOSSM★ (SSM<sup>SCO</sup>)</li>
+<li><kbd>CSI = r</kbd> _SCORSM★ (RSM<sup>SCO</sup>)</li>
+<li><kbd>CSI = z</kbd> _SCOCAT★ (CAT<sup>SCO</sup>)</li>
+</ul>
+
+
+<h2>CIT-101</h2>
+<p>伊藤忠商事の作っていた端末。</p>
+<ul>
+<li>典拠: C.Itoh CIT-101 [PDF] <a href="https://www.vt100.net/manx/details/8,5491">cit101-um.pdf</a></li>
+</ul>
+
+<p>ANSI Control sequence 一覧</p>
+<ul>
+<li><kbd>ESC # 0</kbd> _CITSAAM★ Enter Auto Auxiliary Mode</li>
+<li><kbd>ESC # 1</kbd> _CITEAM★ Exit Auto Auxiliary or Concurrent Auxiliary Modes</li>
+<li><kbd>ESC # 2</kbd> _CITOCLA★ Output cursor line to Auxiliary</li>
+<li><kbd>ESC # 3</kbd> DECDHL</li>
+<li><kbd>ESC # 4</kbd> DECDHL</li>
+<li><kbd>ESC # 5</kbd> DECSWL</li>
+<li><kbd>ESC # 6</kbd> DECDWL</li>
+<li><kbd>ESC # 7</kbd> _DECPDI Output Page to Auxiliary</li>
+<li><kbd>ESC # 8</kbd> DECALN</li>
+<li><kbd>ESC # 9</kbd> _CITFSC★ Fill screen with character assortment</li>
+<li><kbd>ESC # :</kbd> _CITDHT★ Change cursor line to double height (DH) single width (SW) top half</li>
+<li><kbd>ESC # ;</kbd> _CITDHB★ Change cursor line to double height (DH) single width (SW) bottom half</li>
+<li><kbd>ESC # &lt;</kbd> _CITSOLA★ Set option line attribute bit</li>
+<li><kbd>ESC # =</kbd> _CITROLA★ Clear option line attribute bit</li>
+<li><kbd>ESC # &gt;</kbd> _CITKCLK★ Perform keyclick</li>
+<li><kbd>ESC ( <i>Ft</i></kbd> GZD4</li>
+<li><kbd>ESC ) <i>Ft</i></kbd> G1D4
+  <p><i class="kbd">Ft</i> には以下を指定できる。</p>
+  <ul>
+  <li><kbd>A</kbd> UK</li>
+  <li><kbd>B</kbd> ASCII</li>
+  <li><kbd>0</kbd> Graphics Character</li>
+  <li><kbd>1</kbd> Alternate Character Set (付表略■)</li>
+  <li><kbd>2</kbd> Alternate Graphics Set (付表略■)</li>
+  </ul>
+</li>
+<li><kbd>ESC 0</kbd> _CITSCAM★ Enter Concurrent Auxiliary Mode</li>
+<li><kbd>ESC 1</kbd> _CITSACM★ Enter Auxiliary Control Mode</li>
+<li><kbd>ESC 2</kbd> _CITEACM★ Exit Auxiliary Control Mode</li>
+<li><kbd>ESC 7</kbd> DECSC</li>
+<li><kbd>ESC 8</kbd> DECRC</li>
+<li><kbd>ESC =</kbd> DECKPAM</li>
+<li><kbd>ESC &gt;</kbd> DECKPNM</li>
+<li><kbd>ESC D</kbd></li>
+<li><kbd>ESC E</kbd></li>
+<li><kbd>ESC H</kbd></li>
+<li><kbd>ESC M</kbd></li>
+<li><kbd>ESC Z</kbd></li>
+<li><kbd>ESC c</kbd></li>
+<li><kbd>CSI <i>Pn</i> A</kbd></li>
+<li><kbd>CSI <i>Pn</i> B</kbd></li>
+<li><kbd>CSI <i>Pn</i> C</kbd></li>
+<li><kbd>CSI <i>Pn</i> D</kbd></li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> H</kbd></li>
+<li><kbd>CSI <i>Ps</i> J</kbd></li>
+<li><kbd>CSI <i>Ps</i> K</kbd>
+  <p>JK 共に <i>Ps</i> = 0, 1, 2 に対応</p>
+</li>
+<li><kbd>CSI &gt; 3 ; <i>Ps</i> ; <i>CL</i> ; <i>RB</i> ; <i>CR</i> J</kbd> _CITERECT★
+  Erase all within top row <i class="kbd">RT</i>; left column <i class="kbd">CL</i>; bottom row <i class="kbd">RB</i>; right column <i class="kbd">CR</i>
+</li>
+<li><kbd>CSI &gt; 3 ; <i>CL</i> ; <i>CR</i> K</kbd> _CITECOLS★
+  Erase within lines from left column <i class="kbd">CL</i> to right column <i class="kbd">CR</i>
+</li>
+<li><kbd>CSI c</kbd>, <kbd>CSI 0 c</kbd></li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> f</kbd></li>
+<li><kbd>CSI <i>Ps</i> g</kbd> <p><i>Ps</i> = 0, 3 に対応</p></li>
+<li><kbd>CSI &gt; 5 g</kbd> _CITST8C★ DECST8C と同じ</li>
+<li><kbd>CSI <i>Ps</i> h</kbd> SM</li>
+<li><kbd>CSI <i>Ps</i> l</kbd> RM
+  <p><i>Ps</i> = 20, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8 に対応。拡張として以下にも対応。</p>
+  <ul>
+  <li>Mode &gt;1 Set double speed smooth scroll mode</li>
+  <li>Mode &gt;2</li>
+  <li>Mode &gt;3</li>
+  <li>Mode &gt;4</li>
+  <li>Mode &gt;5</li>
+  <li>Mode &gt;6</li>
+  <li>Mode &gt;9</li>
+  <li>Mode &gt;10</li>
+  <li>Mode &gt;11</li>
+  <li>Mode &gt;12</li>
+  <li>Mode &gt;13</li>
+  <li>Mode &gt;14</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Ps</i> m</kbd> SGR
+  <p><i>Ps</i> = 0, 1, 4, 5, 7 に対応</p>
+</li>
+<li><kbd>CSI <i>Ps</i> n</kbd> DSR
+  <p><i>Ps</i> = 5, 6 に対応</p>
+</li>
+<li><kbd>CSI <i>Ps</i> q</kbd> DECLL</li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> r</kbd> DECSTBM</li>
+<li><kbd>CSI <i>HH</i> ; <i>MM</i> ; <i>SS</i> t</kbd>, <kbd>CSI t</kbd>> _CITSTIME
+  Set time of day clock to hours, minutes, and seconds; Disable time of day clock
+</li>
+<li><kbd>CSI <i>Pn</i> u</kbd> _CITSSR★
+  Set scroll rate to <i>Pn</i> ticks (1/60th of second) between scanline scrolls
+</li>
+<li><kbd>CSI <i>Ps</i> v</kbd> _CITSCUR★
+  <ul>
+  <li>0 visible (default)</li>
+  <li>1 invisible</li>
+  <li>2 underline</li>
+  <li>3 reverse block</li>
+  <li>4 non-blinking</li>
+  <li>5 blink</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Ps</i> w</kbd> _CITSCURB★
+  <ul>
+  <li>0 Enable blinking attribute (default)</li>
+  <li>1 Freeze blinking in the OFF state</li>
+  <li>1 Freeze blinking in the ON state</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Ps</i> x</kbd> DECREGTPARAM
+  <p><i>Ps</i> = 0,1,2,3 に対応。</p>
+</li>
+<li><kbd>CSI 2 ; <i>Ps</i> y</kbd> DECTST
+  <ul>
+  <li>1 Invoke power-up diagnostic test</li>
+  <li>2 Invoke dual port loop back test</li>
+  <li>4 Invoke EIA loop back test</li>
+  <li>(他) Invoke specified test</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Ps</i> z</kbd> _CITPCTL★
+  <ul>
+  <li>0 Keyboard data to Communication Port</li>
+  <li>1 Keyboard data to Auxiliary Port</li>
+  <li>2 Auxiliary Port to Communication Port</li>
+  <li>3 Auxiliary Port to Display</li>
+  <li>4 Cease input from Auxiliary Port</li>
+  <li>5 Clear printer buffer</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Pn</i> ~</kbd> _CITTST★</li>
+</ul>
+<p>他に VT52 Mode sequences もあるが未だまとめていない。■</p>
+
+<div class="linkbar2">
+  <span class="left">-- ≪</span>
+  <span class="right">≫ --</span>
+  <span class="center">
+  akinomyoga/contra :: Control functions
+  </span>
+</div>
+<div class="address2">
+  <span class="left">作成 2020-06-21</span>
+  <span class="left">更新 2020-06-21</span>
+  <address class="right">&copy; 2020, K. Murase <a href="mailto:myoga.murase@gmail.com">myoga.murase@gmail.com</a></address>
+</div>
+</body>
+</html>
