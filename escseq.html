@@ -649,12 +649,22 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <h4>3Fp型 私用制御機能</h4>
 <p>実際の端末実装で確認できる私用制御機能を以下に挙げる。</p>
 <table class="normal center">
-<tr><th>略号</th>   <th>符号化表現</th><th>Hex; 行/列</th></tr>
+<tr><th>略号</th>   <th>符号化表現</th><th>Hex; 列/行</th></tr>
+<tr><th>EnterAutoAuxiliaryMode<sup>CIT</sup></th> <td><kbd>ESC # 0</kbd></td> <td>\x1B\x23\x30; 1/11 2/3 3/0</td></tr>
+<tr><th>ExitAuxiliaryMode<sup>CIT</sup></th> <td><kbd>ESC # 1</kbd></td> <td>\x1B\x23\x31; 1/11 2/3 3/1</td></tr>
+<tr><th>OutputCursorDisplayLine<sup>CIT</sup></th> <td><kbd>ESC # 2</kbd></td> <td>\x1B\x23\x32; 1/11 2/3 3/2</td></tr>
 <tr><th>DECDHL</th> <td><kbd>ESC # 3</kbd></td> <td>\x1B\x23\x33; 1/11 2/3 3/3</td></tr>
 <tr><th>DECDHL</th> <td><kbd>ESC # 4</kbd></td> <td>\x1B\x23\x34; 1/11 2/3 3/4</td></tr>
 <tr><th>DECSWL</th> <td><kbd>ESC # 5</kbd></td> <td>\x1B\x23\x34; 1/11 2/3 3/4</td></tr>
 <tr><th>DECDWL</th> <td><kbd>ESC # 6</kbd></td> <td>\x1B\x23\x36; 1/11 2/3 3/6</td></tr>
+<tr><th>Print Display Image<sup>VK100</sup></th><td><kbd>ESC # 7</kbd></td><td>\x1B\x23\x37; 1/11 2/3 3/7</td></tr>
 <tr><th>DECALN</th> <td><kbd>ESC # 8</kbd></td> <td>\x1B\x23\x38; 1/11 2/3 3/8</td></tr>
+<tr><th>FillScreenWithCharAssort<sup>CIT</sup></th> <td><kbd>ESC # 9</kbd></td> <td>\x1B\x23\x39; 1/11 2/3 3/9</td></tr>
+<tr><th>DoubleHeightSingleWidthTop   <sup>CIT</sup></th> <td><kbd>ESC # :</kbd></td> <td>\x1B\x23\x3A; 1/11 2/3 3/10</td></tr>
+<tr><th>DoubleHeightSingleWidthBottom<sup>CIT</sup></th> <td><kbd>ESC # ;</kbd></td> <td>\x1B\x23\x3B; 1/11 2/3 3/11</td></tr>
+<tr><th>SetOptionLineAttrBit<sup>CIT</sup></th> <td><kbd>ESC # &lt;</kbd></td> <td>\x1B\x23\x3C; 1/11 2/3 3/12</td></tr>
+<tr><th>ClearOptionLineAttrBit<sup>CIT</sup></th> <td><kbd>ESC # =</kbd></td> <td>\x1B\x23\x3D; 1/11 2/3 3/13</td></tr>
+<tr><th>PerformKeyclick<sup>CIT</sup></th> <td><kbd>ESC # &gt;</kbd></td> <td>\x1B\x23\x3E; 1/11 2/3 3/14</td></tr>
 </table>
 
 <h3>制御シーケンス (control sequence)</h3>
@@ -714,7 +724,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </ul>
 
 <p>この文書ではエスケープシーケンスに倣って、制御シーケンスについても <i class="kbd">I</i><strong>*</strong> <i class="kbd">Ft</i> の部分により型を定めることにする。
-Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</strong> のないもの) を表にする。</p>
+Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</strong> のないもの) を表にする。<sup>*a</sup> を付した物は all-escapes.txt より。</p>
 <table class="normal center">
 <tr><th colspan="6">Ft型: 端末制御機能</th>
     <th colspan="2">Ft型: 私用制御機能</th>
@@ -726,39 +736,39 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>ICH</th>    <td><kbd>CSI ... @</kbd></td>
     <th>DCH</th>    <td><kbd>CSI ... P</kbd></td>
     <th>HPA</th>    <td><kbd>CSI ... `</kbd></td>
-    <th>DECSSL</th> <td><kbd>CSI ... p</kbd></td></tr>
+    <th>DECSSL, SUNBOW<sup>*a</sup>, SKR<sup>ANSI.SYS</sup>, RLBFAT</th> <td><kbd>CSI ... p</kbd></td></tr>
 <tr><th>CUU</th>    <td><kbd>CSI ... A</kbd></td>
     <th>SEE</th>    <td><kbd>CSI ... Q</kbd></td>
     <th>HPR</th>    <td><kbd>CSI ... a</kbd></td>
-    <th>DECLL</th>  <td><kbd>CSI ... q</kbd></td></tr>
+    <th>DECLL, SUNWOB<sup>*a</sup></th>  <td><kbd>CSI ... q</kbd></td></tr>
 <tr><th>CUD</th>    <td><kbd>CSI ... B</kbd></td>
     <th>CPR</th>    <td><kbd>CSI ... R</kbd></td>
     <th>REP</th>    <td><kbd>CSI ... b</kbd></td>
-    <th>DECSTBM</th><td><kbd>CSI ... r</kbd></td></tr>
+    <th>DECSTBM, CSR<sup>*a</sup>, SUNSCRL<sup>*a</sup></th><td><kbd>CSI ... r</kbd></td></tr>
 <tr><th>CUF</th>    <td><kbd>CSI ... C</kbd></td>
     <th>SU</th>     <td><kbd>CSI ... S</kbd></td>
     <th>DA</th>     <td><kbd>CSI ... c</kbd></td>
-    <th>SCOSC, DECSLRM</th><td><kbd>CSI ... s</kbd></td></tr>
+    <th>DECSLRM, SCOSC, SUNRESET<sup>*a</sup></th><td><kbd>CSI ... s</kbd></td></tr>
 <tr><th>CUB</th>    <td><kbd>CSI ... D</kbd></td>
     <th>SD</th>     <td><kbd>CSI ... T</kbd></td>
     <th>VPA</th>    <td><kbd>CSI ... d</kbd></td>
-    <th>DECSLPP</th><td><kbd>CSI ... t</kbd></td></tr>
+    <th>DECSLPP, Wyse Define Enhance Attribute<sup>*a</sup>, SetTimeOfDayClock<sup>CIT</sup></th><td><kbd>CSI ... t</kbd></td></tr>
 <tr><th>CNL</th>    <td><kbd>CSI ... E</kbd></td>
     <th>NP</th>     <td><kbd>CSI ... U</kbd></td>
     <th>VPR</th>    <td><kbd>CSI ... e</kbd></td>
-    <th>SCORC, DECSHTS</th><td><kbd>CSI ... u</kbd></td></tr>
+    <th>DECSHTS, SCORC, SetSmoothScrollRate<sup>CIT</sup></th><td><kbd>CSI ... u</kbd></td></tr>
 <tr><th>CPL</th>    <td><kbd>CSI ... F</kbd></td>
     <th>PP</th>     <td><kbd>CSI ... V</kbd></td>
     <th>HVP</th>    <td><kbd>CSI ... f</kbd></td>
-    <th>DECSVTS</th><td><kbd>CSI ... v</kbd></td></tr>
+    <th>DECSVTS, RLSCD<sup>CIT</sup></th><td><kbd>CSI ... v</kbd></td></tr>
 <tr><th>CHA</th>    <td><kbd>CSI ... G</kbd></td>
     <th>CTC</th>    <td><kbd>CSI ... W</kbd></td>
     <th>TBC</th>    <td><kbd>CSI ... g</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... w</kbd></td></tr>
+    <th>ControlBlinkRate<sup>CIT</sup></th>    <td><kbd>CSI ... w</kbd></td></tr>
 <tr><th>CUP</th>    <td><kbd>CSI ... H</kbd></td>
     <th>ECH</th>    <td><kbd>CSI ... X</kbd></td>
     <th>SM</th>     <td><kbd>CSI ... h</kbd></td>
-    <th>DECREQTPARM</th><td><kbd>CSI ... x</kbd></td></tr>
+    <th>DECREQTPARM, DECREPTPARM, DGRTC<sup>*a</sup></th><td><kbd>CSI ... x</kbd></td></tr>
 <tr><th>CHT</th>    <td><kbd>CSI ... I</kbd></td>
     <th>CVT</th>    <td><kbd>CSI ... Y</kbd></td>
     <th>MC</th>     <td><kbd>CSI ... i</kbd></td>
@@ -766,7 +776,7 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>ED</th>     <td><kbd>CSI ... J</kbd></td>
     <th>CBT</th>    <td><kbd>CSI ... Z</kbd></td>
     <th>HPB</th>    <td><kbd>CSI ... j</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... z</kbd></td></tr>
+    <th>DECVERP<sup>*a</sup>, SSW<sup>*a</sup>, BidiControl<sup>CIT</sup></th><td><kbd>CSI ... z</kbd></td></tr>
 <tr><th>EL</th>     <td><kbd>CSI ... K</kbd></td>
     <th>SRS</th>    <td><kbd>CSI ... [</kbd></td>
     <th>VPB</th>    <td><kbd>CSI ... k</kbd></td>
@@ -774,15 +784,15 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>IL</th>     <td><kbd>CSI ... L</kbd></td>
     <th>PTX</th>    <td><kbd>CSI ... \</kbd></td>
     <th>RM</th>     <td><kbd>CSI ... l</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... |</kbd></td></tr>
+    <th>DECTTC<sup>*a</sup></th>    <td><kbd>CSI ... |</kbd></td></tr>
 <tr><th>DL</th>     <td><kbd>CSI ... M</kbd></td>
     <th>SDS</th>    <td><kbd>CSI ... ]</kbd></td>
     <th>SGR</th>    <td><kbd>CSI ... m</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... }</kbd></td></tr>
+    <th>DECPRO<sup>*a</sup></th>    <td><kbd>CSI ... }</kbd></td></tr>
 <tr><th>EF</th>     <td><kbd>CSI ... N</kbd></td>
     <th>SIMD</th>   <td><kbd>CSI ... ^</kbd></td>
     <th>DSR</th>    <td><kbd>CSI ... n</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... ~</kbd></td></tr>
+    <th>TestingSeq<sup>CIT</sup></th>    <td><kbd>CSI ... ~</kbd></td></tr>
 <tr><th>EA</th>     <td><kbd>CSI ... O</kbd></td>
     <th>---</th>    <td><kbd>CSI ... _</kbd></td>
     <th>DAQ</th>    <td><kbd>CSI ... o</kbd></td>
@@ -813,7 +823,7 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>GSS</th>    <td><kbd>CSI ... SP C</kbd></td>
     <th>SPD</th>    <td><kbd>CSI ... SP S</kbd></td>
     <th>TCC</th>    <td><kbd>CSI ... SP c</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP s</kbd></td></tr>
+    <th>DECCNS<sup>*a</sup></th>    <td><kbd>CSI ... SP s</kbd></td></tr>
 <tr><th>FNT</th>    <td><kbd>CSI ... SP D</kbd></td>
     <th>DTA</th>    <td><kbd>CSI ... SP T</kbd></td>
     <th>TSR</th>    <td><kbd>CSI ... SP d</kbd></td>
@@ -833,7 +843,7 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>QUAD</th>   <td><kbd>CSI ... SP H</kbd></td>
     <th>SPQR</th>   <td><kbd>CSI ... SP X</kbd></td>
     <th>SLS</th>    <td><kbd>CSI ... SP h</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP x</kbd></td></tr>
+    <th>DECSDPM<sup>*a</sup></th>    <td><kbd>CSI ... SP x</kbd></td></tr>
 <tr><th>SSU</th>    <td><kbd>CSI ... SP I</kbd></td>
     <th>SEF</th>    <td><kbd>CSI ... SP Y</kbd></td>
     <th>SPH</th>    <td><kbd>CSI ... SP i</kbd></td>
@@ -841,15 +851,15 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>PFS</th>    <td><kbd>CSI ... SP J</kbd></td>
     <th>PEC</th>    <td><kbd>CSI ... SP Z</kbd></td>
     <th>SPL</th>    <td><kbd>CSI ... SP j</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP z</kbd></td></tr>
+    <th>DECVPFS<sup>*a</sup></th>    <td><kbd>CSI ... SP z</kbd></td></tr>
 <tr><th>SHS</th>    <td><kbd>CSI ... SP K</kbd></td>
     <th>SSW</th>    <td><kbd>CSI ... SP [</kbd></td>
     <th>SCP</th>    <td><kbd>CSI ... SP k</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP {</kbd></td></tr>
+    <th>DECSSS<sup>*a</sup></th>    <td><kbd>CSI ... SP {</kbd></td></tr>
 <tr><th>SVS</th>    <td><kbd>CSI ... SP L</kbd></td>
     <th>SACS</th>   <td><kbd>CSI ... SP \</kbd></td>
     <th>---</th>    <td><kbd>CSI ... SP l</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP |</kbd></td></tr>
+    <th>DECRVEC<sup>*a</sup></th>    <td><kbd>CSI ... SP |</kbd></td></tr>
 <tr><th>IGS</th>    <td><kbd>CSI ... SP M</kbd></td>
     <th>SAPV</th>   <td><kbd>CSI ... SP ]</kbd></td>
     <th>---</th>    <td><kbd>CSI ... SP m</kbd></td>
@@ -866,47 +876,36 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 
 <p>その他の nFt 型の私用制御機能を以下にまとめる。</p>
 <table class="normal center contra-cell-centered">
-<tr><th></th><th colspan="11">nFt型: 私用制御機能</th>
+<tr><th></th><th colspan="7">nFt型: 私用制御機能 (1Ft..7Ft)</th>
     </tr>
 <tr><th></th>
     <th>1Ft <kbd>!</kbd></th>
     <th>2Ft <kbd>"</kbd></th><!--"-->
     <th>3Ft <kbd>#</kbd></th>
     <th>4Ft <kbd>$</kbd></th>
+    <th>5Ft <kbd>%</kbd></th>
     <th>6Ft <kbd>&amp;</kbd></th>
     <th>7Ft <kbd>'</kbd></th><!--'-->
-    <th>9Ft <kbd>)</kbd></th>
-    <th>10Ft <kbd>*</kbd></th>
-    <th>11Ft <kbd>+</kbd></th>
-    <th>12Ft <kbd>,</kbd></th>
-    <th>13Ft <kbd>-</kbd></th></tr>
-<tr><th><kbd>p</kbd></th>
+    </tr>
+<tr><th>p</th>
     <td>DECSTR</td>
     <td>DECSCL</td>
     <td>XTPUSHSGR</td>
     <td>DECRQM <!-- CSI ? ... $ p DECRQMH (RLogin による名称) --></td>
     <td>---</td>
     <td>---</td>
-    <td>DECSDPT</td>
-    <td>DECSPPCS</td>
-    <td>DECSR</td>
-    <td>DECLTOD</td>
-    <td>DECARR</td>
-    </tr>
-<tr><th><kbd>q</kbd></th>
     <td>---</td>
+    </tr>
+<tr><th>q</th>
+    <td>Print Partial Image<sup>VK100</sup></td>
     <td>DECSCA</td>
     <td>XTPOPSGR</td>
     <td>DECSDDT</td>
+    <td>---</td>
     <td>DECSNC</td>
     <td>DECSBCA</td>
-    <td>---</td>
-    <td>DECSRC</td>
-    <td>DECELF</td>
-    <td>DECTID</td>
-    <td>DECCRTST</td>
     </tr>
-<tr><th><kbd>r</kbd></th>
+<tr><th>r</th>
     <td>---</td>
     <td>---</td>
     <td>---</td>
@@ -914,12 +913,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>---</td>
     <td>---</td>
-    <td>DECSCS</td>
-    <td>DECSMKR</td>
-    <td>---</td>
-    <td>DECSEST</td>
     </tr>
-<tr><th><kbd>s</kbd></th>
+<tr><th>s</th>
     <td>DECFIL</td>
     <td>DECPWA</td>
     <td>---</td>
@@ -927,16 +922,161 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>---</td>
     <td>---</td>
+    </tr>
+<tr><th>t</th>
+    <td>---</td>
+    <td>DECSRFR</td>
+    <td>---</td>
+    <td>DECRARA</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
+    </tr>
+<tr><th>u</th>
+    <td>---</td>
+    <td>DECSTRL</td>
+    <td>---</td>
+    <td>DECRQTSR</td>
+    <td>---</td>
+    <td>DECRQUPSS</td>
+    <td>---</td>
+    </tr>
+<tr><th>v</th>
+    <td>DECASFC</td>
+    <td>DECRQDE</td>
+    <td>---</td>
+    <td>DECCRA</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
+    </tr>
+<tr><th>w</th>
+    <td>DECUND</td>
+    <td>DECRPDE</td>
+    <td>---</td>
+    <td>DECRQPSR</td>
+    <td>---</td>
+    <td>DECLRP<sup>*a</sup></td>
+    <td>DECEFR</td>
+    </tr>
+<tr><th>x</th>
+    <td>DECPTS</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECFRA</td>
+    <td>---</td>
+    <td>DECES</td>
+    <td>---</td>
+    </tr>
+<tr><th>y</th>
+    <td>DECSS</td>
+    <td>---</td>
+    <td>XTCHECKSUM</td>
+    <td>DECRPM</td>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
+    </tr>
+<tr><th>z</th>
+    <td>---</td>
+    <td>DECDEN</td>
+    <td>---</td>
+    <td>DECERA</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECELR</td>
+    </tr>
+<tr><th>{</th>
+    <td>---</td>
+    <td class="markB">DECRFS<sup>*a</sup></td>
+    <td>XTPUSHSGR</td>
+    <td>DECSERA</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECSLE</td>
+    </tr>
+<tr><th>|</th>
+    <td>DECVEC</td>
+    <td>---</td>
+    <td>XTREPORTSGR</td>
+    <td>DECSCPP</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECRQLP</td>
+    </tr>
+<tr><th>}</th>
+    <td>DECFIN</td>
+    <td>---</td>
+    <td>XTPOPSGR</td>
+    <td>DECSASD</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECIC</td>
+    </tr>
+<tr><th>~</th>
+    <td>---</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECSSDT</td>
+    <td>---</td>
+    <td>---</td>
+    <td>DECDC</td>
+    </tr>
+</table>
+<table class="normal center contra-cell-centered">
+<tr><th></th><th colspan="8">nFt型: 私用制御機能 (8Ft..15Ft)</th>
+    </tr>
+<tr><th></th>
+    <th>8Ft <kbd>(</kbd></th>
+    <th>9Ft <kbd>)</kbd></th>
+    <th>10Ft <kbd>*</kbd></th>
+    <th>11Ft <kbd>+</kbd></th>
+    <th>12Ft <kbd>,</kbd></th>
+    <th>13Ft <kbd>-</kbd></th>
+    <th>14Ft <kbd>.</kbd></th>
+    <th>15Ft <kbd>/</kbd></th></tr>
+<tr><th><kbd>p</kbd></th>
+    <td>---</td>
+    <td>DECSDPT</td>
+    <td>DECSPPCS</td>
+    <td>DECSR</td>
+    <td>DECLTOD</td>
+    <td>DECARR</td>
+    <td>---</td>
+    <td>---</td>
+    </tr>
+<tr><th><kbd>q</kbd></th>
+    <td>---</td>
+    <td>---</td>
+    <td>DECSRC</td>
+    <td>DECELF</td>
+    <td>DECTID</td>
+    <td>DECCRTST</td>
+    <td>---</td>
+    <td>---</td>
+    </tr>
+<tr><th><kbd>r</kbd></th>
+    <td>---</td>
+    <td>---</td>
+    <td>DECSCS</td>
+    <td>DECSMKR</td>
+    <td>---</td>
+    <td>DECSEST</td>
+    <td>---</td>
+    <td>---</td>
+    </tr>
+<tr><th><kbd>s</kbd></th>
+    <td>---</td>
+    <td>---</td>
     <td>DECSFC</td>
+    <td>---</td>
+    <td>---</td>
     <td>---</td>
     <td>---</td>
     <td>---</td>
     </tr>
 <tr><th><kbd>t</kbd></th>
     <td>---</td>
-    <td>DECSRFR</td>
-    <td>---</td>
-    <td>DECRARA</td>
     <td>---</td>
     <td>---</td>
     <td>---</td>
@@ -947,152 +1087,374 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     </tr>
 <tr><th><kbd>u</kbd></th>
     <td>---</td>
-    <td>DECSTRL</td>
-    <td>---</td>
-    <td>DECRQTSR</td>
-    <td>DECRQUPSS</td>
-    <td>---</td>
     <td>---</td>
     <td>DECSCP</td>
     <td>---</td>
     <td>DECRQKT</td>
     <td>---</td>
+    <td>---</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>v</kbd></th>
-    <td>DECASFC</td>
-    <td>DECRQDE</td>
-    <td>---</td>
-    <td>DECCRA</td>
-    <td>---</td>
     <td>---</td>
     <td>---</td>
     <td>---</td>
     <td>DECMM</td>
     <td>DECRPKT</td>
     <td>---</td>
+    <td>---</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>w</kbd></th>
-    <td>DECUND</td>
-    <td>DECRPDE</td>
     <td>---</td>
-    <td>DECRQPSR</td>
-    <td>---</td>
-    <td>DECEFR</td>
     <td>---</td>
     <td>---</td>
     <td>DECSPP</td>
     <td>DECRQKD</td>
     <td>---</td>
+    <td>---</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>x</kbd></th>
-    <td>DECPTS</td>
-    <td>---</td>
-    <td>---</td>
-    <td>DECFRA</td>
-    <td>DECES</td>
     <td>---</td>
     <td>---</td>
     <td>DECSACE</td>
     <td>DECRQPKFM<!-- RLogin では DECPQPLFM と呼んでいる --></td>
     <td>DECSPMA</td>
     <td>---</td>
+    <td>---</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>y</kbd></th>
-    <td>DECSS</td>
-    <td>---</td>
-    <td>XTCHECKSUM</td>
-    <td>DECRPM</td>
-    <td>---</td>
     <td>---</td>
     <td>---</td>
     <td>DECRQCRA</td>
     <td>DECPKFMR</td>
     <td>DECUS</td>
     <td>---</td>
+    <td>---</td>
+    <td>SGIXwshCommand</td>
     </tr>
 <tr><th><kbd>z</kbd></th>
     <td>---</td>
-    <td>DECDEN</td>
-    <td>---</td>
-    <td>DECERA</td>
-    <td>---</td>
-    <td>DECELR</td>
     <td>---</td>
     <td>DECINVM</td>
     <td>DECPKA</td>
     <td>DECDLDA</td>
     <td>---</td>
+    <td>---</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>{</kbd></th>
     <td>---</td>
-    <td>---</td>
-    <td>XTPUSHSGR</td>
-    <td>DECSERA</td>
-    <td>---</td>
-    <td>DECSLE</td>
     <td>DECSTGLT</td>
     <td>DECMSR<br />DSR-MSR</td>
     <td>---</td>
     <td>DECSZS</td>
     <td>---</td>
+    <td>---</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>|</kbd></th>
-    <td>DECVEC</td>
     <td>---</td>
-    <td>XTREPORTSGR</td>
-    <td>DECSCPP</td>
-    <td>---</td>
-    <td>DECRQLP</td>
     <td>---</td>
     <td>DECSNLS</td>
     <td>---</td>
     <td>DECAC</td>
     <td>---</td>
+    <td>---</td>
+    <td>---</td>
     </tr>
 <tr><th><kbd>}</kbd></th>
-    <td>DECFIN</td>
     <td>---</td>
-    <td>XTPOPSGR</td>
-    <td>DECSASD</td>
-    <td>---</td>
-    <td>DECIC</td>
     <td>---</td>
     <td>DECLFKC</td>
     <td>---</td>
     <td>DECATC</td>
+    <td>---</td>
+    <td>---</td>
     <td>---</td>
     </tr>
 <tr><th><kbd>~</kbd></th>
     <td>---</td>
     <td>---</td>
     <td>---</td>
-    <td>DECSSDT</td>
-    <td>---</td>
-    <td>DECDC</td>
-    <td>---</td>
-    <td>---</td>
     <td>---</td>
     <td>DECPS</td>
+    <td>---</td>
+    <td>---</td>
     <td>---</td>
     </tr>
 </table>
 
-<p>パラメータの先頭に <kbd>&lt;</kbd>, <kbd>=</kbd>, <kbd>&gt;</kbd>, <kbd>?</kbd> を含む私用シーケンス。</p>
+<p>パラメータの先頭に <kbd>&lt;</kbd>, <kbd>=</kbd>, <kbd>&gt;</kbd>, <kbd>?</kbd> を含む私用制御機能。</p>
+<table class="normal center contra-cell-centered">
+<caption>[<sup>+</sup> は既存の制御機能の私用パラメータとしての拡張、
+  <sup>*1</sup> は mlterm/en/doc/ControlSequences による命名,
+  <sup>*2</sup> は RLogin のマニュアルによる命名 ]
+</caption>
+<tr><th>Ft</th>
+    <th><kbd>&lt;</kbd></th>
+    <th><kbd>=</kbd></th>
+    <th><kbd>&gt;</kbd></th>
+    <th><kbd>?</kbd></th>
+</tr>
+<tr><th><kbd>A</kbd></th>
+    <td>-</td>
+    <td>SBC<sup>*a</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>B</kbd></th>
+    <td>-</td>
+    <td>SBP<sup>*a</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>C</kbd></th>
+    <td>-</td>
+    <td>SCO Set Cursor Parameters<sup>*a</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>D</kbd></th>
+    <td>-</td>
+    <td>SBI<sup>*a</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>E</kbd></th>
+    <td>-</td>
+    <td>SBB<sup>*a</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>F</kbd></th>
+    <td>-</td>
+    <td>SNF<sup>*a</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>G</kbd></th>
+    <td>-</td>
+    <td>SNB<sup>*a</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>H</kbd></th>
+    <td>-</td>
+    <td>SRF<sup>*a</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>I</kbd></th>
+    <td>-</td>
+    <td>SRB<sup>*a</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>J</kbd></th>
+    <td>-</td>
+    <td>SGF<sup>*a</sup></td>
+    <td>EraseWindow<sup>CIT</sup></td>
+    <td>DECSED<sup>+</sup></td>
+</tr>
+<tr><th><kbd>K</kbd></th>
+    <td>-</td>
+    <td>SGB<sup>*a</sup></td>
+    <td>EraseWindowLine<sup>CIT</sup></td>
+    <td>DECSEL<sup>+</sup></td>
+</tr>
+<tr><th><kbd>L</kbd></th>
+    <td>-</td>
+    <td>SEF<sup>*a</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>M</kbd></th>
+    <td>-</td>
+    <td>RAS<sup>*a</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th>Ft</th>
+    <th><kbd>&lt;</kbd></th>
+    <th><kbd>=</kbd></th>
+    <th><kbd>&gt;</kbd></th>
+    <th><kbd>?</kbd></th>
+</tr>
+<tr><th><kbd>S</kbd></th>
+    <td>-</td>
+    <td>C25LCT<sup>cons25*2</sup></td> 
+    <td>-</td>
+    <td>XTCOLREG<sup>*1</sup></td> 
+</tr>
+<tr><th><kbd>T</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>XTRMTT<sup>*1</sup></td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>W</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>DECST8C<sup>+</sup></td>
+</tr>
+<tr><th>Ft</th>
+    <th><kbd>&lt;</kbd></th>
+    <th><kbd>=</kbd></th>
+    <th><kbd>&gt;</kbd></th>
+    <th><kbd>?</kbd></th>
+</tr>
+<tr><th><kbd>c</kbd></th>
+    <td>-</td>
+    <td>DA3<sup>+</sup><br/>HSC<sup>*a</sup></td>
+    <td>DA2<sup>+</sup></td>
+    <td>DEC EB DS<sup>+*a</sup><br/>DEC LA Request DPS Configuration<sup>+*a</sup></td>
+</tr>
+<tr><th><kbd>g</kbd></th>
+    <td>-</td>
+    <td>PRC<sup>*a</sup></td>
+    <td>SetTabsEvery8Cols<sup>CIT100+</sup></td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>h</kbd></th>
+    <td>SM<sup>DG+*a</sup></td>
+    <td>SM<sup>SGI+*a</sup><br/>SM<sup>ANSI.SYS+</sup></td>
+    <td>SM<sup>Japanese ANSI.SYS+</sup><br/>SM<sup>CIT</sup></td>
+    <td>DECSET<sup>+</sup></td>
+</tr>
+<tr><th><kbd>i</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>DECMC<sup>+</sup></td>
+</tr>
+<tr><th><kbd>k</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>DECMC<sup>+</sup></td>
+</tr>
+<tr><th><kbd>l</kbd></th>
+    <td>RM<sup>DG+*a</sup></td>
+    <td>CHC<sup>*a</sup><br/>RM<sup>SGI+*a</sup><br/>RM<sup>ANSI.SYS+</sup></td>
+    <td>RM<sup>Japanese ANSI.SYS+</sup><br/>SM<sup>CIT</sup></td>
+    <td>DECRST<sup>+</sup></td>
+</tr>
+<tr><th><kbd>m</kbd></th>
+    <td>-</td>
+    <td>SSM<sup>*a</sup></td>
+    <td>XTERM_SET_MOD_FKEYS  (XTMDKEY<sup>*1</sup>)</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>n</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>XTERM_SET_MOD_FKEYS0 (XTMDKEYD<sup>*1</sup>)</td>
+    <td>DECDSR<sup>+</sup></td>
+</tr>
+<tr><th>Ft</th>
+    <th><kbd>&lt;</kbd></th>
+    <th><kbd>=</kbd></th>
+    <th><kbd>&gt;</kbd></th>
+    <th><kbd>?</kbd></th>
+</tr>
+<tr><th><kbd>p</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>XTHDPT<sup>*1</sup></td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>q</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>Terminal Identification<sup>TWG</sup></td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>r</kbd></th>
+    <td>TTIMERS</td>
+    <td>RSM<sup>*a</sup></td>
+    <td>-</td>
+    <td>XTREST<sup>*</sup></td>
+</tr>
+<tr><th><kbd>s</kbd></th>
+    <td>TTIMESV</td>
+    <td>-</td>
+    <td>-</td>
+    <td>XTSAVE<sup>*</sup></td>
+</tr>
+<tr><th><kbd>t</kbd></th>
+    <td>TTIMEST</td>
+    <td>-</td>
+    <td>XTSMTT<sup>*1</sup></td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>z</kbd></th>
+    <td>-</td>
+    <td>CAT<sup>*a</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th>I Ft</th>
+    <th><kbd>&lt;</kbd></th>
+    <th><kbd>=</kbd></th>
+    <th><kbd>&gt;</kbd></th>
+    <th><kbd>?</kbd></th>
+</tr>
+<tr><th><kbd>SP J</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>PFS<sup>+*a</sup></td>
+</tr>
+<tr><th><kbd>$ p</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>DECRQM<sup>+</sup></td>
+</tr>
+<tr><th><kbd>$ y</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>DECRPM<sup>+</sup></td>
+</tr>
+<tr><th><kbd>! i</kbd></th>
+    <td>RLIMGCP</td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>! q</kbd></th>
+    <td>RLCURCOL</td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+</table>
+
+<p>その他の私用制御機能</p>
 <table class="normal center">
-<caption>[*1 RLogin/mlterm による命名]</caption>
 <tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>DA2</th> <td><kbd>CSI &gt; <i>Ps</i> c</kbd></td></tr>
-<tr><th>DA3</th> <td><kbd>CSI = <i>Ps</i> c</kbd></td></tr>
-<tr><th>XTERM_SET_MOD_FKEYS  (XTMDKEY<sup>*1</sup>)</th><td><kbd>CSI &gt; <i>Ps1</i> ; <i>Ps2</i> m</kbd></td></tr>
-<tr><th>XTERM_SET_MOD_FKEYS0 (XTMDKEYD<sup>*1</sup>)</th><td><kbd>CSI &gt; <i>Ps1</i> n</kbd>             </td></tr>
+<tr><th>BA80 Screen Saver Off<sup>*a</sup></th><td><kbd>CSI = ? I</kbd></td></tr>
+<tr><th>BA80 Screen Saver On<sup>*a</sup></th><td><kbd>CSI ? = J</kbd></td></tr>
+<tr><th>? Insert Line Up<sup>*a</sup></th><td><kbd>CSI = ? l</kbd></td></tr>
+<tr><th>? Delete Line Down<sup>*a</sup></th><td><kbd>CSI ? = m</kbd></td></tr>
+<tr><th>DECFSR (Response to DECRFS)<sup>*a</sup></th><td><kbd>CSI 2 " nnn ST</kbd><sup>違反</sup></td></tr><!--"-->
+<tr><th>TeleGraphix Determining RIP support<sup>*a</sup></th><td><kbd>CSI !</kbd><sup>違反</sup></td></tr><!--"-->
+</table>
+
+
+
+<table class="normal center">
+<caption>未だまとめていないシーケンス</caption>
+<tr><th>略号</th><th>符号化表現</th></tr>
 <tr><th>XTCOLREG<sup>*1</sup></th> <td><kbd>CSI &gt; <i>Ps</i> S</kbd></td></tr>
 <tr><th>XTSMTT<sup>*1</sup></th> <td><kbd>CSI &gt; <i>Ps</i> t</kbd></td></tr>
 <tr><th>XTRMTT<sup>*1</sup></th> <td><kbd>CSI &gt; <i>Ps</i> T</kbd></td></tr>
 <tr><th>XTHDPT<sup>*1</sup></th> <td><kbd>CSI &gt; <i>Ps</i> p</kbd></td></tr>
-<tr><th>DECSET</th> <td><kbd>CSI ? <i>Pm</i> h</kbd></td></tr>
-<tr><th>DECRST</th> <td><kbd>CSI ? <i>Pm</i> l</kbd></td></tr>
-<tr><th>DECRQM</th> <td><kbd>CSI ? <i>Ps</i> $ p</kbd></td></tr>
-<tr><th>DECRPM</th> <td><kbd>CSI ? <i>Ps</i> ; <i>Ps</i> $ y</kbd></td></tr>
 <tr><th>DECSED</th><td><kbd>CSI ? <i>Ps</i> J</kbd></td></tr>
 <tr><th>DECSEL</th><td><kbd>CSI ? <i>Ps</i> K</kbd></td></tr>
 <tr><th>XTREST<sup>*</sup></th> <td><kbd>CSI ? <i>Pm</i> r</kbd></td></tr>
@@ -1105,6 +1467,7 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>RLIMGCP</th><td><kbd>CSI &lt; <i>Ps</i> ! i</kbd></td></tr>
 <tr><th>RLCURCOL</th><td><kbd>CSI &lt; <i>Ps</i> ! q</kbd></td></tr>
 </table>
+
 
 <pre>
 # 各端末の対応制御機能
@@ -1141,7 +1504,7 @@ tmux=screen Poderosa=none
 | RLogin  |**  *           ***                         | *  *|
 | screen  |                                            | *   |
 | contra  |**                 * **              *   ***| *   |
-| mintty  |**                 *                       *| *   |
+| mintty  |**                 *      *                *| *** |
 | xterm   |**                                          | *** |
 
 # nFt型私用 CSI シーケンス
@@ -1153,7 +1516,7 @@ screen=none tmux=none
 |----------|--------|--------|-------|---------------|---|-------|--|-----------|-------|-----------|---|
 | RLogin   |*       |**   *  |       |* * ***** *****| * | ******| *|     ***   |*    * | *      ***|   |
 | contra   |        |**      |       |*           *  |   |       |  |           |       |           |   |
-| mintty   |*       | *      |*** * *|* *   *** ***  |   | ******|  |     **  * |       |           |   |
+| mintty   |*       | *      |*** * *|* *   *** ***  |   | ******|  |     **  * |       |           |*  |
 | xterm    |*       |**      |** ****|* * * *** ***  |   | ******|  |     **  * |       |           |   |
 | Poderosa |*       |        |       |               |   |       |  |           |       |           |   |
 
@@ -1161,16 +1524,16 @@ screen=none tmux=none
 
 tmux=screen
 
-|          |<<<<<|=========|>>>>>>>|????????????|
-|          |   !!|         |       |           $|
-|          |rstiq|ABCFGHIsc|STcmnpt|JKSWchilnrsp|
-|----------|-----|---------|-------|------------|
-| RLogin   |*****|   **  **| ******|**** *******|
-| screen   |     |         |  *    |     * *    |
-| contra   |     |         |  ***  |     * *   *|
-| mintty   |***  |         |  **** |**  ******* |
-| xterm    |     |        *| ******|**   *******|
-| Poderosa |     |         |  *    |     * * ** |
+|          |<<<<<|=========|>>>>>>>>|????????????|
+|          |   !!|         |        |           $|
+|          |rstiq|ABCFGHISc|STcmnpqt|JKSWchilnrsp|
+|----------|-----|---------|--------|------------|
+| RLogin   |*****|   **  **| ***** *|**** *******|
+| screen   |     |         |  *     |     * *    |
+| contra   |     |         |  ***   |     * *   *|
+| mintty   |***  |         |  ***** |**  ******* |
+| xterm    |     |        *| ***** *|**   *******|
+| Poderosa |     |         |  *     |     * * ** |
 </pre>
 
 <h3>制御列 (control string)</h3>
@@ -1187,6 +1550,7 @@ tmux=screen
 <tr><th>PM</th>    <td>コマンド列</td>   <td><kbd>PM <i>GL'</i><strong>*</strong> ST</kbd></td> <td>Privacy Message</td></tr><!--'-->
 <tr><th>APC</th>   <td>コマンド列</td>   <td><kbd>APC <i>GL'</i><strong>*</strong> ST</kbd></td><td>Application Program Command</td></tr><!--'-->
 <tr><th>SCREEN_TDS</th><td>キャラクタ列?</td><td><kbd>ESC k <i>U</i><strong>*</strong> ST</kbd></td> <td>Title Definition String (GNU Screen)</td></tr>
+<tr><th>DECRFS</th><td>キャラクタ列?</td><td><kbd>CSI <i>Ps</i> ; " { <i>U</i><strong>*</strong> ST</kbd></td><td>Request Font Status</td></tr><!--"-->
 </table>
 
 <ul>
@@ -1275,6 +1639,10 @@ tmux=screen
 未整理の DCS シーケンス
 <table class="normal">
 <tr><th>略号</th><th>符号化表現</th></tr>
+<tr><td>ReGIS Data<sup>VK100</sup></td><td><kbd>DCS p ... ST</kbd></td></tr>
+<tr><td>Hard Copy Data<sup>VK100</sup></td><td><kbd>DCS q ... ST</kbd></td></tr>
+<tr><td>SET-UP Data<sup>VK100</sup></td><td><kbd>DCS r ... ST</kbd></td></tr>
+<tr><td>Auxiliary Keypad Data<sup>VK100</sup></td><td><kbd>DCS <i>Ps</i> s ... ST</kbd></td></tr>
 <tr><td>DECUDK   </td><td><kbd>DCS |   ... ST</kbd></td></tr>
 <tr><td>DECRQSS  </td><td><kbd>DCS $ q ... ST</kbd></td></tr>
 <tr><td>DECRPSS  </td><td><kbd>DCS $ r ... ST</kbd></td></tr>
@@ -2483,29 +2851,24 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
 </ul>
 
 <h3>位置記録</h3>
-<table class="normal center">
-<tr><th>略号</th><th>符号化表現</th><th>意味</th></tr>
-<tr><th>SCOSC</th><td><kbd>CSI s</kbd></td><td>カーソルの位置を保存する。</td></tr>
-<tr><th>SCORC</th><td><kbd>CSI u</kbd></td><td>カーソルの位置を復元する。</td></tr>
-<tr><th>DECSC</th><td><kbd>ESC 7</kbd></td><td>カーソルの状態を保存する。</td></tr>
-<tr><th>DECRC</th><td><kbd>ESC 8</kbd></td><td>カーソルの状態を復元する。</td></tr>
-</table>
 <ul>
-<li><dfn class="cfunc">SCOSC</dfn>: SAVE CURRENT CURSOR POSITION
+<li><dfn class="cfunc">SCOSC</dfn> (SCP) <kbd>CSI s</kbd>: SAVE CURRENT CURSOR POSITION
   <p>現在のカーソル位置を記録する。</p>
   <ul>
   <li>互換性: vt510, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SCOSC">SCOSC</a></li>
+  <li>all-escapes.txt によると SCO による略称は SCP</li>
   </ul>
 </li>
-<li><dfn class="cfunc">SCORC</dfn>: RESTORE SAVED CURSOR POSITION
+<li><dfn class="cfunc">SCORC</dfn> (RCP) <kbd>CSI u</kbd>: RESTORE SAVED CURSOR POSITION
   <p>SCOSC で記録した位置にカーソル位置を戻す。</p>
   <ul>
   <li>互換性: vt510, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SCORC">SCORC</a></li>
+  <li>all-escapes.txt によると SCO による略称は RCP</li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECSC</dfn>: SAVE CURSOR
+<li><dfn class="cfunc">DECSC</dfn> <kbd>ESC 7</kbd>: SAVE CURSOR
   <p>現在のカーソル状態を記録する。
     記録される物にはカーソル位置・描画属性・文字デコード状態・DECAWM・DECOM・DECSCA状態などを含む。
   </p>
@@ -2514,7 +2877,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li><a href="http://www.vt100.net/docs/vt510-rm/DECSC">DECSC</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECRC</dfn>: RESTORE CURSOR
+<li><dfn class="cfunc">DECRC</dfn> <kbd>ESC 8</kbd>: RESTORE CURSOR
   <p>DECSC で記録したカーソル状態を復元する。</p>
   <ul>
   <li>互換性: vt510, xterm</li>
@@ -3387,6 +3750,8 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     RLogin は現在の描画属性の E で埋め尽くす。
     contra では xterm の振る舞いに倣う。
   </li>
+  <li>[ek-0gigi-rc-001_gigi_programming.pdf]
+    DEC VK100 (GIGI) はクロスハッチパターン。</li> 
   </ul>
 </li>
 </ul>
@@ -5089,9 +5454,14 @@ f.面クリ, CLS 　このコマンドはバッチファイルのみに利用で
   <a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.pdf">pdf</a>
   <del><a href="http://www.xfree86.org/current/ctlseqs.html">Xterm Control Sequences</a></del>
 </li>
-<li>VT
+<li>DEC VT
   <ul>
-  <li><a href="http://www.vt100.net/docs/vt100-ug/chapter3.html">VT100.net: Digital VT100 User Guide</a></li>
+  <li><a href="http://www.vt100.net/docs/vt100-ug/chapter3.html">VT100.net: Digital VT100 User Guide</a>
+    <ul>
+    <li>DEC VK100 GIGI [PDF] <a href="http://vt100.net/dec/ek-0gigi-rc-001_gigi_programming.pdf">ek-0gigi-rc-001_gigi_programming.pdf</a></li>
+    <li>C.Itoh CIT-101 [PDF] <a href="https://www.vt100.net/manx/details/8,5491">cit101-um.pdf</a></li>
+    </ul>
+  </li>
   <li><a href="http://vt100.net/docs/vt510-rm/contents">VT510 Video Terminal Programmer Information</a></li>
   <li>
     <a href="http://www.ccs.neu.edu/research/gpc/VonaUtils/vona/terminal/VT100_Escape_Codes.html">VT100 escape codes</a>
