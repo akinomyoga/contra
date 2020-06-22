@@ -29,23 +29,133 @@
   <p></p>
   </div>
 </div>
-
 <h1>akinomyoga/contra :: Terminals</h1>
-<h2>DEC 関連</h2>
-<p>実は DEC の制御シーケンスはここにまとまっている。</p>
+<h2>情報源</h2>
 <ul>
-<li><a href="https://vt100.net/emu/ctrlfunc_dec.html">VT100.net: Private Control Functions used by DEC</a></li>
+<li><a href="https://vt100.net/">Video Display Terminal Information</a></li>
+<li><a href="https://invisible-mirror.net/archives/shuford/terminal/">Video Terminal and Terminal-Emulator Information</a></li>
 </ul>
 
-<h2>LA100</h2>
+<h2>Sun wscons (7D)</h2>
+<ul>
+<li>SumOS 5.8 <a href="https://docs.oracle.com/cd/E19109-01/tsolaris8/816-1060/6m7glrk90/index.html">wscons(7D)</a></li>
+<li>Solaris 11.2 <a href="https://docs.oracle.com/cd/E36784_01/html/E36884/wscons-7d.html">wscons - man pages section 7: Device and Network Interfaces</a></li>
+</ul>
+<p>■</p>
+
+<h2>DEC 関連 at VT100.net</h2>
+<p>実は DEC の制御シーケンスはここにまとまっている。
+  またどのマニュアルに載っているかという情報も一緒にある。
+  然し、必ずしもその制御機能が載っているマニュアルが全て列挙されている訳ではない様だ。
+</p>
+<ul>
+<li><a href="https://vt100.net/emu/ctrlseq_dec.html">VT100.net: Private Control Sequences used by DEC</a></li>
+<li><a href="https://vt100.net/emu/ctrlfunc_dec.html">VT100.net: Private Control Functions used by DEC</a></li>
+<li><a href="https://vt100.net/emu/dcsseq_dec.html">VT100.net: Private Device Control Strings used by DEC</a></li>
+</ul>
+<p>更に VT100 から VT525 まで version 毎にどう増減したか迄以下にまとめられている。</p>
+<ul>
+<li><a href="https://vt100.net/emu/fingers/">Code Fingers – VT100.net</a> の下部のリンク。</li>
+</ul>
+<p>様々のプリンタについては以下にまとまっている。■</p>
+<ul>
+<li><a href="https://vt100.net/docs/tp83/contents.html">Terminals &amp; Printers Handbook Contents</a></li>
+</ul>
+<p>その他の特別な機能</p>
+<ul>
+<li>Glyphs
+  <ul>
+  <li>VT220 <a href="https://vt100.net/dec/vt220/glyphs">VT220 Glyphs</a></li>
+  <li>VT320 <a href="https://vt100.net/dec/vt320/glyphs">VT320 Glyphs</a>
+    ここを見ると DEC Graphics の Lantern 等は実際は VT という文字だった事が分かる。
+    絵ではなく。terminfo に於ける名称は一体何処から来たのだろうか。
+  </li>
+  <li>DEC Tech Char Set <a href="https://vt100.net/charsets/technical.html">VT100.net: DEC Technical Character Set</a></li>
+  </ul>
+</li>
+<li>DRCS <a href="https://vt100.net/dec/vt320/soft_characters">VT320 Soft Character Sets</a></li>
+<li>Serial Connection <a href="https://vt100.net/dec/vt320/serial_connections">Digital VT320 Serial Connections</a>
+  Serial Connection 専用の制御機能が色々在るようである。■
+</li>
+<li>DECRQTSR <a href="https://vt100.net/dec/vt320/terminal_state_report">Digital VT320 Terminal State Reports</a></li>
+</ul>
+
+<h2>DEC LA100</h2>
 <ul>
 <li><a href="https://vt100.net/docs/la100-rm/chapter2.html#S2.5">https://vt100.net/docs/la100-rm/chapter2.html#S2.5</a></li>
 </ul>
 
+<p>CSI シーケンス</p>
+<ul>
+<li><kbd>ESC D</kbd> IND</li>
+<li><kbd>ESC E</kbd> NEL</li>
+<li><kbd>ESC H</kbd> HTS</li>
+<li><kbd>ESC J</kbd> VTS</li>
+<li><kbd>ESC K</kbd> PLD</li>
+<li><kbd>ESC L</kbd> PLU</li>
+<li><kbd>ESC M</kbd> RI</li>
+<li><kbd>ESC Z</kbd> DECID</li>
+<li><kbd>ESC 1</kbd> DECHTS</li>
+<li><kbd>ESC 2</kbd> DECCAHT</li>
+<li><kbd>ESC 3</kbd> DECVTS</li>
+<li><kbd>ESC 4</kbd> DECCAVT</li>
+<li><kbd>CSI <i>Pn</i> A</kbd> CUU</li>
+<li><kbd>CSI <i>Pn</i> `</kbd> HPA</li>
+<li><kbd>CSI <i>Pn</i> a</kbd> HPR</li>
+<li><kbd>CSI <i>Pn</i> d</kbd> VPA</li>
+<li><kbd>CSI <i>Pn</i> e</kbd> VPR</li>
+<li><kbd>CSI c</kbd> DA</li>
+<li><kbd>CSI ? 1 0 c</kbd> ★ Request Font Configuration</li>
+<li><kbd>CSI ? <i>Pn</i> ; <i>Pn</i> SP D</kbd> ★ Report Font Configuration</li>
+<li><kbd>CSI <i>Ps</i> m</kbd> SGR <i>Ps</i> = 0,4,10-14</li>
+<li><kbd>CSI <i>Ps</i> g</kbd> TBC <i>Ps</i> = 0-2, 4</li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> r</kbd> DECSTBM</li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> s</kbd> DECSLRM</li>
+<li><kbd>CSI <i>Pn</i> t</kbd> DECSLPP</li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> u</kbd> DECSHTS</li>
+<li><kbd>CSI <i>Pm</i> v</kbd> DECSVTS</li>
+<li><kbd>CSI <i>Ps</i> w</kbd> DECSHORP <i>Ps</i> = 0-8</li>
+<li><kbd>CSI <i>Ps</i> z</kbd> DECSVERP <i>Ps</i> = 0-6</li>
+<li><kbd>CSI <i>Ps</i> " z</kbd> DECDEN <i>Ps</i> = 0,1,2,3</li>
+</ul>
+
+<p>94文字集合</p>
+<table class="normal center">
+<tr><th>F</th><th>94文字集合</th></tr>
+<tr><th>0</th><td>DIGITAL VT100 line drawing set</td></tr>
+<tr><th>5</th><td>DIGITAL Finnish</td></tr>
+<tr><th>6</th><td>DIGITAL Norwegian/Danish</td></tr>
+<tr><th>7</th><td>DIGITAL Swedish</td></tr>
+<tr><th>9</th><td>DIGITAL French Canadian</td></tr>
+<tr><th>A</th><td>ISO United Kingdom</td></tr>
+<tr><th>B</th><td>USASCII</td></tr>
+<tr><th>K</th><td>ISO German</td></tr>
+<tr><th>R</th><td>ISO French</td></tr>
+<tr><th>Y</th><td>ISO Italian</td></tr>
+<tr><th>Z</th><td>ISO Spanish</td></tr>
+</table>
+
+<p>Modes</p>
+<ul>
+<li>Mode 20 LNM</li>
+<li>Mode ?7 DECAWM</li>
+<li>Mode ?29 DECPSM<sup>*a</sup> Pitch Select</li>
+</ul>
+
 <p>DCS シーケンス</p>
 <ul>
-<li><kbd>DCS <i>Pn</i> q ... ST</kbd> Graphics String</li>
-<li><kbd>DCS <i>Pn</i> v ... ST</kbd> Answerback Message</li>
+<li><kbd>DCS <i>Pn</i> q ... ST</kbd> decSIXEL Graphics String
+  <p>内部では以下の文字を使う事ができる。</p>
+  <ul>
+  <li><kbd>CAN</kbd></li>
+  <li><kbd>SUB</kbd></li>
+  <li><kbd>ESC</kbd></li>
+  <li><kbd>!</kbd> DECGRI</li>
+  <li><kbd>$</kbd> DECGCR</li>
+  <li><kbd>-</kbd> DECGNL</li>
+  </ul>
+</li>
+<li><kbd>DCS <i>Pn</i> v ... ST</kbd> DECLANS Answerback Message</li>
 </ul>
 
 <h2>SCO OpenServer 5.0.6 screen(HW)</h2>
