@@ -40,7 +40,7 @@
 <ul>
 <li><a href="https://nixdoc.net/man-pages/IRIX/man1/xwsh.1.html">xwsh - IRIX</a></li>
 </ul>
-
+<p>シーケンス一覧</p>
 <ul>
 <li><kbd>ESC 7</kbd></li>
 <li><kbd>ESC 8</kbd></li>
@@ -173,7 +173,7 @@
 <li>AIX 7.2 (en) <a href="https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/a_commands/aixterm.html">aixterm Command</a></li>
 </ul>
 
-<p>シーケンス</p>
+<p>シーケンス一覧</p>
 <ul>
 <li><kbd>ESC 7</kbd> DECSC</li>
 <li><kbd>ESC 8</kbd> DECRC</li>
@@ -336,7 +336,35 @@
 <li>SumOS 5.8 <a href="https://docs.oracle.com/cd/E19109-01/tsolaris8/816-1060/6m7glrk90/index.html">wscons(7D)</a></li>
 <li>Solaris 11.2 <a href="https://docs.oracle.com/cd/E36784_01/html/E36884/wscons-7d.html">wscons - man pages section 7: Device and Network Interfaces</a></li>
 </ul>
-<p>■</p>
+<p>シーケンス一覧</p>
+<ul>
+<li><kbd>CSI <i>Pn</i> @</kbd> ICH</li>
+<li><kbd>CSI <i>Pn</i> A</kbd> CUU</li>
+<li><kbd>CSI <i>Pn</i> B</kbd> CUD</li>
+<li><kbd>CSI <i>Pn</i> C</kbd> CUF</li>
+<li><kbd>CSI <i>Pn</i> D</kbd> CUB</li>
+<li><kbd>CSI <i>Pn</i> E</kbd> CNL</li>
+<li><kbd>CSI <i>Pn1</i> ; <i>Pn2</i> f</kbd> or <kbd>CSI <i>Pn1</i> ; <i>Pn2</i> H</kbd> HVP or  CUP</li>
+<li><kbd>CSI J</kbd> ED</li>
+<li><kbd>CSI K</kbd> EL</li>
+<li><kbd>CSI <i>Pn</i> L</kbd> IL</li>
+<li><kbd>CSI <i>Pn</i> M</kbd> DL</li>
+<li><kbd>CSI <i>Pn</i> P</kbd> DCH</li>
+<li><kbd>CSI <i>Pn</i> m</kbd> SGR
+  <p><i class="kbd">Pn</i> = 0,7,30..37,40..47</p>
+</li>
+<li><kbd>CSI p</kbd> SUNBOW★ (Black On White)</li>
+<li><kbd>CSI q</kbd> SUNWOB★ (White On Black)</li>
+<li><kbd>CSI <i>Pn</i> r</kbd> SUNSCRL★ (Set Scrolling) Set scrolling amount
+  <ul>
+  <li>0 initiates wrap mode (最終行で LF すると一番上に戻る)</li>
+  <li>1 default for initial/reset</li>
+  <li>2 or 3 a small amount of jump</li>
+  <li>34 clears the screen rather than scrolling</li>
+  </ul>
+</li>
+<li><kbd>CSI s</kbd> SUNRESET★ (Reset terminal emulator) 画面とカーソル位置をその儘にしてそれ以外のモード等を全て初期化する。</li>
+</ul>
 
 <h2>DEC 関連 at VT100.net</h2>
 <p>実は DEC の制御シーケンスはここにまとまっている。
