@@ -33,12 +33,8 @@
     <a href="index.html">akinomyoga/contra</a> :: Control functions
     </span>
   </div>
-  <div>
-  <p></p>
-  </div>
 </div>
-<hr style="height:1px;"/>
-<h1>akinomyoga/contra :: Control functions</h1>
+<h1>Control functions</h1>
 
 <!--===================================================================================-->
 <h2>制御機能 一般論</h2>
@@ -2119,6 +2115,12 @@ tmux=screen
 <tr><th>KITTY_EXTENDED_KEYBOARD       </th><td>?2017</td></tr>
 </table>
 
+<h3>その他未整理のモード</h3>
+<ul>
+<li>_DGSM, _SGISM, _ASYSSM, _PC98SM, _CITSM</li>
+<li>Tera Term 14001..14004?</li>
+</ul>
+
 <h3>端末毎の対応モードの一覧</h3>
 <p>他</p>
 <ul>
@@ -2138,6 +2140,17 @@ tmux=screen
 </li>
 <li>Tera Term source <a href="https://osdn.net/projects/ttssh2/scm/svn/blobs/head/trunk/teraterm/teraterm/vtterm.c">File Details: /trunk/teraterm/teraterm/vtterm.c (head) - ttssh2 (svn) - Tera Term - OSDN</a>
   14001..14004 に NetTerm 由来のマウスモードがあるが実験的な実装だろうか。
+  NetTerm のマニュアルを探してもそれらしき物は見つからない。検索したら以下の様な顛末。14001 は取り敢えずの実験的な値?
+  <ul>
+  <li><a href="https://togetter.com/li/290073">拡張マウストラッキングに対応するならばSGR-style - Togetter</a></li>
+  <li><a href="https://vim-jp.org/vimdoc-ja/options.html">options - Vim日本語ドキュメント</a></li>
+  <li><a href="https://medium.com/usevim/using-a-mouse-with-vim-44378f51f7d2">Using a Mouse with Vim - usevim - Medium</a></li>
+  <li><a href="https://twitter.com/ttdoda/status/55947929076248576">いわもと こういちさんはTwitterを使っています 「NetTermの...</a>
+    <p>「NetTermのマウスプロトコルの初期化シーケンスがわからなかったので、
+      ttymouse=xterm2とttymouse=nettermでの出力の違いを比べて見たら、
+      xtermの初期化シーケンスが無くなっただけだった。もしかして初期化シーケンスは無いの? #TeraTerm」</p>
+  </li>
+  </ul>
 </li>
 <li>モードに名前を付けるならば origin のソースコードの中で割り当てられている物を使うのが良い。
     xterm は xterm/ptyx.h にある。srm_X10_MOUSE (?9) などの識別子。
@@ -6071,7 +6084,7 @@ f.面クリ, CLS 　このコマンドはバッチファイルのみに利用で
   <span class="left">-- ≪</span>
   <span class="right">≫ --</span>
   <span class="center">
-  akinomyoga/contra :: Control functions
+  <a href="index.html">akinomyoga/contra</a> :: Control functions
   </span>
 </div>
 <div class="address2">

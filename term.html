@@ -25,15 +25,20 @@
     <a href="index.html">akinomyoga/contra</a> :: Terminals
     </span>
   </div>
-  <div>
-  <p></p>
-  </div>
 </div>
-<h1>akinomyoga/contra :: Terminals</h1>
-<h2>情報源</h2>
+<h1>Terminals</h1>
+<p>このページではそれぞれの端末の制御機能とシーケンスを纏める。特に端末固有の制御機能に注視する。
+  端末固有の制御機能には★を付した。
+  ECMA-48 のシーケンスの規則を破ったシーケンスには <sup class="violation">×</sup> を付している。
+  制御機能に略称がない場合もしくは他と紛らわしい略称の場合は、
+  暫定的な略称を割り当てる。暫定的な略称は _ で始まるものとする。
+</p>
+
+<p>以下は歴史的な端末の文書を集めているサイト。</p>
 <ul>
-<li><a href="https://vt100.net/">Video Display Terminal Information</a></li>
-<li><a href="https://invisible-mirror.net/archives/shuford/terminal/">Video Terminal and Terminal-Emulator Information</a></li>
+<li>VT100.net <a href="https://vt100.net/">Video Display Terminal Information</a></li>
+<li><sup>The Archive of</sup> <span style="font-variant: small-caps;">Video Terminal Information</span>
+  <a href="https://invisible-mirror.net/archives/shuford/terminal/">Video Terminal and Terminal-Emulator Information</a></li>
 </ul>
 
 <h2>PC-98</h2>
@@ -226,15 +231,15 @@
 
 <p>Cons25 互換シーケンス</p>
 <ul>
-<li><kbd>CSI = <i>Pn</i> A</kbd>             C25BORD Cons25 set border</li>
-<li><kbd>CSI = <i>Pn</i> ; <i>Pn</i> B</kbd> C25BLPD Cons25 set bell pitch duration</li>
-<li><kbd>CSI = <i>Pm</i> C</kbd>             C25GCS  Cons25 set global cursor shape</li>
-<li><kbd>CSI = <i>Pn</i> F</kbd>             C25DFG  Cons25 set default foreground</li>
-<li><kbd>CSI = <i>Pn</i> G</kbd>             C25DBG  Cons25 set default background</li>
-<li><kbd>CSI = <i>Pn</i> S</kbd>             C25LCT  Cons25 set local cursor type</li>
-<li><kbd>CSI = <i>Pn</i> T</kbd>             C25MODE Cons25 set terminal mode</li>
-<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> x</kbd>   C25SGR  Cons25 set graphic rendition</li>
-<li><kbd>CSI <i>Pn</i> z</kbd>               C25VTSW Cons25 switch virtual terminal</li>
+<li><kbd>CSI = <i>Pn</i> A</kbd>             C25BORD★ Cons25 set border</li>
+<li><kbd>CSI = <i>Pn</i> ; <i>Pn</i> B</kbd> C25BLPD★ Cons25 set bell pitch duration</li>
+<li><kbd>CSI = <i>Pm</i> C</kbd>             C25GCS ★ Cons25 set global cursor shape</li>
+<li><kbd>CSI = <i>Pn</i> F</kbd>             C25DFG ★ Cons25 set default foreground</li>
+<li><kbd>CSI = <i>Pn</i> G</kbd>             C25DBG ★ Cons25 set default background</li>
+<li><kbd>CSI = <i>Pn</i> S</kbd>             C25LCT ★ Cons25 set local cursor type</li>
+<li><kbd>CSI = <i>Pn</i> T</kbd>             C25MODE★ Cons25 set terminal mode</li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> x</kbd>   C25SGR ★ Cons25 set graphic rendition</li>
+<li><kbd>CSI <i>Pn</i> z</kbd>               C25VTSW★ Cons25 switch virtual terminal</li>
 <li>SCO のシーケンスと同じ物が見られる。
   コードの配置を考えると SCO の方が先であろうと思われる。
 </li>
@@ -1174,7 +1179,7 @@
   <span class="left">-- ≪</span>
   <span class="right">≫ --</span>
   <span class="center">
-  akinomyoga/contra :: Control functions
+  <a href="index.html">akinomyoga/contra</a> :: Terminals
   </span>
 </div>
 <div class="address2">
