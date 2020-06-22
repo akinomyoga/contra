@@ -53,7 +53,13 @@
 <li><kbd>SI</kbd></li>
 <li><kbd>SO</kbd></li>
 <li><kbd>ESC SP</kbd><sup class="violation">×</sup> WYID★</li>
-<li><kbd>ESC ! p</kbd><sup class="violation">×</sup> DECSTR (<kbd>CSI ! p</kbd> の typo ではないか)</li>
+<li><kbd>ESC ! p</kbd><sup class="violation">×</sup> <del>DECSTR</del> WYSTR★
+  <p><kbd>CSI ! p</kbd> の typo ではないか。
+    と思ったら、後のバージョンで DECSTR は <kbd>CSI ! p</kbd> に改められ、
+    代わりに <kbd>ESC ! p</kbd> は WYSTR という名前に改められた。
+    つまり誤って実装してしまってそのまま残ったという事。
+  </p>
+</li>
 <li><kbd>ESC # 3</kbd> DECDHL</li>
 <li><kbd>ESC # 4</kbd> DECDHL</li>
 <li><kbd>ESC # 5</kbd> DECSWL</li>
@@ -154,6 +160,60 @@
 <li><kbd>CSI &gt; <i>Cq</i> ... <i>Cq</i></kbd><sup class="violation">×</sup> WYTLOAD★</li>
 </ul>
 
+<h3>WY-85</h3>
+<ul>
+<li>88-060-01B_WY-85_Users_Guide_May85.pdf</li>
+</ul>
+<p>上記 WY-60 との差分 (増分)</p>
+<ul>
+<li>ANSI modes: 1,6 がなくなっている。</li>
+<li>DEC modes: ?16 が増えている。</li>
+<li>Wyse modes: 36 (WYDELKM), 37 (WYGATM), 38 (WYTEXM) が追加。
+  40 (WYEXTDM) が変更。41-44 が削除。</li>
+<li>DECSTR, WYSTR の顛末については上を参照。</li>
+<li><kbd>IND</kbd></li>
+<li><kbd>RI</kbd></li>
+<li><kbd>NEL</kbd></li>
+<li><kbd>CAN</kbd> エスケープシーケンスを中断。何も表示しない。</li>
+<li><kbd>SUB</kbd>★ エスケープシーケンスを中断する。逆転 ? を表示。</li>
+<li><kbd>ESC SP G</kbd> S7C1T</li>
+<li><kbd>ESC SP F</kbd> S8C1T</li>
+<li><kbd>ESC .</kbd><sup class="violation">×</sup> LS3</li>
+<li><kbd>ESC :</kbd><sup class="violation">×</sup> LS3R</li>
+<li><kbd>ESC N</kbd> SS2</li>
+<li><kbd>ESC O</kbd> SS3</li>
+<li><kbd>ESC n</kbd> LS2</li>
+<li><kbd>ESC }</kbd> LS2R</li>
+<li><kbd>ESC ~</kbd> LS1R</li>
+<li><kbd>CSI <i>Ps</i> W</kbd> CTC
+  <p><i class="kbd">Ps</i> = 0,2,5,?5</p>
+</li>
+<li><kbd>CSI <i>Pn</i> `</kbd> HPA</li>
+<li><kbd>CSI <i>Pn</i> a</kbd> HPR</li>
+<li><kbd>CSI <i>Pn</i> d</kbd> VPA</li>
+<li><kbd>CSI <i>Pn</i> e</kbd> VPR</li>
+<li><kbd>CSI <i>Ps</i> i</kbd> MC
+  <p><i class="kbd">Ps</i> = 6,7 が追加されている。</p>
+</li>
+<li><kbd>CSI <i>Ps</i> n</kbd> DSR
+  <p><i class="kbd">Ps</i>: 15 は ?15 に変わっている。?25 追加。</p>
+</li>
+<li><kbd>CSI <i>Ps</i> z</kbd> WYSCRATE★
+  <p><i class="kbd">Ps</i> = 0-4</p>
+</li>
+<li><kbd>CSI <i>Ps</i> |</kbd> DECTTC
+  <p><i class="kbd">Ps</i> = 0,1</p>
+</li>
+<li><kbd>CSI <i>Ps</i> ; <i>Ps</i> " p</kbd> DECSCL</li>
+<li><kbd>CSI <i>Ps</i> " q</kbd> DECSCA
+  <p><i class="kbd">Ps</i> = 0,1,2</p>
+</li>
+<li><kbd>CSI &lt; <i>F</i></kbd> WYFKEX★ (応答)
+  <p><i>F</i> = a-o, A-O</p>
+</li>
+<li><kbd>DCS <i>Pm</i> { ... ST</kbd> DECDLD</li>
+<li><kbd>DCS <i>Pm</i> | ... ST</kbd> DECUKD</li>
+</ul>
 
 <h2>SGI xwsh</h2>
 <ul>

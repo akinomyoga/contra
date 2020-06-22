@@ -515,7 +515,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th class="markB">DCS</th><td><kbd>ESC P</kbd></td>
     <th>DMI</th><td><kbd>ESC `</kbd></td>
     <th>PCD</th><td><kbd>ESC p</kbd></td></tr>
-<tr><th class="markB">CZD</th><td><kbd>ESC ! <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
+<tr><th class="markB">CZD<br/>WYSTR<sup>違反</sup></th><td><kbd>ESC ! <i>I</i><strong>*</strong> <i>Ft</i></kbd><br/><kbd>ESC ! p</kbd></td>
     <th>DECHTS<br/>DECGON<br/>_CITSACM</th><td><kbd>ESC 1</kbd></td>
     <th>(HOP)</th><td><kbd>ESC A</kbd></td>
     <th>PU1<br/>_SCOSFK</th><td><kbd>ESC Q</kbd></td>
@@ -875,7 +875,7 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>ED</th>     <td><kbd>CSI ... J</kbd></td>
     <th>CBT</th>    <td><kbd>CSI ... Z</kbd></td>
     <th>HPB</th>    <td><kbd>CSI ... j</kbd></td>
-    <th>DECVERP, _SCOSSW, _CITPCTL</th><td><kbd>CSI ... z</kbd></td></tr>
+    <th>DECVERP, WYSCRATE, _SCOSSW, _CITPCTL</th><td><kbd>CSI ... z</kbd></td></tr>
 <tr><th>EL</th>     <td><kbd>CSI ... K</kbd></td>
     <th>SRS</th>    <td><kbd>CSI ... [</kbd></td>
     <th>VPB<br/>_SCOEDK</th>    <td><kbd>CSI ... k</kbd></td>
@@ -1286,7 +1286,9 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     </tr>
 </table>
 
-<p>パラメータの先頭に <kbd>&lt;</kbd>, <kbd>=</kbd>, <kbd>&gt;</kbd>, <kbd>?</kbd> を含む私用制御機能。</p>
+<p>パラメータの先頭に <kbd>&lt;</kbd>, <kbd>=</kbd>, <kbd>&gt;</kbd>, <kbd>?</kbd> を含む私用制御機能。
+  応答では WYFKEX が <kbd>CSI &lt; <i>F</i></kbd> (<i class="kbd">F</i> = a-o, A-O) を専有している。
+</p>
 <table class="normal center contra-cell-centered">
 <caption>[<sup>+</sup> は既存の制御機能の私用パラメータとしての拡張、
   <sup>*1</sup> は mlterm/en/doc/ControlSequences による命名,
