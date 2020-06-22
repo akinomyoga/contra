@@ -823,161 +823,161 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </ul>
 
 <p>この文書ではエスケープシーケンスに倣って、制御シーケンスについても <i class="kbd">I</i><strong>*</strong> <i class="kbd">Ft</i> の部分により型を定めることにする。
-Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</strong> のないもの) を表にする。<sup>*a</sup> を付した物は all-escapes.txt より。</p>
-<table class="normal center">
-<tr><th colspan="6">Ft型: 端末制御機能</th>
-    <th colspan="2">Ft型: 私用制御機能</th>
-    </tr>
-<tr><th>略号</th><th>符号化表現</th>
-    <th>略号</th><th>符号化表現</th>
-    <th>略号</th><th>符号化表現</th>
-    <th>略号</th><th>符号化表現</th></tr>
-<tr><th>ICH</th>    <td><kbd>CSI ... @</kbd></td>
-    <th>DCH</th>    <td><kbd>CSI ... P</kbd></td>
-    <th>HPA</th>    <td><kbd>CSI ... `</kbd></td>
-    <th>DECSSL, SUNBOW, WYFDAT, _AIXKSI<br/>_DGBAR, SKR<sup>ANSI.SYS</sup>, RLBFAT</th> <td><kbd>CSI ... p</kbd></td></tr>
-<tr><th>CUU</th>    <td><kbd>CSI ... A</kbd></td>
-    <th>SEE</th>    <td><kbd>CSI ... Q</kbd></td>
-    <th>HPR</th>    <td><kbd>CSI ... a</kbd></td>
-    <th>DECLL, SUNWOB, _AIXPFK, DGCA</th>  <td><kbd>CSI ... q</kbd></td></tr>
-<tr><th>CUD</th>    <td><kbd>CSI ... B</kbd></td>
-    <th>CPR<br/>_SCODL</th><td><kbd>CSI ... R</kbd></td>
-    <th>REP</th>    <td><kbd>CSI ... b</kbd></td>
-    <th>DECSTBM, DECPCTERM, _SCOCSR, SUNSCRL</th><td><kbd>CSI ... r</kbd></td></tr>
-<tr><th>CUF</th>    <td><kbd>CSI ... C</kbd></td>
-    <th>SU</th>     <td><kbd>CSI ... S</kbd></td>
-    <th>DA</th>     <td><kbd>CSI ... c</kbd></td>
-    <th>DECSLRM, SCOSC, WYSC, _DGRRC, SUNRESET</th><td><kbd>CSI ... s</kbd></td></tr>
-<tr><th>CUB</th>    <td><kbd>CSI ... D</kbd></td>
-    <th>SD</th>     <td><kbd>CSI ... T</kbd></td>
-    <th>VPA</th>    <td><kbd>CSI ... d</kbd></td>
-    <th>DECSLPP, WYNNAT, DGROSC, _CITSTIME</th><td><kbd>CSI ... t</kbd></td></tr>
-<tr><th>CNL</th>    <td><kbd>CSI ... E</kbd></td>
-    <th>NP<br/>_SCORIS</th>     <td><kbd>CSI ... U</kbd></td>
-    <th>VPR</th>    <td><kbd>CSI ... e</kbd></td>
-    <th>DECSHTS, SCORC, WYRC, _DGSPOS, _CITSSR</th><td><kbd>CSI ... u</kbd></td></tr>
-<tr><th>CPL</th>    <td><kbd>CSI ... F</kbd></td>
-    <th>PP<br/>_SCOER</th>     <td><kbd>CSI ... V</kbd></td>
-    <th>HVP</th>    <td><kbd>CSI ... f</kbd></td>
-    <th>DECSVTS, RLSCD (_CITSCUR), _DGSPARM</th><td><kbd>CSI ... v</kbd></td></tr>
-<tr><th>CHA</th>    <td><kbd>CSI ... G</kbd></td>
-    <th>CTC</th>    <td><kbd>CSI ... W</kbd></td>
-    <th>TBC<br/>_SCODGC</th>    <td><kbd>CSI ... g</kbd></td>
-    <th>DECSHORP, _AIXVTR, DGMARG, _CITSCURB</th><td><kbd>CSI ... w</kbd></td></tr>
-<tr><th>CUP</th>    <td><kbd>CSI ... H</kbd></td>
-    <th>ECH</th>    <td><kbd>CSI ... X</kbd></td>
-    <th>SM</th>     <td><kbd>CSI ... h</kbd></td>
-    <th>DECREQTPARM, DECREPTPARM, _AIXVTD, DGRTC</th><td><kbd>CSI ... x</kbd></td></tr>
-<tr><th>CHT</th>    <td><kbd>CSI ... I</kbd></td>
-    <th>CVT</th>    <td><kbd>CSI ... Y</kbd></td>
-    <th>MC</th>     <td><kbd>CSI ... i</kbd></td>
-    <th>DECTST, _AIXVTL</th> <td><kbd>CSI ... y</kbd></td></tr>
-<tr><th>ED</th>     <td><kbd>CSI ... J</kbd></td>
-    <th>CBT</th>    <td><kbd>CSI ... Z</kbd></td>
-    <th>HPB</th>    <td><kbd>CSI ... j</kbd></td>
-    <th>DECVERP, WYSCRATE, _SCOSSW, _CITPCTL</th><td><kbd>CSI ... z</kbd></td></tr>
-<tr><th>EL</th>     <td><kbd>CSI ... K</kbd></td>
-    <th>SRS</th>    <td><kbd>CSI ... [</kbd></td>
-    <th>VPB<br/>_SCOEDK</th>    <td><kbd>CSI ... k</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... {</kbd></td></tr>
-<tr><th>IL</th>     <td><kbd>CSI ... L</kbd></td>
-    <th>PTX</th>    <td><kbd>CSI ... \</kbd></td>
-    <th>RM</th>     <td><kbd>CSI ... l</kbd></td>
-    <th>DECTTC</th>    <td><kbd>CSI ... |</kbd></td></tr>
-<tr><th>DL</th>     <td><kbd>CSI ... M</kbd></td>
-    <th>SDS</th>    <td><kbd>CSI ... ]</kbd></td>
-    <th>SGR</th>    <td><kbd>CSI ... m</kbd></td>
-    <th>DECPRO</th>    <td><kbd>CSI ... }</kbd></td></tr>
-<tr><th>EF</th>     <td><kbd>CSI ... N</kbd></td>
-    <th>SIMD</th>   <td><kbd>CSI ... ^</kbd></td>
-    <th>DSR<br/>_SCOTCP</th>    <td><kbd>CSI ... n</kbd></td>
-    <th>DECFNK, _CITTST</th>    <td><kbd>CSI ... ~</kbd></td></tr>
-<tr><th>EA</th>     <td><kbd>CSI ... O</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... _</kbd></td>
-    <th>DAQ<br/>_SCOTMP</th>    <td><kbd>CSI ... o</kbd></td>
-    <th>---</th>    <td>-</td></tr>
-</table>
+  <sup>*a</sup> を付した物は all-escapes.txt より。</p>
 
-<p>0Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</strong> = <kbd>SP</kbd> のもの) を <i class="kbd">Ft</i> に従って表にする。</p>
-<table class="normal center">
-<tr><th colspan="6">0Ft型: 端末制御機能</th>
-    <th colspan="2">0Ft型: 私用制御機能</th>
-    </tr>
-<tr><th>略号</th><th>符号化表現</th>
-    <th>略号</th><th>符号化表現</th>
-    <th>略号</th><th>符号化表現</th>
-    <th>略号</th><th>符号化表現</th></tr>
-<tr><th>SL</th>     <td><kbd>CSI ... SP @</kbd></td>
-    <th>PPA</th>    <td><kbd>CSI ... SP P</kbd></td>
-    <th>TATE</th>   <td><kbd>CSI ... SP `</kbd></td>
-    <th>DECSSCLS</th><td><kbd>CSI ... SP p</kbd></td></tr>
-<tr><th>SR</th>     <td><kbd>CSI ... SP A</kbd></td>
-    <th>PPR</th>    <td><kbd>CSI ... SP Q</kbd></td>
-    <th>TALE</th>   <td><kbd>CSI ... SP a</kbd></td>
-    <th>DECSCUSR</th><td><kbd>CSI ... SP q</kbd></td></tr>
-<tr><th>GSM</th>    <td><kbd>CSI ... SP B</kbd></td>
-    <th>PPB</th>    <td><kbd>CSI ... SP R</kbd></td>
-    <th>TAC</th>    <td><kbd>CSI ... SP b</kbd></td>
-    <th>DECSKCV</th><td><kbd>CSI ... SP r</kbd></td></tr>
-<tr><th>GSS</th>    <td><kbd>CSI ... SP C</kbd></td>
-    <th>SPD</th>    <td><kbd>CSI ... SP S</kbd></td>
-    <th>TCC</th>    <td><kbd>CSI ... SP c</kbd></td>
-    <th>DECNS</th>  <td><kbd>CSI ... SP s</kbd></td></tr>
-<tr><th>FNT</th>    <td><kbd>CSI ... SP D</kbd></td>
-    <th>DTA</th>    <td><kbd>CSI ... SP T</kbd></td>
-    <th>TSR</th>    <td><kbd>CSI ... SP d</kbd></td>
-    <th>DECSWBV</th><td><kbd>CSI ... SP t</kbd></td></tr>
-<tr><th>TSS</th>    <td><kbd>CSI ... SP E</kbd></td>
-    <th>SLH</th>    <td><kbd>CSI ... SP U</kbd></td>
-    <th>SCO</th>    <td><kbd>CSI ... SP e</kbd></td>
-    <th>DECSMBV</th><td><kbd>CSI ... SP u</kbd></td></tr>
-<tr><th>JFY</th>    <td><kbd>CSI ... SP F</kbd></td>
-    <th>SLL</th>    <td><kbd>CSI ... SP V</kbd></td>
-    <th>SRCS</th>   <td><kbd>CSI ... SP f</kbd></td>
-    <th>DECSLCK</th><td><kbd>CSI ... SP v</kbd></td></tr>
-<tr><th>SPL</th>    <td><kbd>CSI ... SP G</kbd></td>
-    <th>FNK</th>    <td><kbd>CSI ... SP W</kbd></td>
-    <th>SCS</th>    <td><kbd>CSI ... SP g</kbd></td>
-    <th>DECSITF</th><td><kbd>CSI ... SP w</kbd></td></tr>
-<tr><th>QUAD</th>   <td><kbd>CSI ... SP H</kbd></td>
-    <th>SPQR</th>   <td><kbd>CSI ... SP X</kbd></td>
-    <th>SLS</th>    <td><kbd>CSI ... SP h</kbd></td>
-    <th>DECSDPM</th><td><kbd>CSI ... SP x</kbd></td></tr>
-<tr><th>SSU</th>    <td><kbd>CSI ... SP I</kbd></td>
-    <th>SEF</th>    <td><kbd>CSI ... SP Y</kbd></td>
-    <th>SPH</th>    <td><kbd>CSI ... SP i</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP y</kbd></td></tr>
-<tr><th>PFS</th>    <td><kbd>CSI ... SP J</kbd></td>
-    <th>PEC</th>    <td><kbd>CSI ... SP Z</kbd></td>
-    <th>SPL</th>    <td><kbd>CSI ... SP j</kbd></td>
-    <th>DECVPFS</th><td><kbd>CSI ... SP z</kbd></td></tr>
-<tr><th>SHS</th>    <td><kbd>CSI ... SP K</kbd></td>
-    <th>SSW</th>    <td><kbd>CSI ... SP [</kbd></td>
-    <th>SCP</th>    <td><kbd>CSI ... SP k</kbd></td>
-    <th>DECSSS</th> <td><kbd>CSI ... SP {</kbd></td></tr>
-<tr><th>SVS</th>    <td><kbd>CSI ... SP L</kbd></td>
-    <th>SACS</th>   <td><kbd>CSI ... SP \</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP l</kbd></td>
-    <th>DECRVEC</th><td><kbd>CSI ... SP |</kbd></td></tr>
-<tr><th>IGS</th>    <td><kbd>CSI ... SP M</kbd></td>
-    <th>SAPV</th>   <td><kbd>CSI ... SP ]</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP m</kbd></td>
-    <th>DECKBD</th> <td><kbd>CSI ... SP }</kbd></td></tr>
-<tr><th>HTSA<sup>廃</sup></th><td><kbd>CSI ... SP N</kbd></td>
-    <th>STAB</th>   <td><kbd>CSI ... SP ^</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP n</kbd></td>
-    <th>DECTME</th> <td><kbd>CSI ... SP ~</kbd></td></tr>
-<tr><th>IDCS</th>   <td><kbd>CSI ... SP O</kbd></td>
-    <th>GCC</th>    <td><kbd>CSI ... SP _</kbd></td>
-    <th>---</th>    <td><kbd>CSI ... SP o</kbd></td>
-    <th>---</th>    <td>-</td></tr>
-</table>
-
-<p>その他の nFt 型の私用制御機能を以下にまとめる。</p>
+<p>標準の制御機能 (Ft型 <kbd>CSI ... <i>Ft</i></kbd> 及び 0Ft型 <kbd>CSI ... SP <i>Ft</i></kbd>) を表にする。</p>
 <table class="normal center contra-cell-centered">
-<tr><th></th><th colspan="7">nFt型: 私用制御機能 (1Ft..7Ft)</th>
+<tr><th colspan="6">Ft型: 標準端末制御機能<br/><kbd>CSI ... <i>Ft</i></kbd></th>
+    <th colspan="6">0Ft型: 標準端末制御機能<br/><kbd>CSI ... SP <i>Ft</i></kbd></th>
+    </tr>
+<tr><th><i>Ft</i></th><th>略号</th>
+    <th><i>Ft</i></th><th>略号</th>
+    <th><i>Ft</i></th><th>略号</th>
+    <th><i>Ft</i></th><th>略号</th>
+    <th><i>Ft</i></th><th>略号</th>
+    <th><i>Ft</i></th><th>略号</th></tr>
+<tr><th><kbd>@</kbd></th><td>ICH</td>
+    <th><kbd>P</kbd></th><td>DCH</td>
+    <th><kbd>`</kbd></th><td>HPA</td>
+    <th><kbd>@</kbd></th><td>SL</td>
+    <th><kbd>P</kbd></th><td>PPA</td>
+    <th><kbd>`</kbd></th><td>TATE</td>
+</tr>
+<tr><th><kbd>A</kbd></th><td>CUU</td>
+    <th><kbd>Q</kbd></th><td>SEE</td>
+    <th><kbd>a</kbd></th><td>HPR</td>
+    <th><kbd>A</kbd></th><td>SR</td>
+    <th><kbd>Q</kbd></th><td>PPR</td>
+    <th><kbd>a</kbd></th><td>TALE</td>
+</tr>
+<tr><th><kbd>B</kbd></th><td>CUD</td>
+    <th><kbd>R</kbd></th><td>CPR, _SCODL</td>
+    <th><kbd>b</kbd></th><td>REP</td>
+    <th><kbd>B</kbd></th><td>GSM</td>
+    <th><kbd>R</kbd></th><td>PPB</td>
+    <th><kbd>b</kbd></th><td>TAC</td>
+</tr>
+<tr><th><kbd>C</kbd></th><td>CUF</td>
+    <th><kbd>S</kbd></th><td>SU</td>
+    <th><kbd>c</kbd></th><td>DA</td>
+    <th><kbd>C</kbd></th><td>GSS</td>
+    <th><kbd>S</kbd></th><td>SPD</td>
+    <th><kbd>c</kbd></th><td>TCC</td>
+</tr>
+<tr><th><kbd>D</kbd></th><td>CUB</td>
+    <th><kbd>T</kbd></th><td>SD</td>
+    <th><kbd>d</kbd></th><td>VPA</td>
+    <th><kbd>D</kbd></th><td>FNT</td>
+    <th><kbd>T</kbd></th><td>DTA</td>
+    <th><kbd>d</kbd></th><td>TSR</td>
+</tr>
+<tr><th><kbd>E</kbd></th><td>CNL</td>
+    <th><kbd>U</kbd></th><td>NP, _SCORIS</td>
+    <th><kbd>e</kbd></th><td>VPR</td>
+    <th><kbd>E</kbd></th><td>TSS</td>
+    <th><kbd>U</kbd></th><td>SLH</td>
+    <th><kbd>e</kbd></th><td>SCO</td>
+</tr>
+<tr><th><kbd>F</kbd></th><td>CPL</td>
+    <th><kbd>V</kbd></th><td>PP, _SCOER</td>
+    <th><kbd>f</kbd></th><td>HVP</td>
+    <th><kbd>F</kbd></th><td>JFY</td>
+    <th><kbd>V</kbd></th><td>SLL</td>
+    <th><kbd>f</kbd></th><td>SRCS</td>
+</tr>
+<tr><th><kbd>G</kbd></th><td>CHA</td>
+    <th><kbd>W</kbd></th><td>CTC</td>
+    <th><kbd>g</kbd></th><td>TBC, _SCODGC</td>
+    <th><kbd>G</kbd></th><td>SPL</td>
+    <th><kbd>W</kbd></th><td>FNK</td>
+    <th><kbd>g</kbd></th><td>SCS</td>
+</tr>
+<tr><th><kbd>H</kbd></th><td>CUP</td>
+    <th><kbd>X</kbd></th><td>ECH</td>
+    <th><kbd>h</kbd></th><td>SM</td>
+    <th><kbd>H</kbd></th><td>QUAD</td>
+    <th><kbd>X</kbd></th><td>SPQR</td>
+    <th><kbd>h</kbd></th><td>SLS</td>
+</tr>
+<tr><th><kbd>I</kbd></th><td>CHT</td>
+    <th><kbd>Y</kbd></th><td>CVT</td>
+    <th><kbd>i</kbd></th><td>MC</td>
+    <th><kbd>I</kbd></th><td>SSU</td>
+    <th><kbd>Y</kbd></th><td>SEF</td>
+    <th><kbd>i</kbd></th><td>SPH</td>
+</tr>
+<tr><th><kbd>J</kbd></th><td>ED</td>
+    <th><kbd>Z</kbd></th><td>CBT</td>
+    <th><kbd>j</kbd></th><td>HPB</td>
+    <th><kbd>J</kbd></th><td>PFS</td>
+    <th><kbd>Z</kbd></th><td>PEC</td>
+    <th><kbd>j</kbd></th><td>SPL</td>
+</tr>
+<tr><th><kbd>K</kbd></th><td>EL</td>
+    <th><kbd>[</kbd></th><td>SRS</td>
+    <th><kbd>k</kbd></th><td>VPB, _SCOEDK</td>
+    <th><kbd>K</kbd></th><td>SHS</td>
+    <th><kbd>[</kbd></th><td>SSW</td>
+    <th><kbd>k</kbd></th><td>SCP</td>
+</tr>
+<tr><th><kbd>L</kbd></th><td>IL</td>
+    <th><kbd>\</kbd></th><td>PTX</td>
+    <th><kbd>l</kbd></th><td>RM</td>
+    <th><kbd>L</kbd></th><td>SVS</td>
+    <th><kbd>\</kbd></th><td>SACS</td>
+    <th><kbd>l</kbd></th><td>---</td>
+</tr>
+<tr><th><kbd>M</kbd></th><td>DL</td>
+    <th><kbd>]</kbd></th><td>SDS</td>
+    <th><kbd>m</kbd></th><td>SGR</td>
+    <th><kbd>M</kbd></th><td>IGS</td>
+    <th><kbd>]</kbd></th><td>SAPV</td>
+    <th><kbd>m</kbd></th><td>---</td>
+</tr>
+<tr><th><kbd>N</kbd></th><td>EF</td>
+    <th><kbd>^</kbd></th><td>SIMD</td>
+    <th><kbd>n</kbd></th><td>DSR, _SCOTCP</td>
+    <th><kbd>N</kbd></th><td>HTSA<sup>廃</sup></td>
+    <th><kbd>^</kbd></th><td>STAB</td>
+    <th><kbd>n</kbd></th><td>---</td>
+</tr>
+<tr><th><kbd>O</kbd></th><td>EA</td>
+    <th><kbd>_</kbd></th><td>---</td>
+    <th><kbd>o</kbd></th><td>DAQ, _SCOTMP</td>
+    <th><kbd>O</kbd></th><td>IDCS</td>
+    <th><kbd>_</kbd></th><td>GCC</td>
+    <th><kbd>o</kbd></th><td>---</td>
+</tr>
+</table>
+
+<p>以下は Ft型の私用制御機能 (<kbd>CSI ... <i>Ft</i></kbd>)。重複が著しいが元々避ける意図はなかったのだろう。</p>
+<table class="normal center contra-cell-centered">
+<tr><th colspan="2">Ft型: 私用制御機能</th>
+    </tr>
+<tr><th><i>Ft</i></th><th>略号</th></tr>
+<tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, SKR<sup>ANSI.SYS</sup>, RLBFAT</td></tr>
+<tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA</td></tr>
+<tr><th><kbd>r</kbd></th><td>DECSTBM, DECPCTERM, _SCOCSR, SUNSCRL</td></tr>
+<tr><th><kbd>s</kbd></th><td>DECSLRM, SCOSC, WYSC, _DGRRC, SUNRESET</td></tr>
+<tr><th><kbd>t</kbd></th><td>DECSLPP, WYNNAT, DGROSC, _CITSTIME</td></tr>
+<tr><th><kbd>u</kbd></th><td>DECSHTS, SCORC, WYRC, _DGSPOS, _CITSSR</td></tr>
+<tr><th><kbd>v</kbd></th><td>DECSVTS, RLSCD (_CITSCUR), _DGSPARM</td></tr>
+<tr><th><kbd>w</kbd></th><td>DECSHORP, _AIXVTR, DGMARG, _CITSCURB</td></tr>
+<tr><th><kbd>x</kbd></th><td>DECREQTPARM, DECREPTPARM, _AIXVTD, DGRTC</td></tr>
+<tr><th><kbd>y</kbd></th><td>DECTST, _AIXVTL</td></tr>
+<tr><th><kbd>z</kbd></th><td>DECVERP, WYSCRATE, _SCOSSW, _CITPCTL</td></tr>
+<tr><th><kbd>{</kbd></th><td>---</td></tr>
+<tr><th><kbd>|</kbd></th><td>DECTTC</td></tr>
+<tr><th><kbd>}</kbd></th><td>DECPRO</td></tr>
+<tr><th><kbd>~</kbd></th><td>DECFNK, _CITTST</td></tr>
+</table>
+
+<p>nFt型の私用制御機能 (<kbd>CSI ... <i>I</i> <i>Ft</i></kbd>) を以下にまとめる。</p>
+<table class="normal center contra-cell-centered">
+<tr><th></th><th colspan="8">nFt型: 私用制御機能 (0Ft..7Ft)</th>
     </tr>
 <tr><th></th>
+    <th>0Ft <kbd>SP</kbd></th>
     <th>1Ft <kbd>!</kbd></th>
     <th>2Ft <kbd>"</kbd></th><!--"-->
     <th>3Ft <kbd>#</kbd></th>
@@ -986,7 +986,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <th>6Ft <kbd>&amp;</kbd></th>
     <th>7Ft <kbd>'</kbd></th><!--'-->
     </tr>
-<tr><th>p</th>
+<tr><th><kbd>p</kbd></th>
+    <td>DECSSCLS</td>
     <td>DECSTR</td>
     <td>DECSCL</td>
     <td>XTPUSHSGR</td>
@@ -995,7 +996,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>---</td>
     </tr>
-<tr><th>q</th>
+<tr><th><kbd>q</kbd></th>
+    <td>DECSCUSR</td>
     <td>PrintPartialImage<sup>VK100</sup></td>
     <td>DECSCA</td>
     <td>XTPOPSGR</td>
@@ -1004,7 +1006,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>DECSNC</td>
     <td>DECSBCA</td>
     </tr>
-<tr><th>r</th>
+<tr><th><kbd>r</kbd></th>
+    <td>DECSKCV</td>
     <td>---</td>
     <td>---</td>
     <td>---</td>
@@ -1013,7 +1016,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>---</td>
     </tr>
-<tr><th>s</th>
+<tr><th><kbd>s</kbd></th>
+    <td>DECNS</td>
     <td>DECFIL</td>
     <td>DECPWA</td>
     <td>---</td>
@@ -1022,7 +1026,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>DECTLTC</td>
     </tr>
-<tr><th>t</th>
+<tr><th><kbd>t</kbd></th>
+    <td>DECSWBV</td>
     <td>---</td>
     <td>DECSRFR</td>
     <td>---</td>
@@ -1031,7 +1036,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>---</td>
     </tr>
-<tr><th>u</th>
+<tr><th><kbd>u</kbd></th>
+    <td>DECSMBV</td>
     <td>---</td>
     <td>DECSTRL</td>
     <td>---</td>
@@ -1040,7 +1046,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>DECRQUPSS</td>
     <td>---</td>
     </tr>
-<tr><th>v</th>
+<tr><th><kbd>v</kbd></th>
+    <td>DECSLCK</td>
     <td>DECASFC</td>
     <td>DECRQDE</td>
     <td>---</td>
@@ -1049,7 +1056,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>---</td>
     </tr>
-<tr><th>w</th>
+<tr><th><kbd>w</kbd></th>
+    <td>DECSITF</td>
     <td>DECUND</td>
     <td>DECRPDE</td>
     <td>---</td>
@@ -1058,7 +1066,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>DECLRP</td>
     <td>DECEFR</td>
     </tr>
-<tr><th>x</th>
+<tr><th><kbd>x</kbd></th>
+    <td>DECSDPM</td>
     <td>DECPTS</td>
     <td>DECFCR</td>
     <td>---</td>
@@ -1067,7 +1076,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>DECES</td>
     <td>---</td>
     </tr>
-<tr><th>y</th>
+<tr><th><kbd>y</kbd></th>
+    <td>---</td>
     <td>DECSS</td>
     <td>---</td>
     <td>XTCHECKSUM</td>
@@ -1076,7 +1086,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>---</td>
     </tr>
-<tr><th>z</th>
+<tr><th><kbd>z</kbd></th>
+    <td>DECVPFS</td>
     <td>---</td>
     <td>DECDEN</td>
     <td>---</td>
@@ -1085,7 +1096,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>DECELR</td>
     </tr>
-<tr><th>{</th>
+<tr><th><kbd>{</kbd></th>
+    <td>DECSSS</td>
     <td>---</td>
     <td class="markB">DECRFS<sup>*a</sup></td>
     <td>XTPUSHSGR</td>
@@ -1094,7 +1106,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>DECSLE</td>
     </tr>
-<tr><th>|</th>
+<tr><th><kbd>|</kbd></th>
+    <td>DECRVEC</td>
     <td>DECVEC</td>
     <td>---</td>
     <td>XTREPORTSGR</td>
@@ -1103,7 +1116,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>DECRQLP</td>
     </tr>
-<tr><th>}</th>
+<tr><th><kbd>}</kbd></th>
+    <td>DECKBD</td>
     <td>DECFIN</td>
     <td>---</td>
     <td>XTPOPSGR</td>
@@ -1112,7 +1126,8 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>DECIC</td>
     </tr>
-<tr><th>~</th>
+<tr><th><kbd>~</kbd></th>
+    <td>DECTME</td>
     <td>---</td>
     <td>---</td>
     <td>---</td>
@@ -1121,8 +1136,6 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>---</td>
     <td>DECDC</td>
     </tr>
-</table>
-<table class="normal center contra-cell-centered">
 <tr><th></th><th colspan="8">nFt型: 私用制御機能 (8Ft..15Ft)</th>
     </tr>
 <tr><th></th>
@@ -1439,7 +1452,7 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>DECMC<sup>+</sup></td>
 </tr>
 <tr><th><kbd>l</kbd></th>
-    <td>RM<sup>DG+*a</sup></td>
+    <td>_DGRM<sup>+</sup></td>
     <td>_SCOCHC<br/>_SGIRM<sup>+</sup><br/>RM<sup>ANSI.SYS+</sup></td>
     <td>RM<sup>Japanese ANSI.SYS+</sup><br/>RM<sup>CIT</sup></td>
     <td>DECRST<sup>+</sup></td>
