@@ -36,6 +36,301 @@
 <li><a href="https://invisible-mirror.net/archives/shuford/terminal/">Video Terminal and Terminal-Emulator Information</a></li>
 </ul>
 
+<h2>SGI xwsh</h2>
+<ul>
+<li><a href="https://nixdoc.net/man-pages/IRIX/man1/xwsh.1.html">xwsh - IRIX</a></li>
+</ul>
+
+<ul>
+<li><kbd>ESC 7</kbd></li>
+<li><kbd>ESC 8</kbd></li>
+<li><kbd>ESC &lt;</kbd>  (VT52) enter ansi mode.</li>
+<li><kbd>ESC =</kbd></li>
+<li><kbd>ESC ></kbd></li>
+<li><kbd>ESC D</kbd>, <kbd>IND</kbd></li>
+<li><kbd>ESC E</kbd>, <kbd>NEL</kbd></li>
+<li><kbd>ESC H</kbd>, <kbd>HTS</kbd></li>
+<li><kbd>ESC M</kbd>, <kbd>RI</kbd></li>
+<li><kbd>ESC N</kbd>, <kbd>SS2</kbd></li>
+<li><kbd>ESC O</kbd>, <kbd>SS3</kbd></li>
+<li><kbd>ESC Z</kbd> DECID</li>
+<li><kbd>ESC # 8</kbd> DECALN</li>
+<li><kbd>ESC <i>I</i> <i>F</i></kbd> GnD4
+  <p><i class="kbd">F</i>: B = ascii, 0 = graphics character set</p>
+</li>
+<li><kbd>SO</kbd></li>
+<li><kbd>SI</kbd></li>
+<li><kbd>ESC n</kbd> LS2</li>
+<li><kbd>ESC o</kbd> LS3</li>
+<li><kbd>ESC c</kbd></li>
+<li><kbd>CSI <i>Pv</i> A</kbd></li>
+<li><kbd>CSI <i>Pv</i> B</kbd></li>
+<li><kbd>CSI <i>Pv</i> C</kbd></li>
+<li><kbd>CSI <i>Pv</i> D</kbd></li>
+<li><kbd>CSI <i>Pv</i> H</kbd> or <kbd>CSI <i>Pv</i> f</kbd></li>
+<li><kbd>CSI <i>Pv</i> g</kbd></li>
+<li><kbd>CSI <i>Pv</i> L</kbd></li>
+<li><kbd>CSI <i>Pv</i> M</kbd></li>
+<li><kbd>CSI <i>Pv</i> @</kbd></li>
+<li><kbd>CSI <i>Pv</i> P</kbd></li>
+<li><kbd>CSI <i>Pv</i> X</kbd></li>
+<li><kbd>CSI <i>Pv</i> K</kbd></li>
+<li><kbd>CSI <i>Pv</i> J</kbd></li>
+<li><kbd>CSI <i>Pv</i> m</kbd>
+  <ul>
+  <li>0,1,2,3,4,7,23,24,27,30..37,40..47</li>
+  <li>21,22 はそれぞれ bold off, dim off</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Pv</i> c</kbd> DA1</li>
+<li><kbd>CSI ? 1 ; 2 c</kbd> を返答</li>
+<li><kbd>CSI ? <i>Pv</i> c</kbd> (応答)</li>
+<li><kbd>CSI <i>Pv</i> r</kbd> DECSTBM</li>
+<li><kbd>CSI <i>Pv</i> h</kbd> SM</li>
+<li><kbd>CSI <i>Pv</i> l</kbd> RM
+  <p><i class="kbd">Pv</i> = 2, 4, 20</p>
+</li>
+<li><kbd>CSI = <i>Pv</i> h</kbd> _SGISM★ xwsh set mode</li>
+<li><kbd>CSI = <i>Pv</i> l</kbd> _SGIRM★ xwsh reset mode
+  <ul>
+  <li>=6    Lock display</li>
+  <li>=9    Enable visual bell</li>
+  <li>=12   Overlay mode</li>
+  </ul>
+</li>
+<li><kbd>CSI ? <i>Pv</i> h</kbd> DECSET</li>
+<li><kbd>CSI ? <i>Pv</i> l</kbd> DECRST
+  <ul>
+  <li>?1    VT100 application cursor key mode.  When set, the cursor keys</li>
+  <li>?3    VT100 column mode.  When set, the display changes to 132</li>
+  <li>?5    VT100 screen mode.  When set, the colors used to display text</li>
+  <li>?6    VT100 origin mode.  When set, cursor positions are taken</li>
+  <li>?7    VT100 auto wrap mode.  When set, auto wrapping occurs normally.</li>
+  <li>?25   VT100 text cursor enable.  When set, the text cursor is</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Pv</i> n</kbd> Device status report.  Legal values for the parameter are:
+  <ul>
+  <li><i class="kbd">Pv</i> = 5, 6 は普通</li>
+  <li>100 the text color</li>
+  <li>101 the page color</li>
+  <li>102 the selection text color</li>
+  <li>103 the selection page color</li>
+  <li>104 the cursor text color</li>
+  <li>105 the cursor page color</li>
+  <li>106 the half intensity color</li>
+  <li>107 the bold color.
+    <p><kbd>DCS <i>Pn</i> .y <i>Ps</i> ST</kbd> の形式で rgb 値 (#rrggbb) を返す。</p>
+  </li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Pv</i> R</kbd>  CPR (応答)</li>
+<li><kbd>CSI ? <i>Pv</i> n</kbd> DECDSR</li>
+<li><kbd>CSI <i>Pv</i> q</kbd> DECLL</li>
+<li><kbd>CSI <i>Pv</i> x</kbd> DECREQTPARM</li>
+<li><kbd>CSI <i>Pv</i> / y</kbd> _SGICMD★ xwsh command
+  <ul>
+  <li>2  Textport init</li>
+  <li>14 History init</li>
+  <li>3  Push the window</li>
+  <li>4  Pop the window</li>
+  <li>16 Reset bindable function keys.</li>
+  <li>15 Initialize bindable function keys to defaults.</li>
+  <li>101  Set the text color by using a 3.3 compatible index.</li>
+  <li>102  Set the page color by using a 3.3 compatible index.</li>
+  <li>103  Set the bold color by using a 3.3 compatible index.</li>
+  <li>104  Set the cursor page color by using a 3.3 compatible index.</li>
+  <li>111;Psc;Ppc  Set the selection colors by using 3.3 compatible indices.</li>
+  <li>203;Pr;Pc  Set the window size by row and column</li>
+  <li>204;Pw;Ph  Set the window size, in pixels</li>
+  <li>205  Set the window position, in pixels</li>
+  </ul>
+</li>
+<li><kbd>DCS <i>Pn</i> . y <i>Ps</i> ST</kbd> _SGIDCS★
+  <ul>
+  <li>1  Set the window title.</li>
+  <li>3  Set the icon title.</li>
+  <li>4  Set the text color by string</li>
+  <li>5  Set the page color by string.</li>
+  <li>6  Set the selection text color by string.</li>
+  <li>7  Set the selection page color by string.</li>
+  <li>8  Set the cursor text color by string.</li>
+  <li>9  Set the cursor page color by string.</li>
+  <li>10 Set the half intensity color by string.</li>
+  <li>11 Set the bold intensity color by string.</li>
+  <li>101  Bind the string to the key named by <i>Pn</i>+1 (for application)</li>
+  <li>103  Bind the string to the key named by <i>Pn</i>+1 (for xwsh)</li>
+  </ul>
+</li>
+<li><kbd>DCS <i>Pv</i> | <i>Ps</i> ST</kbd> DECUDK</li>
+<li><kbd>OSC <i>Pn</i> ; <i>Ps</i> BEL</kbd> Xterm Set Title</li>
+</ul>
+
+<h2>IBM aixterm</h2>
+<ul>
+<li>AIX 4.3 <a href="http://ps-2.kev009.com/tl/techlib/manuals/adoclib/cmds/aixcmds1/aixterm.htm">aixterm Command</a></li>
+<li>AIX 7.2 (ja) <a href="https://www.ibm.com/support/knowledgecenter/ja/ssw_aix_72/a_commands/aixterm.html">aixterm コマンド</a></li>
+<li>AIX 7.2 (en) <a href="https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/a_commands/aixterm.html">aixterm Command</a></li>
+</ul>
+
+<p>シーケンス</p>
+<ul>
+<li><kbd>ESC 7</kbd> DECSC</li>
+<li><kbd>ESC 8</kbd> DECRC</li>
+<li><kbd>ESC =</kbd> DECKPAM</li>
+<li><kbd>ESC &gt;</kbd> DECKPNM</li>
+<li><kbd>ESC D</kbd> IND</li>
+<li><kbd>ESC E</kbd> NEL</li>
+<li><kbd>ESC H</kbd> HTS</li>
+<li><kbd>ESC I</kbd> VTS</li>
+<li><kbd>ESC M</kbd> RI</li>
+<li><kbd>ESC N</kbd> SS2</li>
+<li><kbd>ESC O</kbd> SS3</li>
+<li><kbd>ESC `</kbd> DMI</li>
+<li><kbd>ESC b</kbd> EMI</li>
+<li><kbd>ESC c</kbd> RIS</li>
+<li><kbd>ESC n</kbd> LS2</li>
+<li><kbd>ESC o</kbd> LS3</li>
+<li><kbd>ESC # 8</kbd> DECALN</li>
+<li><kbd>ESC <i>I</i> <i>F</i></kbd> GnD4 (SCS<sup>AIX</sup>)
+  <ul>
+  <li>A = England, B = USASCII, 0 = Special Graphics</li>
+  <li><kbd>ESC ( &lt;</kbd> (SG0A<sup>AIX</sup>)</li>
+  <li><kbd>ESC ) &lt;</kbd> (SG1A<sup>AIX</sup>)</li>
+  </ul>
+</li>
+
+<li><kbd>CSI <i>Pn</i> @</kbd> ICH</li>
+<li><kbd>CSI <i>Pn</i> A</kbd> CUU</li>
+<li><kbd>CSI <i>Pn</i> B</kbd> CUD</li>
+<li><kbd>CSI <i>Pn</i> C</kbd> CUF</li>
+<li><kbd>CSI <i>Pn</i> D</kbd> CUB</li>
+<li><kbd>CSI <i>Pn</i> E</kbd> CNL</li>
+<li><kbd>CSI <i>Pn</i> F</kbd> CPL</li>
+<li><kbd>CSI <i>Pn</i> G</kbd> CHA</li>
+<li><kbd>CSI <i>Pl</i> ; <i>Pc</i> H</kbd> CUP</li>
+<li><kbd>CSI <i>Pn</i> I</kbd> CHT</li>
+<li><kbd>CSI <i>Ps</i> J</kbd> ED
+  <p><i class="kbd">Ps</i> = 0, 5, 6, 13</p>
+</li>
+<li><kbd>CSI <i>Ps</i> K</kbd> EL
+  <p><i class="kbd">Ps</i> = 0, 5, 6, 13</p>
+</li>
+<li><kbd>CSI <i>Pn</i> L</kbd> IL</li>
+<li><kbd>CSI <i>Pn</i> M</kbd> DL</li>
+<li><kbd>CSI <i>Ps</i> N</kbd> EF
+  <p><i class="kbd">Ps</i> = 0, 5, 6, 13</p>
+</li>
+<li><kbd>CSI <i>Ps</i> O</kbd> EA
+  <p><i class="kbd">Ps</i> = 0, 5, 6, 13</p>
+</li>
+<li><kbd>CSI <i>Pn</i> P</kbd> DCH</li>
+<li><kbd>CSI <i>Pl</i> ; <i>Pc</i> R</kbd> CPR</li>
+<li><kbd>CSI <i>Pn</i> S</kbd> SU</li>
+<li><kbd>CSI <i>Pn</i> T</kbd> SD</li>
+<li><kbd>CSI <i>Pn</i> W</kbd> CTC</li>
+<li><kbd>CSI <i>Pn</i> X</kbd> ECH</li>
+<li><kbd>CSI <i>Pn</i> Y</kbd> CVT</li>
+<li><kbd>CSI <i>Pn</i> Z</kbd> CBT</li>
+<li><kbd>CSI <i>Ps</i> [</kbd> SRS
+  <p><i class="kbd">Ps</i> = 0, 1</p>
+</li>
+<li><kbd>CSI c</kbd>, <kbd>CSI 0 c</kbd> DA1</li>
+<li><kbd>CSI ? 1 ; 2 c</kbd> DA1R</li>
+<li><kbd>CSI <i>Pl</i> ; <i>Pc</i> f</kbd> HVP</li>
+<li><kbd>CSI <i>Ps</i> g</kbd> TBC
+  <p><i class="kbd">Ps</i> = 0-4</p>
+</li>
+<li><kbd>CSI <i>Ps</i>;...;<i>Ps</i> h</kbd> SM
+  <ul>
+  <li>4,12,18,20</li>
+  <li>?1 normal/application cursor</li>
+  <li>?3 80/132 columns</li>
+  <li>?4 smooth/jump scroll</li>
+  <li>?5 reverse/normal video</li>
+  <li>?6 origin/normal</li>
+  <li>?7 on/off autowrap</li>
+  <li>?8 on/off autorept</li>
+  <li>?21 CNM CR-NL</li>
+  <li>(XTERM) ?40 132/80 column mode</li>
+  <li>(XTERM) ?41 curses(5) fix</li>
+  <li>(XTERM) ?42 hide/show scroll bar</li>
+  <li>(XTERM) ?43 on/off save scroll text</li>
+  <li>(XTERM) ?44 on/off margin bell</li>
+  <li>(XTERM) ?45 on/off reverse wraparound</li>
+  <li>(XTERM) ?47 alternate/normal screen buffer</li>
+  <li>(XTERM) ?48 reverse/normal status line</li>
+  <li>(XTERM) ?49 page/normal scroll mode</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Ps</i>;...;<i>Ps</i> l</kbd> RM</li>
+<li><kbd>CSI ? <i>Ps</i>;...;<i>Ps</i> l</kbd> DECRST Reset Private Mode</li>
+<li><kbd>CSI <i>Ps</i> m</kbd> SGR
+  <p><i class="kbd">Ps</i> = 0,1,4,5,7,8,10..17,30..37,40..47,90..97,100..107</p>
+</li>
+<li><kbd>CSI <i>Ps</i> n</kbd> DSR
+  <p><i class="kbd">Ps</i> = 0, 5, 6, 13</p>
+</li>
+<li><kbd>CSI <i>Ps</i> p</kbd> _AIXKSI★ (KSI<sup>AIX</sup>) Keyboard Status Information</li>
+<li><kbd>CSI <i>Pn</i> q</kbd> _AIXPFK★ (PFK<sup>AIX</sup>) PF Key Report</li>
+<li><kbd>CSI <i>Pt</i> ; <i>Pb</i> r</kbd> DECSTBM</li>
+<li><kbd>CSI s</kbd> SCOSC (SCP<sup>AIX</sup>)</li>
+<li><kbd>CSI u</kbd> SCORC (RCP<sup>AIX</sup>) Restore cursor position</li>
+<li><kbd>CSI x</kbd> _AIXVTD★ (VTD<sup>AIX</sup>) Virtual Terminal Data</li>
+<li><kbd>CSI y</kbd> _AIXVTL★ (VTL<sup>AIX</sup>) Virtual Terminal Locator Report</li>
+<li><kbd>CSI w</kbd> _AIXVTR★ (VTR<sup>AIX</sup>) VT Raw Keyboard Input</li>
+<li><kbd>CSI <i>Pn</i> SP @</kbd> SL</li>
+<li><kbd>CSI <i>Pn</i> SP A</kbd> SR</li>
+<li><kbd>CSI <i>Ps1</i> ; 1 SP S</kbd> SPD
+  <p>マニュアルには <kbd>CSI <i>Ps1</i> ; 1 S</kbd> と書かれているが誤りと思われる。<i>Ps1</i> = 0, 1。</p>
+  <ul>
+  <li>0 画面方向を左から右にし、Latin キーボードに設定</li>
+  <li>1 画面方向を右から左にし、National キーボードに設定</li>
+  </ul>
+</li>
+<li><kbd>CSI Psl;...;Psn SP ]</kbd> SAPV
+  <p>マニュアルには <kbd>CSI Psl;...;Psn ]</kbd> と書かれているが誤りと思われる。</p>
+  <ul>
+  <li>0  BIDI のデフォルト値を設定; set default values for BIDI</li>
+  <li>1  アラビア数字形状を設定; set Arabic numeric shapes</li>
+  <li>2  ヒンディ数字形状を設定; set Hindi numeric shapes</li>
+  <li>3  両方向文字の対称スワップ・モードの設定; set symmetric swapping mode for directional characters</li>
+  <li>5  後続のグラフィカル文字を分離フォーマットで表示 (アラビア語のみ); the following graphic character is presented in its isolated form (Arabic only)</li>
+  <li>6  後続のグラフィカル文字を初期フォーマットで表示 (アラビア語のみ); the following graphic character is presented in its initial form (Arabic only)</li>
+  <li>7  後続のグラフィカル文字を中間フォーマットで表示 (アラビア語のみ); the following graphic character is presented in its middle form (Arabic only)</li>
+  <li>8  後続のグラフィカル文字を最終フォーマットで表示 (アラビア語); the following graphic character is presented in its final form (Arabic only)</li>
+  <li>13 特殊形状モードを設定; set Special shaping mode</li>
+  <li>14 標準形状モードを設定; set standard shaping mode</li>
+  <li>15 対称モードをリセット; reset symmetric mode</li>
+  <li>18 パススルー (すべての文字); Passthru (everything)</li>
+  <li>19 パススルー (数字以外のすべて); Passthru (everything except numbers)</li>
+  <li>20 コンテキスト番号 (デバイスに依存); Contextual numbers (device dependent)</li>
+  <li>21 ロック 5, 6, 7, 8; lock 5, 6, 7, 8</li>
+  <li>22 アンロック; unlock</li>
+  <li>23 非ヌル・モードを設定; set the nonull mode</li>
+  <li>24 非ヌル・モードをリセット; reset the nonull mode</li>
+  <li>5-8 21 または 22 と共に使用した場合を除き、後続の 1 文字だけに影響を与えます;
+    affect only the following character unless used with values 21 or 22
+  </li>
+  </ul>
+</li>
+<li><kbd>CSI ? E</kbd> _AIXXES★ (XES<sup>AIX</sup>) Erase Status Line</li>
+<li><kbd>CSI ? F</kbd> _AIXXRS★ (XRS<sup>AIX</sup>) Return From Status Line</li>
+<li><kbd>CSI ? H</kbd> _AIXXHS★ (XHS<sup>AIX</sup>) Hide Status Line</li>
+<li><kbd>CSI ? S</kbd> _AIXXSS★ (XSS<sup>AIX</sup>) Show Status Line</li>
+<li><kbd>CSI ? <i>Ps</i> T</kbd> _AIXXGS★ (XGS<sup>AIX</sup>) Go To Column Of Status Line</li>
+<li><kbd>CSI ? <i>Ps</i>;...;<i>Ps</i> r</kbd> _AIXRM★ Restore Private Mode</li>
+<li><kbd>CSI ? <i>Ps</i>;...;<i>Ps</i> s</kbd> _AIXSM★ Save Priavte Mode</li>
+<li><kbd>OSC <i>Ps</i> ; <i>Pt</i> BEL</kbd> _AIXXST★ (XST<sup>AIX</sup>) Set Text Parameters
+  <ul>
+  <li>0 ウィンドウ名とタイトルを <i class="kbd">Pt</i> に変更</li>
+  <li>1 アイコン名だけを設定</li>
+  <li>2 タイトル名だけを設定</li>
+  <li>間にある DCS sequence は無視される</li>
+  </ul>
+</li>
+</ul>
+
 <h2>Sun wscons (7D)</h2>
 <ul>
 <li>SumOS 5.8 <a href="https://docs.oracle.com/cd/E19109-01/tsolaris8/816-1060/6m7glrk90/index.html">wscons(7D)</a></li>
