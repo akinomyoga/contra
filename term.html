@@ -36,6 +36,180 @@
 <li><a href="https://invisible-mirror.net/archives/shuford/terminal/">Video Terminal and Terminal-Emulator Information</a></li>
 </ul>
 
+<h2>PC-98</h2>
+<p>これも本来の文書が見つからない。
+  [1] は "主要なもの" を挙げると書いているが、[2] では全く同じ表を提示している。
+  と思ったが [3] がより完全な物だろう。
+</p>
+<ul>
+<li>[1] <a href="http://kasayan86.web.fc2.com/dos/esc.htm">エスケープシーケンス</a></li>
+<li>[2] <a href="http://software.aufheben.info/oohpc/98esc.html">エスケープシーケンス</a></li>
+<li>[3] <a href="http://www.246.ne.jp/~sim/v6prf05.htm">v6prf05.htm</a></li>
+<li>[4] <a href="http://hp.vector.co.jp/authors/VA016670/escape_code.html">エスケープシーケンスについて</a>
+  <p>このページは DOS だか ANSI.SYS を何となく対象としているつもりの様だが、
+    載っているシーケンスはどうも PC98 の物の様に見える。
+    というか此処が謎の &gt;1 やら &gt;5 等のモードの出どころの様だ。
+  </p>
+</li>
+</ul>
+<p>取り敢えず上に見られるシーケンスの一覧。</p>
+<ul>
+<li><kbd>ESC *</kbd><sup class="violation">×</sup> 画面クリア</li>
+<li><kbd>ESC=lc</kbd><sup class="violation">×</sup> カーソル移動 (???)
+  <p>上の二つは VT か或いは別の端末の非ANSIシーケンスの模倣だろうか。
+    だとすると <kbd>ESC = <i>Cl</i> <i>Cc</i></kbd> で、
+    文字を直接指定して位置を移動する物と思われる。
+  </p>
+</li>
+<li><kbd>ESC ) 0</kbd> 漢字モード</li>
+<li><kbd>ESC ) 3</kbd> グラフィックス文字モード</li>
+<li><kbd>ESC D</kbd> IND</li>
+<li><kbd>ESC E</kbd> NEL</li>
+<li><kbd>ESC M</kbd> RI</li>
+<li><kbd>CSI <i>Pn</i> A</kbd> CUU</li>
+<li><kbd>CSI <i>Pn</i> B</kbd> CUD</li>
+<li><kbd>CSI <i>Pn</i> C</kbd> CUF</li>
+<li><kbd>CSI <i>Pn</i> D</kbd> CUB</li>
+<li><kbd>CSI <i>Pl</i> ; <i>Pc</i> H</kbd> CUP</li>
+<li><kbd>CSI <i>Ps</i> J</kbd> ED
+  <p><i class="kbd">Ps</i> = 0,1,2</p>
+</li>
+<li><kbd>CSI 2 K</kbd> EL
+  <p><i class="kbd">Ps</i> = 0,1,2</p>
+</li>
+<li><kbd>CSI <i>Pn</i> L</kbd> IL</li>
+<li><kbd>CSI <i>Pn</i> M</kbd> DL</li>
+<li><kbd>CSI <i>Ps</i> h</kbd> _PC98SM</li>
+<li><kbd>CSI <i>Ps</i> l</kbd> _PC98RM
+  <ul>
+  <li>Mode &gt;1 最下行をプログラムで使用 (RM 時はシステムが使用)</li>
+  <li>Mode &gt;3 20行モードにする (RM 時は25行モード)</li>
+  <li>Mode &gt;5 カーソル非表示</li>
+  <li>Mode ?7 DECAWM auto wrapping</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Pm</i> m</kbd> SGR
+  <ul>
+  <li>0,1,4,5,7,8,30..37,40..48 は通常</li>
+  <li>2 は縦棒、16 は不可視 (8 と同じ)</li>
+  <li>17,18,19,20,21,22,23 赤青紫緑黄水白 (RBG=124の順番の様だ)</li>
+  </ul>
+</li>
+<li><kbd>CSI 6 n</kbd> DSR(6)</li>
+<li><kbd>CSI s</kbd> SCOSC</li>
+<li><kbd>CSI u</kbd> SCORC</li>
+</ul>
+
+<h2>MS-DOS ANSI.SYS</h2>
+<p>公式の文書が恐らく見つからないので様々のページを見て推測するしかない。</p>
+<ul>
+<li>[1] <a href="https://www.computerhope.com/ansisys.htm">MS-DOS and Windows command line ansi.sys command</a>
+  <p>以下のページは本質的に等価な内容である。</p>
+  <ul>
+  <li><a href="http://ascii-table.com/ansi-escape-sequences.php">ansi-escape-sequences.php</a></li>
+  <li><a href="https://web.archive.org/web/20070623224036/http://enterprise.aacc.cc.md.us/~rhs/ansi.html">ANSI.SYS -- ansi terminal emulation escape sequences</a></li>
+  </ul>
+</li>
+<li>[2] <a href="http://uno036.starfree.jp/SYSmanual/dos_command/cmd/ansi.htm">ANSI.SYS - キーボードと画面の拡張制御のサポート</a>
+  <p>以下は同じ内容のページ。</p>
+  <ul>
+  <li><a href="http://fpcu.on.coocan.jp/dosvcmd/ansi.htm">ANSI.SYS - キーボードと画面の拡張制御のサポート [FPCU]DOS/V&amp;Windowsコマンド・プロンプト・リファレンス</a></li>
+  </ul>
+</li>
+<li>[3] <a href="https://en.wikipedia.org/wiki/ANSI.SYS">ANSI.SYS - Wikipedia</a></li>
+</ul>
+<p>シーケンス一覧。</p>
+<ul>
+<li><kbd>ESC $ ) 1</kbd>, <kbd>ESC ( 2</kbd>
+  <p>文字を韓国語と英語で切り替え。韓国語版だけで利用できる [3]。</p>
+</li>
+<li><kbd>CSI +</kbd><sup class="violation">×</sup> _ASYSXON★</li>
+<li><kbd>CSI -</kbd><sup class="violation">×</sup> _ASYSXOFF★
+  <p>コンソール出力を有効化、無効化する。
+    DR-DOS 7.02 以上の ANSI.SYS で利用できる [3]。</p>
+</li>
+<li><kbd>CSI <i>Pn</i> A</kbd> CUU</li>
+<li><kbd>CSI <i>Pn</i> B</kbd> CUD</li>
+<li><kbd>CSI <i>Pn</i> C</kbd> CUF</li>
+<li><kbd>CSI <i>Pn</i> D</kbd> CUB</li>
+<li><kbd>CSI <i>Pl</i> ; <i>Pc</i> H</kbd> CUP</li>
+<li><kbd>CSI <i>Pl</i> ; <i>Pc</i> f</kbd> HVP</li>
+<li><kbd>CSI 2 J</kbd> ED
+  <p>2 にしか対応していない? [1,2] では明示的に 2J となっている。
+    一方で Wikipedia [3] では引数になっていて 0,1,2 を受け付けるが如く書かれている。
+    よく註を読むと日本語版 MS-DOC および ANSI.SYS または multiuser DOS でのみ 0,1,2 が有効とある。
+    それ以外は 0,2 だけの対応。
+  </p>
+</li>
+<li><kbd>CSI K</kbd> EL
+  <p>引数には対応していない?
+    これも [1,2] では引数が書かれていないが Wikipedia [3] では 0,1,2 が書かれている。
+    ED の時と同様に日本語版 MS-DOC および ANSI.SYS または multiuser DOS でのみ 0,1,2 らしい。
+    それ以外は 0 のみの対応。
+  </p>
+</li>
+<li><kbd>CSI <i>Pn</i> L</kbd> IL</li>
+<li><kbd>CSI <i>Pn</i> M</kbd> DL
+  <p>IL と DL も日本語版と multiuser DOS だけで利用できるらしい [3]。</p>
+</li>
+<li><kbd>CSI <i>Pm</i> m</kbd> SGR
+  <p><i class="kbd">Ps</i> = 0,1,4,5,7,8,30..37,40..47 に対応している。
+    [1] によれば下線は ANSI 通りに 4 であるが、
+    [2] によると下線は 2 になっている。
+    わざわざ ANSI.SYS という名前で新しく開発したのだったら、
+    後方互換性は捨てて 4 にするのが自然である。
+    つまり、[2] の説明は typo ではないか。
+  </p>
+</li>
+<li><kbd>CSI s</kbd> SCOSC</li>
+<li><kbd>CSI u</kbd> SCORC</li>
+<li><kbd>CSI 6 n</kbd> DSR(6)</li>
+<li><kbd>CSI <i>Pl</i> ; <i>Pc</i> R</kbd> CPR
+  <p><kbd>DSR(6)</kbd> と <kbd>CPR</kbd> は [1,2] にはないが、
+    [3] には書かれている。何もない所から記述が出てくる訳はないので、
+    後々に対応が追加されたという事だろうか。
+  </p>
+</li>
+<li><kbd>CSI = <i>Ps</i> h</kbd> _ASYSSM★</li>
+<li><kbd>CSI = <i>Ps</i> l</kbd> _ASYSRM★
+  <ul>
+  <li>Mode =0  40列x25行 monochrome (text)</li>
+  <li>Mode =1  40列x25行 color (text)</li>
+  <li>Mode =2  80列x25行 monochrome (text)</li>
+  <li>Mode =3  80列x25行 color (text)</li>
+  <li>Mode =4  320x200ドット 4-color (graphics)</li>
+  <li>Mode =5  320x200ドット monochrome (graphics)</li>
+  <li>Mode =6  640x200ドット monochrome (graphics)</li>
+  <li>Mode =7  Enables line wrapping (Mode ?7 DECAWM と同じ振る舞いだろうか?)</li>
+  <li>Mode =13 320x200ドット color (graphics)</li>
+  <li>Mode =14 640x200ドット color (16-color graphics)</li>
+  <li>Mode =15 640x350ドット monochrome (2-color graphics)</li>
+  <li>Mode =16 640x350ドット color (16-color graphics)</li>
+  <li>Mode =17 640x480ドット monochrome (2-color graphics)</li>
+  <li>Mode =18 640x480ドット color (16-color graphics)</li>
+  <li>Mode =19 320x200ドット color (256-color graphics)</li>
+  <li>Mode =114 640x480ドット color (16-color graphics) (日本語)</li>
+  <li>Mode =115 80列x25行 color (text) (日本語)</li>
+  <li>Mode =114 と =115 は Japanese DOS/V issues of ANSI.SYS
+    found in DR DOS 6.0, Novell DOS 7 and higher のみで対応。</li>
+  <li>日本語モードでは =3,=17,=18,=114,=115 のみ選択可能。</li>
+  <li>Wikipedia [3] の記述によると日本語版には Mode <kbd>&gt; <i>Ps</i></kbd> もあるらしい。
+    というか <kbd>? <i>Ps</i></kbd> や <kbd><i>Ps</i></kbd> も使える?
+    もしかすると前置されている文字は全て無視するという仕様なのかもしれない。
+  </li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; ... p</kbd> _ASYSSKR★ (SKR, KR<sup>ANSI.SYS</sup>)</li>
+<li><kbd>CSI <i>Ps</i> ; " <i>D</i> " ; ... p</kbd><sup class="violation">×</sup> _ASYSSKR★ (SKR, KR<sup>ANSI.SYS</sup>)
+  <p>１つ目の引数に押すキーのコード (別表) を指定し、
+    2つ目の引数にそのキーの解釈をもうひとつのキーコードまたは文字列で指定する。
+  </p>
+</li>
+<li><kbd>CSI <i>Ps</i> q</kbd> _ASYSEKR★
+  <p><i class="kbd">Ps</i> = 1 で _ASYSSKR を有効化、0 で無効化。</p>
+</li>
+</ul>
+
 <h2>FreeBSD teken/cons25</h2>
 <p>RLogin の C25LCT はソースコードを見ると cons25 由来らしい。
   調べてみるとこれは FreeBSD の前の kernel console だったらしい
@@ -65,7 +239,6 @@
   コードの配置を考えると SCO の方が先であろうと思われる。
 </li>
 </ul>
-
 
 <h2>Data General (DG) D410</h2>
 <ul>
@@ -779,7 +952,7 @@
 <li><kbd>CSI S</kbd> SU</li>
 <li><kbd>CSI T</kbd> SD</li>
 <li><kbd>CSI U</kbd><sup class="violation">×</sup> RIS</li>
-<li><kbd>CSI V</kbd><sup class="violation">×</sup> _SCOER★ (ER<sup>SCO</sup>)</li>
+<li><kbd>CSI V</kbd><sup class="violation">×</sup> _SCOER★ (ER<sup>SCO</sup>) Erase in Region スクロール領域内での ED</li>
 <li><kbd>CSI X</kbd> ECH</li>
 <li><kbd>CSI Z</kbd> CBT</li>
 <li><kbd>CSI a</kbd> HPR</li>
@@ -923,8 +1096,8 @@
 <li><kbd>CSI <i>Pn</i> ; <i>Pn</i> f</kbd></li>
 <li><kbd>CSI <i>Ps</i> g</kbd> <p><i>Ps</i> = 0, 3 に対応</p></li>
 <li><kbd>CSI &gt; 5 g</kbd> _CITST8C★ DECST8C と同じ</li>
-<li><kbd>CSI <i>Ps</i> h</kbd> SM</li>
-<li><kbd>CSI <i>Ps</i> l</kbd> RM
+<li><kbd>CSI <i>Ps</i> h</kbd> _CITSM★</li>
+<li><kbd>CSI <i>Ps</i> l</kbd> _CITRM★
   <p><i>Ps</i> = 20, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8 に対応。拡張として以下にも対応。</p>
   <ul>
   <li>Mode &gt;1 Set double speed smooth scroll mode</li>

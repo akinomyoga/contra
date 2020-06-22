@@ -955,8 +955,8 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th colspan="2">Ft型: 私用制御機能</th>
     </tr>
 <tr><th><i>Ft</i></th><th>略号</th></tr>
-<tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, SKR<sup>ANSI.SYS</sup>, RLBFAT</td></tr>
-<tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA</td></tr>
+<tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, _ASYSSKR, RLBFAT</td></tr>
+<tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA, _ASYSEKR</td></tr>
 <tr><th><kbd>r</kbd></th><td>DECSTBM, DECPCTERM, _SCOCSR, SUNSCRL</td></tr>
 <tr><th><kbd>s</kbd></th><td>DECSLRM, SCOSC, WYSC, _DGRRC, SUNRESET</td></tr>
 <tr><th><kbd>t</kbd></th><td>DECSLPP, WYNNAT, DGROSC, _CITSTIME</td></tr>
@@ -1434,8 +1434,8 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>h</kbd></th>
     <td>_DGSM<sup>+</sup></td>
-    <td>_SGISM<sup>+</sup><br/>SM<sup>ANSI.SYS+</sup></td>
-    <td>SM<sup>Japanese ANSI.SYS+</sup><br/>SM<sup>CIT</sup></td>
+    <td>_SGISM<sup>+</sup><br/>_ASYSSM<sup>+</sup></td>
+    <td>_ASYSSM<sup>+</sup><br/>_CITSM<sup>+</sup><br/>_PC98SM<sup>+</sup></td>
     <td>DECSET<sup>+</sup></td>
 </tr>
 <tr><th><kbd>i</kbd></th>
@@ -1446,8 +1446,8 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>l</kbd></th>
     <td>_DGRM<sup>+</sup></td>
-    <td>_SCOCHC<br/>_SGIRM<sup>+</sup><br/>RM<sup>ANSI.SYS+</sup></td>
-    <td>RM<sup>Japanese ANSI.SYS+</sup><br/>RM<sup>CIT</sup></td>
+    <td>_SCOCHC<br/>_SGIRM<sup>+</sup><br/>_ASYSRM<sup>+</sup></td>
+    <td>_ASYSRM<sup>+</sup><br/>_CITRM<sup>+</sup><br/>_PC98RM<sup>+</sup></td>
     <td>DECRST<sup>+</sup></td>
 </tr>
 <tr><th><kbd>m</kbd></th>
@@ -1520,7 +1520,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>-</td>
     <td>-</td>
-    <td>PFS<sup>+*a</sup></td>
+    <td>PFS<sup>+LN03</sup></td>
 </tr>
 <tr><th><kbd>$ p</kbd></th>
     <td>-</td>
@@ -1558,6 +1558,8 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>DECFSR (Response to DECRFS)<sup>*a</sup></th><td><kbd>CSI 2 " nnn ST</kbd><sup>違反</sup></td></tr><!--"-->
 <tr><th>TeleGraphix Determining RIP support<sup>*a</sup></th><td><kbd>CSI !</kbd><sup>違反</sup></td></tr><!--"-->
 <tr><th>WYTLOAD</th><td><kbd>CSI &gt; <i>Cq</i> ... <i>Cq</i></kbd><sup>違反</sup></td></tr>
+<tr><th>_ASYSXON</th><td><kbd>CSI +</kbd><sup>違反</sup></td></tr>
+<tr><th>_ASYSXOFF</th><td><kbd>CSI -</kbd><sup>違反</sup></td></tr>
 </table>
 
 <table class="normal center">
@@ -1753,6 +1755,7 @@ tmux=screen
 <tr><td>_AIXXST</td> <td><kbd>OSC 0 ; ... BEL</kbd></td></tr>
 <tr><td>_AIXXST</td> <td><kbd>OSC 1 ; ... BEL</kbd></td></tr>
 <tr><td>_AIXXST</td> <td><kbd>OSC 2 ; ... BEL</kbd></td></tr>
+<tr><td>GWREPT<sup>yaft</sup></td>  <td><kbd>OSC 8 9 0 0 ; ... BEL</kbd></td></tr>
 </table>
 
 <p>DCS シーケンス一覧表</p>
@@ -1944,7 +1947,7 @@ tmux=screen
     <th>DECCRNLM<sup>*</sup><br/>XTERM_132COLS</th><td>?40</td></tr>
 </table>
 <ul>
-<li>Note: <sup>*</sup> を付した物はは all-espaces.txt にあった物で初期の VT シリーズの古いモードと思われる。</li>
+<li>Note: <sup>*</sup> を付した物はは all-espaces.txt にあった物で初期の VT シリーズの古いモードと思われる。→どうもプリンタ関連?</li>
 <li>?38 は rlogin に記述があった。</li>
 </ul>
 
@@ -2119,10 +2122,6 @@ tmux=screen
 <h3>端末毎の対応モードの一覧</h3>
 <p>他</p>
 <ul>
-<li>GWREPT/OSC 8900 (yaft)</li>
-</ul>
-
-<ul>
 <li><a href="https://terminal-wg.pages.freedesktop.org/bidi/recommendation/escape-sequences.html">The escape sequences – BiDi in Terminal Emulators</a>
   ここによると VTE が 2500, 2501 で Bidi のスイッチを実装しているらしい。
   この番号は Box drawing characters (RTL で左右反転) のコードが U+2500 から始まるかららしい。
@@ -2255,43 +2254,6 @@ tmux=screen
 |-----------|--------|--|-|-|--------------------|--|-|-|-|---|-|-------------|-|-------------------------------|-----|
 | contra    |******* |  |*| |    -      - *** ***|**| |*| |   | |             | |                               |     |
 </pre>
-
-
-<!--...................................................................................-->
-<div class="note">以前まとめた表にあった出典不明のモード
-<table class="normal center">
-<colgroup>
-  <col span="3" />
-  <col style="width:40%;" />
-  <col style="width:40%;" />
-</colgroup>
-<tr><th>引数</th><th>環境</th><th>略号</th><th>有効</th><th>無効</th><th>実装</th></tr>
-<tr><td>=0</td>    <td>/ansi.sys</td> <td></td> <td>40列 x 25行 monochrome (text)                 </td><td></td><td>X</td></tr>
-<tr><td>=1</td>    <td>/ansi.sys</td> <td></td> <td>40列 x 25行 color (text)                      </td><td></td><td>X</td></tr>
-<tr><td>=2</td>    <td>/ansi.sys</td> <td></td> <td>80列 x 25行 monochrome (text)                 </td><td></td><td>X</td></tr>
-<tr><td>=3</td>    <td>/ansi.sys</td> <td></td> <td>80列 x 25行 color (text)                      </td><td></td><td>X</td></tr>
-<tr><td>=4</td>    <td>/ansi.sys</td> <td></td> <td>320px x 200px 4-color (graphics)              </td><td></td><td>X</td></tr>
-<tr><td>=5</td>    <td>/ansi.sys</td> <td></td> <td>320px x 200px monochrome (graphics)           </td><td></td><td>X</td></tr>
-<tr><td>=6</td>    <td>/ansi.sys</td> <td></td> <td>640px x 200px monochrome (graphics)           </td><td></td><td>X</td></tr>
-<tr><td>=7</td>    <td>/ansi.sys</td> <td></td> <td>行折返し有効                                  </td><td>行折返し無効</td><td>X</td></tr>
-<tr><td>=13</td>   <td>/ansi.sys</td> <td></td> <td>320px x 200px color (graphics)                </td><td></td><td>X</td></tr>
-<tr><td>=14</td>   <td>/ansi.sys</td> <td></td> <td>640px x 200px color (16-color graphics)       </td><td></td><td>X</td></tr>
-<tr><td>=15</td>   <td>/ansi.sys</td> <td></td> <td>640px x 350px monochrome (2-color graphics)   </td><td></td><td>X</td></tr>
-<tr><td>=16</td>   <td>/ansi.sys</td> <td></td> <td>640px x 350px color (16-color graphics)       </td><td></td><td>X</td></tr>
-<tr><td>=17</td>   <td>/ansi.sys</td> <td></td> <td>640px x 480px monochrome (2-color graphics)   </td><td></td><td>X</td></tr>
-<tr><td>=18</td>   <td>/ansi.sys</td> <td></td> <td>640px x 480px 16-color graphics               </td><td></td><td>X</td></tr>
-<tr><td>=19</td>   <td>/ansi.sys</td> <td></td> <td>320px x 200px 256-color graphics              </td><td></td><td>X</td></tr>
-<tr><td>=114</td>  <td>/ansi.sys</td> <td></td> <td>640px x 480px 16-color graphics (日本語モード)</td><td></td><td>X</td></tr>
-<tr><td>=115</td>  <td>/ansi.sys</td> <td></td> <td>80列 x 25行 color (text) (日本語モード)       </td><td></td><td>X</td></tr>
-<tr><td>&gt;1</td><td></td><td></td>         <td>ファンクション有り</td><td>ファンクション無し</td><td>X</td></tr>
-<tr><td>&gt;5</td><td></td><td></td>         <td>カーソル有り</td><td>カーソル無し</td><td>X</td></tr>
-</table>
-<ul>
-<li><a href="http://fpcu.on.coocan.jp/dosvcmd/ansi.htm">ANSI.SYS - キーボードと画面の拡張制御のサポート [FPCU]DOS/V&amp;Windowsコマンド・プロンプト・リファレンス</a></li>
-<li>ANSI.SYS 日本語モードでは =3, =17, =18, =114, =115 のみ選択可能</li>
-<li>恐らく上記 ANSI.SYS の出典はここにもある <a href="http://ascii-table.com/ansi-escape-sequences.php">ASCII Table - ANSI Escape sequences</a></li>
-</ul>
-</div>
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h2>文字集合の制御</h2>
