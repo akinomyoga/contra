@@ -963,9 +963,9 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th><kbd>u</kbd></th><td>DECSHTS, SCORC, WYRC, _DGSPOS, _CITSSR</td></tr>
 <tr><th><kbd>v</kbd></th><td>DECSVTS, RLSCD (_CITSCUR), _DGSPARM</td></tr>
 <tr><th><kbd>w</kbd></th><td>DECSHORP, _AIXVTR, DGMARG, _CITSCURB</td></tr>
-<tr><th><kbd>x</kbd></th><td>DECREQTPARM, DECREPTPARM, _AIXVTD, DGRTC</td></tr>
+<tr><th><kbd>x</kbd></th><td>DECREQTPARM, DECREPTPARM, _AIXVTD, DGRTC, C25SGR</td></tr>
 <tr><th><kbd>y</kbd></th><td>DECTST, _AIXVTL</td></tr>
-<tr><th><kbd>z</kbd></th><td>DECVERP, WYSCRATE, _SCOSSW, _CITPCTL</td></tr>
+<tr><th><kbd>z</kbd></th><td>DECVERP, WYSCRATE, _SCOSSW, C25VTSW, _CITPCTL</td></tr>
 <tr><th><kbd>{</kbd></th><td>---</td></tr>
 <tr><th><kbd>|</kbd></th><td>DECTTC</td></tr>
 <tr><th><kbd>}</kbd></th><td>DECPRO</td></tr>
@@ -1304,8 +1304,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </p>
 <table class="normal center contra-cell-centered">
 <caption>[<sup>+</sup> は既存の制御機能の私用パラメータとしての拡張、
-  <sup>*1</sup> は mlterm/en/doc/ControlSequences による命名,
-  <sup>*2</sup> は RLogin のマニュアルによる命名 ]
+  <sup>*1</sup> は mlterm/en/doc/ControlSequences による命名 ]
 </caption>
 <tr><th>Ft</th>
     <th><kbd>&lt;</kbd></th>
@@ -1315,19 +1314,19 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>A</kbd></th>
     <td>-</td>
-    <td>_SCOSBC</td>
+    <td>_SCOSBC (C25BORD)</td>
     <td>-</td>
     <td>-</td>
 </tr>
 <tr><th><kbd>B</kbd></th>
     <td>-</td>
-    <td>_SCOSBP</td>
+    <td>_SCOSBP (C25BLPD)</td>
     <td>-</td>
     <td>-</td>
 </tr>
 <tr><th><kbd>C</kbd></th>
     <td>-</td>
-    <td>_SCOSCS</td>
+    <td>_SCOSCS (C25GCS)</td>
     <td>-</td>
     <td>-</td>
 </tr>
@@ -1345,13 +1344,13 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>F</kbd></th>
     <td>-</td>
-    <td>_SCOSNF</td>
+    <td>_SCOSNF (C25DFG)</td>
     <td>-</td>
     <td>_AIXXRS</td>
 </tr>
 <tr><th><kbd>G</kbd></th>
     <td>-</td>
-    <td>_SCOSNB</td>
+    <td>_SCOSNB (C25DBG)</td>
     <td>-</td>
     <td>-</td>
 </tr>
@@ -1399,13 +1398,13 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>S</kbd></th>
     <td>-</td>
-    <td>C25LCT<sup>cons25*2</sup></td> 
+    <td>C25LCT</td> 
     <td>-</td>
     <td>XTCOLREG<sup>*1</sup><br/>_AIXXSS</td> 
 </tr>
 <tr><th><kbd>T</kbd></th>
     <td>-</td>
-    <td>-</td>
+    <td>C25MODE</td>
     <td>XTRMTT<sup>*1</sup></td>
     <td>_AIXXGS</td>
 </tr>
@@ -1440,12 +1439,6 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>DECSET<sup>+</sup></td>
 </tr>
 <tr><th><kbd>i</kbd></th>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
-    <td>DECMC<sup>+</sup></td>
-</tr>
-<tr><th><kbd>k</kbd></th>
     <td>-</td>
     <td>-</td>
     <td>-</td>

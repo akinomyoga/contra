@@ -36,6 +36,37 @@
 <li><a href="https://invisible-mirror.net/archives/shuford/terminal/">Video Terminal and Terminal-Emulator Information</a></li>
 </ul>
 
+<h2>FreeBSD teken/cons25</h2>
+<p>RLogin の C25LCT はソースコードを見ると cons25 由来らしい。
+  調べてみるとこれは FreeBSD の前の kernel console だったらしい
+  (更にその前は wscons だったらしい様な雰囲気である) [1]。
+  cons25 は別名 teken らしい。
+  然し cons25 や teken, libteken で検索してもまとまった情報は出てこない。
+  と思ったら freebsd の sys/teken の中に sequence というテキストファイルがあった [2]。
+  更にその中に Cons25 compatibility sequences という場所があってまとめて定義されている。
+</p>
+<ul>
+<li>[1] <a href="https://jdebp.eu/Softwares/nosh/guide/console-terminal-emulator.html">console-terminal-emulator</a></li>
+<li>[2] <a href="https://github.com/freebsd/freebsd/blob/master/sys/teken/sequences">freebsd/sequences at master · freebsd/freebsd</a></li>
+</ul>
+
+<p>Cons25 互換シーケンス</p>
+<ul>
+<li><kbd>CSI = <i>Pn</i> A</kbd>             C25BORD Cons25 set border</li>
+<li><kbd>CSI = <i>Pn</i> ; <i>Pn</i> B</kbd> C25BLPD Cons25 set bell pitch duration</li>
+<li><kbd>CSI = <i>Pm</i> C</kbd>             C25GCS  Cons25 set global cursor shape</li>
+<li><kbd>CSI = <i>Pn</i> F</kbd>             C25DFG  Cons25 set default foreground</li>
+<li><kbd>CSI = <i>Pn</i> G</kbd>             C25DBG  Cons25 set default background</li>
+<li><kbd>CSI = <i>Pn</i> S</kbd>             C25LCT  Cons25 set local cursor type</li>
+<li><kbd>CSI = <i>Pn</i> T</kbd>             C25MODE Cons25 set terminal mode</li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> x</kbd>   C25SGR  Cons25 set graphic rendition</li>
+<li><kbd>CSI <i>Pn</i> z</kbd>               C25VTSW Cons25 switch virtual terminal</li>
+<li>SCO のシーケンスと同じ物が見られる。
+  コードの配置を考えると SCO の方が先であろうと思われる。
+</li>
+</ul>
+
+
 <h2>Data General (DG) D410</h2>
 <ul>
 <li>d410-um.pdf
