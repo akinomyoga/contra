@@ -835,11 +835,11 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>ICH</th>    <td><kbd>CSI ... @</kbd></td>
     <th>DCH</th>    <td><kbd>CSI ... P</kbd></td>
     <th>HPA</th>    <td><kbd>CSI ... `</kbd></td>
-    <th>DECSSL, SUNBOW, WYFDAT, SKR<sup>ANSI.SYS</sup>, RLBFAT, _AIXKSI</th> <td><kbd>CSI ... p</kbd></td></tr>
+    <th>DECSSL, SUNBOW, WYFDAT, _AIXKSI<br/>_DGBAR, SKR<sup>ANSI.SYS</sup>, RLBFAT</th> <td><kbd>CSI ... p</kbd></td></tr>
 <tr><th>CUU</th>    <td><kbd>CSI ... A</kbd></td>
     <th>SEE</th>    <td><kbd>CSI ... Q</kbd></td>
     <th>HPR</th>    <td><kbd>CSI ... a</kbd></td>
-    <th>DECLL, SUNWOB, _AIXPFK</th>  <td><kbd>CSI ... q</kbd></td></tr>
+    <th>DECLL, SUNWOB, _AIXPFK, DGCA</th>  <td><kbd>CSI ... q</kbd></td></tr>
 <tr><th>CUD</th>    <td><kbd>CSI ... B</kbd></td>
     <th>CPR<br/>_SCODL</th><td><kbd>CSI ... R</kbd></td>
     <th>REP</th>    <td><kbd>CSI ... b</kbd></td>
@@ -847,27 +847,27 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>CUF</th>    <td><kbd>CSI ... C</kbd></td>
     <th>SU</th>     <td><kbd>CSI ... S</kbd></td>
     <th>DA</th>     <td><kbd>CSI ... c</kbd></td>
-    <th>DECSLRM, SCOSC, WYSC, SUNRESET</th><td><kbd>CSI ... s</kbd></td></tr>
+    <th>DECSLRM, SCOSC, WYSC, _DGRRC, SUNRESET</th><td><kbd>CSI ... s</kbd></td></tr>
 <tr><th>CUB</th>    <td><kbd>CSI ... D</kbd></td>
     <th>SD</th>     <td><kbd>CSI ... T</kbd></td>
     <th>VPA</th>    <td><kbd>CSI ... d</kbd></td>
-    <th>DECSLPP, WYNNAT, _CITSTIME</th><td><kbd>CSI ... t</kbd></td></tr>
+    <th>DECSLPP, WYNNAT, DGROSC, _CITSTIME</th><td><kbd>CSI ... t</kbd></td></tr>
 <tr><th>CNL</th>    <td><kbd>CSI ... E</kbd></td>
     <th>NP<br/>_SCORIS</th>     <td><kbd>CSI ... U</kbd></td>
     <th>VPR</th>    <td><kbd>CSI ... e</kbd></td>
-    <th>DECSHTS, SCORC, WYRC, _CITSSR</th><td><kbd>CSI ... u</kbd></td></tr>
+    <th>DECSHTS, SCORC, WYRC, _DGSPOS, _CITSSR</th><td><kbd>CSI ... u</kbd></td></tr>
 <tr><th>CPL</th>    <td><kbd>CSI ... F</kbd></td>
     <th>PP<br/>_SCOER</th>     <td><kbd>CSI ... V</kbd></td>
     <th>HVP</th>    <td><kbd>CSI ... f</kbd></td>
-    <th>DECSVTS, RLSCD (_CITSCUR)</th><td><kbd>CSI ... v</kbd></td></tr>
+    <th>DECSVTS, RLSCD (_CITSCUR), _DGSPARM</th><td><kbd>CSI ... v</kbd></td></tr>
 <tr><th>CHA</th>    <td><kbd>CSI ... G</kbd></td>
     <th>CTC</th>    <td><kbd>CSI ... W</kbd></td>
     <th>TBC<br/>_SCODGC</th>    <td><kbd>CSI ... g</kbd></td>
-    <th>DECSHORP, _CITSCURB, _AIXVTR</th><td><kbd>CSI ... w</kbd></td></tr>
+    <th>DECSHORP, _AIXVTR, DGMARG, _CITSCURB</th><td><kbd>CSI ... w</kbd></td></tr>
 <tr><th>CUP</th>    <td><kbd>CSI ... H</kbd></td>
     <th>ECH</th>    <td><kbd>CSI ... X</kbd></td>
     <th>SM</th>     <td><kbd>CSI ... h</kbd></td>
-    <th>DECREQTPARM, DECREPTPARM, DGRTC<sup>*a</sup>, _AIXVTD</th><td><kbd>CSI ... x</kbd></td></tr>
+    <th>DECREQTPARM, DECREPTPARM, _AIXVTD, DGRTC</th><td><kbd>CSI ... x</kbd></td></tr>
 <tr><th>CHT</th>    <td><kbd>CSI ... I</kbd></td>
     <th>CVT</th>    <td><kbd>CSI ... Y</kbd></td>
     <th>MC</th>     <td><kbd>CSI ... i</kbd></td>
@@ -1421,7 +1421,7 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
     <td>-</td>
 </tr>
 <tr><th><kbd>h</kbd></th>
-    <td>SM<sup>DG+*a</sup></td>
+    <td>_DGSM<sup>+</sup></td>
     <td>_SGISM<sup>+</sup><br/>SM<sup>ANSI.SYS+</sup></td>
     <td>SM<sup>Japanese ANSI.SYS+</sup><br/>SM<sup>CIT</sup></td>
     <td>DECSET<sup>+</sup></td>
@@ -1752,6 +1752,9 @@ tmux=screen
 <p>DCS シーケンス一覧表</p>
 <table class="normal">
 <tr><th>略号</th><th>符号化表現</th></tr>
+<tr><td>_DGDC</td>    <td><kbd>DCS A ... ST</kbd></td></tr>
+<tr><td>_DGSPAT</td>  <td><kbd>DCS C ... ST</kbd></td></tr>
+<tr><td>DGSW</td>     <td><kbd>DCS D ... ST</kbd></td></tr>
 <tr><td>decREGIS</td> <td><kbd>DCS p ... ST</kbd></td></tr>
 <tr><td>decSIXEL<br/>HardCopyData<sup>VK100</sup></td><td><kbd>DCS q ... ST</kbd></td></tr>
 <tr><td>decVKSET<br/>DECLBAN</td><td><kbd>DCS r ... ST</kbd></td></tr>

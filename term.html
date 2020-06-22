@@ -36,6 +36,66 @@
 <li><a href="https://invisible-mirror.net/archives/shuford/terminal/">Video Terminal and Terminal-Emulator Information</a></li>
 </ul>
 
+<h2>Data General (DG) D410</h2>
+<ul>
+<li>d410-um.pdf
+  <ul>
+  <li>3-13 辺りから Data General Mode のコマンドが並んでいる。
+    RS (C-^) から始まる謎のシーケンスが沢山ある。
+  </li>
+  <li>3-31 から ANSI Mode Commands が並んでいる。</li>
+  </ul>
+</li>
+</ul>
+<p>ANSI Mode シーケンス一覧 (DG拡張のみ)</p>
+<ul>
+<li><kbd>CSI <i>Pm</i> h</kbd> SM, _DGSM★
+  <ul>
+  <li><i class="kbd">Ps</i> = 1,6 は標準</li>
+  <li>Mode &lt;0 ROLL MODE</li>
+  <li>Mode &lt;1 BLINK MODE</li>
+  <li>Mode &lt;2 HORIZONTAL SCROLL MODE</li>
+  <li>Mode &lt;3 DG-ANSI MODE</li>
+  <li>Mode &lt;4 FORMS MODE</li>
+  <li>Mode &lt;5 MARGINS MODE</li>
+  </ul>
+</li>
+<li><kbd>ESC <i>I</i> <i>F</i></kbd> GnD4
+  <ul>
+  <li><i class="kbd">F</i> = A, B, H, I, J, K, R は ISO 2022</li>
+  <li>0 Terminal keyboard language</li>
+  <li>1 Spanish</li>
+  <li>2 Danish/Norwegian</li>
+  <li>3 Swiss</li>
+  <li>4 DG International</li>
+  <li>5 Word processing/math/Greek</li>
+  <li>6 Line drawing</li>
+  <li><kbd>SP <i>Fp</i></kbd> DLL sets 1-16</li>
+  <li><kbd>! <i>Fp</i></kbd> DLL sets 17-32</li>
+  <li><kbd>! <i>Fp</i></kbd> DLL sets 33-38 (48 迄は定義されていない)</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Ps</i> i</kbd> MC
+  <p><i class="kbd">Ps</i> = 0,4,5,?0</p>
+</li>
+<li><kbd>CSI <i>Ps</i> m</kbd> SGR
+  <p><i class="kbd">Ps</i> = 0,2,4,5,7</p>
+</li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> ; <i>Pn</i> ; <i>Pn</i> ; <i>Pn</i> p</kbd> _DGBAR★ (BAR<sup>DG</sup>) (BAR)</li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> ; <i>Pn</i> q</kbd> DGCA★ (CHANGE ATTRIBUTES)</li>
+<li><kbd>CSI <i>Ps</i> ; <i>Pm</i> s</kbd> _DGRRC★ (READ/REVERSE CHARACTERS)</li>
+<li><kbd>CSI <i>Ps</i> ; <i>Pm</i> t</kbd> DGROSC★ (READ OFFSET / SHOW COLUMNS)</li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> u</kbd> _DGSPOS★ (DGSP<sup>DG</sup>) (SCREEN POSITION)</li>
+<li><kbd>CSI <i>Pm</i> v</kbd> _DGSPARM★ (DGSP<sup>DG</sup>) (SET PARAMETERS)
+  <p>何故か <kbd>CSI u</kbd> と <kbd>CSI v</kbd> に同じ略称が割り当てられているので、略称を振り直す。</p>
+</li>
+<li><kbd>CSI <i>Ps</i> ; <i>Pm</i> w</kbd> DGMARG★ (SET MARGINS)</li>
+<li><kbd>CSI x</kbd> DGRTC★ (READ TERMINAL CONFIGURATION)</li>
+<li><kbd>DCS A ... ST</kbd> _DGDC★ (DEFINE CHARACTER)</li>
+<li><kbd>DCS C ... ST</kbd> _DGSPAT★ (SET PATTERN)</li>
+<li><kbd>DCS D ... ST</kbd> DGSW★ (SET WINDOWS)</li>
+</ul>
+
 <h2>Wyse WY-60</h2>
 <ul>
 <li>880261-01A_WY-60_Programmers_Guide_Jan87.pdf</li>
@@ -215,7 +275,7 @@
 <li><kbd>DCS <i>Pm</i> | ... ST</kbd> DECUKD</li>
 </ul>
 
-<h2>SGI xwsh</h2>
+<h2>SGI IRIX xwsh</h2>
 <ul>
 <li><a href="https://nixdoc.net/man-pages/IRIX/man1/xwsh.1.html">xwsh - IRIX</a></li>
 </ul>
@@ -345,7 +405,7 @@
 <li><kbd>OSC <i>Pn</i> ; <i>Ps</i> BEL</kbd> Xterm Set Title</li>
 </ul>
 
-<h2>IBM aixterm</h2>
+<h2>IBM AIX aixterm</h2>
 <ul>
 <li>AIX 4.3 <a href="http://ps-2.kev009.com/tl/techlib/manuals/adoclib/cmds/aixcmds1/aixterm.htm">aixterm Command</a></li>
 <li>AIX 7.2 (ja) <a href="https://www.ibm.com/support/knowledgecenter/ja/ssw_aix_72/a_commands/aixterm.html">aixterm コマンド</a></li>
@@ -510,7 +570,7 @@
 </li>
 </ul>
 
-<h2>Sun wscons (7D)</h2>
+<h2>Sun SunOS wscons (7D)</h2>
 <ul>
 <li>SumOS 5.8 <a href="https://docs.oracle.com/cd/E19109-01/tsolaris8/816-1060/6m7glrk90/index.html">wscons(7D)</a></li>
 <li>Solaris 11.2 <a href="https://docs.oracle.com/cd/E36784_01/html/E36884/wscons-7d.html">wscons - man pages section 7: Device and Network Interfaces</a></li>
@@ -582,7 +642,7 @@
 <li>DECRQTSR <a href="https://vt100.net/dec/vt320/terminal_state_report">Digital VT320 Terminal State Reports</a></li>
 </ul>
 
-<h2>DEC LA100</h2>
+<h3>LA100</h3>
 <ul>
 <li><a href="https://vt100.net/docs/la100-rm/chapter2.html#S2.5">https://vt100.net/docs/la100-rm/chapter2.html#S2.5</a></li>
 </ul>
@@ -618,7 +678,7 @@
 <li><kbd>CSI <i>Pm</i> v</kbd> DECSVTS</li>
 <li><kbd>CSI <i>Ps</i> w</kbd> DECSHORP <i>Ps</i> = 0-8</li>
 <li><kbd>CSI <i>Ps</i> z</kbd> DECSVERP <i>Ps</i> = 0-6</li>
-<li><kbd>CSI <i>Ps</i> " z</kbd> DECDEN <i>Ps</i> = 0,1,2,3</li>
+<li><kbd>CSI <i>Ps</i> " z</kbd> DECDEN <i>Ps</i> = 0,1,2,3</li><!--"-->
 </ul>
 
 <p>94文字集合</p>
@@ -765,7 +825,7 @@
 </ul>
 
 
-<h2>CIT-101</h2>
+<h2>C.Itoh CIT-101</h2>
 <p>伊藤忠商事の作っていた端末。</p>
 <ul>
 <li>典拠: C.Itoh CIT-101 [PDF] <a href="https://www.vt100.net/manx/details/8,5491">cit101-um.pdf</a></li>
