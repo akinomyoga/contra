@@ -41,7 +41,7 @@
   <a href="https://invisible-mirror.net/archives/shuford/terminal/">Video Terminal and Terminal-Emulator Information</a></li>
 </ul>
 
-<h2>PC-98</h2>
+<h2>PC-9801</h2>
 <p>これも本来の文書が見つからない。
   [1] は "主要なもの" を挙げると書いているが、[2] では全く同じ表を提示している。
   と思ったが [3] がより完全な物だろう。
@@ -51,9 +51,10 @@
 <li>[2] <a href="http://software.aufheben.info/oohpc/98esc.html">エスケープシーケンス</a></li>
 <li>[3] <a href="http://www.246.ne.jp/~sim/v6prf05.htm">v6prf05.htm</a></li>
 <li>[4] <a href="http://hp.vector.co.jp/authors/VA016670/escape_code.html">エスケープシーケンスについて</a>
-  <p>このページは DOS だか ANSI.SYS を何となく対象としているつもりの様だが、
+  <p>このページは DOS だか ANSI.SYS を何となく対象としている様な気がするが、
     載っているシーケンスはどうも PC98 の物の様に見える。
     というか此処が謎の &gt;1 やら &gt;5 等のモードの出どころの様だ。
+    どうも PC-9801 に MS-DOS を入れて使うと ANSI.SYS と関係なくエスケープシーケンスが使える?
   </p>
 </li>
 </ul>
@@ -128,8 +129,8 @@
 <li><kbd>ESC $ ) 1</kbd>, <kbd>ESC ( 2</kbd>
   <p>文字を韓国語と英語で切り替え。韓国語版だけで利用できる [3]。</p>
 </li>
-<li><kbd>CSI +</kbd><sup class="violation">×</sup> _ASYSXON★</li>
-<li><kbd>CSI -</kbd><sup class="violation">×</sup> _ASYSXOFF★
+<li><kbd>CSI +</kbd><sup class="violation">×</sup> _DOSXON★</li>
+<li><kbd>CSI -</kbd><sup class="violation">×</sup> _DOSXOFF★
   <p>コンソール出力を有効化、無効化する。
     DR-DOS 7.02 以上の ANSI.SYS で利用できる [3]。</p>
 </li>
@@ -175,8 +176,8 @@
     後々に対応が追加されたという事だろうか。
   </p>
 </li>
-<li><kbd>CSI = <i>Ps</i> h</kbd> _ASYSSM★</li>
-<li><kbd>CSI = <i>Ps</i> l</kbd> _ASYSRM★
+<li><kbd>CSI = <i>Ps</i> h</kbd> _DOSSM★</li>
+<li><kbd>CSI = <i>Ps</i> l</kbd> _DOSRM★
   <ul>
   <li>Mode =0  40列x25行 monochrome (text)</li>
   <li>Mode =1  40列x25行 color (text)</li>
@@ -204,14 +205,14 @@
   </li>
   </ul>
 </li>
-<li><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; ... p</kbd> _ASYSSKR★ (SKR, KR<sup>ANSI.SYS</sup>)</li>
-<li><kbd>CSI <i>Ps</i> ; " <i>D</i> " ; ... p</kbd><sup class="violation">×</sup> _ASYSSKR★ (SKR, KR<sup>ANSI.SYS</sup>)
+<li><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; ... p</kbd> _DOSSKR★ (SKR, KR<sup>ANSI.SYS</sup>)</li>
+<li><kbd>CSI <i>Ps</i> ; " <i>D</i> " ; ... p</kbd><sup class="violation">×</sup> _DOSSKR★ (SKR, KR<sup>ANSI.SYS</sup>)
   <p>１つ目の引数に押すキーのコード (別表) を指定し、
     2つ目の引数にそのキーの解釈をもうひとつのキーコードまたは文字列で指定する。
   </p>
 </li>
-<li><kbd>CSI <i>Ps</i> q</kbd> _ASYSEKR★
-  <p><i class="kbd">Ps</i> = 1 で _ASYSSKR を有効化、0 で無効化。</p>
+<li><kbd>CSI <i>Ps</i> q</kbd> _DOSEKR★
+  <p><i class="kbd">Ps</i> = 1 で _DOSSKR を有効化、0 で無効化。</p>
 </li>
 </ul>
 

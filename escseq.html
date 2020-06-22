@@ -951,8 +951,8 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th colspan="2">Ft型: 私用制御機能</th>
     </tr>
 <tr><th><i>Ft</i></th><th>略号</th></tr>
-<tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, _ASYSSKR, RLBFAT</td></tr>
-<tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA, _ASYSEKR</td></tr>
+<tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, _DOSSKR, RLBFAT</td></tr>
+<tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA, _DOSEKR</td></tr>
 <tr><th><kbd>r</kbd></th><td>DECSTBM, DECPCTERM, _SCOCSR, SUNSCRL</td></tr>
 <tr><th><kbd>s</kbd></th><td>DECSLRM, SCOSC, WYSC, _DGRRC, SUNRESET</td></tr>
 <tr><th><kbd>t</kbd></th><td>DECSLPP, WYNNAT, DGROSC, _CITSTIME</td></tr>
@@ -1430,8 +1430,8 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>h</kbd></th>
     <td>_DGSM<sup>+</sup></td>
-    <td>_SGISM<sup>+</sup><br/>_ASYSSM<sup>+</sup></td>
-    <td>_ASYSSM<sup>+</sup><br/>_CITSM<sup>+</sup><br/>_PC98SM<sup>+</sup></td>
+    <td>_SGISM<sup>+</sup><br/>_DOSSM<sup>+</sup></td>
+    <td>_DOSSM<sup>+</sup><br/>_CITSM<sup>+</sup><br/>_PC98SM<sup>+</sup></td>
     <td>DECSET<sup>+</sup></td>
 </tr>
 <tr><th><kbd>i</kbd></th>
@@ -1442,8 +1442,8 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>l</kbd></th>
     <td>_DGRM<sup>+</sup></td>
-    <td>_SCOCHC<br/>_SGIRM<sup>+</sup><br/>_ASYSRM<sup>+</sup></td>
-    <td>_ASYSRM<sup>+</sup><br/>_CITRM<sup>+</sup><br/>_PC98RM<sup>+</sup></td>
+    <td>_SCOCHC<br/>_SGIRM<sup>+</sup><br/>_DOSRM<sup>+</sup></td>
+    <td>_DOSRM<sup>+</sup><br/>_CITRM<sup>+</sup><br/>_PC98RM<sup>+</sup></td>
     <td>DECRST<sup>+</sup></td>
 </tr>
 <tr><th><kbd>m</kbd></th>
@@ -1554,8 +1554,8 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>DECFSR (Response to DECRFS)<sup>*a</sup></th><td><kbd>CSI 2 " nnn ST</kbd><sup>違反</sup></td></tr><!--"-->
 <tr><th>TeleGraphix Determining RIP support<sup>*a</sup></th><td><kbd>CSI !</kbd><sup>違反</sup></td></tr><!--"-->
 <tr><th>WYTLOAD</th><td><kbd>CSI &gt; <i>Cq</i> ... <i>Cq</i></kbd><sup>違反</sup></td></tr>
-<tr><th>_ASYSXON</th><td><kbd>CSI +</kbd><sup>違反</sup></td></tr>
-<tr><th>_ASYSXOFF</th><td><kbd>CSI -</kbd><sup>違反</sup></td></tr>
+<tr><th>_DOSXON</th><td><kbd>CSI +</kbd><sup>違反</sup></td></tr>
+<tr><th>_DOSXOFF</th><td><kbd>CSI -</kbd><sup>違反</sup></td></tr>
 </table>
 
 <table class="normal center">
@@ -2117,7 +2117,7 @@ tmux=screen
 
 <h3>その他未整理のモード</h3>
 <ul>
-<li>_DGSM, _SGISM, _ASYSSM, _PC98SM, _CITSM</li>
+<li>_DGSM, _SGISM, _DOSSM, _PC98SM, _CITSM</li>
 <li>Tera Term 14001..14004?</li>
 </ul>
 
