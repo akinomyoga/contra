@@ -471,6 +471,20 @@ bool load_jis_def() {
   proc.save_txt("out/tmp.txt");
   return true;
 }
+bool load_cjk_def() {
+  iso2022_charset_registry iso2022;
+  iso2022_definition_dumper proc;
+  if (!proc.process(iso2022, "res/iso2022-cjk.def")) return false;
+  proc.save_html_separate("out");
+  return true;
+}
+bool load_cns_def() {
+  iso2022_charset_registry iso2022;
+  iso2022_definition_dumper proc;
+  if (!proc.process(iso2022, "res/iso2022-cns.def")) return false;
+  proc.save_html_separate("out");
+  return true;
+}
 
 bool load_file(const char* filename) {
   iso2022_charset_registry iso2022;
@@ -483,6 +497,8 @@ int main(int argc, char** argv) {
   if (argc == 1) {
     if (!load_iso2022_def()) return 1;
     if (!load_jis_def()) return 1;
+    if (!load_cjk_def()) return 1;
+    if (!load_cns_def()) return 1;
   } else {
     if (!load_file(argv[1])) return 1;
   }
