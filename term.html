@@ -36,6 +36,125 @@
 <li><a href="https://invisible-mirror.net/archives/shuford/terminal/">Video Terminal and Terminal-Emulator Information</a></li>
 </ul>
 
+<h2>Wyse WY-60</h2>
+<ul>
+<li>880261-01A_WY-60_Programmers_Guide_Jan87.pdf</li>
+</ul>
+<p>シーケンス一覧</p>
+<ul>
+<li><kbd>ENQ</kbd></li>
+<li><kbd>XON</kbd></li>
+<li><kbd>XOFF</kbd></li>
+<li><kbd>BEL</kbd></li>
+<li><kbd>BS</kbd></li>
+<li><kbd>LF</kbd>, <kbd>VT</kbd>, <kbd>FF</kbd></li>
+<li><kbd>CR</kbd></li>
+<li><kbd>HT</kbd></li>
+<li><kbd>SI</kbd></li>
+<li><kbd>SO</kbd></li>
+<li><kbd>ESC SP</kbd><sup class="violation">×</sup> WYID★</li>
+<li><kbd>ESC ! p</kbd><sup class="violation">×</sup> DECSTR (<kbd>CSI ! p</kbd> の typo ではないか)</li>
+<li><kbd>ESC # 3</kbd> DECDHL</li>
+<li><kbd>ESC # 4</kbd> DECDHL</li>
+<li><kbd>ESC # 5</kbd> DECSWL</li>
+<li><kbd>ESC # 6</kbd> DECDWL</li>
+<li><kbd>ESC # 8</kbd> DECALN</li>
+<li><kbd>ESC # :</kbd> WYDHL★</li>
+<li><kbd>ESC # ;</kbd> WYDHL★</li>
+<li><kbd>ESC <i>I</i> <i>F</i></kbd> GnD4 (SCS)
+  <p><i class="kbd">F</i> = 0 (ANSI graphics), A (UK ANSI), B (Standard ANSI)</p>
+</li>
+<li><kbd>ESC ,</kbd><sup class="violation">×</sup> WYDELAY★</li>
+<li><kbd>ESC 5</kbd> WYXCH★</li>
+<li><kbd>ESC 7</kbd> DECSC</li>
+<li><kbd>ESC 8</kbd> DECRC</li>
+<li><kbd>ESC =</kbd> DECKPAM</li>
+<li><kbd>ESC &gt;</kbd> DECKPNM</li>
+<li><kbd>ESC D</kbd> IND</li>
+<li><kbd>ESC E</kbd> NEL</li>
+<li><kbd>ESC H</kbd> HTS</li>
+<li><kbd>ESC M</kbd> RI</li>
+<li><kbd>ESC Z</kbd> DECID</li>
+<li><kbd>ESC c</kbd> RIS</li>
+<li><kbd>CSI <i>Pn</i> @</kbd> ICH</li>
+<li><kbd>CSI <i>Pn</i> A</kbd> CUU</li>
+<li><kbd>CSI <i>Pn</i> B</kbd> CUD</li>
+<li><kbd>CSI <i>Pn</i> C</kbd> CUF</li>
+<li><kbd>CSI <i>Pn</i> D</kbd> CUB</li>
+<li><kbd>CSI <i>Pn</i> E</kbd> CNL</li>
+<li><kbd>CSI <i>Pn</i> F</kbd> CPL</li>
+<li><kbd>CSI <i>Pn</i> G</kbd> CHA</li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> H</kbd> CUP</li>
+<li><kbd>CSI <i>Pn</i> I</kbd> CHT</li>
+<li><kbd>CSI <i>Ps</i> J</kbd> ED</li>
+<li><kbd>CSI ? <i>Ps</i> J</kbd> DECSED</li>
+<li><kbd>CSI <i>Ps</i> K</kbd> EL</li>
+<li><kbd>CSI ? <i>Ps</i> K</kbd> DECSEL
+  <p><i class="kbd">Ps</i> = 0,1,2</p>
+</li>
+<li><kbd>CSI <i>Pn</i> L</kbd> IL</li>
+<li><kbd>CSI <i>Pn</i> M</kbd> DL</li>
+<li><kbd>CSI <i>Pn</i> P</kbd> DCH</li>
+<li><kbd>CSI <i>Pn</i> U</kbd> NP</li>
+<li><kbd>CSI <i>Pn</i> V</kbd> PP</li>
+<li><kbd>CSI <i>Pn</i> X</kbd> ECH</li>
+<li><kbd>CSI <i>Pn</i> Z</kbd> CBT</li>
+<li><kbd>CSI 0 c</kbd> DA
+  <ul>
+  <li>Response: <kbd>CSI ? 1 ; 0 c</kbd> (WY 75 mode)</li>
+  <li>Response: <kbd>CSI ? 2 ; 0 c</kbd> (VT100 mode)</li>
+  <li>Response: <kbd>ESC / Z</kbd> (VT 52 mode)</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> f</kbd> HVP</li>
+<li><kbd>CSI <i>Ps</i> g</kbd> TBC
+  <p><i class="kbd">Ps</i> = 0, 3</p>
+</li>
+<li><kbd>CSI <i>Pm</i> h</kbd> SM</li>
+<li><kbd>CSI <i>Pm</i> l</kbd> RM
+  <ul>
+  <li>ANSI modes: 1,2,3,4,6,12,13,16,20</li>
+  <li>DEC modes: ?1,?2,?3,?4,?5,?6,?7,?8,?10,?18,?19,?25</li>
+  <li>30 WYDSCM    ★                        Display disable</li>
+  <li>31 WYSTLINM  ★                        Status line display</li>
+  <li>32 WYCRTSAVM ★                        Screen saver</li>
+  <li>33 WYSTCURM  ★                        Steady cursor</li>
+  <li>34 WYULCURM  ★                        Underline cursor</li>
+  <li>35 WYCLRM    ★                        Width change clear disable</li>
+  <li>40 WYSEDL    ★                        Select 25th/43rd data line</li>
+  <li>41 WYSL44    ★                        Select 42/43 data lines</li>
+  <li>42 WY60      ★                        WY 60 (from VT100 or WY 75 mode)</li>
+  <li>43 WY75      ★                        WY-75 (from VT100 mode)</li>
+  <li>44 _WYVT100  ★ (VT100<sup>Wyse</sup>) VT100 (from WY 75 mode)</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Ps</i> i</kbd> MC
+  <p><i class="kbd">Ps</i> = 0,2,4,5,?1,?3,?4,?5</p>
+</li>
+<li><kbd>CSI <i>Pm</i> m</kbd> SGR
+  <ul>
+  <li>0,1,2,5,4,7,8,22,24,25,27</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Ps</i> n</kbd> DSR
+  <ul>
+  <li>5 terminal status</li>
+  <li>6 cursor position</li>
+  <li>15 printer status</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Ps</i> p</kbd> WYFDAT★ 現在位置から連続する属性を指定した値 (flags) で置換</li>
+<li><kbd>CSI <i>Pm</i> q</kbd> DECLL</li>
+<li><kbd>CSI <i>Pn</i> ; <i>Pn</i> r</kbd> DECSTBM</li>
+<li><kbd>CSI s</kbd> WYSC★</li>
+<li><kbd>CSI <i>Ps</i> t</kbd> WYNNAT★ 属性選択</li>
+<li><kbd>CSI u</kbd> WYRC★
+  <p>SCORC/SCOSC と違って属性・文字集合も保存・復元する。</p>
+</li>
+<li><kbd>CSI &gt; <i>Cq</i> ... <i>Cq</i></kbd><sup class="violation">×</sup> WYTLOAD★</li>
+</ul>
+
+
 <h2>SGI xwsh</h2>
 <ul>
 <li><a href="https://nixdoc.net/man-pages/IRIX/man1/xwsh.1.html">xwsh - IRIX</a></li>
@@ -604,8 +723,8 @@
 <li><kbd>ESC # 7</kbd> DECHCP Output Page to Auxiliary</li>
 <li><kbd>ESC # 8</kbd> DECALN</li>
 <li><kbd>ESC # 9</kbd> _CITFSC★ Fill screen with character assortment</li>
-<li><kbd>ESC # :</kbd> _CITDHT★ Change cursor line to double height (DH) single width (SW) top half</li>
-<li><kbd>ESC # ;</kbd> _CITDHB★ Change cursor line to double height (DH) single width (SW) bottom half</li>
+<li><kbd>ESC # :</kbd> WYDHL Change cursor line to double height (DH) single width (SW) top half</li>
+<li><kbd>ESC # ;</kbd> WYDHL Change cursor line to double height (DH) single width (SW) bottom half</li>
 <li><kbd>ESC # &lt;</kbd> _CITSOLA★ Set option line attribute bit</li>
 <li><kbd>ESC # =</kbd> _CITROLA★ Clear option line attribute bit</li>
 <li><kbd>ESC # &gt;</kbd> _CITKCLK★ Perform keyclick</li>

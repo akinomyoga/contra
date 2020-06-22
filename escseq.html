@@ -509,7 +509,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th>
     <th>略号</th><th>符号化表現</th></tr>
-<tr><th class="markB">ACS</th><td><kbd>ESC SP <i>Ft</i></kbd></td>
+<tr><th class="markB">ACS<br/>WYID<sup>違反</sup></th><td><kbd>ESC SP <i>Ft</i></kbd><br/><kbd>ESC SP</kbd></td>
     <th>_CITSCAM</th><td><kbd>ESC 0</kbd></td>
     <th>(PAD)</th><td><kbd>ESC @</kbd></td>
     <th class="markB">DCS</th><td><kbd>ESC P</kbd></td>
@@ -518,7 +518,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th class="markB">CZD</th><td><kbd>ESC ! <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
     <th>DECHTS<br/>DECGON<br/>_CITSACM</th><td><kbd>ESC 1</kbd></td>
     <th>(HOP)</th><td><kbd>ESC A</kbd></td>
-    <th>PU1</th><td><kbd>ESC Q</kbd></td>
+    <th>PU1<br/>_SCOSFK</th><td><kbd>ESC Q</kbd></td>
     <th>INT</th><td><kbd>ESC a</kbd></td>
     <th>-R-</th><td><kbd>ESC q</kbd></td></tr>
 <tr><th class="markB">C1D</th><td><kbd>ESC " <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><!--"-->
@@ -540,7 +540,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>CMD</th><td><kbd>ESC d</kbd></td>
     <th>-R-</th><td><kbd>ESC t</kbd></td></tr>
 <tr><th class="markB">DOCS</th><td><kbd>ESC % <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
-    <th>DECXMIT</th><td><kbd>ESC 5</kbd></td>
+    <th>DECXMIT<br/>WYXCH</th><td><kbd>ESC 5</kbd></td>
     <th>NEL</th><td><kbd>ESC E</kbd></td>
     <th>MW</th><td><kbd>ESC U</kbd></td>
     <th>-R-</th><td><kbd>ESC e</kbd></td>
@@ -580,9 +580,9 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>---</th><td><kbd>ESC ;</kbd></td>
     <th>PLD</th><td><kbd>ESC K</kbd></td>
     <th class="markB">CSI</th><td><kbd>ESC [</kbd></td>
-    <th class="markB">SCREEN_TDS</th><td><kbd>ESC k</kbd></td>
+    <th class="markB">_SCRTDS</th><td><kbd>ESC k</kbd></td>
     <th>-R-</th><td><kbd>ESC {</kbd></td></tr>
-<tr><th>-R-</th><td><kbd>ESC ,</kbd></td>
+<tr><th>-R-<br/>WYDELAY<sup>違反</sup></th><td><kbd>ESC ,</kbd></td>
     <th>V5EX</th><td><kbd>ESC &lt;</kbd></td>
     <th>PLU</th><td><kbd>ESC L</kbd></td>
     <th>ST</th><td><kbd>ESC \</kbd></td>
@@ -617,7 +617,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <tr><th>hpMemoryUnlock</th><td><kbd>ESC m</kbd></td></tr>
   </table>
 </li>
-<li>screen は <kbd>ESC k</kbd> をバッファーのタイトルを設定する為の私用コマンド列の開始記号 (SCREEN_TDS) に使っている。</li>
+<li>screen は <kbd>ESC k</kbd> をバッファーのタイトルを設定する為の私用コマンド列の開始記号 (_SCRTDS) に使っている。</li>
 <li>「<kbd>ESC k</kbd>, <kbd>ESC l</kbd>, <kbd>ESC m</kbd> には昔は LS1R, LS2R, LS3R が与えられていた」という情報が
   2013-05-12 初版 escseqs.html からあったが、2020-03-01 現在出どころを探しても全く見つからない。
   恐らく何かの勘違いではないだろうか (或いは一部の端末の機能から勝手に憶測で書いた記述の可能性もある)。
@@ -721,13 +721,13 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>---</th><td><kbd>ESC ) 9</kbd></td>
 </tr>
 <tr><th>---</th><td><kbd>ESC SP :</kbd></td>
-    <th>_CITDHT</th> <td><kbd>ESC # :</kbd></td>
+    <th>WYDHL</th> <td><kbd>ESC # :</kbd></td>
     <th>---</th><td><kbd>ESC % :</kbd></td>
     <th>---</th><td><kbd>ESC ( :</kbd></td>
     <th>---</th><td><kbd>ESC ) :</kbd></td>
 </tr>
 <tr><th>---</th><td><kbd>ESC SP ;</kbd></td>
-    <th>_CITDHB</th> <td><kbd>ESC # ;</kbd></td>
+    <th>WYDHL</th> <td><kbd>ESC # ;</kbd></td>
     <th>---</th><td><kbd>ESC % ;</kbd></td>
     <th>---</th><td><kbd>ESC ( ;</kbd></td>
     <th>---</th><td><kbd>ESC ) ;</kbd></td>
@@ -835,7 +835,7 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>ICH</th>    <td><kbd>CSI ... @</kbd></td>
     <th>DCH</th>    <td><kbd>CSI ... P</kbd></td>
     <th>HPA</th>    <td><kbd>CSI ... `</kbd></td>
-    <th>DECSSL, SUNBOW, SKR<sup>ANSI.SYS</sup>, RLBFAT, _AIXKSI</th> <td><kbd>CSI ... p</kbd></td></tr>
+    <th>DECSSL, SUNBOW, WYFDAT, SKR<sup>ANSI.SYS</sup>, RLBFAT, _AIXKSI</th> <td><kbd>CSI ... p</kbd></td></tr>
 <tr><th>CUU</th>    <td><kbd>CSI ... A</kbd></td>
     <th>SEE</th>    <td><kbd>CSI ... Q</kbd></td>
     <th>HPR</th>    <td><kbd>CSI ... a</kbd></td>
@@ -847,15 +847,15 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>CUF</th>    <td><kbd>CSI ... C</kbd></td>
     <th>SU</th>     <td><kbd>CSI ... S</kbd></td>
     <th>DA</th>     <td><kbd>CSI ... c</kbd></td>
-    <th>DECSLRM, SCOSC, SUNRESET</th><td><kbd>CSI ... s</kbd></td></tr>
+    <th>DECSLRM, SCOSC, WYSC, SUNRESET</th><td><kbd>CSI ... s</kbd></td></tr>
 <tr><th>CUB</th>    <td><kbd>CSI ... D</kbd></td>
     <th>SD</th>     <td><kbd>CSI ... T</kbd></td>
     <th>VPA</th>    <td><kbd>CSI ... d</kbd></td>
-    <th>DECSLPP, _CITSTIME, DefineEnhanceAttribute<sup>*a,Wyse</sup></th><td><kbd>CSI ... t</kbd></td></tr>
+    <th>DECSLPP, WYNNAT, _CITSTIME</th><td><kbd>CSI ... t</kbd></td></tr>
 <tr><th>CNL</th>    <td><kbd>CSI ... E</kbd></td>
     <th>NP<br/>_SCORIS</th>     <td><kbd>CSI ... U</kbd></td>
     <th>VPR</th>    <td><kbd>CSI ... e</kbd></td>
-    <th>DECSHTS, SCORC, _CITSSR</th><td><kbd>CSI ... u</kbd></td></tr>
+    <th>DECSHTS, SCORC, WYRC, _CITSSR</th><td><kbd>CSI ... u</kbd></td></tr>
 <tr><th>CPL</th>    <td><kbd>CSI ... F</kbd></td>
     <th>PP<br/>_SCOER</th>     <td><kbd>CSI ... V</kbd></td>
     <th>HVP</th>    <td><kbd>CSI ... f</kbd></td>
@@ -1549,6 +1549,7 @@ Ft型の制御シーケンス (中間バイト <i class="kbd">I</i><strong>*</st
 <tr><th>? Delete Line Down<sup>*a</sup></th><td><kbd>CSI ? = m</kbd></td></tr>
 <tr><th>DECFSR (Response to DECRFS)<sup>*a</sup></th><td><kbd>CSI 2 " nnn ST</kbd><sup>違反</sup></td></tr><!--"-->
 <tr><th>TeleGraphix Determining RIP support<sup>*a</sup></th><td><kbd>CSI !</kbd><sup>違反</sup></td></tr><!--"-->
+<tr><th>WYTLOAD</th><td><kbd>CSI &gt; <i>Cq</i> ... <i>Cq</i></kbd><sup>違反</sup></td></tr>
 </table>
 
 <table class="normal center">
@@ -1652,7 +1653,7 @@ tmux=screen
 <tr><th>SOS</th>   <td>キャラクタ列</td> <td><kbd>SOS <i>U</i><strong>*</strong> ST</kbd></td> <td>Start of String</td></tr>
 <tr><th>PM</th>    <td>コマンド列</td>   <td><kbd>PM <i>GL'</i><strong>*</strong> ST</kbd></td> <td>Privacy Message</td></tr><!--'-->
 <tr><th>APC</th>   <td>コマンド列</td>   <td><kbd>APC <i>GL'</i><strong>*</strong> ST</kbd></td><td>Application Program Command</td></tr><!--'-->
-<tr><th>SCREEN_TDS</th><td>キャラクタ列?</td><td><kbd>ESC k <i>U</i><strong>*</strong> ST</kbd></td> <td>Title Definition String (GNU Screen)</td></tr>
+<tr><th>_SCRTDS</th><td>キャラクタ列?</td><td><kbd>ESC k <i>U</i><strong>*</strong> ST</kbd></td> <td>Title Definition String (GNU Screen)</td></tr>
 <tr><th>DECRFS</th><td>キャラクタ列?</td><td><kbd>CSI <i>Ps</i> ; " { <i>U</i><strong>*</strong> ST</kbd></td><td>Request Font Status</td></tr><!--"-->
 </table>
 
@@ -1731,7 +1732,7 @@ tmux=screen
   APC は 01/11 05/15 (<kbd>ESC _</kbd>) または 09/15 で表現される。
   </p>
 </li>
-<li><dfn class="cfunc">SCREEN_TDS</dfn>: Title Definition String
+<li><dfn class="cfunc">_SCRTDS</dfn>: Title Definition String
   <p>GNU screen でバッファのタイトルを設定するのに使われるキャラクタ列。
   ST で終端する (BEL では終端しない)。
   </p>
@@ -1861,13 +1862,13 @@ tmux=screen
 <tr><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th><th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th><th>略号</th><th>Mode</th></tr>
 <tr><th>GATM                    </th><td>1 </td><th>PUM<sup>非推奨</sup></th>     <td>11</td>  <th>GRCM</th>                <td>21</td>
-    <th>WYSTLINM<sup>違反</sup> </th><td>31</td><th>-</th><td>-</td></tr>
+    <th>WYSTLINM<sup>違反</sup> </th><td>31</td><th>WYSL44</th><td>41</td></tr>
 <tr><th>KAM                     </th><td>2 </td><th>SRM</th>                      <td>12</td>  <th>ZDM<sup>非推奨</sup></th><td>22</td>
-    <th>WYCRTSAVM<sup>違反</sup></th><td>32</td><th>WYASCII<sup>違反</sup></th><td>42</td></tr>
+    <th>WYCRTSAVM<sup>違反</sup></th><td>32</td><th>WYASCII<sup>違反</sup>, WY60</th><td>42</td></tr>
 <tr><th>CRM                     </th><td>3 </td><th>FEAM</th>                     <td>13</td>  <th>-</th><td>23</td>
-    <th>WYSTCURM<sup>違反</sup> </th><td>33</td><th>-</th><td>-</td></tr>
+    <th>WYSTCURM<sup>違反</sup> </th><td>33</td><th>WY75</th><td>43</td></tr>
 <tr><th>IRM                     </th><td>4 </td><th>FETM</th>                     <td>14</td>  <th>-</th><td>24</td>
-    <th>WYULCURM<sup>違反</sup> </th><td>34</td><th>-</th><td>-</td></tr>
+    <th>WYULCURM<sup>違反</sup> </th><td>34</td><th>_WYVT100</th><td>44</td></tr>
 <tr><th>SRTM                    </th><td>5 </td><th>MATM</th>                     <td>15</td>  <th>-</th><td>25</td>
     <th>WYCLRM<sup>違反</sup>   </th><td>35</td><th>-</th><td>-</td></tr>
 <tr><th>ERM                     </th><td>6 </td><th>TTM</th>                      <td>16</td>  <th>-</th><td>26</td>
@@ -1879,7 +1880,7 @@ tmux=screen
 <tr><th>DCSM                    </th><td>9 </td><th>EBM<sup>廃</sup></th>         <td>19</td>  <th>-</th><td>29</td>
     <th>-                       </th><td>- </td><th>-</th><td>-</td></tr>
 <tr><th>HEM                     </th><td>10</td><th>LF/NL<sup>廃</sup> (LNM)</th> <td>20</td>  <th>WYDSCM<sup>違反</sup></th><td>30</td>
-    <th>WYEXTDM<sup>違反</sup>  </th><td>40</td><th>-</th><td>-</td></tr>
+    <th>WYEXTDM<sup>違反</sup>, WYSEDL<sup>違反</sup></th><td>40</td><th>-</th><td>-</td></tr>
 </table>
 
 <h3>DEC Modes (?1-?120)</h3>
