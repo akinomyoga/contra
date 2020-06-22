@@ -516,13 +516,13 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>DMI</th><td><kbd>ESC `</kbd></td>
     <th>PCD</th><td><kbd>ESC p</kbd></td></tr>
 <tr><th class="markB">CZD</th><td><kbd>ESC ! <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
-    <th>DECHTS<br/>_CITSACM</th><td><kbd>ESC 1</kbd></td>
+    <th>DECHTS<br/>DECGON<br/>_CITSACM</th><td><kbd>ESC 1</kbd></td>
     <th>(HOP)</th><td><kbd>ESC A</kbd></td>
     <th>PU1</th><td><kbd>ESC Q</kbd></td>
     <th>INT</th><td><kbd>ESC a</kbd></td>
     <th>-R-</th><td><kbd>ESC q</kbd></td></tr>
 <tr><th class="markB">C1D</th><td><kbd>ESC " <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><!--"-->
-    <th>DECCAHT<br/>_CITEACM</th><td><kbd>ESC 2</kbd></td>
+    <th>DECCAHT<br/>DECGOFF<br/>_CITEACM</th><td><kbd>ESC 2</kbd></td>
     <th>BPH</th><td><kbd>ESC B</kbd></td>
     <th>PU2</th><td><kbd>ESC R</kbd></td>
     <th>EMI</th><td><kbd>ESC b</kbd></td>
@@ -540,7 +540,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>CMD</th><td><kbd>ESC d</kbd></td>
     <th>-R-</th><td><kbd>ESC t</kbd></td></tr>
 <tr><th class="markB">DOCS</th><td><kbd>ESC % <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
-    <th>---</th><td><kbd>ESC 5</kbd></td>
+    <th>DECXMIT</th><td><kbd>ESC 5</kbd></td>
     <th>NEL</th><td><kbd>ESC E</kbd></td>
     <th>MW</th><td><kbd>ESC U</kbd></td>
     <th>-R-</th><td><kbd>ESC e</kbd></td>
@@ -641,25 +641,129 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <p>[ECMA-35/6.5.2] ISO-IR (ISO International Register of Coded Character Sets) に後から登録される制御機能。</p>
 <p>Note: 現在 (2016-10-13) この型の制御機能は一つも登録されていない様だ。</p>
 
-<h4>3Fp型 私用制御機能</h4>
-<p>実際の端末実装で確認できる私用制御機能を以下に挙げる。</p>
+<h4>nFp型 私用領域</h4>
+<p>1Fp, 2Fp, 4Fp, 6Fp, 7Fp, 10-15Fp の使用例は現在見つかっていない。
+  というより 0Fp型は ACS の私用パラメータで、
+  というより 5Fp型は DOCS の私用パラメータで、
+  というより 8Fp, 9Fp型は GZD4, G1D4 の私用パラメータなのでは。
+</p>
+<table class="normal center">
+<tr><th colspan="2">0Fp型 私用ACS</th>
+    <th colspan="2">3Fp型 私用制御機能</th>
+    <th colspan="2">5Fp型 私用DOCS</th>
+    <th colspan="2">8Fp型 私用GZD4</th>
+    <th colspan="2">9Fp型 私用G1D4</th>
+</tr>
+<tr><th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th>
+    <th>略号</th><th>符号化表現</th>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP 0</kbd></td>
+    <th>_CITSAAM</th><td><kbd>ESC # 0</kbd></td>
+    <th>DECTCS</th><td><kbd>ESC % 0</kbd></td>
+    <th>---</th><td><kbd>ESC ( 0</kbd></td>
+    <th>---</th><td><kbd>ESC ) 0</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP 1</kbd></td>
+    <th>_CITEAM</th> <td><kbd>ESC # 1</kbd></td>
+    <th>---</th><td><kbd>ESC % 1</kbd></td>
+    <th>DDD3</th><td><kbd>ESC ( 1</kbd></td>
+    <th>DDD1</th><td><kbd>ESC ) 1</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP 2</kbd></td>
+    <th>_CITOCLA</th><td><kbd>ESC # 2</kbd></td>
+    <th>---</th><td><kbd>ESC % 2</kbd></td>
+    <th>---</th><td><kbd>ESC ( 2</kbd></td>
+    <th>---</th><td><kbd>ESC ) 2</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP 3</kbd></td>
+    <th>DECDHL</th>  <td><kbd>ESC # 3</kbd></td>
+    <th>---</th><td><kbd>ESC % 3</kbd></td>
+    <th>---</th><td><kbd>ESC ( 3</kbd></td>
+    <th>---</th><td><kbd>ESC ) 3</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP 4</kbd></td>
+    <th>DECDHL</th>  <td><kbd>ESC # 4</kbd></td>
+    <th>DECSCCS</th><td><kbd>ESC % 4</kbd></td>
+    <th>---</th><td><kbd>ESC ( 4</kbd></td>
+    <th>---</th><td><kbd>ESC ) 4</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP 5</kbd></td>
+    <th>DECSWL</th>  <td><kbd>ESC # 5</kbd></td>
+    <th>---</th><td><kbd>ESC % 5</kbd></td>
+    <th>---</th><td><kbd>ESC ( 5</kbd></td>
+    <th>---</th><td><kbd>ESC ) 5</kbd></td>
+</tr>
+<tr><th>DECTC1<br/>S7C1R</th><td><kbd>ESC SP 6</kbd></td>
+    <th>DECDWL</th>  <td><kbd>ESC # 6</kbd></td>
+    <th>---</th><td><kbd>ESC % 6</kbd></td>
+    <th>---</th><td><kbd>ESC ( 6</kbd></td>
+    <th>---</th><td><kbd>ESC ) 6</kbd></td>
+</tr>
+<tr><th>DECAC1<br/>S8C1R</th><td><kbd>ESC SP 7</kbd></td>
+    <th>DECHCP</th><td><kbd>ESC # 7</kbd></td>
+    <th>---</th><td><kbd>ESC % 7</kbd></td>
+    <th>---</th><td><kbd>ESC ( 7</kbd></td>
+    <th>---</th><td><kbd>ESC ) 7</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP 8</kbd></td>
+    <th>DECALN</th>  <td><kbd>ESC # 8</kbd></td>
+    <th>DECHPPCL</th><td><kbd>ESC % 8</kbd></td>
+    <th>---</th><td><kbd>ESC ( 8</kbd></td>
+    <th>---</th><td><kbd>ESC ) 8</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP 9</kbd></td>
+    <th>DECFPP<br/>_CITFSC</th> <td><kbd>ESC # 9</kbd></td>
+    <th>---</th><td><kbd>ESC % 9</kbd></td>
+    <th>---</th><td><kbd>ESC ( 9</kbd></td>
+    <th>---</th><td><kbd>ESC ) 9</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP :</kbd></td>
+    <th>_CITDHT</th> <td><kbd>ESC # :</kbd></td>
+    <th>---</th><td><kbd>ESC % :</kbd></td>
+    <th>---</th><td><kbd>ESC ( :</kbd></td>
+    <th>---</th><td><kbd>ESC ) :</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP ;</kbd></td>
+    <th>_CITDHB</th> <td><kbd>ESC # ;</kbd></td>
+    <th>---</th><td><kbd>ESC % ;</kbd></td>
+    <th>---</th><td><kbd>ESC ( ;</kbd></td>
+    <th>---</th><td><kbd>ESC ) ;</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP &lt;</kbd></td>
+    <th>_CITSOLA</th><td><kbd>ESC # &lt;</kbd></td>
+    <th>---</th><td><kbd>ESC % &lt;</kbd></td>
+    <th>---</th><td><kbd>ESC ( &lt;</kbd></td>
+    <th>---</th><td><kbd>ESC ) &lt;</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP =</kbd></td>
+    <th>_CITROLA</th><td><kbd>ESC # =</kbd></td>   
+    <th>---</th><td><kbd>ESC % =</kbd></td>
+    <th>---</th><td><kbd>ESC ( =</kbd></td>
+    <th>---</th><td><kbd>ESC ) =</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP &gt;</kbd></td>
+    <th>_CITKCLK</th><td><kbd>ESC # &gt;</kbd></td>
+    <th>---</th><td><kbd>ESC % &gt;</kbd></td>
+    <th>---</th><td><kbd>ESC ( &gt;</kbd></td>
+    <th>---</th><td><kbd>ESC ) &gt;</kbd></td>
+</tr>
+<tr><th>---</th><td><kbd>ESC SP ?</kbd></td>
+    <th>---</th><td><kbd>ESC # ?</kbd></td>
+    <th>---</th><td><kbd>ESC % ?</kbd></td>
+    <th>---</th><td><kbd>ESC ( ?</kbd></td>
+    <th>---</th><td><kbd>ESC ) ?</kbd></td>
+</tr>
+</table>
+
+<p>中間バイトを含む 3Fp 型の私用制御機能</p>
 <table class="normal center">
 <tr><th>略号</th>   <th>符号化表現</th></tr>
-<tr><th>_CITSAAM</th><td><kbd>ESC # 0</kbd></td></tr>
-<tr><th>_CITEAM</th> <td><kbd>ESC # 1</kbd></td></tr>
-<tr><th>_CITOCLA</th><td><kbd>ESC # 2</kbd></td></tr>
-<tr><th>DECDHL</th>  <td><kbd>ESC # 3</kbd></td></tr>
-<tr><th>DECDHL</th>  <td><kbd>ESC # 4</kbd></td></tr>
-<tr><th>DECSWL</th>  <td><kbd>ESC # 5</kbd></td></tr>
-<tr><th>DECDWL</th>  <td><kbd>ESC # 6</kbd></td></tr>
-<tr><th>Print Display Image<sup>VK100</sup></th><td><kbd>ESC # 7</kbd></td></tr>
-<tr><th>DECALN</th>  <td><kbd>ESC # 8</kbd></td></tr>
-<tr><th>_CITFSC</th> <td><kbd>ESC # 9</kbd></td></tr>
-<tr><th>_CITDHT</th> <td><kbd>ESC # :</kbd></td></tr>
-<tr><th>_CITDHB</th> <td><kbd>ESC # ;</kbd></td></tr>
-<tr><th>_CITSOLA</th><td><kbd>ESC # &lt;</kbd></td></tr>
-<tr><th>_CITROLA</th><td><kbd>ESC # =</kbd></td>   </tr>
-<tr><th>_CITKCLK</th><td><kbd>ESC # &gt;</kbd></td></tr>
+<tr><th>_X11CT0<sup>*a</sup></th><td><kbd>ESC # <i>I</i> 0</kbd></td></tr>
+<tr><th>_X11CT1<sup>*a</sup></th><td><kbd>ESC # <i>I</i> 1</kbd></td>
+</tr>
 </table>
 
 <h3>制御シーケンス (control sequence)</h3>
@@ -3550,14 +3654,8 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </table>
 
 <h3>端末適合レベル</h3>
-<table class="normal center">
-<tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>DECSCL</th><td><kbd>CSI <i>Ps1</i> ; <i>Ps2</i> " p</kbd></td></tr><!--"-->
-<tr><th>S7C1T</th><td><kbd>ESC SP F</kbd></td></tr>
-<tr><th>S8C1T</th><td><kbd>ESC SP G</kbd></td></tr>
-</table>
 <ul>
-<li><dfn class="cfunc">DECSCL</dfn>: Select Conformance Level
+<li><dfn class="cfunc">DECSCL</dfn> <kbd>CSI <i>Ps1</i> ; <i>Ps2</i> " p</kbd>: Select Conformance Level<!--"-->
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECSCL.html">VT510/DECSCL</a>]
     端末の適合レベルを指定する。
     <i class="kbd">Ps1</i> には 61-65 の値を指定する。
@@ -3568,7 +3666,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     1 を指定すると 7bit 表現になり、それ以外の時は 8bit 表現になる。
   </p>
 </li>
-<li><dfn class="cfunc">S7C1T</dfn>: Send 7bit C1 Control Character to the Host
+<li><dfn class="cfunc">S7C1T</dfn> <kbd>ESC SP F</kbd>: Send 7bit C1 Control Character to the Host
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/S7C1T.html">VT510/S7C1T</a>]
     アプリケーションに C1 制御文字を 7bit 表現で送る。
   </p>
@@ -3576,7 +3674,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <li>互換性: xterm, vt510 は少なくとも対応している。</li>
   </ul>
 </li>
-<li><dfn class="cfunc">S8C1T</dfn>: Send 8bit C1 Control Character to the Host
+<li><dfn class="cfunc">S8C1T</dfn> <kbd>ESC SP G</kbd>: Send 8bit C1 Control Character to the Host
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/S8C1T.html">VT510/S8C1T</a>]
     アプリケーションに C1 制御文字を 8bit 表現で送る。
   </p>
@@ -5307,8 +5405,10 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
 <tr><td> 3</td><td><kbd>ESC SP C</kbd></td><td>使用不可</td><td rowspan="2">(GL=G0, GR=G1 固定)</td></tr>
 <tr><td> 4</td><td><kbd>ESC SP D</kbd></td><td>SI,SO</td></tr>
 <tr><td> 5</td><td><kbd>ESC SP E</kbd></td><td colspan="2">ECMA-35/11 にある 7/8bit 変換完全対応?</td></tr>
-<tr><td> 6</td><td><kbd>ESC SP F</kbd></td><td rowspan="2">C1 を <kbd>ESC <i>Fe</i></kbd> で符号化</td><td colspan="2">S7C1T: C1 を <kbd>ESC <i>Fe</i></kbd> で符号化</td></tr>
-<tr><td> 7</td><td><kbd>ESC SP G</kbd></td><td colspan="2">S8C1T: C1 を <kbd><i>CR</i></kbd> で符号化</td></tr>
+<tr><td> 6</td><td><kbd>ESC SP F</kbd></td><td rowspan="2">C1 を <kbd>ESC <i>Fe</i></kbd> で符号化</td>
+  <td colspan="2">S7C1T: C1 を <kbd>ESC <i>Fe</i></kbd> で符号化</td></tr>
+<tr><td> 7</td><td><kbd>ESC SP G</kbd></td>
+  <td colspan="2">S8C1T: C1 を <kbd><i>CR</i></kbd> で符号化</td></tr>
 <tr><td> 8</td><td><kbd>ESC SP H</kbd></td><td colspan="2">94文字集合のみ使用可能</td></tr>
 <tr><td> 9</td><td><kbd>ESC SP I</kbd></td><td colspan="2">94/96文字集合の何れも使用可能</td></tr>
 <tr><td>10</td><td><kbd>ESC SP J</kbd></td><td colspan="2">(8bitでも)7bit符号を使用</td></tr>
