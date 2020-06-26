@@ -63,7 +63,8 @@
 この文書では特に制御の用途のシーケンスを中心に扱い、特に断りがなければこれを指す。
 </p>
 
-<p class="marked"><strong>※注意</strong>: この文書に於いて小文字から始まる略号はこの文書内だけで通じる便宜上の略号である事に注意する。
+<p class="marked"><strong>※注意</strong>:
+  この文書に於いて小文字またはアンダースコアから始まる略号はこの文書内だけで通じる便宜上の略号である事に注意する。
   各種規格で定義される制御機能及び後述のモード・モード設定の名称と略号は、
   一般の単語と区別する為に全て大文字で与えられる。
   様々な端末の持つ独自の制御機能の名称は必ずしも大文字ではないが、
@@ -73,6 +74,16 @@
   独自モード設定については名称・略号が割り当てられている事は稀である。
   この文書では名前の割り当てられていない制御機能・モードに対して独自の略号を与える。
 </p>
+<ul>
+<li>略号の右肩に <sup>*ae</sup> を付した物は all-escapes.txt より。
+  初期の VT の古い制御機能・モードや、DEC のプリンタが持つ制御機能の場合が多い。
+  詳細な出処に関しては all-escape.txt を参照の事。
+</li>
+<li>略号の右肩に <sup>*ml</sup> を付した物は、
+  XTerm の無名の制御機能に対して
+  mlterm/en/doc/ControlSequences で与えられている名称である。
+</li>
+</ul>
 
 <h3>関連する標準規格</h3>
 <p>複数ある主要な標準規格の名称と関係について簡潔に述べる。
@@ -257,25 +268,25 @@ column と row は 0-15 の十進整数であり、それぞれ上位 4 bit と�
 </tr>
 <tr>
   <th>FF</th> <td>00/12</td><td>\x0C</td><td>\014</td><td>\f</td><td>^L</td>
-  <th>FS</th> <td>01/12</td><td>\x1C</td><td>\034</td><td></td><td>^\</td>
+  <th>FS, IS4</th> <td>01/12</td><td>\x1C</td><td>\034</td><td></td><td>^\</td>
   <th>PLU</th><td>08/12</td><td>\x8C</td><td>\214</td>
   <th class="markC">ST</th><td>09/12</td><td>\x9C</td><td>\234</td>
 </tr>
 <tr>
   <th>CR</th> <td>00/13</td><td>\x0D</td><td>\015</td><td>\r</td><td>^M</td>
-  <th>GS</th> <td>01/13</td><td>\x1D</td><td>\035</td><td></td><td>^]</td>
+  <th>GS, IS3</th> <td>01/13</td><td>\x1D</td><td>\035</td><td></td><td>^]</td>
   <th>RI</th><td>08/13</td><td>\x8D</td><td>\215</td>
   <th class="markB">OSC</th><td>09/13</td><td>\x9D</td><td>\235</td>
 </tr>
 <tr>
   <th>SO<br/>LS1</th> <td>00/14</td><td>\x0E</td><td>\016</td><td></td><td>^N</td>
-  <th>RS</th> <td>01/14</td><td>\x1E</td><td>\036</td><td></td><td>^^</td>
+  <th>RS, IS2</th> <td>01/14</td><td>\x1E</td><td>\036</td><td></td><td>^^</td>
   <th>SS2</th><td>08/14</td><td>\x8E</td><td>\216</td>
   <th class="markB">PM</th><td>09/14</td><td>\x9E</td><td>\236</td>
 </tr>
 <tr>
   <th>SI<br/>LS0</th> <td>00/15</td><td>\x0F</td><td>\017</td><td></td><td>^O</td>
-  <th>US</th><td>01/15</td><td>\x1F</td><td>\037</td><td></td><td>^_</td>
+  <th>US, IS1</th><td>01/15</td><td>\x1F</td><td>\037</td><td></td><td>^_</td>
   <th>SS3</th><td>08/15</td><td>\x8F</td><td>\217</td>
   <th class="markB">APC</th><td>09/15</td><td>\x9F</td><td>\237</td>
 </tr>
@@ -576,7 +587,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>---</th><td><kbd>ESC ;</kbd></td>
     <th>PLD</th><td><kbd>ESC K</kbd></td>
     <th class="markB">CSI</th><td><kbd>ESC [</kbd></td>
-    <th class="markB">_SCRTDS</th><td><kbd>ESC k</kbd></td>
+    <th class="markB">_SCRAKA</th><td><kbd>ESC k</kbd></td>
     <th>-R-</th><td><kbd>ESC {</kbd></td></tr>
 <tr><th>-R-<br/>WYDELAY<sup>違反</sup></th><td><kbd>ESC ,</kbd></td>
     <th>V5EX</th><td><kbd>ESC &lt;</kbd></td>
@@ -613,7 +624,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <tr><th>hpMemoryUnlock</th><td><kbd>ESC m</kbd></td></tr>
   </table>
 </li>
-<li>screen は <kbd>ESC k</kbd> をバッファーのタイトルを設定する為の私用コマンド列の開始記号 (_SCRTDS) に使っている。</li>
+<li>screen は <kbd>ESC k</kbd> をバッファーのタイトルを設定する為の私用コマンド列の開始記号 (_SCRAKA) に使っている。</li>
 <li>「<kbd>ESC k</kbd>, <kbd>ESC l</kbd>, <kbd>ESC m</kbd> には昔は LS1R, LS2R, LS3R が与えられていた」という情報が
   2013-05-12 初版 escseqs.html からあったが、2020-03-01 現在出どころを探しても全く見つからない。
   恐らく何かの勘違いではないだろうか (或いは一部の端末の機能から勝手に憶測で書いた記述の可能性もある)。
@@ -757,8 +768,8 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <p>中間バイトを含む 3Fp 型の私用制御機能</p>
 <table class="normal center">
 <tr><th>略号</th>   <th>符号化表現</th></tr>
-<tr><th>_X11CT0<sup>*a</sup></th><td><kbd>ESC # <i>I</i> 0</kbd></td></tr>
-<tr><th>_X11CT1<sup>*a</sup></th><td><kbd>ESC # <i>I</i> 1</kbd></td>
+<tr><th>_X11CT0<sup>*ae</sup></th><td><kbd>ESC # <i>I</i> 0</kbd></td></tr>
+<tr><th>_X11CT1<sup>*ae</sup></th><td><kbd>ESC # <i>I</i> 1</kbd></td>
 </tr>
 </table>
 
@@ -819,7 +830,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </ul>
 
 <p>この文書ではエスケープシーケンスに倣って、制御シーケンスについても <i class="kbd">I</i><strong>*</strong> <i class="kbd">Ft</i> の部分により型を定めることにする。
-  <sup>*a</sup> を付した物は all-escapes.txt より。</p>
+</p>
 
 <p>標準の制御機能 (Ft型 <kbd>CSI ... <i>Ft</i></kbd> 及び 0Ft型 <kbd>CSI ... SP <i>Ft</i></kbd>) を表にする。</p>
 <table class="normal center contra-cell-centered">
@@ -1095,7 +1106,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th><kbd>{</kbd></th>
     <td>DECSSS</td>
     <td>---</td>
-    <td class="markB">DECRFS<sup>*a</sup></td>
+    <td class="markB">DECRFS<sup>*ae</sup></td>
     <td>XTPUSHSGR</td>
     <td>DECSERA</td>
     <td>---</td>
@@ -1299,8 +1310,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   応答では WYFKEX が <kbd>CSI &lt; <i>F</i></kbd> (<i class="kbd">F</i> = a-o, A-O) を専有している。
 </p>
 <table class="normal center contra-cell-centered">
-<caption>[<sup>+</sup> は既存の制御機能の私用パラメータとしての拡張、
-  <sup>*1</sup> は mlterm/en/doc/ControlSequences による命名 ]
+<caption>[<sup>+</sup> は既存の制御機能の私用パラメータとしての拡張 ]
 </caption>
 <tr><th>Ft</th>
     <th><kbd>&lt;</kbd></th>
@@ -1396,12 +1406,12 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>C25LCT</td> 
     <td>-</td>
-    <td>XTCOLREG<sup>*1</sup><br/>_AIXXSS</td> 
+    <td>XTCOLREG<sup>*ml</sup><br/>_AIXXSS</td> 
 </tr>
 <tr><th><kbd>T</kbd></th>
     <td>-</td>
     <td>C25MODE</td>
-    <td>XTRMTT<sup>*1</sup></td>
+    <td>XTRMTT<sup>*ml</sup></td>
     <td>_AIXXGS</td>
 </tr>
 <tr><th><kbd>W</kbd></th>
@@ -1420,7 +1430,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>DA3<sup>+</sup><br/>_SCOHSC</td>
     <td>DA2<sup>+</sup></td>
-    <td>DEC EB DS<sup>+*a</sup><br/>RequestFontConfiguration<sup>+LA100</sup><br/>RequestDPSConfiguration<sup>+*a,LA</sup></td>
+    <td>DEC EB DS<sup>+*ae</sup><br/>RequestFontConfiguration<sup>+LA100</sup><br/>RequestDPSConfiguration<sup>+*ae,LA</sup></td>
 </tr>
 <tr><th><kbd>g</kbd></th>
     <td>-</td>
@@ -1449,13 +1459,13 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th><kbd>m</kbd></th>
     <td>-</td>
     <td>_SCOSSM</td>
-    <td>XTERM_SET_MOD_FKEYS  (XTMDKEY<sup>*1</sup>)</td>
+    <td>XTERM_SET_MOD_FKEYS  (XTMDKEY<sup>*ml</sup>)</td>
     <td>-</td>
 </tr>
 <tr><th><kbd>n</kbd></th>
     <td>-</td>
     <td>-</td>
-    <td>XTERM_SET_MOD_FKEYS0 (XTMDKEYD<sup>*1</sup>)</td>
+    <td>XTERM_SET_MOD_FKEYS0 (XTMDKEYD<sup>*ml</sup>)</td>
     <td>DECDSR<sup>+</sup></td>
 </tr>
 <tr><th>Ft</th>
@@ -1467,7 +1477,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th><kbd>p</kbd></th>
     <td>-</td>
     <td>-</td>
-    <td>XTHDPT<sup>*1</sup></td>
+    <td>XTHDPT<sup>*ml</sup></td>
     <td>-</td>
 </tr>
 <tr><th><kbd>q</kbd></th>
@@ -1480,18 +1490,18 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>TTIMERS</td>
     <td>_SCORSM</td>
     <td>-</td>
-    <td>XTREST<sup>*</sup> (_AIXRM)</td>
+    <td>XTREST<sup>*ml</sup> (_AIXRM)</td>
 </tr>
 <tr><th><kbd>s</kbd></th>
     <td>TTIMESV</td>
     <td>-</td>
     <td>-</td>
-    <td>XTSAVE<sup>*</sup> (_AIXSM)</td>
+    <td>XTSAVE<sup>*ml</sup> (_AIXSM)</td>
 </tr>
 <tr><th><kbd>t</kbd></th>
     <td>TTIMEST</td>
     <td>-</td>
-    <td>XTSMTT<sup>*1</sup></td>
+    <td>XTSMTT<sup>*ml</sup></td>
     <td>-</td>
 </tr>
 <tr><th><kbd>z</kbd></th>
@@ -1547,37 +1557,48 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <p>その他の私用制御機能</p>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>BA80 Screen Saver Off<sup>*a</sup></th><td><kbd>CSI = ? I</kbd></td></tr>
-<tr><th>BA80 Screen Saver On<sup>*a</sup></th><td><kbd>CSI ? = J</kbd></td></tr>
-<tr><th>? Insert Line Up<sup>*a</sup></th><td><kbd>CSI = ? l</kbd></td></tr>
-<tr><th>? Delete Line Down<sup>*a</sup></th><td><kbd>CSI ? = m</kbd></td></tr>
-<tr><th>DECFSR (Response to DECRFS)<sup>*a</sup></th><td><kbd>CSI 2 " nnn ST</kbd><sup>違反</sup></td></tr><!--"-->
-<tr><th>TeleGraphix Determining RIP support<sup>*a</sup></th><td><kbd>CSI !</kbd><sup>違反</sup></td></tr><!--"-->
+<tr><th>BA80 Screen Saver Off<sup>*ae</sup></th><td><kbd>CSI = ? I</kbd></td></tr>
+<tr><th>BA80 Screen Saver On<sup>*ae</sup></th><td><kbd>CSI ? = J</kbd></td></tr>
+<tr><th>? Insert Line Up<sup>*ae</sup></th><td><kbd>CSI = ? l</kbd></td></tr>
+<tr><th>? Delete Line Down<sup>*ae</sup></th><td><kbd>CSI ? = m</kbd></td></tr>
+<tr><th>TeleGraphix Determining RIP support<sup>*ae</sup></th><td><kbd>CSI !</kbd><sup>違反</sup></td></tr><!--"-->
 <tr><th>WYTLOAD</th><td><kbd>CSI &gt; <i>Cq</i> ... <i>Cq</i></kbd><sup>違反</sup></td></tr>
 <tr><th>_DOSXON</th><td><kbd>CSI +</kbd><sup>違反</sup></td></tr>
 <tr><th>_DOSXOFF</th><td><kbd>CSI -</kbd><sup>違反</sup></td></tr>
 </table>
 
+<ul>
+<li>all-escapes.txt には
+  DECRFS は <kbd>CSI <i>Ps</i> ; " { String ST</kbd><!--"--> で、
+  その応答である DECFSR は <kbd>CSI 2  " nnn ST</kbd><!--"--> と書かれているが、
+  実際に LN03 を見てもその様には書かれていない。
+  LN03 では p63 には <kbd>CSI <i>Ps</i> ; <i>Ps</i> " {</kbd><!--"--> と書かれているが、
+  後ろの Appendix B では二番目の <i>Ps</i> が消滅している。
+  DECRFS に対する応答 DECFSR の記述は、p63 では <kbd>DCS <i>Ps</i> " { nnn ST</kbd><!--"--> であるが、
+  Appendix B では <kbd>DCS</kbd> が <kbd>CSI</kbd> に置き換わって、nnn が消滅している。
+  恐らくこれは LN03 の Appendix における間違いが混乱を呼んでいるのだろう。
+</li>
+</ul>
+
 <table class="normal center">
 <caption>未だまとめていないシーケンス</caption>
 <tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>XTCOLREG<sup>*1</sup></th> <td><kbd>CSI &gt; <i>Ps</i> S</kbd></td></tr>
-<tr><th>XTSMTT<sup>*1</sup></th> <td><kbd>CSI &gt; <i>Ps</i> t</kbd></td></tr>
-<tr><th>XTRMTT<sup>*1</sup></th> <td><kbd>CSI &gt; <i>Ps</i> T</kbd></td></tr>
-<tr><th>XTHDPT<sup>*1</sup></th> <td><kbd>CSI &gt; <i>Ps</i> p</kbd></td></tr>
-<tr><th>DECSED</th><td><kbd>CSI ? <i>Ps</i> J</kbd></td></tr>
-<tr><th>DECSEL</th><td><kbd>CSI ? <i>Ps</i> K</kbd></td></tr>
-<tr><th>XTREST<sup>*</sup></th> <td><kbd>CSI ? <i>Pm</i> r</kbd></td></tr>
-<tr><th>XTSAVE<sup>*</sup></th> <td><kbd>CSI ? <i>Pm</i> s</kbd></td></tr>
-<tr><th>DECMC (MC)</th>  <td><kbd>CSI ? <i>Pm</i> i</kbd></td></tr>
-<tr><th>DECDSR (DSR)</th> <td><kbd>CSI ? <i>Ps</i> n</kbd></td></tr>
-<tr><th>TTIMEST</th><td><kbd>CSI &lt; <i>Ps</i> t</kbd></td></tr>
-<tr><th>TTIMESV</th><td><kbd>CSI &lt; <i>Ps</i> s</kbd></td></tr>
-<tr><th>TTIMERS</th><td><kbd>CSI &lt; <i>Ps</i> r</kbd></td></tr>
-<tr><th>RLIMGCP</th><td><kbd>CSI &lt; <i>Ps</i> ! i</kbd></td></tr>
-<tr><th>RLCURCOL</th><td><kbd>CSI &lt; <i>Ps</i> ! q</kbd></td></tr>
+<tr><th>XTCOLREG<sup>*ml</sup></th><td><kbd>CSI &gt; <i>Ps</i> S</kbd></td></tr>
+<tr><th>XTSMTT<sup>*ml</sup></th>  <td><kbd>CSI &gt; <i>Ps</i> t</kbd></td></tr>
+<tr><th>XTRMTT<sup>*ml</sup></th>  <td><kbd>CSI &gt; <i>Ps</i> T</kbd></td></tr>
+<tr><th>XTHDPT<sup>*ml</sup></th>  <td><kbd>CSI &gt; <i>Ps</i> p</kbd></td></tr>
+<tr><th>DECSED</th>                <td><kbd>CSI ? <i>Ps</i> J</kbd></td></tr>
+<tr><th>DECSEL</th>                <td><kbd>CSI ? <i>Ps</i> K</kbd></td></tr>
+<tr><th>XTREST<sup>*ml</sup></th>  <td><kbd>CSI ? <i>Pm</i> r</kbd></td></tr>
+<tr><th>XTSAVE<sup>*ml</sup></th>  <td><kbd>CSI ? <i>Pm</i> s</kbd></td></tr>
+<tr><th>DECMC (MC)</th>            <td><kbd>CSI ? <i>Pm</i> i</kbd></td></tr>
+<tr><th>DECDSR (DSR)</th>          <td><kbd>CSI ? <i>Ps</i> n</kbd></td></tr>
+<tr><th>TTIMEST</th><td>           <kbd>CSI &lt; <i>Ps</i> t</kbd></td></tr>
+<tr><th>TTIMESV</th><td>           <kbd>CSI &lt; <i>Ps</i> s</kbd></td></tr>
+<tr><th>TTIMERS</th><td>           <kbd>CSI &lt; <i>Ps</i> r</kbd></td></tr>
+<tr><th>RLIMGCP</th><td>           <kbd>CSI &lt; <i>Ps</i> ! i</kbd></td></tr>
+<tr><th>RLCURCOL</th>              <td><kbd>CSI &lt; <i>Ps</i> ! q</kbd></td></tr>
 </table>
-
 
 <pre>
 # 各端末の対応制御機能
@@ -1659,8 +1680,7 @@ tmux=screen
 <tr><th>SOS</th>   <td>キャラクタ列</td> <td><kbd>SOS <i>U</i><strong>*</strong> ST</kbd></td> <td>Start of String</td></tr>
 <tr><th>PM</th>    <td>コマンド列</td>   <td><kbd>PM <i>GL'</i><strong>*</strong> ST</kbd></td> <td>Privacy Message</td></tr><!--'-->
 <tr><th>APC</th>   <td>コマンド列</td>   <td><kbd>APC <i>GL'</i><strong>*</strong> ST</kbd></td><td>Application Program Command</td></tr><!--'-->
-<tr><th>_SCRTDS</th><td>キャラクタ列?</td><td><kbd>ESC k <i>U</i><strong>*</strong> ST</kbd></td> <td>Title Definition String (GNU Screen)</td></tr>
-<tr><th>DECRFS</th><td>キャラクタ列?</td><td><kbd>CSI <i>Ps</i> ; " { <i>U</i><strong>*</strong> ST</kbd></td><td>Request Font Status</td></tr><!--"-->
+<tr><th>_SCRAKA</th><td>キャラクタ列?</td><td><kbd>ESC k <i>U</i><strong>*</strong> ST</kbd></td> <td>Title Definition String (GNU Screen)</td></tr>
 </table>
 
 <ul>
@@ -1738,7 +1758,7 @@ tmux=screen
   APC は 01/11 05/15 (<kbd>ESC _</kbd>) または 09/15 で表現される。
   </p>
 </li>
-<li><dfn class="cfunc">_SCRTDS</dfn>: Title Definition String
+<li><dfn class="cfunc">_SCRAKA</dfn>: Title Definition String
   <p>GNU screen でバッファのタイトルを設定するのに使われるキャラクタ列。
   ST で終端する (BEL では終端しない)。
   </p>
@@ -1910,24 +1930,24 @@ tmux=screen
     <th>-</th><td>?22</td>
     <th>-</th><td>?32</td></tr>
 <tr><th>DECCOLM</th><td>?3</td>
-    <th>DECSCFDM<sup>*</sup><br/>XTERM_CURSOR_BLINK_OPS</th><td>?13</td>
+    <th>DECSCFDM<sup>*ae</sup><br/>XTERM_CURSOR_BLINK_OPS</th><td>?13</td>
     <th>-</th><td>?23</td>
     <th>-</th><td>?33</td></tr>
 <tr><th>DECSCLM</th><td>?4</td>
-    <th>DECTEM<sup>*</sup><br/>XTERM_XOR_CURSOR_BLINKS</th><td>?14</td>
-    <th>laPrintDensity<sup>*</sup></th><td>?24</td>
+    <th>DECTEM<sup>*ae</sup><br/>XTERM_XOR_CURSOR_BLINKS</th><td>?14</td>
+    <th>laPrintDensity<sup>*ae</sup></th><td>?24</td>
     <th>DECRLM</th><td>?34</td></tr>
 <tr><th>DECSCNM</th><td>?5</td>
     <th>-</th><td>?15</td>
     <th>DECTCEM</th><td>?25</td>
     <th>DECHEBM<br/>RXVT_ShiftKeys</th><td>?35</td></tr>
 <tr><th>DECOM</th><td>?6</td>
-    <th>DECEKEM<sup>*</sup></th><td>?16</td>
+    <th>DECEKEM<sup>*ae</sup></th><td>?16</td>
     <th>-</th><td>?26</td>
     <th>DECHEM</th><td>?36</td></tr>
 <tr><th>DECAWM</th><td>?7</td>
     <th>-</th><td>?17</td>
-    <th>DECPSP<sup>*</sup></th><td>?27</td>
+    <th>DECPSP<sup>*ae</sup></th><td>?27</td>
     <th>-</th><td>?37</td></tr>
 <tr><th>DECARM</th><td>?8</td>
     <th>DECPFF</th><td>?18</td>
@@ -1935,15 +1955,14 @@ tmux=screen
     <th>DECTEK</th><td>?38</td></tr>
 <tr><th>DECINLM<br/>XTERM_X10_MOUSE</th><td>?9</td>
     <th>DECPEX</th><td>?19</td>
-    <th>DECPSM<sup>*</sup></th><td>?29</td>
+    <th>DECPSM<sup>*ae</sup></th><td>?29</td>
     <th>-</th><td>?39</td></tr>
 <tr><th>RXVT_menuBar</th><td>?10</td>
     <th>-</th><td>?20</td>
     <th>RXVT_scrollBar</th><td>?30</td>
-    <th>DECCRNLM<sup>*</sup><br/>XTERM_132COLS</th><td>?40</td></tr>
+    <th>DECCRNLM<sup>*ae</sup><br/>XTERM_132COLS</th><td>?40</td></tr>
 </table>
 <ul>
-<li>Note: <sup>*</sup> を付した物はは all-espaces.txt にあった物で初期の VT シリーズの古いモードと思われる。→どうもプリンタ関連?</li>
 <li>?38 は rlogin に記述があった。</li>
 </ul>
 
@@ -1953,31 +1972,31 @@ tmux=screen
     <th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th>
     <th>略号</th><th>Mode</th></tr>
-<tr><th>laPrintDirection<sup>*</sup><br/>XTERM_CURSES_HACK</th><td>?41</td>
-    <th>DECBWRM<sup>*</sup></th><td>?51</td>
+<tr><th>laPrintDirection<sup>*ae</sup><br/>XTERM_CURSES_HACK</th><td>?41</td>
+    <th>DECBWRM<sup>*ae</sup></th><td>?51</td>
     <th>DECVCCM</th><td>?61</td>
     <th>-</th><td>?71</td></tr>
 <tr><th>DECNRCM</th><td>?42</td>
-    <th>DECOPM<sup>*</sup></th><td>?52</td>
+    <th>DECOPM<sup>*ae</sup></th><td>?52</td>
     <th>-</th><td>?62</td>
     <th>-</th><td>?72</td></tr>
-<tr><th>DECGEPM<sup>*</sup></th><td>?43</td>
+<tr><th>DECGEPM<sup>*ae</sup></th><td>?43</td>
     <th>-</th><td>?53</td>
     <th>-</th><td>?63</td>
     <th>DECXRLMM</th><td>?73</td></tr>
-<tr><th>DECGPCM<sup>*</sup><br/>XTERM_MARGIN_BELL</th><td>?44</td>
+<tr><th>DECGPCM<sup>*ae</sup><br/>XTERM_MARGIN_BELL</th><td>?44</td>
     <th>-</th><td>?54</td>
     <th>DECPCCM</th><td>?64</td>
     <th>-</th><td>?74</td></tr>
-<tr><th>DECGPCS<sup>*</sup><br/>XTERM_REVERSEWRAP</th><td>?45</td>
-    <th>DECBPM<sup>*</sup></th><td>?55</td>
+<tr><th>DECGPCS<sup>*ae</sup><br/>XTERM_REVERSEWRAP</th><td>?45</td>
+    <th>DECBPM<sup>*ae</sup></th><td>?55</td>
     <th>-</th><td>?65</td>
     <th>-</th><td>?75</td></tr>
-<tr><th>DECGPBM<sup>*</sup><br/>XTERM_ALLOWLOGGING</th><td>?46</td>
+<tr><th>DECGPBM<sup>*ae</sup><br/>XTERM_ALLOWLOGGING</th><td>?46</td>
     <th>-</th><td>?56</td>
     <th>DECNKM</th><td>?66</td>
     <th>-</th><td>?76</td></tr>
-<tr><th>DECGRPM<sup>*</sup><br/>XTERM_ALTBUF</th><td>?47</td>
+<tr><th>DECGRPM<sup>*ae</sup><br/>XTERM_ALTBUF</th><td>?47</td>
     <th>DECNAKB</th><td>?57</td>
     <th>DECBKM</th><td>?67</td>
     <th>-</th><td>?77</td></tr>
@@ -1986,7 +2005,7 @@ tmux=screen
     <th>DECKBUM</th><td>?68</td>
     <th>-</th><td>?78</td></tr>
 <tr><th>-</th><td>?49</td>
-    <th>DECKDM<sup>*</sup></th><td>?59</td>
+    <th>DECKDM<sup>*ae</sup></th><td>?59</td>
     <th>DECLRMM (DECVSSM)</th><td>?69</td>
     <th>-</th><td>?79</td></tr>
 <tr><th>-</th><td>?50</td>
@@ -2074,7 +2093,7 @@ tmux=screen
 
 <h3>Other Private Modes</h3>
 <table class="normal center">
-<caption>表: RLogin モード (RLogin/TextRam.h より。*1 マニュアルには RLAMBCHM とある)</caption>
+<caption>表: RLogin モード (名称は RLogin/TextRam.h より。*1 マニュアルには RLAMBCHM<sup>*ml</sup> とある)</caption>
 <tr><th>略号</th><th>番号</th><th>略号</th><th>番号</th><th>略号</th><th>番号</th></tr>
 <tr><th>RLGCWA    </th><td>?8400</td><th>RLNORESZ  </th><td>?8435        </td><th>RLMODKEY  </th><td>?8450        </td></tr>
 <tr><th>RLGNDW    </th><td>?8401</td><th>RLKANAUTO </th><td>?8437        </td><th>RLDRWLINE </th><td>?8451        </td></tr>
@@ -4767,8 +4786,9 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
 <li>SGR 66-69 <dfn class="sgr">sgrIdeoDecoration2</dfn>: CJK装飾2
   <p>[JIS X 0211] CJK文字に対する装飾で 60-64 の時とは、縦書き・横書きの切り替わり方が異なる物である。</p>
   <p>Note: ECMA-48 5th edition (1991) には書かれていないが JIS X 0211 にはある。
-  恐らく、ISO/IEC 6429:1992 で導入された物だろう
-  (JIS X 0211 は ISO/IEC 6429:1992 に "IDT" [ISO/IEC GUIDE 21-1:2005(E) 4.2] と書かれている)。
+    恐らく、ISO/IEC 6429:1992 で導入された物だろう
+    (JIS X 0211 は ISO/IEC 6429:1992 に "IDT" [ISO/IEC GUIDE 21-1:2005(E) 4.2] と書かれている)。
+    更に、CCITT Recommendation T.53 (1994) にも記述されていた。T.101/3.3.3 SGR には記述されていない。
   </p>
   <table class="normal center">
   <tr><th>番号</th><th>機能</th>    <th>横書き</th>  <th>縦書き</th>  </tr>
@@ -4778,7 +4798,7 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
   <tr><td>69</td><td>右二重傍線</td><td>上二重線</td><td>右二重線</td></tr>
   </table>
   <ul>
-  <li>互換性: JIS X 0211, ISO/IEC 6429:1992</li>
+  <li>互換性: JIS X 0211, ISO/IEC 6429:1992, T.53</li>
   </ul>
 </li>
 <li>SGR 65 <dfn class="sgr">sgrIdeoDecorationOff</dfn>: CJK装飾解除

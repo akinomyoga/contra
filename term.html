@@ -41,7 +41,588 @@
   <a href="https://invisible-mirror.net/archives/shuford/terminal/">Video Terminal and Terminal-Emulator Information</a></li>
 </ul>
 
-<h2>PC-9801</h2>
+<h3>目次</h3>
+<ul>
+<li><a href="#term.T101">ITU-T Recommendation T.53, T.101</a></li>
+<li>PC98 <a href="#term.PC98">PC-9801</a></li>
+<li>DOS <a href="#term.DOS">MS-DOS ANSI.SYS</a></li>
+<li>C25 <a href="#term.C25">FreeBSD teken/cons25</a></li>
+<li>DG <a href="#term.DG">Data General (DG) D410</a></li>
+<li>WY <a href="#term.WY">Wyse WY-60</a></li>
+<li>SGI <a href="#term.SGI">SGI IRIX xwsh</a></li>
+<li>AIX <a href="#term.AIX">IBM AIX aixterm</a></li>
+<li>SUN <a href="#term.SUN">Sun SunOS wscons (7D)</a></li>
+<li>DEC <a href="#term.DEC">DEC 関連 at VT100.net</a></li>
+<li>SCO <a href="#term.SCO">SCO OpenServer 5.0.6 screen(HW)</a></li>
+<li>CIT <a href="#term.CIT">C.Itoh CIT-101</a></li>
+</ul>
+
+<h2 id="term.IR">ISO 2022 IR</h2>
+<p>ISO 2022 IR に登録されている制御文字も確認しておく。</p>
+
+<h3>登録 C0 文字集合</h3>
+<table class="normal center contra-cell-centered">
+<tr><th colspan="2">IR-1</th><th colspan="2">IR-7</th><th colspan="2">IR-106</th><th colspan="2">IR-132</th><th colspan="2">IR-134</th></tr>
+<tr><td>NUL      </td><td>TC7 (DLE) </td><td>NUL</td><td>DLE</td><td>---</td><td>---</td><td>---</td><td>---</td><td>NUL</td><td>---</td></tr>
+<tr><td>TC1 (SOH)</td><td>DC1       </td><td>SOH</td><td>DC1</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td><td>CON</td></tr>
+<tr><td>TC2 (STX)</td><td>DC2       </td><td>STX</td><td>DC2</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td><td>RPT</td></tr>
+<tr><td>TC3 (ETX)</td><td>DC3       </td><td>ETX</td><td>DC3</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+<tr><td>TC4 (EOT)</td><td>DC4       </td><td>EOT</td><td>DC4</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td><td>COF</td></tr>
+<tr><td>TC5 (ENQ)</td><td>TC8 (NAK) </td><td>ENQ</td><td>NAK</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+<tr><td>TC6 (ACK)</td><td>TC9 (SYN) </td><td>ACK</td><td>SYN</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+<tr><td>BEL      </td><td>TC10 (ETB)</td><td>BEL</td><td>ETB</td><td>---</td><td>---</td><td>BEL</td><td>---</td><td>---</td><td>---</td></tr>
+<tr><td>FE0 (BS) </td><td>CAN       </td><td>BS </td><td>KW </td><td>BS </td><td>---</td><td>APB</td><td>CAN</td><td>APB</td><td>CAN</td></tr>
+<tr><td>FE1 (HT) </td><td>EM        </td><td>FO </td><td>EM </td><td>---</td><td>SS2</td><td>APF</td><td>SS2</td><td>APF</td><td>SS2</td></tr>
+<tr><td>FE2 (LF) </td><td>SUB       </td><td>LF </td><td>SUB</td><td>LF </td><td>SUB</td><td>APD</td><td>---</td><td>APD</td><td>---</td></tr>
+<tr><td>FE3 (VT) </td><td>ESC       </td><td>ECD</td><td>ESC</td><td>---</td><td>ESC</td><td>APU</td><td>ESC</td><td>APU</td><td>ESC</td></tr>
+<tr><td>FE4 (FF) </td><td>IS4 (FS)  </td><td>SCD</td><td>SS </td><td>FF </td><td>---</td><td>CS </td><td>APS</td><td>CS </td><td>---</td></tr>
+<tr><td>FE5 (CR) </td><td>IS3 (GS)  </td><td>QL </td><td>QC </td><td>CR </td><td>SS3</td><td>APR</td><td>SS3</td><td>APR</td><td>SS3</td></tr>
+<tr><td>SO       </td><td>IS2 (RS)  </td><td>UR </td><td>QR </td><td>LS1</td><td>---</td><td>LS1</td><td>APH</td><td>LS1</td><td>APH</td></tr>
+<tr><td>SI       </td><td>IS1 (US)  </td><td>LR </td><td>JY </td><td>LS0</td><td>---</td><td>LS0</td><td>NSR</td><td>LS0</td><td>APR</td></tr>
+</table>
+
+<ul>
+<li>IR-1
+  <p>表中では 0/2 が ETX になっているが説明には STX になっている。STX が正しい。</p>
+</li>
+<li>IR-7
+  <ul>
+  <li>FO: Formatting</li>
+  <li>ECD: End of instruction</li>
+  <li>SCD: Start of instruction</li>
+  <li>QL: Quad left</li>
+  <li>UR: Upper rail</li>
+  <li>LR: Lower rail</li>
+  <li>KW: kill word</li>
+  <li>SS: Super shift</li>
+  <li>QC: Quad centre</li>
+  <li>QR: Quad right</li>
+  <li>JY: Justify</li>
+  </ul>
+</li>
+<li>IR-26
+  <p>IR-7 の DC1,DC2,DC3 を FT1,FT2,FT3 で置き換えたもの。
+    表中では FONT 1, FONT 2, FONT 3 になっているが、
+    説明では FT1 (Font 1), etc の様になっている。
+  </p>
+  <ul>
+  <li>FT1: Font 1</li>
+  <li>FT2: Font 2</li>
+  <li>FT3: Font 3</li>
+  </ul>
+</li>
+<li>IR-36
+  <p>IR-1 の IS4 を SS2 に置き換えた物。
+    IR-1 と同様の誤植がある。</p>
+  <ul>
+  <li>SS2: Single shift for G2</li>
+  </ul>
+</li>
+<li>IR-48
+  <p>IR-1 で ESC,GS,RS だけにした物。
+    これ以降は制御機能の名前は全て大文字になっている。</p>
+</li>
+<li>IR-74
+  <p>IR-1 で IS4 を CEX に置き換えた物。
+    名前が2つある物については片方を選んでいる。
+    IS3,IS2,IS1 以外は現在一般的に使われている名称(括弧の中の物)。
+  </p>
+  <ul>
+  <li>CEX: CONTROL EXTENSION
+    <p>control strings を導入する? JIS C 6225 に詳細が書かれているそうだ。</p>
+    <p>JIS C 6225 は JIS X 0207 に置き換えられた。
+      然し、結局 JIS X 0207 の本文は見つからなかった。
+      既に 1997 に廃止されている様子である。
+      代わりに以下の興味深い文書を発見した。
+      <a href="http://jegvedbedre.dk/Document%20archive/wg8/wg8n0604.pdf">wg8n0604.pdf</a>
+      CEX について言及されているが詳しい仕様については議論されていない。
+      IDCS(2)DCS 及び IDCS(3)DCS を使う方向性について述べている。
+      然し、結局 DCS の中にどのようにデータを埋め込むかについては何も述べられていない。
+      今と同じ問題について議論されている。DCS が標準化されていない事による問題点について書かれている。
+    </p>
+  </li>
+  </ul>
+</li>
+<li>IR-104
+  <p>IR-1 で ESC だけにした物。</p>
+</li>
+<li>IR-106
+  <p>SS2 の位置と名称が IR-36 の時から変わっている。</p>
+  <ul>
+  <li>SS2: SINGLE-SHIFT TWO</li>
+  <li>SS3: SINGLE-SHIFT THREE</li>
+  </ul>
+</li>
+<li>IR-130
+  <p>IR-1 から SO,SI を除いた物。
+    IR-1で名前が2つある物は現在一般的な方の名前になっている。
+  </p>
+</li>
+<li>IR-132 [<a href="#term.T101">T.101</a> 参照]</li>
+<li>IR-134 [<a href="#term.T101">T.101</a> 参照]
+  <p>IR-132 と比べると、NUL, CON, RPT, COF 追加。BEL, APS 削除。NSR は APA に置換。</p>
+</li>
+<li>IR-135 [<a href="#term.T101">T.101</a> 参照]
+  <p>IR-132 の 1/10 に SDC を追加した物。</p>
+</li>
+<li>IR-140
+  <p>IR-74 の CEX を SS2 に落ちかえた物。</p>
+</li>
+</ul>
+
+<h3>登録 C1 文字集合</h3>
+
+<table class="normal center contra-cell-centered">
+<tr><th rowspan="2">Row</th>
+    <th colspan="2">IR-40</th><th colspan="2">IR-67</th><th colspan="2">IR-77</th><th colspan="2">IR-136</th><th colspan="2">IR-133</th></tr>
+<tr><th>8/*</th><th>9/*</th>
+    <th>8/*</th><th>9/*</th>
+    <th>8/*</th><th>9/*</th>
+    <th>8/*</th><th>9/*</th>
+    <th>8/*</th><th>9/*</th></tr>
+<tr><th>*/00</th><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td><td>DCS</td><td>DEFM</td><td>PRO </td><td>BKF</td><td>COL    </td></tr>
+<tr><th>*/01</th><td>---</td><td>EAB</td><td>---</td><td>EAB</td><td>---</td><td>PU1</td><td>DEFP</td><td>EDC1</td><td>RDF</td><td>FLC    </td></tr>
+<tr><th>*/02</th><td>---</td><td>EAE</td><td>---</td><td>EAE</td><td>---</td><td>PU2</td><td>DEFT</td><td>EDC2</td><td>GRF</td><td>CDC    </td></tr>
+<tr><th>*/03</th><td>---</td><td>ISB</td><td>---</td><td>---</td><td>---</td><td>STS</td><td>DEFD</td><td>EDC3</td><td>YLF</td><td>---    </td></tr>
+<tr><th>*/04</th><td>---</td><td>ISE</td><td>---</td><td>---</td><td>IND</td><td>CCH</td><td>DEFX</td><td>EDC4</td><td>BLF</td><td>---    </td></tr>
+<tr><th>*/05</th><td>---</td><td>---</td><td>---</td><td>SIB</td><td>NEL</td><td>MW </td><td>END </td><td>WWON</td><td>MGF</td><td>P-MACRO</td></tr>
+<tr><th>*/06</th><td>---</td><td>---</td><td>---</td><td>SIE</td><td>SSA</td><td>SPA</td><td>REP </td><td>WWOF</td><td>CNF</td><td>---    </td></tr>
+<tr><th>*/07</th><td>CUS</td><td>---</td><td>CUS</td><td>SSB</td><td>ESA</td><td>EPA</td><td>REPE</td><td>SCON</td><td>WHF</td><td>---    </td></tr>
+<tr><th>*/08</th><td>NSB</td><td>---</td><td>NSB</td><td>SSE</td><td>HTS</td><td>---</td><td>REVV</td><td>SCOF</td><td>SSZ</td><td>RPC    </td></tr>
+<tr><th>*/09</th><td>NSE</td><td>INC</td><td>NSE</td><td>---</td><td>HTJ</td><td>---</td><td>NORV</td><td>USTA</td><td>MSZ</td><td>SPL    </td></tr>
+<tr><th>*/10</th><td>FIL</td><td>---</td><td>---</td><td>---</td><td>VTS</td><td>---</td><td>SMTX</td><td>USTO</td><td>NSZ</td><td>STL    </td></tr>
+<tr><th>*/11</th><td>TCI</td><td>---</td><td>---</td><td>---</td><td>PLD</td><td>CSI</td><td>METX</td><td>FLC </td><td>SZX</td><td>---    </td></tr>
+<tr><th>*/12</th><td>ICI</td><td>KWB</td><td>---</td><td>KWB</td><td>PLU</td><td>ST </td><td>NOTX</td><td>STC </td><td>---</td><td>---    </td></tr>
+<tr><th>*/13</th><td>OSC</td><td>KWE</td><td>---</td><td>KWE</td><td>RI </td><td>OSC</td><td>DBH </td><td>COF </td><td>---</td><td>---    </td></tr>
+<tr><th>*/14</th><td>SS2</td><td>PSB</td><td>---</td><td>PSB</td><td>SS2</td><td>PM </td><td>BSTA</td><td>BSTO</td><td>CON</td><td>UNP    </td></tr>
+<tr><th>*/15</th><td>SS3</td><td>PSE</td><td>---</td><td>PSE</td><td>SS3</td><td>APC</td><td>DBS </td><td>UNP </td><td>COF</td><td>PRT    </td></tr>
+</table>
+
+<ul>
+<li>IR-40
+  <ul>
+  <li>CUS: CLOSE-UP FOR SORTING</li>
+  <li>NSB: NON-SORTING CHARACTER(S) BEGINNING</li>
+  <li>NSE: NON-SORTING CHARACTER(S) END</li>
+  <li>FIL: FIL CHARACTER</li>
+  <li>TCI: TAG-IN-CONTEXT INDICATOR</li>
+  <li>ICI: INDENTIFICATION NUMBER-IN-CONTEXT INDICATOR</li>
+  <li>OSC: OPTIONAL SYLLABICATION CONTROL</li>
+  <li>SS2: SINGLE SHIFT TWO</li>
+  <li>SS3: SINGLE SHIFT THREE</li>
+  <li>EAB: EMBEDDED ANNOTATION BEGINNING</li>
+  <li>EAE: EMBEDDED ANNOTATION END</li>
+  <li>ISB: ITEM SPECIFICATION BEGINNING</li>
+  <li>ISE: ITEM SPECIFICATION END</li>
+  <li>INC: INDICATOR FOR NON-STANDARD CHARACTER</li>
+  <li>KWB: KEYWORD BEGINNING</li>
+  <li>KWE: KEYWORD END</li>
+  <li>PSB: PERMUTATION STRING BEGINNING</li>
+  <li>PSE: PERMUTATION STRING END</li>
+  </ul>
+</li>
+<li>IR-56: これは後述の T.101/C3.3.1 に等価。</li>
+<li>IR-67
+  <p>IR-40 から CUS NSB NSE EAB EAE KWB KWE PSB PSE を取って、他に以下の4つを追加した物。
+    但し、IR-40 から取った制御機能は、名称の BEGINNING, END の前にカンマが追加されている。
+    KEYWORD は KEY-WORD になっている。
+  </p>
+  <ul>
+  <li>SIB: SORTING INTERPOLATION, BEGINNING</li>
+  <li>SIE: SORTING INTERPOLATION, END</li>
+  <li>SSB: SECONDARY SORTING VALUE, BEGINNING</li>
+  <li>SSE: SECONDARY SORTING VALUE, END</li>
+  </ul>
+</li>
+<li>IR-73: これは後述の T.101/C3.3.2 に等価であるが、
+  STOP CONCEAL の略称が SCD に変わっている。
+  由来は STOP CONCEAL DISPLAY だそうだ。
+  <ul>
+  <li>SCD: STOP CONCEAL</li>
+  </ul>
+</li>
+<li>IR-77: これは標準的な C1 から PAD, HOP, BPH, NBH, SOS, SGCI, SCI を除いた物。</li>
+<li>IR-105: これは SS2 と SS3 だけの物。</li>
+<li>IR-107: これは PLD, PLU, CSI だけの物。</li>
+<li>IR-124: これは IR-67 に PLD, PLU を追加した物。</li>
+<li>IR-136: これは T.101/D.6.2 と等価であるが略称が一部異なる。
+  <p>以下は略称が変わっている物。</p>
+  <ul>
+  <li>REPE: REPEAT TO END OF LINE</li>
+  <li>WWON: WORD WRAP ON</li>
+  <li>WWOF: WORD WRAP OFF</li>
+  <li>SCON: SCROLL ON</li>
+  <li>SCOF: SCROLL OFF</li>
+  </ul>
+  <p>以下は新しく略称が与えられている物。</p>
+  <ul>
+  <li>DEFM: DEFINE MSCRO</li>
+  <li>DEFP: DEFINE P-MACRO</li>
+  <li>DEFT: DEFINE TRANSMIT-MACRO</li>
+  <li>DEFD: DEFINE DRCS</li>
+  <li>DEFX: DEFINE TEXTURE</li>
+  <li>REP:  REPEAT</li>
+  <li>REVV: REVERSE VIDEO</li>
+  <li>NORV: NORMAL VIDEO</li>
+  <li>SMTX: SMALL TEXT</li>
+  <li>METX: MEDIUM TEXT</li>
+  <li>NOTX: NORMAL TEXT</li>
+  <li>BSTA: BLINK START</li>
+  <li>PRO:  PROTECT</li>
+  <li>USTA: UNDERLINE START</li>
+  <li>USTO: UNDERLINE STOP</li>
+  <li>FLC:  FLASH CURSOR</li>
+  <li>STC:  STEADY CURSOR</li>
+  <li>BSTO: BILNK STOP</li>
+  <li>UNP:  UNPROTECT</li>
+  </ul>
+</li>
+<li>IR-133: T.101 の複数の機能を集めて並び替えた様な雰囲気。
+  実は T.101/B に等価な物が定義されていた。
+  <p>SPL と STL の説明が逆になっている気がする。
+    略称が変だし、T.101 と逆である。</p>
+  <p>以下は名称が変わっている。</p>
+  <ul>
+  <li>UNP: UNPROTECTED</li>
+  <li>PRT: PROTECTED</li>
+  <li>FLC: FLASHING CONTROL</li>
+  </ul>
+  <p>以下は他にない制御機能。</p>  
+  <ul>
+  <li>SSZ: SMALL SIZE</li>
+  <li>MSZ: MEDIUM SIZE</li>
+  <li>NSZ: NORMAL SIZE</li>
+  <li>SZX: SIZE CONTROL</li>
+  <li>COL: BACKGROUND OR FOREGROUND COLOUR</li>
+  <li>CDC: CONCEAL DISPLAY CONTROL</li>
+  <li>P-MACRO: PHOTO MACRO</li>
+  <li>RPC: REPEAT CONTROL</li>
+  </ul>
+</li>
+</ul>
+
+<h2 id="term.T101">ITU-T Recommendation T.53, T.101</h2>
+<p>これは端末ではないが、色々特有の制御機能を定義しているのでここにまとめる。</p>
+<ul>
+<li>T.53: Character coded control functions for telematic services</li>
+<li>T.53 の制御機能一覧には ECMA-48 と同じ物も沢山あるが、
+  T.101 だけで使われる符号化表現という物が定義されていて、
+  結構既存の物と衝突している。
+</li>
+<li>ISO 2022 IR に登録されている CCITT の文字集合は T.101 に載っている様だ。</li>
+</ul>
+
+<h3>T.101/C,D の制御文字</h3>
+<table class="center normal contra-cell-centered">
+<caption>[*1 T.101の表中にはBBOと書かれていたがこれは BBD の誤りであろう。]</caption>
+<tr><th rowspan="2">Row</th>
+    <th colspan="2">T.101/C3.2</th>
+    <th colspan="2">T.101/C3.3.1</th>
+    <th colspan="2">T.101/C3.3.2</th>
+    <th colspan="2">T.101/D6.1</th>
+    <th colspan="2">T.101/D6.2 C1</th>
+</tr>
+<tr><th>0/</th><th>1/</th>
+    <th>0/</th><th>1/</th>
+    <th>0/</th><th>1/</th>
+    <th>0/</th><th>1/</th>
+    <th>7/</th><th>8/</th>
+    </tr>
+<tr><th>/0</th>
+    <td>NUL</td><td>-R-</td>
+    <td>ABK</td><td>MBK</td>
+    <td>BKF</td><td>BKB</td>
+    <td>NUL</td><td>DLE</td>
+    <td>DEF MACRO</td><td>PROTECT</td>
+</tr>
+<tr><th>/1</th>
+    <td>-R-</td><td>CON</td>
+    <td>ANR</td><td>MSR</td>
+    <td>RDF</td><td>RDB</td>
+    <td>SOH</td><td>DC1</td>
+    <td>DEFP MACRO</td><td>EDC1</td>
+</tr>
+<tr><th>/2</th>
+    <td>-R-</td><td>RPT</td>
+    <td>ANG</td><td>MSG</td>
+    <td>GRF</td><td>GRB</td>
+    <td>STX</td><td>DC2</td>
+    <td>DEFT MACRO</td><td>EDC2</td>
+</tr>
+<tr><th>/3</th>
+    <td>-R-</td><td>-R-</td>
+    <td>ANY</td><td>MSY</td>
+    <td>YLF</td><td>YLB</td>
+    <td>ETX</td><td>DC3</td>
+    <td>DEF DRCS</td><td>EDC3</td>
+</tr>
+<tr><th>/4</th>
+    <td>-R-</td><td>COF</td>
+    <td>ANB</td><td>MSB</td>
+    <td>BLF</td><td>BLB</td>
+    <td>EOT</td><td>DC4</td>
+    <td>DEF TEXTURE</td><td>EDC4</td>
+</tr>
+<tr><th>/5</th>
+    <td>-R-</td><td>-R-</td>
+    <td>ANM</td><td>MSN</td>
+    <td>MGF</td><td>MGB</td>
+    <td>ENQ</td><td>NAK</td>
+    <td>END</td><td>WWN</td>
+</tr>
+<tr><th>/6</th>
+    <td>-R-</td><td>-R-</td>
+    <td>ANC</td><td>MSC</td>
+    <td>CNF</td><td>CNB</td>
+    <td>ACK</td><td>SYN</td>
+    <td>REPEAT</td><td>WWF</td>
+</tr>
+<tr><th>/7</th>
+    <td>-R-</td><td>-R-</td>
+    <td>ANW</td><td>MSW</td>
+    <td>WHF</td><td>WHB</td>
+    <td>BEL</td><td>ETB</td>
+    <td>ROL</td><td>SCN</td>
+</tr>
+<tr><th>/8</th>
+    <td>APB</td><td>CAN</td>
+    <td>FSH</td><td>CDY</td>
+    <td>FSH</td><td>CDY</td>
+    <td>APB</td><td>CAN</td>
+    <td>REVERSE VIDEO</td><td>SCF</td>
+</tr>
+<tr><th>/9</th>
+    <td>APF</td><td>SS2</td>
+    <td>STD</td><td>SPL</td>
+    <td>STD</td><td>SPL</td>
+    <td>APF</td><td>SS2</td>
+    <td>NORMAL VIDEO</td><td>UNDERLINE START</td>
+</tr>
+<tr><th>/10</th>
+    <td>APD</td><td>-R-</td>
+    <td>EBX</td><td>STL</td>
+    <td>EBX</td><td>STL</td>
+    <td>APD</td><td>SDC</td>
+    <td>SMALL TEXT</td><td>UNDERLINE STOP</td>
+</tr>
+<tr><th>/11</th>
+    <td>APU</td><td>ESC</td>
+    <td>SBX</td><td>CSI</td>
+    <td>SBX</td><td>CSI</td>
+    <td>APU</td><td>ESC</td>
+    <td>MEDIUM TEXT</td><td>FLASH CURSOR</td>
+</tr>
+<tr><th>/12</th>
+    <td>CS </td><td>-R-</td>
+    <td>NSZ</td><td>BBD<sup>*1</sup></td>
+    <td>NSZ</td><td>NPO</td>
+    <td>CS </td><td>APS</td>
+    <td>NORMAL TEXT</td><td>STEADY CURSOR</td>
+</tr>
+<tr><th>/13</th>
+    <td>APR</td><td>SS3</td>
+    <td>DBH</td><td>NBD</td>
+    <td>DBH</td><td>IPO</td>
+    <td>APR</td><td>SS3</td>
+    <td>DBH</td><td>CURSOR OFF</td>
+</tr>
+<tr><th>/14</th>
+    <td>SO </td><td>APH</td>
+    <td>DBW</td><td>HMS</td>
+    <td>DBW</td><td>TRB</td>
+    <td>SO </td><td>APH</td>
+    <td>BLINK START</td><td>BLINK STOP</td>
+</tr>
+<tr><th>/15</th>
+    <td>SI </td><td>APA</td>
+    <td>DBS</td><td>RMS</td>
+    <td>DBS</td><td>STC</td>
+    <td>SI </td><td>NSR</td>
+    <td>DBS</td><td>UNPROTECT</td>
+</tr>
+</table>
+
+<ul>
+<li>[T.101/C3.2] The Primary control function set
+  <ul>
+  <li>NUL SO SI CAN ESC は同じ</li>
+  <li>APB <kbd>BS</kbd>: ACTIVE POSITION BACKWARD</li>
+  <li>APF <kbd>HT</kbd><sup class="violation">×</sup>: ACTIVE POSITION FORWARD</li>
+  <li>APD <kbd>LF</kbd>: ACTIVE POSITION DOWN</li>
+  <li>APU <kbd>VT</kbd><sup class="violation">×</sup>: ACTIVE POSITION UP</li>
+  <li>CS <kbd>FF</kbd>: CLEAR SCREEN</li>
+  <li>APR <kbd>CR</kbd>: ACTIVE POSITION RETURN</li>
+  <li>CON <kbd>DC1</kbd>: CURSOR ON</li>
+  <li>RPT<kbd>DC2</kbd>: REPEAT<sup class="violation">×</sup> [T.101 DS II/III]
+    <p>直前の文字をパラメータ (?) で指定された回数だけ繰り返す。</p>
+  </li>
+  <li>COF <kbd>DC4</kbd>: CURSOR OFF</li>
+  <li>SS2<kbd>EM</kbd><sup class="violation">×</sup>: 機能は同じだが符号化表現が ECMA-48 と異なる</li>
+  <li>SS3<kbd>GS</kbd><sup class="violation">×</sup>: 機能は同じだが符号化表現が ECMA-48 と異なる</li>
+  <li>APH <kbd>RS</kbd><sup class="violation">×</sup>: ACTIVE POSITION HOME</li>
+  <li>APA <kbd>US <i>Ft</i> <i>Ft</i></kbd><sup class="violation">×</sup>: ACTIVE POSITION ADDRESSING [T.101用]
+    <p>続くパラメータ(???)で指定される位置に移動する format effector。</p>
+    <p>[T.101/C.3.2.1] 続く2バイトでパラメータを指定する。列4-7を用いる。</p>
+  </li>
+  <li>これらは T.53 にも載っているが、CS には T.101 専用と書かれていなかった。</li>
+  </ul>
+</li>
+<li>[T.101/C.3.3.1] The serial supplementary control function set
+  <p><kbd>ESC " @</kbd> で切り替える。</p>
+  <ul>
+  <li>ABK: ALPHA BLACK</li>
+  <li>ABR: ALPHA RED</li>
+  <li>ABG: ALPHA GREEN</li>
+  <li>ABY: ALPHA YELLOW</li>
+  <li>ABB: ALPHA BLUE</li>
+  <li>ABM: ALPHA MAGENTA</li>
+  <li>ABC: ALPHA CYAN</li>
+  <li>ABW: ALPHA WHITE</li>
+  <li>FSH: FLASH</li>
+  <li>STD: STEADY</li>
+  <li>EBX: END BOX</li>
+  <li>SBX: START BOX</li>
+  <li>NSZ: NORMAL-SIZE</li>
+  <li>DBH: DOUBLE-HEIGHT</li>
+  <li>DBW: DOUBLE-WIDTH</li>
+  <li>DBS: DOUBLE-SIZE</li>
+  <li>MBK: MOSAIC BLACK</li>
+  <li>MBR: MOSAIC RED</li>
+  <li>MBG: MOSAIC GREEN</li>
+  <li>MBY: MOSAIC YELLOW</li>
+  <li>MBB: MOSAIC BLUE</li>
+  <li>MBM: MOSAIC MAGENTA</li>
+  <li>MBC: MOSAIC CYAN</li>
+  <li>MBW: MOSAIC WHITE</li>
+  <li>CDY: CONCEAL DISPLAY</li>
+  <li>STL: START LINING</li>
+  <li>SPL: STOP LINING</li>
+  <li>BBD: BLACK BACKGROUND</li>
+  <li>NBD: NEW BACKGROUND</li>
+  <li>HMS: HOLD MOSAIC</li>
+  <li>RMS: RELEASE MOSAIC</li>
+  </ul>
+</li>
+<li>[T.101/C.3.3.2] The parallel supplementary control function set
+  <p><kbd>ESC " A</kbd> で切り替える。</p>
+  <ul>
+  <li>BKF: BLACK FOREGROUND</li>
+  <li>RDF: RED FOREGROUND</li>
+  <li>GRF: GREEN FOREGROUND</li>
+  <li>YLF: YELLOW FOREGROUND</li>
+  <li>BLF: BLUE FOREGROUND</li>
+  <li>MGF: MAGENTA FOREGROUND</li>
+  <li>CNF: CYAN FOREGROUND</li>
+  <li>WHF: WHITE FOREGROUND</li>
+  <li>BKB: BLACK BACKGROUND</li>
+  <li>RDB: RED BACKGROUND</li>
+  <li>GRB: GREEN BACKGROUND</li>
+  <li>YLB: YELLOW BACKGROUND</li>
+  <li>BLB: BLUE BACKGROUND</li>
+  <li>MGB: MAGENTA BACKGROUND</li>
+  <li>CNB: CYAN BACKGROUND</li>
+  <li>WHB: WHITE BACKGROUND</li>
+  <li>NPO: NORMAL POLARITY</li>
+  <li>IPO: INVERTED POLARITY</li>
+  <li>TRB: TRANSPARENT BACKGROUND</li>
+  <li>STC: STOP CONCEAL</li>
+  </ul>
+</li>
+<li>[T.101/D6.1.1] C0
+  <ul>
+  <li>SDC<kbd>SUB</kbd><sup class="violation">×</sup>: SERVICE DELIMITER CHARACTER</li>
+  <li>APS <kbd>FS <i>G</i> <i>G</i></kbd><sup class="violation">×</sup>: ACTIVE POSITION SET
+    <p>T.53 には列2-7または10-15で、32を引き算すると書かれている。
+      然し、T.101/表B.3-1には列4-7の下6bitを使うと書かれている (64を引き算するのに等価)。
+      T.101/D.6.1.2.4 には T.53 と同様に書かれている。
+    </p>
+  </li>
+  <li>NSR<kbd>US <i>G</i> <i>G</i></kbd><sup class="violation">×</sup>: NON-SELECTIVE RESET
+  </li>
+  <li>これらは T.53 に載っているが、NSR については T.101 専用と書かれていなかった。</li>
+  </ul>
+</li>
+<li>[T.101/D6.2] C1
+  <ul>
+  <li>EDC1<kbd>PU1</kbd>: EXTENDED DEVICE CONTROL ONE</li>
+  <li>EDC2<kbd>PU2</kbd>: EXTENDED DEVICE CONTROL TWO</li>
+  <li>EDC3<kbd>STS</kbd><sup class="violation">×</sup>: EXTENDED DEVICE CONTROL THREE</li>
+  <li>EDC4<kbd>CCH</kbd><sup class="violation">×</sup>: EXTENDED DEVICE CONTROL FOUR</li>
+  <li>ROL<kbd>ESA</kbd><sup class="violation">×</sup>: REPEAT TO END OF LINE</li>
+  <li>WWF<kbd>SPA</kbd><sup class="violation">×</sup>: WORD WRAP OFF</li>
+  <li>WWN<kbd>MW</kbd><sup class="violation">×</sup>: WORD WRAP ON</li>
+  <li>SCN<kbd>EPA</kbd><sup class="violation">×</sup>: SCROLL ON</li>
+  <li>SCF<kbd>SOS</kbd><sup class="violation">×</sup>: SCROLL OFF</li>
+  <li>これらは T.53 にも載っているが WWF と WWN については T.53 には T.101 専用とは書かれていなかった。</li>
+  </ul>
+</li>
+<li><kbd>DEL</kbd>
+  <p>他に、何故か DEL が T.53 に "T.101 専用" と書かれていた。</p>
+</li>
+</ul>
+
+<h3>T.101 の制御シーケンス</h3>
+
+<ul>
+<li>[T.101/C.3.5] Supplementary attribute and qualified area controls
+  <ul>
+  <li>STC<kbd>CSI B</kbd><sup class="violation">×</sup>: STOP CONCEAL</li>
+  <li>MMS<kbd>CSI <i>Ps</i> S</kbd><sup class="violation">×</sup>: MARKED MODE START</li>
+  <li>MMT<kbd>CSI <i>Ps</i> T</kbd><sup class="violation">×</sup>: MARKED MODE STOP</li>
+  <li>PMS<kbd>CSI <i>Ps</i> P</kbd><sup class="violation">×</sup>: PROTECTED MODE START</li>
+  <li>PMC<kbd>CSI <i>Ps</i> Q</kbd><sup class="violation">×</sup>: PROTECTED MODE CANCEL</li>
+  <li>PMI<kbd>CSI <i>Ps</i> R</kbd><sup class="violation">×</sup>: PROTECTED MODE IDLE</li>
+  <li>CSA<kbd>CSI <i>Ps</i> U</kbd><sup class="violation">×</sup>: CREATE SCROLLING AREA</li>
+  <li>DSA<kbd>CSI <i>Ps</i> V</kbd><sup class="violation">×</sup>: DELETE SCROLLING AREA</li>
+  <li>CT1<kbd>CSI 0 @</kbd><sup class="violation">×</sup>: COLOUR TABLE 1</li>
+  <li>CT2<kbd>CSI 1 @</kbd><sup class="violation">×</sup>: COLOUR TABLE 2</li>
+  <li>CT3<kbd>CSI 2 @</kbd><sup class="violation">×</sup>: COLOUR TABLE 3</li>
+  <li>CT4<kbd>CSI 3 @</kbd><sup class="violation">×</sup>: COLOUR TABLE 4</li>
+  <li>IVF<kbd>CSI 0 A</kbd><sup class="violation">×</sup>: INVERTED FLASH</li>
+  <li>RIF<kbd>CSI 1 A</kbd><sup class="violation">×</sup>: REDUCED INTENSITY FLASH</li>
+  <li>FF1<kbd>CSI 2 A</kbd><sup class="violation">×</sup>: FAST FLASH 1</li>
+  <li>FF2<kbd>CSI 3 A</kbd><sup class="violation">×</sup>: FAST FLASH 2</li>
+  <li>FF3<kbd>CSI 4 A</kbd><sup class="violation">×</sup>: FAST FLASH 3</li>
+  <li>ICF<kbd>CSI 5 A</kbd><sup class="violation">×</sup>: INCREMENT FLASH</li>
+  <li>DCF<kbd>CSI 6 A</kbd><sup class="violation">×</sup>: DECREMENT FLASH</li>
+  </ul>
+</li>
+<li>[T.101/C.3.6.2] Supplementary device controls
+  <ul>
+  <li>RDW<kbd>ESC 5</kbd>: RECORDING DEVICE WAIT</li>
+  <li>RDS<kbd>ESC 6</kbd>: RECORDING DEVICE START</li>
+  <li>RDT<kbd>ESC 7</kbd>: RECORDING DEVICE STOP</li>
+  <li>HCW<kbd>ESC 8</kbd>: HARD COPY WAIT</li>
+  <li>HCS<kbd>ESC 9</kbd>: HARD COPY START</li>
+  <li>HCT<kbd>ESC :</kbd>: HARD COPY STOP</li>
+  <li>DDO <kbd>ESC &lt;</kbd>: DISPLAY DEVICE ON</li>
+  <li>DDF <kbd>ESC =</kbd>: DISPLAY DEVICE OFF</li>
+  <li>ADO <kbd>ESC &gt;</kbd>: AUXILIARY DEVICE ON</li>
+  <li>ADF <kbd>ESC ?</kbd>: AUXILIARY DEVICE OFF</li>
+  <li>SCU<kbd>CSI 0 `</kbd><sup class="violation">×</sup>: SCROLL UP<sup class="violation">×</sup></li>
+  <li>SCD<kbd>CSI 1 `</kbd><sup class="violation">×</sup>: SCROLL DOWN<sup class="violation">×</sup></li>
+  <li>AIS <kbd>CSI 2 `</kbd><sup class="violation">×</sup>: ACTIVATE IMPLICIT SCROLLING</li>
+  <li>DIS <kbd>CSI 3 `</kbd><sup class="violation">×</sup>: DEACTIVATE IMPLICIT SCROLLING
+    <p>T.53 では <kbd>CSI 0 `</kbd> になっているがこれは SCN と同じである。
+      T.101 を確認したら <kbd>CSI 3 `</kbd> になっていた。
+    </p>
+  </li>
+  <li>APA 前述</li>
+  <li>EBU <kbd>ESC ;</kbd>: EMPTY BUFFER</li>
+  <li>これらは T.53 にも載っていた。</li>
+  </ul>
+</li>
+<li>その他の T.53 に載っていた T.101 用の制御機能
+  <ul>
+  <li>RPC<kbd>SOS <i>Gns</i>* <i>G</i> <i>Fs</i></kbd><sup class="violation">×</sup>: REPEAT CONTROL [T.101 DS I]
+    <p><i class="kbd">Gns</i> は non-space character</p>
+  </li>
+  </ul>
+</li>
+</ul>
+
+
+<h2 id="term.PC98">PC-9801</h2>
 <p>これも本来の文書が見つからない。
   [1] は "主要なもの" を挙げると書いているが、[2] では全く同じ表を提示している。
   と思ったが [3] がより完全な物だろう。
@@ -106,7 +687,7 @@
 <li><kbd>CSI u</kbd> SCORC</li>
 </ul>
 
-<h2>MS-DOS ANSI.SYS</h2>
+<h2 id="term.DOS">MS-DOS ANSI.SYS</h2>
 <p>公式の文書が恐らく見つからないので様々のページを見て推測するしかない。</p>
 <ul>
 <li>[1] <a href="https://www.computerhope.com/ansisys.htm">MS-DOS and Windows command line ansi.sys command</a>
@@ -216,7 +797,7 @@
 </li>
 </ul>
 
-<h2>FreeBSD teken/cons25</h2>
+<h2 id="term.C25">FreeBSD teken/cons25</h2>
 <p>RLogin の C25LCT はソースコードを見ると cons25 由来らしい。
   調べてみるとこれは FreeBSD の前の kernel console だったらしい
   (更にその前は wscons だったらしい様な雰囲気である) [1]。
@@ -246,7 +827,7 @@
 </li>
 </ul>
 
-<h2>Data General (DG) D410</h2>
+<h2 id="term.DG">Data General (DG) D410</h2>
 <ul>
 <li>d410-um.pdf
   <ul>
@@ -307,7 +888,7 @@
 <li><kbd>DCS D ... ST</kbd> DGSW★ (SET WINDOWS)</li>
 </ul>
 
-<h2>Wyse WY-60</h2>
+<h2 id="term.WY">Wyse WY-60</h2>
 <ul>
 <li>880261-01A_WY-60_Programmers_Guide_Jan87.pdf</li>
 </ul>
@@ -486,7 +1067,7 @@
 <li><kbd>DCS <i>Pm</i> | ... ST</kbd> DECUKD</li>
 </ul>
 
-<h2>SGI IRIX xwsh</h2>
+<h2 id="term.SGI">SGI IRIX xwsh</h2>
 <ul>
 <li><a href="https://nixdoc.net/man-pages/IRIX/man1/xwsh.1.html">xwsh - IRIX</a></li>
 </ul>
@@ -616,7 +1197,7 @@
 <li><kbd>OSC <i>Pn</i> ; <i>Ps</i> BEL</kbd> Xterm Set Title</li>
 </ul>
 
-<h2>IBM AIX aixterm</h2>
+<h2 id="term.AIX">IBM AIX aixterm</h2>
 <ul>
 <li>AIX 4.3 <a href="http://ps-2.kev009.com/tl/techlib/manuals/adoclib/cmds/aixcmds1/aixterm.htm">aixterm Command</a></li>
 <li>AIX 7.2 (ja) <a href="https://www.ibm.com/support/knowledgecenter/ja/ssw_aix_72/a_commands/aixterm.html">aixterm コマンド</a></li>
@@ -770,7 +1351,7 @@
 <li><kbd>CSI ? S</kbd> _AIXXSS★ (XSS<sup>AIX</sup>) Show Status Line</li>
 <li><kbd>CSI ? <i>Ps</i> T</kbd> _AIXXGS★ (XGS<sup>AIX</sup>) Go To Column Of Status Line</li>
 <li><kbd>CSI ? <i>Ps</i>;...;<i>Ps</i> r</kbd> _AIXRM★ Restore Private Mode</li>
-<li><kbd>CSI ? <i>Ps</i>;...;<i>Ps</i> s</kbd> _AIXSM★ Save Priavte Mode</li>
+<li><kbd>CSI ? <i>Ps</i>;...;<i>Ps</i> s</kbd> _AIXSM★ Save Private Mode</li>
 <li><kbd>OSC <i>Ps</i> ; <i>Pt</i> BEL</kbd> _AIXXST★ (XST<sup>AIX</sup>) Set Text Parameters
   <ul>
   <li>0 ウィンドウ名とタイトルを <i class="kbd">Pt</i> に変更</li>
@@ -781,7 +1362,7 @@
 </li>
 </ul>
 
-<h2>Sun SunOS wscons (7D)</h2>
+<h2 id="term.SUN">Sun SunOS wscons (7D)</h2>
 <ul>
 <li>SumOS 5.8 <a href="https://docs.oracle.com/cd/E19109-01/tsolaris8/816-1060/6m7glrk90/index.html">wscons(7D)</a></li>
 <li>Solaris 11.2 <a href="https://docs.oracle.com/cd/E36784_01/html/E36884/wscons-7d.html">wscons - man pages section 7: Device and Network Interfaces</a></li>
@@ -816,7 +1397,7 @@
 <li><kbd>CSI s</kbd> SUNRESET★ (Reset terminal emulator) 画面とカーソル位置をその儘にしてそれ以外のモード等を全て初期化する。</li>
 </ul>
 
-<h2>DEC 関連 at VT100.net</h2>
+<h2 id="term.DEC">DEC 関連 at VT100.net</h2>
 <p>実は DEC の制御シーケンスはここにまとまっている。
   またどのマニュアルに載っているかという情報も一緒にある。
   然し、必ずしもその制御機能が載っているマニュアルが全て列挙されている訳ではない様だ。
@@ -912,7 +1493,7 @@
 <ul>
 <li>Mode 20 LNM</li>
 <li>Mode ?7 DECAWM</li>
-<li>Mode ?29 DECPSM<sup>*a</sup> Pitch Select</li>
+<li>Mode ?29 DECPSM<sup>*ae</sup> Pitch Select</li>
 </ul>
 
 <p>DCS シーケンス</p>
@@ -931,7 +1512,7 @@
 <li><kbd>DCS <i>Pn</i> v ... ST</kbd> DECLANS Answerback Message</li>
 </ul>
 
-<h2>SCO OpenServer 5.0.6 screen(HW)</h2>
+<h2 id="term.SCO">SCO OpenServer 5.0.6 screen(HW)</h2>
 
 <ul>
 <li>all-escapes.html</li>
@@ -1036,7 +1617,7 @@
 </ul>
 
 
-<h2>C.Itoh CIT-101</h2>
+<h2 id="term.CIT">C.Itoh CIT-101</h2>
 <p>伊藤忠商事の作っていた端末。</p>
 <ul>
 <li>典拠: C.Itoh CIT-101 [PDF] <a href="https://www.vt100.net/manx/details/8,5491">cit101-um.pdf</a></li>
@@ -1128,7 +1709,7 @@
 </li>
 <li><kbd>CSI <i>Ps</i> q</kbd> DECLL</li>
 <li><kbd>CSI <i>Pn</i> ; <i>Pn</i> r</kbd> DECSTBM</li>
-<li><kbd>CSI <i>HH</i> ; <i>MM</i> ; <i>SS</i> t</kbd>, <kbd>CSI t</kbd>> _CITSTIME
+<li><kbd>CSI <i>HH</i> ; <i>MM</i> ; <i>SS</i> t</kbd>, <kbd>CSI t</kbd> _CITSTIME
   Set time of day clock to hours, minutes, and seconds; Disable time of day clock
 </li>
 <li><kbd>CSI <i>Pn</i> u</kbd> _CITSSR★
