@@ -43,6 +43,9 @@
 
 <h3>目次</h3>
 <ul>
+<li>ZDS <a href="#term.ZDS">Heath/Zenith Z-19-CN</a></li>
+<li>BA80 <a href="#term.BA80">Nixdorf BA80</a></li>
+<li>Kermit <a href="#term.Kermit">Kermit</a></li>
 <li><a href="#term.T101">ITU-T Recommendation T.53, T.101</a></li>
 <li>PC98 <a href="#term.PC98">PC-9801</a></li>
 <li>DOS <a href="#term.DOS">MS-DOS ANSI.SYS</a></li>
@@ -55,6 +58,82 @@
 <li>DEC <a href="#term.DEC">DEC 関連 at VT100.net</a></li>
 <li>SCO <a href="#term.SCO">SCO OpenServer 5.0.6 screen(HW)</a></li>
 <li>CIT <a href="#term.CIT">C.Itoh CIT-101</a></li>
+</ul>
+
+<h2 id="term.ZDS">Heath/Zenith Z-19-CN</h2>
+<ul>
+<li>ZDS = Zenith Data Systems</li>
+<li><a href="https://vt100.net/manx/details/12,5612">Video Terminal Model Z-19-CN Operation – Manx</a></li>
+</ul>
+
+<p>ANSI Escape Sequences</p>
+<ul>
+<li><kbd>CSI p</kbd> _ZDSPXMT★ (PXMT<sup>ZDS</sup>) Transmit Page</li>
+<li><kbd>CSI q</kbd> _ZDSPX25★ (PX25<sup>ZDS</sup>) Transmit 25th Line</li>
+<li><kbd>CSI <i>Pn</i> r</kbd> _ZDSPMBR★ (PMBR<sup>ZDS</sup>) Modify Baud Rate</li>
+<li><kbd>CSI s</kbd> SCOSC (PSCP<sup>ZDS</sup>) Save Cursor Position</li>
+<li><kbd>CSI u</kbd> SCORC (PRCP<sup>ZDS</sup>) Set Cursor Position</li>
+<li><kbd>CSI z</kbd> _ZDSPRAM★ (PRAM<sup>ZDS</sup>) Reset to Power-Up Configuration</li>
+<li>SM/RM _ZDSSM/_ZDSRM
+  <ul>
+  <li>2,4,20 は標準</li>
+  <li>Mode &gt;1 _ZDSL25★ (L25<sup>ZDS</sup>)</li>
+  <li>Mode &gt;2 _ZDSKCL★ (KCL<sup>ZDS</sup>)</li>
+  <li>Mode &gt;3 _ZDSHSM★ (HSM<sup>ZDS</sup>)</li>
+  <li>Mode &gt;4 _ZDSCBL★ (CBL<sup>ZDS</sup>)</li>
+  <li>Mode &gt;5 _ZDSCDE★ (CDE<sup>ZDS</sup>)</li>
+  <li>Mode &gt;6 _ZDSKSH★ (KSH<sup>ZDS</sup>)</li>
+  <li>Mode &gt;7 _ZDSKAM★ (KAM<sup>ZDS</sup>)</li>
+  <li>Mode &gt;8 _ZDSALF★ (ALF<sup>ZDS</sup>)</li>
+  <li>Mode &gt;9 _ZDSACR★ (ACR<sup>ZDS</sup>)</li>
+  <li>Mode ?2 _ZDSZMD★ (ZMD<sup>ZDS</sup>), 特に <kbd>RM(?2)</kbd> を PEZM としている。</li>
+  <li>Mode ?7 DECAWM (WAR<sup>ZDS</sup>)</li>
+  </ul>
+</li>
+<li>SGR
+  <ul>
+  <li>0,7</li>
+  <li>10,11 は Normal/Graphics モードの切替に使っている。</li>
+  </ul>
+</li>
+</ul>
+
+<h2>InterSoft NetTerm</h2>
+<p>ずっとメンテナンスが続けられている様だ。凄い。
+  でも一方でマニュアルにはどのシーケンスに対応しているかの情報がない。
+</p>
+<ul>
+<li><a href="https://web.archive.org/web/20050305113642/http://www.securenetterm.com/html/downloads.html">Downloads - InterSoft International, Inc.</a></li>
+<li><a href="http://www.securenetterm.com/html/downloads.html">Downloads - InterSoft International, Inc.</a></li>
+</ul>
+
+<p>非標準のエスケープシーケンスが幾つか定義されている。</p>
+<ul>
+<li><kbd>CSI ] ... CSI <i>Ps</i> *</kbd><sup class="violation">×</sup></li>
+</ul>
+
+<h2 id="term.Kermit">Kermit</h2>
+<p>Kermit は元々コロンビア大学で開発されていたターミナルエミュレータ。
+  Unix 向けに C-Kermit が、Windows 向けに Kermit 95 があった。
+  2011年に開発が停止されてソースコードが公開された。
+  GitHub に一応誰かがメンテナンスを少しした物がある [2]。
+  Kermit 95 のページにサポートしている端末エミュレーションの一覧がある [3]。
+</p>
+<ul>
+<li>[1] <a href="http://www.kermitproject.org/k95sourcecode.html">New Kermit 95 Source Code</a></li>
+<li>[2] <a href="https://github.com/davidrg/ckwin">davidrg/ckwin: C-Kermit for Windows</a></li>
+<li>[3] <a href="http://www.columbia.edu/kermit/k95manual/termtype.html">Kermit 95 - Terminal Types</a></li>
+</ul>
+
+<h2 id="term.BA80">Nixdorf BA80</h2>
+<ul>
+<li>all-escapes.txt に BA80 のシーケンスとして、二重にパラメータバイトを持つ物が載っている。
+  情報源は <a href="https://groups.google.com/d/msg/comp.terminals/xHf7HodWYeI/0PdZTi0XGP0J">1999-10-01 Jeffrey Altman - comp.terminals</a> である。
+</li>
+<li>BA80 で検索しても余り情報は出てこない。
+  <a href="http://www.columbia.edu/kermit/k95manual/termtype.html">Kermit 95 - Terminal Types</a>
+  のエミュレーションのターゲットとして Nixdorf BA80 Terminal という物が挙げられている。
+</li>
 </ul>
 
 <h2 id="term.IR">ISO 2022 IR</h2>
@@ -78,7 +157,7 @@
 <tr><td>FE4 (FF) </td><td>IS4 (FS)  </td><td>SCD</td><td>SS </td><td>FF </td><td>---</td><td>CS </td><td>APS</td><td>CS </td><td>---</td></tr>
 <tr><td>FE5 (CR) </td><td>IS3 (GS)  </td><td>QL </td><td>QC </td><td>CR </td><td>SS3</td><td>APR</td><td>SS3</td><td>APR</td><td>SS3</td></tr>
 <tr><td>SO       </td><td>IS2 (RS)  </td><td>UR </td><td>QR </td><td>LS1</td><td>---</td><td>LS1</td><td>APH</td><td>LS1</td><td>APH</td></tr>
-<tr><td>SI       </td><td>IS1 (US)  </td><td>LR </td><td>JY </td><td>LS0</td><td>---</td><td>LS0</td><td>NSR</td><td>LS0</td><td>APR</td></tr>
+<tr><td>SI       </td><td>IS1 (US)  </td><td>LR </td><td>JY </td><td>LS0</td><td>---</td><td>LS0</td><td>NSR</td><td>LS0</td><td>APA</td></tr>
 </table>
 
 <ul>
