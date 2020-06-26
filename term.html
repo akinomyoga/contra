@@ -748,9 +748,9 @@
 <li><kbd>CSI <i>Ps</i> h</kbd> _PC98SM</li>
 <li><kbd>CSI <i>Ps</i> l</kbd> _PC98RM
   <ul>
-  <li>Mode &gt;1 最下行をプログラムで使用 (RM 時はシステムが使用)</li>
-  <li>Mode &gt;3 20行モードにする (RM 時は25行モード)</li>
-  <li>Mode &gt;5 カーソル非表示</li>
+  <li>Mode &gt;1 _ZDSL25 最下行をプログラムで使用 (RM 時はシステムが使用)</li>
+  <li>Mode &gt;3 _PC98L20★ 20行モードにする (RM 時は25行モード)</li>
+  <li>Mode &gt;5 _ZDSCDE カーソル非表示</li>
   <li>Mode ?7 DECAWM auto wrapping</li>
   </ul>
 </li>
@@ -839,23 +839,23 @@
 <li><kbd>CSI = <i>Ps</i> h</kbd> _DOSSM★</li>
 <li><kbd>CSI = <i>Ps</i> l</kbd> _DOSRM★
   <ul>
-  <li>Mode =0  40列x25行 monochrome (text)</li>
-  <li>Mode =1  40列x25行 color (text)</li>
-  <li>Mode =2  80列x25行 monochrome (text)</li>
-  <li>Mode =3  80列x25行 color (text)</li>
-  <li>Mode =4  320x200ドット 4-color (graphics)</li>
-  <li>Mode =5  320x200ドット monochrome (graphics)</li>
-  <li>Mode =6  640x200ドット monochrome (graphics)</li>
-  <li>Mode =7  Enables line wrapping (Mode ?7 DECAWM と同じ振る舞いだろうか?)</li>
-  <li>Mode =13 320x200ドット color (graphics)</li>
-  <li>Mode =14 640x200ドット color (16-color graphics)</li>
-  <li>Mode =15 640x350ドット monochrome (2-color graphics)</li>
-  <li>Mode =16 640x350ドット color (16-color graphics)</li>
-  <li>Mode =17 640x480ドット monochrome (2-color graphics)</li>
-  <li>Mode =18 640x480ドット color (16-color graphics)</li>
-  <li>Mode =19 320x200ドット color (256-color graphics)</li>
-  <li>Mode =114 640x480ドット color (16-color graphics) (日本語)</li>
-  <li>Mode =115 80列x25行 color (text) (日本語)</li>
+  <li>Mode =0  _DOST40C1M 40列x25行 monochrome (text)</li>
+  <li>Mode =1  _DOST40C3M 40列x25行 color (text)</li>
+  <li>Mode =2  _DOST80C1M 80列x25行 monochrome (text)</li>
+  <li>Mode =3  _DOST80C3M 80列x25行 color (text)</li>
+  <li>Mode =4  _DOSG32C2M 320x200ドット 4-color (graphics)</li>
+  <li>Mode =5  _DOSG32C1M 320x200ドット monochrome (graphics)</li>
+  <li>Mode =6  _DOSG62C1M 640x200ドット monochrome (graphics)</li>
+  <li>Mode =7  _DOSAWM Enables line wrapping (Mode ?7 DECAWM と同じ振る舞いだろうか?)</li>
+  <li>Mode =13 _DOSG32C3 320x200ドット color (graphics)</li>
+  <li>Mode =14 _DOSG62C4 640x200ドット color (16-color graphics)</li>
+  <li>Mode =15 _DOSG63C1 640x350ドット monochrome (2-color graphics)</li>
+  <li>Mode =16 _DOSG63C4 640x350ドット color (16-color graphics)</li>
+  <li>Mode =17 _DOSG64C1 640x480ドット monochrome (2-color graphics)</li>
+  <li>Mode =18 _DOSG64C4 640x480ドット color (16-color graphics)</li>
+  <li>Mode =19 _DOSG32C8 320x200ドット color (256-color graphics)</li>
+  <li>Mode =114 _DOSG64C4JM 640x480ドット color (16-color graphics) (日本語)</li>
+  <li>Mode =115 _DOST80C3JM 80列x25行 color (text) (日本語)</li>
   <li>Mode =114 と =115 は Japanese DOS/V issues of ANSI.SYS
     found in DR DOS 6.0, Novell DOS 7 and higher のみで対応。</li>
   <li>日本語モードでは =3,=17,=18,=114,=115 のみ選択可能。</li>
@@ -923,12 +923,12 @@
 <li><kbd>CSI <i>Pm</i> l</kbd> RM, _DGRM★
   <ul>
   <li><i class="kbd">Ps</i> = 1,6 は標準</li>
-  <li>Mode &lt;0 ROLL MODE</li>
-  <li>Mode &lt;1 BLINK MODE</li>
-  <li>Mode &lt;2 HORIZONTAL SCROLL MODE</li>
-  <li>Mode &lt;3 DG-ANSI MODE</li>
-  <li>Mode &lt;4 FORMS MODE</li>
-  <li>Mode &lt;5 MARGINS MODE</li>
+  <li>Mode &lt;0 _DGROLM★ ROLL MODE</li>
+  <li>Mode &lt;1 _DGBLKM★ BLINK MODE</li>
+  <li>Mode &lt;2 _DGHSCM★ HORIZONTAL SCROLL MODE</li>
+  <li>Mode &lt;3 _DGANSM★ DG-ANSI MODE</li>
+  <li>Mode &lt;4 _DGFRMM★ FORMS MODE</li>
+  <li>Mode &lt;5 _DGMGNM★ MARGINS MODE</li>
   </ul>
 </li>
 <li><kbd>ESC <i>I</i> <i>F</i></kbd> GnD4
@@ -1203,9 +1203,9 @@
 <li><kbd>CSI = <i>Pv</i> h</kbd> _SGISM★ xwsh set mode</li>
 <li><kbd>CSI = <i>Pv</i> l</kbd> _SGIRM★ xwsh reset mode
   <ul>
-  <li>=6    Lock display</li>
-  <li>=9    Enable visual bell</li>
-  <li>=12   Overlay mode</li>
+  <li>=6  _SGILKDM  Lock display</li>
+  <li>=9  _SGIEVBM  Enable visual bell</li>
+  <li>=12 _SGIOVLM  Overlay mode</li>
   </ul>
 </li>
 <li><kbd>CSI ? <i>Pv</i> h</kbd> DECSET</li>
@@ -1766,18 +1766,18 @@
 <li><kbd>CSI <i>Ps</i> l</kbd> _CITRM★
   <p><i>Ps</i> = 20, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8 に対応。拡張として以下にも対応。</p>
   <ul>
-  <li>Mode &gt;1 Set double speed smooth scroll mode</li>
-  <li>Mode &gt;2</li>
-  <li>Mode &gt;3</li>
-  <li>Mode &gt;4</li>
-  <li>Mode &gt;5</li>
-  <li>Mode &gt;6</li>
-  <li>Mode &gt;9</li>
-  <li>Mode &gt;10</li>
-  <li>Mode &gt;11</li>
-  <li>Mode &gt;12</li>
-  <li>Mode &gt;13</li>
-  <li>Mode &gt;14</li>
+  <li>Mode &gt;1 _CITDSSSM: DOUBLE SPEED SMOOTH SCROLL MODE</li>
+  <li>Mode &gt;2 _CITVTSSKM: VT52/VT100 STYLE SCROLL KEY MODES</li>
+  <li>Mode &gt;3 _CITHKNM: HEX KEYPAND NUMERIC MODE</li>
+  <li>Mode &gt;4 _CITFFCDM: CLEAR DISPLAY/LINE FEED ON FORM FEED MODE</li>
+  <li>Mode &gt;5 _CITCTRVM: Set control character visible</li>
+  <li>Mode &gt;6 _CITDIXM: DISABLE INCOMING XOFF MODE</li>
+  <li>Mode &gt;9 _CITSWCEM: SCREEN WIDTH CHANGE WIDTH ERASE MODE</li>
+  <li>Mode &gt;10 _CITDWEM: RIGHT HALF OF DOUBLE WIDTH LINES ERASE MODE</li>
+  <li>Mode &gt;11 _CITEPEM: ERASE PAGE EXTENT MODE</li>
+  <li>Mode &gt;12 _CITTSPM: TAB MOTION SPACES/DIRECT MODE</li>
+  <li>Mode &gt;13 _CITCRTSM: CRT SAVER MODE</li>
+  <li>Mode &gt;14 _CITHFDUPM: HALF DUPLEX/FULL DUPLEX MODE</li>
   </ul>
 </li>
 <li><kbd>CSI <i>Ps</i> m</kbd> SGR

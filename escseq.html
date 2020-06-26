@@ -1925,7 +1925,7 @@ tmux=screen
     <th>-</th><td>?11</td>
     <th>-</th><td>?21</td>
     <th>-</th><td>?31</td></tr>
-<tr><th>DECANM</th><td>?2</td>
+<tr><th>DECANM<br/>_ZDSZMD</th><td>?2</td>
     <th>ATT610_BLINK</th><td>?12</td>
     <th>-</th><td>?22</td>
     <th>-</th><td>?32</td></tr>
@@ -2109,7 +2109,7 @@ tmux=screen
 </table>
 
 <table class="normal center">
-<caption>表: その他の私用モード</caption>
+<caption>表: その他の私用DECモード</caption>
 <tr><th>略号</th><th>Mode</th></tr>
 <tr><th>minttyAmbiguousWidthReport</th> <td>?7700</td></tr>
 <tr><th>minttyScrollMarker</th>         <td>?7711</td></tr>
@@ -2134,9 +2134,105 @@ tmux=screen
 <tr><th>KITTY_EXTENDED_KEYBOARD       </th><td>?2017</td></tr>
 </table>
 
+<h3>その他の私用モード</h3>
+
+<table class="normal center contra-cell-centered">
+<tr><th>Mode</th><th>Name</th>
+    <th>Mode</th><th>Name</th>
+    <th>Mode</th><th>Name</th>
+</tr>
+<tr><th>&lt;0</th><td>_DGROLM</td>
+    <th>=0  </th><td>_DOST40C1M </td>
+    <th>&gt;0</th><td>---</td>
+</tr>
+<tr><th>&lt;1</th><td>_DGBLKM</td>
+    <th>=1  </th><td>_DOST40C3M </td>
+    <th>&gt;1</th><td>_ZDSL25<br/>_CITDSSSM</td>
+</tr>
+<tr><th>&lt;2</th><td>_DGHSCM</td>
+    <th>=2  </th><td>_DOST80C1M </td>
+    <th>&gt;2</th><td>_ZDSKCL<br/>_CITVTSSKM</td>
+</tr>
+<tr><th>&lt;3</th><td>_DGANSM</td>
+    <th>=3  </th><td>_DOST80C3M </td>
+    <th>&gt;3</th><td>_ZDSHSM<br/>_PC98L20<br/>_CITHKNM</td>
+</tr>
+<tr><th>&lt;4</th><td>_DGFRMM</td>
+    <th>=4  </th><td>_DOSG32C2M </td>
+    <th>&gt;4</th><td>_ZDSCBL<br/>_CITFFCDM</td>
+</tr>
+<tr><th>&lt;5</th><td>_DGMGNM</td>
+    <th>=5  </th><td>_DOSG32C1M </td>
+    <th>&gt;5</th><td>_ZDSCDE<br/>_CITCTRVM</td>
+</tr>
+<tr><th>&lt;6</th><td>---</td>
+    <th>=6  </th><td>_DOSG62C1M<br/>_SGILKDM</td>
+    <th>&gt;6</th><td>_ZDSKSH<br/>_CITDIXM</td>
+</tr>
+<tr><th>&lt;7</th><td>---</td>
+    <th>=7  </th><td>_DOSAWM    </td>
+    <th>&gt;7</th><td>_ZDSKAM</td>
+</tr>
+<tr><th>&lt;8</th><td>---</td>
+    <th>=8</th><td>---</td>
+    <th>&gt;8</th><td>_ZDSALF</td>
+</tr>
+<tr><th>&lt;9</th><td>---</td>
+    <th>=9  </th><td>_SGIEVBM   </td>
+    <th>&gt;9</th><td>_ZDSACR<br/>_CITSWCEM</td>
+</tr>
+<tr><th>&lt;10</th><td>---</td>
+    <th>=10</th><td>---</td>
+    <th>&gt;10</th><td>_CITDWEM</td>
+</tr>
+<tr><th>&lt;11</th><td>---</td>
+    <th>=11</th><td>---</td>
+    <th>&gt;11</th><td>_CITEPEM</td>
+</tr>
+<tr><th>&lt;12</th><td>---</td>
+    <th>=12 </th><td>_SGIOVLM   </td>
+    <th>&gt;12</th><td>_CITTSPM</td>
+</tr>
+<tr><th>&lt;13</th><td>---</td>
+    <th>=13 </th><td>_DOSG32C3  </td>
+    <th>&gt;13</th><td>_CITCRTSM</td>
+</tr>
+<tr><th>&lt;14</th><td>---</td>
+    <th>=14 </th><td>_DOSG62C4  </td>
+    <th>&gt;14</th><td>_CITHFDUPM</td>
+</tr>
+<tr><th>&lt;15 </th><td>---</td>
+    <th>=15 </th><td>_DOSG63C1  </td>
+    <th>&gt;15 </th><td>---</td>
+</tr>
+<tr><th>&lt;16 </th><td>---</td>
+    <th>=16 </th><td>_DOSG63C4  </td>
+    <th>&gt;16 </th><td>---</td>
+</tr>
+<tr><th>&lt;17 </th><td>---</td>
+    <th>=17 </th><td>_DOSG64C1  </td>
+    <th>&gt;17 </th><td>---</td>
+</tr>
+<tr><th>&lt;18 </th><td>---</td>
+    <th>=18 </th><td>_DOSG64C4  </td>
+    <th>&gt;18 </th><td>---</td>
+</tr>
+<tr><th>&lt;19 </th><td>---</td>
+    <th>=19 </th><td>_DOSG32C8  </td>
+    <th>&gt;19 </th><td>---</td>
+</tr>
+<tr><th>&lt;114</th><td>---</td>
+    <th>=114</th><td>_DOSG64C4JM</td>
+    <th>&gt;114</th><td>---</td>
+</tr>
+<tr><th>&lt;115</th><td>---</td>
+    <th>=115</th><td>_DOST80C3JM</td>
+    <th>&gt;115</th><td>---</td>
+</tr>
+</table>
+
 <h3>その他未整理のモード</h3>
 <ul>
-<li>_DGSM, _SGISM, _DOSSM, _PC98SM, _CITSM</li>
 <li>Tera Term 14001..14004?</li>
 </ul>
 
