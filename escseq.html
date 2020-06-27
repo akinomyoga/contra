@@ -16,12 +16,6 @@
   <script type="text/javascript" charset="utf-8" src="escseq.js"></script>
   <link rel="stylesheet" type="text/css" href="escseq.css" />
   <style type="text/css">
-  table.normal>*>tr>th{background-color:#eee;}
-  table.normal>*>tr>th.markB{background-color:#fee;}
-  table.normal>*>tr>th.markC{background-color:#efe;}
-  dfn.cfunc{color:blue;}
-  dfn.cmode{color:brown;}
-  dfn.sgr{color:brown;}
   </style>
 </head>
 <body class="tex:math_bqd">
@@ -467,9 +461,9 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
       <td>0Ft</td><td><kbd>ESC SP <i>Ft</i></kbd></td><td>ACS (ANNOUNCE CODE STRUCTURE)</td><td>ECMA-35/15.2</td></tr>
   <tr><td>1Ft</td><td><kbd>ESC ! <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>CZD (C0-DESIGNATE)</td><td rowspan="2">ECMA-35/14.2</td></tr>
   <tr><td>2Ft</td><td><kbd>ESC " <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>C1D (C1-DESIGNATE)</td></tr><!--"-->
-  <tr><td>4Ft</td><td><kbd>ESC $ <i>I</i> <i>Ft</i></kbd></td><td>Designation of multiple-byte graphic character sets</td><td>ECMA-35/13.2.3, 14.3</td></tr>
-  <tr><td>5Ft</td><td><kbd>ESC % <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>DOCS (DESIGNATE OTHER CODING SYSTEM)</td><td>ECMA-35/15.4</td></tr>
-  <tr><td>6Ft</td><td><kbd>ESC &amp; <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>IRR (IDENTIFY REVISED REGISTRATION)</td><td>ECMA-35/14.5</td></tr>
+  <tr><td>4Ft</td><td><kbd>ESC $ <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>Designation of multiple-byte graphic character sets</td><td>ECMA-35/13.2.3, 14.3</td></tr>
+  <tr><td>5Ft</td><td><kbd>ESC % <i>I</i><strong>?</strong> <i>Ft</i></kbd></td><td>DOCS (DESIGNATE OTHER CODING SYSTEM)</td><td>ECMA-35/15.4</td></tr>
+  <tr><td>6Ft</td><td><kbd>ESC &amp; <i>Ft</i></kbd></td><td>IRR (IDENTIFY REVISED REGISTRATION)</td><td>ECMA-35/14.5</td></tr>
   <tr><td>8Ft</td> <td><kbd>ESC ( <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>GZD4 (G0-DESIGNATE 94-SET)</td><td rowspan="7">ECMA-35/14.3</td></tr>
   <tr><td>9Ft</td> <td><kbd>ESC ) <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>G1D4 (G1-DESIGNATE 94-SET)</td></tr>
   <tr><td>10Ft</td><td><kbd>ESC * <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><td>G2D4 (G2-DESIGNATE 94-SET)</td></tr>
@@ -488,7 +482,9 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
   <tr><td>12Ft</td><td><kbd>ESC , <i>I</i><strong>*</strong> <i>Ft</i></kbd></td></tr>
   </table>
   <ul>
-  <li><i class="kbd">Fp</i> で終端するエスケープシーケンスは私用の為に保留されている。</li>
+  <li>[ECMA-35/13.3.3] <i class="kbd">Fp</i> で終端するエスケープシーケンスは私用の為に保留されているとしているが、
+    特に [ECMA-35/14.1p7] では、私用文字集合の為に使うとしている。
+  </li>
   <li>2バイト目が <i class="kbd">I</i> のエスケープシーケンスは符号識別機能に用いられ、
     特に文字集合の設定に用いられる。</li>
   <li>2バイト目が <i class="kbd">Fe</i> にあるエスケープシーケンスは、
@@ -540,7 +536,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>STS</th><td><kbd>ESC S</kbd></td>
     <th>RIS</th><td><kbd>ESC c</kbd></td>
     <th>-R-</th><td><kbd>ESC s</kbd></td></tr>
-<tr><th class="markB">GnDMm</th><td><kbd>ESC $ <i>I</i> <i>Ft</i></kbd></td>
+<tr><th class="markB">"GnDMm"</th><td><kbd>ESC $ <i>I</i> <i>Ft</i></kbd></td>
     <th>DECAVT</th><td><kbd>ESC 4</kbd></td>
     <th>IND<sup>廃</sup></th><td><kbd>ESC D</kbd></td>
     <th>CCH</th><td><kbd>ESC T</kbd></td>
@@ -647,6 +643,22 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <h4>3Ft型 登録単独制御機能</h4>
 <p>[ECMA-35/6.5.2] ISO-IR (ISO International Register of Coded Character Sets) に後から登録される制御機能。</p>
 <p>Note: 現在 (2016-10-13) この型の制御機能は一つも登録されていない様だ。</p>
+
+<h4>4Ft型 マルチバイト図形文字集合の指示</h4>
+<table class="normal center">
+<tr><th>略号</th><th>符号化表現</th><th>説明</th></tr>
+<tr><td><kbd>GZDM4(@)</kbd></td><td><kbd>ESC $ @</kbd></td><td>旧JIS (1978) を G0 に指示</td></tr>
+<tr><td><kbd>GZDM4(A)</kbd></td><td><kbd>ESC $ A</kbd></td><td>GB 2312      を G0 に指示</td></tr>
+<tr><td><kbd>GZDM4(B)</kbd></td><td><kbd>ESC $ B</kbd></td><td>新JIS (1983) を G0 に指示</td></tr>
+<tr><td>GZDM4</td><td><kbd>ESC $ ( <i>I</i>* <i>Ft</i></kbd></td><td>94<sup>n</sup> 図形文字集合を G0 に指示</td></tr>
+<tr><td>G1DM4</td><td><kbd>ESC $ ) <i>I</i>* <i>Ft</i></kbd></td><td>94<sup>n</sup> 図形文字集合を G1 に指示</td></tr>
+<tr><td>G2DM4</td><td><kbd>ESC $ * <i>I</i>* <i>Ft</i></kbd></td><td>94<sup>n</sup> 図形文字集合を G2 に指示</td></tr>
+<tr><td>G3DM4</td><td><kbd>ESC $ + <i>I</i>* <i>Ft</i></kbd></td><td>94<sup>n</sup> 図形文字集合を G3 に指示</td></tr>
+<tr><td>-R-  </td><td><kbd>ESC $ , <i>I</i>* <i>Ft</i></kbd></td><td>(予約)</td></tr>
+<tr><td>G1DM6</td><td><kbd>ESC $ - <i>I</i>* <i>Ft</i></kbd></td><td>96<sup>n</sup> 図形文字集合を G1 に指示</td></tr>
+<tr><td>G2DM6</td><td><kbd>ESC $ . <i>I</i>* <i>Ft</i></kbd></td><td>96<sup>n</sup> 図形文字集合を G2 に指示</td></tr>
+<tr><td>G3DM6</td><td><kbd>ESC $ / <i>I</i>* <i>Ft</i></kbd></td><td>96<sup>n</sup> 図形文字集合を G3 に指示</td></tr>
+</table>
 
 <h4>nFp型 私用領域</h4>
 <p>1Fp, 2Fp, 4Fp, 6Fp, 7Fp, 10-15Fp の使用例は現在見つかっていない。
@@ -1671,15 +1683,15 @@ tmux=screen
 <table class="normal center">
 <tr><th>開始</th><th>種類</th><th>符号化表現</th><th>名前</th></tr>
 <tr><th>OSC</th><td>コマンド列</td>
-  <td><kbd>OSC <i>N</i><strong>*</strong> ; <i>GL'</i><strong>*</strong> BEL</kbd><br/>
-  <kbd>OSC <i>N</i><strong>*</strong> ; <i>GL'</i><strong>*</strong> ST</kbd>
-  </td>
-  <td>Operating System Command</td>
+    <td><kbd>OSC <i>Ps</i> ; <i>GL'<!--'--></i><strong>*</strong> BEL</kbd><br/>
+        <kbd>OSC <i>Ps</i> ; <i>GL'<!--'--></i><strong>*</strong> ST</kbd></td>
+    <td>Operating System Command</td>
 </tr>
-<tr><th>DCS</th>   <td>コマンド列</td>   <td><kbd>DCS <i>GL'</i><strong>*</strong> ST</kbd></td><td>Device Control String</td></tr><!--'-->
+<tr><th>DCS</th><td>コマンド列</td>
+  <td><kbd>DCS <i>Pm</i> <i>I</i><strong>*</strong> <i>Ft</i> <i>GL'<!--'--></i><strong>*</strong> ST</kbd></td><td>Device Control String</td></tr>
 <tr><th>SOS</th>   <td>キャラクタ列</td> <td><kbd>SOS <i>U</i><strong>*</strong> ST</kbd></td> <td>Start of String</td></tr>
-<tr><th>PM</th>    <td>コマンド列</td>   <td><kbd>PM <i>GL'</i><strong>*</strong> ST</kbd></td> <td>Privacy Message</td></tr><!--'-->
-<tr><th>APC</th>   <td>コマンド列</td>   <td><kbd>APC <i>GL'</i><strong>*</strong> ST</kbd></td><td>Application Program Command</td></tr><!--'-->
+<tr><th>PM</th>    <td>コマンド列</td>   <td><kbd>PM <i>GL'<!--'--></i><strong>*</strong> ST</kbd></td> <td>Privacy Message</td></tr>
+<tr><th>APC</th>   <td>コマンド列</td>   <td><kbd>APC <i>GL'<!--'--></i><strong>*</strong> ST</kbd></td><td>Application Program Command</td></tr>
 <tr><th>_SCRAKA</th><td>キャラクタ列?</td><td><kbd>ESC k <i>U</i><strong>*</strong> ST</kbd></td> <td>Title Definition String (GNU Screen)</td></tr>
 </table>
 
@@ -1716,6 +1728,15 @@ tmux=screen
   後に続く <strong>.*</strong> の部分は、コマンドの引数として与える文字列である。
   本来 ST で終端するはずだが BEL で終端することもある。
   </p>
+  <table class="normal contra-cell-centered">
+  <caption>OSC コード一覧</caption>
+  <tr><th><i class="kbd">Ps</i></th><th>略号</th></tr>
+  <tr><td>0</td>   <td>_AIXXST</td></tr>
+  <tr><td>1</td>   <td>_AIXXST</td></tr>
+  <tr><td>2</td>   <td>_AIXXST</td></tr>
+  <tr><td>(ToDo)</td><td>(たくさん)</td></tr>
+  <tr><td>8900</td><td>GWREPT<sup>yaft</sup></td></tr>
+  </table>
 </li>
 <li><dfn class="cfunc">DCS</dfn>: DEVICE CONTROL STRING
   <p>[ECMA-48/8.3.27]
@@ -1728,6 +1749,48 @@ tmux=screen
   <p>DCS シーケンスはコマンド列の形式に従う。
   DCS は 01/11 05/00 (<kbd>ESC P</kbd>) または 09/00 で表現される。
   </p>
+  <p>実際の実装では CSI シーケンスと同様の形式の接頭辞とそれに続くデータからなる事が多い。</p>
+  <table class="normal">
+  <caption>DCS シーケンス一覧</caption>
+  <tr><th>略号</th><th>符号化表現</th></tr>
+  <tr><td>_DGDC</td>    <td><kbd>DCS A ... ST</kbd></td></tr>
+  <tr><td>_DGSPAT</td>  <td><kbd>DCS C ... ST</kbd></td></tr>
+  <tr><td>DGSW</td>     <td><kbd>DCS D ... ST</kbd></td></tr>
+  <tr><td>decREGIS</td> <td><kbd>DCS p ... ST</kbd></td></tr>
+  <tr><td>decSIXEL<br/>HardCopyData<sup>VK100</sup></td><td><kbd>DCS q ... ST</kbd></td></tr>
+  <tr><td>decVKSET<br/>DECLBAN</td><td><kbd>DCS r ... ST</kbd></td></tr>
+  <tr><td>decVKPK</td>  <td><kbd>DCS <i>Ps</i> s ... ST</kbd></td></tr>
+  <tr><td>decVT105G</td><td><kbd>DCS t ... ST</kbd></td></tr>
+  <tr><td>DECLANS</td>  <td><kbd>DCS <i>Pn</i> v ... ST</kbd></td></tr>
+  <tr><td>DECLFF</td>   <td><kbd>DCS y ... ST</kbd></td></tr>
+  <tr><td>DECDLD</td>   <td><kbd>DCS { ... ST</kbd></td></tr>
+  <tr><td>DECUDK</td>   <td><kbd>DCS |   ... ST</kbd></td></tr>
+  <tr><td>DECATFF</td>  <td><kbd>DCS }   ... ST</kbd></td></tr>
+  <tr><td>DECDTFF</td>  <td><kbd>DCS ~   ... ST</kbd></td></tr>
+  <tr><td>decGIDIS</td> <td><kbd>DCS ! q ... ST</kbd></td></tr>
+  <tr><td>DECAUPSS</td> <td><kbd>DCS ! u ... ST</kbd></td></tr>
+  <tr><td>DECDMAC</td>  <td><kbd>DCS ! z ... ST</kbd></td></tr>
+  <tr><td>DECSTUI</td>  <td><kbd>DCS ! { ... ST</kbd></td></tr>
+  <tr><td>DECRPTUI</td> <td><kbd>DCS ! | ... ST</kbd></td></tr>
+  <tr><td>DECCKSR</td>  <td><kbd>DCS ! ~ ... ST</kbd></td></tr>
+  <tr><td>DECPFK</td>   <td><kbd>DCS " x ... ST</kbd></td></tr><!--"-->
+  <tr><td>DECPAC</td>   <td><kbd>DCS " y ... ST</kbd></td></tr><!--"-->
+  <tr><td>DECCKD</td>   <td><kbd>DCS " z ... ST</kbd></td></tr><!--"-->
+  <tr><td>DECFSR</td>   <td><kbd>DCS " { ... ST</kbd></td></tr><!--"-->
+  <tr><td>DECRPFK</td>  <td><kbd>DCS " } ... ST</kbd></td></tr><!--"-->
+  <tr><td>DECRPAK</td>  <td><kbd>DCS " ~ ... ST</kbd></td></tr><!--"-->
+  <tr><td>DECRSTS  </td><td><kbd>DCS $ p ... ST</kbd></td></tr>
+  <tr><td>DECRQSS  </td><td><kbd>DCS $ q ... ST</kbd></td></tr>
+  <tr><td>DECRPSS  </td><td><kbd>DCS $ r ... ST</kbd></td></tr>
+  <tr><td>DECTSR<br/>DECCTR</td><td><kbd>DCS $ s ... ST</kbd></td></tr>
+  <tr><td>DECRSPS  </td><td><kbd>DCS $ t ... ST</kbd></td></tr>
+  <tr><td>DECCIR<br/>DECTABSR</td><td><kbd>DCS $ u ... ST</kbd></td></tr>
+  <tr><td>DECLBD   </td><td><kbd>DCS $ w ... ST</kbd></td></tr>
+  <tr><td>XTSETTCAP</td><td><kbd>DCS + p ... ST</kbd></td></tr>
+  <tr><td>XTGETTCAP</td><td><kbd>DCS + q ... ST</kbd></td></tr>
+  <tr><td>XTGETXRES</td><td><kbd>DCS + Q ... ST</kbd></td></tr>
+  <tr><td>_SGIDCS</td>  <td><kbd>DCS . y ... ST</kbd></td></tr>
+  </table>
 </li>
 <li><dfn class="cfunc">SOS</dfn>: START OF STRING
   <p>[ECMA-48/8.3.128]
@@ -1764,57 +1827,6 @@ tmux=screen
   </p>
 </li>
 </ul>
-
-<p>OSC シーケンス一覧表</p>
-<table class="normal">
-<tr><th>略号</th><th>符号化表現</th></tr>
-<tr><td>_AIXXST</td> <td><kbd>OSC 0 ; ... BEL</kbd></td></tr>
-<tr><td>_AIXXST</td> <td><kbd>OSC 1 ; ... BEL</kbd></td></tr>
-<tr><td>_AIXXST</td> <td><kbd>OSC 2 ; ... BEL</kbd></td></tr>
-<tr><td>GWREPT<sup>yaft</sup></td>  <td><kbd>OSC 8 9 0 0 ; ... BEL</kbd></td></tr>
-</table>
-
-<p>DCS シーケンス一覧表</p>
-<table class="normal">
-<tr><th>略号</th><th>符号化表現</th></tr>
-<tr><td>_DGDC</td>    <td><kbd>DCS A ... ST</kbd></td></tr>
-<tr><td>_DGSPAT</td>  <td><kbd>DCS C ... ST</kbd></td></tr>
-<tr><td>DGSW</td>     <td><kbd>DCS D ... ST</kbd></td></tr>
-<tr><td>decREGIS</td> <td><kbd>DCS p ... ST</kbd></td></tr>
-<tr><td>decSIXEL<br/>HardCopyData<sup>VK100</sup></td><td><kbd>DCS q ... ST</kbd></td></tr>
-<tr><td>decVKSET<br/>DECLBAN</td><td><kbd>DCS r ... ST</kbd></td></tr>
-<tr><td>decVKPK</td>  <td><kbd>DCS <i>Ps</i> s ... ST</kbd></td></tr>
-<tr><td>decVT105G</td><td><kbd>DCS t ... ST</kbd></td></tr>
-<tr><td>DECLANS</td>  <td><kbd>DCS <i>Pn</i> v ... ST</kbd></td></tr>
-<tr><td>DECLFF</td>   <td><kbd>DCS y ... ST</kbd></td></tr>
-<tr><td>DECDLD</td>   <td><kbd>DCS { ... ST</kbd></td></tr>
-<tr><td>DECUDK</td>   <td><kbd>DCS |   ... ST</kbd></td></tr>
-<tr><td>DECATFF</td>  <td><kbd>DCS }   ... ST</kbd></td></tr>
-<tr><td>DECDTFF</td>  <td><kbd>DCS ~   ... ST</kbd></td></tr>
-<tr><td>decGIDIS</td> <td><kbd>DCS ! q ... ST</kbd></td></tr>
-<tr><td>DECAUPSS</td> <td><kbd>DCS ! u ... ST</kbd></td></tr>
-<tr><td>DECDMAC</td>  <td><kbd>DCS ! z ... ST</kbd></td></tr>
-<tr><td>DECSTUI</td>  <td><kbd>DCS ! { ... ST</kbd></td></tr>
-<tr><td>DECRPTUI</td> <td><kbd>DCS ! | ... ST</kbd></td></tr>
-<tr><td>DECCKSR</td>  <td><kbd>DCS ! ~ ... ST</kbd></td></tr>
-<tr><td>DECPFK</td>   <td><kbd>DCS " x ... ST</kbd></td></tr><!--"-->
-<tr><td>DECPAC</td>   <td><kbd>DCS " y ... ST</kbd></td></tr><!--"-->
-<tr><td>DECCKD</td>   <td><kbd>DCS " z ... ST</kbd></td></tr><!--"-->
-<tr><td>DECFSR</td>   <td><kbd>DCS " { ... ST</kbd></td></tr><!--"-->
-<tr><td>DECRPFK</td>  <td><kbd>DCS " } ... ST</kbd></td></tr><!--"-->
-<tr><td>DECRPAK</td>  <td><kbd>DCS " ~ ... ST</kbd></td></tr><!--"-->
-<tr><td>DECRSTS  </td><td><kbd>DCS $ p ... ST</kbd></td></tr>
-<tr><td>DECRQSS  </td><td><kbd>DCS $ q ... ST</kbd></td></tr>
-<tr><td>DECRPSS  </td><td><kbd>DCS $ r ... ST</kbd></td></tr>
-<tr><td>DECTSR<br/>DECCTR</td><td><kbd>DCS $ s ... ST</kbd></td></tr>
-<tr><td>DECRSPS  </td><td><kbd>DCS $ t ... ST</kbd></td></tr>
-<tr><td>DECCIR<br/>DECTABSR</td><td><kbd>DCS $ u ... ST</kbd></td></tr>
-<tr><td>DECLBD   </td><td><kbd>DCS $ w ... ST</kbd></td></tr>
-<tr><td>XTSETTCAP</td><td><kbd>DCS + p ... ST</kbd></td></tr>
-<tr><td>XTGETTCAP</td><td><kbd>DCS + q ... ST</kbd></td></tr>
-<tr><td>XTGETXRES</td><td><kbd>DCS + Q ... ST</kbd></td></tr>
-<tr><td>_SGIDCS</td>  <td><kbd>DCS . y ... ST</kbd></td></tr>
-</table>
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h2>モード</h2>
@@ -2384,54 +2396,6 @@ tmux=screen
 </pre>
 
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-<h2>文字集合の制御</h2>
-
-<ul>
-<li>[ECMA-35/8.3.3]
-  G0-G3 の何れか一つが同時に GL と GR に両方呼び出される状態も可能だが推奨されない。
-</li>
-</ul>
-<ul>
-<li><dfn class="cfunc">LS0</dfn>: LOCKING-SHIFT ZERO</li>
-<li><dfn class="cfunc">LS1</dfn>: LOCKING-SHIFT ONE</li>
-<li><dfn class="cfunc">LS2</dfn>: LOCKING-SHIFT TWO</li>
-<li><dfn class="cfunc">LS3</dfn>: LOCKING-SHIFT THREE
-  <p>[ECMA-35/8.3.1] それぞれ G0, G1, G2, G3 符号要素を GL 領域に呼び出す。
-  94文字または94<sup>n</sup>文字集合を呼び出した時は、
-  0x20 及び 0x7F にはそれぞれ SP と DEL が呼び出される。
-  96文字または96<sup>n</sup>文字集合を呼び出している時は、
-  SP 及び DEL は符号化表現を持たない。
-  </p>
-</li>
-<li><dfn class="cfunc">LS0R</dfn>: LOCKING-SHIFT RIGHT ZERO</li>
-<li><dfn class="cfunc">LS1R</dfn>: LOCKING-SHIFT RIGHT ONE</li>
-<li><dfn class="cfunc">LS2R</dfn>: LOCKING-SHIFT RIGHT TWO</li>
-<li><dfn class="cfunc">LS3R</dfn>: LOCKING-SHIFT RIGHT THREE
-  <p>[ECMA-35/8.3.2] それぞれ G0, G1, G2, G3 符号要素を GR 領域に呼び出す。
-  94文字または94<sup>n</sup>文字集合を呼び出した時は、
-  0xA0 及び 0xFF は使ってはならない。
-  </p>
-</li>
-<li><dfn class="cfunc">SS2</dfn>: SINGLE-SHIFT TWO</li>
-<li><dfn class="cfunc">SS3</dfn>: SINGLE-SHIFT THREE
-  <p>[ECMA-35/8.3.2] それぞれ G2, G3 を単一シフト領域に一時的に呼び出す。
-  単一シフト領域は GL または GR で処理系定義である。
-  直後に来る図形文字1文字分をこのシフト状態で処理しすぐに
-  この制御機能を呼び出す前のシフト状態に戻る。
-  </p>
-  <p>この制御機能の直後には単一シフト領域における
-    図形文字1文字分を表すバイトが厳密に来なければならない。
-    特に 94/94<sup>n</sup>文字集合をGLに呼び出した時は
-    2/1 及び 7/15 は許されない事に注意する。
-  </p>
-  <ul>
-  <li>単一シフト領域が GL, GR のどちらであっても、
-    実装上はどちらも受け入れる様にしておけば問題ない気がする。
-    また ACS によってどちらを使用するかを通信の最初に宣言することもできる。
-  </li>
-  </ul>
-</li>
-</ul>
 
 <h2>装置の構成と双方向 (bidi) 対応</h2>
 
@@ -2871,7 +2835,7 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   </p>
   <ul>
   <li>一般的な実装では、最終行にいる時には一行最後に追加してからその行に移動する。</li>
-  <li>xterm, RLogin, mintty では LNM が設定されている時は次の行の先頭に移動する。</li>
+  <li>xterm, RLogin, mintty では LNM が設定されている時は LF で次の行の先頭に移動する。IND は同じ列のまま移動しない。</li>
   <li>screen, Poderosa は常に列はそのままである (というより LNM がない)。</li>
   </ul>
 </li>
@@ -4880,7 +4844,7 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
   </ul>
 </li>
 <li>SGR 66-69 <dfn class="sgr">sgrIdeoDecoration2</dfn>: CJK装飾2
-  <p>[JIS X 0211] CJK文字に対する装飾で 60-64 の時とは、縦書き・横書きの切り替わり方が異なる物である。</p>
+  <p>[JIS X 0211, T.53] CJK文字に対する装飾で 60-64 の時とは、縦書き・横書きの切り替わり方が異なる物である。</p>
   <p>Note: ECMA-48 5th edition (1991) には書かれていないが JIS X 0211 にはある。
     恐らく、ISO/IEC 6429:1992 で導入された物だろう
     (JIS X 0211 は ISO/IEC 6429:1992 に "IDT" [ISO/IEC GUIDE 21-1:2005(E) 4.2] と書かれている)。
@@ -5517,20 +5481,15 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
 </ul>
 
 <!--************************************************************************-->
-<h2>古い物: ISO/IEC 2022 関連</h2>
+<h2>ISO/IEC 2022 の制御機能</h2>
 
-<h3><dfn class="cfunc">ACS</dfn>: ANNOUNCE CODE STRUCTURE</h3>
-<table class="normal center">
-<tr><th>略号</th><th>Sequence</th><th>C/R</th></tr>
-<tr><th>ACS</th>
-  <td><kbd>ESC SP <i>Ft</i></kbd></td>
-  <td>1/11 2/0 <i class="kbd">Ft</i></td>
-  </tr>
-</table>
-
-<p>ESC SP <i class="kbd">Ft</i> の形式のシーケンスは ACS と呼ばれる。
-通信の初めに、文字コードで有効な G0 G1 G2 G3 から GL GR へのシフトの構造を伝達する為の符号である。
-<i class="kbd">Ft</i> に指定する文字で構造を指定する。
+<h3>符号構造アナウンス</h3>
+<ul>
+<li><dfn class="cfunc">ACS</dfn> <kbd>ESC SP <i>Ft</i></kbd>: ANNOUNCE CODE STRUCTURE</li>
+</ul>
+<p>ACD は通信の初めに文字コードで有効な G0 G1 G2 G3 から
+  GL GR へのシフトの構造を伝達する為の制御機能である。
+  <i class="kbd">Ft</i> に指定する文字で構造を指定する。
 </p>
 
 <table class="normal center contra-cell-center">
@@ -5574,23 +5533,350 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
 <li><a href="http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-035.pdf">ECMA-35</a></li>
 </ul>
 
-<!--===================================================================================-->
-<h2>古い物: エスケープシーケンス表</h2>
-<table class="normal center">
-<tr><th>シーケンス</th><th>説明</th><th>対応</th></tr>
-<tr><td><code>\e*</code></td><td>全て消去</td><td>O</td></tr>
+<h3>図形集合のシフト</h3>
+<ul>
+<li>[ECMA-35/8.3.3]
+  G0-G3 の何れか一つが同時に GL と GR に両方呼び出される状態も可能だが推奨されない。
+</li>
+</ul>
+<ul>
+<li><dfn class="cfunc">LS0</dfn> (<dfn class="cfunc">SI</dfn>) <kbd>SI</kbd>: LOCKING-SHIFT ZERO (SHIFT-IN)</li>
+<li><dfn class="cfunc">LS1</dfn> (<dfn class="cfunc">SO</dfn>) <kbd>SO</kbd>: LOCKING-SHIFT ONE (SHIFT-OUT)</li>
+<li><dfn class="cfunc">LS2</dfn> <kbd>ESC n</kbd>: LOCKING-SHIFT TWO</li>
+<li><dfn class="cfunc">LS3</dfn> <kbd>ESC o</kbd>: LOCKING-SHIFT THREE
+  <p>[ECMA-35/8.3.1] それぞれ G0, G1, G2, G3 符号要素を GL 領域に呼び出す。
+    94文字または94<sup>n</sup>文字集合を呼び出した時は、
+    0x20 及び 0x7F にはそれぞれ SP と DEL が呼び出される。
+    96文字または96<sup>n</sup>文字集合を呼び出している時は、
+    SP 及び DEL は符号化表現を持たない。
+    SI 及び SO は 7-bit 符号の時に使われる LS0, LS1 の別名。
+  </p>
+</li>
+<li><dfn class="cfunc">LS1R</dfn> <kbd>ESC ~</kbd>: LOCKING-SHIFT RIGHT ONE</li>
+<li><dfn class="cfunc">LS2R</dfn> <kbd>ESC }</kbd>: LOCKING-SHIFT RIGHT TWO</li>
+<li><dfn class="cfunc">LS3R</dfn> <kbd>ESC |</kbd>: LOCKING-SHIFT RIGHT THREE
+  <p>[ECMA-35/8.3.2] それぞれ G1, G2, G3 符号要素を GR 領域に呼び出す。
+  94文字または94<sup>n</sup>文字集合を呼び出した時は、
+  0xA0 及び 0xFF は使ってはならない。
+  </p>
+</li>
+<li><dfn class="cfunc">SS2</dfn> <kbd>SS2</kbd>: SINGLE-SHIFT TWO</li>
+<li><dfn class="cfunc">SS3</dfn> <kbd>SS3</kbd>: SINGLE-SHIFT THREE
+  <p>[ECMA-35/8.3.2] それぞれ G2, G3 を単一シフト領域に一時的に呼び出す。
+  単一シフト領域は GL または GR で処理系定義である。
+  直後に来る図形文字1文字分をこのシフト状態で処理しすぐに
+  この制御機能を呼び出す前のシフト状態に戻る。
+  </p>
+  <p>この制御機能の直後には単一シフト領域における
+    図形文字1文字分を表すバイトが厳密に来なければならない。
+    特に 94/94<sup>n</sup>文字集合をGLに呼び出した時は
+    2/1 及び 7/15 は許されない事に注意する。
+  </p>
+  <ul>
+  <li>単一シフト領域が GL, GR のどちらであっても、
+    実装上はどちらも受け入れる様にしておけば問題ない気がする。
+    また ACS によってどちらを使用するかを通信の最初に宣言することもできる。
+  </li>
+  </ul>
+</li>
+</ul>
+
+<h3>文字集合の指示</h3>
+<p>ISO/IEC 2022 の文字集合は6種類に分類される。
+  C0制御文字集合、C1制御文字集合、94図形文字集合、96図形文字集合、
+  94<sup>n</sup>図形文字集合、96<sup>m</sup>図形文字集合である。
+  それぞれの文字集合の種類に対して、C0..C1,G0..G3 に呼び出す制御機能がある。
+</p>
+<table class="normal contra-cell-centered">
+<tr><th rowspan="2">文字集合の種類</th><th colspan="6">指示領域</th></tr>
+<tr><th>C0</th><th>C1</th><th>G0</th><th>G1</th><th>G2</th><th>G3</th></tr>
+<tr><td>C0制御文字集合</td><td>CZD</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>C1制御文字集合</td><td></td><td>C1D</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>94図形文字集合</td><td></td><td></td><td>GZD4</td><td>G1D4</td><td>G2D4</td><td>G3D4</td></tr>
+<tr><td>96図形文字集合</td><td></td><td></td><td>    </td><td>G1D6</td><td>G2D6</td><td>G3D6</td></tr>
+<tr><td>94<sup>n</sup>図形文字集合</td><td></td><td></td><td>GZDM4</td><td>G1DM4</td><td>G2DM4</td><td>G3DM4</td></tr>
+<tr><td>96<sup>n</sup>図形文字集合</td><td></td><td></td><td>     </td><td>G1DM6</td><td>G2DM6</td><td>G3DM6</td></tr>
 </table>
-<!--
-m.コンソール入力, ESC[6n
+<ul>
+<li><dfn class="cfunc">CZD</dfn> <kbd>ESC ! <i>Set</i></kbd>: C0-DESIGNATE</li>
+<li><dfn class="cfunc">C1D</dfn> <kbd>ESC " <i>Set</i></kbd><!--"-->: C1-DESIGNATE</li>
+<li><dfn class="cfunc">GnDm</dfn> 94/96 図形文字集合指示の制御機能の総称
+  <ul>
+  <li><dfn class="cfunc">GZD4</dfn> <kbd>ESC ( <i>Set</i></kbd>: G0-DESIGNATE 94-SET</li>
+  <li><dfn class="cfunc">G1D4</dfn> <kbd>ESC ) <i>Set</i></kbd>: G1-DESIGNATE 94-SET</li>
+  <li><dfn class="cfunc">G2D4</dfn> <kbd>ESC * <i>Set</i></kbd>: G2-DESIGNATE 94-SET</li>
+  <li><dfn class="cfunc">G3D4</dfn> <kbd>ESC + <i>Set</i></kbd>: G3-DESIGNATE 94-SET</li>
+  <li><dfn class="cfunc">G1D6</dfn> <kbd>ESC - <i>Set</i></kbd>: G1-DESIGNATE 96-SET</li>
+  <li><dfn class="cfunc">G2D6</dfn> <kbd>ESC . <i>Set</i></kbd>: G2-DESIGNATE 96-SET</li>
+  <li><dfn class="cfunc">G3D6</dfn> <kbd>ESC / <i>Set</i></kbd>: G3-DESIGNATE 96-SET</li>
+  </ul>
+</li>
+<li><dfn class="cfunc">GnDMm</dfn> 94<sup>n</sup>/96<sup>n</sup> 図形文字集合指示の制御機能の総称
+  <ul>
+  <li><dfn class="cfunc">GZDM4</dfn> <kbd>ESC $ ( <i>Set</i></kbd>: G0-DESIGNATE MULTIBYTE 94-SET</li>
+  <li><dfn class="cfunc">G1DM4</dfn> <kbd>ESC $ ) <i>Set</i></kbd>: G1-DESIGNATE MULTIBYTE 94-SET</li>
+  <li><dfn class="cfunc">G2DM4</dfn> <kbd>ESC $ * <i>Set</i></kbd>: G2-DESIGNATE MULTIBYTE 94-SET</li>
+  <li><dfn class="cfunc">G3DM4</dfn> <kbd>ESC $ + <i>Set</i></kbd>: G2-DESIGNATE MULTIBYTE 94-SET</li>
+  <li><dfn class="cfunc">G1DM6</dfn> <kbd>ESC $ - <i>Set</i></kbd>: G1-DESIGNATE MULTIBYTE 96-SET</li>
+  <li><dfn class="cfunc">G2DM6</dfn> <kbd>ESC $ . <i>Set</i></kbd>: G2-DESIGNATE MULTIBYTE 96-SET</li>
+  <li><dfn class="cfunc">G3DM6</dfn> <kbd>ESC $ / <i>Set</i></kbd>: G3-DESIGNATE MULTIBYTE 96-SET</li>
+  </ul>
+</li>
+</ul>
+<p><i class="kbd">Set</i> は <kbd><i>I</i>* <i>F</i></kbd> の形式を持つ。
+  文字集合の種類毎に、それぞれの文字集合に一意な <i class="kbd">Set</i> が与えられる。</p>
+<ul>
+<li>最初の文字が <kbd>SP</kbd> (SELECT-DRCS) の物は DRCS (実行時定義の文字集合) を指定する。</li>
+<li>終端バイトが <i class="kbd">Fp</i> の物は私用の文字集合に使う事ができる。</li>
+<li>終端バイトが <i class="kbd">Ft</i> の物は ISO 登録簿に登録された文字集合を指定する。
+  但し 96<sup>n</sup>文字集合は未だに登録されていない。</li>
+</ul>
+<p>GZDM4 については歴史的経緯から一部の文字集合 (<i class="kbd">Set</i> = <kbd>@</kbd>, <kbd>A</kbd>, <kbd>B</kbd>) について
+  <kbd>(</kbd> を省略して <kbd>ESC $ <i>Set</i></kbd> とする事になっている。</p>
+<p>更に、登録文字集合に改訂 (文字の追加) があった場合には、
+  改訂版を指定する為に IRR を前述の指示機能の直前に指定する。</p>
+<ul>
+<li><dfn class="cfunc">IRR</dfn> <kbd>ESC &amp; <i>Ft</i></kbd>: IDENTIFY-REVISED-REGISTRATION</li>
+</ul>
+<p>規格上は GZD6, GZDM6 に相当する制御機能は定義されていないが、
+  DEC による実装では DRCS に対して使うことができた筈<sup>[要検証]</sup>。
+</p>
+<ul>
+<li><dfn class="cfunc">_GZD6</dfn> <kbd>ESC , <i>Set</i></kbd>: G0-DESIGNATE 96-SET</li>
+<li><dfn class="cfunc">_GZDM6</dfn> <kbd>ESC $ , <i>Set</i></kbd>: G0-DESIGNATE MULTIBYTE 96-SET</li>
+</ul>
 
-e.面クリ, ESC*
-f.面クリ, CLS 　このコマンドはバッチファイルのみに利用できる。
--->
+<h3>登録 C0 制御文字集合</h3>
+<table class="normal">
+<tr><th><kbd><i>Set</i></kbd></th><th>IR</th><th>名称</th></tr>
+<tr><th><kbd>@</kbd></th><td>IR-1</td><td>C0 Set of ISO 646</td></tr>
+<tr><th><kbd>A</kbd></th><td>IR-7</td><td>NATS, C0 Set</td></tr>
+<tr><th><kbd>C</kbd></th><td>IR-26</td><td>IPTC, C0 Set</td></tr>
+<tr><th><kbd>D</kbd></th><td>IR-36</td><td>C0 Set of ISO 646 with SS2 instead of IS4</td></tr>
+<tr><th><kbd>B</kbd></th><td>IR-48</td><td>INIS, Control Set</td></tr>
+<tr><th><kbd>F</kbd></th><td>IR-74</td><td>C0 for Japanese standard JIS C 6225-1979</td></tr>
+<tr><th><kbd>G</kbd></th><td>IR-104</td><td>Minimum C0 Set for ISO 4873</td></tr>
+<tr><th><kbd>E</kbd></th><td>IR-106</td><td>Teletex primary set of Control Functions CCITT Rec. T.61</td></tr>
+<tr><th><kbd>H</kbd></th><td>IR-130</td><td>C0 Set of ISO 646 without SI and SO ASMO-662 and COMECON ST SEV 358</td></tr>
+<tr><th><kbd>I</kbd></th><td>IR-132</td><td>Primary Control Set of Data Syntax I of CCITT Rec. T.101</td></tr>
+<tr><th><kbd>J</kbd></th><td>IR-134</td><td>Primary Control Set of Data Syntax II of CCITT Rec. T.101</td></tr>
+<tr><th><kbd>K</kbd></th><td>IR-135</td><td>Primary Control Set of Data Syntax III of CCITT Rec. T.101</td></tr>
+<tr><th><kbd>L</kbd></th><td>IR-140</td><td>C0 Set of ISO 646 with EM replaced by SS2 - Czechoslovak Standard CSN 369102</td></tr>
+</table>
 
-<table class="normal center">
-<tr><th>Control</th><th>ESC Sequence</th><th>環境</th><th>略号</th><th>説明</th></tr>
-<tr><td>\x8E</td><td><code>\eN</code></td><td></td><td>SS2</td><td>Single Shift 2: 後述</td></tr>
-<tr><td>\x8F</td><td><code>\eO</code></td><td></td><td>SS3</td><td>Single Shift 3: 後述</td></tr>
+<h3>登録 C1 制御文字集合</h3>
+<table class="normal">
+<tr><th><kbd><i>Set</i></kbd></th><th>IRR</th><th>IR</th><th>名称</th></tr>
+<tr><th><kbd>E</kbd></th><th></th><td>IR-40</td><td>Additional Control Functions for Bibliographic Use according to DIN 31626</td></tr>
+<tr><th><kbd>@</kbd></th><th></th><td>IR-56</td><td>Attribute Control set for UK Videotex British Telecom</td></tr>
+<tr><th><kbd>B</kbd></th><th></th><td>IR-67</td><td>Additional Control Functions for Bibliographic Use according to ISO 6630</td></tr>
+<tr><th><kbd>A</kbd></th><th></th><td>IR-73</td><td>Attribute Control Set for Videotex CCITT</td></tr>
+<tr><th><kbd>C</kbd></th><th></th><td>IR-77</td><td>C1 Control Set of ISO 6429-1983</td></tr>
+<tr><th><kbd>G</kbd></th><th></th><td>IR-105</td><td>Minimum C1 Set for ISO 4873</td></tr>
+<tr><th><kbd>H</kbd></th><th></th><td>IR-107</td><td>Teletex Supplementary Set of Control Functions CCITT Rec. T.61</td></tr>
+<tr><th><kbd>B</kbd></th><th><kbd>@</kbd></th><td>IR-124</td><td>Upward Compatible Version of ISO 6630 (Registration 67)</td></tr>
+<tr><th><kbd>D</kbd></th><th></th><td>IR-133</td><td>Supplementary Control Set of Data Syntax I of CCITT Rec. T.101</td></tr>
+<tr><th><kbd>F</kbd></th><th></th><td>IR-136</td><td>Supplementary Control Set of Data Syntax III of CCITT Rec. T.101</td></tr>
+</table>
+
+
+<h3>登録 94 図形文字集合</h3>
+<table class="normal">
+<tr><th><kbd><i>Set</i></kbd></th><th>名称</th></tr>
+<tr><th><kbd>@</kbd></th><td>IRV of ISO 646 : 1983</td></tr>
+<tr><th><kbd>A</kbd></th><td>ISO 646, British Version BSI 4730</td></tr>
+<tr><th><kbd>B</kbd></th><td>ISO 646, USA Version X3.4 - 1968</td></tr>
+<tr><th><kbd>C</kbd></th><td>NATS, Primary Set for Finland and Sweden</td></tr>
+<tr><th><kbd>D</kbd></th><td>NATS, Secondary Set for Finland and Sweden</td></tr>
+<tr><th><kbd>E</kbd></th><td>NATS, Primary Set for Denmark and Norway</td></tr>
+<tr><th><kbd>F</kbd></th><td>NATS, Secondary Set for Denmark and Norway</td></tr>
+<tr><th><kbd>G</kbd></th><td>ISO 646, Swedish Version SEN 850200 (Ann. B)</td></tr>
+<tr><th><kbd>H</kbd></th><td>ISO 646, Swedish Version for Names, (SEN 850200 Ann.C)</td></tr>
+<tr><th><kbd>I</kbd></th><td>Katakana Character Set JIS C6220-1969</td></tr>
+<tr><th><kbd>J</kbd></th><td>ISO 646, Japanese Version for Roman Characters JIS C6220-1969</td></tr>
+<tr><th><kbd>Y</kbd></th><td>ISO 646, Version for Italian, ECMA (Olivetti)</td></tr>
+<tr><th><kbd>L</kbd></th><td>ISO 646, Version for Portuguese, ECMA (Olivetti)</td></tr>
+<tr><th><kbd>Z</kbd></th><td>ISO 646, Version for Spanish, ECMA (Olivetti)</td></tr>
+<tr><th><kbd>[</kbd></th><td>Character Set for Greek, ECMA (Olivetti)</td></tr>
+<tr><th><kbd>\</kbd></th><td>Latin-Greek Character Set, ECMA (Olivetti)</td></tr>
+<tr><th><kbd>K</kbd></th><td>ISO 646, German Version DIN 66083</td></tr>
+<tr><th><kbd>R</kbd></th><td>ISO 646, French Version, NF Z 62010-1973 (Withdrawn in April 1985)</td></tr>
+<tr><th><kbd>U</kbd></th><td>Latin-Greek Character Set, ECMA (Honeywell-Bull)</td></tr>
+<tr><th><kbd>X</kbd></th><td>Greek Character Set for Bibliography, ISO 5428</td></tr>
+<tr><th><kbd>N</kbd></th><td>Basic Cyrillic Character Set, ECMA (Cii Honeywell-Bull) and ISO 5427</td></tr>
+<tr><th><kbd>O</kbd></th><td>Extended Graphic Character Set for Bibliography, DIN 31624</td></tr>
+<tr><th><kbd>M</kbd></th><td>Character Set for African Languages, DIN 31625 and ISO 6438</td></tr>
+<tr><th><kbd>V</kbd></th><td>Character Set for Viewdata and Teletext (UK)</td></tr>
+<tr><th><kbd>W</kbd></th><td>INIS, Sub-set of the IRV</td></tr>
+<tr><th><kbd>]</kbd></th><td>INIS, Non-standard Extension of Reg. 49</td></tr>
+<tr><th><kbd>^</kbd></th><td>INIS, Cyrillic Extension of Reg. 49</td></tr>
+<tr><th><kbd>P</kbd></th><td>Extended Graphic Character Set for Bibliography ISO 5426-1980</td></tr>
+<tr><th><kbd>Q</kbd></th><td>Extension of the Cyrillic Character Set of Reg. 37, ISO 5427-1981</td></tr>
+<tr><th><kbd>S</kbd></th><td>Greek Character Set for Bibliography, ISO 5428-1980</td></tr>
+<tr><th><kbd>T</kbd></th><td>Coded Character Set for Information Interchange, Standard Chinese GB 1988-80</td></tr>
+<tr><th><kbd>_</kbd></th><td>Arabic Character Set CODAR-U IERA (Morocco)</td></tr>
+<tr><th><kbd>`</kbd></th><td>ISO 646, Norwegian Version NS 4551</td></tr>
+<tr><th><kbd>a</kbd></th><td>Norwegian Character Set, Version 2, NS 4551 (Withdrawn in June 1987)</td></tr>
+<tr><th><kbd>e</kbd></th><td>APL Character Set, Canadian APL Working Group</td></tr>
+<tr><th><kbd>f</kbd></th><td>ISO 646, French Version NF Z 62010-1982</td></tr>
+<tr><th><kbd>b</kbd></th><td>Supplementary Set for Videotex, CCITT</td></tr>
+<tr><th><kbd>c</kbd></th><td>Second Supplementary Set for Videotex (Mosaic), CCITT</td></tr>
+<tr><th><kbd>d</kbd></th><td>
+  Third Supplementary Set for Videotex, (Mosaic), CCITT (superseded by Reg. 173)<br />
+  Third supplementary set of Mosaic Characters/ Videotex and Facsimile
+</td></tr>
+<tr><th><kbd>g</kbd></th><td>ISO 646, Version for Portuguese, ECMA (IBM)</td></tr>
+<tr><th><kbd>h</kbd></th><td>ISO 646, Version for the Spanish languages, ECMA (IBM)</td></tr>
+<tr><th><kbd>i</kbd></th><td>ISO 646, Hungarian Version Hungarian standard 7795/3</td></tr>
+<tr><th><kbd>j</kbd></th><td>Greek Character Set ELOT, Hellenic Organization for Standardization (Withdrawn in November 1986)</td></tr>
+<tr><th><kbd>k</kbd></th><td>7-bit Arabic Code for Information Interchange, Arab standard ASMO-449, ISO 9036</td></tr>
+<tr><th><kbd>l</kbd></th><td>Supplementary Set for Use with Registration No.2</td></tr>
+<tr><th><kbd>m</kbd></th><td>Japanese OCR-A graphic set JIS C6229-1984</td></tr>
+<tr><th><kbd>n</kbd></th><td>Japanese OCR-B Graphic Set JIS C6229-1984</td></tr>
+<tr><th><kbd>o</kbd></th><td>Japanese OCR-B, Additional Graphic Set, JIS C6229-1984</td></tr>
+<tr><th><kbd>p</kbd></th><td>Japanese Basic Hand-printed Graphic Set for OCR JIS C6229-1984</td></tr>
+<tr><th><kbd>q</kbd></th><td>Japanese Additional Handprinted Graphic Character Set for OCR JIS C6229- 1984</td></tr>
+<tr><th><kbd>r</kbd></th><td>Katakana hand-printed Graphic Character Set for OCR JIS C6229-1984</td></tr>
+<tr><th><kbd>s</kbd></th><td>E13B Graphic Character Set Japanese National Committee for ISO/TC97/SC2</td></tr>
+<tr><th><kbd>t</kbd></th><td>Supplementary Set of Graphic Characters for Videotex and Teletext ANSI and Teletext ANSI and CSA (Withdrawn in November 1986)</td></tr>
+<tr><th><kbd>u</kbd></th><td>Teletex Primary Set of Graphic Characters CCITT Rec. T.61</td></tr>
+<tr><th><kbd>v</kbd></th><td>Teletex Supplementary Set of Graphic characters CCITT Rec. T.61</td></tr>
+<tr><th><kbd>w</kbd></th><td>Alternate Primary Graphic Set No. 1 CSA Standard Z 243.4-1985</td></tr>
+<tr><th><kbd>x</kbd></th><td>Alternate Primary Graphic Set No.2 CSA Standard Z 243.4-1985</td></tr>
+<tr><th><kbd>|</kbd></th><td>Supplementary Set of graphic Characters for CCITT Rec. T.101, Data Syntax III</td></tr>
+<tr><th><kbd>y</kbd></th><td>Mosaic-1 Set of Data Syntax I of CCITT Rec. T.101</td></tr>
+<tr><th><kbd>z</kbd></th><td>Serbocroatian and Slovenian Latin Alphabet</td></tr>
+<tr><th><kbd>{</kbd></th><td>Serbocroatian Cyrillic Alphabet</td></tr>
+<tr><th><kbd>}</kbd></th><td>Macedonian Cyrillic Alphabet</td></tr>
+<tr><th><kbd>! @</kbd></th><td>Greek Primary Set of CCITT</td></tr>
+<tr><th><kbd>! A</kbd></th><td>Character Set of Cuba</td></tr>
+<tr><th><kbd>! B</kbd></th><td>Invariant characters (82) of ISO/IEC 646</td></tr>
+<tr><th><kbd>! C</kbd></th><td>Variant of the ISO 7-bit kbdd character set for the Irish Gaelic language</td></tr>
+<tr><th><kbd>! D</kbd></th><td>Turkmen Alphabet</td></tr>
+<tr><th><kbd>! E</kbd></th><td>American National Standard Extended Latin Alphabet Coded Character Set for Bibliographic Use (ANSEL)</td></tr>
+<tr><th><kbd>! F</kbd></th><td>Turkmen character set for 8-bit kbds</td></tr>
+</table>
+
+<h3>登録 96 文字集合</h3>
+<table class="normal">
+<tr><th><kbd><i>Set</i></kbd></th><th>名称</th></tr>
+<tr><th><kbd>A</kbd></th><td>Right-hand Part of Latin Alphabet No.1 ISO 8859/1, ECMA-94</td></tr>
+<tr><th><kbd>B</kbd></th><td>Right-hand Part of Latin Alphabet No.2 ISO 8859/2, ECMA-94</td></tr>
+<tr><th><kbd>C</kbd></th><td>Right-hand Part of Latin Alphabet No.3 ISO DIS 8859/3, ECMA-94</td></tr>
+<tr><th><kbd>D</kbd></th><td>Right-hand Part of Latin Alphabet No.4 ISO DIS 8859/4, ECMA-94</td></tr>
+<tr><th><kbd>@</kbd></th><td>Right-hand Part of the Latin/Cyrillic Alphabet ECMA-113 (Version of June 1986)</td></tr>
+<tr><th><kbd>E</kbd></th><td>General Purpose Supplementary Graphic Set CSA Standard Z 243.4-1985</td></tr>
+<tr><th><kbd>F</kbd></th><td>Right-hand Part of the Latin/Greek Alphabet Standard ELOT 928, ECMA-118, ISO DIS 8859/7</td></tr>
+<tr><th><kbd>G</kbd></th><td>Right-hand Part of the Latin/Arabic Alphabet ECMA-114, ISO 8859/6</td></tr>
+<tr><th><kbd>}</kbd></th><td>Supplementary Set of Mosaic Characters for CCITT Rec. 101, Data Syntax III</td></tr>
+<tr><th><kbd>H</kbd></th><td>Latin/Hebrew Alphabet Standard ECMA-121</td></tr>
+<tr><th><kbd>I</kbd></th><td>Right-hand Part for Czechoslovak Standard CSN 369103</td></tr>
+<tr><th><kbd>J</kbd></th><td>Supplementary Set of Latin Alphabetic and non-Alphabetic Graphic Characters</td></tr>
+<tr><th><kbd>K</kbd></th><td>Technical Set</td></tr>
+<tr><th><kbd>L</kbd></th><td>Cyrillic part of the Latin/Cyrillic Alphabet</td></tr>
+<tr><th><kbd>M</kbd></th><td>Right-hand part of Latin Alphabet No.5</td></tr>
+<tr><th><kbd>N</kbd></th><td>Residual Characters from ISO 6937-2 : 1983</td></tr>
+<tr><th><kbd>O</kbd></th><td>Basic Cyrillic Character Set for 8-bit Codes</td></tr>
+<tr><th><kbd>P</kbd></th><td>Supplementary set for Latin Alphabets No.1, No.2 and No.5</td></tr>
+<tr><th><kbd>Q</kbd></th><td>Basic Box Drawings Set</td></tr>
+<tr><th><kbd>R</kbd></th><td>Supplementary Set ISO/IEC 6937 : 1992</td></tr>
+<tr><th><kbd>V</kbd></th><td>Supplementary Set for Latin Alphabet No. 6</td></tr>
+<tr><th><kbd>X</kbd></th><td>Sami (Lappish) Supplementary Set</td></tr>
+<tr><th><kbd>S</kbd></th><td>CCITT Hebrew Supplementary Set</td></tr>
+<tr><th><kbd>T</kbd></th><td>Thai Set</td></tr>
+<tr><th><kbd>U</kbd></th><td>Arabic/French/German Set</td></tr>
+<tr><th><kbd>Y</kbd></th><td>Baltic Rim Supplementary Set</td></tr>
+<tr><th><kbd>Z</kbd></th><td>Vietnamese Standard Code for Information Interchange</td></tr>
+<tr><th><kbd>[</kbd></th><td>Technical Character Set No.1: IEC Publication 1289</td></tr>
+<tr><th><kbd>\</kbd></th><td>Welsh variant of Latin Alphabet No. 1</td></tr>
+<tr><th><kbd>]</kbd></th><td>Sami supplementary Latin set</td></tr>
+<tr><th><kbd>^</kbd></th><td>Latin/Hebrew Alphabet</td></tr>
+<tr><th><kbd>_</kbd></th><td>Celtic Supplementary Latin Set</td></tr>
+<tr><th><kbd>`</kbd></th><td>Uralic Supplementary Cyrllic Set</td></tr>
+<tr><th><kbd>a</kbd></th><td>Volgaic Supplementary Cyrllic Set</td></tr>
+<tr><th><kbd>b</kbd></th><td>European Supplementary Latin Set ("Latin 9")</td></tr>
+<tr><th><kbd>c</kbd></th><td>Supplementary set for Latin-1 alternative with EURO SIGN</td></tr>
+<tr><th><kbd>d</kbd></th><td>Supplementary set for Latin-4 alternative with EURO SIGN</td></tr>
+<tr><th><kbd>e</kbd></th><td>Supplementary set for Latin-7 alternative with EURO SIGN</td></tr>
+<tr><th><kbd>g</kbd></th><td>Ogham kbdd character set for information interchange</td></tr>
+<tr><th><kbd>h</kbd></th><td>Sami supplementary Latin set no 2</td></tr>
+<tr><th><kbd>f</kbd></th><td>Romanian Character Set for Information Interchange</td></tr>
+<tr><th><kbd>i</kbd></th><td>Right-hand part of Latin/Greek alphabet</td></tr>
+<tr><th><kbd>j</kbd></th><td>Latin/Hebrew character set for 8-bit kbds</td></tr>
+</table>
+
+<h3>登録 94<sup>n</sup> 文字集合</h3>
+<table class="normal">
+<tr><th><kbd><i>Set</i></kbd></th><th>IRR</th><th>名称</th></tr>
+<tr><th><kbd>@</kbd></th><th></th><td>
+  Japanese Character Set JISC C 6226-1978
+  ※ <kbd>ESC $ ( @</kbd> の代わりに <kbd>ESC $ @</kbd> を使う。
+</td></tr>
+<tr><th><kbd>A</kbd></th><th></th><td>
+  Chinese Character Set Chinese Standard GB 2312-80<br />
+  ※ <kbd>ESC $ ( A</kbd> の代わりに <kbd>ESC $ A</kbd> を使う。
+</td></tr>
+<tr><th><kbd>B</kbd></th><th></th><td>
+  Japanese Character Set JIS C 6226-1983<br />
+  ※ <kbd>ESC $ ( B</kbd> の代わりに <kbd>ESC $ B</kbd> を使う。
+</td></tr>
+<tr><th><kbd>B</kbd></th><th><kbd>@</kbd></th><td>
+  Update Registration 87 Japanese Graphic Character Set for Information Interchange<br />
+  ※ <kbd>IRR(@) ESC $ ( B</kbd> の代わりに <kbd>IRR(@) ESC $ B</kbd> を使う。
+</td></tr>
+<tr><th><kbd>C</kbd></th><th></th><td>Korean Graphic Character Set, Korean Standard KSC 5601-1987</td></tr>
+<tr><th><kbd>D</kbd></th><th></th><td>Supplementary Japanese Graphic Character Set for Information Interchange</td></tr>
+<tr><th><kbd>E</kbd></th><th></th><td>CCITT Chinese Set</td></tr>
+<tr><th><kbd>F</kbd></th><th></th><td>Blissymbol Graphic Character Set</td></tr>
+<tr><th><kbd>G</kbd></th><th></th><td>Chinese Standard Interchange Code - Set 1, CNS 11643-1992</td></tr>
+<tr><th><kbd>H</kbd></th><th></th><td>Chinese Standard Interchange Code - Set 2, CNS 11643-1992</td></tr>
+<tr><th><kbd>I</kbd></th><th></th><td>Chinese Standard Interchange Code - Set 3, CNS 11643-1992</td></tr>
+<tr><th><kbd>J</kbd></th><th></th><td>Chinese Standard Interchange Code - Set 4, CNS 11643-1992</td></tr>
+<tr><th><kbd>K</kbd></th><th></th><td>Chinese Standard Interchange Code - Set 5, CNS 11643-1992</td></tr>
+<tr><th><kbd>L</kbd></th><th></th><td>Chinese Standard Interchange Code - Set 6, CNS 11643-1992</td></tr>
+<tr><th><kbd>M</kbd></th><th></th><td>Chinese Standard Interchange Code - Set 7, CNS 11643-1992</td></tr>
+<tr><th><kbd>N</kbd></th><th></th><td>DPRK Standard Korean Graphic Character Set for Information Interchange</td></tr>
+<tr><th><kbd>O</kbd></th><th></th><td>Japanese Graphic Character Set for Information Interchange --- Plane 1</td></tr>
+<tr><th><kbd>P</kbd></th><th></th><td>Japanese Graphic Character Set for Information Interchange --- Plane 2</td></tr>
+<tr><th><kbd>Q</kbd></th><th></th><td>Japanese Graphic Character Set for Information Interchange, Plane 1 (Update of ISO-IR 228)</td></tr>
+</table>
+
+<h3>DOCS: 他の文字符号化方式への切り替え</h3>
+<ul>
+<li><dfn class="cfunc">DOCS</dfn> <kbd>ESC % <i>Set</i></kbd>: DESIGNATE OTHER CODING SYSTEM</li>
+</ul>
+<p><i class="kbd">Set</i> は <kbd><i>I</i>? <i>F</i></kbd> の形式を持つ。
+  <i class="kbd">Set</i> = <kbd>@</kbd> は ISO 2022 に戻ってくる事を示す。
+  その他の <i class="kbd">Set</i> は他の文字符号化方式に移行する事を示す。
+  <i class="kbd">Set</i> = <kbd>F</kbd> の形式の文字集合については、
+  <kbd>DOCS(@)</kbd> を用いてまた ISO 2022 に戻ってくる事ができる。
+  中間バイトを一つ以上含む文字集合の場合には、
+  <kbd>DOCS(@)</kbd> で ISO 2022 に戻ってくる事はできない。
+</p>
+<table class="normal">
+<tr><th><kbd><i>Set</i></kbd></th><th>名称</th></tr>
+<tr><th><kbd>@</kbd></th><td>ISO/IEC 2022</td></tr>
+<tr><th><kbd>A</kbd></th><td>Syntax of the North American Videotex/Teletex Presentation Level Protocol (NAPLPS), CSA T 500-1983</td></tr>
+<tr><th><kbd>B</kbd></th><td>UCS Transformation Format One (UTF-1)</td></tr>
+<tr><th><kbd>C</kbd></th><td>Data Syntax I of CCITT Rec.T.101</td></tr>
+<tr><th><kbd>D</kbd></th><td>Data Syntax II of CCITT Rec. T.101</td></tr>
+<tr><th><kbd>E</kbd></th><td>Photo-Videotex Data Syntax of CCITT Rec. T.101</td></tr>
+<tr><th><kbd>F</kbd></th><td>Audio Data Syntax of CCITT Rec. T.101</td></tr>
+<tr><th><kbd>G</kbd></th><td>UTF-8 without implementation level</td></tr>
+<tr><th><kbd>H</kbd></th><td>Videotex Enhanced Man Machine Interface (VEMMI) Data Syntax of ITU-T Rec. T.107</td></tr>
+<tr><th><kbd>/ @</kbd></th><td>ISO/IEC 10646:1993, UCS-2, Level 1</td></tr>
+<tr><th><kbd>/ A</kbd></th><td>ISO/IEC 10646:1993, UCS-4, Level 1</td></tr>
+<tr><th><kbd>/ B</kbd></th><td>Virtual Terminal service Transparent Set</td></tr>
+<tr><th><kbd>/ C</kbd></th><td>ISO/IEC 10646:1993, UCS-2, Level 2</td></tr>
+<tr><th><kbd>/ D</kbd></th><td>ISO/IEC 10646:1993, UCS-4, Level 2</td></tr>
+<tr><th><kbd>/ E</kbd></th><td>ISO/IEC 10646:1993, UCS-2, Level 3</td></tr>
+<tr><th><kbd>/ F</kbd></th><td>ISO/IEC 10646:1993, UCS-4, Level 3</td></tr>
+<tr><th><kbd>/ G</kbd></th><td>UTF-8 Level 1</td></tr>
+<tr><th><kbd>/ H</kbd></th><td>UTF-8 Level 2</td></tr>
+<tr><th><kbd>/ I</kbd></th><td>UTF-8 Level 3</td></tr>
+<tr><th><kbd>/ J</kbd></th><td>UTF-16 Level 1</td></tr>
+<tr><th><kbd>/ K</kbd></th><td>UTF-16 Level 2</td></tr>
+<tr><th><kbd>/ L</kbd></th><td>UTF-16 Level 3</td></tr>
 </table>
 
 <!--===================================================================================-->
@@ -5668,11 +5954,31 @@ f.面クリ, CLS 　このコマンドはバッチファイルのみに利用で
   <li><a href="http://ja.wikipedia.org/wiki/%E5%88%B6%E5%BE%A1%E6%96%87%E5%AD%97">制御文字 - Wikipedia</a></li>
   <li></li>
   <li><a href="http://www.wdic.org/w/WDIC/ISO/IEC%202022">ISO/IEC 2022 ‐ 通信用語の基礎知識</a></li>
-  <li><a href="http://ja.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia</a></li>
   <li><a href="http://en.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia, the free encyclopedia</a></li>
-  <li><a href="http://isoreg.com/">::: ISO REG Quality Registrars Inc. :::: - HOME</a></li>
-  <li><a href="http://www.itscj.ipsj.or.jp/ISO-IR/">International Register of Coded Character Sets</a></li>
-  <li></li>
+  <li><a href="http://ja.wikipedia.org/wiki/ISO/IEC_2022">ISO/IEC 2022 - Wikipedia</a>
+    <ul>
+    <li><a href="http://ja.wikipedia.org/wiki/ISO/IEC_2022#.E5.88.B6.E5.BE.A1.E6.A9.9F.E8.83.BD">制御機能</a></li>
+    </ul>
+  </li>
+  <li><a href="https://www.itscj.ipsj.or.jp/itscj_english/iso-ir/ISO-IR.pdf">[PDF] INTERNATIONAL REGISTER OF CODED CHARACTER SETS TO BE USED WITH ESCAPE SEQUENCES</a>
+    <p>規格の筈なのにそこら中を動き回っていて場所が一定しない。
+      担当者は、これが相当重要な物であるという事を理解していない気がする。
+    </p>
+    <ul>
+    <li><del><a href="http://kikaku.itscj.ipsj.or.jp/ISO-IR/">International Register of Coded Character Sets</a></del></li>
+    <li><del><a href="http://www.itscj.ipsj.or.jp/ISO-IR/">International Register of Coded Character Sets</a></del></li>
+    <li><del><a href="http://www.itscj.ipsj.or.jp/ISO-IR/overview.htm">overview</a></del></li>
+    <li><del><a href="http://isoreg.com/">::: ISO REG Quality Registrars Inc. :::: - HOME</a></del></li>
+    </ul>
+    <p><a href="https://wiki.suikawiki.org/n/ISO-IR">ISO-IR - Suika Wiki</a> によると IR-232 は
+      以下のリンクで Unicode との対応表を提供しているらしい。
+      然し、別の文字コードについても同様の物を提供しているかと思いきや、提供されていなかった。
+      例えば、これより後の IR-233 (JIS 2004) についても Unicode との対応表は用意されていない。
+    </p>
+    <ul>
+    <li><a href="https://www.itscj.ipsj.or.jp/iso-ir/232mapping.txt">https://www.itscj.ipsj.or.jp/iso-ir/232mapping.txt</a></li>
+    </ul>
+  </li>
   </ul>
 </li>
 </ul>
@@ -5747,270 +6053,6 @@ f.面クリ, CLS 　このコマンドはバッチファイルのみに利用で
 <pre class="agh-prog-bash">infocmp cygwin</pre>
 <p class="resume">等として見る事ができる。</p>
 
-<!--===================================================================================-->
-<h2>古: ISO/IEC 2022 文字集合制御</h2>
-<!--...................................................................................-->
-<table class="normal center">
-<tr><td><code>\e!<i class="kbd">I</i> <i class="kbd">Ft</i></code></td><td>C0 への呼出</td></tr>
-<tr><td><code>\e"<i class="kbd">I</i> <i class="kbd">Ft</i></code></td><td>C1 への呼出</td></tr><!--"-->
-<tr><td><code>\e&amp;<i class="kbd">Ft</i></code></td><td>改訂番号識別</td></tr>
-<tr><td><code>\17</code></td><td>G0 から GL へとシフト</td></tr>
-<tr><td><code>\16</code></td><td>G1 から GL へとシフト</td></tr>
-<tr><td><code>\en</code></td><td>G2 から GL へとシフト</td></tr>
-<tr><td><code>\eo</code></td><td>G3 から GL へとシフト</td></tr>
-<tr><td><code>\e~</code></td><td>G1 から GR へとシフト</td></tr>
-<tr><td><code>\e}</code></td><td>G2 から GR へとシフト</td></tr>
-<tr><td><code>\e|</code></td><td>G3 から GR へとシフト</td></tr>
-<tr><td><code>\eN</code></td><td rowspan="2">G2 から GR に次の一文字だけシフト</td></tr>
-<tr><td><code>\216</code></td></tr>
-<tr><td><code>\eO</code></td><td rowspan="2">G3 から GR に次の一文字だけシフト</td></tr>
-<tr><td><code>\217</code></td></tr>
-</table>
-<table class="normal center">
-<tr><th>シーケンス</th><th>環境</th><th>文字集合</th></tr>
-<tr><td><code>\e$B</code></td><td></td><td>KI 新JIS JIS X 0208-1983</td></tr>
-<tr><td><code>\e$@</code></td><td></td><td>KI 旧JIS JIS X 0208-1978</td></tr>
-<tr><td><code>\e$B</code></td><td></td><td>KI UJIS (EUC-JP, (JIS X 0208-1983)</td></tr>
-<tr><td><code>\e$K</code></td><td></td><td>KI 区点</td></tr>
-<tr><td><code>\e(J</code></td><td></td><td>KI JIS ローマ字 JIS X 0201</td></tr>
-<tr><td><code>\e(B</code></td><td></td><td>KO ASCII</td></tr>
-<tr><td><code>\e</code></td><td></td><td></td></tr>
-</table>
-<!--...................................................................................-->
-<h3>94 文字集合</h3>
-<h4>操作</h4>
-<table class="normal center">
-<tr><th>シーケンス</th><th>操作</th></tr>
-<tr><td><code>\e(<strong>*</strong></code></td><td>G0 への読込</td></tr>
-<tr><td><code>\e)<strong>*</strong></code></td><td>G1 への読込</td></tr>
-<tr><td><code>\e*<strong>*</strong></code></td><td>G2 への読込</td></tr>
-<tr><td><code>\e+<strong>*</strong></code></td><td>G3 への読込</td></tr>
-</table>
-<h4>文字集合一覧</h4>
-<table class="normal center">
-<tr><th><strong>*</strong></th><th>名称</th></tr>
-<tr><td><code>@</code></td><td>IRV of ISO 646 : 1983</td></tr>
-<tr><td><code>A</code></td><td>ISO 646, British Version BSI 4730</td></tr>
-<tr><td><code>B</code></td><td>ISO 646, USA Version X3.4 - 1968</td></tr>
-<tr><td><code>C</code></td><td>NATS, Primary Set for Finland and Sweden</td></tr>
-<tr><td><code>D</code></td><td>NATS, Secondary Set for Finland and Sweden</td></tr>
-<tr><td><code>E</code></td><td>NATS, Primary Set for Denmark and Norway</td></tr>
-<tr><td><code>F</code></td><td>NATS, Secondary Set for Denmark and Norway</td></tr>
-<tr><td><code>G</code></td><td>ISO 646, Swedish Version SEN 850200 (Ann. B)</td></tr>
-<tr><td><code>H</code></td><td>ISO 646, Swedish Version for Names, (SEN 850200 Ann.C)</td></tr>
-<tr><td><code>I</code></td><td>Katakana Character Set JIS C6220-1969</td></tr>
-<tr><td><code>J</code></td><td>ISO 646, Japanese Version for Roman Characters JIS C6220-1969</td></tr>
-<tr><td><code>Y</code></td><td>ISO 646, Version for Italian, ECMA (Olivetti)</td></tr>
-<tr><td><code>L</code></td><td>ISO 646, Version for Portuguese, ECMA (Olivetti)</td></tr>
-<tr><td><code>Z</code></td><td>ISO 646, Version for Spanish, ECMA (Olivetti)</td></tr>
-<tr><td><code>[</code></td><td>Character Set for Greek, ECMA (Olivetti)</td></tr>
-<tr><td><code>\\</code></td><td>Latin-Greek Character Set, ECMA (Olivetti)</td></tr>
-<tr><td><code>K</code></td><td>ISO 646, German Version DIN 66083</td></tr>
-<tr><td><code>R</code></td><td>ISO 646, French Version, NF Z 62010-1973 (Withdrawn in April 1985)</td></tr>
-<tr><td><code>U</code></td><td>Latin-Greek Character Set, ECMA (Honeywell-Bull)</td></tr>
-<tr><td><code>X</code></td><td>Greek Character Set for Bibliography, ISO 5428</td></tr>
-<tr><td><code>N</code></td><td>Basic Cyrillic Character Set, ECMA (Cii Honeywell-Bull) and ISO 5427</td></tr>
-<tr><td><code>O</code></td><td>Extended Graphic Character Set for Bibliography, DIN 31624</td></tr>
-<tr><td><code>M</code></td><td>Character Set for African Languages, DIN 31625 and ISO 6438</td></tr>
-<tr><td><code>V</code></td><td>Character Set for Viewdata and Teletext (UK)</td></tr>
-<tr><td><code>W</code></td><td>INIS, Sub-set of the IRV</td></tr>
-<tr><td><code>]</code></td><td>INIS, Non-standard Extension of Reg. 49</td></tr>
-<tr><td><code>^</code></td><td>INIS, Cyrillic Extension of Reg. 49</td></tr>
-<tr><td><code>P</code></td><td>Extended Graphic Character Set for Bibliography ISO 5426-1980</td></tr>
-<tr><td><code>Q</code></td><td>Extension of the Cyrillic Character Set of Reg. 37, ISO 5427-1981</td></tr>
-<tr><td><code>S</code></td><td>Greek Character Set for Bibliography, ISO 5428-1980</td></tr>
-<tr><td><code>T</code></td><td>Coded Character Set for Information Interchange, Standard Chinese GB 1988-80</td></tr>
-<tr><td><code>_</code></td><td>Arabic Character Set CODAR-U IERA (Morocco)</td></tr>
-<tr><td><code>`</code></td><td>ISO 646, Norwegian Version NS 4551</td></tr>
-<tr><td><code>a</code></td><td>Norwegian Character Set, Version 2, NS 4551 (Withdrawn in June 1987)</td></tr>
-<tr><td><code>e</code></td><td>APL Character Set, Canadian APL Working Group</td></tr>
-<tr><td><code>f</code></td><td>ISO 646, French Version NF Z 62010-1982</td></tr>
-<tr><td><code>b</code></td><td>Supplementary Set for Videotex, CCITT</td></tr>
-<tr><td><code>c</code></td><td>Second Supplementary Set for Videotex (Mosaic), CCITT</td></tr>
-<tr><td><code>d</code></td><td>
-  Third Supplementary Set for Videotex, (Mosaic), CCITT (superseded by Reg. 173)<br />
-  Third supplementary set of Mosaic Characters/ Videotex and Facsimile
-</td></tr>
-<tr><td><code>g</code></td><td>ISO 646, Version for Portuguese, ECMA (IBM)</td></tr>
-<tr><td><code>h</code></td><td>ISO 646, Version for the Spanish languages, ECMA (IBM)</td></tr>
-<tr><td><code>i</code></td><td>ISO 646, Hungarian Version Hungarian standard 7795/3</td></tr>
-<tr><td><code>j</code></td><td>Greek Character Set ELOT, Hellenic Organization for Standardization (Withdrawn in November 1986)</td></tr>
-<tr><td><code>k</code></td><td>7-bit Arabic Code for Information Interchange, Arab standard ASMO-449, ISO 9036</td></tr>
-<tr><td><code>l</code></td><td>Supplementary Set for Use with Registration No.2</td></tr>
-<tr><td><code>m</code></td><td>Japanese OCR-A graphic set JIS C6229-1984</td></tr>
-<tr><td><code>n</code></td><td>Japanese OCR-B Graphic Set JIS C6229-1984</td></tr>
-<tr><td><code>o</code></td><td>Japanese OCR-B, Additional Graphic Set, JIS C6229-1984</td></tr>
-<tr><td><code>p</code></td><td>Japanese Basic Hand-printed Graphic Set for OCR JIS C6229-1984</td></tr>
-<tr><td><code>q</code></td><td>Japanese Additional Handprinted Graphic Character Set for OCR JIS C6229- 1984</td></tr>
-<tr><td><code>r</code></td><td>Katakana hand-printed Graphic Character Set for OCR JIS C6229-1984</td></tr>
-<tr><td><code>s</code></td><td>E13B Graphic Character Set Japanese National Committee for ISO/TC97/SC2</td></tr>
-<tr><td><code>t</code></td><td>Supplementary Set of Graphic Characters for Videotex and Teletext ANSI and Teletext ANSI and CSA (Withdrawn in November 1986)</td></tr>
-<tr><td><code>u</code></td><td>Teletex Primary Set of Graphic Characters CCITT Rec. T.61</td></tr>
-<tr><td><code>v</code></td><td>Teletex Supplementary Set of Graphic characters CCITT Rec. T.61</td></tr>
-<tr><td><code>w</code></td><td>Alternate Primary Graphic Set No. 1 CSA Standard Z 243.4-1985</td></tr>
-<tr><td><code>x</code></td><td>Alternate Primary Graphic Set No.2 CSA Standard Z 243.4-1985</td></tr>
-<tr><td><code>|</code></td><td>Supplementary Set of graphic Characters for CCITT Rec. T.101, Data Syntax III</td></tr>
-<tr><td><code>y</code></td><td>Mosaic-1 Set of Data Syntax I of CCITT Rec. T.101</td></tr>
-<tr><td><code>z</code></td><td>Serbocroatian and Slovenian Latin Alphabet</td></tr>
-<tr><td><code>{</code></td><td>Serbocroatian Cyrillic Alphabet</td></tr>
-<tr><td><code>}</code></td><td>Macedonian Cyrillic Alphabet</td></tr>
-<tr><td><code>!@</code></td><td>Greek Primary Set of CCITT</td></tr>
-<tr><td><code>!A</code></td><td>Character Set of Cuba</td></tr>
-<tr><td><code>!B</code></td><td>Invariant characters (82) of ISO/IEC 646</td></tr>
-<tr><td><code>!C</code></td><td>Variant of the ISO 7-bit coded character set for the Irish Gaelic language</td></tr>
-<tr><td><code>!D</code></td><td>Turkmen Alphabet</td></tr>
-<tr><td><code>!E</code></td><td>American National Standard Extended Latin Alphabet Coded Character Set for Bibliographic Use (ANSEL)</td></tr>
-<tr><td><code>!F</code></td><td>Turkmen character set for 8-bit codes</td></tr>
-</table>
-<!--...................................................................................-->
-<h3>96 文字集合</h3>
-<h4>操作</h4>
-<table class="normal center">
-<tr><th>シーケンス</th><th>操作</th></tr>
-<tr><td><code>\e-<strong>*</strong></code></td><td>G1 への読込</td></tr>
-<tr><td><code>\e.<strong>*</strong></code></td><td>G2 への読込</td></tr>
-<tr><td><code>\e/<strong>*</strong></code></td><td>G3 への読込</td></tr>
-</table>
-<h4>文字集合一覧</h4>
-<table class="normal center">
-<tr><th><strong>*</strong></th><th>名称</th></tr>
-<tr><td><code>A</code></td><td>Right-hand Part of Latin Alphabet No.1 ISO 8859/1, ECMA-94</td></tr>
-<tr><td><code>B</code></td><td>Right-hand Part of Latin Alphabet No.2 ISO 8859/2, ECMA-94</td></tr>
-<tr><td><code>C</code></td><td>Right-hand Part of Latin Alphabet No.3 ISO DIS 8859/3, ECMA-94</td></tr>
-<tr><td><code>D</code></td><td>Right-hand Part of Latin Alphabet No.4 ISO DIS 8859/4, ECMA-94</td></tr>
-<tr><td><code>@</code></td><td>Right-hand Part of the Latin/Cyrillic Alphabet ECMA-113 (Version of June 1986)</td></tr>
-<tr><td><code>E</code></td><td>General Purpose Supplementary Graphic Set CSA Standard Z 243.4-1985</td></tr>
-<tr><td><code>F</code></td><td>Right-hand Part of the Latin/Greek Alphabet Standard ELOT 928, ECMA-118, ISO DIS 8859/7</td></tr>
-<tr><td><code>G</code></td><td>Right-hand Part of the Latin/Arabic Alphabet ECMA-114, ISO 8859/6</td></tr>
-<tr><td><code>}</code></td><td>Supplementary Set of Mosaic Characters for CCITT Rec. 101, Data Syntax III</td></tr>
-<tr><td><code>H</code></td><td>Latin/Hebrew Alphabet Standard ECMA-121</td></tr>
-<tr><td><code>I</code></td><td>Right-hand Part for Czechoslovak Standard CSN 369103</td></tr>
-<tr><td><code>J</code></td><td>Supplementary Set of Latin Alphabetic and non-Alphabetic Graphic Characters</td></tr>
-<tr><td><code>K</code></td><td>Technical Set</td></tr>
-<tr><td><code>L</code></td><td>Cyrillic part of the Latin/Cyrillic Alphabet</td></tr>
-<tr><td><code>M</code></td><td>Right-hand part of Latin Alphabet No.5</td></tr>
-<tr><td><code>N</code></td><td>Residual Characters from ISO 6937-2 : 1983</td></tr>
-<tr><td><code>O</code></td><td>Basic Cyrillic Character Set for 8-bit Codes</td></tr>
-<tr><td><code>P</code></td><td>Supplementary set for Latin Alphabets No.1, No.2 and No.5</td></tr>
-<tr><td><code>Q</code></td><td>Basic Box Drawings Set</td></tr>
-<tr><td><code>R</code></td><td>Supplementary Set ISO/IEC 6937 : 1992</td></tr>
-<tr><td><code>V</code></td><td>Supplementary Set for Latin Alphabet No. 6</td></tr>
-<tr><td><code>X</code></td><td>Sami (Lappish) Supplementary Set</td></tr>
-<tr><td><code>S</code></td><td>CCITT Hebrew Supplementary Set</td></tr>
-<tr><td><code>T</code></td><td>Thai Set</td></tr>
-<tr><td><code>U</code></td><td>Arabic/French/German Set</td></tr>
-<tr><td><code>Y</code></td><td>Baltic Rim Supplementary Set</td></tr>
-<tr><td><code>Z</code></td><td>Vietnamese Standard Code for Information Interchange</td></tr>
-<tr><td><code>[</code></td><td>Technical Character Set No.1: IEC Publication 1289</td></tr>
-<tr><td><code>\\</code></td><td>Welsh variant of Latin Alphabet No. 1</td></tr>
-<tr><td><code>]</code></td><td>Sami supplementary Latin set</td></tr>
-<tr><td><code>^</code></td><td>Latin/Hebrew Alphabet</td></tr>
-<tr><td><code>_</code></td><td>Celtic Supplementary Latin Set</td></tr>
-<tr><td><code>`</code></td><td>Uralic Supplementary Cyrllic Set</td></tr>
-<tr><td><code>a</code></td><td>Volgaic Supplementary Cyrllic Set</td></tr>
-<tr><td><code>b</code></td><td>European Supplementary Latin Set ("Latin 9")</td></tr>
-<tr><td><code>c</code></td><td>Supplementary set for Latin-1 alternative with EURO SIGN</td></tr>
-<tr><td><code>d</code></td><td>Supplementary set for Latin-4 alternative with EURO SIGN</td></tr>
-<tr><td><code>e</code></td><td>Supplementary set for Latin-7 alternative with EURO SIGN</td></tr>
-<tr><td><code>g</code></td><td>Ogham coded character set for information interchange</td></tr>
-<tr><td><code>h</code></td><td>Sami supplementary Latin set no 2</td></tr>
-<tr><td><code>f</code></td><td>Romanian Character Set for Information Interchange</td></tr>
-<tr><td><code>i</code></td><td>Right-hand part of Latin/Greek alphabet</td></tr>
-<tr><td><code>j</code></td><td>Latin/Hebrew character set for 8-bit codes</td></tr>
-</table>
-<!--...................................................................................-->
-<h3>94<sup>n</sup> 文字集合</h3>
-<h4>操作</h4>
-<table class="normal center">
-<tr><th>シーケンス</th><th>操作</th></tr>
-<tr><td><code>\e$(<strong>*</strong></code></td><td>G0 への読込</td></tr>
-<tr><td><code>\e$)<strong>*</strong></code></td><td>G1 への読込</td></tr>
-<tr><td><code>\e$*<strong>*</strong></code></td><td>G2 への読込</td></tr>
-<tr><td><code>\e$+<strong>*</strong></code></td><td>G3 への読込</td></tr>
-</table>
-<h4>文字集合一覧</h4>
-<table class="normal center">
-<tr><th><strong>*</strong></th><th>名称</th></tr>
-<tr><td><code>@</code></td><td>
-  Japanese Character Set JISC C 6226-1978
-  ※ <code>\e$(@</code> の代わりに <code>\e$@</code> と記す。
-</td></tr>
-<tr><td><code>A</code></td><td>
-  Chinese Character Set Chinese Standard GB 2312-80<br />
-  ※ <code>\e$(A</code> の代わりに <code>\e$A</code> と記す。
-</td></tr>
-<tr><td><code>B</code></td><td>
-  Japanese Character Set JIS C 6226-1983<br />
-  Update Registration 87 Japanese Graphic Character Set for Information Interchange<br />
-  ※ <code>\e$(B</code> の代わりに <code>\e$B</code> と記す。
-</td></tr>
-<tr><td><code>C</code></td><td>Korean Graphic Character Set, Korean Standard KSC 5601-1987</td></tr>
-<tr><td><code>D</code></td><td>Supplementary Japanese Graphic Character Set for Information Interchange</td></tr>
-<tr><td><code>E</code></td><td>CCITT Chinese Set</td></tr>
-<tr><td><code>F</code></td><td>Blissymbol Graphic Character Set</td></tr>
-<tr><td><code>G</code></td><td>Chinese Standard Interchange Code - Set 1, CNS 11643-1992</td></tr>
-<tr><td><code>H</code></td><td>Chinese Standard Interchange Code - Set 2, CNS 11643-1992</td></tr>
-<tr><td><code>I</code></td><td>Chinese Standard Interchange Code - Set 3, CNS 11643-1992</td></tr>
-<tr><td><code>J</code></td><td>Chinese Standard Interchange Code - Set 4, CNS 11643-1992</td></tr>
-<tr><td><code>K</code></td><td>Chinese Standard Interchange Code - Set 5, CNS 11643-1992</td></tr>
-<tr><td><code>L</code></td><td>Chinese Standard Interchange Code - Set 6, CNS 11643-1992</td></tr>
-<tr><td><code>M</code></td><td>Chinese Standard Interchange Code - Set 7, CNS 11643-1992</td></tr>
-<tr><td><code>N</code></td><td>DPRK Standard Korean Graphic Character Set for Information Interchange</td></tr>
-<tr><td><code>O</code></td><td>Japanese Graphic Character Set for Information Interchange --- Plane 1</td></tr>
-<tr><td><code>P</code></td><td>Japanese Graphic Character Set for Information Interchange --- Plane 2</td></tr>
-<tr><td><code>Q</code></td><td>Japanese Graphic Character Set for Information Interchange, Plane 1 (Update of ISO-IR 228)</td></tr>
-</table>
-<!--...................................................................................-->
-<h3>96<sup>n</sup> 文字集合</h3>
-<h4>操作</h4>
-<table class="normal center">
-<tr><th>シーケンス</th><th>操作</th></tr>
-<tr><td><code>\e$-<strong>*</strong></code></td><td>G1 への読込</td></tr>
-<tr><td><code>\e$.<strong>*</strong></code></td><td>G2 への読込</td></tr>
-<tr><td><code>\e$/<strong>*</strong></code></td><td>G3 への読込</td></tr>
-</table>
-<!--...................................................................................-->
-<h3>その他</h3>
-<h4>操作</h4>
-<table class="normal center">
-<tr><th>シーケンス</th><th>操作</th></tr>
-<tr><td><code>\e%<strong>*</strong></code></td><td>文字コードの切替</td></tr>
-</table>
-<h4>文字集合一覧</h4>
-<table class="normal center">
-<tr><th><strong>*</strong></th><th>名称</th></tr>
-<tr><td><code>A </code></td><td>Syntax of the North American Videotex/Teletex Presentation Level Protocol (NAPLPS), CSA T 500-1983</td></tr>
-<tr><td><code>/B</code></td><td>Virtual Terminal service Transparent Set</td></tr>
-<tr><td><code>C </code></td><td>Data Syntax I of CCITT Rec.T.101</td></tr>
-<tr><td><code>D </code></td><td>Data Syntax II of CCITT Rec. T.101</td></tr>
-<tr><td><code>E </code></td><td>Photo-Videotex Data Syntax of CCITT Rec. T.101</td></tr>
-<tr><td><code>F </code></td><td>Audio Data Syntax of CCITT Rec. T.101</td></tr>
-<tr><td><code>/@</code></td><td>ISO/IEC 10646:1993, UCS-2, Level 1</td></tr>
-<tr><td><code>/A</code></td><td>ISO/IEC 10646:1993, UCS-4, Level 1</td></tr>
-<tr><td><code>/C</code></td><td>ISO/IEC 10646:1993, UCS-2, Level 2</td></tr>
-<tr><td><code>/D</code></td><td>ISO/IEC 10646:1993, UCS-4, Level 2</td></tr>
-<tr><td><code>/E</code></td><td>ISO/IEC 10646:1993, UCS-2, Level 3</td></tr>
-<tr><td><code>/F</code></td><td>ISO/IEC 10646:1993, UCS-4, Level 3</td></tr>
-<tr><td><code>B </code></td><td>UCS Transformation Format One (UTF-1)</td></tr>
-<tr><td><code>H </code></td><td>Videotex Enhanced Man Machine Interface (VEMMI) Data Syntax of ITU-T Rec. T.107</td></tr>
-<tr><td><code>/G</code></td><td>UTF-8 Level 1</td></tr>
-<tr><td><code>/H</code></td><td>UTF-8 Level 2</td></tr>
-<tr><td><code>/I</code></td><td>UTF-8 Level 3</td></tr>
-<tr><td><code>/J</code></td><td>UTF-16 Level 1</td></tr>
-<tr><td><code>/K</code></td><td>UTF-16 Level 2</td></tr>
-<tr><td><code>/L</code></td><td>UTF-16 Level 3</td></tr>
-<tr><td><code>G </code></td><td>UTF-8 without implementation level</td></tr>
-<!--
--->
-</table>
-<!--...................................................................................-->
-<h3>参考</h3>
-<ul>
-<li><a href="http://ja.wikipedia.org/wiki/ISO/IEC_2022#.E5.88.B6.E5.BE.A1.E6.A9.9F.E8.83.BD">ISO/IEC 2022 - Wikipedia</a></li>
-<li><a href="http://kikaku.itscj.ipsj.or.jp/ISO-IR/">International Register of Coded Character Sets</a>
-  <del><a href="http://www.itscj.ipsj.or.jp/ISO-IR/overview.htm">overview</a></del>
-</li>
-</ul>
 <!--===================================================================================-->
 <h2>古: キーシーケンス</h2>
 <p>ターミナルからプログラムへ送られるデータ</p>
@@ -6191,10 +6233,6 @@ f.面クリ, CLS 　このコマンドはバッチファイルのみに利用で
 <tr><td>F21-F24</td> <td colspan="2"><code>\e[23$</code></td></tr>
 </table>
 
-<!--===================================================================================-->
-<!--===================================================================================-->
-<!--===================================================================================-->
-<!--↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑-->
 <hr style="height:1px;"/>
 <div class="linkbar2">
   <span class="left">-- ≪</span>

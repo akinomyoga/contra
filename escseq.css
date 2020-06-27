@@ -4,7 +4,7 @@ kbd {
   font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", "Courier", monospace;
   font-size: 80%; padding: 1px 5px; vertical-align: 1px;
   border: 1px solid silver; border-bottom: 2px solid gray; border-radius: 3px;
-  display: inline-block; text-indent: 0; line-height: 1.2;
+  display: inline-block; text-indent: 0; line-height: 1.2; white-space: nowrap;
   /* line-height: 1.8; */
   text-decoration: inherit;
 }
@@ -15,6 +15,13 @@ i.kbd:before,
 kbd>i:before { content: '<'; }
 i.kbd:after,
 kbd>i:after { content: '>'; }
+
+table.normal>*>tr>th{background-color:#eee;}
+table.normal>*>tr>th.markB{background-color:#fee;}
+table.normal>*>tr>th.markC{background-color:#efe;}
+dfn.cfunc{color:blue;}
+dfn.cmode{color:brown;}
+dfn.sgr{color:brown;}
 
 table.contra-cell-centered>tbody>tr>td,
 table.contra-cell-centered>tbody>tr>th { text-align: center; }
