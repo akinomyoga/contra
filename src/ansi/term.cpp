@@ -1448,8 +1448,8 @@ namespace ansi {
     case 4:
       if (!rest.read_arg(param, false, 0)) param = 1;
       switch (param) {
-      default:
       case 0: b.cur.abuild.clear_underline(); break;
+      default:
       case 1: b.cur.abuild.set_underline(attr_underline_single); break;
       case 2: b.cur.abuild.set_underline(attr_underline_double); break;
       case 3: b.cur.abuild.set_underline(attr_underline_curly); break;
