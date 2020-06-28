@@ -278,6 +278,10 @@ namespace contra {
             case ascii_slash: // G3DM6
               n = 3; m = iso2022_size_mb96;
               goto process_iso2022_GnDm;
+            case ascii_sp: // [T.61/E.3.1.2] DRCS の時は ( を省略しても良い?
+              seq_skip = 1;
+              n = 0; m = iso2022_size_mb94;
+              goto process_iso2022_GnDm;
             }
           }
           break;
