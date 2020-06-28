@@ -1445,7 +1445,7 @@ namespace ansi {
       bool _visible(std::uint32_t code, attr_t const& attr, bool sp_visible = false) const {
         return code != ascii_nul && (sp_visible || code != ascii_sp)
           && !(code & flag_processed)
-          && !_atable->is_invisible(attr);
+          && !(_atable->aflags(attr) & invisible_flags);
       }
 
       // DECDHL用の制限
