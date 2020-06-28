@@ -372,7 +372,7 @@ namespace ansi {
 
     color_t m_rgba256[256];
 
-    // OSC(0), scrTDS
+    // OSC(0), scrAKA
     std::u32string title; // xterm title
     std::u32string screen_title; // GNU screen title
 

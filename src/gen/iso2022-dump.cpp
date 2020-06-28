@@ -66,14 +66,16 @@ class iso2022_definition_dumper {
   }
 
 private:
-  void print_html_header(std::ostream& ostr) {
-    ostr << "<?DOCTYPE html>\n"
+  void print_html_header(std::ostream& ostr, std::string const& title) {
+    ostr << "<!DOCTYPE html>\n"
          << "<html>\n"
-         << "<head>\n"
-         << "<style>\n"
-         << "table.contra-iso2022-table { border-collapse: collapse; margin: auto; }\n"
+         << "<head>\n";
+    if (!title.empty())
+      ostr << "<title>" << title << " - contra</title>\n";
+    ostr << "<style>\n"
+         << "table.contra-iso2022-table { border-collapse: collapse; margin: auto; margin-top: 1em; }\n"
          << "table.contra-iso2022-table td { border: 1px solid gray; text-align: center; font-size: 1.5em; height: 2em; width: 2em; position: relative; }\n"
-         << "table.contra-iso2022-table td>code { font-size: 0.7rem; }\n"
+         << "table.contra-iso2022-table td>code { font-size: 0.7rem; display: block; margin: 0; }\n"
          << "table.contra-iso2022-table td>span.c2w { font-size: 0.7rem; position: absolute; left: 0; top: 0; }\n"
          << "td.contra-iso2022-undef { background-color: #ddd; }\n"
          << "td.contra-iso2022-diff { background-color: #dfd; }\n"
@@ -81,10 +83,12 @@ private:
          << "th.contra-iso2022-ku { font-size: 1.5em; padding-right: 0.5em; }\n"
          << "</style>\n"
          << "</head>\n"
-         << "<body>\n";
+         << "<body>\n"
+         << "<!-- BODY_HEADER -->\n";
   }
   void print_html_footer(std::ostream& ostr) {
-    ostr << "</body>\n"
+    ostr << "<!-- BODY_FOOTER -->\n"
+         << "</body>\n"
          << "</html>\n";
   }
   /// @param[in] meta_shift 違いを比較する対象の文字コードのずれ
@@ -134,7 +138,7 @@ private:
 
           std::ios_base::fmtflags old_flags = std::cout.flags();
           {
-            ostr << "<br/><code>";
+            ostr << "<code>";
             bool first = true;
             for (auto const b : vec) {
               if (first) first = false; else ostr << " ";
@@ -152,7 +156,7 @@ private:
     ostr << "</table>\n";
   }
   void print_html_charset(std::ostream& ostr, iso2022_charset const* charset) {
-    ostr << "<h2>" << charset->reg << ": " << charset->name << "</h2>\n";
+    ostr << "<h2 id=\"sec." << charset->reg << "\">" << charset->reg << ": " << charset->name << "</h2>\n";
 
     ostr << "<ul>\n";
     {
@@ -415,7 +419,7 @@ public:
 public:
   void save_html(std::string const& filename, std::string const& title) {
     std::ofstream ostr(filename);
-    print_html_header(ostr);
+    print_html_header(ostr, title);
     if (!title.empty()) ostr << "<h1>" << title << "</h1>\n";
     for (auto index : m_charset_list) {
       if (index & iso2022_charset_db) continue;
@@ -446,7 +450,7 @@ public:
         std::cerr << "failed to open the file '" << fname_html << "'" << std::endl;
         return;
       }
-      print_html_header(file);
+      print_html_header(file, charset->reg);
       print_html_charset(file, charset);
       print_html_footer(file);
     }
