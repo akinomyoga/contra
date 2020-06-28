@@ -20,7 +20,7 @@ namespace ansi {
   static void do_vertical_scroll(term_t& term, curpos_t shift, curpos_t tmargin, curpos_t bmargin, curpos_t lmargin, curpos_t rmargin, bool dcsm, bool transfer);
   static void do_vertical_scroll(term_t& term, curpos_t shift, bool dcsm);
 
-  void do_ed(term_t& term, csi_single_param_t param);
+  void do_ed(term_t& term, csi_param_t param);
 
   //---------------------------------------------------------------------------
   // Modes
@@ -39,25 +39,25 @@ namespace ansi {
 #include "../../out/gen/term.mode_register.hpp"
     }
 
-    void set_ansi_mode(tstate_t& s, csi_single_param_t param, bool value) {
+    void set_ansi_mode(tstate_t& s, csi_param_t param, bool value) {
       auto const it = data_ansi.find(param);
       if (it != data_ansi.end())
         s.sm_mode(it->second, value);
       else
         std::fprintf(stderr, "unrecognized ANSI mode %u\n", (unsigned) param);
     }
-    void set_dec_mode(tstate_t& s, csi_single_param_t param, bool value) {
+    void set_dec_mode(tstate_t& s, csi_param_t param, bool value) {
       auto const it = data_dec.find(param);
       if (it != data_dec.end())
         s.sm_mode(it->second, value);
       else
         std::fprintf(stderr, "unrecognized DEC mode %u\n", (unsigned) param);
     }
-    int rqm_ansi_mode(tstate_t& s, csi_single_param_t param) {
+    int rqm_ansi_mode(tstate_t& s, csi_param_t param) {
       auto const it = data_ansi.find(param);
       return it == data_ansi.end() ? 0 : s.rqm_mode(it->second);
     }
-    int rqm_dec_mode(tstate_t& s, csi_single_param_t param) {
+    int rqm_dec_mode(tstate_t& s, csi_param_t param) {
       auto const it = data_dec.find(param);
       return it == data_dec.end() ? 0 : s.rqm_mode(it->second);
     }
@@ -67,7 +67,7 @@ namespace ansi {
   // CSI h: SM
   bool do_sm(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t value;
+    csi_param_t value;
     while (params.read_param(value, 0))
       mode_dictionary.set_ansi_mode(s, value, true);
     return true;
@@ -75,7 +75,7 @@ namespace ansi {
   // CSI l: RM
   bool do_rm(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t value;
+    csi_param_t value;
     while (params.read_param(value, 0))
       mode_dictionary.set_ansi_mode(s, value, false);
     return true;
@@ -83,7 +83,7 @@ namespace ansi {
   // CSI ? h: DECSET
   bool do_decset(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t value;
+    csi_param_t value;
     while (params.read_param(value, 0))
       mode_dictionary.set_dec_mode(s, value, true);
     return true;
@@ -91,7 +91,7 @@ namespace ansi {
   // CSI ? l: DECRST
   bool do_decrst(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t value;
+    csi_param_t value;
     while (params.read_param(value, 0))
       mode_dictionary.set_dec_mode(s, value, false);
     return true;
@@ -99,7 +99,7 @@ namespace ansi {
 
   static bool do_decrqm_impl(term_t& term, csi_parameters& params, bool decmode) {
     tstate_t& s = term.state();
-    csi_single_param_t value;
+    csi_param_t value;
     params.read_param(value, 0);
 
     int result;
@@ -171,7 +171,7 @@ namespace ansi {
     tstate_t& s = term.state();
     if (!s.cfg_decscpp_enabled) return true;
 
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 0);
     if (param == 0) param = 80;
     curpos_t cols = contra::clamp<curpos_t>(param, s.cfg_decscpp_min, s.cfg_decscpp_max);
@@ -560,9 +560,9 @@ namespace ansi {
   // Page and line settings
 
   bool do_spd(term_t& term, csi_parameters& params) {
-    csi_single_param_t direction;
+    csi_param_t direction;
     params.read_param(direction, 0);
-    csi_single_param_t update;
+    csi_param_t update;
     params.read_param(update, 0);
     if (direction > 7 || update > 2) return false;
 
@@ -596,9 +596,9 @@ namespace ansi {
   }
 
   bool do_scp(term_t& term, csi_parameters& params) {
-    csi_single_param_t charPath;
+    csi_param_t charPath;
     params.read_param(charPath, 0);
-    csi_single_param_t update;
+    csi_param_t update;
     params.read_param(update, 0);
     if (charPath > 2 || update > 2) return false;
 
@@ -634,7 +634,7 @@ namespace ansi {
   }
 
   bool do_simd(term_t& term, csi_parameters& params) {
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 0);
     if (param > 1) return false;
     term.state().set_mode(mode_simd, param != 0);
@@ -646,7 +646,7 @@ namespace ansi {
     board_t& b = term.board();
     line_t& line = b.line();
 
-    csi_single_param_t param;
+    csi_param_t param;
     if (params.read_param(param, 0) && param) {
       curpos_t const x = (curpos_t) param - 1;
       line.home() = x;
@@ -669,7 +669,7 @@ namespace ansi {
     board_t& b = term.board();
     line_t& line = b.line();
 
-    csi_single_param_t param;
+    csi_param_t param;
     if (params.read_param(param, 0) && param) {
       curpos_t const x = (curpos_t) param - 1;
       line.limit() = x;
@@ -690,7 +690,7 @@ namespace ansi {
   bool do_sph(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
 
-    csi_single_param_t param;
+    csi_param_t param;
     if (params.read_param(param, 0) && param) {
       curpos_t const y = (curpos_t) param - 1;
       s.page_home = y;
@@ -705,7 +705,7 @@ namespace ansi {
   bool do_spl(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
 
-    csi_single_param_t param;
+    csi_param_t param;
     if (params.read_param(param, 0) && param) {
       curpos_t const y = (curpos_t) param - 1;
       s.page_limit = y;
@@ -721,7 +721,7 @@ namespace ansi {
     tstate_t& s = term.state();
     board_t& b = term.board();
 
-    csi_single_param_t param1, param2;
+    csi_param_t param1, param2;
     params.read_param(param1, 0);
     params.read_param(param2, 0);
 
@@ -740,7 +740,7 @@ namespace ansi {
     board_t& b = term.board();
     if (!s.get_mode(mode_declrmm)) return true;
 
-    csi_single_param_t param1, param2;
+    csi_param_t param1, param2;
     params.read_param(param1, 0);
     params.read_param(param2, 0);
 
@@ -758,7 +758,7 @@ namespace ansi {
   // Strings
 
   bool do_sds(term_t& term, csi_parameters& params) {
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 0);
     if (param > 2) return false;
     term.insert_marker(
@@ -768,7 +768,7 @@ namespace ansi {
     return true;
   }
   bool do_srs(term_t& term, csi_parameters& params) {
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 0);
     if (param > 2) return false;
     term.insert_marker(
@@ -797,7 +797,7 @@ namespace ansi {
     return do_cux_direction(vec >> do_cux_shift * (0 <= value && value < 8 ? value : 0) & do_cux_mask);
   }
 
-  static void do_cux(term_t& term, csi_single_param_t param, do_cux_direction direction, bool isPresentation, bool check_stbm) {
+  static void do_cux(term_t& term, csi_param_t param, do_cux_direction direction, bool isPresentation, bool check_stbm) {
     board_t& b = term.board();
 
     curpos_t y = b.cur.y();
@@ -852,7 +852,7 @@ namespace ansi {
   }
   static bool do_cux(term_t& term, csi_parameters& params, do_cux_direction direction, bool isPresentation, bool check_stbm) {
     tstate_t& s = term.state();
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
       if (s.get_mode(mode_zdm))
@@ -948,7 +948,7 @@ namespace ansi {
 
   bool do_cnl(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 1);
     if (param == 0 && s.get_mode(mode_zdm)) param = 1;
 
@@ -959,7 +959,7 @@ namespace ansi {
 
   bool do_cpl(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 1);
     if (param == 0 && s.get_mode(mode_zdm)) param = 1;
 
@@ -970,7 +970,7 @@ namespace ansi {
 
   bool do_cup(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t param1, param2;
+    csi_param_t param1, param2;
     params.read_param(param1, 1);
     params.read_param(param2, 1);
     if (s.get_mode(mode_zdm)) {
@@ -981,12 +981,12 @@ namespace ansi {
     if (param1 == 0 || param2 == 0) return false;
 
     if (s.get_mode(mode_decom)) {
-      param1 = std::min<csi_single_param_t>(param1 + term.tmargin(), term.bmargin());
-      param2 = std::min<csi_single_param_t>(param2 + term.lmargin(), term.rmargin());
+      param1 = std::min<csi_param_t>(param1 + term.tmargin(), term.bmargin());
+      param2 = std::min<csi_param_t>(param2 + term.lmargin(), term.rmargin());
     } else {
       board_t& b = term.board();
-      param1 = std::min<csi_single_param_t>(param1, b.height());
-      param2 = std::min<csi_single_param_t>(param2, b.width());
+      param1 = std::min<csi_param_t>(param1, b.height());
+      param2 = std::min<csi_param_t>(param2, b.width());
     }
 
     return do_cup(term, (curpos_t) param2 - 1, (curpos_t) param1 - 1);
@@ -1006,7 +1006,7 @@ namespace ansi {
   }
   bool do_hvp(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t param1, param2;
+    csi_param_t param1, param2;
     params.read_param(param1, 1);
     params.read_param(param2, 1);
     if (s.get_mode(mode_zdm)) {
@@ -1022,7 +1022,7 @@ namespace ansi {
 
   bool do_cha(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
       if (s.get_mode(mode_zdm))
@@ -1033,15 +1033,15 @@ namespace ansi {
 
     board_t& b = term.board();
     if (s.get_mode(mode_decom))
-      param = std::min<csi_single_param_t>(param + term.lmargin(), term.rmargin());
+      param = std::min<csi_param_t>(param + term.lmargin(), term.rmargin());
     else
-      param = std::min<csi_single_param_t>(param, b.width());
+      param = std::min<csi_param_t>(param, b.width());
     return do_cup(term, param - 1, b.cur.y());
   }
 
   bool do_hpa(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
       if (s.get_mode(mode_zdm))
@@ -1052,16 +1052,16 @@ namespace ansi {
 
     board_t& b = term.board();
     if (s.get_mode(mode_decom))
-      param = std::min<csi_single_param_t>(param + term.lmargin(), term.rmargin());
+      param = std::min<csi_param_t>(param + term.lmargin(), term.rmargin());
     else
-      param = std::min<csi_single_param_t>(param, b.width());
+      param = std::min<csi_param_t>(param, b.width());
     b.cur.set_x(param - 1);
     return true;
   }
 
   bool do_vpa(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
       if (s.get_mode(mode_zdm))
@@ -1072,9 +1072,9 @@ namespace ansi {
 
     board_t& b = term.board();
     if (s.get_mode(mode_decom))
-      param = std::min<csi_single_param_t>(param + term.tmargin(), term.bmargin());
+      param = std::min<csi_param_t>(param + term.tmargin(), term.bmargin());
     else
-      param = std::min<csi_single_param_t>(param, b.height());
+      param = std::min<csi_param_t>(param, b.height());
 
     b.cur.adjust_xenl();
     b.cur.set_y(param - 1);
@@ -1135,7 +1135,7 @@ namespace ansi {
 
   static bool do_scroll(term_t& term, csi_parameters& params, do_cux_direction direction, bool dcsm = false) {
     tstate_t& s = term.state();
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
       if (s.get_mode(mode_zdm))
@@ -1331,7 +1331,7 @@ namespace ansi {
   // SGR and other graphics
 
   static void do_sgr_iso8613_colors(board_t& b, csi_parameters& params, int type) {
-    csi_single_param_t param2;
+    csi_param_t param2;
     params.read_arg(param2, true, 0);
     int colorSpace = color_space_fromsgr(param2);
 
@@ -1357,7 +1357,7 @@ namespace ansi {
         color = 0;
 
         int const ncomp = colorSpace == color_space_cmyk ? 4 : 3;
-        csi_single_param_t comp;
+        csi_param_t comp;
         for (int i = 0; i < ncomp; i++) {
           params.read_arg(comp, true, 0);
           if (comp > 255) comp = 255;
@@ -1401,7 +1401,7 @@ namespace ansi {
     }
   }
 
-  static void do_sgr_parameter(term_t& term, csi_single_param_t param, csi_parameters& rest) {
+  static void do_sgr_parameter(term_t& term, csi_param_t param, csi_parameters& rest) {
     board_t& b = term.board();
     if (30 <= param && param < 40) {
       if (param < 38) {
@@ -1530,7 +1530,7 @@ namespace ansi {
 
     term.gc(contra_ansi_term_abuild_gc_threshold);
 
-    csi_single_param_t value;
+    csi_param_t value;
     while (params.read_param(value, 0))
       do_sgr_parameter(term, value, params);
 
@@ -1538,7 +1538,7 @@ namespace ansi {
   }
 
   bool do_sco(term_t& term, csi_parameters& params) {
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 0);
     if (param > 7) return false;
 
@@ -1558,7 +1558,7 @@ namespace ansi {
   }
 
   bool do_decsca(term_t& term, csi_parameters& params) {
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 0);
     if (param > 2) return false;
 
@@ -1604,7 +1604,7 @@ namespace ansi {
 
   bool do_ech(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
       if (s.get_mode(mode_zdm))
@@ -1679,7 +1679,7 @@ namespace ansi {
 
   bool do_ich(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
       if (s.get_mode(mode_zdm))
@@ -1694,7 +1694,7 @@ namespace ansi {
 
   bool do_dch(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
       if (s.get_mode(mode_zdm))
@@ -1710,7 +1710,7 @@ namespace ansi {
   //---------------------------------------------------------------------------
   // EL, IL, DL
 
-  static void do_el(term_t& term, line_t& line, csi_single_param_t param, attr_t const& fill_attr) {
+  static void do_el(term_t& term, line_t& line, csi_param_t param, attr_t const& fill_attr) {
     board_t& b = term.board();
     tstate_t& s = term.state();
     if (param != 0 && param != 1) {
@@ -1744,13 +1744,13 @@ namespace ansi {
   }
 
   bool do_el(term_t& term, csi_parameters& params) {
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 0);
     do_el(term, term.board().line(), param, term.fill_attr());
     return true;
   }
 
-  void do_ed(term_t& term, csi_single_param_t param) {
+  void do_ed(term_t& term, csi_param_t param) {
     tstate_t& s = term.state();
     board_t& b = term.board();
     attr_t const fill_attr = term.fill_attr();
@@ -1778,7 +1778,7 @@ namespace ansi {
     }
   }
   bool do_ed(term_t& term, csi_parameters& params) {
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 0);
     do_ed(term, param);
     return true;
@@ -1832,7 +1832,7 @@ namespace ansi {
 
   bool do_il(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
       if (s.get_mode(mode_zdm))
@@ -1846,7 +1846,7 @@ namespace ansi {
 
   bool do_dl(term_t& term, csi_parameters& params) {
     tstate_t& s = term.state();
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 1);
     if (param == 0) {
       if (s.get_mode(mode_zdm))
@@ -1863,7 +1863,7 @@ namespace ansi {
 
   // CSI SP q: DECSCUSR
   bool do_decscusr(term_t& term, csi_parameters& params) {
-    csi_single_param_t spec;
+    csi_param_t spec;
     params.read_param(spec, 0);
     tstate_t& s = term.state();
     auto _set = [&s] (bool blink, int shape) {
@@ -1939,7 +1939,7 @@ namespace ansi {
   int do_rqm_ContraTildeFkeys(term_t& term) { return do_rqm_funckey_mode(term, funckey_contra  ); }
 
   bool do_XtermSetModFkeys(term_t& term, csi_parameters& params) {
-    csi_single_param_t category, value;
+    csi_param_t category, value;
     params.read_param(category, 9900);
     params.read_param(value, 2); // contra 既定値
     if (value > 3) return false;
@@ -1956,7 +1956,7 @@ namespace ansi {
     return false;
   }
   bool do_XtermSetModFkeys0(term_t& term, csi_parameters& params) {
-    csi_single_param_t category;
+    csi_param_t category;
     params.read_param(category, 9900);
     auto& s = term.state();
     if (category <= 5) {
@@ -2018,7 +2018,7 @@ namespace ansi {
     term.state().set_mode(mode_s7c1t, false);
   }
   bool do_decscl(term_t& term, csi_parameters& params) {
-    csi_single_param_t param, s7c1t;
+    csi_param_t param, s7c1t;
     params.read_param(param, 0);
     params.read_param(s7c1t, 0);
     if (param == 0) param = 65;
@@ -2028,7 +2028,7 @@ namespace ansi {
     return true;
   }
   bool do_da1(term_t& term, csi_parameters& params) {
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 0);
     if (param != 0) return false;
 
@@ -2042,7 +2042,7 @@ namespace ansi {
     return true;
   }
   bool do_da2(term_t& term, csi_parameters& params) {
-    csi_single_param_t param;
+    csi_param_t param;
     params.read_param(param, 0);
     if (param != 0) return false;
 
@@ -2205,40 +2205,6 @@ namespace ansi {
 
   static control_function_dictionary cfunc_dict;
 
-  static bool process_private_control_sequence(term_t& term, sequence const& seq) {
-    char32_t const* param = seq.parameter();
-    std::size_t const len = seq.parameter_size();
-    if (len > 0) {
-      if (param[0] == '?') {
-        // CSI ? ... Ft の形式
-        csi_parameters params(param + 1, len - 1);
-        if (!params) return false;
-
-        if (seq.intermediate_size() == 0) {
-          switch (seq.final()) {
-          case ascii_h: return do_decset(term, params);
-          case ascii_l: return do_decrst(term, params);
-          }
-        } else if (seq.intermediate_size() == 1) {
-          if (seq.intermediate()[0] == ascii_dollar && seq.final() == ascii_p)
-            return do_decrqm_dec(term, params);
-        }
-      } else if (param[0] == '>') {
-        csi_parameters params(param + 1, len - 1);
-        if (!params) return false;
-        if (seq.intermediate_size() == 0) {
-          switch (seq.final()) {
-          case ascii_c: return do_da2(term, params);
-          case ascii_m: return do_XtermSetModFkeys(term, params);
-          case ascii_n: return do_XtermSetModFkeys0(term, params);
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
   void term_t::print_unrecognized_sequence(sequence const& seq) {
     return; // 今は表示しない (後でロギングの枠組みを整理する)
 
@@ -2273,40 +2239,82 @@ namespace ansi {
     mwg_assert(b.cur.is_sane(b.width()));
 #endif
 
-    if (seq.is_private_csi()) {
-      if (!process_private_control_sequence(*this, seq))
-        print_unrecognized_sequence(seq);
-
-#ifndef NDEBUG
-      mwg_assert(b.cur.is_sane(b.width()),
-        "cur: {x=%d, xenl=%d, width=%d} after CSI %c %c",
-        b.cur.x(), b.cur.xenl(), b.width(), seq.parameter()[0], seq.final());
-#endif
-      return;
-    }
-
     auto& params = this->w_csiparams;
     params.initialize(seq);
     if (!params) {
+      switch (params.result_code()) {
+      default:
+      case csi_parameters::parse_invalid:
+        std::fprintf(stderr, "invalid value of CSI parameter values.\n");
+        break;
+      case csi_parameters::parse_overflow:
+        std::fprintf(stderr, "a CSI parameter value is too large.\n");
+        break;
+      }
       print_unrecognized_sequence(seq);
       return;
     }
 
     bool result = false;
-    std::int32_t const intermediate_size = seq.intermediate_size();
-    if (intermediate_size == 0) {
-      if (seq.final() == ascii_m)
-        result = do_sgr(*this, params);
-      else if (control_function_t* const f = cfunc_dict.get(seq.final()))
-        result = f(*this, params);
-    } else if (intermediate_size == 1) {
-      mwg_assert(seq.intermediate()[0] <= 0xFF);
-      if (control_function_t* const f = cfunc_dict.get((byte) seq.intermediate()[0], seq.final()))
-        result = f(*this, params);
+    switch (params.private_prefix_count()) {
+    case 0:
+      switch (seq.intermediate_size()) {
+      case 0:
+        // CSI ... Ft の形式
+        if (seq.final() == ascii_m)
+          result = do_sgr(*this, params);
+        else if (control_function_t* const f = cfunc_dict.get(seq.final()))
+          result = f(*this, params);
+        break;
+
+      case 1:
+        // CSI ... I Ft の形式
+        mwg_assert(seq.intermediate()[0] <= 0xFF);
+        if (control_function_t* const f = cfunc_dict.get((byte) seq.intermediate()[0], seq.final()))
+          result = f(*this, params);
+        break;
+      }
+      break;
+
+    case 1: // Private parameter byte
+      switch (seq.parameter()[0]) {
+      case '?':
+        switch (seq.intermediate_size()) {
+        case 0:
+          // CSI ? ... Ft の形式
+          switch (seq.final()) {
+          case ascii_h: result = do_decset(*this, params); break;
+          case ascii_l: result = do_decrst(*this, params); break;
+          }
+          break;
+
+        case 1:
+          // CSI ? ... I Ft の形式
+          if (seq.intermediate()[0] == ascii_dollar && seq.final() == ascii_p)
+            result = do_decrqm_dec(*this, params);
+          break;
+        }
+        break;
+
+      case '>':
+        if (seq.intermediate_size() == 0) {
+          // CSI > ... Ft の形式
+          switch (seq.final()) {
+          case ascii_c: result = do_da2(*this, params); break;
+          case ascii_m: result = do_XtermSetModFkeys(*this, params); break;
+          case ascii_n: result = do_XtermSetModFkeys0(*this, params); break;
+          }
+        }
+        break;
+      }
+      break;
     }
+
+#ifndef NDEBUG
     mwg_assert(b.cur.is_sane(b.width()),
-      "cur: {x=%d, xenl=%d, width=%d} after CSI %c",
-      b.cur.x(), b.cur.xenl(), b.width(), seq.final());
+      "cur: {x=%d, xenl=%d, width=%d} after CSI %c %c",
+      b.cur.x(), b.cur.xenl(), b.width(), seq.parameter()[0], seq.final());
+#endif
 
     if (!result)
       print_unrecognized_sequence(seq);

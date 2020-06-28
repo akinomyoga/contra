@@ -10,6 +10,7 @@
 #include <numeric>
 #include <fstream>
 #include <unordered_map>
+#include <limits>
 #include <mwg/except.h>
 #include "enc.utf8.hpp"
 #include "iso2022.hpp"
@@ -66,6 +67,7 @@ namespace contra {
     std::int32_t parameter_size() const {
       return m_intermediateStart < 0 ? m_content.size() : m_intermediateStart;
     }
+    char32_t const* parameter_end() const { return &m_content[parameter_size()]; }
     char32_t const* intermediate() const {
       return m_intermediateStart < 0 ? nullptr : &m_content[m_intermediateStart];
     }
@@ -828,70 +830,88 @@ namespace contra {
   //---------------------------------------------------------------------------
   // CSI parameters
 
-  typedef std::uint32_t csi_single_param_t;
-
-  class csi_parameters;
-
-  struct csi_param_type {
-    csi_single_param_t value;
-    bool isColon;
-    bool isDefault;
-  };
+  typedef std::uint32_t csi_param_t;
 
   class csi_parameters {
-    std::vector<csi_param_type> m_data;
-    std::size_t m_index {0};
-    bool m_result;
+    struct csi_param_holder {
+      csi_param_t value;
+      bool isColon;
+      bool isDefault;
+    };
+
+    std::vector<csi_param_holder> m_data;
+    std::size_t m_private_prefix_count;
+    std::size_t m_index;
 
   public:
-    csi_parameters(char32_t const* s, std::size_t n) {
-      initialize();
-      read_parameters(s, n);
-    }
-    csi_parameters(sequence const& seq):
-      csi_parameters(seq.parameter(), seq.parameter_size()) {}
+    enum result_code_t {
+      parse_incomplete = -1,
+      parse_ok = 0,
+      parse_invalid = 1,
+      parse_overflow = 2,
+    };
+  private:
+    result_code_t m_result_code;
 
-    csi_parameters(): m_result(false) {}
-
+  public:
     void initialize() {
       m_data.clear();
       m_index = 0;
+      m_private_prefix_count = 0;
       m_isColonAppeared = false;
-      m_result = false;
+      m_result_code = parse_incomplete;
     }
-
-    void initialize(sequence const& seq) {
+    void initialize(char32_t const* begin, char32_t const* end) {
       initialize();
-      read_parameters(seq.parameter(), seq.parameter_size());
+      read_parameters(begin, end);
+    }
+    void initialize(char32_t const* s, std::size_t n) { initialize(s, s + n); }
+    void initialize(sequence const& seq) { initialize(seq.parameter(), seq.parameter_end()); }
+
+    csi_parameters(): m_result_code(parse_incomplete) {}
+    template<typename... Args>
+    explicit csi_parameters(Args&&... args) {
+      this->initialize(std::forward<Args>(args)...);
     }
 
-    operator bool() const {return this->m_result;}
+    operator bool() const { return this->m_result_code == parse_ok; }
+    bool operator!() const { return !this->operator bool(); }
+    result_code_t result_code() const { return this->m_result_code; }
 
   public:
+    std::size_t private_prefix_count() const { return m_private_prefix_count; }
     std::size_t size() const {return m_data.size();}
-    void push_back(csi_param_type const& value) {m_data.push_back(value);}
+    void push_back(csi_param_holder const& value) {m_data.push_back(value);}
 
   private:
-    bool read_parameters(char32_t const* str, std::size_t len) {
+    bool read_parameters(char32_t const* begin, char32_t const* end) {
       bool isSet = false;
-      csi_param_type param {0, false, true};
-      for (std::size_t i = 0; i < len; i++) {
-        char32_t const c = str[i];
+      csi_param_holder param {0, false, true};
+
+      while (begin != end && ascii_less <= *begin && *begin <= ascii_question) {
+        begin++;
+        m_private_prefix_count++;
+      }
+
+      while (begin != end) {
+        char32_t const c = *begin++;
         if (!(ascii_0 <= c && c <= ascii_semicolon)) {
-          std::fprintf(stderr, "invalid value of CSI parameter values.\n");
+          m_result_code = parse_invalid;
           return false;
         }
 
         if (c <= ascii_9) {
-          std::uint32_t const newValue = param.value * 10 + (c - ascii_0);
-          if (newValue < param.value) {
-            // overflow
-            std::fprintf(stderr, "a CSI parameter value is too large.\n");
+          int const digit = c - ascii_0;
+
+          // overflow check
+          constexpr auto max_value = std::numeric_limits<csi_param_t>::max();
+          if (param.value > (max_value - digit) / 10) {
+            m_result_code = parse_overflow;
             return false;
           }
 
           isSet = true;
-          param.value = newValue;
+          param.value = param.value * 10 + digit;
           param.isDefault = false;
         } else {
           m_data.push_back(param);
@@ -903,15 +923,17 @@ namespace contra {
       }
 
       if (isSet) m_data.push_back(param);
-      return m_result = true;
+      m_result_code = parse_ok;
+      return true;
     }
 
-  public:
+  private:
     bool m_isColonAppeared;
 
-    bool read_param(csi_single_param_t& result, std::uint32_t defaultValue) {
+  public:
+    bool read_param(csi_param_t& result, std::uint32_t defaultValue) {
       while (m_index < m_data.size()) {
-        csi_param_type const& param = m_data[m_index++];
+        csi_param_holder const& param = m_data[m_index++];
         if (!param.isColon) {
           m_isColonAppeared = false;
           if (!param.isDefault)
@@ -925,11 +947,11 @@ namespace contra {
       return false;
     }
 
-    bool read_arg(csi_single_param_t& result, bool toAllowSemicolon, csi_single_param_t defaultValue) {
+    bool read_arg(csi_param_t& result, bool toAllowSemicolon, csi_param_t defaultValue) {
       if (m_index < m_data.size()
         && (m_data[m_index].isColon || (toAllowSemicolon && !m_isColonAppeared))
       ) {
-        csi_param_type const& param = m_data[m_index++];
+        csi_param_holder const& param = m_data[m_index++];
         if (param.isColon) m_isColonAppeared = true;
         if (!param.isDefault)
           result = param.value;
@@ -995,8 +1017,8 @@ namespace contra {
     int m_state = 0;
     sequence m_seq;
     bool has_pending_esc = false;
-    int m_paste_suffix = 0;
     std::u32string m_paste_data;
+    std::size_t m_paste_size;
   public:
     void decode(char32_t const* beg, char32_t const* end) {
       while (beg != end) decode_char(*beg++);
@@ -1051,42 +1073,43 @@ namespace contra {
           decode_char(u);
         }
         break;
+      decode_paste_default:
       case decode_paste_default:
-        m_paste_data += u;
         if (u == ascii_esc) {
+          m_paste_size = m_paste_data.size();
           m_state = decode_paste_esc;
-          m_paste_suffix = 1;
         } else if (u == ascii_csi) {
           m_state = decode_paste_csi;
-          m_paste_suffix = 1;
         }
+        m_paste_data += u;
         break;
       case decode_paste_esc:
+        if (u != ascii_left_bracket) goto decode_paste_default;
         m_paste_data += u;
-        m_state = u == ascii_left_bracket ? decode_paste_csi : decode_paste_default;
-        m_paste_suffix++;
+        m_state = decode_paste_csi;
         break;
-      case decode_paste_csi:
+      case decode_paste_csi: // matches against /\e[0*201~/
+        if (u != ascii_2 && u != ascii_0) goto decode_paste_default;
         m_paste_data += u;
-        m_state = u == ascii_2 ? decode_paste_csi2 : decode_paste_default;
-        m_paste_suffix++;
+        if (u == ascii_2)
+          m_state = decode_paste_csi2;
         break;
       case decode_paste_csi2:
+        if (u != ascii_0) goto decode_paste_default;
         m_paste_data += u;
-        m_state = u == ascii_0 ? decode_paste_csi20 : decode_paste_default;
-        m_paste_suffix++;
+        m_state = decode_paste_csi20;
         break;
       case decode_paste_csi20:
+        if (u != ascii_1) goto decode_paste_default;
         m_paste_data += u;
-        m_state = u == ascii_1 ? decode_paste_csi201 : decode_paste_default;
-        m_paste_suffix++;
+        m_state = decode_paste_csi201;
         break;
       case decode_paste_csi201:
+        if (u != ascii_tilde) goto decode_paste_default;
         m_paste_data += u;
-        m_state = u == ascii_1 ? decode_paste_csi201 : decode_paste_default;
-        m_paste_suffix++;
+        m_state = decode_default;
         if (u == ascii_tilde) {
-          m_paste_data.erase(m_paste_data.end() - m_paste_suffix, m_paste_data.end());
+          m_paste_data.erase(m_paste_data.begin() + m_paste_size, m_paste_data.end());
           process_input_data(input_data_paste, m_paste_data);
         }
         break;
@@ -1136,16 +1159,20 @@ namespace contra {
         m_proc->process_control_sequence(m_seq);
     }
 
+    csi_parameters m_params;
     bool process_csi_key() {
-      csi_parameters params(m_seq);
-      if (!params) return false;
+      m_params.initialize(m_seq);
+      bool const accept = m_params && (
+        m_params.private_prefix_count() == 0 ||
+        m_params.private_prefix_count() == 1 && m_seq.parameter()[0] == '>');
+      if (!accept) return false;
 
       key_t key = 0;
       switch (m_seq.final()) {
       case ascii_tilde:
         {
-          csi_single_param_t param1;
-          params.read_param(param1, 0);
+          csi_param_t param1;
+          m_params.read_param(param1, 0);
 
           switch (param1) {
           case 1: key = key_home; goto modified_key;
@@ -1214,7 +1241,7 @@ namespace contra {
       case ascii_X: key = key_kpeq; goto modified_alpha;
 
       paste_begin:
-        if (params.size() == 1) {
+        if (m_params.size() == 1) {
           m_state = decode_paste_default;
           m_paste_data.clear();
           return true;
@@ -1222,9 +1249,9 @@ namespace contra {
         break;
       modified_code:
         {
-          csi_single_param_t param2, param3;
-          params.read_param(param2, 0);
-          params.read_param(param3, 0);
+          csi_param_t param2, param3;
+          m_params.read_param(param2, 0);
+          m_params.read_param(param3, 0);
           key = param3 & _character_mask;
           if (param2)
             key |= (param2 - 1) << _modifier_shft & _modifier_mask;
@@ -1233,22 +1260,22 @@ namespace contra {
         }
       modified_unicode:
         {
-          csi_single_param_t param1;
-          params.read_param(param1, 1);
+          csi_param_t param1;
+          m_params.read_param(param1, 1);
           if (param1 != 1) key = param1 & _character_mask;
           goto modified_key;
         }
       modified_alpha:
         {
-          csi_single_param_t param1;
-          params.read_param(param1, 1);
+          csi_param_t param1;
+          m_params.read_param(param1, 1);
           if (param1 == 1) goto modified_key;
           break;
         }
       modified_key:
         {
-          csi_single_param_t param2;
-          params.read_param(param2, 0);
+          csi_param_t param2;
+          m_params.read_param(param2, 0);
           if (param2)
             key |= (param2 - 1) << _modifier_shft & _modifier_mask;
           process_key(key);
