@@ -54,10 +54,17 @@
 <li>WY <a href="#term.WY">Wyse WY-60</a></li>
 <li>SGI <a href="#term.SGI">SGI IRIX xwsh</a></li>
 <li>AIX <a href="#term.AIX">IBM AIX aixterm</a></li>
+<li>CDE <a href="#term.CDE">CDE dtterm</a></li>
 <li>SUN <a href="#term.SUN">Sun SunOS wscons (7D)</a></li>
 <li>DEC <a href="#term.DEC">DEC 関連 at VT100.net</a></li>
 <li>SCO <a href="#term.SCO">SCO OpenServer 5.0.6 screen(HW)</a></li>
 <li>CIT <a href="#term.CIT">C.Itoh CIT-101</a></li>
+</ul>
+
+<p>以下に HPTerm の情報が載っている。他は既に既知の情報である。</p>
+<ul>
+<li><a href="http://tldp.org/HOWTO/Xterm-Title-6.html">How to change the title of an xterm: Appendix: escapes for other terminal types</a></li>
+<li>他に espterm, iTerm2, konsole, NetTerm 等は確認しておくべき気がする。</li>
 </ul>
 
 <h2 id="term.ZDS">Heath/Zenith Z-19-CN</h2>
@@ -1219,7 +1226,7 @@
   <li>?25   VT100 text cursor enable.  When set, the text cursor is</li>
   </ul>
 </li>
-<li><kbd>CSI <i>Pv</i> n</kbd> Device status report.  Legal values for the parameter are:
+<li><kbd>CSI <i>Pv</i> n</kbd> DSR Device status report.  Legal values for the parameter are:
   <ul>
   <li><i class="kbd">Pv</i> = 5, 6 は普通</li>
   <li>100 the text color</li>
@@ -1431,7 +1438,10 @@
 <li><kbd>CSI ? <i>Ps</i> T</kbd> _AIXXGS★ (XGS<sup>AIX</sup>) Go To Column Of Status Line</li>
 <li><kbd>CSI ? <i>Ps</i>;...;<i>Ps</i> r</kbd> _AIXRM★ Restore Private Mode</li>
 <li><kbd>CSI ? <i>Ps</i>;...;<i>Ps</i> s</kbd> _AIXSM★ Save Private Mode</li>
-<li><kbd>OSC <i>Ps</i> ; <i>Pt</i> BEL</kbd> _AIXXST★ (XST<sup>AIX</sup>) Set Text Parameters
+<li><kbd>OSC <i>Ps</i> ; <i>Pt</i> BEL</kbd> _CDEChangeIconNameAndWindowTitle (XST<sup>AIX</sup>) Set Text Parameters
+  <p>XTerm を模倣したと書かれているが、
+    XTerm のマニュアルには CDE dtterm が拡張したという事になっている。
+  </p>
   <ul>
   <li>0 ウィンドウ名とタイトルを <i class="kbd">Pt</i> に変更</li>
   <li>1 アイコン名だけを設定</li>
@@ -1441,7 +1451,58 @@
 </li>
 </ul>
 
-<h2 id="term.SUN">Sun SunOS wscons (7D)</h2>
+<h2 id="term.CDE">CDE dtterm</h2>
+<ul>
+<li><a href="http://www2.phys.canterbury.ac.nz/dept/docs/manuals/unix/DEC_5.0a_Docs/HTML/MAN/MAN1/0592____.HTM">dtterm(1)</a> Manual</li>
+<li><a href="http://www2.phys.canterbury.ac.nz/dept/docs/manuals/unix/DEC_5.0a_Docs/HTML/MAN/MAN5/0036____.HTM">dtterm(5)</a> Escape sequences</li>
+</ul>
+<ul>
+<li><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> t</kbd> _SUNWINM: Window manipulation</li>
+<li><kbd>CSI <i>Ps</i> x</kbd> DECREQTPARM: Request terminal modes</li>
+<li>ANSI モードで対応しているのは 2,4,12,20</li>
+<li>DEC Modes は xterm の ?40,?44,?45,?46 を実装している。実はどちらが先かは分からない。</li>
+<li>DSR で対応しているのは 5,6</li>
+<li>SGR で対応しているのは 0,1,2,4,5,7,8,22,24,27,28,30-39,40-49</li>
+<li><kbd>OSC 0 ; ... BEL</kbd> _CDEChangeIconNameAndWindowTitle★</li>
+<li><kbd>OSC 1 ; ... BEL</kbd> _CDEChangeIconName★</li>
+<li><kbd>OSC 2 ; ... BEL</kbd> _CDEChangeWindowTitle★
+  <p>XTerm のマニュアルによるとこれらを最初に追加したのは CDE dtterm である様に読める。</p>
+</li>
+<li><kbd>OSC 3 ; ... BEL</kbd> _CDESetCurrentWorkingDirectory★ Set the current working directory for the new sessions</li>
+<li><kbd>OSC l ... ST</kbd> _SUNSetWindowTitle</li>
+<li><kbd>OSC I ... ST</kbd> _SUNSetIconFile</li>
+<li><kbd>OSC L ... ST</kbd> _SUNSetIconLabel
+  <p>XTerm のマニュアルによるとこれらを最初に実装したのは Sun の shelltools らしい。</p>
+</li>
+</ul>
+
+<h2 id="term.SUN">Sun SunOS</h2>
+
+<h3>SUN SunView (SunOS 3.0, 1986) shelltool</h3>
+<ul>
+<li><a href="https://www.opennet.ru/man.shtml?topic=shelltool&amp;category=1&amp;russian=4">Проект OpenNet: MAN shelltool (1) Команды и прикладные программы пользовательского уровня (FreeBSD и Linux)</a></li>
+<li><a href="https://www.unix.com/man-page/sunos/1/shelltool/">shelltool(1) [sunos man page]</a></li>
+</ul>
+<p>XTerm のマニュアルに以下は SUN によって導入されたらしき記述がある。</p>
+<ul>
+<li><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> t</kbd> _SUNWINM★ Window manipulation</li>
+<li><kbd>OSC l ... ST</kbd> _SUNSetWindowTitle★</li>
+<li><kbd>OSC I ... ST</kbd> _SUNSetIconFile★</li>
+<li><kbd>OSC L ... ST</kbd> _SUNSetIconLabel★</li>
+</ul>
+<p>他に以下の物が確認できる。</p>
+<ul>
+<li><kbd>CSI &gt; <i>Ps </i>h</kbd> SM</li>
+<li><kbd>CSI &gt; <i>Ps </i>k</kbd> _SUNRQM★ Report mode</li>
+<li><kbd>CSI &gt; <i>Ps </i>l</kbd> RM
+  <ul>
+  <li>Mode &gt;1 _SUNPGM★ pagemode</li>
+  <li>Mode &gt;3, &gt;4 ??? 唯の例示だろうか</li>
+  </ul>
+</li>
+</ul>
+
+<h3>Sun SunOS wscons (7D)</h3>
 <ul>
 <li>SumOS 5.8 <a href="https://docs.oracle.com/cd/E19109-01/tsolaris8/816-1060/6m7glrk90/index.html">wscons(7D)</a></li>
 <li>Solaris 11.2 <a href="https://docs.oracle.com/cd/E36784_01/html/E36884/wscons-7d.html">wscons - man pages section 7: Device and Network Interfaces</a></li>
