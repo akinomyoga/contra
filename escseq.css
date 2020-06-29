@@ -16,6 +16,11 @@ kbd>i:before { content: '<'; }
 i.kbd:after,
 kbd>i:after { content: '>'; }
 
+code {
+  font-family: monospace;
+  padding: 2px 4px; background-color: #eee; border-radius: 3px;
+}
+
 table.normal>*>tr>th{background-color:#eee;}
 table.normal>*>tr>th.markB{background-color:#fee;}
 table.normal>*>tr>th.markC{background-color:#efe;}
