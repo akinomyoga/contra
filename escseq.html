@@ -77,6 +77,7 @@
   XTerm の無名の制御機能に対して
   mlterm/en/doc/ControlSequences で与えられている名称である。
 </li>
+<li>略号の右肩に <sup>*tg</sup> を付した物は、terminalguide による情報。</li>
 </ul>
 
 <h3>関連する標準規格</h3>
@@ -977,10 +978,10 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th><i>Ft</i></th><th>略号</th></tr>
 <tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, _DOSSKR, _ZDSPXMT, RLBFAT</td></tr>
 <tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA, _DOSEKR, _ZDSPX25</td></tr>
-<tr><th><kbd>r</kbd></th><td>DECSTBM, DECPCTERM, _SCOCSR, SUNSCRL, _ZDSPMBR</td></tr>
-<tr><th><kbd>s</kbd></th><td>DECSLRM, SCOSC, WYSC, _DGRRC, SUNRESET</td></tr>
-<tr><th><kbd>t</kbd></th><td>DECSLPP, WYNNAT, DGROSC, _CITSTIME</td></tr>
-<tr><th><kbd>u</kbd></th><td>DECSHTS, SCORC, WYRC, _DGSPOS, _CITSSR</td></tr>
+<tr><th><kbd>r</kbd></th><td><b>DECSTBM</b>, DECPCTERM, _SCOCSR, SUNSCRL, _ZDSPMBR</td></tr>
+<tr><th><kbd>s</kbd></th><td><b>DECSLRM</b>, <b>SCOSC</b>, WYSC, _DGRRC, SUNRESET</td></tr>
+<tr><th><kbd>t</kbd></th><td>DECSLPP, WYNNAT, DGROSC, _CITSTIME, <b>_SUNWINM</b></td></tr>
+<tr><th><kbd>u</kbd></th><td>DECSHTS, <b>SCORC</b>, WYRC, _DGSPOS, _CITSSR</td></tr>
 <tr><th><kbd>v</kbd></th><td>DECSVTS, RLSCD (_CITSCUR), _DGSPARM</td></tr>
 <tr><th><kbd>w</kbd></th><td>DECSHORP, _AIXVTR, DGMARG, _CITSCURB</td></tr>
 <tr><th><kbd>x</kbd></th><td>DECREQTPARM, DECREPTPARM, _AIXVTD, DGRTC, C25SGR</td></tr>
@@ -1454,7 +1455,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th><kbd>h</kbd></th>
     <td>_DGSM<sup>+</sup></td>
     <td>_SGISM<sup>+</sup><br/>_DOSSM<sup>+</sup></td>
-    <td>_DOSSM<sup>+</sup><br/>_CITSM<sup>+</sup><br/>_PC98SM<sup>+</sup><br/>_ZDSSM<sup>+</sup></td>
+    <td>_DOSSM<sup>+</sup><br/>_CITSM<sup>+</sup><br/>_PC98SM<sup>+</sup><br/>_ZDSSM<sup>+</sup><br/>_SUNSM<sup>+</sup></td>
     <td>DECSET<sup>+</sup></td>
 </tr>
 <tr><th><kbd>i</kbd></th>
@@ -1463,10 +1464,16 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>DECMC<sup>+</sup></td>
 </tr>
+<tr><th><kbd>k</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>_SUNRQM</td>
+    <td>-</td>
+</tr>
 <tr><th><kbd>l</kbd></th>
     <td>_DGRM<sup>+</sup></td>
     <td>_SCOCHC<br/>_SGIRM<sup>+</sup><br/>_DOSRM<sup>+</sup></td>
-    <td>_DOSRM<sup>+</sup><br/>_CITRM<sup>+</sup><br/>_PC98RM<sup>+</sup><br/>_ZDSRM<sup>+</sup></td>
+    <td>_DOSRM<sup>+</sup><br/>_CITRM<sup>+</sup><br/>_PC98RM<sup>+</sup><br/>_ZDSRM<sup>+</sup><br/>_SUNRM<sup>+</sup></td>
     <td>DECRST<sup>+</sup></td>
 </tr>
 <tr><th><kbd>m</kbd></th>
@@ -1684,8 +1691,9 @@ tmux=screen
 <table class="normal center">
 <tr><th>開始</th><th>種類</th><th>符号化表現</th><th>名前</th></tr>
 <tr><th>OSC</th><td>コマンド列</td>
-    <td><kbd>OSC <i>Ps</i> ; <i>GL'<!--'--></i><strong>*</strong> BEL</kbd><br/>
-        <kbd>OSC <i>Ps</i> ; <i>GL'<!--'--></i><strong>*</strong> ST</kbd></td>
+    <td><kbd>OSC <i>Ps</i> ; <i>GL'<!--'--></i><strong>*</strong> ST</kbd><br/>
+        <kbd>OSC <i>Ps</i> ; <i>GL'<!--'--></i><strong>*</strong> BEL</kbd><br/>
+        <kbd>OSC <i>Ft</i> <i>GL'<!--'--></i><strong>*</strong> ST</kbd></td>
     <td>Operating System Command</td>
 </tr>
 <tr><th>DCS</th><td>コマンド列</td>
@@ -1724,18 +1732,81 @@ tmux=screen
   <p>OSC シーケンスはコマンド列の形式に従う。
   OSC は 01/11 05/13 (<kbd>ESC ]</kbd>) または 09/13 で表現される。
   ECMA-48 ではそれ以上は定められていないが、実際の実装では一番最初に数字の引数を取ることが多い。
-  <i class="kbd">N</i> は [0-9] の文字を表す。
-  <i class="kbd">N</i><strong>*</strong> はコマンドの種類を指定する番号である。
-  後に続く <strong>.*</strong> の部分は、コマンドの引数として与える文字列である。
-  本来 ST で終端するはずだが BEL で終端することもある。
+  一方で、XTerm に於いて <kbd><i>Ft</i></kbd> を最初に取る場合も確認できる。
+  </p>
+  <p>本来 ST で終端するはずだが BEL で終端することもある。
+    aixterm の <kbd>OSC(0-2)</kbd> は <kbd>ST</kbd> では終端せず、
+    中に DCS シーケンスを埋め込む事ができる。
   </p>
   <table class="normal contra-cell-centered">
   <caption>OSC コード一覧</caption>
+  <tr><th><i class="kbd">Ft</i></th><th>略号</th></tr>
+  <tr><td><kbd>l</kbd></td><td>_SUNSetWindowTitle<br/>_CDEReportWindowTitle (<kbd>_SUNWINM(21)</kbd> への応答)</td></tr>
+  <tr><td><kbd>I</kbd></td><td>_SUNSetIconFile</td></tr>
+  <tr><td><kbd>L</kbd></td><td>_SUNSetIconLabel<br/>_CDEReportIconLabel (<kbd>_SUNWINM(20)</kbd> への応答)</td></tr>
   <tr><th><i class="kbd">Ps</i></th><th>略号</th></tr>
-  <tr><td>0</td>   <td>_AIXXST</td></tr>
-  <tr><td>1</td>   <td>_AIXXST</td></tr>
-  <tr><td>2</td>   <td>_AIXXST</td></tr>
-  <tr><td>(ToDo)</td><td>(たくさん)</td></tr>
+  <tr><td>0</td>   <td>_CDEChangeIconNameAndWindowTitle</td></tr>
+  <tr><td>1</td>   <td>_CDEChangeIconName</td></tr>
+  <tr><td>2</td>   <td>_CDEChangeWindowTitle</td></tr>
+  <tr><td>3</td>   <td>_CDESetCurrentWorkingDirectory<br/>XTSetXProperty</td></tr>
+  <tr><td>4</td>   <td>ChangeColor</td></tr>
+  <tr><td>5</td>   <td>ChangeSpecialColor</td></tr>
+  <tr><td>6</td>   <td>EnableSpecialColor<br/>(VTE) CurrentFile<sup>*tg</sup></td></tr>
+  <tr><td>7</td>   <td>(iTerm2) SetWorkingDirectory</td></tr>
+  <tr><td>8</td>   <td>(iTerm2, VTE) Hyperlink</td></tr>
+  <tr><td>9</td>   <td>(iTerm2, espterm) UserNotification</td></tr>
+  <tr><td>10</td>  <td>ChangeVT100TextForegroundColor</td></tr>
+  <tr><td>11</td>  <td>ChangeVT100TextBackgroundColor</td></tr>
+  <tr><td>12</td>  <td>ChangeTextCursorColor</td></tr>
+  <tr><td>13</td>  <td>ChangeMouseForegroundColor</td></tr>
+  <tr><td>14</td>  <td>ChangeMouseBackgroundColor</td></tr>
+  <tr><td>15</td>  <td>ChangeTektronixForegroundColor</td></tr>
+  <tr><td>16</td>  <td>ChangeTektronixBackgroundColor</td></tr>
+  <tr><td>17</td>  <td>ChangeHighlightBackgroundColor</td></tr>
+  <tr><td>18</td>  <td>ChangeTektronixCursorColor</td></tr>
+  <tr><td>19</td>  <td>ChangeHighlightForegroundColor</td></tr>
+  <tr><td>27</td>  <td>(espterm) SetBackgroundImage,SetButtonNumber<sup>*tg</sup></td></tr>
+  <tr><td>28</td>  <td>(espterm) SetButtonLabel<sup>*tg</sup></td></tr>
+  <tr><td>29</td>  <td>(espterm) SetButtonMessage<sup>*tg</sup></td></tr>
+  <tr><td>30</td>  <td>(konsole) SetSessionName<sup>*tg</sup></td></tr>
+  <tr><td>31</td>  <td>(konsole comment) OpenUrl<sup>*tg</sup></td></tr>
+  <tr><td>32</td>  <td>(konsole) SetSessionIcon<sup>*tg</sup></td></tr>
+  <tr><td>39</td>  <td>(urxvt) ChangeVT100TextForegroundColor<sup>*tg</sup></td></tr>
+  <tr><td>46</td>  <td>ChangeLogFile</td></tr>
+  <tr><td>50</td>  <td>SetFont<br/>(iTerm2Extension)<sup>deprecated</sup></td></tr>
+  <tr><td>51</td>  <td>(Reserved for Emacs shell)</td></tr>
+  <tr><td>52</td>  <td>ManipulateSelectionData</td></tr>
+  <tr><td>55</td>  <td>(urxvt comment) DumpScreen<sup>*tg</sup></td></tr>
+  <tr><td>104</td> <td>ResetColor</td></tr>
+  <tr><td>105</td> <td>ResetSpecialColor</td></tr>
+  <tr><td>106</td> <td>EnableSpecialColorNumber</td></tr>
+  <tr><td>110</td> <td>ResetVT100TextForegroundColor.</td></tr>
+  <tr><td>111</td> <td>ResetVT100TextBackgroundColor.</td></tr>
+  <tr><td>112</td> <td>ResetTextCursorColor.</td></tr>
+  <tr><td>113</td> <td>ResetMouseForegroundColor.</td></tr>
+  <tr><td>114</td> <td>ResetMouseBackgroundColor.</td></tr>
+  <tr><td>115</td> <td>ResetTektronixForegroundColor.</td></tr>
+  <tr><td>116</td> <td>ResetTektronixBackgroundColor.</td></tr>
+  <tr><td>117</td> <td>ResetHighlightColor.</td></tr>
+  <tr><td>118</td> <td>ResetTektronixCursorColor.</td></tr>
+  <tr><td>119</td> <td>ResetHighlightForegroundColor.</td></tr>
+  <tr><td>133</td> <td>(FinalTerm) Extension</td></tr>
+  <tr><td>701</td> <td>(urxvt) Override Terminal Locale<sup>*tg</sup></td></tr>
+  <tr><td>702</td> <td>(urxvt) Report Terminal Version<sup>*tg</sup></td></tr>
+  <tr><td>704</td> <td>(urxvt) Set Replacement Color For Italic Text<sup>*tg</sup></td></tr>
+  <tr><td>706</td> <td>(urxvt) Set Replacement Color For Bold Text<sup>*tg</sup></td></tr>
+  <tr><td>707</td> <td>(urxvt) Set Replacement Color For Underlined Text<sup>*tg</sup></td></tr>
+  <tr><td>708</td> <td>(urxvt) Set Terminal Border Color<sup>*tg</sup></td></tr>
+  <tr><td>710</td> <td>(urxvt) Set Base Font<sup>*tg</sup></td></tr>
+  <tr><td>711</td> <td>(urxvt) Set Bold Font<sup>*tg</sup></td></tr>
+  <tr><td>712</td> <td>(urxvt) Set Italic Font<sup>*tg</sup></td></tr>
+  <tr><td>713</td> <td>(urxvt) Set Bold Italic Font<sup>*tg</sup></td></tr>
+  <tr><td>720</td> <td>(urxvt) MoveToScrollBackTop<sup>*tg</sup></td></tr>
+  <tr><td>721</td> <td>(urxvt) MoveToCurrentActiveBuffer<sup>*tg</sup></td></tr>
+  <tr><td>777</td> <td>(urxvt) <sup>*tg</sup></td></tr>
+  <tr><td>800</td> <td>(RLogin) 漢字コード</td></tr>
+  <tr><td>801</td> <td>(RLogin) 音声読み上げ</td></tr>
+  <tr><td>1337</td><td>(iTerm2) Extension</td></tr>
   <tr><td>8900</td><td>GWREPT<sup>yaft</sup></td></tr>
   </table>
 </li>
@@ -1844,14 +1915,14 @@ tmux=screen
 <tr><th>DECRPM</th> <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> $ y</kbd><br/><kbd>CSI ? <i>Ps</i> ; <i>Ps</i> $ y</kbd></td><td>(応答)</td></tr>
 </table>
 <ul>
-<li><dfn class="cfunc">SM</dfn>: SET MODE <kbd>CSI <i>Pm</i> h</kbd>
+<li><dfn class="cfunc">SM</dfn> <kbd>CSI <i>Pm</i> h</kbd>: SET MODE
   <p>番号で指定されたモードを有効にする。</p>
   <ul>
   <li>互換性: [ECMA-48/8.3.125], vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT510: SM</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">RM</dfn>: RESET MODE <kbd>CSI <i>Pm</i> l</kbd>
+<li><dfn class="cfunc">RM</dfn> <kbd>CSI <i>Pm</i> l</kbd>: RESET MODE
   <p>番号で指定されたモードを無効にする。</p>
   <ul>
   <li>互換性: [ECMA-48/8.3.106], vt100, xterm</li>
@@ -1863,22 +1934,20 @@ tmux=screen
   を用いて private モードを実装しても良い。
   例えば以下の DECSET, DECRST は ? で始まる引数による SM, RM の private モードである。
 </li>
-<li><dfn class="cfunc">DECSET</dfn>: Set DEC Mode <kbd>CSI ? <i>Pm</i> h</kbd>
+<li><dfn class="cfunc">DECSET</dfn> <kbd>CSI ? <i>Pm</i> h</kbd>: Set DEC Mode
   <ul>
   <li>互換性: vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/SM">VT510: SM</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECRST</dfn>: Reset DEC Mode <kbd>CSI ? <i>Pm</i> l</kbd>
+<li><dfn class="cfunc">DECRST</dfn> <kbd>CSI ? <i>Pm</i> l</kbd>: Reset DEC Mode
   <ul>
   <li>互換性: vt100, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/RM">VT510: RM</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECRQM</dfn>: Request Mode
-  <kbd>CSI <i>Ps</i> $ p</kbd>, <kbd>CSI ? <i>Ps</i> $ p</kbd></li>
-<li><dfn class="cfunc">DECRPM</dfn>: Report Mode (応答)
-  <kbd>CSI <i>Ps</i> ; <i>Ps</i> $ y</kbd>, <kbd>CSI ? <i>Ps</i> ; <i>Ps</i> $ y</kbd>
+<li><dfn class="cfunc">DECRQM</dfn> <kbd>CSI <i>Ps</i> $ p</kbd>, <kbd>CSI ? <i>Ps</i> $ p</kbd>: Request Mode</li>
+<li><dfn class="cfunc">DECRPM</dfn> <kbd>CSI <i>Ps</i> ; <i>Ps</i> $ y</kbd>, <kbd>CSI ? <i>Ps</i> ; <i>Ps</i> $ y</kbd>: Report Mode (応答)
   <p>DECRQM で現在の状態を問い合わせる。
     一度に一つのモードについてのみ尋ねる事が可能である。
     端末から DECRPM によって現在の状態を応答する。
@@ -2160,7 +2229,7 @@ tmux=screen
 </tr>
 <tr><th>&lt;1</th><td>_DGBLKM</td>
     <th>=1  </th><td>_DOST40C3M </td>
-    <th>&gt;1</th><td>_ZDSL25<br/>_CITDSSSM</td>
+    <th>&gt;1</th><td>_ZDSL25<br/>_CITDSSSM<br/>_SUNPGM</td>
 </tr>
 <tr><th>&lt;2</th><td>_DGHSCM</td>
     <th>=2  </th><td>_DOST80C1M </td>
