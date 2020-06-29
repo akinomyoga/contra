@@ -1164,7 +1164,7 @@ namespace contra {
       m_params.initialize(m_seq);
       bool const accept = m_params && (
         m_params.private_prefix_count() == 0 ||
-        m_params.private_prefix_count() == 1 && m_seq.parameter()[0] == '>');
+        (m_params.private_prefix_count() == 1 && m_seq.parameter()[0] == '>'));
       if (!accept) return false;
 
       key_t key = 0;

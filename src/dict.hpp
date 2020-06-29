@@ -130,7 +130,7 @@ namespace dict {
   //-----------------------------------------------------------------------------
 
   struct tty_writer {
-    attr_table* m_atable;
+    attr_table* m_atable = nullptr;
 
     std::FILE* file;
 
@@ -142,9 +142,10 @@ namespace dict {
     attribute_t m_attribute = 0;
     bool sgr_isOpen;
 
-    tty_writer(attr_table* atable, std::FILE* file, termcap_sgr_type* sgrcap): m_atable(atable), file(file), sgrcap(sgrcap) {
+    tty_writer(std::FILE* file, termcap_sgr_type* sgrcap): file(file), sgrcap(sgrcap) {
       m_attr = 0;
     }
+    void set_atable(attr_table* atable) { this->m_atable = atable; }
 
   private:
     void sgr_clear() const {

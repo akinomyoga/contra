@@ -39,8 +39,7 @@ namespace contra::ttty {
       params.row = ws.ws_row;
       params.xunit = ws.ws_xpixel / ws.ws_col;
       params.yunit = ws.ws_ypixel / ws.ws_row;
-      params.termios = &screen.old_termios;
-
+      // params.termios = &screen.old_termios;
       // params.dbg_fd_tee = STDOUT_FILENO;
       // params.dbg_sequence_logfile = "ttty-allseq.txt";
     }
@@ -48,6 +47,8 @@ namespace contra::ttty {
       std::fprintf(stderr, "contra: failed to create the session");
       return false;
     }
+
+    screen.manager().set_prefix_key(modifier_control | ascii_a);
 
     // auto& app = screen.manager().app();
     // app.state().m_default_fg_space = contra::ansi::color_space_indexed;

@@ -485,7 +485,8 @@ void test_sgr() {
   sgrcap.initialize();
 
   contra::ansi::attr_table atable;
-  contra::dict::tty_writer w(&atable, stdout, &sgrcap);
+  contra::dict::tty_writer w(stdout, &sgrcap);
+  w.set_atable(&atable);
   w.print_screen(term.board());
 }
 

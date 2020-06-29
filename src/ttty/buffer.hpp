@@ -14,8 +14,6 @@ namespace ttty {
 
   struct tty_observer {
   private:
-    term_view_t* view;
-
     // 端末の状態追跡の為の変数
     frame_snapshot_t snapshot;
     std::vector<int> snapshot_delta;
@@ -35,11 +33,12 @@ namespace ttty {
     curpos_t remote_w = 80, remote_h = 24;
     bool remote_xenl = true;
 
+
+    term_view_t* w_view = nullptr;
     tty_writer w;
 
   public:
-    tty_observer(term_view_t& view, std::FILE* file, termcap_sgr_type* sgrcap):
-      view(&view), w(view.atable(), file, sgrcap) {}
+    tty_observer(std::FILE* file, termcap_sgr_type* sgrcap): w(file, sgrcap) {}
 
     tty_writer& writer() { return w; }
     tty_writer const& writer() const { return w; }
@@ -133,13 +132,13 @@ namespace ttty {
      *   同時に screen_buffer の内容も実施したスクロールに合わせて更新します。
      */
     void trace_line_scroll() {
-      curpos_t const height = view->height();
+      curpos_t const height = w_view->height();
       snapshot_delta.resize(height, -1);
       curpos_t j = 0;
       for (curpos_t i = 0; i < height; i++) {
         snapshot_delta[i] = height;
         for (curpos_t k = j; k < height; k++) {
-          if (view->line(k).id() == snapshot.lines[i].id) {
+          if (w_view->line(k).id() == snapshot.lines[i].id) {
             snapshot_delta[i] = k - i;
             j = k + 1;
             break;
@@ -321,12 +320,13 @@ namespace ttty {
       }
     };
 
+  private:
     void erase_until_eol(attr_t const& fill_attr) {
-      curpos_t const width = view->width();
+      curpos_t const width = w_view->width();
       if (remote_x >= width) return;
 
       w.apply_attr(fill_attr);
-      if (w.termcap_bce || view->atable()->is_default(fill_attr)) {
+      if (w.termcap_bce || w_view->atable()->is_default(fill_attr)) {
         put_ech(width - remote_x);
       } else {
         for (; remote_x < width; remote_x++) w.put(' ');
@@ -335,7 +335,7 @@ namespace ttty {
 
     void render_line(std::vector<cell_t> const& new_content, std::vector<cell_t> const& old_content, attr_t const& fill_attr) {
       // 更新の必要のある範囲を決定する
-      attr_table* const atable = view->atable();
+      attr_table* const atable = w_view->atable();
 
       // 一致する先頭部分の長さを求める。
       std::size_t i1 = 0;
@@ -409,10 +409,10 @@ namespace ttty {
     }
 
     bool is_content_changed() const {
-      curpos_t const height = view->height();
+      curpos_t const height = w_view->height();
       if ((curpos_t) snapshot.lines.size() != height) return true;
       for (curpos_t y = 0; y < height; y++) {
-        line_t const& line = view->line(y);
+        line_t const& line = w_view->line(y);
         auto const& snapshot_line = snapshot.lines[y];
         if (snapshot_line.id != line.id() || snapshot_line.version != line.version()) return true;
       }
@@ -420,30 +420,31 @@ namespace ttty {
     }
 
     attr_t create_fill_attr() {
-      attr_builder abuild(view->atable());
-      abuild.set_bg(view->bg_color(), view->bg_space());
+      attr_builder abuild(w_view->atable());
+      abuild.set_bg(w_view->bg_color(), w_view->bg_space());
       return abuild.fill_attr();
     }
 
+  private:
     void render_content(bool full_update) {
       std::vector<cell_t> buff;
 
-      curpos_t const height = view->height();
+      curpos_t const height = w_view->height();
       if (full_update) {
-        snapshot.setup(*view);
+        snapshot.setup(*w_view);
         put_csiseq_pn1(2, ascii_J);
       }
       if (is_terminal_fullwidth)
         trace_line_scroll();
 
       attr_t const fill_attr = create_fill_attr();
-      apply_default_attribute_impl default_attribute(view);
+      apply_default_attribute_impl default_attribute(w_view);
       for (curpos_t y = 0; y < height; y++) {
-        line_t const& line = view->line(y);
+        line_t const& line = w_view->line(y);
         auto& snapshot_line = snapshot.lines[y];
         if (full_update || snapshot_line.id != line.id() || snapshot_line.version != line.version()) {
           go_to(0, y);
-          view->order_cells_in(buff, position_client, line);
+          w_view->order_cells_in(buff, position_client, line);
           default_attribute.apply(buff);
           this->render_line(buff, snapshot_line.content, fill_attr);
 
@@ -466,30 +467,36 @@ namespace ttty {
     }
 
   public:
-    void update() {
-      view->update();
-
+    void update(term_view_t& view) {
       bool full_update = false;
+      if (w_view != &view) {
+        full_update = true;
+        w_view = &view;
+        w.set_atable(view.atable());
+      }
+
+      w_view->update();
+
       auto _update_metric = [&] (auto& prev, auto value) {
         if (prev == value) return;
         prev = value;
         full_update = true;
       };
-      _update_metric(prev_fg_space, view->fg_space());
-      _update_metric(prev_fg_color, view->fg_color());
-      _update_metric(prev_bg_space, view->bg_space());
-      _update_metric(prev_bg_color, view->bg_color());
-      _update_metric(prev_width, view->width());
-      _update_metric(prev_height, view->height());
+      _update_metric(prev_fg_space, w_view->fg_space());
+      _update_metric(prev_fg_color, w_view->fg_color());
+      _update_metric(prev_bg_space, w_view->bg_space());
+      _update_metric(prev_bg_color, w_view->bg_color());
+      _update_metric(prev_width, w_view->width());
+      _update_metric(prev_height, w_view->height());
 
       if (full_update || is_content_changed()) {
         update_remote_dectcem(false);
         render_content(full_update);
       }
 
-      if (0 <= view->y() && view->y() < view->height()) {
-        go_to(view->x(), view->y());
-        update_remote_dectcem(view->is_cursor_visible());
+      if (0 <= w_view->y() && w_view->y() < w_view->height()) {
+        go_to(w_view->x(), w_view->y());
+        update_remote_dectcem(w_view->is_cursor_visible());
       } else {
         update_remote_dectcem(false);
       }

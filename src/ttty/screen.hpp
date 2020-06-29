@@ -90,8 +90,21 @@ namespace ttty {
     };
     input_decoder_t m_input_decoder { this };
 
+    class ttty_events: public contra::term::terminal_events {
+      ttty_screen* win;
+    public:
+      ttty_events(ttty_screen* win): win(win) {}
+      virtual bool create_new_session() override {
+        return win->add_terminal_session();
+      }
+    };
+
+    ttty_events m_events {this};
+
   public:
-    ttty_screen(int fd_in, int fd_out): fd_in(fd_in), fd_out(fd_out) {}
+    ttty_screen(int fd_in, int fd_out): fd_in(fd_in), fd_out(fd_out) {
+      m_manager.set_events(m_events);
+    }
 
   private:
     void setup_tty() {
@@ -113,22 +126,40 @@ namespace ttty {
       tcsetattr(fd_in, TCSAFLUSH, &this->old_termios);
     }
 
-  public:
-    bool initialize(contra::term::terminal_session_parameters& params) {
+    void initialize_session(curpos_t width, curpos_t height, coord_t xunit, coord_t yunit) {
       setup_tty();
-      m_manager.reset_size(params.col, params.row, params.xunit, params.yunit);
-
-      std::unique_ptr<contra::term::terminal_application> sess = contra::term::create_terminal_session(params);
-      if (!sess) {
-        reset_tty();
-        return false;
-      }
-      m_manager.add_app(std::move(sess));
+      m_manager.reset_size(width, height, xunit, yunit);
 
       sgrcap.initialize();
-      renderer = std::make_unique<contra::ttty::tty_observer>(m_manager.app().view(), stdout, &sgrcap);
-      renderer->reset_size(params.col, params.row);
+      renderer = std::make_unique<contra::ttty::tty_observer>(stdout, &sgrcap);
+      renderer->reset_size(width, height);
       renderer->set_xenl(contra::sys::xenl());
+    }
+
+    bool add_terminal_session(term::terminal_session_parameters& params) {
+      std::unique_ptr<term::terminal_application> sess = contra::term::create_terminal_session(params);
+      if (!sess) return false;
+      m_manager.add_app(std::move(sess));
+      return true;
+    }
+    bool add_terminal_session() {
+      term::terminal_session_parameters params;
+      params.col = m_manager.width();
+      params.row = m_manager.height();
+      params.xunit = m_manager.xunit();
+      params.yunit = m_manager.yunit();
+      return add_terminal_session(params);
+    }
+
+  public:
+    bool initialize(curpos_t width, curpos_t height, coord_t xunit, coord_t yunit) {
+      if (!add_terminal_session()) return false;
+      initialize_session(width, height, xunit, yunit);
+      return true;
+    }
+    bool initialize(contra::term::terminal_session_parameters& params) {
+      if (!add_terminal_session(params)) return false;
+      initialize_session(params.col, params.row, params.xunit, params.yunit);
       return true;
     }
 
@@ -137,7 +168,7 @@ namespace ttty {
       for (;;) {
         bool const processed = m_manager.do_events();
         if (m_manager.m_dirty && render_to_stdout)
-          renderer->update();
+          renderer->update(m_manager.app().view());
 
         contra::sys::process_signals();
 

@@ -245,14 +245,23 @@ namespace term {
       [[maybe_unused]] coord_t yunit
     ) { return false; }
     virtual bool create_new_session() { return false; }
+
+    virtual void on_enter_app() {}
+    virtual void on_leave_app() {}
   };
 
   class terminal_manager {
     std::vector<std::shared_ptr<terminal_application> > m_apps;
     terminal_events* m_events = nullptr;
 
+  private:
     curpos_t m_width = 80, m_height = 24;
     coord_t m_xunit = 7, m_yunit = 13;
+  public:
+    curpos_t width() const { return m_width; }
+    curpos_t height() const { return m_height; }
+    curpos_t xunit() const { return m_xunit; }
+    curpos_t yunit() const { return m_yunit; }
 
   public:
     terminal_manager() {
@@ -265,7 +274,9 @@ namespace term {
     void select_app(int index, bool force_update = false) {
       std::size_t const new_iapp = !m_apps.size() ? 0 : contra::clamp(index, 0, m_apps.size() - 1);
       if (!force_update && new_iapp == m_active_iapp) return;
+      if (m_active_iapp < m_apps.size()) m_events->on_leave_app();
       m_active_iapp = new_iapp;
+      if (m_active_iapp < m_apps.size()) m_events->on_enter_app();
       if (m_apps.size()) {
         app().reset_size(m_width, m_height, m_xunit, m_yunit);
         m_dirty = true;
@@ -345,8 +356,10 @@ namespace term {
           m_apps.begin(), m_apps.end(),
           [&] (auto const& app) {
             if (!app->is_alive()) {
-              if (iapp == m_active_iapp)
+              if (iapp == m_active_iapp) {
+                m_events->on_leave_app();
                 is_active_app_dead = true;
+              }
               if (m_active_iapp >= iapp++ && new_active_iapp > 0)
                 new_active_iapp--;
               return true;
@@ -372,8 +385,58 @@ namespace term {
         app->terminate();
     }
 
+  private:
+    void do_next_app() {
+      if (m_apps.size() > 1)
+        select_app((m_active_iapp + 1) % m_apps.size());
+    }
+    void do_previous_app() {
+      if (m_apps.size() > 1)
+        select_app((m_active_iapp - 1 + m_apps.size()) % m_apps.size());
+    }
+    void do_create_app() {
+      if (m_events) {
+        if (m_events->create_new_session() && m_apps.size())
+          select_app(m_apps.size() - 1);
+      }
+    }
+
+  private:
+    key_t m_prefix_key = -1;
+    bool m_prefix_state = false;
+  public:
+    void set_prefix_key(key_t key) { this->m_prefix_key = key; }
+  private:
+    bool process_prefixed_input(key_t key) {
+      m_prefix_state = false;
+      switch (key) {
+      case ascii_a:
+        return app().input_key(m_prefix_key);
+
+      case ascii_n | modifier_control:
+      case ascii_n:
+        do_next_app();
+        return true;
+      case ascii_p | modifier_control:
+      case ascii_p:
+        do_previous_app();
+        return true;
+      case ascii_c | modifier_control:
+      case ascii_c:
+        do_create_app();
+        return true;
+      }
+      return false;
+    }
   public:
     bool input_key(key_t key) {
+      if (m_prefix_state) {
+        return process_prefixed_input(key);
+      } else if (key == m_prefix_key) {
+        m_prefix_state = true;
+        return true;
+      }
+
       using namespace contra::ansi;
       if (key & modifier_application) {
         key &= ~(modifier_application | modifier_autorepeat);
@@ -408,18 +471,13 @@ namespace term {
           return true;
 
         case ascii_n:
-          if (m_apps.size() > 1)
-            select_app((m_active_iapp + 1) % m_apps.size());
+          do_next_app();
           return true;
         case ascii_p:
-          if (m_apps.size() > 1)
-            select_app((m_active_iapp - 1 + m_apps.size()) % m_apps.size());
+          do_previous_app();
           return true;
         case ascii_c:
-          if (m_events) {
-            if (m_events->create_new_session() && m_apps.size())
-              select_app(m_apps.size() - 1);
-          }
+          do_create_app();
           return true;
 
         case ascii_v:
