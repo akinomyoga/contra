@@ -873,14 +873,14 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>B</kbd></th><td>CUD</td>
     <th><kbd>R</kbd></th><td>CPR, _SCODL</td>
-    <th><kbd>b</kbd></th><td>REP</td>
+    <th><kbd>b</kbd></th><td>REP, _SCOHPR<sup>*km</sup></td>
     <th><kbd>B</kbd></th><td>GSM</td>
     <th><kbd>R</kbd></th><td>PPB</td>
     <th><kbd>b</kbd></th><td>TAC</td>
 </tr>
 <tr><th><kbd>C</kbd></th><td>CUF</td>
     <th><kbd>S</kbd></th><td>SU</td>
-    <th><kbd>c</kbd></th><td>DA</td>
+    <th><kbd>c</kbd></th><td>DA, _SNIRIS<sup>*km</sup></td>
     <th><kbd>C</kbd></th><td>GSS</td>
     <th><kbd>S</kbd></th><td>SPD</td>
     <th><kbd>c</kbd></th><td>TCC</td>
@@ -949,7 +949,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th><kbd>l</kbd></th><td>---</td>
 </tr>
 <tr><th><kbd>M</kbd></th><td>DL</td>
-    <th><kbd>]</kbd></th><td>SDS</td>
+    <th><kbd>]</kbd></th><td>SDS, _LNXCLR<sup>*km</sup></td>
     <th><kbd>m</kbd></th><td>SGR</td>
     <th><kbd>M</kbd></th><td>IGS</td>
     <th><kbd>]</kbd></th><td>SAPV</td>
@@ -976,17 +976,17 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th colspan="2">Ft型: 私用制御機能</th>
     </tr>
 <tr><th><i>Ft</i></th><th>略号</th></tr>
-<tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, _DOSSKR, _ZDSPXMT, RLBFAT</td></tr>
-<tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA, _DOSEKR, _ZDSPX25</td></tr>
+<tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, _DOSSKR, _ZDSPXMT, RLBFAT, _SNIMODEP<sup>*km</sup>, zSDP<sup>*km</sup></td></tr>
+<tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA, _DOSEKR, _ZDSPX25, _SNIMODEQ<sup>*km</sup></td></tr>
 <tr><th><kbd>r</kbd></th><td><b>DECSTBM</b>, DECPCTERM, _SCOCSR, SUNSCRL, _ZDSPMBR</td></tr>
-<tr><th><kbd>s</kbd></th><td><b>DECSLRM</b>, <b>SCOSC</b>, WYSC, _DGRRC, SUNRESET</td></tr>
-<tr><th><kbd>t</kbd></th><td>DECSLPP, WYNNAT, DGROSC, _CITSTIME, <b>_SUNWINM</b></td></tr>
-<tr><th><kbd>u</kbd></th><td>DECSHTS, <b>SCORC</b>, WYRC, _DGSPOS, _CITSSR</td></tr>
-<tr><th><kbd>v</kbd></th><td>DECSVTS, RLSCD (_CITSCUR), _DGSPARM</td></tr>
-<tr><th><kbd>w</kbd></th><td>DECSHORP, _AIXVTR, DGMARG, _CITSCURB</td></tr>
+<tr><th><kbd>s</kbd></th><td><b>DECSLRM</b>, <b>SCOSC</b>, WYSC, _DGRRC, SUNRESET, _SNIMODES<sup>*km</sup>, zPSH<sup>*km</sup></td></tr>
+<tr><th><kbd>t</kbd></th><td>DECSLPP, WYNNAT, DGROSC, _CITSTIME, <b>_SUNWINM</b>, _SNIMODET<sup>*km</sup>, zPOP<sup>*km</sup></td></tr>
+<tr><th><kbd>u</kbd></th><td>DECSHTS, <b>SCORC</b>, WYRC, _DGSPOS, _CITSSR, _SNIMODEU<sup>*km</sup>, zSTP<sup>*km</sup></td></tr>
+<tr><th><kbd>v</kbd></th><td>DECSVTS, RLSCD (_CITSCUR), _DGSPARM, _SNIMODEV<sup>*km</sup>, zSRC<sup>*km</sup></td></tr>
+<tr><th><kbd>w</kbd></th><td>DECSHORP, _AIXVTR, DGMARG, _CITSCURB, _SNIMODEW<sup>*km</sup>, zSPF<sup>*km</sup>, _WYCLR<sup>*km</sup></td></tr>
 <tr><th><kbd>x</kbd></th><td>DECREQTPARM, DECREPTPARM, _AIXVTD, DGRTC, C25SGR</td></tr>
-<tr><th><kbd>y</kbd></th><td>DECTST, _AIXVTL</td></tr>
-<tr><th><kbd>z</kbd></th><td>DECVERP, WYSCRATE, _SCOSSW, C25VTSW, _CITPCTL, _ZDSPRAM</td></tr>
+<tr><th><kbd>y</kbd></th><td>DECTST, _AIXVTL, _SNIMODEY<sup>*km</sup>, _VIPRQ<sup>*km</sup></td></tr>
+<tr><th><kbd>z</kbd></th><td>DECVERP, WYSCRATE, _SCOSSW, C25VTSW, _CITPCTL, _ZDSPRAM, _SNISLRM<sup>*km</sup>, zSTE<sup>*km</sup></td></tr>
 <tr><th><kbd>{</kbd></th><td>---</td></tr>
 <tr><th><kbd>|</kbd></th><td>DECTTC</td></tr>
 <tr><th><kbd>}</kbd></th><td>DECPRO</td></tr>
@@ -1334,19 +1334,19 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>A</kbd></th>
     <td>-</td>
-    <td>_SCOSBC (C25BORD)</td>
+    <td>_SCOSBC (C25BORD)<br/>_BA80DKM<sup>*km</sup></td>
     <td>-</td>
     <td>-</td>
 </tr>
 <tr><th><kbd>B</kbd></th>
     <td>-</td>
-    <td>_SCOSBP (C25BLPD)</td>
+    <td>_SCOSBP (C25BLPD)<br/>_BA80CUR<sup>*km</sup></td>
     <td>-</td>
     <td>-</td>
 </tr>
 <tr><th><kbd>C</kbd></th>
     <td>-</td>
-    <td>_SCOSCS (C25GCS)</td>
+    <td>_SCOSCS (C25GCS)<br/>_BA80CVM<sup>*km</sup></td>
     <td>-</td>
     <td>-</td>
 </tr>
@@ -1358,13 +1358,13 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>E</kbd></th>
     <td>-</td>
-    <td>_SCOSBB</td>
+    <td>_SCOSBB<br/>_BA80WSR<sup>*km</sup></td>
     <td>-</td>
     <td>_AIXXES</td>
 </tr>
 <tr><th><kbd>F</kbd></th>
     <td>-</td>
-    <td>_SCOSNF (C25DFG)</td>
+    <td>_SCOSNF (C25DFG)<br/>_BA80FVW<sup>*km</sup></td>
     <td>-</td>
     <td>_AIXXRS</td>
 </tr>
@@ -1382,7 +1382,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>I</kbd></th>
     <td>-</td>
-    <td>_SCOSRB</td>
+    <td>_SCOSRB<br/>_BA80INP<sup>*km</sup></td>
     <td>-</td>
     <td>-</td>
 </tr>
@@ -1394,7 +1394,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>K</kbd></th>
     <td>-</td>
-    <td>_SCOSGB</td>
+    <td>_SCOSGB<br/>_BA80BFL<sup>*km</sup></td>
     <td>_CITECOLS<sup>+</sup></td>
     <td>DECSEL<sup>+</sup></td>
 </tr>
@@ -1406,7 +1406,13 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>M</kbd></th>
     <td>-</td>
-    <td>_SCORAS</td>
+    <td>_SCORAS<br/>_BA80GSL<sup>*km</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+<tr><th><kbd>O</kbd></th>
+    <td>-</td>
+    <td>_BA80OVW<sup>*km</sup></td>
     <td>-</td>
     <td>-</td>
 </tr>
@@ -1418,7 +1424,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>S</kbd></th>
     <td>-</td>
-    <td>C25LCT</td> 
+    <td>C25LCT<br/>_BA80RSL<sup>*km</sup></td> 
     <td>-</td>
     <td>XTCOLREG<sup>*ml</sup><br/>_AIXXSS</td> 
 </tr>
@@ -1434,6 +1440,12 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>DECST8C<sup>+</sup></td>
 </tr>
+<tr><th><kbd>Z</kbd></th>
+    <td>-</td>
+    <td>_ANSIRIS<sup>*km</sup></td>
+    <td>-</td>
+    <td>-</td>
+</tr>
 <tr><th>Ft</th>
     <th><kbd>&lt;</kbd></th>
     <th><kbd>=</kbd></th>
@@ -1444,11 +1456,11 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>DA3<sup>+</sup><br/>_SCOHSC</td>
     <td>DA2<sup>+</sup></td>
-    <td>DEC EB DS<sup>+*ae</sup><br/>RequestFontConfiguration<sup>+LA100</sup><br/>RequestDPSConfiguration<sup>+*ae,LA</sup></td>
+    <td>DEC EB DS<sup>+*ae</sup><br/>RequestFontConfiguration<sup>+LA100</sup><br/>RequestDPSConfiguration<sup>+*ae,LA</sup><br/>_LNXCUR<sup>*km</sup></td>
 </tr>
 <tr><th><kbd>g</kbd></th>
     <td>-</td>
-    <td>_SCOPRC</td>
+    <td>_SCOPRC<br/>_ANSIDGC<sup>*km</sup></td>
     <td>_CITST8C<sup>+</sup></td>
     <td>-</td>
 </tr>
@@ -1530,6 +1542,12 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>-</td>
 </tr>
+<tr><th><kbd>~</kbd></th>
+    <td>_KERMMACR<sup>*km</sup></td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+</tr>
 <tr><th>I Ft</th>
     <th><kbd>&lt;</kbd></th>
     <th><kbd>=</kbd></th>
@@ -1547,6 +1565,12 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>-</td>
     <td>PFS<sup>+LN03</sup></td>
+</tr>
+<tr><th><kbd>$ R</kbd></th>
+    <td>-</td>
+    <td>_BA80RVW<sup>*km</sup></td>
+    <td>-</td>
+    <td>-</td>
 </tr>
 <tr><th><kbd>$ p</kbd></th>
     <td>-</td>
@@ -1577,10 +1601,11 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <p>その他の私用制御機能</p>
 <table class="normal center">
 <tr><th>略号</th><th>符号化表現</th></tr>
-<tr><th>BA80 Screen Saver Off<sup>*ae</sup></th><td><kbd>CSI = ? I</kbd></td></tr>
-<tr><th>BA80 Screen Saver On<sup>*ae</sup></th><td><kbd>CSI ? = J</kbd></td></tr>
-<tr><th>? Insert Line Up<sup>*ae</sup></th><td><kbd>CSI = ? l</kbd></td></tr>
-<tr><th>? Delete Line Down<sup>*ae</sup></th><td><kbd>CSI ? = m</kbd></td></tr>
+<tr><th>_SCODL<sup>*km</sup></th><td><kbd>CSI $ R</kbd></td></tr>
+<tr><th>_AESSF<sup>*ae,*km</sup></th><td><kbd>CSI = ? I</kbd></td></tr>
+<tr><th>_AESSN<sup>*ae,*km</sup></th><td><kbd>CSI ? = J</kbd></td></tr>
+<tr><th>_AEILU<sup>*ae,*km</sup></th><td><kbd>CSI = ? l</kbd></td></tr>
+<tr><th>_AEDLD<sup>*ae,*km</sup></th><td><kbd>CSI ? = m</kbd></td></tr>
 <tr><th>TeleGraphix Determining RIP support<sup>*ae</sup></th><td><kbd>CSI !</kbd><sup>違反</sup></td></tr><!--"-->
 <tr><th>WYTLOAD</th><td><kbd>CSI &gt; <i>Cq</i> ... <i>Cq</i></kbd><sup>違反</sup></td></tr>
 <tr><th>_DOSXON</th><td><kbd>CSI +</kbd><sup>違反</sup></td></tr>
@@ -1702,6 +1727,8 @@ tmux=screen
 <tr><th>PM</th>    <td>コマンド列</td>   <td><kbd>PM <i>GL'<!--'--></i><strong>*</strong> ST</kbd></td> <td>Privacy Message</td></tr>
 <tr><th>APC</th>   <td>コマンド列</td>   <td><kbd>APC <i>GL'<!--'--></i><strong>*</strong> ST</kbd></td><td>Application Program Command</td></tr>
 <tr><th>_SCRAKA</th><td>キャラクタ列?</td><td><kbd>ESC k <i>U</i><strong>*</strong> ST</kbd></td> <td>Title Definition String (GNU Screen)</td></tr>
+<tr><th>_SNIPU1<sup>*km</sup></th><td>コマンド列</td><td><kbd>PU1 <i>GL'<!--'--></i><strong>*</strong> ST</kbd></td> <td>97801-5XX PU1 sequence</td></tr>
+<tr><th>_SNIPU2<sup>*km</sup></th><td>コマンド列</td><td><kbd>PU2 <i>GL'<!--'--></i><strong>*</strong> ST</kbd></td> <td>97801-5XX PU2 sequence</td></tr>
 </table>
 
 <ul>
@@ -1994,6 +2021,14 @@ tmux=screen
 <tr><th>HEM                     </th><td>10</td><th>LF/NL<sup>廃</sup> (LNM)</th> <td>20</td>  <th>WYDSCM<sup>違反</sup></th><td>30</td>
     <th>WYEXTDM<sup>違反</sup>, WYSEDL<sup>違反</sup></th><td>40</td><th>-</th><td>-</td></tr>
 </table>
+<p>その他の ANSI モード</p>
+<ul>
+<li>Mode 48 _SCOTCEM1<sup>*km</sup></li>
+<li>Mode 1048 _SCOTCEM2<sup>*km</sup></li>
+<li>Mode 50 _SNICKTM<sup>*km</sup></li>
+<li>Mode 51 _SNIDKTM<sup>*km</sup></li>
+<li>Mode 52 _SNI132M<sup>*km</sup></li>
+</ul>
 
 <h3>DEC Modes (?1-?120)</h3>
 
@@ -2063,7 +2098,7 @@ tmux=screen
     <th>-</th><td>?62</td>
     <th>-</th><td>?72</td></tr>
 <tr><th>DECGEPM<sup>*ae</sup></th><td>?43</td>
-    <th>-</th><td>?53</td>
+    <th>DEC131TM<sup>*km</sup></th><td>?53</td>
     <th>-</th><td>?63</td>
     <th>DECXRLMM</th><td>?73</td></tr>
 <tr><th>DECGPCM<sup>*ae</sup><br/>XTERM_MARGIN_BELL</th><td>?44</td>
@@ -2093,7 +2128,7 @@ tmux=screen
 <tr><th>-</th><td>?50</td>
     <th>DECHCCM</th><td>?60</td>
     <th>-</th><td>?70</td>
-    <th>DECSDM</th><td>?80</td></tr>
+    <th>DECSDM<br/>WY161<sup>*km</sup></th><td>?80</td></tr>
 </table>
 <ul>
 <li>?80 DECSDM は rlogin に記述があった。</li>
@@ -2113,15 +2148,15 @@ tmux=screen
     <th>-</th><td>?92</td>
     <th>DECNULM</th><td>?102</td>
     <th>DECRPL</th><td>?112</td></tr>
-<tr><th>-</th><td>?83</td>
+<tr><th>WY52<sup>*km</sup></th><td>?83</td>
     <th>-</th><td>?93</td>
     <th>DECHDPXM</th><td>?103</td>
     <th>DECHWUM</th><td>?113</td></tr>
-<tr><th>-</th><td>?84</td>
+<tr><th>WYENAT<sup>*km</sup></th><td>?84</td>
     <th>-</th><td>?94</td>
     <th>DECESKM</th><td>?104</td>
     <th>DECATCUM</th><td>?114</td></tr>
-<tr><th>-</th><td>?85</td>
+<tr><th>WYREPL<sup>*km</sup></th><td>?85</td>
     <th>DECNCSM</th><td>?95</td>
     <th>-</th><td>?105</td>
     <th>DECATCBM</th><td>?115</td></tr>
@@ -2302,6 +2337,142 @@ tmux=screen
 <tr><th>&lt;19 </th><td>---</td>
     <th>=19 </th><td>_DOSG32C8  </td>
     <th>&gt;19 </th><td>---</td>
+</tr>
+<tr><th>&lt;25</th><td>---</td>
+    <th>=25</th><td>---</td>
+    <th>&gt;25</th><td>zMDM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;26</th><td>---</td>
+    <th>=26</th><td>---</td>
+    <th>&gt;26</th><td>zKCM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;27</th><td>---</td>
+    <th>=27</th><td>---</td>
+    <th>&gt;27</th><td>zKPCM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;28</th><td>---</td>
+    <th>=28</th><td>---</td>
+    <th>&gt;28</th><td>zKRM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;29</th><td>---</td>
+    <th>=29</th><td>---</td>
+    <th>&gt;29</th><td>zRLM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;30</th><td>---</td>
+    <th>=30</th><td>---</td>
+    <th>&gt;30</th><td>zDBM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;31</th><td>---</td>
+    <th>=31</th><td>---</td>
+    <th>&gt;31</th><td>zBKCM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;32</th><td>---</td>
+    <th>=32</th><td>---</td>
+    <th>&gt;32</th><td>zBNCM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;33</th><td>---</td>
+    <th>=33</th><td>---</td>
+    <th>&gt;33</th><td>zWFM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;34</th><td>---</td>
+    <th>=34</th><td>---</td>
+    <th>&gt;34</th><td>zWBM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;35</th><td>---</td>
+    <th>=35</th><td>---</td>
+    <th>&gt;35</th><td>zDDM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;36</th><td>---</td>
+    <th>=36</th><td>---</td>
+    <th>&gt;36</th><td>zSPM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;37</th><td>---</td>
+    <th>=37</th><td>---</td>
+    <th>&gt;37</th><td>zAXM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;38</th><td>---</td>
+    <th>=38</th><td>---</td>
+    <th>&gt;38</th><td>zAPM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;39</th><td>---</td>
+    <th>=39</th><td>---</td>
+    <th>&gt;39</th><td>zSSM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;40</th><td>---</td>
+    <th>=40</th><td>---</td>
+    <th>&gt;40</th><td>zHDM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;41</th><td>---</td>
+    <th>=41</th><td>---</td>
+    <th>&gt;41</th><td>zTPDM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;42</th><td>---</td>
+    <th>=42</th><td>---</td>
+    <th>&gt;42</th><td>zLTM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;43</th><td>---</td>
+    <th>=43</th><td>---</td>
+    <th>&gt;43</th><td>zCSTM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;44</th><td>---</td>
+    <th>=44</th><td>---</td>
+    <th>&gt;44</th><td>zFSTM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;45</th><td>---</td>
+    <th>=45</th><td>---</td>
+    <th>&gt;45</th><td>zGRTM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;46</th><td>---</td>
+    <th>=46</th><td>---</td>
+    <th>&gt;46</th><td>zAKDM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;47</th><td>---</td>
+    <th>=47</th><td>---</td>
+    <th>&gt;47</th><td>zFRM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;48</th><td>---</td>
+    <th>=48</th><td>---</td>
+    <th>&gt;48</th><td>zHAM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;49</th><td>---</td>
+    <th>=49</th><td>---</td>
+    <th>&gt;49</th><td>zGAPM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;51</th><td>---</td>
+    <th>=51</th><td>---</td>
+    <th>&gt;51</th><td>zACM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;52</th><td>---</td>
+    <th>=52</th><td>---</td>
+    <th>&gt;52</th><td>zMKM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;53</th><td>---</td>
+    <th>=53</th><td>---</td>
+    <th>&gt;53</th><td>zCLIM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;54</th><td>---</td>
+    <th>=54</th><td>---</td>
+    <th>&gt;54</th><td>zINM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;55</th><td>---</td>
+    <th>=55</th><td>---</td>
+    <th>&gt;55</th><td>zCNM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;56</th><td>---</td>
+    <th>=56</th><td>---</td>
+    <th>&gt;56</th><td>zICM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;57</th><td>---</td>
+    <th>=57</th><td>---</td>
+    <th>&gt;57</th><td>zMMM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;59</th><td>---</td>
+    <th>=59</th><td>---</td>
+    <th>&gt;59</th><td>zIVM<sup>*km</sup></td>
+</tr>
+<tr><th>&lt;61</th><td>---</td>
+    <th>=61</th><td>---</td>
+    <th>&gt;61</th><td>Z8RCM<sup>*km</sup></td>
 </tr>
 <tr><th>&lt;114</th><td>---</td>
     <th>=114</th><td>_DOSG64C4JM</td>
@@ -3727,6 +3898,12 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <p>引数の既定値は 0 である。
   消去範囲は、DCSM に応じて表示部またはデータ部において決定される。
   ERM によって保護領域の文字も消去するかどうかが決まる。
+  </p>
+  <p>[Kermit] SNI-97801 では 0-17 まで定義されている。
+    既定では空白埋めだが 3 を加算するとNUL埋めになる。
+    既定では属性も一緒に消去するが、6 または 12 を加算すると
+    最後の有効な属性に戻す? (<q>Preset with the last valid SGR attribute (if attributes are not stored)</q>)
+    または属性をそのままにする。
   </p>
   <ul>
   <li>xterm は EL と ED に対応する。

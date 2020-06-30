@@ -67,6 +67,233 @@
 <li>他に espterm, iTerm2, konsole, Kermit 等は確認しておくべき気がする。</li>
 </ul>
 
+<h2 id="term.KERM">Kermit</h2>
+<ul>
+<li>Kermit の対応している端末エミュレーション <a href="http://www.columbia.edu/kermit/k95manual/termtype.html">Kermit 95 - Terminal Types</a></li>
+</ul>
+<p>ソースコードから。AAA は Ann Arbor Ambassador。ANSI は ANSI-BBS (PC ANSI)??。QANSI は QNX ANSI。
+  ckoco3.c:12594-18261 (vtcsi) は確認した。
+</p>
+<ul>
+<li>以下は SCO の対応する機能をそのまま実装したものに見える。
+  <ul>
+  <li><kbd>CSI = A</kbd>: (_SCO) ANSI Set Border Color</li>
+  <li><kbd>CSI = B</kbd>: (_SCO) ANSI Set Beep Freq/Duration</li>
+  <li><kbd>CSI = C</kbd>: (_SCO) ANSI Set Cursor Height</li>
+  <li><kbd>CSI = D</kbd>: (_SCO) ANSI Turn on/off Background Intensity</li>
+  <li><kbd>CSI = E</kbd>: (_SCO) ANSI TRUE BLINK vs Bold Background Intensity</li>
+  <li><kbd>CSI = F</kbd>: (_SCO) ANSI/QANSI Set Normal Foreground Color</li>
+  <li><kbd>CSI = G</kbd>: (_SCO) ANSI/QANSI Set Normal Background Color</li>
+  <li><kbd>CSI = H</kbd>: (_SCO) ANSI Set Reverse Foreground Color</li>
+  <li><kbd>CSI = I</kbd>: (_SCO) ANSI Set Reverse Background Color</li>
+  <li><kbd>CSI = J</kbd>: (_SCO) ANSI Set Graphic Foreground Color</li>
+  <li><kbd>CSI = K</kbd>: (_SCO) ANSI Set Graphic Background Color</li>
+  <li><kbd>CSI = L</kbd>: (_SCO) ANSI Set Fill (Erase?) mode </li>
+  <li><kbd>CSI = M</kbd>: (_SCO) ANSI Report Color Attributes</li>
+  </ul>
+</li>
+<li><kbd>CSI = Z</kbd>: _ANSIRIS★ ANSI resetcolors(1)</li>
+<li><kbd>CSI = g</kbd>: _ANSIDGC★ ANSI Display Graphic Character
+  <p>_SCODGC <kbd>CSI g</kbd> と同じ。</p>
+</li>
+
+<li><kbd>CSI = A</kbd>: _BA80DKM★ BA80 DeadKeyMode, Block</li>
+<li><kbd>CSI = B</kbd>: _BA80CUR★ BA80 Cursor</li>
+<li><kbd>CSI = C</kbd>: _BA80CVM★ BA80 Close Virtual Window</li>
+<li><kbd>CSI = E</kbd>: _BA80WSR★ BA80 Window Status Report</li>
+<li><kbd>CSI = F</kbd>: _BA80FVW★ BA80 Fetch virtual window from the background</li>
+<li><kbd>CSI = I</kbd>: _BA80INP★ BA80 Input</li>
+<li><kbd>CSI = K</kbd>: _BA80BFL★ BA80 Begin Reading Function Labels</li>
+<li><kbd>CSI = M</kbd>: _BA80GSL★ BA80 Goto Status Line</li>
+<li><kbd>CSI = O</kbd>: _BA80OVW★ BA80 Open Virtual Window</li>
+<li><kbd>CSI = S</kbd>: _BA80RSL★ BA80 Return from Status Line</li>
+<li><kbd>CSI = $ R</kbd>: _BA80RVW★ BA80 Reset virtual window to the background</li>
+<li>以下は all-escape.txt と正体不明 (??) まで含めて一致している。
+  但し、all-escapes.txt では Delete line down になっている物が、
+  ここでは Delete Line Up になっている。
+  また、= と ? の順序についてはこの実装では分からない。
+  恐らく all-escape.txt に載っていたから実装されたのだろう。
+  何故なら Down を Up に間違えるのは Insert Line Up につられてと理解できるし、
+  この実装から = と ? の順序を入れ替えて載せる理由もよく分からない。
+  <ul>
+  <li><kbd>CSI = ? I</kbd>: _AESSF★ BA80 Screen Saver Off</li>
+  <li><kbd>CSI = ? J</kbd>: _AESSN★ BA80 Screen Saver On</li>
+  <li><kbd>CSI = ? l</kbd>: _AEILU★ ?? Insert Line Up</li>
+  <li><kbd>CSI = ? m</kbd>: _AEDLU★ ?? Delete Line Up</li>
+  </ul>
+</li>
+<li><kbd>CSI b</kbd>×: _SCOHPR★ SCO/AAA HPR?</li>
+<li><kbd>CSI $ R</kbd>: _SCODL★  SCO Delete lines - Alternate form of (CSI P1 M)</li>
+<li><kbd>CSI = c</kbd>: SCO Set Cursor Type
+  <p>これは <kbd>CSI = C</kbd> _SCOSCS の誤りの気がする。</p>
+</li>
+
+<li><kbd>CSI ? E</kbd>: _AIXXES: AIX Erase Status Line</li>
+<li><kbd>CSI ? F</kbd>: _AIXXRS: AIX Return From Status Line</li>
+<li><kbd>CSI ? H</kbd>: _AIXXHS: HFT Hide Status Line</li>
+<li><kbd>CSI ]</kbd>×: _LNXCLR★ Linux 色々な色の設定</li>
+<li><kbd>CSI c</kbd>×: _SNIRIS★ 97801 RIS</li>
+<li><kbd>CSI ? c</kbd>: _LNXCUR★ LINUX cursor</li>
+<li><kbd>CSI p</kbd>
+  <ul>
+  <li>_ZDSPXMT: H19 Transmit Page to host</li>
+  <li>AAA zSDP★ - Set Display Parameters</li>
+  <li>_SNIMODEP★ 97801 色々なモード?</li>
+  </ul>
+</li>
+<li><kbd>CSI q</kbd>
+  <ul>
+  <li>_ZDSPX25: H19 Transmit 25th line to host</li>
+  <li>_SNIMODEQ★ 97801 LED? DECLL とは少し違う</li>
+  </ul>
+</li>
+<li><kbd>CSI r</kbd> _ZDSPMBR H19: Set Baud Rate</li>
+<li><kbd>CSI ? r</kbd> _AIXRM: HFT  Restore Modes</li>
+<li><kbd>CSI ? s</kbd> _AIXSM: HFT  Save Modes</li>
+<li><kbd>CSI s</kbd>
+  <ul>
+  <li>AAA zPSH★ - Push Line</li>
+  <li>_SNIMODES★ 97801 色々なモード?</li>
+  </ul>
+</li>
+<li><kbd>CSI t</kbd>
+  <ul>
+  <li>AAA zPOP★ - Pop Line</li>
+  <li>_SNIMODET★ 97801 色々なモード?</li>
+  </ul>
+</li>
+<li><kbd>CSI u</kbd>
+  <ul>
+  <li>AAA zSTP★ - Set Transfer Point</li>
+  <li>_SNIMODEU★ 97801 色々なモード?</li>
+  </ul>
+</li>
+<li><kbd>CSI v</kbd>
+  <ul>
+  <li>AAA zSRC★ - Start Remote Copy</li>
+  <li>_SNIMODEV★ 97801 色々なモード?</li>
+  </ul>
+</li>
+<li><kbd>CSI w</kbd>
+  <ul>
+  <li>AAA zSPF★ - Set Print Format</li>
+  <li>_AIXVTR: HFT vt raw keyboard input</li>
+  <li>_WYCLR★ WY370 All sorts of color controls</li>
+  <li>_SNIMODEW★ 97801 色々なモード?</li>
+  </ul>
+</li>
+<li><kbd>CSI x</kbd> WY370 Set Color and Attribute</li>
+<li><kbd>CSI y</kbd>
+  <ul>
+  <li>_VIPRQ★ VIP 端末情報か何かを送る?</li>
+  <li>_AIXVTL: HFT Virtual Terminal locator report</li>
+  <li>_SNIMODEY★ 97801 色々なモード?</li>
+  </ul>
+</li>
+<li><kbd>CSI z</kbd>
+  <ul>
+  <li>_ZDSPRAM: H19 Reset</li>
+  <li>AAA zSTE★ - Set Transfer End</li>
+  <li>_SNISLRM: 97801 Define left (pn[1]) and right (pn[2]) margins</li>
+  </ul>
+</li>
+<li><kbd>CSI &lt; ~</kbd> _KERMMACR★ MS-DOS Kermit PRODUCT macro (Kermit extension)</li>
+<li><kbd>CSI J</kbd> ED
+  <p>SNI-97801 による拡張が存在している。</p>
+  <ul>
+  <li>3:  97801 Clear to end of screen w/NUL, Clear Attributes</li>
+  <li>4:  97801 Clear to beginning w/NUL    , Clear Attributes</li>
+  <li>5:  97801 Clear whole screen w/NUL    , Clear Attributes DEC ... Cursor does not move</li>
+  <li>6:  97801 Clear to end of screen w/SP, Preset with the last valid attribute (if attributes are not stored)</li>
+  <li>7:  97801 Clear to beginning w/SP    , Preset with the last valid attribute (if attributes are not stored)</li>
+  <li>8:  97801 Clear whole screen w/SP    , Preset with the last valid attribute (if attributes are not stored)</li>
+  <li>9:  97801 Clear to end of screen w/NUL, Preset with the last valid attribute (if attributes are not stored)</li>
+  <li>10: 97801 Clear to beginning w/NUL   , Preset with the last valid attribute (if attributes are not stored)</li>
+  <li>11: 97801 Clear whole screen w/NUL   , Preset with the last valid attribute (if attributes are not stored)</li>
+  <li>12: 97801 Clear to end of screen w/SP, Preserve attributes</li>
+  <li>13: 97801 Clear to beginning w/SP    , Preserve attributes</li>
+  <li>14: 97801 Clear whole screen w/SP    , Preserve attributes</li>
+  <li>15: 97801 Clear to end of screen w/NUL, Preserve attributes</li>
+  <li>16: 97801 Clear to beginning w/NUL    , Preserve attributes</li>
+  <li>17: 97801 Clear whole screen w/NUL    , Preserve attributes</li>
+  </ul>
+</li>
+<li><kbd>CSI K</kbd> EL
+  <p>97801 による拡張が存在している。</p>
+  <ul>
+  <li>3:  SNI 97801 Erase with NULs to EOL     , Clear attributes</li>
+  <li>4:  SNI 97801 Erase with NULs to BOL     , Clear attributes</li>
+  <li>5:  SNI 97801 Erase with NULs entire line, Clear attributes</li>
+  <li>6:  SNI 97801 Erase with SP to EOL     , Preset with the last valid SGR attribute, (if attributes are not stored)</li>
+  <li>7:  SNI 97801 Erase with SP to BOL     , Preset with the last valid SGR attribute, (if attributes are not stored)</li>
+  <li>8:  SNI 97801 Erase with SP entire line, Preset with the last valid SGR attribute, (if attributes are not stored)</li>
+  <li>9:  SNI 97801 Erase with NUL to EOL     , Preset with the last valid SGR attribute, (if attributes are not stored)</li>
+  <li>10: SNI 97801 Erase with NUL to BOL     , Preset with the last valid SGR attribute, (if attributes are not stored)</li>
+  <li>11: SNI 97801 Erase with NUL entire line, Preset with the last valid SGR attribute, (if attributes are not stored)</li>
+  <li>12: SNI 97801 Erase with SP to EOL     , Preserve attributes</li>
+  <li>13: SNI 97801 Erase with SP to BOL     , Preserve attributes</li>
+  <li>14: SNI 97801 Erase with SP entire line, Preserve attributes</li>
+  <li>15: SNI 97801 Erase with NUL to EOL     , Preserve attributes</li>
+  <li>16: SNI 97801 Erase with NUL to BOL     , Preserve attributes</li>
+  <li>17: SNI 97801 Erase with NUL entire line, Preserve attributes</li>
+  </ul>
+</li>
+<li>他 SRS, EF, EA, SAPV などを実装している端末が実在していたという事。</li>
+<li>モードは ckoco3.c:14042 から。
+  <ul>
+  <li>Mode ?53★ DEC131TM VT131 Transmit</li>
+  <li>Mode ?80★ WY161 - 161-column mode</li>
+  <li>Mode ?83★ WY52 - 52 line mode</li>
+  <li>Mode ?84★ WYENAT Enable separate assignment of attributes (SGR) to erasable and nonerasable characters</li>
+  <li>Mode ?85★ WYREPL Set replacement character to current character background color</li>
+  <li>Mode &gt;25★: AAA zMDM - Margin Bell Mode</li>
+  <li>Mode &gt;26★: AAA zKCM - Key Click Mode</li>
+  <li>Mode &gt;27★: AAA zKPCM - Key Pad Control Mode</li>
+  <li>Mode &gt;28★: AAA zKRM - Key Repeat Mode</li>
+  <li>Mode &gt;29★: AAA zRLM - Return Line Feed Mode</li>
+  <li>Mode &gt;30★: AAA zDBM - Destructive Backspace Mode</li>
+  <li>Mode &gt;31★: AAA zBKCM - Block Cursor Mode</li>
+  <li>Mode &gt;32★: AAA zBNCM - Blinking Cursor Mode</li>
+  <li>Mode &gt;33★: AAA zWFM - Wrap Forward Mode</li>
+  <li>Mode &gt;34★: AAA zWBM - Wrap Backward Mode</li>
+  <li>Mode &gt;35★: AAA zDDM - DEL character Display Mode</li>
+  <li>Mode &gt;36★: AAA zSPM - Scroll Page Mode</li>
+  <li>Mode &gt;37★: AAA zAXM - Auto Xoff/Xon Mode</li>
+  <li>Mode &gt;38★: AAA zAPM - Auto Pause Mode</li>
+  <li>Mode &gt;39★: AAA zSSM - Slow Scroll Mode</li>
+  <li>Mode &gt;40★: AAA zHDM - Half-Duplex Mode</li>
+  <li>Mode &gt;41★: AAA zTPDM - Transfer Pointer Display Mode</li>
+  <li>Mode &gt;42★: AAA zLTM - Line Transfer Mode</li>
+  <li>Mode &gt;43★: AAA zCSTM - Column Separator Transfer Mode</li>
+  <li>Mode &gt;44★: AAA zFSTM - Field Separator Transfer Mode</li>
+  <li>Mode &gt;45★: AAA zGRTM - Graphic Rendition Transfer Mode</li>
+  <li>Mode &gt;46★: AAA zAKDM - Auto Keyboard Disable Mode</li>
+  <li>Mode &gt;47★: AAA zFRM - Fast Repeat Mode</li>
+  <li>Mode &gt;48★: AAA zHAM - Hold in Area Mode</li>
+  <li>Mode &gt;49★: AAA zGAPM - Guarded Area Print Mode</li>
+  <li>Mode &gt;51★: AAA zACM - Alternate Cursor Mode</li>
+  <li>Mode &gt;52★: AAA zMKM - Meta Key Mode</li>
+  <li>Mode &gt;53★: AAA zCLIM - Caps Lock Invert Mode</li>
+  <li>Mode &gt;54★: AAA zINM - Ignore NUL Mode</li>
+  <li>Mode &gt;55★: AAA zCNM - CR New-Line Mode</li>
+  <li>Mode &gt;56★: AAA zICM - Invisible Cursor Mode</li>
+  <li>Mode &gt;57★: AAA zMMM - Meta Monitor Mode</li>
+  <li>Mode &gt;59★: AAA zIVM - Inverse Video Mode</li>
+  <li>Mode &gt;61★: AAA Z8RCM - 8-bit Remote Copy Mode</li>
+  <li>Mode 3,4,6,7,25: SCO ?3,?4,?6,?7,?25 に同じ</li>
+  <li>Mode 30,44: SCO それぞれ ?30 urxvt scrollbar, ?44 xterm margin bell に同じ</li>
+  <li>Mode 48,1048: _SCOTCEM1★,_SCOTCEM2★ SCO ?25 に同じ? (カーソル保存の不完全版?)</li>
+  <li>Mode 50: _SNICKTM★ 97801-5XX - Compose key table on</li>
+  <li>Mode 51: _SNIDKTM★ 97801-5XX - Dead key table on</li>
+  <li>Mode 53: _SNI132M★ 97801-5XX - 132-character mode</li>
+  </ul>
+</li>
+<li>DSR ?7, ?8 (ckoco3.c:15280)</li>
+<li>モードは ckoco3.c:15794 から。色々な端末での違いがまとまっている。
+</li>
+<li>_SNIPU1, _SNIPU2★ PU1 string, PU2 string という物を処理している様だ (for 97801-5xx)</li>
+</ul>
+
 <h2 id="term.ZDS">Heath/Zenith Z-19-CN</h2>
 <ul>
 <li>ZDS = Zenith Data Systems</li>
@@ -1434,7 +1661,9 @@
 <li><kbd>CSI ? E</kbd> _AIXXES★ (XES<sup>AIX</sup>) Erase Status Line</li>
 <li><kbd>CSI ? F</kbd> _AIXXRS★ (XRS<sup>AIX</sup>) Return From Status Line</li>
 <li><kbd>CSI ? H</kbd> _AIXXHS★ (XHS<sup>AIX</sup>) Hide Status Line</li>
-<li><kbd>CSI ? S</kbd> _AIXXSS★ (XSS<sup>AIX</sup>) Show Status Line</li>
+<li><kbd>CSI ? S</kbd> _AIXXSS★ (XSS<sup>AIX</sup>) Show Status Line
+  <p>上記4つは IBM HFT (high function terminal) 由来だろうか。</p>
+</li>
 <li><kbd>CSI ? <i>Ps</i> T</kbd> _AIXXGS★ (XGS<sup>AIX</sup>) Go To Column Of Status Line</li>
 <li><kbd>CSI ? <i>Ps</i>;...;<i>Ps</i> r</kbd> _AIXRM★ Restore Private Mode</li>
 <li><kbd>CSI ? <i>Ps</i>;...;<i>Ps</i> s</kbd> _AIXSM★ Save Private Mode</li>
@@ -1687,7 +1916,7 @@
 <li><kbd>CSI d</kbd> VPA</li>
 <li><kbd>CSI e</kbd> VPR</li>
 <li><kbd>CSI f</kbd> HVP</li>
-<li><kbd>CSI g</kbd><sup class="violation">×</sup> _SCODGC★ (DGC<sup>SCO</sup>)</li>
+<li><kbd>CSI g</kbd><sup class="violation">×</sup> _SCODGC★ (DGC<sup>SCO</sup>) Display Graphics Character</li>
 <li><kbd>CSI h</kbd> SM</li>
 <li><kbd>CSI l</kbd> RM
   <ul>
@@ -1696,29 +1925,29 @@
   </ul>
 </li>
 <li><kbd>CSI i</kbd> MC</li>
-<li><kbd>CSI k</kbd><sup class="violation">×</sup> _SCOEDK★ (EDK<sup>SCO</sup>)</li>
+<li><kbd>CSI k</kbd><sup class="violation">×</sup> _SCOEDK★ (EDK<sup>SCO</sup>) Enable or Disable Keyboard click</li>
 <li><kbd>CSI m</kbd> SGR
   <ul>
   <li>0, 1, 3, 4, 5, 7, 8, 10-13, 23, 24, 25, 27, 28, 30-49 は標準。90-97, 100-107 は普通。</li>
   <li>2, 6, 21, 26, 50, 51 は独自の物<sup class="violation">×</sup></li>
   </ul>
 </li>
-<li><kbd>CSI n</kbd><sup class="violation">×</sup> _SCOTCP★ (TCP<sup>SCO</sup>)
+<li><kbd>CSI n</kbd><sup class="violation">×</sup> _SCOTCP★ (TCP<sup>SCO</sup>) Transmit Cursor Position
   <p>要求内容は <kbd>DSR(6)</kbd> に似ているが、何と <kbd><i>Pn</i> SP <i>Pn</i> LF</kbd> で返す。</p>
 </li>
-<li><kbd>CSI <i>Ps</i> o</kbd><sup class="violation">×</sup> _SCOTMP★ (TMP<sup>SCO</sup>)
+<li><kbd>CSI <i>Ps</i> o</kbd><sup class="violation">×</sup> _SCOTMP★ (TMP<sup>SCO</sup>) Transmit Margin Position
   <p>これも <kbd>SP</kbd> 区切り <kbd>LF</kbd> 終端の文字列で返す。
     0 は TBLR の全ての値を返し、1,2,3,4 はそれぞれ TBLR を一つ返す。
   </p>
 </li>
-<li><kbd>CSI r</kbd> _SCOCSR★ (CSR<sup>SCO</sup>)
+<li><kbd>CSI r</kbd> _SCOCSR★ (CSR<sup>SCO</sup>) Change Scrolling Region
   <p>DECSTBM は2個しか引数を受け付けないが、
     _SCOCSR は 4 つまで引数を受け付け、TBLR の margin を設定する。
   </p>
 </li>
-<li><kbd>CSI s</kbd> SCOSC★ (SCP<sup>SCO</sup>)</li>
-<li><kbd>CSI u</kbd> SCORC★ (RCP<sup>SCO</sup>)</li>
-<li><kbd>CSI z</kbd> _SCOSSW★ (SSW<sup>SCO</sup>)</li>
+<li><kbd>CSI s</kbd> SCOSC★ (SCP<sup>SCO</sup>) Save Cursor Position</li>
+<li><kbd>CSI u</kbd> SCORC★ (RCP<sup>SCO</sup>) Restore Cursor Position</li>
+<li><kbd>CSI z</kbd> _SCOSSW★ (SSW<sup>SCO</sup>) Screen SWitch</li>
 <li><kbd>CSI `</kbd> HPA (HPA2<sup>SCO</sup>)</li>
 <li><kbd>CSI @</kbd> ICH</li>
 <li><kbd>CSI SP</kbd><sup class="violation">×</sup> CUB</li>
@@ -1730,30 +1959,30 @@
 <li><kbd>ESC H</kbd> HTS (SHT<sup>SCO</sup>)</li>
 <li><kbd>ESC I</kbd><sup class="violation">×</sup> _SCOCBPL (CBPL<sup>SCO</sup>)</li>
 <li><kbd>ESC M</kbd> RI (CRI<sup>SCO</sup>)</li>
-<li><kbd>ESC Q <i>C1</i> <i>Cq</i> ... <i>Cq</i></kbd> _SCOSFK★ (SFK<sup>SCO</sup>)</li>
+<li><kbd>ESC Q <i>C1</i> <i>Cq</i> ... <i>Cq</i></kbd> _SCOSFK★ (SFK<sup>SCO</sup>) Set Function Key</li>
 <li><kbd>ESC c</kbd> RIS</li>
-<li><kbd>ESC l</kbd> _SCOLMA★ (CRI<sup>LMA</sup>)</li>
-<li><kbd>ESC m</kbd> _SCOUSR★ (CRI<sup>USR</sup>)</li>
+<li><kbd>ESC l</kbd> _SCOLMA★ (CRI<sup>LMA</sup>) Lock Memory Above</li>
+<li><kbd>ESC m</kbd> _SCOUSR★ (CRI<sup>USR</sup>) Unlock Scrolling Region</li>
 
-<li><kbd>CSI = A</kbd> _SCOSBC★ (SBC<sup>SCO</sup>)</li>
-<li><kbd>CSI = B</kbd> _SCOSBP★ (SBP<sup>SCO</sup>)</li>
-<li><kbd>CSI = C</kbd> _SCOSCS★ (SCS<sup>SCO</sup>)</li>
-<li><kbd>CSI = D</kbd> _SCOSBI★ (SBI<sup>SCO</sup>)</li>
-<li><kbd>CSI = E</kbd> _SCOSBB★ (SBB<sup>SCO</sup>)</li>
-<li><kbd>CSI = F</kbd> _SCOSNF★ (SNF<sup>SCO</sup>)</li>
-<li><kbd>CSI = G</kbd> _SCOSNB★ (SNB<sup>SCO</sup>)</li>
-<li><kbd>CSI = H</kbd> _SCOSRF★ (SRF<sup>SCO</sup>)</li>
-<li><kbd>CSI = I</kbd> _SCOSRB★ (SRB<sup>SCO</sup>)</li>
-<li><kbd>CSI = J</kbd> _SCOSGF★ (SGF<sup>SCO</sup>)</li>
-<li><kbd>CSI = K</kbd> _SCOSGB★ (SGB<sup>SCO</sup>)</li>
-<li><kbd>CSI = L</kbd> _SCOSEF★ (SEF<sup>SCO</sup>)</li>
-<li><kbd>CSI = M</kbd> _SCORAS★ (RAS<sup>SCO</sup>)</li>
-<li><kbd>CSI = c</kbd> _SCOHSC★ (HSC<sup>SCO</sup>)</li>
-<li><kbd>CSI = g</kbd> _SCOPRC★ (PRC<sup>SCO</sup>)</li>
-<li><kbd>CSI = l</kbd> _SCOCHC★ (CHC<sup>SCO</sup>)</li>
-<li><kbd>CSI = m</kbd> _SCOSSM★ (SSM<sup>SCO</sup>)</li>
-<li><kbd>CSI = r</kbd> _SCORSM★ (RSM<sup>SCO</sup>)</li>
-<li><kbd>CSI = z</kbd> _SCOCAT★ (CAT<sup>SCO</sup>)</li>
+<li><kbd>CSI = A</kbd> _SCOSBC★ (SBC<sup>SCO</sup>) Set Border Color</li>
+<li><kbd>CSI = B</kbd> _SCOSBP★ (SBP<sup>SCO</sup>) Set Bell Parameters</li>
+<li><kbd>CSI = C</kbd> _SCOSCS★ (SCS<sup>SCO</sup>) Set Cursor Shape</li>
+<li><kbd>CSI = D</kbd> _SCOSBI★ (SBI<sup>SCO</sup>) Set Background Intensity</li>
+<li><kbd>CSI = E</kbd> _SCOSBB★ (SBB<sup>SCO</sup>) Set Background Blink bit</li>
+<li><kbd>CSI = F</kbd> _SCOSNF★ (SNF<sup>SCO</sup>) Set Normal Foreground color</li>
+<li><kbd>CSI = G</kbd> _SCOSNB★ (SNB<sup>SCO</sup>) Set Normal Background color</li>
+<li><kbd>CSI = H</kbd> _SCOSRF★ (SRF<sup>SCO</sup>) Set Reverse Foreground color (Video)</li>
+<li><kbd>CSI = I</kbd> _SCOSRB★ (SRB<sup>SCO</sup>) Set Reverse Background color (Video)</li>
+<li><kbd>CSI = J</kbd> _SCOSGF★ (SGF<sup>SCO</sup>) Set Reverse Foreground color (Graphic characters)</li>
+<li><kbd>CSI = K</kbd> _SCOSGB★ (SGB<sup>SCO</sup>) Set Reverse Background color (Graphic characters)</li>
+<li><kbd>CSI = L</kbd> _SCOSEF★ (SEF<sup>SCO</sup>) Set Emulation Feature</li>
+<li><kbd>CSI = M</kbd> _SCORAS★ (RAS<sup>SCO</sup>) Return Attribute Setting</li>
+<li><kbd>CSI = c</kbd> _SCOHSC★ (HSC<sup>SCO</sup>) Hide or Show Cursor</li>
+<li><kbd>CSI = g</kbd> _SCOPRC★ (PRC<sup>SCO</sup>) Print ROM Character</li>
+<li><kbd>CSI = l</kbd> _SCOCHC★ (CHC<sup>SCO</sup>) Clear and Home Cursor</li>
+<li><kbd>CSI = m</kbd> _SCOSSM★ (SSM<sup>SCO</sup>) Set Specific Margin</li>
+<li><kbd>CSI = r</kbd> _SCORSM★ (RSM<sup>SCO</sup>) ReSet Margins</li>
+<li><kbd>CSI = z</kbd> _SCOCAT★ (CAT<sup>SCO</sup>) Clear All TABs</li>
 </ul>
 
 
