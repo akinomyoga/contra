@@ -64,7 +64,17 @@
 <p>以下に HPTerm の情報が載っている。他は既に既知の情報である。</p>
 <ul>
 <li><a href="http://tldp.org/HOWTO/Xterm-Title-6.html">How to change the title of an xterm: Appendix: escapes for other terminal types</a></li>
-<li>他に espterm, iTerm2, konsole, Kermit 等は確認しておくべき気がする。</li>
+<li>他に espterm, iTerm2, konsole, <del>Kermit</del> 等は確認しておくべき気がする。</li>
+</ul>
+
+<h2>TNREPTAMB</h2>
+<ul>
+<li><a href="https://docs.google.com/document/d/1Dgq81J0eQEfjq3MR__O7VrbSVnatr9CCqMEITse9psk/edit?pli=1">New Terminal Control Commands for Ambiguous Width Characters - Google Docs</a></li>
+</ul>
+<ul>
+<li>DSR ?8840 TNREPTAMB</li>
+<li>DSR ?8841 TNREPTAMB</li>
+<li>DSR ?8842 TNREPTAMB</li>
 </ul>
 
 <h2 id="term.KERM">Kermit</h2>
@@ -367,6 +377,12 @@
 <li>BA80 で検索しても余り情報は出てこない。
   <a href="http://www.columbia.edu/kermit/k95manual/termtype.html">Kermit 95 - Terminal Types</a>
   のエミュレーションのターゲットとして Nixdorf BA80 Terminal という物が挙げられている。
+</li>
+<li>Kermit のソースコードに BA80 の機能が色々残っている。
+  Kermit には BA80 という項目もあるが 97801 という項目もある。
+  この 97801 は SNI-97801 とも書いて、SNI は Siemence Nixdorf の略らしい。
+  つまり、97801 も同じ会社から出ている端末という事になるか。
+  "Siemens Nixdorf 97801" の名前で検索すると色々出てくる。
 </li>
 </ul>
 
