@@ -1,7 +1,7 @@
 # -+- mode: makefile-gmake -*-
 
 all:
-.PHONY: all
+.PHONY: all test
 
 make_config.mk: ./configure
 	./configure
@@ -161,8 +161,23 @@ experimental/bidi: $(objdir)/experimental/bidi.o
 #all: minimal_openpt
 minimal_openpt: $(objdir)/minimal_openpt.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
-$(objdir)/minimal_openpt.o: minimal_openpt.cpp | $(objdir)
+$(objdir)/minimal_openpt.o: ../min/minimal_openpt.cpp | $(objdir)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+#------------------------------------------------------------------------------
+# test
+
+test: test_seq
+test_seq_objs := \
+  $(objdir)/test_seq.o \
+  $(objdir)/contradef.o \
+  $(objdir)/enc.utf8.o \
+  $(objdir)/iso2022.o \
+  $(objdir)/sys.path.o
+test_seq:  $(test_seq_objs)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+#------------------------------------------------------------------------------
 
 $(directories):
 	mkdir -p $@

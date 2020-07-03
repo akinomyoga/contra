@@ -712,22 +712,15 @@ namespace contra {
     }
   };
 
-  class sequence_printer: public idevice {
+  class sequence_print_processor {
     const char* fname;
     std::FILE* const file;
   public:
-    sequence_printer(std::FILE* file):
+    sequence_print_processor(std::FILE* file):
       fname(nullptr), file(file) {}
-    sequence_printer(const char* fname):
+    sequence_print_processor(const char* fname):
       fname(fname), file(std::fopen(fname, "w")) {}
-    ~sequence_printer() {if (fname) std::fclose(this->file);}
-
-  private:
-    sequence_decoder_config m_config; // ToDo: should be simpler instance
-
-    typedef sequence_decoder<sequence_printer> decoder_type;
-    decoder_type m_seqdecoder {this, &this->m_config};
-    friend decoder_type;
+    ~sequence_print_processor() {if (fname) std::fclose(this->file);}
 
     bool m_hasPrecedingChar {false};
 
@@ -814,11 +807,23 @@ namespace contra {
       else
         std::fprintf(file, "%c", uchar);
     }
+  };
+
+  class sequence_printer: public idevice {
+  private:
+    sequence_print_processor m_processor;
+    sequence_decoder_config m_config; // ToDo: should be simpler instance
+    typedef sequence_decoder<sequence_print_processor> decoder_type;
+    decoder_type m_seqdecoder {&m_processor, &this->m_config};
+
+  public:
+    sequence_printer(std::FILE* file): m_processor(file) {}
+    sequence_printer(const char* fname): m_processor(fname) {}
 
   public:
     void write(const char* data, std::size_t size) {
       for (std::size_t i = 0; i < size; i++)
-        m_seqdecoder.decode_char(data[i]);
+        m_seqdecoder.decode_char((byte) data[i]);
     }
 
   private:

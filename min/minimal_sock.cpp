@@ -73,6 +73,7 @@ void server(const char* filename) {
     }
   }
 
+  // 本来は write は一回で全て送信できるとは限らない事に注意する。
   std::cout << "server: Connect!" << std::endl;
   const char* msg = "\x1b[1;34mserver_message\x1b[m";
   std::size_t len = std::strlen(msg) + 1;
@@ -107,6 +108,7 @@ void client(const char* filename) {
     std::exit(1);
   }
 
+  // 本来は read は一回で全て受信できるとは限らない事に注意する。
   std::cout << "client: Connect!" << std::endl;
   std::size_t len;
   read(s, &len, sizeof len);
