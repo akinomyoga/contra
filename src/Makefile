@@ -37,7 +37,7 @@ $(gendir)/term.mode_def.hpp: make_command.sh ansi/term.mode.def
 #------------------------------------------------------------------------------
 # test
 
-all: impl1
+test: impl1
 impl1_objs = \
   $(objdir)/impl1.o \
   $(objdir)/ttty/buffer.o \
@@ -52,7 +52,7 @@ impl1_objs = \
 impl1: $(impl1_objs)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-all: impl2
+test: impl2
 impl2_objs = \
   $(objdir)/impl2.o \
   $(objdir)/pty.o \
