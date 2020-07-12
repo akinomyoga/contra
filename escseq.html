@@ -544,38 +544,37 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>CMD</th><td><kbd>ESC d</kbd></td>
     <th>-R-</th><td><kbd>ESC t</kbd></td></tr>
 <tr><th class="markB">DOCS</th><td><kbd>ESC % <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
-    <th>DECXMIT<br/>WYXCH</th><td><kbd>ESC 5</kbd></td>
+    <th>DECXMIT<br/>WYXCH<br/>zTFC</th><td><kbd>ESC 5</kbd></td>
     <th>NEL</th><td><kbd>ESC E</kbd></td>
     <th>MW</th><td><kbd>ESC U</kbd></td>
     <th>-R-</th><td><kbd>ESC e</kbd></td>
     <th>-R-</th><td><kbd>ESC u</kbd></td></tr>
 <tr><th class="markB">IRR</th><td><kbd>ESC &amp; <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
-    <th>DECBI</th><td><kbd>ESC 6</kbd></td>
+    <th>DECBI<br/>zTI</th><td><kbd>ESC 6</kbd></td>
     <th>SSA</th><td><kbd>ESC F</kbd></td>
     <th>SPA</th><td><kbd>ESC V</kbd></td>
     <th>-R-</th><td><kbd>ESC f</kbd></td>
     <th>-R-</th><td><kbd>ESC v</kbd></td></tr>
 <tr><th>-R-</th><td><kbd>ESC '</kbd></td><!--'-->
-    <th>DECSC</th><td><kbd>ESC 7</kbd></td>
+    <th>DECSC (zSC)</th><td><kbd>ESC 7</kbd></td>
     <th>ESA</th><td><kbd>ESC G</kbd></td>
     <th>EPA</th><td><kbd>ESC W</kbd></td>
     <th>-R-</th><td><kbd>ESC g</kbd></td>
     <th>-R-</th><td><kbd>ESC w</kbd></td></tr>
-
 <tr><th class="markB">GZD4</th><td><kbd>ESC ( <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
-    <th>DECRC</th><td><kbd>ESC 8</kbd></td>
+    <th>DECRC (zRC)</th><td><kbd>ESC 8</kbd></td>
     <th>HTS</th><td><kbd>ESC H</kbd></td>
     <th>SOS</th><td><kbd>ESC X</kbd></td>
     <th>-R-</th><td><kbd>ESC h</kbd></td>
     <th>-R-</th><td><kbd>ESC x</kbd></td></tr>
 <tr><th class="markB">G1D4</th><td><kbd>ESC ) <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
-    <th>DECFI</th><td><kbd>ESC 9</kbd></td>
+    <th>DECFI<br/>zCGR</th><td><kbd>ESC 9</kbd></td>
     <th>HTJ<br/>_SCOCBPL<sup>違反</sup></th><td><kbd>ESC I</kbd></td>
     <th>(SGCI)</th><td><kbd>ESC Y</kbd></td>
     <th>-R-</th><td><kbd>ESC i</kbd></td>
     <th>-R-</th><td><kbd>ESC y</kbd></td></tr>
 <tr><th class="markB">G2D4</th><td><kbd>ESC * <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
-    <th>---</th><td><kbd>ESC :</kbd></td>
+    <th>zGUA</th><td><kbd>ESC :</kbd></td>
     <th>VTS</th><td><kbd>ESC J</kbd></td>
     <th>SCI<br/>DECID</th><td><kbd>ESC Z</kbd></td>
     <th>-R-</th><td><kbd>ESC j</kbd></td>
@@ -976,17 +975,17 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th colspan="2">Ft型: 私用制御機能</th>
     </tr>
 <tr><th><i>Ft</i></th><th>略号</th></tr>
-<tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, _DOSSKR, _ZDSPXMT, RLBFAT, _SNIMODEP<sup>*km</sup>, zSDP<sup>*km</sup></td></tr>
+<tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, _DOSSKR, _ZDSPXMT, RLBFAT, _SNIMODEP<sup>*km</sup>, zSDP</td></tr>
 <tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA, _DOSEKR, _ZDSPX25, _SNIMODEQ<sup>*km</sup></td></tr>
 <tr><th><kbd>r</kbd></th><td><b>DECSTBM</b>, DECPCTERM, _SCOCSR, SUNSCRL, _ZDSPMBR</td></tr>
-<tr><th><kbd>s</kbd></th><td><b>DECSLRM</b>, <b>SCOSC</b>, WYSC, _DGRRC, SUNRESET, _SNIMODES<sup>*km</sup>, zPSH<sup>*km</sup></td></tr>
-<tr><th><kbd>t</kbd></th><td>DECSLPP, WYNNAT, DGROSC, _CITSTIME, <b>_SUNWINM</b>, _SNIMODET<sup>*km</sup>, zPOP<sup>*km</sup></td></tr>
-<tr><th><kbd>u</kbd></th><td>DECSHTS, <b>SCORC</b>, WYRC, _DGSPOS, _CITSSR, _SNIMODEU<sup>*km</sup>, zSTP<sup>*km</sup></td></tr>
-<tr><th><kbd>v</kbd></th><td>DECSVTS, RLSCD (_CITSCUR), _DGSPARM, _SNIMODEV<sup>*km</sup>, zSRC<sup>*km</sup></td></tr>
-<tr><th><kbd>w</kbd></th><td>DECSHORP, _AIXVTR, DGMARG, _CITSCURB, _SNIMODEW<sup>*km</sup>, zSPF<sup>*km</sup>, _WYCLR<sup>*km</sup></td></tr>
+<tr><th><kbd>s</kbd></th><td><b>DECSLRM</b>, <b>SCOSC</b>, WYSC, _DGRRC, SUNRESET, _SNIMODES<sup>*km</sup>, zPSH</td></tr>
+<tr><th><kbd>t</kbd></th><td>DECSLPP, WYNNAT, DGROSC, _CITSTIME, <b>_SUNWINM</b>, _SNIMODET<sup>*km</sup>, zPOP</td></tr>
+<tr><th><kbd>u</kbd></th><td>DECSHTS, <b>SCORC</b>, WYRC, _DGSPOS, _CITSSR, _SNIMODEU<sup>*km</sup>, zSTP</td></tr>
+<tr><th><kbd>v</kbd></th><td>DECSVTS, RLSCD (_CITSCUR), _DGSPARM, _SNIMODEV<sup>*km</sup>, zSRC</td></tr>
+<tr><th><kbd>w</kbd></th><td>DECSHORP, _AIXVTR, DGMARG, _CITSCURB, _SNIMODEW<sup>*km</sup>, zSPF, _WYCLR<sup>*km</sup></td></tr>
 <tr><th><kbd>x</kbd></th><td>DECREQTPARM, DECREPTPARM, _AIXVTD, DGRTC, C25SGR</td></tr>
 <tr><th><kbd>y</kbd></th><td>DECTST, _AIXVTL, _SNIMODEY<sup>*km</sup>, _VIPRQ<sup>*km</sup></td></tr>
-<tr><th><kbd>z</kbd></th><td>DECVERP, WYSCRATE, _SCOSSW, C25VTSW, _CITPCTL, _ZDSPRAM, _SNISLRM<sup>*km</sup>, zSTE<sup>*km</sup></td></tr>
+<tr><th><kbd>z</kbd></th><td>DECVERP, WYSCRATE, _SCOSSW, C25VTSW, _CITPCTL, _ZDSPRAM, _SNISLRM<sup>*km</sup>, zSTE</td></tr>
 <tr><th><kbd>{</kbd></th><td>---</td></tr>
 <tr><th><kbd>|</kbd></th><td>DECTTC</td></tr>
 <tr><th><kbd>}</kbd></th><td>DECPRO</td></tr>
@@ -1467,7 +1466,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th><kbd>h</kbd></th>
     <td>_DGSM<sup>+</sup></td>
     <td>_SGISM<sup>+</sup><br/>_DOSSM<sup>+</sup></td>
-    <td>_DOSSM<sup>+</sup><br/>_CITSM<sup>+</sup><br/>_PC98SM<sup>+</sup><br/>_ZDSSM<sup>+</sup><br/>_SUNSM<sup>+</sup></td>
+    <td>_DOSSM<sup>+</sup>, _CITSM<sup>+</sup><br/>_PC98SM<sup>+</sup>, _ZDSSM<sup>+</sup><br/>_SUNSM<sup>+</sup>, _zSM<sup>+</sup></td>
     <td>DECSET<sup>+</sup></td>
 </tr>
 <tr><th><kbd>i</kbd></th>
@@ -1485,7 +1484,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th><kbd>l</kbd></th>
     <td>_DGRM<sup>+</sup></td>
     <td>_SCOCHC<br/>_SGIRM<sup>+</sup><br/>_DOSRM<sup>+</sup></td>
-    <td>_DOSRM<sup>+</sup><br/>_CITRM<sup>+</sup><br/>_PC98RM<sup>+</sup><br/>_ZDSRM<sup>+</sup><br/>_SUNRM<sup>+</sup></td>
+    <td>_DOSRM<sup>+</sup>, _CITRM<sup>+</sup><br/>_PC98RM<sup>+</sup>, _ZDSRM<sup>+</sup><br/>_SUNRM<sup>+</sup>, _zRM<sup>+</sup></td>
     <td>DECRST<sup>+</sup></td>
 </tr>
 <tr><th><kbd>m</kbd></th>
@@ -1499,6 +1498,12 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>XTERM_SET_MOD_FKEYS0 (XTMDKEYD<sup>*ml</sup>)</td>
     <td>DECDSR<sup>+</sup></td>
+</tr>
+<tr><th><kbd>o</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>_zDAQ<sup>+</sup></td>
+    <td>-</td>
 </tr>
 <tr><th>Ft</th>
     <th><kbd>&lt;</kbd></th>
@@ -1757,9 +1762,14 @@ tmux=screen
   主に端末のウィンドウの制御 (出力)・状態報告 (入力) などに用いられる。
   </p>
   <p>OSC シーケンスはコマンド列の形式に従う。
-  OSC は 01/11 05/13 (<kbd>ESC ]</kbd>) または 09/13 で表現される。
-  ECMA-48 ではそれ以上は定められていないが、実際の実装では一番最初に数字の引数を取ることが多い。
-  一方で、XTerm に於いて <kbd><i>Ft</i></kbd> を最初に取る場合も確認できる。
+    OSC は 01/11 05/13 (<kbd>ESC ]</kbd>) または 09/13 で表現される。
+    ECMA-48 ではそれ以上は定められていないが、実際の実装では一番最初に数字の引数を取ることが多い。
+    一方で、 XTerm 等に於いて <kbd><i>Ft</i></kbd> を最初に取る場合も確認できる。
+    どうやら、XTerm ctlseqs.pdf 及び
+    <a href="ftp://ftp.ora.com/pub/openlook/vol3ol.pdf">[PDF] X Window System User's Guide (OPEN LOOK Edition)</a><!--'--> によると、
+    <kbd>OSC Ps ; ... BEL</kbd> の形式は、
+    最初に xterm が <kbd>OSC Ps ND ... NP</kbd> (ND は最初の非数字、NP は最初の non-printing character) として導入した様である。
+    それを CDE dtterm が <kbd>OSC Ps ; ... BEL</kbd> の形で継承した。
   </p>
   <p>本来 ST で終端するはずだが BEL で終端することもある。
     aixterm の <kbd>OSC(0-2)</kbd> は <kbd>ST</kbd> では終端せず、
@@ -1772,9 +1782,9 @@ tmux=screen
   <tr><td><kbd>I</kbd></td><td>_SUNSetIconFile</td></tr>
   <tr><td><kbd>L</kbd></td><td>_SUNSetIconLabel<br/>_CDEReportIconLabel (<kbd>_SUNWINM(20)</kbd> への応答)</td></tr>
   <tr><th><i class="kbd">Ps</i></th><th>略号</th></tr>
-  <tr><td>0</td>   <td>_CDEChangeIconNameAndWindowTitle</td></tr>
-  <tr><td>1</td>   <td>_CDEChangeIconName</td></tr>
-  <tr><td>2</td>   <td>_CDEChangeWindowTitle</td></tr>
+  <tr><td>0</td>   <td>_XtermChangeIconNameAndWindowTitle</td></tr>
+  <tr><td>1</td>   <td>_XtermChangeIconName</td></tr>
+  <tr><td>2</td>   <td>_XtermChangeWindowTitle</td></tr>
   <tr><td>3</td>   <td>_CDESetCurrentWorkingDirectory<br/>XTSetXProperty</td></tr>
   <tr><td>4</td>   <td>ChangeColor</td></tr>
   <tr><td>5</td>   <td>ChangeSpecialColor</td></tr>
@@ -1798,12 +1808,13 @@ tmux=screen
   <tr><td>30</td>  <td>(konsole) SetSessionName<sup>*tg</sup></td></tr>
   <tr><td>31</td>  <td>(konsole comment) OpenUrl<sup>*tg</sup></td></tr>
   <tr><td>32</td>  <td>(konsole) SetSessionIcon<sup>*tg</sup></td></tr>
-  <tr><td>39</td>  <td>(urxvt) ChangeVT100TextForegroundColor<sup>*tg</sup></td></tr>
-  <tr><td>46</td>  <td>ChangeLogFile</td></tr>
-  <tr><td>50</td>  <td>SetFont<br/>(iTerm2Extension)<sup>deprecated</sup></td></tr>
+  <tr><td>39</td>  <td>(rxvt) RestoreFG (ChangeVT100TextForegroundColor と同じ)</td></tr>
+  <tr><td>46</td>  <td>_XtermChangeLogFile</td></tr>
+  <tr><td>49</td>  <td>(rxvt) RestoreBG (ChangeVT100TextBackgroundColor と同じ)</td></tr>
+  <tr><td>50</td>  <td>SetFont<br/>(iTerm2Extension)<sup>deprecated</sup><br/>(konsole) ProfileChange</td></tr>
   <tr><td>51</td>  <td>(Reserved for Emacs shell)</td></tr>
   <tr><td>52</td>  <td>ManipulateSelectionData</td></tr>
-  <tr><td>55</td>  <td>(urxvt comment) DumpScreen<sup>*tg</sup></td></tr>
+  <tr><td>55</td>  <td>(rxvt) DumpScreen</td></tr>
   <tr><td>104</td> <td>ResetColor</td></tr>
   <tr><td>105</td> <td>ResetSpecialColor</td></tr>
   <tr><td>106</td> <td>EnableSpecialColorNumber</td></tr>
@@ -1831,11 +1842,15 @@ tmux=screen
   <tr><td>720</td> <td>(urxvt) MoveToScrollBackTop<sup>*tg</sup></td></tr>
   <tr><td>721</td> <td>(urxvt) MoveToCurrentActiveBuffer<sup>*tg</sup></td></tr>
   <tr><td>777</td> <td>(urxvt) <sup>*tg</sup></td></tr>
-  <tr><td>800</td> <td>(RLogin) 漢字コード</td></tr>
-  <tr><td>801</td> <td>(RLogin) 音声読み上げ</td></tr>
+  <tr><td>800</td> <td>(RLogin) OriginalKanjiCodeSet</td></tr>
+  <tr><td>801</td> <td>(RLogin) SpeakString</td></tr>
   <tr><td>1337</td><td>(iTerm2) Extension</td></tr>
   <tr><td>8900</td><td>GWREPT<sup>yaft</sup></td></tr>
   </table>
+  <ul>
+  <li>urxvt は rxvt.h で 777 を検索すれば見つかる。
+      konsole は src/Session.h (SessionAttributes) にある。</li>
+  </ul>
 </li>
 <li><dfn class="cfunc">DCS</dfn>: DEVICE CONTROL STRING
   <p>[ECMA-48/8.3.27]
@@ -1855,7 +1870,8 @@ tmux=screen
   <tr><td>_DGDC</td>    <td><kbd>DCS A ... ST</kbd></td></tr>
   <tr><td>_DGSPAT</td>  <td><kbd>DCS C ... ST</kbd></td></tr>
   <tr><td>DGSW</td>     <td><kbd>DCS D ... ST</kbd></td></tr>
-  <tr><td>decREGIS</td> <td><kbd>DCS p ... ST</kbd></td></tr>
+  <tr><td>_zPSTE</td>   <td><kbd>DCS ` ... ST</kbd></td></tr>
+  <tr><td>decREGIS<br/>_zPPOS</td> <td><kbd>DCS p ... ST</kbd></td></tr>
   <tr><td>decSIXEL<br/>HardCopyData<sup>VK100</sup></td><td><kbd>DCS q ... ST</kbd></td></tr>
   <tr><td>decVKSET<br/>DECLBAN</td><td><kbd>DCS r ... ST</kbd></td></tr>
   <tr><td>decVKPK</td>  <td><kbd>DCS <i>Ps</i> s ... ST</kbd></td></tr>
@@ -1909,6 +1925,11 @@ tmux=screen
   <p>PM シーケンスはコマンド列の形式に従う。
   PM は 01/11 05/14 (<kbd>ESC ^</kbd>) または 09/14 で表現される。
   </p>
+  <p>[jexer/ECMA48.java (pmPut)] jexer は私用目的で
+    <kbd>PM h i d e M o u s e P o i n t e r ST</kbd>
+    <kbd>PM s h o w M o u s e P o i n t e r ST</kbd>
+    というシーケンスを用いている。
+  </p>
 </li>
 <li><dfn class="cfunc">APC</dfn>: APPLICATION PROGRAM COMMAND
   <p>[ECMA-48/8.3.2]
@@ -1918,6 +1939,9 @@ tmux=screen
   </p>
   <p>APC シーケンスはコマンド列の形式に従う。
   APC は 01/11 05/15 (<kbd>ESC _</kbd>) または 09/15 で表現される。
+  </p>
+  <p>[Kitty] Kitty は <kbd>APC G ... ST</kbd>
+    というシーケンスを画像転送に用いている。
   </p>
 </li>
 <li><dfn class="cfunc">_SCRAKA</dfn>: Title Definition String
@@ -2340,131 +2364,135 @@ tmux=screen
 </tr>
 <tr><th>&lt;25</th><td>---</td>
     <th>=25</th><td>---</td>
-    <th>&gt;25</th><td>zMDM<sup>*km</sup></td>
+    <th>&gt;25</th><td>zMDM</td>
 </tr>
 <tr><th>&lt;26</th><td>---</td>
     <th>=26</th><td>---</td>
-    <th>&gt;26</th><td>zKCM<sup>*km</sup></td>
+    <th>&gt;26</th><td>zKCM</td>
 </tr>
 <tr><th>&lt;27</th><td>---</td>
     <th>=27</th><td>---</td>
-    <th>&gt;27</th><td>zKPCM<sup>*km</sup></td>
+    <th>&gt;27</th><td>zKPCM</td>
 </tr>
 <tr><th>&lt;28</th><td>---</td>
     <th>=28</th><td>---</td>
-    <th>&gt;28</th><td>zKRM<sup>*km</sup></td>
+    <th>&gt;28</th><td>zKRM</td>
 </tr>
 <tr><th>&lt;29</th><td>---</td>
     <th>=29</th><td>---</td>
-    <th>&gt;29</th><td>zRLM<sup>*km</sup></td>
+    <th>&gt;29</th><td>zRLM</td>
 </tr>
 <tr><th>&lt;30</th><td>---</td>
     <th>=30</th><td>---</td>
-    <th>&gt;30</th><td>zDBM<sup>*km</sup></td>
+    <th>&gt;30</th><td>zDBM</td>
 </tr>
 <tr><th>&lt;31</th><td>---</td>
     <th>=31</th><td>---</td>
-    <th>&gt;31</th><td>zBKCM<sup>*km</sup></td>
+    <th>&gt;31</th><td>zBKCM</td>
 </tr>
 <tr><th>&lt;32</th><td>---</td>
     <th>=32</th><td>---</td>
-    <th>&gt;32</th><td>zBNCM<sup>*km</sup></td>
+    <th>&gt;32</th><td>zBNCM</td>
 </tr>
 <tr><th>&lt;33</th><td>---</td>
     <th>=33</th><td>---</td>
-    <th>&gt;33</th><td>zWFM<sup>*km</sup></td>
+    <th>&gt;33</th><td>zWFM</td>
 </tr>
 <tr><th>&lt;34</th><td>---</td>
     <th>=34</th><td>---</td>
-    <th>&gt;34</th><td>zWBM<sup>*km</sup></td>
+    <th>&gt;34</th><td>zWBM</td>
 </tr>
 <tr><th>&lt;35</th><td>---</td>
     <th>=35</th><td>---</td>
-    <th>&gt;35</th><td>zDDM<sup>*km</sup></td>
+    <th>&gt;35</th><td>zDDM</td>
 </tr>
 <tr><th>&lt;36</th><td>---</td>
     <th>=36</th><td>---</td>
-    <th>&gt;36</th><td>zSPM<sup>*km</sup></td>
+    <th>&gt;36</th><td>zSPM</td>
 </tr>
 <tr><th>&lt;37</th><td>---</td>
     <th>=37</th><td>---</td>
-    <th>&gt;37</th><td>zAXM<sup>*km</sup></td>
+    <th>&gt;37</th><td>zAXM</td>
 </tr>
 <tr><th>&lt;38</th><td>---</td>
     <th>=38</th><td>---</td>
-    <th>&gt;38</th><td>zAPM<sup>*km</sup></td>
+    <th>&gt;38</th><td>zAPM</td>
 </tr>
 <tr><th>&lt;39</th><td>---</td>
     <th>=39</th><td>---</td>
-    <th>&gt;39</th><td>zSSM<sup>*km</sup></td>
+    <th>&gt;39</th><td>zSSM</td>
 </tr>
 <tr><th>&lt;40</th><td>---</td>
     <th>=40</th><td>---</td>
-    <th>&gt;40</th><td>zHDM<sup>*km</sup></td>
+    <th>&gt;40</th><td>zHDM</td>
 </tr>
 <tr><th>&lt;41</th><td>---</td>
     <th>=41</th><td>---</td>
-    <th>&gt;41</th><td>zTPDM<sup>*km</sup></td>
+    <th>&gt;41</th><td>zTPDM</td>
 </tr>
 <tr><th>&lt;42</th><td>---</td>
     <th>=42</th><td>---</td>
-    <th>&gt;42</th><td>zLTM<sup>*km</sup></td>
+    <th>&gt;42</th><td>zLTM</td>
 </tr>
 <tr><th>&lt;43</th><td>---</td>
     <th>=43</th><td>---</td>
-    <th>&gt;43</th><td>zCSTM<sup>*km</sup></td>
+    <th>&gt;43</th><td>zCSTM</td>
 </tr>
 <tr><th>&lt;44</th><td>---</td>
     <th>=44</th><td>---</td>
-    <th>&gt;44</th><td>zFSTM<sup>*km</sup></td>
+    <th>&gt;44</th><td>zFSTM</td>
 </tr>
 <tr><th>&lt;45</th><td>---</td>
     <th>=45</th><td>---</td>
-    <th>&gt;45</th><td>zGRTM<sup>*km</sup></td>
+    <th>&gt;45</th><td>zGRTM</td>
 </tr>
 <tr><th>&lt;46</th><td>---</td>
     <th>=46</th><td>---</td>
-    <th>&gt;46</th><td>zAKDM<sup>*km</sup></td>
+    <th>&gt;46</th><td>zAKDM</td>
 </tr>
 <tr><th>&lt;47</th><td>---</td>
     <th>=47</th><td>---</td>
-    <th>&gt;47</th><td>zFRM<sup>*km</sup></td>
+    <th>&gt;47</th><td>zFRM</td>
 </tr>
 <tr><th>&lt;48</th><td>---</td>
     <th>=48</th><td>---</td>
-    <th>&gt;48</th><td>zHAM<sup>*km</sup></td>
+    <th>&gt;48</th><td>zHAM</td>
 </tr>
 <tr><th>&lt;49</th><td>---</td>
     <th>=49</th><td>---</td>
-    <th>&gt;49</th><td>zGAPM<sup>*km</sup></td>
+    <th>&gt;49</th><td>zGAPM</td>
+</tr>
+<tr><th>&lt;50</th><td>---</td>
+    <th>=50</th><td>---</td>
+    <th>&gt;50</th><td>zFIM</td>
 </tr>
 <tr><th>&lt;51</th><td>---</td>
     <th>=51</th><td>---</td>
-    <th>&gt;51</th><td>zACM<sup>*km</sup></td>
+    <th>&gt;51</th><td>zACM</td>
 </tr>
 <tr><th>&lt;52</th><td>---</td>
     <th>=52</th><td>---</td>
-    <th>&gt;52</th><td>zMKM<sup>*km</sup></td>
+    <th>&gt;52</th><td>zMKM</td>
 </tr>
 <tr><th>&lt;53</th><td>---</td>
     <th>=53</th><td>---</td>
-    <th>&gt;53</th><td>zCLIM<sup>*km</sup></td>
+    <th>&gt;53</th><td>zCLIM</td>
 </tr>
 <tr><th>&lt;54</th><td>---</td>
     <th>=54</th><td>---</td>
-    <th>&gt;54</th><td>zINM<sup>*km</sup></td>
+    <th>&gt;54</th><td>zINM</td>
 </tr>
 <tr><th>&lt;55</th><td>---</td>
     <th>=55</th><td>---</td>
-    <th>&gt;55</th><td>zCNM<sup>*km</sup></td>
+    <th>&gt;55</th><td>zCNM</td>
 </tr>
 <tr><th>&lt;56</th><td>---</td>
     <th>=56</th><td>---</td>
-    <th>&gt;56</th><td>zICM<sup>*km</sup></td>
+    <th>&gt;56</th><td>zICM</td>
 </tr>
 <tr><th>&lt;57</th><td>---</td>
     <th>=57</th><td>---</td>
-    <th>&gt;57</th><td>zMMM<sup>*km</sup></td>
+    <th>&gt;57</th><td>zMMM</td>
 </tr>
 <tr><th>&lt;59</th><td>---</td>
     <th>=59</th><td>---</td>

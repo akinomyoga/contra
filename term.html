@@ -43,6 +43,7 @@
 
 <h3>目次</h3>
 <ul>
+<li>AAA <a href="#term.AAA">Ann Arbor Ambassador</a></li>
 <li>ZDS <a href="#term.ZDS">Heath/Zenith Z-19-CN</a></li>
 <li>BA80 <a href="#term.BA80">Nixdorf BA80</a></li>
 <li>Kermit <a href="#term.Kermit">Kermit</a></li>
@@ -77,12 +78,83 @@
 <li>DSR ?8842 TNREPTAMB</li>
 </ul>
 
+<h2 id="term.AAA">Ann Arbor Ambassador</h2>
+<ul>
+<li><a href="https://vt100.net/annarbor/aaa-ug/appendixa.html">Ann Arbor Ambassador User Guide: Appendix A</a></li>
+<li><a href="https://vt100.net/annarbor/aaa-ug/section11.html">Ann Arbor Ambassador User Guide: Section 11</a> DCS はこちら。</li>
+</ul>
+
+<ul>
+<li>STS, DMI, INT, EMI 等の制御文字にも対応している。</li>
+<li>ETX は zSRC の終端を示す為に使われている。</li>
+<li>ENQ は前回 application から受け取った DCS を application に向かって送信する事を要求する。</li>
+<li>DAQ と SSA/ESA SPA/EPA は同じ役割。</li>
+<li><kbd>DCS ` ... ST</kbd> _zPSTE★ - Program string table entry</li>
+<li><kbd>DCS p ... ST</kbd> _zPPOS★ - Program power-on string</li>
+<li><kbd>ESC 5</kbd> zTFC★ - Toggle Fast-Blink Cursor</li>
+<li><kbd>ESC 6</kbd> zTI ★ - Toggle IRM</li>
+<li><kbd>ESC 7</kbd> zSC ★ - Save Cursor カーソル位置と属性の両方を保存する</li>
+<li><kbd>ESC 8</kbd> zRC ★ - Restore Cursor</li>
+<li><kbd>ESC 9</kbd> zCGR★ - Change Graphic Rendition</li>
+<li><kbd>ESC :</kbd> zGUA★ - Guard Unprotected Areas</li>
+<li><kbd>CSI p</kbd> zSDP★ - Set Display Parameters</li>
+<li><kbd>CSI s</kbd> zPSH★ - Push Line</li>
+<li><kbd>CSI t</kbd> zPOP★ - Pop Line</li>
+<li><kbd>CSI u</kbd> zSTP★ - Set Transfer Pointer</li>
+<li><kbd>CSI v</kbd> zSRC★ - Start Remote Copy</li>
+<li><kbd>CSI w</kbd> zSPF★ - Set Print Format</li>
+<li><kbd>CSI z</kbd> zSTE★ - Set Transfer End</li>
+<li><kbd>CSI &gt; o</kbd> _zDAQ★ - private DAQ</li>
+<li>Modes (_zSM, _zRM)★
+  <ul>
+  <li>&gt;25 zMBM ★ - Margin Bell Mode</li>
+  <li>&gt;26 zKCM ★ - Key Click Mode</li>
+  <li>&gt;27 zKPCM★ - Key Pad Control Mode</li>
+  <li>&gt;28 zKRM ★ - Key Repeat Mode</li>
+  <li>&gt;29 zRLM ★ - Return Line Feed Mode</li>
+  <li>&gt;30 zDBM ★ - Destructive Backspace Mode</li>
+  <li>&gt;31 zBKCM★ - Block Cursor Mode</li>
+  <li>&gt;32 zBNCM★ - Blinking Cursor Mode</li>
+  <li>&gt;33 zWFM ★ - Wrap Forward Mode</li>
+  <li>&gt;34 zWBM ★ - Wrap Backward Mode</li>
+  <li>&gt;35 zDDM ★ - DEL-character Display Mode</li>
+  <li>&gt;36 zSPM ★ - Scroll-Page Mode</li>
+  <li>&gt;37 zAXM ★ - Auto Xon/Xoff Mode</li>
+  <li>&gt;38 zAPM ★ - Auto Pause Mode</li>
+  <li>&gt;39 zSSM ★ - Slow Scroll Mode</li>
+  <li>&gt;40 zHDM ★ - Half-Duplex Mode</li>
+  <li>&gt;41 zTPDM★ - Transfer Pointer Display Mode</li>
+  <li>&gt;42 zLTM ★ - Line Transfer Mode</li>
+  <li>&gt;43 zCSTM★ - Column Separator Transfer Mode</li>
+  <li>&gt;44 zFSTM★ - Field Separator Transfer Mode</li>
+  <li>&gt;45 zGRTM★ - Graphic Rendition Transfer Mode</li>
+  <li>&gt;46 zAKDM★ - Auto Keyboard Disable Mode</li>
+  <li>&gt;47 zFRM ★ - Fast Repeat Mode</li>
+  <li>&gt;48 zHAM ★ - Hold in Area Mode</li>
+  <li>&gt;49 zGAPM★ - Guarded Area Print Mode</li>
+  <li>&gt;50 zFIM ★ - Function-key Initialize Mode</li>
+  <li>&gt;51 zACM ★ - Alternate Cursor Mode</li>
+  <li>&gt;52 zMKM ★ - Meta Key Mode</li>
+  <li>&gt;53 zCLIM★ - Caps Lock Invert Mode</li>
+  <li>&gt;54 zINM ★ - Ignore NUL Mode</li>
+  <li>&gt;55 zCNM ★ - CR New-Line Mode</li>
+  <li>&gt;56 zICM ★ - Invisible Cursor Mode</li>
+  <li>&gt;57 zMMM ★ - Meta Monitor Mode</li>
+  <li>加えて &gt;N で標準モード N=1,2,4,6,12,14-18,20も使えるそうだ。
+    25 から始まっているのはこれが理由である。
+  </li>
+  </ul>
+</li>
+<li>SGR: 0,1,4,5,7,8</li>
+</ul>
+
 <h2 id="term.KERM">Kermit</h2>
 <ul>
 <li>Kermit の対応している端末エミュレーション <a href="http://www.columbia.edu/kermit/k95manual/termtype.html">Kermit 95 - Terminal Types</a></li>
 </ul>
 <p>ソースコードから。AAA は Ann Arbor Ambassador。ANSI は ANSI-BBS (PC ANSI)??。QANSI は QNX ANSI。
   ckoco3.c:12594-18261 (vtcsi) は確認した。
+  ■escape sequences については未確認。
 </p>
 <ul>
 <li>以下は SCO の対応する機能をそのまま実装したものに見える。
@@ -147,7 +219,7 @@
 <li><kbd>CSI p</kbd>
   <ul>
   <li>_ZDSPXMT: H19 Transmit Page to host</li>
-  <li>AAA zSDP★ - Set Display Parameters</li>
+  <li>AAA zSDP - Set Display Parameters</li>
   <li>_SNIMODEP★ 97801 色々なモード?</li>
   </ul>
 </li>
@@ -162,31 +234,31 @@
 <li><kbd>CSI ? s</kbd> _AIXSM: HFT  Save Modes</li>
 <li><kbd>CSI s</kbd>
   <ul>
-  <li>AAA zPSH★ - Push Line</li>
+  <li>AAA zPSH - Push Line</li>
   <li>_SNIMODES★ 97801 色々なモード?</li>
   </ul>
 </li>
 <li><kbd>CSI t</kbd>
   <ul>
-  <li>AAA zPOP★ - Pop Line</li>
+  <li>AAA zPOP - Pop Line</li>
   <li>_SNIMODET★ 97801 色々なモード?</li>
   </ul>
 </li>
 <li><kbd>CSI u</kbd>
   <ul>
-  <li>AAA zSTP★ - Set Transfer Point</li>
+  <li>AAA zSTP - Set Transfer Point</li>
   <li>_SNIMODEU★ 97801 色々なモード?</li>
   </ul>
 </li>
 <li><kbd>CSI v</kbd>
   <ul>
-  <li>AAA zSRC★ - Start Remote Copy</li>
+  <li>AAA zSRC - Start Remote Copy</li>
   <li>_SNIMODEV★ 97801 色々なモード?</li>
   </ul>
 </li>
 <li><kbd>CSI w</kbd>
   <ul>
-  <li>AAA zSPF★ - Set Print Format</li>
+  <li>AAA zSPF - Set Print Format</li>
   <li>_AIXVTR: HFT vt raw keyboard input</li>
   <li>_WYCLR★ WY370 All sorts of color controls</li>
   <li>_SNIMODEW★ 97801 色々なモード?</li>
@@ -203,7 +275,7 @@
 <li><kbd>CSI z</kbd>
   <ul>
   <li>_ZDSPRAM: H19 Reset</li>
-  <li>AAA zSTE★ - Set Transfer End</li>
+  <li>AAA zSTE - Set Transfer End</li>
   <li>_SNISLRM: 97801 Define left (pn[1]) and right (pn[2]) margins</li>
   </ul>
 </li>
@@ -256,38 +328,7 @@
   <li>Mode ?83★ WY52 - 52 line mode</li>
   <li>Mode ?84★ WYENAT Enable separate assignment of attributes (SGR) to erasable and nonerasable characters</li>
   <li>Mode ?85★ WYREPL Set replacement character to current character background color</li>
-  <li>Mode &gt;25★: AAA zMDM - Margin Bell Mode</li>
-  <li>Mode &gt;26★: AAA zKCM - Key Click Mode</li>
-  <li>Mode &gt;27★: AAA zKPCM - Key Pad Control Mode</li>
-  <li>Mode &gt;28★: AAA zKRM - Key Repeat Mode</li>
-  <li>Mode &gt;29★: AAA zRLM - Return Line Feed Mode</li>
-  <li>Mode &gt;30★: AAA zDBM - Destructive Backspace Mode</li>
-  <li>Mode &gt;31★: AAA zBKCM - Block Cursor Mode</li>
-  <li>Mode &gt;32★: AAA zBNCM - Blinking Cursor Mode</li>
-  <li>Mode &gt;33★: AAA zWFM - Wrap Forward Mode</li>
-  <li>Mode &gt;34★: AAA zWBM - Wrap Backward Mode</li>
-  <li>Mode &gt;35★: AAA zDDM - DEL character Display Mode</li>
-  <li>Mode &gt;36★: AAA zSPM - Scroll Page Mode</li>
-  <li>Mode &gt;37★: AAA zAXM - Auto Xoff/Xon Mode</li>
-  <li>Mode &gt;38★: AAA zAPM - Auto Pause Mode</li>
-  <li>Mode &gt;39★: AAA zSSM - Slow Scroll Mode</li>
-  <li>Mode &gt;40★: AAA zHDM - Half-Duplex Mode</li>
-  <li>Mode &gt;41★: AAA zTPDM - Transfer Pointer Display Mode</li>
-  <li>Mode &gt;42★: AAA zLTM - Line Transfer Mode</li>
-  <li>Mode &gt;43★: AAA zCSTM - Column Separator Transfer Mode</li>
-  <li>Mode &gt;44★: AAA zFSTM - Field Separator Transfer Mode</li>
-  <li>Mode &gt;45★: AAA zGRTM - Graphic Rendition Transfer Mode</li>
-  <li>Mode &gt;46★: AAA zAKDM - Auto Keyboard Disable Mode</li>
-  <li>Mode &gt;47★: AAA zFRM - Fast Repeat Mode</li>
-  <li>Mode &gt;48★: AAA zHAM - Hold in Area Mode</li>
-  <li>Mode &gt;49★: AAA zGAPM - Guarded Area Print Mode</li>
-  <li>Mode &gt;51★: AAA zACM - Alternate Cursor Mode</li>
-  <li>Mode &gt;52★: AAA zMKM - Meta Key Mode</li>
-  <li>Mode &gt;53★: AAA zCLIM - Caps Lock Invert Mode</li>
-  <li>Mode &gt;54★: AAA zINM - Ignore NUL Mode</li>
-  <li>Mode &gt;55★: AAA zCNM - CR New-Line Mode</li>
-  <li>Mode &gt;56★: AAA zICM - Invisible Cursor Mode</li>
-  <li>Mode &gt;57★: AAA zMMM - Meta Monitor Mode</li>
+  <li>Mode &gt;25..57: AAA のマニュアルと同じ。但し、&gt;50 は Kermit では抜けている。</li>
   <li>Mode &gt;59★: AAA zIVM - Inverse Video Mode</li>
   <li>Mode &gt;61★: AAA Z8RCM - 8-bit Remote Copy Mode</li>
   <li>Mode 3,4,6,7,25: SCO ?3,?4,?6,?7,?25 に同じ</li>
@@ -1708,10 +1749,13 @@
 <li>DEC Modes は xterm の ?40,?44,?45,?46 を実装している。実はどちらが先かは分からない。</li>
 <li>DSR で対応しているのは 5,6</li>
 <li>SGR で対応しているのは 0,1,2,4,5,7,8,22,24,27,28,30-39,40-49</li>
-<li><kbd>OSC 0 ; ... BEL</kbd> _CDEChangeIconNameAndWindowTitle★</li>
-<li><kbd>OSC 1 ; ... BEL</kbd> _CDEChangeIconName★</li>
-<li><kbd>OSC 2 ; ... BEL</kbd> _CDEChangeWindowTitle★
-  <p>XTerm のマニュアルによるとこれらを最初に追加したのは CDE dtterm である様に読める。</p>
+<li><kbd>OSC 0 ; ... BEL</kbd> _XtermChangeIconNameAndWindowTitle★</li>
+<li><kbd>OSC 1 ; ... BEL</kbd> _XtermChangeIconName★</li>
+<li><kbd>OSC 2 ; ... BEL</kbd> _XtermChangeWindowTitle★
+  <p><del>XTerm のマニュアルによるとこれらを最初に追加したのは CDE dtterm である様に読める。</del>
+    改めてよく読むと shelltool が <kbd>OSC l .. ST</kbd> etc を追加して、
+    XTerm が <kbd>OSC Ps ; ... BEL</kbd> を追加して、CDE dtterm が両方に対応した様である。
+  </p>
 </li>
 <li><kbd>OSC 3 ; ... BEL</kbd> _CDESetCurrentWorkingDirectory★ Set the current working directory for the new sessions</li>
 <li><kbd>OSC l ... ST</kbd> _SUNSetWindowTitle</li>
