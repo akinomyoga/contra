@@ -975,19 +975,19 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th colspan="2">Ft型: 私用制御機能</th>
     </tr>
 <tr><th><i>Ft</i></th><th>略号</th></tr>
-<tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, _DOSSKR, _ZDSPXMT, RLBFAT, _SNIMODEP<sup>*km</sup>, zSDP</td></tr>
+<tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, _DOSSKR, _ZDSPXMT, RLBFAT, _SNIMODEP<sup>*km</sup>, zSDP, BEESSKM</td></tr>
 <tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA, _DOSEKR, _ZDSPX25, _SNIMODEQ<sup>*km</sup></td></tr>
 <tr><th><kbd>r</kbd></th><td><b>DECSTBM</b>, DECPCTERM, _SCOCSR, SUNSCRL, _ZDSPMBR</td></tr>
-<tr><th><kbd>s</kbd></th><td><b>DECSLRM</b>, <b>SCOSC</b>, WYSC, _DGRRC, SUNRESET, _SNIMODES<sup>*km</sup>, zPSH</td></tr>
-<tr><th><kbd>t</kbd></th><td>DECSLPP, WYNNAT, DGROSC, _CITSTIME, <b>_SUNWINM</b>, _SNIMODET<sup>*km</sup>, zPOP</td></tr>
-<tr><th><kbd>u</kbd></th><td>DECSHTS, <b>SCORC</b>, WYRC, _DGSPOS, _CITSSR, _SNIMODEU<sup>*km</sup>, zSTP</td></tr>
-<tr><th><kbd>v</kbd></th><td>DECSVTS, RLSCD (_CITSCUR), _DGSPARM, _SNIMODEV<sup>*km</sup>, zSRC</td></tr>
-<tr><th><kbd>w</kbd></th><td>DECSHORP, _AIXVTR, DGMARG, _CITSCURB, _SNIMODEW<sup>*km</sup>, zSPF, _WYCLR<sup>*km</sup></td></tr>
+<tr><th><kbd>s</kbd></th><td><b>DECSLRM</b>, <b>SCOSC</b>, WYSC, _DGRRC, SUNRESET, _SNIMODES<sup>*km</sup>, zPSH, BEEAP</td></tr>
+<tr><th><kbd>t</kbd></th><td>DECSLPP, WYNNAT, DGROSC, _CITSTIME, <b>_SUNWINM</b>, _SNIMODET<sup>*km</sup>, zPOP, BEESAP</td></tr>
+<tr><th><kbd>u</kbd></th><td>DECSHTS, <b>SCORC</b>, WYRC, _DGSPOS, _CITSSR, _SNIMODEU<sup>*km</sup>, zSTP, BEESKL</td></tr>
+<tr><th><kbd>v</kbd></th><td>DECSVTS, RLSCD (_CITSCUR), _DGSPARM, _SNIMODEV<sup>*km</sup>, zSRC, BEEMAP</td></tr>
+<tr><th><kbd>w</kbd></th><td>DECSHORP, _AIXVTR, DGMARG, _CITSCURB, _SNIMODEW<sup>*km</sup>, zSPF, _WYCLR<sup>*km</sup>, BEEBEL</td></tr>
 <tr><th><kbd>x</kbd></th><td>DECREQTPARM, DECREPTPARM, _AIXVTD, DGRTC, C25SGR</td></tr>
 <tr><th><kbd>y</kbd></th><td>DECTST, _AIXVTL, _SNIMODEY<sup>*km</sup>, _VIPRQ<sup>*km</sup></td></tr>
-<tr><th><kbd>z</kbd></th><td>DECVERP, WYSCRATE, _SCOSSW, C25VTSW, _CITPCTL, _ZDSPRAM, _SNISLRM<sup>*km</sup>, zSTE</td></tr>
-<tr><th><kbd>{</kbd></th><td>---</td></tr>
-<tr><th><kbd>|</kbd></th><td>DECTTC</td></tr>
+<tr><th><kbd>z</kbd></th><td>DECVERP, WYSCRATE, _SCOSSW, C25VTSW, _CITPCTL, _ZDSPRAM, _SNISLRM<sup>*km</sup>, zSTE, BEEBDS</td></tr>
+<tr><th><kbd>{</kbd></th><td>BEECM</td></tr>
+<tr><th><kbd>|</kbd></th><td>DECTTC, BEESND</td></tr>
 <tr><th><kbd>}</kbd></th><td>DECPRO</td></tr>
 <tr><th><kbd>~</kbd></th><td>DECFNK, _CITTST</td></tr>
 </table>
@@ -1734,6 +1734,8 @@ tmux=screen
 <tr><th>_SCRAKA</th><td>キャラクタ列?</td><td><kbd>ESC k <i>U</i><strong>*</strong> ST</kbd></td> <td>Title Definition String (GNU Screen)</td></tr>
 <tr><th>_SNIPU1<sup>*km</sup></th><td>コマンド列</td><td><kbd>PU1 <i>GL'<!--'--></i><strong>*</strong> ST</kbd></td> <td>97801-5XX PU1 sequence</td></tr>
 <tr><th>_SNIPU2<sup>*km</sup></th><td>コマンド列</td><td><kbd>PU2 <i>GL'<!--'--></i><strong>*</strong> ST</kbd></td> <td>97801-5XX PU2 sequence</td></tr>
+<tr><th>_BEETCMK5</th><td>コマンド列</td><td><kbd>SS3 P ... ST</kbd></td><td>Beehive PF key report</td></tr>
+<tr><th>_BEEAPC</th><td>コマンド列</td><td><kbd>ESC APC <i>Ft</i> ... ESC ST</kbd></td><td>Beehive ESC APC sequence</td></tr>
 </table>
 
 <ul>
@@ -1781,6 +1783,7 @@ tmux=screen
   <tr><td><kbd>l</kbd></td><td>_SUNSetWindowTitle<br/>_CDEReportWindowTitle (<kbd>_SUNWINM(21)</kbd> への応答)</td></tr>
   <tr><td><kbd>I</kbd></td><td>_SUNSetIconFile</td></tr>
   <tr><td><kbd>L</kbd></td><td>_SUNSetIconLabel<br/>_CDEReportIconLabel (<kbd>_SUNWINM(20)</kbd> への応答)</td></tr>
+  <tr><td><kbd>P</kbd></td><td>_BEETCMK2</td></tr>
   <tr><th><i class="kbd">Ps</i></th><th>略号</th></tr>
   <tr><td>0</td>   <td>_XtermChangeIconNameAndWindowTitle</td></tr>
   <tr><td>1</td>   <td>_XtermChangeIconName</td></tr>
@@ -1854,22 +1857,33 @@ tmux=screen
 </li>
 <li><dfn class="cfunc">DCS</dfn>: DEVICE CONTROL STRING
   <p>[ECMA-48/8.3.27]
-  DCS で始まるシーケンスは <dfn>DCS シーケンス</dfn> (DCS sequence)
-  または Device Control String と呼ばれる。
-  受信装置へのコマンド、送信装置からの返答に用いることを意図している。
-  規格では IDCS の返答に用いる形式が定められている。
-  その他の形式は受信装置・送信装置の間で取り決めて利用する。
-  </p>
-  <p>DCS シーケンスはコマンド列の形式に従う。
-  DCS は 01/11 05/00 (<kbd>ESC P</kbd>) または 09/00 で表現される。
+    DCS で始まるシーケンスは <dfn>DCS シーケンス</dfn> (DCS sequence)
+    または Device Control String と呼ばれる。
+    受信装置へのコマンド、送信装置からの返答に用いることを意図している。
+    規格では IDCS の返答に用いる形式が定められている。
+    その他の形式は受信装置・送信装置の間で取り決めて利用する。
+    DCS シーケンスはコマンド列の形式に従う。
+    DCS は 01/11 05/00 (<kbd>ESC P</kbd>) または 09/00 で表現される。
   </p>
   <p>実際の実装では CSI シーケンスと同様の形式の接頭辞とそれに続くデータからなる事が多い。</p>
+  <p>Beehive ATL-008 では terminal-to-host でユーザーが直接キーボードから入力する時、
+    ST の代わりに ESC でも終端する事ができる様な雰囲気に書かれているが詳細は不明。
+  </p>
   <table class="normal">
   <caption>DCS シーケンス一覧</caption>
   <tr><th>略号</th><th>符号化表現</th></tr>
-  <tr><td>_DGDC</td>    <td><kbd>DCS A ... ST</kbd></td></tr>
-  <tr><td>_DGSPAT</td>  <td><kbd>DCS C ... ST</kbd></td></tr>
-  <tr><td>DGSW</td>     <td><kbd>DCS D ... ST</kbd></td></tr>
+  <tr><td>_DGDC</td>      <td><kbd>DCS A ... ST</kbd></td></tr>
+  <tr><td>_DGSPAT<br/>_BEERQCPR</td><td><kbd>DCS C ... ST</kbd></td></tr>
+  <tr><td>DGSW</td>       <td><kbd>DCS D ... ST</kbd></td></tr>
+  <tr><td>_BEERQTCME</td> <td><kbd>DCS H ... ST</kbd></td></tr>
+  <tr><td>_BEERPTCM</td>  <td><kbd>DCS I ... ST</kbd></td></tr>
+  <tr><td>_BEERQTCMR</td> <td><kbd>DCS N ... ST</kbd></td></tr>
+  <tr><td>_BEESOSL</td>   <td><kbd>DCS O ... ST</kbd></td></tr>
+  <tr><td>_BEELDTCMR<br/>_BEETCMK4</td> <td><kbd>DCS P ... ST</kbd></td></tr>
+  <tr><td>_BEERPTSTAT</td><td><kbd>DCS R ... ST</kbd></td></tr>
+  <tr><td>_BEERQTSTAT</td><td><kbd>DCS T ... ST</kbd></td></tr>
+  <tr><td>_BEESSL</td>    <td><kbd>DCS U ... ST</kbd></td></tr>
+  <tr><td>_BEELDTCME</td> <td><kbd>DCS W ... ST</kbd></td></tr>
   <tr><td>_zPSTE</td>   <td><kbd>DCS ` ... ST</kbd></td></tr>
   <tr><td>decREGIS<br/>_zPPOS</td> <td><kbd>DCS p ... ST</kbd></td></tr>
   <tr><td>decSIXEL<br/>HardCopyData<sup>VK100</sup></td><td><kbd>DCS q ... ST</kbd></td></tr>
@@ -1918,36 +1932,60 @@ tmux=screen
 </li>
 <li><dfn class="cfunc">PM</dfn>: PRIVACY MESSAGE
   <p>[ECMA-48/8.3.94]
-  PM で始まるシーケンスは <dfn>PM シーケンス</dfn> (PM sequence)
-  または 私用メッセージ (privacy message) と呼ばれる。
-  用途は私的な取り決めに従う。
-  </p>
-  <p>PM シーケンスはコマンド列の形式に従う。
-  PM は 01/11 05/14 (<kbd>ESC ^</kbd>) または 09/14 で表現される。
+    PM で始まるシーケンスは <dfn>PM シーケンス</dfn> (PM sequence)
+    または 私用メッセージ (privacy message) と呼ばれる。
+    用途は私的な取り決めに従う。
+    PM シーケンスはコマンド列の形式に従う。
+    PM は 01/11 05/14 (<kbd>ESC ^</kbd>) または 09/14 で表現される。
   </p>
   <p>[jexer/ECMA48.java (pmPut)] jexer は私用目的で
     <kbd>PM h i d e M o u s e P o i n t e r ST</kbd>
     <kbd>PM s h o w M o u s e P o i n t e r ST</kbd>
     というシーケンスを用いている。
   </p>
+  <p>[DEC STD 070] <kbd>APC <i>I</i><strong>*</strong> <i>Ft</i> ... ST</kbd> の形式である。</p>
+  <table class="normal">
+  <caption>PM シーケンス一覧</caption>
+  <tr><th>略号</th><th>符号化表現</th></tr>
+  <tr><td>_BEETCMK3</td><td><kbd>PM P ... ST</kbd></td></tr>
+  </table>
 </li>
 <li><dfn class="cfunc">APC</dfn>: APPLICATION PROGRAM COMMAND
   <p>[ECMA-48/8.3.2]
-  APC で始まるシーケンスは <dfn>APC シーケンス</dfn> (APC sequence)
-  または アプリケーションプログラムコマンド (application program command) と呼ばれる。
-  用途は関連するアプリケーションプログラムの間で取り決める。
+    APC で始まるシーケンスは <dfn>APC シーケンス</dfn> (APC sequence)
+    または アプリケーションプログラムコマンド (application program command) と呼ばれる。
+    用途は関連するアプリケーションプログラムの間で取り決める。
+    APC シーケンスはコマンド列の形式に従う。
+    APC は 01/11 05/15 (<kbd>ESC _</kbd>) または 09/15 で表現される。
   </p>
-  <p>APC シーケンスはコマンド列の形式に従う。
-  APC は 01/11 05/15 (<kbd>ESC _</kbd>) または 09/15 で表現される。
-  </p>
-  <p>[Kitty] Kitty は <kbd>APC G ... ST</kbd>
-    というシーケンスを画像転送に用いている。
-  </p>
+  <p>[DEC STD 070] <kbd>APC <i>I</i><strong>*</strong> <i>Ft</i> ... ST</kbd> の形式をしている。</p>
+  <table class="normal">
+  <caption>APC シーケンス一覧</caption>
+  <tr><th>略号</th><th>符号化表現</th></tr>
+  <tr><td>_BEELDBOOT</td><td><kbd>APC B ... ST</kbd></td></tr>
+  <tr><td>KittyImage</td><td><kbd>APC G ... ST</kbd></td></tr>
+  <tr><td>_BEETCMK1</td><td><kbd>APC P ... ST</kbd></td></tr>
+  </table>
 </li>
 <li><dfn class="cfunc">_SCRAKA</dfn>: Title Definition String
   <p>GNU screen でバッファのタイトルを設定するのに使われるキャラクタ列。
-  ST で終端する (BEL では終端しない)。
+    ST で終端する (BEL では終端しない)。
   </p>
+</li>
+<li><dfn class="cfunc">_BEEAPC</dfn>
+  <table class="normal">
+  <caption>ESC APC シーケンス一覧</caption>
+  <tr><th>符号化表現</th><th>略号</th><th>説明</th></tr>
+  <tr><td><kbd>ESC APC E ... ESC ST</kbd></td><td>_BEEXKEY</td><td>Execute a key</td></tr>
+  <tr><td><kbd>ESC APC H ... ESC ST</kbd></td><td>_BEEUKEY</td><td>Upload key</td></tr>
+  <tr><td><kbd>ESC APC K ... ESC ST</kbd></td><td>_BEEDEFK</td><td>Add/delete a key [5.2.3]</td></tr>
+  <tr><td><kbd>ESC APC L ... ESC ST</kbd></td><td>_BEESAVK</td><td>Saving a user key in EEPROM [5.2.4]</td></tr>
+  <tr><td><kbd>ESC APC M ... ESC ST</kbd></td><td>_BEESAVM</td><td>Saving a menu in EEPROM</td></tr>
+  <tr><td><kbd>ESC APC N ... ESC ST</kbd></td><td>_BEEDEL </td><td>Delete a key or menu from EEPROM</td></tr>
+  <tr><td><kbd>ESC APC O ... ESC ST</kbd></td><td>_BEESAVP</td><td>Saving a new power-up menu number</td></tr>
+  <tr><td><kbd>ESC APC R ... ESC ST</kbd></td><td>_BEEDEFM</td><td>Add/delete a menu</td></tr>
+  <tr><td><kbd>ESC APC U ... ESC ST</kbd></td><td>_BEEUREP</td><td>Upload reply</td></tr>
+  </table>
 </li>
 </ul>
 
@@ -2065,7 +2103,7 @@ tmux=screen
 <tr><th>DECCKM</th><td>?1</td>
     <th>-</th><td>?11</td>
     <th>-</th><td>?21</td>
-    <th>-</th><td>?31</td></tr>
+    <th>_BEEILCRM</th><td>?31</td></tr>
 <tr><th>DECANM<br/>_ZDSZMD</th><td>?2</td>
     <th>ATT610_BLINK</th><td>?12</td>
     <th>-</th><td>?22</td>
@@ -2076,23 +2114,23 @@ tmux=screen
     <th>-</th><td>?33</td></tr>
 <tr><th>DECSCLM</th><td>?4</td>
     <th>DECTEM<sup>*ae</sup><br/>XTERM_XOR_CURSOR_BLINKS</th><td>?14</td>
-    <th>laPrintDensity<sup>*ae</sup></th><td>?24</td>
+    <th>laPrintDensity<sup>*ae</sup><br/>_BEEFFCRM</th><td>?24</td>
     <th>DECRLM</th><td>?34</td></tr>
 <tr><th>DECSCNM</th><td>?5</td>
     <th>-</th><td>?15</td>
-    <th>DECTCEM</th><td>?25</td>
+    <th>DECTCEM<br/>_BEEFFNPM</th><td>?25</td>
     <th>DECHEBM<br/>RXVT_ShiftKeys</th><td>?35</td></tr>
 <tr><th>DECOM</th><td>?6</td>
     <th>DECEKEM<sup>*ae</sup></th><td>?16</td>
-    <th>-</th><td>?26</td>
+    <th>_BEEDROL</th><td>?26</td>
     <th>DECHEM</th><td>?36</td></tr>
 <tr><th>DECAWM</th><td>?7</td>
-    <th>-</th><td>?17</td>
-    <th>DECPSP<sup>*ae</sup></th><td>?27</td>
+    <th>_BEEATM</th><td>?17</td>
+    <th>DECPSP<sup>*ae</sup><br/>_BEEVASM</th><td>?27</td>
     <th>-</th><td>?37</td></tr>
 <tr><th>DECARM</th><td>?8</td>
     <th>DECPFF</th><td>?18</td>
-    <th>-</th><td>?28</td>
+    <th>_BEEHASM</th><td>?28</td>
     <th>DECTEK</th><td>?38</td></tr>
 <tr><th>DECINLM<br/>XTERM_X10_MOUSE</th><td>?9</td>
     <th>DECPEX</th><td>?19</td>
@@ -2100,7 +2138,7 @@ tmux=screen
     <th>-</th><td>?39</td></tr>
 <tr><th>RXVT_menuBar</th><td>?10</td>
     <th>-</th><td>?20</td>
-    <th>RXVT_scrollBar</th><td>?30</td>
+    <th>RXVT_scrollBar<br/>_BEEVTCRM</th><td>?30</td>
     <th>DECCRNLM<sup>*ae</sup><br/>XTERM_132COLS</th><td>?40</td></tr>
 </table>
 <ul>

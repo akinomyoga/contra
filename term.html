@@ -43,6 +43,7 @@
 
 <h3>目次</h3>
 <ul>
+<li>BEE <a href="#term.BEE">Beehive ATL-008</a></li>
 <li>AAA <a href="#term.AAA">Ann Arbor Ambassador</a></li>
 <li>ZDS <a href="#term.ZDS">Heath/Zenith Z-19-CN</a></li>
 <li>BA80 <a href="#term.BA80">Nixdorf BA80</a></li>
@@ -76,6 +77,107 @@
 <li>DSR ?8840 TNREPTAMB</li>
 <li>DSR ?8841 TNREPTAMB</li>
 <li>DSR ?8842 TNREPTAMB</li>
+</ul>
+
+<h2 id="term.BEE">Beehive</h2>
+<h3>ATL-008</h3>
+<ul>
+<li><a href="https://vt100.net/manx/details/74,16339">ATL-008 Technical User's Manual – Manx</a>
+  <ul>
+  <li>PF key defs については Sec. 3 (TCM; terminal configuration manager)</li>
+  <li>Beehive 独自の制御機能については Sec. 6.16</li>
+  <li>制御シーケンス一覧は Appendix E</li>
+  </ul>
+</li>
+</ul>
+<p>シーケンス一覧</p>
+<ul>
+<li><kbd>ESC . E</kbd><sup class="violation">×</sup> - ★ Exit 100 mode
+  <p>これは <kbd>G2D6(E)</kbd> (E = IR-123 General Purpose Supplementary Graphic Set CSA Standard Z 243.4-1985) である。</p>
+</li>
+<li><kbd>ESC # 3</kbd> DECDHL</li>
+<li><kbd>ESC # 4</kbd> DECDHL</li>
+<li><kbd>ESC # 5</kbd> DECSWL</li>
+<li><kbd>ESC # 6</kbd> DECDWL</li>
+<li><kbd>ESC # 8</kbd> DECALN</li>
+<li><kbd>ESC 5</kbd> DECXMIT</li>
+<li><kbd>ESC 7</kbd> DECSC</li>
+<li><kbd>ESC 8</kbd> DECRC</li>
+<li><kbd>ESC &lt;</kbd> (in VT52 mode) ★ Enter 100 Mode</li>
+<li><kbd>ESC =</kbd> DECKPAM</li>
+<li><kbd>ESC &gt;</kbd> DECKPNM</li>
+<li><kbd>CSI p</kbd> BEESSKM★ - Set Softkey Menu [6.16.1]</li>
+<li><kbd>CSI q</kbd> DECLL - load LEDs</li>
+<li><kbd>CSI r</kbd> DECSTBM - set top and bottom margin</li>
+<li><kbd>CSI s</kbd> BEEAP★ - Align Pointer</li>
+<li><kbd>CSI t</kbd> BEESAP★ - Set Absolute Page</li>
+<li><kbd>CSI u</kbd> BEESKL★ - Soft Keyboard Lock</li>
+<li><kbd>CSI v</kbd> BEEMAP★ - Memory Address Pointer</li>
+<li><kbd>CSI w</kbd> BEEBEL★ - Select Audible Alarm (sound audible tone generator)</li>
+<li><kbd>CSI x</kbd> DECREPTPARM - request terminal parameters</li>
+<li><kbd>CSI y</kbd> DECTST - invoke confidence test</li>
+<li><kbd>CSI z</kbd> BEEBDS★ - Blank Data Stream</li>
+<li><kbd>CSI {</kbd> BEECM★ - Communications Mode</li>
+<li><kbd>CSI |</kbd> BEESND★ - Send Data To Host (transparent user sequences)</li>
+<li>PF key defs (program function key)
+  <p>APC seq を PF key defs (Sec. 3) に使っている。
+    [5.2.5 (page 5-24)] ユーザーがキーを押すと terminal to host で次のシーケンスが送られる。
+  </p>
+  <ul>
+  <li><kbd>APC P n ST</kbd> _BEETCMK1★ TCM selection 1</li>
+  <li><kbd>OSC P n ST</kbd> _BEETCMK2★ TCM selection 2</li>
+  <li><kbd>PM P n ST</kbd>  _BEETCMK3★ TCM selection 3</li>
+  <li><kbd>DCS P n ST</kbd> _BEETCMK4★ TCM selection 4</li>
+  <li><kbd>SS3 P n ST</kbd> _BEETCMK5★ TCM selection 5</li>
+  </ul>
+</li>
+<li><kbd>APC B ... ST</kbd> _BEELDBOOT★ - [8.1] Load bootload code これは hex でバイナリデータを符号化している。</li>
+<li><kbd>DCS P ... ST</kbd> _BEELDTCMR★ - TCM download to RAM registers</li>
+<li><kbd>DCS W ... ST</kbd> _BEELDTCME★ - TCM download to EEPROM registers</li>
+<li><kbd>DCS N ... ST</kbd> _BEERQTCMR★ - Request TCM parameters from RAM</li>
+<li><kbd>DCS H ... ST</kbd> _BEERQTCME★ - Request TCM parameters from EEPROM</li>
+<li><kbd>DCS I ... ST</kbd> _BEERPTCM ★ - Report TCM parameters</li>
+<li><kbd>DCS U ... ST</kbd> _BEESSL   ★ - User message from host (set status line)</li>
+<li><kbd>DCS O ... ST</kbd> _BEESOSL  ★ - User-defined optional status line</li>
+<li><kbd>DCS T ST</kbd> _BEERQTSTAT★ - Request terminal status</li>
+<li><kbd>DCS R ST</kbd> _BEERPTSTAT★ - Report terminal status</li>
+<li><kbd>DCS C ST</kbd> _BEERQCPR  ★ - Request CPR</li>
+<li>[5.2.5] どうやら ST の代わりに ESC で終わる事もできるらしい。
+  これはキーボードからシーケンスを入力する時に使うらしい。
+</li>
+<li>_BEEAPC★
+  <p>[5.2.3, 5.2.4] <kbd>ESC APC ... ESC ST</kbd> の形式のシーケンスが複数定義されている。</p>
+  <p>Transparency [5.2.4]
+    <kbd>APC(K)</kbd> 及び <kbd>APC(U)</kbd> については C0 及び &amp; は &amp; を使って escape するそうだ。
+    そのとき C0 については 0x40 を加算する。例えば ESC は <code>&amp;[</code> になる。
+  </p>
+  <ul>
+  <li><kbd>ESC APC K ... ESC ST</kbd> _BEEDEFK★ - Add/delete a key [5.2.3]</li>
+  <li><kbd>ESC APC R ... ESC ST</kbd> _BEEDEFM★ - Add/delete a menu</li>
+  <li><kbd>ESC APC E ... ESC ST</kbd> _BEEXKEY★ - Execute a key</li>
+  <li><kbd>ESC APC H ... ESC ST</kbd> _BEEUKEY★ - Upload key</li>
+  <li><kbd>ESC APC U ... ESC ST</kbd> _BEEUREP★ - Upload reply</li>
+  <li><kbd>ESC APC L ... ESC ST</kbd> _BEESAVK★ - Saving a user key in EEPROM [5.2.4]</li>
+  <li><kbd>ESC APC M ... ESC ST</kbd> _BEESAVM★ - Saving a menu in EEPROM</li>
+  <li><kbd>ESC APC N ... ESC ST</kbd> _BEEDEL ★ - Delete a key or menu from EEPROM</li>
+  <li><kbd>ESC APC O ... ESC ST</kbd> _BEESAVP★ - Saving a new power-up menu number</li>
+  </ul>
+</li>
+<li>Modes
+  <ul>
+  <li>?1..?9 は DEC のものと同じ</li>
+  <li>?17 _BEEATM  ★ - autotab</li>
+  <li>?24 _BEEFFCRM★ - form feed to col 0</li>
+  <li>?25 _BEEFFNPM★ - form feed to next page</li>
+  <li>?26 _BEEDROL ★ - destructive Roll</li>
+  <li>?27 _BEEVASM ★ - vertical auto scroll</li>
+  <li>?28 _BEEHASM ★ - horizontal auto scroll</li>
+  <li>?30 _BEEVTCRM★ - vertical tab to col 0</li>
+  <li>?31 _BEEILCRM★ - insert delete line to col 0</li>
+  </ul>
+  cl
+
+</li>
 </ul>
 
 <h2 id="term.AAA">Ann Arbor Ambassador</h2>
