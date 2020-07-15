@@ -43,12 +43,16 @@
 
 <h3>目次</h3>
 <ul>
+<li>HP <a href="#term.HP">HP 2624</a></li>
+<li>TEK <a href="#term.TEK">Tektronix</a></li>
+<li>RES <a href="#term.RES">Research, Inc.</a></li>
+<li>QUME <a href="#term.QUME">Qume QVT-103</a></li>
 <li>BEE <a href="#term.BEE">Beehive ATL-008</a></li>
 <li>AAA <a href="#term.AAA">Ann Arbor Ambassador</a></li>
 <li>ZDS <a href="#term.ZDS">Heath/Zenith Z-19-CN</a></li>
 <li>BA80 <a href="#term.BA80">Nixdorf BA80</a></li>
 <li>Kermit <a href="#term.Kermit">Kermit</a></li>
-<li><a href="#term.T101">ITU-T Recommendation T.53, T.101</a></li>
+<li>T.53, T.101 <a href="#term.T101">ITU-T Recommendation T.53, T.101</a></li>
 <li>PC98 <a href="#term.PC98">PC-9801</a></li>
 <li>DOS <a href="#term.DOS">MS-DOS ANSI.SYS</a></li>
 <li>C25 <a href="#term.C25">FreeBSD teken/cons25</a></li>
@@ -77,6 +81,221 @@
 <li>DSR ?8840 TNREPTAMB</li>
 <li>DSR ?8841 TNREPTAMB</li>
 <li>DSR ?8842 TNREPTAMB</li>
+</ul>
+
+<h2 id="term.HP">HP 2624</h2>
+<p>xterm の <kbd>ESC F</kbd>, <kbd>ESC l</kbd>, <kbd>ESC m</kbd> で HP が言及されているので探した。</p>
+<ul>
+<li>[PDF] <a href="http://bitsavers.org/pdf/hp/terminal/262x/02624-90008_2624B_Display_Terminal_Reference_Manual_Sep1981.pdf">2624B Display Terminal Reference Manual</a></li>
+</ul>
+<p>p136,p137 に問題のシーケンスは定義されている。
+  然し HP のエスケープシーケンスの体系は VT52 に近く、ANSI互換の体系ではない。
+  xterm が ANSI モードでこれらに対応しているのは xterm の独自の拡張と考えて良い。
+</p>
+<p>その他に気づく事は、HP は
+  <kbd>ESC A <i>B</i> <i>Ft</i> <i>B</i> <i>Ft</i></kbd>
+  <kbd>ESC K <i>B</i> <i>Ft</i></kbd>
+  <kbd>ESC S <i>B</i> <i>Ft</i></kbd> の形式でシーケンスを拡張しているという事である。
+</p>
+
+<h2 id="term.TEK">Tektronix</h2>
+<ul>
+<li><a href="https://vt100.net/manx/details/5,16297">4105 Computer Display Terminal Programmer's Reference – Manx</a>
+  070-4526-01_4105_PgmrRef_Sep83.pdf - Sec. 4
+</li>
+</ul>
+<ul>
+<li><kbd>ESC # ! 0</kbd> _TEKRSM★ REPORT SYNTAX MODE</li>
+<li>Modes: 2,4,12,20
+  <ul>
+  <li>?1-3,?5-8 は略号の DEC を TEK に置き換えただけ★</li>
+  <li>Mode &lt;1: TEKORM★ Overstrike/Replace mode
+    <p>SM だと SP はカーソルを単に進める。_ は下線を引いてカーソルを進める。</p>
+  </li>
+  </ul>
+</li>
+<li>94-SET: 0 = Ruling Set, 3 = Supplementary</li>
+<li><kbd>ESC % ! Fp</kbd> SELECT CODE, Fp = 0,1,2,3 これは私用 DOCS である。
+  <ul>
+  <li><kbd>! 0</kbd> _TEKSCTEK★ Tek mode syntax</li>
+  <li><kbd>! 1</kbd> _TEKSCANS★ ANSI mode syntax</li>
+  <li><kbd>! 2</kbd> _TEKSCEDT★ ANSI mode syntax for Edit mode</li>
+  <li><kbd>! 3</kbd> _TEKSCV52★ VT52 mode syntax</li>
+  </ul>
+</li>
+<li>SGR: 0,1,4,5,7,24,25,27,30-37,39,40-47,49
+  <ul>
+  <li>&lt;0-7 _TEKSGRFC★ Character color </li>
+  <li>=0-7    _TEKSGRBC★ Background color</li>
+  <li>&gt;0-7 _TEKSGREC★ Erase color</li>
+  </ul>
+</li>
+<li>TEKDHL, TEKDWL, TEKSWL, TEKID, TEKKPAM, TEKKPNM, TEKRC, TEKSC, TEKSTBM★ これらは DEC と完全に同一。</li>
+</ul>
+
+<h2 id="term.RES">Research, Inc.</h2>
+<h3>Teleray Model 16</h3>
+<ul>
+<li><a href="https://vt100.net/manx/details/15,6183">Model 16 Instruction Manual – Manx</a> 6-1 からエスケープシーケンス一覧が始まる。</li>
+</ul>
+<p>シーケンス一覧</p>
+<ul>
+<li><kbd>NUL</kbd> <kbd>DEL</kbd> Time fill</li>
+<li><kbd>ENQ</kbd> <kbd>BEL</kbd> <kbd>BS</kbd>
+  <kbd>HT</kbd> <kbd>LF</kbd> <kbd>VT</kbd> <kbd>FF</kbd>
+  <kbd>CR</kbd> <kbd>SO</kbd> <kbd>SI</kbd>
+</li>
+<li><kbd>DC1</kbd> XON</li>
+<li><kbd>DC3</kbd> XOFF</li>
+<li><kbd>CAN</kbd> <kbd>SUB</kbd> シーケンスのキャンセル</li>
+<li>GZD4
+  <ul>
+  <li>0 = Special Graphics Set, 1 = Mosaic Character Set</li>
+  </ul>
+</li>
+<li><kbd>ESC 5</kbd> _RESTMITB★ transmit a block to serial port</li>
+<li><kbd>ESC 6</kbd> _RESTMITT★ transmit text and form to serial port</li>
+<li><kbd>ESC 7</kbd> DECSC</li>
+<li><kbd>ESC 8</kbd> DECRC</li>
+<li><kbd>ESC 9</kbd> _RESBRK★ break</li>
+<li><kbd>DCS <i>Ps</i> ... ST</kbd> _RESETPF★ Enter Text into Program Function (<i class="kbd">Ps</i> = <kbd>0 1</kbd>-<kbd>3 2</kbd>)</li>
+<li><kbd>DCS A ... ST</kbd> _RESRAMT★ Reprogram Answerback Message with Text</li>
+<li><kbd>DCS I ... ST</kbd> _RESRIDT★ Reprogram Identity Sequence with Text</li>
+<li><kbd>DCS K ... ST</kbd> _RESRMKKOT★ Reprogram Macro Key with Keboard Operating Text</li>
+<li><kbd>DCS L ... ST</kbd> _RESRMKLOT★ Reprogram Macro Key with Local Operating Text</li>
+<li><kbd>DCS M ... ST</kbd> _RESRDTSLM★ Reprogram Display Text as a Status Line Message</li>
+<li><kbd>DCS T ... ST</kbd> _RESRMKTT★ Reprogram Macro Key with Transmitting Text</li>
+<li><kbd>DCS R ... ST</kbd> _RESTRDSR★ Teleray Report to Detailed Status Request - current test result display on bottom (25th) line is transmitted</li>
+<li><kbd>ESC S</kbd><sup class="violation">×</sup> _RESTRTB★ Teleray Ready to Transmit a Block</li>
+<li><kbd>SSA</kbd>, <kbd>ESA</kbd></li>
+<li>CSI: @-D, H, J-N, P-V, Z, b, c, f, g, h, SP @, SP A</li>
+<li><kbd>CSI <i>Ps</i> J</kbd> ED, _RESED★
+  <p>幾つか private parameters が追加されている。</p>
+  <ul>
+  <li>Ps = ?1: Cursor to End of Last Page</li>
+  <li>Ps = ?2: All Pages</li>
+  </ul>
+</li>
+<li>Modes 1,2,3,4,12,16,20,?5,?6,?7,?8
+  <ul>
+  <li>Mode ?3 ★: _RESJSM    (Research) Jump Scroll (DECSCLM ?4 と同じ?
+    <p>Model 100 では ?4 でスクロールを制御できるので Model 16 マニュアルの typo の可能性あり</p>
+  </li>
+  <li>Mode ?12★: _RESLOLM   (Research) Local Mode / On-Line Mode</li>
+  <li>Mode ?13★: _RESSPSSM  (Research) Serial Port Space Suppression</li>
+  <li>Mode ?15★: _RESPPSM   (Research) Peripheral Port Suppression</li>
+  <li>Mode ?21★: _RESKRRM   (Research) Keyboard Repeat Rate 15 cps / 30 cps</li>
+  <li>Mode ?22★: _RESSSRM   (Research) Smooth Scroll Rate 12 lps / 6 lps</li>
+  <li>Mode ?23★: _RESNIDFLM (Research) No Interpretation During Function Loading</li>
+  <li>Mode ?24★: _RESPM     (Research) Protect Mode On</li>
+  <li>Mode ?25★: _RESBCM    (Research) Block Mode / Character Mode</li>
+  <li>Mode ?26★: _RESCNM    (Research) Calculator Mode / Normal Mode</li>
+  <li>Mode ?27★: _RESDTSM   (Research) Display Terminal Status / Status Display Off</li>
+  <li>Mode ?28★: _RESKCLKM  (Research) Keyclick On</li>
+  <li>Mode ?29★: _RESLMWM   (Research) Left Margin Wrap</li>
+  <li>Mode ?30★: _RESSCRM   (Research) Scrolling On / Scrolling Off</li>
+  <li>Mode ?31★: _RESAPAM   (Research) Auto Page Advance / Page Advance Stop</li>
+  <li>Mode ?32★: _RESSSM    (Research) Screen Saver On</li>
+  <li>Mode ?33★: _RESCCBM   (Research) Cursor Character Blink / Steady</li>
+  <li>Mode ?34★: _RESRRM    (Research) 50 / 60 Hz Referesh Rate</li>
+  <li>Mode ?35★: _RESSPBRM  (Research) Serial Port Busy-Ready</li>
+  <li>Mode ?36★: _RESSPHM   (Research) Serial Port Half / Full Duplex</li>
+  <li>Mode ?37★: _RESSPNPCM (Research) Serial Port No Parity Check</li>
+  <li>Mode ?38★: _RESSPSRM  (Research) Serial Port Suspend Resume</li>
+  <li>Mode ?39★: _RESSTASM  (Research) Serial Transmit Auto Suspend On EOL / No Auto Suspend</li>
+  <li>Mode ?40★: _RESSSFSM  (Research) Space Substitution for Fields, Serial / No Space Substitution</li>
+  <li>Mode ?41★: _RESPBRDM  (Research) Peripheral Busy-Ready Detect / Busy-Ready Not Sensed</li>
+  <li>Mode ?42★: _RESBRLHM  (Research) Busy-Ready Level Hight / Low</li>
+  <li>Mode ?44★: _RESPPHM   (Research) Peripheral Port Half / Full Duplex</li>
+  <li>Mode ?45★: _RESPPNPCM (Research) Peripheral Port No Parity Check</li>
+  <li>Mode ?46★: _RESESRPPM (Research) Enable Suspend Resume Peripheral Port</li>
+  <li>Mode ?47★: _RESPTASM  (Research) Peripheral Transmit Auto Suspend on EOL</li>
+  <li>Mode ?48★: _RESSSPPM  (Research) Space Substitution Peripheral Port</li>
+  <li>Mode ?49★: _RESEPSM   (Research) Erase to Protected Spaces / Erase to Non-Protected Spaces</li>
+  <li>Mode ?50★: _RESSMPM   (Research) Selection Menu Page / Line</li>
+  </ul>
+</li>
+<li>MC: 0,4,5,6,7,?6,?7,?8,?9</li>
+<li>SGR: 0,2,4,5,7,8</li>
+<li>DSR: 5,6,?7,?8,?15</li>
+<li>DAQ: 0,3,4,5,6,8,?1,?2</li>
+<li><kbd>CSI p</kbd> _RESDCWTB★ Delete Pn Characters Within Text Block</li>
+<li><kbd>CSI q</kbd> _RESPKI  ★ Program Keybaord Indicators</li>
+<li><kbd>CSI r</kbd> DECSTBM</li>
+<li><kbd>CSI s</kbd> DECSLRM</li>
+<li><kbd>CSI t</kbd> _RESTDPF ★ Transmit Dynamic Programmable Function</li>
+<li><kbd>CSI u</kbd> _RESLPDPF★ Locally Perform Dynamic Programmable Function</li>
+<li><kbd>CSI y</kbd> DECTST 0-9</li>
+<li><kbd>CSI z</kbd> _RESETDPF★ Enable Transmits to Dynamic Programmable Function (ST で Function Definitions は終わる(?))</li>
+<li><kbd>CSI {</kbd> _RESSSTIC★ Select Start of Transmission Identifying Character</li>
+<li><kbd>CSI |</kbd> _RESSETIC★ Select End of Transmission Identifying Character</li>
+<li><kbd>CSI ~</kbd> _RESICTB ★ Insert <i>Pn</i> Characters in Text Block</li>
+<li><kbd>CSI SP p</kbd> _RESSPAGE ★ Select Pn Pages</li>
+<li><kbd>CSI SP q</kbd> _RESSCC   ★ Select Cursor Character</li>
+<li><kbd>CSI SP r</kbd> _RESSRBCRM★ Select Right Margin Bell Pn Columns from Right Margin - Default is 8</li>
+<li><kbd>CSI SP s</kbd> _RESSSBL  ★ Specify Screen Brightness Level from 0 through 64</li>
+<li><kbd>CSI SP t</kbd> _RESDMS   ★ Delay Machine Pn1 1st Pn2 Seconds; 2nd .l Seconds</li>
+<li><kbd>CSI SP u</kbd> _RESUSCF  ★ Unlock Selection in Category Ps; Feature Ps</li>
+<li><kbd>CSI SP v</kbd> _RESLSCF  ★ Lock Selection in Category Ps; Feature Ps</li>
+<li><kbd>CSI SP w</kbd> _RESESM   ★ Exit Selection Menu</li>
+<li><kbd>CSI SP x</kbd> _RESCDFM  ★ Clear all Dynamic Function Memory</li>
+<li><kbd>CSI SP y</kbd> _RESRDC   ★ Reset to Default Conditions</li>
+<li><kbd>CSI SP z</kbd> _RESDREND ★ Duplicate Rendition</li>
+<li><kbd>CSI Pn ? p</kbd> _RESSLPLL★ Set Logical Page Length to Pn Lines</li>
+<li><kbd>CSI Pn ? q</kbd> _RESSLLLC★ Set Logical Line Length to Pn Characters</li>
+<li><kbd>CSI Pn ; Pn ; Pn ? r</kbd> _RESRTIME★ Report Time (to Host) Pn hosrs; Pn minutes; Pn seconds</li>
+<li><kbd>CSI Pn ; Pn ; Pn ? s</kbd> _RESSTIME★ Set Time (to Teleray) Pn hosrs; Pn minutes; Pn seconds</li>
+<li><kbd>CSI Pn ; Pn ? t</kbd> _RESSTT★ Select Text for Transmission Serial Port; Peripheral Port</li>
+<li><kbd>CSI Pn ? u</kbd> _RESRLDL ★ Reinstate Last Deleted Line Pn Times</li>
+<li><kbd>CSI Pn ? v</kbd> _RESRLDW ★ Reinstate Last Deleted Word Pn Times</li>
+<li><kbd>CSI ? Pn w</kbd> _RESDWORD★ Delete Pn words
+  <p>これだけ <kbd>?</kbd> の位置が異なるのは怪しいが取り敢えずマニュアルを信じる事にする。</p>
+</li>
+<li><kbd>CSI Pn ; Pn ? y</kbd> _RESSEOLRC★ Select Serial, Peripheral End of Line Resume Character</li>
+<li><kbd>CSI Pn ; Pn ? {</kbd> _RESSGFIC ★ Select Guarded Field Identifier Characters - Default is HT</li>
+<li><kbd>CSI Pn ; Pn ? |</kbd> _RESSELTC ★ Select End of Line Terminator Characters - Default is LF CR</li>
+<li><kbd>CSI Pn ; Pn ? }</kbd> _RESSBAUD ★ Select Baud Rate for Serial Port; Peripheral Port</li>
+<li><kbd>CSI Pn ; Pn ? ~</kbd> _RESSPRTY ★ Set Parity for Serial Port; Peripheral Port</li>
+</ul>
+
+<h3>Teleray Model 100</h3>
+<ul>
+<li>[PDF] <a href="http://bitsavers.org/pdf/researchInc/A059465C_Teleray_Model_100_Instruction_Manual_Sep81.pdf">A059465C_Teleray_Model_100_Instruction_Manual_Sep81.pdf</a>
+  <p>6-18 (p61) にシーケンスがまとめられている。</p>
+</li>
+</ul>
+<ul>
+<li>ANSI control functions: DSR, CPR, SSA, SPA, SGR (0,1,2,3,4,5,7), MC</li>
+<li> DA1, DECID, DECRQTPARM, _RESTDPF, _RESSELTC, _RESTMITT,
+  DECSTBM,
+</li>
+<li><kbd>CSI <i>Pn</i> }</kbd>DECPRO と思われる。</li>
+<li>Mode ?2-8,?14,?16 DEC のそれと同じ。
+  特に ?3,?4 が同じことから Model 16 の記述は typo なのではないかという疑いが生じる。
+</li>
+<li>Mode ?13,?21-24 Model 16 のそれと同じ。</li>
+<li>Mode ?10 _RESEM★ Edit Mode</li>
+<li>Mode ?11 _RESTLPM★ Transmit Line/Page</li>
+<li>Mode ?20 _RESWM★ Wide Mode</li>
+<li><kbd>ESC # 1</kbd> _RESLF80 ★ Set 80-column format</li>
+<li><kbd>ESC # 2</kbd> _RESLF132★ Set 132-column format</li>
+</ul>
+
+<h2 id="term.QUME">Qume QVT-103</h2>
+<ul>
+<li><a href="http://www.bitsavers.org/pdf/qume/brochures/Qume_QVT-103_Brochure_Apr83.pdf">Qume_QVT-103_Brochure_Apr83.pdf</a> pp3-4 に一覧が在る。</li>
+</ul>
+<p>特に固有の機能は殆ど殆どない様に見える。</p>
+<ul>
+<li>Modes 1,2,4,6,12,16,20,?1-8,?10,?11,?13,?14,?16,?18,?19
+  <ul>
+  <li>Mode 30: QUMES2L★ Suppress 25th line</li>
+  </ul>
+</li>
+<li>DSR 0,3,5,6,?10,?11,?13,?15</li>
+<li>DECTST(2;x): x = 1,2,4,8,9,10,12,16,24</li>
+<li>94-SET: 0 = SpChar, 1 = AltROM, 2 = AltROM SpChar</li>
+<li>MC: 0,4,5,?1,?4,?5</li>
 </ul>
 
 <h2 id="term.BEE">Beehive</h2>
@@ -175,8 +394,6 @@
   <li>?30 _BEEVTCRM★ - vertical tab to col 0</li>
   <li>?31 _BEEILCRM★ - insert delete line to col 0</li>
   </ul>
-  cl
-
 </li>
 </ul>
 
@@ -1883,9 +2100,9 @@
 </ul>
 <p>他に以下の物が確認できる。</p>
 <ul>
-<li><kbd>CSI &gt; <i>Ps </i>h</kbd> SM</li>
-<li><kbd>CSI &gt; <i>Ps </i>k</kbd> _SUNRQM★ Report mode</li>
-<li><kbd>CSI &gt; <i>Ps </i>l</kbd> RM
+<li><kbd>CSI &gt; <i>Ps</i> h</kbd> SM</li>
+<li><kbd>CSI &gt; <i>Ps</i> k</kbd> _SUNRQM★ Report mode</li>
+<li><kbd>CSI &gt; <i>Ps</i> l</kbd> RM
   <ul>
   <li>Mode &gt;1 _SUNPGM★ pagemode</li>
   <li>Mode &gt;3, &gt;4 ??? 唯の例示だろうか</li>
