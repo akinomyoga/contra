@@ -522,7 +522,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th class="markB">CZD<br/>WYSTR<sup>違反</sup></th><td><kbd>ESC ! <i>I</i><strong>*</strong> <i>Ft</i></kbd><br/><kbd>ESC ! p</kbd></td>
     <th>DECHTS<br/>DECGON<br/>_CITSACM</th><td><kbd>ESC 1</kbd></td>
     <th>(HOP)</th><td><kbd>ESC A</kbd></td>
-    <th>PU1<br/>_SCOSFK</th><td><kbd>ESC Q</kbd></td>
+    <th>PU1<br/>_SCOSFK (SCODFK)</th><td><kbd>ESC Q</kbd></td>
     <th>INT</th><td><kbd>ESC a</kbd></td>
     <th>-R-</th><td><kbd>ESC q</kbd></td></tr>
 <tr><th class="markB">C1D</th><td><kbd>ESC " <i>I</i><strong>*</strong> <i>Ft</i></kbd></td><!--"-->
@@ -544,7 +544,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>CMD</th><td><kbd>ESC d</kbd></td>
     <th>-R-</th><td><kbd>ESC t</kbd></td></tr>
 <tr><th class="markB">DOCS</th><td><kbd>ESC % <i>I</i><strong>*</strong> <i>Ft</i></kbd></td>
-    <th>DECXMIT<br/>WYXCH<br/>zTFC<br/>_RESTMITB</th><td><kbd>ESC 5</kbd></td>
+    <th>DECXMIT<br/>WYXCH<br/>zTFC<br/>_RESTMITB<br/>_TVTSS</th><td><kbd>ESC 5</kbd></td>
     <th>NEL</th><td><kbd>ESC E</kbd></td>
     <th>MW</th><td><kbd>ESC U</kbd></td>
     <th>-R-</th><td><kbd>ESC e</kbd></td>
@@ -676,7 +676,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th>符号化表現</th><th>略号</th></tr>
 <tr><th><kbd>ESC # 0</kbd></th>   <td>_CITSAAM</td></tr>
 <tr><th><kbd>ESC # 1</kbd></th>   <td>_CITEAM, _RESLF80</td></tr>
-<tr><th><kbd>ESC # 2</kbd></th>   <td>_CITOCLA, _RESLF132</td></tr>
+<tr><th><kbd>ESC # 2</kbd></th>   <td>_CITOCLA, _RESLF132, _TVDHL</td></tr>
 <tr><th><kbd>ESC # 3</kbd></th>   <td>DECDHL</td></tr>
 <tr><th><kbd>ESC # 4</kbd></th>   <td>DECDHL</td></tr>
 <tr><th><kbd>ESC # 5</kbd></th>   <td>DECSWL</td></tr>
@@ -830,7 +830,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 </tr>
 <tr><th><kbd>I</kbd></th><td>CHT</td>
     <th><kbd>Y</kbd></th><td>CVT</td>
-    <th><kbd>i</kbd></th><td>MC</td>
+    <th><kbd>i</kbd></th><td>MC, _TVMC</td>
     <th><kbd>I</kbd></th><td>SSU</td>
     <th><kbd>Y</kbd></th><td>SEF</td>
     <th><kbd>i</kbd></th><td>SPH</td>
@@ -891,19 +891,19 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th colspan="2">Ft型: 私用制御機能</th></tr>
 <tr><th><i>Ft</i></th><th>略号</th></tr>
 <tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, _DOSSKR, _ZDSPXMT, RLBFAT, _SNIMODEP<sup>*km</sup>, zSDP, BEESSKM, _RESDCWTB</td></tr>
-<tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA, _DOSEKR, _ZDSPX25, _SNIMODEQ<sup>*km</sup>, _RESPKI</td></tr>
+<tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA, _DOSEKR, _ZDSPX25, _SNIMODEQ<sup>*km</sup>, _RESPKI, _TVDPM</td></tr>
 <tr><th><kbd>r</kbd></th><td><b>DECSTBM</b>, DECPCTERM, _SCOCSR, SUNSCRL, _ZDSPMBR</td></tr>
-<tr><th><kbd>s</kbd></th><td><b>DECSLRM</b>, <b>SCOSC</b>, WYSC, _DGRRC, SUNRESET, _SNIMODES<sup>*km</sup>, zPSH, BEEAP</td></tr>
-<tr><th><kbd>t</kbd></th><td><b>XTWINOPS</b> (_SUNWINM), DECSLPP, WYNNAT, DGROSC, _CITSTIME, _SNIMODET<sup>*km</sup>, zPOP, BEESAP, _RESTDPF</td></tr>
-<tr><th><kbd>u</kbd></th><td>DECSHTS, <b>SCORC</b>, WYRC, _DGSPOS, _CITSSR, _SNIMODEU<sup>*km</sup>, zSTP, BEESKL, _RESLPDPF</td></tr>
-<tr><th><kbd>v</kbd></th><td>DECSVTS, RLSCD (_CITSCUR), _DGSPARM, _SNIMODEV<sup>*km</sup>, zSRC, BEEMAP</td></tr>
-<tr><th><kbd>w</kbd></th><td>DECSHORP, _AIXVTR, DGMARG, _CITSCURB, _SNIMODEW<sup>*km</sup>, zSPF, _WYCLR<sup>*km</sup>, BEEBEL</td></tr>
-<tr><th><kbd>x</kbd></th><td>DECREQTPARM, DECREPTPARM, _AIXVTD, DGRTC, C25SGR</td></tr>
-<tr><th><kbd>y</kbd></th><td>DECTST, _AIXVTL, _SNIMODEY<sup>*km</sup>, _VIPRQ<sup>*km</sup></td></tr>
+<tr><th><kbd>s</kbd></th><td><b>DECSLRM</b>, <b>SCOSC</b>, WYSC, _DGRRC, SUNRESET, _SNIMODES<sup>*km</sup>, zPSH, BEEAP, _TVCUP</td></tr>
+<tr><th><kbd>t</kbd></th><td><b>XTWINOPS</b> (_SUNWINM), DECSLPP, WYNNAT, DGROSC, _CITSTIME, _SNIMODET<sup>*km</sup>, zPOP, BEESAP, _RESTDPF, _TVCCR</td></tr>
+<tr><th><kbd>u</kbd></th><td>DECSHTS, <b>SCORC</b>, WYRC, _DGSPOS, _CITSSR, _SNIMODEU<sup>*km</sup>, zSTP, BEESKL, _RESLPDPF, _TVCDAQ</td></tr>
+<tr><th><kbd>v</kbd></th><td>DECSVTS, RLSCD (_CITSCUR), _DGSPARM, _SNIMODEV<sup>*km</sup>, zSRC, BEEMAP, _TVSVAL</td></tr>
+<tr><th><kbd>w</kbd></th><td>DECSHORP, _AIXVTR, DGMARG, _CITSCURB, _SNIMODEW<sup>*km</sup>, zSPF, _WYCLR<sup>*km</sup>, BEEBEL, _TVVSTR</td></tr>
+<tr><th><kbd>x</kbd></th><td>DECREQTPARM, DECREPTPARM, _AIXVTD, DGRTC, C25SGR, _TVTPORT</td></tr>
+<tr><th><kbd>y</kbd></th><td>DECTST, _AIXVTL, _SNIMODEY<sup>*km</sup>, _VIPRQ<sup>*km</sup>, _TVRIS</td></tr>
 <tr><th><kbd>z</kbd></th><td>DECVERP, WYSCRATE, _SCOSSW, C25VTSW, _CITPCTL, _ZDSPRAM, _SNISLRM<sup>*km</sup>, zSTE, BEEBDS, _RESETDPF</td></tr>
 <tr><th><kbd>{</kbd></th><td>BEECM, _RESSSTIC</td></tr>
-<tr><th><kbd>|</kbd></th><td>DECTTC, BEESND, _RESSETIC</td></tr>
-<tr><th><kbd>}</kbd></th><td>DECPRO</td></tr>
+<tr><th><kbd>|</kbd></th><td>DECTTC, BEESND, _RESSETIC, _TVEFK</td></tr>
+<tr><th><kbd>}</kbd></th><td>DECPRO, _TVSET</td></tr>
 <tr><th><kbd>~</kbd></th><td>DECFNK, _CITTST, _RESICTB</td></tr>
 </table>
 
@@ -922,7 +922,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <th>7Ft <kbd>'</kbd></th><!--'-->
     </tr>
 <tr><th><kbd>p</kbd></th>
-    <td>DECSSCLS, _RESSPAGE</td>
+    <td>DECSSCLS, _RESSPAGE<br/>_TVOTLG</td>
     <td>DECSTR</td>
     <td>DECSCL</td>
     <td>XTPUSHSGR</td>
@@ -932,7 +932,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>---</td>
     </tr>
 <tr><th><kbd>q</kbd></th>
-    <td>DECSCUSR, _RESSCC</td>
+    <td>DECSCUSR, _RESSCC<br/>_TVCAPVA</td>
     <td>PrintPartialImage<sup>VK100</sup></td>
     <td>DECSCA</td>
     <td>XTPOPSGR</td>
@@ -1304,13 +1304,13 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>_SCOSGF</td>
     <td>_CITERECT<sup>+</sup></td>
-    <td>DECSED<sup>+</sup><br/>_RESED<sup>+</sup></td>
+    <td>DECSED<sup>+</sup><br/>_RESED<sup>+</sup><br/>_TVED<sup>+</sup></td>
 </tr>
 <tr><th><kbd>K</kbd></th>
     <td>-</td>
     <td>_SCOSGB<br/>_BA80BFL<sup>*km</sup></td>
     <td>_CITECOLS<sup>+</sup></td>
-    <td>DECSEL<sup>+</sup></td>
+    <td>DECSEL<sup>+</sup><br/>_TVEL<sup>+</sup></td>
 </tr>
 <tr><th><kbd>L</kbd></th>
     <td>-</td>
@@ -1376,7 +1376,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>_SCOPRC<br/>_ANSIDGC<sup>*km</sup></td>
     <td>_CITST8C<sup>+</sup></td>
-    <td>-</td>
+    <td>_TVTBC</td>
 </tr>
 <tr><th><kbd>h</kbd></th>
     <td>_DGSM<sup>+</sup></td>
@@ -1406,7 +1406,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>_TEKSGRFC</td>
     <td>_SCOSSM<br/>_TEKSGRBC</td>
     <td>XTMODKEYS (XTMDKEY<sup>*ml</sup>)<br/>_TEKSGREC</td>
-    <td>-</td>
+    <td>_DECSGR<sup>*ae</sup></td>
 </tr>
 <tr><th><kbd>n</kbd></th>
     <td>-</td>
@@ -1418,7 +1418,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>-</td>
     <td>_zDAQ<sup>+</sup></td>
-    <td>-</td>
+    <td>_RESDAQ<sup>+</sup></td>
 </tr>
 <tr><th>Ft</th>
     <th><kbd>&lt;</kbd></th>
@@ -1454,7 +1454,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>TTIMEST</td>
     <td>-</td>
     <td>XTSMTITLE (XTSMTT<sup>*ml</sup>)</td>
-    <td>-</td>
+    <td>_TVCCRD</td>
 </tr>
 <tr><th><kbd>w</kbd></th>
     <td>-</td>
@@ -1948,6 +1948,16 @@ tmux=screen
 </li>
 </ul>
 
+<h4>TeleVideo の制御列様のシーケンス</h4>
+<p>TeleVideo が ECMA-48 に反する様な幾つかのシーケンスを定義している。</p>
+<table class="normal">
+<tr><th>符号化表現</th><th>略号</th><th>説明</th></tr>
+<tr><td><kbd>PM ... CR</kbd>                           </td><td>_TVLUML</td><td>Load user's message line       </td></tr><!--'-->
+<tr><td><kbd>ESC | <i>P1</i> ; <i>P2</i> ; ... CR</kbd></td><td>_TVPFK </td><td>Program function keys          </td></tr>
+<tr><td><kbd>ESC ^</kbd> (※<kbd>ESC ^</kbd>は本来 APC)</td><td>_TVDLM </td><td>Download font or data to memory</td></tr>
+<tr><td><kbd>ST <i>Ps</i> ... CR</kbd>                 </td><td>_TVNKFV</td><td>New/ key/function value        </td></tr>
+</table>
+
 <!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
 <h2>モード</h2>
 <p>モードは端末の動作方法を指定する2値の変数である。
@@ -2065,28 +2075,56 @@ tmux=screen
 <tr><th>?5</th> <td>DECSCNM (TEKSCNM)</td></tr>
 <tr><th>?6</th> <td>DECOM (TEKOM)</td></tr>
 <tr><th>?7</th> <td>DECAWM (TEKAWM)</td></tr>
-<tr><th>?8</th> <td>DECARM (TEKARM)</td></tr>
-<tr><th>?9</th> <td>DECINLM<br/>XTERM_X10_MOUSE</td></tr>
+<tr><th>?8</th> <td>
+  DECARM (TEKARM)<br/>
+  _TVCLSPM  - (TeleVideo) Recognize CLEAR SPACE</td></tr>
+<tr><th>?9</th> <td>
+  DECINLM<br/>XTERM_X10_MOUSE<br/>
+  _TVCCM    - (TeleVideo) Control code mode</td></tr>
 <tr><th>?10</th><td>
   RXVT_menuBar<br/>
-  _RESEM - (Research) Edit Mode</td></tr>
-<tr><th>?11</th><td>_RESTLPM - (Research) Transmit Line/Page</td></tr>
+  _RESEM - (Research) Edit Mode<br/>
+  _TVBCM    - (TeleVideo) Block/Conversational mode</td></tr>
+<tr><th>?11</th><td>
+  _RESTLPM - (Research) Transmit Line/Page<br/>
+  _TVTLDM   - (TeleVideo) Transfer line/display</td></tr>
 <tr><th>?12</th><td>
   ATT610_BLINK<br/>
-  _RESLOLM - (Research) Local Mode / On-Line Mode</td></tr>
+  _RESLOLM - (Research) Local Mode / On-Line Mode<br/>
+  _TVHFDUPM - (TeleVideo) Half/Full duplex</td></tr>
 <tr><th>?13</th><td>
   DECSCFDM<sup>*ae</sup><br/>
   XTERM_CURSOR_BLINK_OPS<br/>
-  _RESSPSSM - (Research) Serial Port Space Suppression</td></tr>
-<tr><th>?14</th><td>DECTEM<sup>*ae</sup><br/>XTERM_XOR_CURSOR_BLINKS</td></tr>
-<tr><th>?15</th><td>_RESPPSM - (Research) Peripheral Port Suppression</td></tr>
-<tr><th>?16</th><td>DECEKEM<sup>*ae</sup></td></tr>
-<tr><th>?17</th><td>_BEEATM</td></tr>
-<tr><th>?18</th><td>DECPFF</td></tr>
-<tr><th>?19</th><td>DECPEX</td></tr>
-<tr><th>?20</th><td>_RESWM - (Research) Wide Mode</td></tr>
-<tr><th>?21</th><td>_RESKRRM   - (Research) Keyboard Repeat Rate 15 cps / 30 cps</td></tr>
-<tr><th>?22</th><td>_RESSSRM   - (Research) Smooth Scroll Rate 12 lps / 6 lps</td></tr>
+  _RESSPSSM - (Research) Serial Port Space Suppression<br/>
+  _TVDPM    - (TeleVideo) Display/Page mode</td></tr>
+<tr><th>?14</th><td>
+  DECTEM<sup>*ae</sup><br/>
+  XTERM_XOR_CURSOR_BLINKS<br/>
+  _TVTNLM   - (TeleVideo) Transmit now/later</td></tr>
+<tr><th>?15</th><td>
+  _RESPPSM - (Research) Peripheral Port Suppression<br/>
+  _TVMSPPM  - (TeleVideo) Multi/single page protect mode</td></tr>
+<tr><th>?16</th><td>
+  DECEKEM<sup>*ae</sup><br/>
+  _TVBRKM   - (TeleVideo) Recognize BREAK key</td></tr>
+<tr><th>?17</th><td>
+  _BEEATM<br/>
+  _TVFBM    - (TeleVideo) Forms build mode</td></tr>
+<tr><th>?18</th><td>
+  DECPFF<br/>
+  _TVVAAM   - (TeleVideo) Visual attribute action mode</td></tr>
+<tr><th>?19</th><td>
+  DECPEX<br/>
+  _TVPSPRM  - (TeleVideo) print scrolling page/region</td></tr>
+<tr><th>?20</th><td>
+  _RESWM - (Research) Wide Mode<br/>
+  _TVMSAM   - (TeleVideo) Multi/single autopage mode</td></tr>
+<tr><th>?21</th><td>
+  _RESKRRM   - (Research) Keyboard Repeat Rate 15 cps / 30 cps<br/>
+  _TVNTVM   - (TeleVideo) Native/VT100 mode</td></tr>
+<tr><th>?22</th><td>
+  _RESSSRM   - (Research) Smooth Scroll Rate 12 lps / 6 lps<br/>
+  _TVNKCLKM - (TeleVideo) Disable keyclick</td></tr>
 <tr><th>?23</th><td>_RESNIDFLM - (Research) No Interpretation During Function Loading</td></tr>
 <tr><th>?24</th><td>
   laPrintDensity<sup>*ae</sup><br/>
@@ -2098,7 +2136,8 @@ tmux=screen
   _RESBCM - (Research) Block Mode / Character Mode</td></tr>
 <tr><th>?26</th><td>
   _BEEDROL<br/>
-  _RESCNM - (Research) Calculator Mode / Normal Mode</td></tr>
+  _RESCNM - (Research) Calculator Mode / Normal Mode<br/>
+  _TVBIDIXM - (TeleVideo) Bidirectional extension/transparent print</td></tr>
 <tr><th>?27</th><td>
   DECPSP<sup>*ae</sup><br/>
   _BEEVASM<br/>
@@ -2322,239 +2361,132 @@ tmux=screen
 
 <h3>その他の私用モード</h3>
 
-<table class="normal center contra-cell-centered">
-<tr><th>Mode</th><th>Name</th>
-    <th>Mode</th><th>Name</th>
-    <th>Mode</th><th>Name</th>
-</tr>
-<tr><th>&lt;0</th><td>_DGROLM</td>
-    <th>=0  </th><td>_DOST40C1M </td>
-    <th>&gt;0</th><td>---</td>
-</tr>
-<tr><th>&lt;1</th><td>_DGBLKM<br/>TEKORM</td>
-    <th>=1  </th><td>_DOST40C3M </td>
-    <th>&gt;1</th><td>_ZDSL25<br/>_CITDSSSM<br/>_SUNPGM</td>
-</tr>
-<tr><th>&lt;2</th><td>_DGHSCM</td>
-    <th>=2  </th><td>_DOST80C1M </td>
-    <th>&gt;2</th><td>_ZDSKCL<br/>_CITVTSSKM</td>
-</tr>
-<tr><th>&lt;3</th><td>_DGANSM</td>
-    <th>=3  </th><td>_DOST80C3M </td>
-    <th>&gt;3</th><td>_ZDSHSM<br/>_PC98L20<br/>_CITHKNM</td>
-</tr>
-<tr><th>&lt;4</th><td>_DGFRMM</td>
-    <th>=4  </th><td>_DOSG32C2M </td>
-    <th>&gt;4</th><td>_ZDSCBL<br/>_CITFFCDM</td>
-</tr>
-<tr><th>&lt;5</th><td>_DGMGNM</td>
-    <th>=5  </th><td>_DOSG32C1M </td>
-    <th>&gt;5</th><td>_ZDSCDE<br/>_CITCTRVM</td>
-</tr>
-<tr><th>&lt;6</th><td>---</td>
-    <th>=6  </th><td>_DOSG62C1M<br/>_SGILKDM</td>
-    <th>&gt;6</th><td>_ZDSKSH<br/>_CITDIXM</td>
-</tr>
-<tr><th>&lt;7</th><td>---</td>
-    <th>=7  </th><td>_DOSAWM    </td>
-    <th>&gt;7</th><td>_ZDSKAM</td>
-</tr>
-<tr><th>&lt;8</th><td>---</td>
-    <th>=8</th><td>---</td>
-    <th>&gt;8</th><td>_ZDSALF</td>
-</tr>
-<tr><th>&lt;9</th><td>---</td>
-    <th>=9  </th><td>_SGIEVBM   </td>
-    <th>&gt;9</th><td>_ZDSACR<br/>_CITSWCEM</td>
-</tr>
-<tr><th>&lt;10</th><td>---</td>
-    <th>=10</th><td>---</td>
-    <th>&gt;10</th><td>_CITDWEM</td>
-</tr>
-<tr><th>&lt;11</th><td>---</td>
-    <th>=11</th><td>---</td>
-    <th>&gt;11</th><td>_CITEPEM</td>
-</tr>
-<tr><th>&lt;12</th><td>---</td>
-    <th>=12 </th><td>_SGIOVLM   </td>
-    <th>&gt;12</th><td>_CITTSPM</td>
-</tr>
-<tr><th>&lt;13</th><td>---</td>
-    <th>=13 </th><td>_DOSG32C3  </td>
-    <th>&gt;13</th><td>_CITCRTSM</td>
-</tr>
-<tr><th>&lt;14</th><td>---</td>
-    <th>=14 </th><td>_DOSG62C4  </td>
-    <th>&gt;14</th><td>_CITHFDUPM</td>
-</tr>
-<tr><th>&lt;15 </th><td>---</td>
-    <th>=15 </th><td>_DOSG63C1  </td>
-    <th>&gt;15 </th><td>---</td>
-</tr>
-<tr><th>&lt;16 </th><td>---</td>
-    <th>=16 </th><td>_DOSG63C4  </td>
-    <th>&gt;16 </th><td>---</td>
-</tr>
-<tr><th>&lt;17 </th><td>---</td>
-    <th>=17 </th><td>_DOSG64C1  </td>
-    <th>&gt;17 </th><td>---</td>
-</tr>
-<tr><th>&lt;18 </th><td>---</td>
-    <th>=18 </th><td>_DOSG64C4  </td>
-    <th>&gt;18 </th><td>---</td>
-</tr>
-<tr><th>&lt;19 </th><td>---</td>
-    <th>=19 </th><td>_DOSG32C8  </td>
-    <th>&gt;19 </th><td>---</td>
-</tr>
-<tr><th>&lt;25</th><td>---</td>
-    <th>=25</th><td>---</td>
-    <th>&gt;25</th><td>zMDM</td>
-</tr>
-<tr><th>&lt;26</th><td>---</td>
-    <th>=26</th><td>---</td>
-    <th>&gt;26</th><td>zKCM</td>
-</tr>
-<tr><th>&lt;27</th><td>---</td>
-    <th>=27</th><td>---</td>
-    <th>&gt;27</th><td>zKPCM</td>
-</tr>
-<tr><th>&lt;28</th><td>---</td>
-    <th>=28</th><td>---</td>
-    <th>&gt;28</th><td>zKRM</td>
-</tr>
-<tr><th>&lt;29</th><td>---</td>
-    <th>=29</th><td>---</td>
-    <th>&gt;29</th><td>zRLM</td>
-</tr>
-<tr><th>&lt;30</th><td>---</td>
-    <th>=30</th><td>---</td>
-    <th>&gt;30</th><td>zDBM</td>
-</tr>
-<tr><th>&lt;31</th><td>---</td>
-    <th>=31</th><td>---</td>
-    <th>&gt;31</th><td>zBKCM</td>
-</tr>
-<tr><th>&lt;32</th><td>---</td>
-    <th>=32</th><td>---</td>
-    <th>&gt;32</th><td>zBNCM</td>
-</tr>
-<tr><th>&lt;33</th><td>---</td>
-    <th>=33</th><td>---</td>
-    <th>&gt;33</th><td>zWFM</td>
-</tr>
-<tr><th>&lt;34</th><td>---</td>
-    <th>=34</th><td>---</td>
-    <th>&gt;34</th><td>zWBM</td>
-</tr>
-<tr><th>&lt;35</th><td>---</td>
-    <th>=35</th><td>---</td>
-    <th>&gt;35</th><td>zDDM</td>
-</tr>
-<tr><th>&lt;36</th><td>---</td>
-    <th>=36</th><td>---</td>
-    <th>&gt;36</th><td>zSPM</td>
-</tr>
-<tr><th>&lt;37</th><td>---</td>
-    <th>=37</th><td>---</td>
-    <th>&gt;37</th><td>zAXM</td>
-</tr>
-<tr><th>&lt;38</th><td>---</td>
-    <th>=38</th><td>---</td>
-    <th>&gt;38</th><td>zAPM</td>
-</tr>
-<tr><th>&lt;39</th><td>---</td>
-    <th>=39</th><td>---</td>
-    <th>&gt;39</th><td>zSSM</td>
-</tr>
-<tr><th>&lt;40</th><td>---</td>
-    <th>=40</th><td>---</td>
-    <th>&gt;40</th><td>zHDM</td>
-</tr>
-<tr><th>&lt;41</th><td>---</td>
-    <th>=41</th><td>---</td>
-    <th>&gt;41</th><td>zTPDM</td>
-</tr>
-<tr><th>&lt;42</th><td>---</td>
-    <th>=42</th><td>---</td>
-    <th>&gt;42</th><td>zLTM</td>
-</tr>
-<tr><th>&lt;43</th><td>---</td>
-    <th>=43</th><td>---</td>
-    <th>&gt;43</th><td>zCSTM</td>
-</tr>
-<tr><th>&lt;44</th><td>---</td>
-    <th>=44</th><td>---</td>
-    <th>&gt;44</th><td>zFSTM</td>
-</tr>
-<tr><th>&lt;45</th><td>---</td>
-    <th>=45</th><td>---</td>
-    <th>&gt;45</th><td>zGRTM</td>
-</tr>
-<tr><th>&lt;46</th><td>---</td>
-    <th>=46</th><td>---</td>
-    <th>&gt;46</th><td>zAKDM</td>
-</tr>
-<tr><th>&lt;47</th><td>---</td>
-    <th>=47</th><td>---</td>
-    <th>&gt;47</th><td>zFRM</td>
-</tr>
-<tr><th>&lt;48</th><td>---</td>
-    <th>=48</th><td>---</td>
-    <th>&gt;48</th><td>zHAM</td>
-</tr>
-<tr><th>&lt;49</th><td>---</td>
-    <th>=49</th><td>---</td>
-    <th>&gt;49</th><td>zGAPM</td>
-</tr>
-<tr><th>&lt;50</th><td>---</td>
-    <th>=50</th><td>---</td>
-    <th>&gt;50</th><td>zFIM</td>
-</tr>
-<tr><th>&lt;51</th><td>---</td>
-    <th>=51</th><td>---</td>
-    <th>&gt;51</th><td>zACM</td>
-</tr>
-<tr><th>&lt;52</th><td>---</td>
-    <th>=52</th><td>---</td>
-    <th>&gt;52</th><td>zMKM</td>
-</tr>
-<tr><th>&lt;53</th><td>---</td>
-    <th>=53</th><td>---</td>
-    <th>&gt;53</th><td>zCLIM</td>
-</tr>
-<tr><th>&lt;54</th><td>---</td>
-    <th>=54</th><td>---</td>
-    <th>&gt;54</th><td>zINM</td>
-</tr>
-<tr><th>&lt;55</th><td>---</td>
-    <th>=55</th><td>---</td>
-    <th>&gt;55</th><td>zCNM</td>
-</tr>
-<tr><th>&lt;56</th><td>---</td>
-    <th>=56</th><td>---</td>
-    <th>&gt;56</th><td>zICM</td>
-</tr>
-<tr><th>&lt;57</th><td>---</td>
-    <th>=57</th><td>---</td>
-    <th>&gt;57</th><td>zMMM</td>
-</tr>
-<tr><th>&lt;59</th><td>---</td>
-    <th>=59</th><td>---</td>
-    <th>&gt;59</th><td>zIVM<sup>*km</sup></td>
-</tr>
-<tr><th>&lt;61</th><td>---</td>
-    <th>=61</th><td>---</td>
-    <th>&gt;61</th><td>Z8RCM<sup>*km</sup></td>
-</tr>
-<tr><th>&lt;114</th><td>---</td>
-    <th>=114</th><td>_DOSG64C4JM</td>
-    <th>&gt;114</th><td>---</td>
-</tr>
-<tr><th>&lt;115</th><td>---</td>
-    <th>=115</th><td>_DOST80C3JM</td>
-    <th>&gt;115</th><td>---</td>
-</tr>
+<table class="normal">
+<tr><th>Mode</th><th>Name</th></tr>
+<tr><th>&lt;0</th><td>_DGROLM</td></tr>
+<tr><th>&lt;1</th><td>_DGBLKM<br/>TEKORM</td></tr>
+<tr><th>&lt;2</th><td>_DGHSCM</td></tr>
+<tr><th>&lt;3</th><td>_DGANSM</td></tr>
+<tr><th>&lt;4</th><td>_DGFRMM</td></tr>
+<tr><th>&lt;5</th><td>_DGMGNM</td></tr>
+<tr><th>Mode</th><th>Name</th></tr>
+<tr><th>=0 </th><td>
+  _DOST40C1M<br/>
+  _TVTCM - (TeleVideo 965) Transmission control mode</td></tr>
+<tr><th>=1 </th><td>
+  _DOST40C3M<br/>
+  _TV8DBM - (TeleVideo 965) 8 data bits / 7 data bits</td></tr>
+<tr><th>=2 </th><td>
+  _DOST80C1M<br/>
+  _TVABPM - (TeleVideo 965) Attribute base: page</td></tr>
+<tr><th>=3 </th><td>
+  _DOST80C3M<br/>
+  _TVCOLM - (TeleVideo 965) 132 column mode</td></tr>
+<tr><th>=4 </th><td>
+  _DOSG32C2M<br/>
+  _TVMBELLM - (TeleVideo 965) Margin bell on</td></tr>
+<tr><th>=5 </th><td>
+  _DOSG32C1M<br/>
+  _TVINTENM - (TeleVideo 965) Full/half intensity</td></tr>
+<tr><th>=6 </th><td>
+  _DOSG62C1M<br/>_SGILKDM<br/>
+  _TVNLM - (TeleVideo 965) New line mode</td></tr>
+<tr><th>=7 </th><td>
+  _DOSAWM<br/>
+  _TVLWM - (TeleVideo 965) Line wrap</td></tr>
+<tr><th>=8 </th><td>_TVKRM     - (TeleVideo 965) Key repeat on</td></tr>
+<tr><th>=9 </th><td>
+  _SGIEVBM<br/>
+  _TVDNLFM - (TeleVideo 965) DOWN = C-j/C-v</td></tr>
+<tr><th>=10</th><td>_TVFKSM    - (TeleVideo 965) Function key save on</td></tr>
+<tr><th>=11</th><td>_TVESETUPM - (TeleVideo 965) SETUP enabled</td></tr>
+<tr><th>=12</th><td>
+  _SGIOVLM<br/>
+  _TVEEWSCM - (TeleVideo 965) EWSC enabled</td></tr>
+<tr><th>=13</th><td>
+  _DOSG32C3<br/>
+  _TVECLRM - (TeleVideo 965) CLR SPC enabled</td></tr>
+<tr><th>=14</th><td>
+  _DOSG62C4<br/>
+  _TVEBRKM - (TeleVideo 965) BREAK enabled</td></tr>
+<tr><th>=15</th><td>
+  _DOSG63C1<br/>
+  _TVPPFM - (TeleVideo 965) Page print flip on</td></tr>
+<tr><th>=16</th><td>_DOSG63C4  </td></tr>
+<tr><th>=17</th><td>
+  _DOSG64C1<br/>
+  _TVSBSTM - (TeleVideo 965) Send block boundaries from screen/page top</td></tr>
+<tr><th>=18</th><td>
+  _DOSG64C4<br/>
+  _TVSBEDM - (TeleVideo 965) Send block boundaries end of display/cursor</td></tr>
+<tr><th>=19</th><td>
+  _DOSG32C8<br/>
+  _TVASCRM - (TeleVideo 965) Autoscroll mode</td></tr>
+<tr><th>=20</th><td>_TVENHANM  - (TeleVideo 965) Enhanced mode</td></tr>
+<tr><th>=21</th><td>_TVWSTARM  - (TeleVideo 965) WordStar mode</td></tr>
+<tr><th>=22</th><td>_TVAUXHM   - (TeleVideo 965) Set aux./main as host</td></tr>
+<tr><th>=23</th><td>_TVAPPM    - (TeleVideo 965) Application mode</td></tr>
+<tr><th>=24</th><td>---</td></tr>
+<tr><th>=25</th><td>_TVRCAPSM  - (TeleVideo 965) Reverse CAPS LOCK</td></tr>
+<tr><th>=26</th><td>_TVCAPSM   - (TeleVideo 965) CAPS LOCK on</td></tr>
+<tr><th>=27</th><td>_TVREC2M   - (TeleVideo 965) Secondary rec. on</td></tr>
+<tr><th>=28</th><td>_TVACKM    - (TeleVideo 965) ACK mode</td></tr>
+<tr><th>=29</th><td>_TVAFLM    - (TeleVideo 965) Auto font load</td></tr>
+<tr><th>=114</th><td>_DOSG64C4JM</td></tr>
+<tr><th>=115</th><td>_DOST80C3JM</td></tr>
+<tr><th>Mode</th><th>Name</th></tr>
+<tr><th>&gt;1</th><td>_ZDSL25<br/>_CITDSSSM<br/>_SUNPGM</td></tr>
+<tr><th>&gt;2</th><td>_ZDSKCL<br/>_CITVTSSKM</td></tr>
+<tr><th>&gt;3</th><td>_ZDSHSM<br/>_PC98L20<br/>_CITHKNM</td></tr>
+<tr><th>&gt;4</th><td>_ZDSCBL<br/>_CITFFCDM</td></tr>
+<tr><th>&gt;5</th><td>_ZDSCDE<br/>_CITCTRVM</td></tr>
+<tr><th>&gt;6</th><td>_ZDSKSH<br/>_CITDIXM</td></tr>
+<tr><th>&gt;7</th><td>_ZDSKAM</td></tr>
+<tr><th>&gt;8</th><td>_ZDSALF</td></tr>
+<tr><th>&gt;9</th><td>_ZDSACR<br/>_CITSWCEM</td></tr>
+<tr><th>&gt;10</th><td>_CITDWEM</td></tr>
+<tr><th>&gt;11</th><td>_CITEPEM</td></tr>
+<tr><th>&gt;12</th><td>_CITTSPM</td></tr>
+<tr><th>&gt;13</th><td>_CITCRTSM</td></tr>
+<tr><th>&gt;14</th><td>_CITHFDUPM</td></tr>
+<tr><th>Mode</th><th>Name</th></tr>
+<tr><th>&gt;25</th><td>zMDM</td></tr>
+<tr><th>&gt;26</th><td>zKCM</td></tr>
+<tr><th>&gt;27</th><td>zKPCM</td></tr>
+<tr><th>&gt;28</th><td>zKRM</td></tr>
+<tr><th>&gt;29</th><td>zRLM</td></tr>
+<tr><th>&gt;30</th><td>zDBM</td></tr>
+<tr><th>&gt;31</th><td>zBKCM</td></tr>
+<tr><th>&gt;32</th><td>zBNCM</td></tr>
+<tr><th>&gt;33</th><td>zWFM</td></tr>
+<tr><th>&gt;34</th><td>zWBM</td></tr>
+<tr><th>&gt;35</th><td>zDDM</td></tr>
+<tr><th>&gt;36</th><td>zSPM</td></tr>
+<tr><th>&gt;37</th><td>zAXM</td></tr>
+<tr><th>&gt;38</th><td>zAPM</td></tr>
+<tr><th>&gt;39</th><td>zSSM</td></tr>
+<tr><th>&gt;40</th><td>zHDM</td></tr>
+<tr><th>&gt;41</th><td>zTPDM</td></tr>
+<tr><th>&gt;42</th><td>zLTM</td></tr>
+<tr><th>&gt;43</th><td>zCSTM</td></tr>
+<tr><th>&gt;44</th><td>zFSTM</td></tr>
+<tr><th>&gt;45</th><td>zGRTM</td></tr>
+<tr><th>&gt;46</th><td>zAKDM</td></tr>
+<tr><th>&gt;47</th><td>zFRM</td></tr>
+<tr><th>&gt;48</th><td>zHAM</td></tr>
+<tr><th>&gt;49</th><td>zGAPM</td></tr>
+<tr><th>&gt;50</th><td>zFIM</td></tr>
+<tr><th>&gt;51</th><td>zACM</td></tr>
+<tr><th>&gt;52</th><td>zMKM</td></tr>
+<tr><th>&gt;53</th><td>zCLIM</td></tr>
+<tr><th>&gt;54</th><td>zINM</td></tr>
+<tr><th>&gt;55</th><td>zCNM</td></tr>
+<tr><th>&gt;56</th><td>zICM</td></tr>
+<tr><th>&gt;57</th><td>zMMM</td></tr>
+<tr><th>&gt;58</th><td>---</td></tr>
+<tr><th>&gt;59</th><td>zIVM<sup>*km</sup></td></tr>
+<tr><th>&gt;60</th><td>---</td></tr>
+<tr><th>&gt;61</th><td>Z8RCM<sup>*km</sup></td></tr>
 </table>
 
 <h3>その他未整理のモード</h3>

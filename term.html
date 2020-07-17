@@ -43,6 +43,7 @@
 
 <h3>目次</h3>
 <ul>
+<li>TV <a href="#term.TV">TeleVideo</a></li>
 <li>HP <a href="#term.HP">HP 2624</a></li>
 <li>TEK <a href="#term.TEK">Tektronix</a></li>
 <li>RES <a href="#term.RES">Research, Inc.</a></li>
@@ -81,6 +82,157 @@
 <li>DSR ?8840 TNREPTAMB</li>
 <li>DSR ?8841 TNREPTAMB</li>
 <li>DSR ?8842 TNREPTAMB</li>
+</ul>
+
+<h2 id="term.TV">TeleVideo</h2>
+<ul>
+<li><a href="https://vt100.net/manx/details/6,6121">TeleVideo 970 Video Display Terminal Operator's Manual – Manx</a>
+  p137 に CSI 一覧がある。</li>
+<li><a href="https://vt100.net/manx/details/6,5488">TeleVideo 965 Operator's Manual – Manx</a>
+  p130-138 にシーケンス一覧がある。970 とはまた異なった枠組みに見える。
+  少数のカーソル移動のANSIシーケンスに対応している他は ESC 主体の体系になっている。
+</li>
+</ul>
+
+<h3>TeleVideo 970</h3>
+<ul>
+<li><kbd>CSI ? 3 ; <i>Pn</i> ; <i>Pn</i> ; <i>Pn</i> ; <i>Pn</i> J</kbd> _TVED★ Erase between columns within page</li>
+<li><kbd>CSI ? 3 ; <i>Pn</i> ; <i>Pn</i> K</kbd> _TVEL★ Erase between columns within line</li>
+<li><kbd>CSI ? 8 c</kbd>★ DA に対する応答。970 ID</li>
+<li><kbd>CSI ? 0 g</kbd> _TVTBC★ clear all tabs and set to default</li>
+<li>MC: 0,4,5,?,?0-7</li>
+<li>SGR: 0,1,2,3,4,5,7</li>
+<li>DSR: 0,3,5,6,?0,?6,?10,?11,?15</li>
+<li>DAQ: 0,1,3,4,5,10,11,12</li>
+<li><kbd>CSI <i>Pn</i> q</kbd> _TVDPM★ display personal message</li>
+<li>DECSTBM</li>
+<li><kbd>CSI <i>Pp</i> ; <i>Pt</i> ; <i>Pc</i> s</kbd> _TVCUP★ Page, line, column cursor position</li>
+<li><kbd>CSI <i>Ps</i> t</kbd> _TVCCR★ Report/Reqeust cursor content</li>
+<li><kbd>CSI ? <i>Pn</i> t</kbd> _TVCCRD★ Convert and rerpot cursor's content as decimal value</li>
+<li><kbd>CSI <i>Ps</i> u</kbd> _TVCDAQ★ Clear defined area qualifications</li>
+<li><kbd>CSI <i>Ps</i> w</kbd> _TVVSTR★ Vertical scrolling type/rate</li>
+<li><kbd>CSI <i>Ps</i> x</kbd> _TVTPORT★ Select/report terminal's port parameter</li>
+<li><kbd>CSI 2 y</kbd> _TVRIS★ Return to factory default values</li>
+<li><kbd>CSI 2 ; <i>Ps</i> y</kbd> DECTST</li>
+<li><kbd>CSI <i>Ps</i> ; <i>Ps</i> z</kbd> _TVDEF★ Define parameters</li>
+<li><kbd>CSI <i>Ps</i> |</kbd> _TVEFK★ Execute function key</li>
+<li>FNT に対応している。然し、フォントの切り替えというよりは94文字集合の切り替えの様である。</li>
+<li><kbd>CSI <i>Pw</i> ; <i>Pd</i> SP p</kbd> _TVOTLG★ Outline with thin-line graphics</li>
+<li><kbd>CSI <i>Pw</i> ; <i>Pd</i> SP q</kbd> _TVCAPVA★ Create area with predefined visual attributes</li>
+<li><kbd>ESC 5</kbd> _TVTSS★ DECXMIT と同じかもしれない。</li>
+<li><kbd>ESC # 2</kbd> _TVDHL★ Native double-height line</li>
+<li>一連の謎のシーケンスを定義している。
+  <ul>
+  <li><kbd>PM ... CR</kbd> _TVLUML★ Load user's message line</li>
+  <li><kbd>ESC | <i>P1</i> ; <i>P2</i> ; ... CR</kbd><sup class="violation">×</sup> _TVPFK★ Program function keys
+    <p><kbd>ESC |</kbd> は LS1R である。</p>
+  </li>
+  <li><kbd>APC</kbd><sup class="violation">×</sup> _TVDLM★ Download font or data to memory
+    <p><kbd>APC</kbd> を単独で用いている。</p>
+  </li>
+  <li><kbd>ST <i>Ps</i> ... CR</kbd> _TVNKFV★ New/ key/function value
+    <p>孤立した <kbd>ST</kbd> で新しいシーケンスを初めている。
+    普通は孤立した <kbd>ST</kbd> は無視される。</p>
+  </li>
+  </ul>
+</li>
+<li>Mode
+  <ul>
+  <li>標準モードは 1-4,6,7,10,12,15,16,19,20</li>
+  <li>DECモードは ?1-7</li>
+  <li>Mode ?8  _TVCLSPM ★ Recognize CLEAR SPACE</li>
+  <li>Mode ?9  _TVCCM   ★ Control code mode</li>
+  <li>Mode ?10 _TVBCM   ★ Block/Conversational mode</li>
+  <li>Mode ?11 _TVTLDM  ★ Transfer line/display (_RESTLPM と同じ番号・同じ意味に見えるがこれだけなので偶々の気がする)</li>
+  <li>Mode ?12 _TVHFDUPM★ Half/Full duplex</li>
+  <li>Mode ?13 _TVDPM   ★ Display/Page mode</li>
+  <li>Mode ?14 _TVTNLM  ★ Transmit now/later</li>
+  <li>Mode ?15 _TVMSPPM ★ Multi/single page protect mode</li>
+  <li>Mode ?16 _TVBRKM  ★ Recognize BREAK key</li>
+  <li>Mode ?17 _TVFBM   ★ Forms build mode</li>
+  <li>Mode ?18 _TVVAAM  ★ Visual attribute action mode</li>
+  <li>Mode ?19 _TVPSPRM ★ print scrolling page/region</li>
+  <li>Mode ?20 _TVMSAM  ★ Multi/single autopage mode</li>
+  <li>Mode ?21 _TVNTVM  ★ Native/VT100 mode</li>
+  <li>Mode ?22 _TVNKCLKM★ Disable keyclick</li>
+  <li>Mode ?26 _TVBIDIXM★ Bidirectional extension/transparent print</li>
+  </ul>
+</li>
+</ul>
+
+<h3>TeleVideo 965</h3>
+<p>大体 ESC で始まる ECMA-48 とは相容れない体系になっているが
+  少数の CSI シーケンスは ECMA-48 に従っている様である。
+  CSI シーケンスだけまとめる。
+</p>
+<ul>
+<li>DECSTBM</li>
+<li><kbd>CSI <i>Ps</i> ; <i>Ps</i> v</kbd> _TVSVAL★
+  <ul>
+  <li>Note <sup>*1</sup>: マニュアルでは [ が抜けていたが typo と思われる。</li>
+  <li><kbd>CSI 0 ; <i>Ps</i> v</kbd> Set transmit delay rate</li>
+  <li><kbd>CSI 1 ; <i>Ps</i> v</kbd> Set handshaking Main receive</li>
+  <li><kbd>CSI 2 ; <i>Ps</i> v</kbd> Set receive buffer fill limit</li>
+  <li><kbd>CSI 3 ; <i>Ps</i> v</kbd> Line attribute</li>
+  <li><kbd>CSI 4 ; <i>Ps</i> v</kbd><sup>*1</sup> Set top line attribute</li>
+  <li><kbd>CSI 5 ; <i>Ps</i> v</kbd><sup>*1</sup> Set bottom line</li>
+  <li><kbd>CSI 6 ; <i>Ps</i> v</kbd> Set scroll rate</li>
+  <li><kbd>CSI 7 ; <i>Ps</i> v</kbd> Set function key set</li>
+  <li><kbd>CSI 8 ; <i>Ps</i> v</kbd> Screen saver</li>
+  <li><kbd>CSI 9 ; <i>Ps</i> v</kbd> Select char set</li>
+  <li><kbd>CSI 1 1 ; <i>Ps</i> v</kbd> Set handshaking Main transmit</li>
+  <li><kbd>CSI 1 2 ; <i>Ps</i> v</kbd> Set handshaking Aux. receive</li>
+  <li><kbd>CSI 1 3 ; <i>Ps</i> v</kbd> Set handshaking Aux. transmit</li>
+  <li><kbd>CSI 1 4 ; <i>Ps</i> v</kbd> set number of data lines</li>
+  <li><kbd>CSI 1 5 ; <i>Ps</i> v</kbd><sup>*1</sup> set break signal</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Ps</i> ; <i>Ps</i> }</kbd> _TVSET★
+  <ul>
+  <li><kbd>CSI 0 ; 1 }</kbd> Save set-up values</li>
+  <li><kbd>CSI 1 ; <i>Pn</i> }</kbd> Display page</li>
+  </ul>
+</li>
+<li>MC: 本来引数が1個の筈だが二つ指定している。 _TVMC★
+  <ul>
+  <li><kbd>MC(0;0)</kbd> page print formatted all</li>
+  <li><kbd>MC(0;1)</kbd> page print formatted unprotected</li>
+  <li><kbd>MC(0;4)</kbd> page print unformatted all</li>
+  <li><kbd>MC(0;5)</kbd> page print unformatted unprotected</li>
+  </ul>
+</li>
+<li>Mode
+  <ul>
+  <li>Mode =0  _TVTCM    ★ Transmission control mode</li>
+  <li>Mode =1  _TV8DBM   ★ 8 data bits / 7 data bits</li>
+  <li>Mode =2  _TVABPM   ★ Attribute base: page</li>
+  <li>Mode =3  _TVCOLM   ★ 132 column mode</li>
+  <li>Mode =4  _TVMBELLM ★ Margin bell on</li>
+  <li>Mode =5  _TVINTENM ★ Full/half intensity</li>
+  <li>Mode =6  _TVNLM    ★ New line mode</li>
+  <li>Mode =7  _TVLWM    ★ Line wrap</li>
+  <li>Mode =8  _TVKRM    ★ Key repeat on</li>
+  <li>Mode =9  _TVDNLFM  ★ DOWN = C-j/C-v</li>
+  <li>Mode =10 _TVFKSM   ★ Function key save on</li>
+  <li>Mode =11 _TVESETUPM★ SETUP enabled</li>
+  <li>Mode =12 _TVEEWSCM ★ EWSC enabled</li>
+  <li>Mode =13 _TVECLRM  ★ CLR SPC enabled</li>
+  <li>Mode =14 _TVEBRKM  ★ BREAK enabled</li>
+  <li>Mode =15 _TVPPFM   ★ Page print flip on</li>
+  <li>Mode =17 _TVSBSTM  ★ Send block boundaries from screen/page top</li>
+  <li>Mode =18 _TVSBEDM  ★ Send block boundaries end of display/cursor</li>
+  <li>Mode =19 _TVASCRM  ★ Autoscroll mode</li>
+  <li>Mode =20 _TVENHANM ★ Enhanced mode</li>
+  <li>Mode =21 _TVWSTARM ★ WordStar mode</li>
+  <li>Mode =22 _TVAUXHM  ★ Set aux./main as host</li>
+  <li>Mode =23 _TVAPPM   ★ Application mode</li>
+  <li>Mode =25 _TVRCAPSM ★ Reverse CAPS LOCK</li>
+  <li>Mode =26 _TVCAPSM  ★ CAPS LOCK on</li>
+  <li>Mode =27 _TVREC2M  ★ Secondary rec. on</li>
+  <li>Mode =28 _TVACKM   ★ ACK mode</li>
+  <li>Mode =29 _TVAFLM   ★ Auto font load</li>
+  </ul>
+</li>
 </ul>
 
 <h2 id="term.HP">HP 2624</h2>
@@ -218,7 +370,7 @@
 <li>MC: 0,4,5,6,7,?6,?7,?8,?9</li>
 <li>SGR: 0,2,4,5,7,8</li>
 <li>DSR: 5,6,?7,?8,?15</li>
-<li>DAQ: 0,3,4,5,6,8,?1,?2</li>
+<li>DAQ: 0,3,4,5,6,8; _RESDAQ★ ?1,?2</li>
 <li><kbd>CSI p</kbd> _RESDCWTB★ Delete Pn Characters Within Text Block</li>
 <li><kbd>CSI q</kbd> _RESPKI  ★ Program Keybaord Indicators</li>
 <li><kbd>CSI r</kbd> DECSTBM</li>
@@ -2260,11 +2412,17 @@
 <li><kbd>DCS <i>Pn</i> v ... ST</kbd> DECLANS Answerback Message</li>
 </ul>
 
-<h2 id="term.SCO">SCO OpenServer 5.0.6 screen(HW)</h2>
-
+<h2 id="term.SCO">SCO</h2>
+<h3>SCO OpenServer screen(HW)</h3>
 <ul>
 <li>all-escapes.html</li>
-<li><a href="http://osr507doc.sco.com/en/man/html.HW/screen.HW.html">http://osr507doc.sco.com/en/man/html.HW/screen.HW.html</a></li>
+<li>OpenServer 5.0.7 <a href="http://osr507doc.sco.com/en/man/html.HW/screen.HW.html">screen(HW)</a>
+  <a href="http://osr507doc.xinuos.com/en/man/html.HW/screen.HW.html">screen(HW)</a></li>
+<li>OpenServer 6.0.0 <a href="http://osr600doc.sco.com/en/man/html.HW/screen.HW.html">screen(HW)</a>
+  <a href="http://96.68.86.38:8457/man/html.HW/screen.HW.html">screen(HW)</a>
+  <a href="http://50.240.52.99:8457/en/manHW/screen.HW.html">screen(HW)</a>
+  <a href="http://201.116.36.246:8457/man/html.HW/screen.HW.html">screen(HW)</a>
+</li>
 </ul>
 
 <p>以下は ANSI シーケンスであるが企画に反している物が沢山ある。</p>
@@ -2283,7 +2441,7 @@
 <li><kbd>CSI L</kbd> IL</li>
 <li><kbd>CSI M</kbd> DL</li>
 <li><kbd>CSI P</kbd> DCH</li>
-<li><kbd>CSI R</kbd><sup class="violation">×</sup> DL</li>
+<li><kbd>CSI R</kbd><sup class="violation">×</sup> _SCODL★ (DL<sup>SCO</sup>)</li>
 <li><kbd>CSI S</kbd> SU</li>
 <li><kbd>CSI T</kbd> SD</li>
 <li><kbd>CSI U</kbd><sup class="violation">×</sup> RIS</li>
@@ -2340,8 +2498,8 @@
 <li><kbd>ESC M</kbd> RI (CRI<sup>SCO</sup>)</li>
 <li><kbd>ESC Q <i>C1</i> <i>Cq</i> ... <i>Cq</i></kbd> _SCOSFK★ (SFK<sup>SCO</sup>) Set Function Key</li>
 <li><kbd>ESC c</kbd> RIS</li>
-<li><kbd>ESC l</kbd> _SCOLMA★ (CRI<sup>LMA</sup>) Lock Memory Above</li>
-<li><kbd>ESC m</kbd> _SCOUSR★ (CRI<sup>USR</sup>) Unlock Scrolling Region</li>
+<li><kbd>ESC l</kbd> _SCOLMA★ (LMA<sup>SCO</sup>) Lock Memory Above</li>
+<li><kbd>ESC m</kbd> _SCOUSR★ (USR<sup>SCO</sup>) Unlock Scrolling Region</li>
 
 <li><kbd>CSI = A</kbd> _SCOSBC★ (SBC<sup>SCO</sup>) Set Border Color</li>
 <li><kbd>CSI = B</kbd> _SCOSBP★ (SBP<sup>SCO</sup>) Set Bell Parameters</li>
@@ -2364,6 +2522,35 @@
 <li><kbd>CSI = z</kbd> _SCOCAT★ (CAT<sup>SCO</sup>) Clear All TABs</li>
 </ul>
 
+<h3>SCO XENIX System V console(HW)</h3>
+<ul>
+<li>[PDF] <a href="http://www.bitsavers.org/pdf/sco/system_V_2.x/SCO_XENIX_System_V_Run_Time_Environment_2.2A_Apr87.pdf">SCO XENIX® System V System - Bitsavers</a>
+  - May 1, 1986
+  <p>p434 からエスケープシーケンス一覧が在る。</p>
+</li>
+</ul>
+<ul>
+<li>SCO 特有の制御機能。
+  <ul>
+  <li><kbd>ESC Q Fn ' string '</kbd> Define function key (_SCOSFK)</li>
+  <li><kbd>CSI <i>Pn</i> g</kbd> Accesses alternate graphics set. (_SCODGC)
+    <p>DEC が _SCOSFK に対して SCODFK の名称を与えているのは、
+      この当時の説明 Define function key に由来すると思われる。
+      因みに DEC は _SCOSCP, _SCORCP に対して SCOSC, SCORC の名称も割り当てているが、
+      この時は未だ _SCOSCP も _SCORCP も無かった様である。</p>
+  </li>
+  </ul>
+</li>
+<li>SGR 幾つか特別な物を定義している。
+  <ul>
+  <li>0,1,4,5,7,8,10-12,30-37,40-47</li>
+  <li><kbd>CSI 2 ; <i>P1</i> ; <i>P2</i> m</kbd>★ 前景色と背景色を設定する。色は 0-15 を指定できる。</li>
+  <li><kbd>CSI 7 ; <i>P1</i> ; <i>P2</i> m</kbd>★ 反転(reverse)時の前景色と背景色を設定する。</li>
+  <li><kbd>CSI 3 ; <i>Ps</i> m</kbd>★ Color only, Set blink bit.</li>
+  </ul>
+</li>
+<li><kbd>CSI <i>Pn</i> g</kbd><sup class="violation">×</sup> _SCOAGS★ Access alternate graphics set</li>
+</ul>
 
 <h2 id="term.CIT">C.Itoh CIT-101</h2>
 <p>伊藤忠商事の作っていた端末。</p>
