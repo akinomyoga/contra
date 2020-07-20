@@ -43,6 +43,7 @@
 
 <h3>目次</h3>
 <ul>
+<li>VC <a href="#term.VC">Volker-Craig NABU 3100</a></li>
 <li>TV <a href="#term.TV">TeleVideo</a></li>
 <li>HP <a href="#term.HP">HP 2624</a></li>
 <li>TEK <a href="#term.TEK">Tektronix</a></li>
@@ -82,6 +83,69 @@
 <li>DSR ?8840 TNREPTAMB</li>
 <li>DSR ?8841 TNREPTAMB</li>
 <li>DSR ?8842 TNREPTAMB</li>
+</ul>
+
+<h2 id="term.VC">Volker-Craig NABU 3100</h2>
+<a href="https://vt100.net/manx/details/55,15190">NABU 3100 Users Manual – Manx</a>
+<ul>
+<li><kbd>CSI ? <i>Ps</i> k</kbd> _VCSLA★: STATUS LINE ACCESS</li>
+<li>PROT★
+  <ul>
+  <li>Mode ?19 PROTected mode _VCPROTM★ プロテクトされた領域は変更不可能になる。</li>
+  <li><kbd>CSI ? <i>Pm</i> }</kbd> _VCPSGR★: protected field highlight
+    プロテクトするSGR属性を指定する。
+  </li>
+  </ul>
+</li>
+<li>BLK モード
+  <p>キーボード入力を一旦画面で編集して S-RET を押した時に全て送信する。</p>
+  <ul>
+  <li>Mode ?10 _VCBLKM (_TVBCM)★ block edit mode / conversational mode</li>
+  <li>Mode ?11 _VCTSL  (_VCTSL)★ transmit single line/page</li>
+  <li>Mode ?14 _VCITM  (_VCITM)★ immediate transmission mode / deferred transmission mode</li>
+  <li>Mode ?18 _VCINSM★ INS/EDIT BLK mode</li>
+  <li>Mode 16 full-page transmission / transmit only scrolling window</li>
+  <li>STX,ETX data transmission string を示す。これは edit モードで使う物?</li>
+  <li><kbd>CSI ? <i>Ps</i> m <i>C</i></kbd> _VCTDP★ Transmission delimiter programming
+    <p>区切り文字を設定するのに使う。</p>
+  </li>
+  <li><kbd>ESC 5</kbd> 現在の状態で内容を送信させる。ユーザが S-RET を押すのと同じ。</li>
+  </ul>
+</li>
+<li><kbd>CSI ? <i>Ps</i> j <i>Cq</i> ... <i>Cq</i></kbd> _VCKDEF★: keydef</li>
+<li>DECDHL DECSCNM DECSTBM DECALN</li>
+<li>SGR: 0,1,4,5,7; 1 は Bold on</li>
+<li>CU[UDFBP] HPA IND RI DECSC DECRC ICH DCH IL DL ED EL HTS TBC RI</li>
+<li>Mode 1,?4-8,</li>
+<li>DSR: 6,5</li>
+<li>DA1R: <kbd>CSI ? 1 ; 8 c</kbd></li>
+</ul>
+
+<h2>Visual Technology Visual 220</h2>
+<ul>
+<li><a href="https://vt100.net/manx/details/9,5538">Visual 220 User's Guide – Manx</a>
+  Appendix D, p277 からシーケンス一覧が始まる。
+  機種名からしてそうだが実際に VT の完全劣化コピーで独自性は何もない。
+</li>
+<li>Mode: 2,3,4,12,20,?1-?8,?18,?19,?25,?42</li>
+<li>94-set:
+  0 = DEC Special Graphics,
+  &lt; = DEC Supplemental,
+  4 = Dutch,
+  5 = C = Finnish,
+  6 = E = Norwegian,
+  7 = H = Swedish,
+  = = Swiss
+</li>
+<li>CUU CUD CUF CUB CUP HPA IND RI NEL ED EL TBC HTS IL DL ICH ICH</li>
+<li>ISO-2022 functions, DECID DA1 DA2 RIS DECSTR</li>
+<li>DECSCA DECSEL DECSED DECSWL DECDWL DECDHL DECALN</li>
+<li>DECSC DECRC S8C1T S7C1T</li>
+<li>DSR: 5,6,?25</li>
+<li>SGR: 0,1,2,4,5,7,22,24,25,27; 1 は Bold</li>
+<li>MC: 0,4,5,?1,?4-7,?15(response:?10,?11,?13)</li>
+<li><kbd>CSI 4 ; <i>Ps</i> Y</kbd><sup>typo?</sup>: DECTST 0-9</li>
+<li>DCS |, DCS {, DCS ~</li>
 </ul>
 
 <h2 id="term.TV">TeleVideo</h2>
@@ -2528,12 +2592,10 @@
   - May 1, 1986
   <p>p434 からエスケープシーケンス一覧が在る。</p>
 </li>
-</ul>
-<ul>
 <li>SCO 特有の制御機能。
   <ul>
   <li><kbd>ESC Q Fn ' string '</kbd> Define function key (_SCOSFK)</li>
-  <li><kbd>CSI <i>Pn</i> g</kbd> Accesses alternate graphics set. (_SCODGC)
+  <li><kbd>CSI <i>Pn</i> g</kbd><sup class="violation">×</sup> Accesses alternate graphics set. (_SCODGC)
     <p>DEC が _SCOSFK に対して SCODFK の名称を与えているのは、
       この当時の説明 Define function key に由来すると思われる。
       因みに DEC は _SCOSCP, _SCORCP に対して SCOSC, SCORC の名称も割り当てているが、
@@ -2542,14 +2604,17 @@
   </ul>
 </li>
 <li>SGR 幾つか特別な物を定義している。
+  改めて SCO screen の方も確認してみた所、同様の内容が文章で説明されていた。
+  これらの特別な振る舞いについては既に all-escapes.txt にも記述されている。
   <ul>
   <li>0,1,4,5,7,8,10-12,30-37,40-47</li>
-  <li><kbd>CSI 2 ; <i>P1</i> ; <i>P2</i> m</kbd>★ 前景色と背景色を設定する。色は 0-15 を指定できる。</li>
-  <li><kbd>CSI 7 ; <i>P1</i> ; <i>P2</i> m</kbd>★ 反転(reverse)時の前景色と背景色を設定する。</li>
-  <li><kbd>CSI 3 ; <i>Ps</i> m</kbd>★ Color only, Set blink bit.</li>
+  <li><kbd>CSI 2 ; <i>P1</i> ; <i>P2</i> m</kbd> 前景色と背景色を設定する。色は 0-15 を指定できる。</li>
+  <li><kbd>CSI 7 ; <i>P1</i> ; <i>P2</i> m</kbd> 反転(reverse)時の前景色と背景色を設定する。</li>
+  <li><kbd>CSI 3 ; <i>Ps</i> m</kbd> Color only, Set blink bit.
+    <p>0 = SGR(5) を明るい背景色と解釈する。1 = SGR(5) を bilnk と解釈する。</p>
+  </li>
   </ul>
 </li>
-<li><kbd>CSI <i>Pn</i> g</kbd><sup class="violation">×</sup> _SCOAGS★ Access alternate graphics set</li>
 </ul>
 
 <h2 id="term.CIT">C.Itoh CIT-101</h2>

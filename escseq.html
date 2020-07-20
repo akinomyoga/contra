@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 <html lang="ja" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -1390,11 +1389,17 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>-</td>
     <td>DECMC<sup>+</sup></td>
 </tr>
+<tr><th><kbd>j</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>_VCKDEF</td>
+</tr>
 <tr><th><kbd>k</kbd></th>
     <td>-</td>
     <td>-</td>
     <td>_SUNRQM</td>
-    <td>-</td>
+    <td>_VCSLA</td>
 </tr>
 <tr><th><kbd>l</kbd></th>
     <td>_DGRM<sup>+</sup></td>
@@ -1406,7 +1411,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>_TEKSGRFC</td>
     <td>_SCOSSM<br/>_TEKSGRBC</td>
     <td>XTMODKEYS (XTMDKEY<sup>*ml</sup>)<br/>_TEKSGREC</td>
-    <td>_DECSGR<sup>*ae</sup></td>
+    <td>_DECSGR<sup>*ae</sup><br/>_VCTDP</td>
 </tr>
 <tr><th><kbd>n</kbd></th>
     <td>-</td>
@@ -1467,6 +1472,12 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
     <td>_SCOCAT</td>
     <td>-</td>
     <td>-</td>
+</tr>
+<tr><th><kbd>}</kbd></th>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>_VCPSGR</td>
 </tr>
 <tr><th><kbd>~</kbd></th>
     <td>_KERMMACR<sup>*km</sup></td>
@@ -2083,11 +2094,14 @@ tmux=screen
   _TVCCM    - (TeleVideo) Control code mode</td></tr>
 <tr><th>?10</th><td>
   RXVT_menuBar<br/>
-  _RESEM - (Research) Edit Mode<br/>
-  _TVBCM    - (TeleVideo) Block/Conversational mode</td></tr>
+  _RESEM  - (Research) Edit Mode<br/>
+  _TVBCM  - (TeleVideo) Block/Conversational mode<br/>
+  _VCBLKM - (Volker-Craig) block edit mode / conversational mode
+  </td></tr>
 <tr><th>?11</th><td>
   _RESTLPM - (Research) Transmit Line/Page<br/>
-  _TVTLDM   - (TeleVideo) Transfer line/display</td></tr>
+  _TVTLDM  - (TeleVideo) Transfer line/display<br/>
+  _VCTSL   - (Volker-Craig) transmit single line/page</td></tr>
 <tr><th>?12</th><td>
   ATT610_BLINK<br/>
   _RESLOLM - (Research) Local Mode / On-Line Mode<br/>
@@ -2100,7 +2114,9 @@ tmux=screen
 <tr><th>?14</th><td>
   DECTEM<sup>*ae</sup><br/>
   XTERM_XOR_CURSOR_BLINKS<br/>
-  _TVTNLM   - (TeleVideo) Transmit now/later</td></tr>
+  _TVTNLM - (TeleVideo) Transmit now/later<br/>
+  _VCITM  - (Volker-Craig) immediate transmission mode / deferred transmission mode
+  </td></tr>
 <tr><th>?15</th><td>
   _RESPPSM - (Research) Peripheral Port Suppression<br/>
   _TVMSPPM  - (TeleVideo) Multi/single page protect mode</td></tr>
@@ -2112,10 +2128,13 @@ tmux=screen
   _TVFBM    - (TeleVideo) Forms build mode</td></tr>
 <tr><th>?18</th><td>
   DECPFF<br/>
-  _TVVAAM   - (TeleVideo) Visual attribute action mode</td></tr>
+  _TVVAAM - (TeleVideo) Visual attribute action mode<br/>
+  _VCINSM - (Volker-Craig) INS/EDIT BLK mode
+  </td></tr>
 <tr><th>?19</th><td>
   DECPEX<br/>
-  _TVPSPRM  - (TeleVideo) print scrolling page/region</td></tr>
+  _TVPSPRM - (TeleVideo) print scrolling page/region<br/>
+  _VCPROTM - (Volker-Craig) PROTected mode</td></tr>
 <tr><th>?20</th><td>
   _RESWM - (Research) Wide Mode<br/>
   _TVMSAM   - (TeleVideo) Multi/single autopage mode</td></tr>
@@ -3998,11 +4017,8 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <tr><th>DECREQTPARM</th><td><kbd>CSI <i>Ps</i> x</kbd></td></tr>
 <tr><th>DECSACE</th>    <td><kbd>CSI <i>Ps</i> * x</kbd></td></tr>
 <tr><th>DECFRA</th>     <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> $ x</kbd></td></tr>
-<tr><th>DECELR</th>     <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ' z</kbd></td></tr><!--'-->
 <tr><th>DECERA</th>     <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> $ z</kbd></td></tr>
-<tr><th>DECSLE</th>     <td><kbd>CSI <i>Pm</i> ' {</kbd></td></tr><!--'-->
 <tr><th>DECSERA</th>    <td><kbd>CSI <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> ; <i>Ps</i> $ {</kbd></td></tr>
-<tr><th>DECRQLP</th>    <td><kbd>CSI <i>Ps</i> ' |</kbd></td></tr><!--'-->
 </table>
 
 <h3>端末適合レベル</h3>
@@ -4116,6 +4132,15 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <li>Cygwin が <kbd>CSI &gt; 6 7 ; 3 0 1 0 2 ; 0 c</kbd> (例 3.1.2) である (67 = 'C')。</li>
   <li>Kitty の DA2R は <kbd>CSI > 1 ; MAJOR ; MINOR c</kbd>。
     DA1R は <kbd>CSI ? 6 2 ; c</kbd> である。</li>
+  <li>xterm は以下の通り。
+    <table class="normal">
+    <tr><th>Version</th><th>応答</th></tr>
+    <tr><th>40-94</th><td>`1;0;0`</td></tr>
+    <tr><th>95-279</th><td>`[01];version;0`</td></tr>
+    <tr><th>280-353</th><td>`([012]|24|1[89]|41|6[145]);version;0`</td></tr>
+    <tr><th>354-358</th><td>`([012]|24|1[89]|32|41|6[145]);version;0`</td></tr>
+    </table>
+  </li>
   </ul>
 </li>
 <li><dfn class="cfunc">DA3</dfn>: Tertiary Device Attributes
@@ -4636,7 +4661,24 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
 <li>SGR 1 <dfn class="sgr">sgrBold</dfn>: bold, highlight
   <p>太字、もしくは高輝度の文字。</p>
   <ul>
-  <li>互換性: vt100 (bold), ansi (bold/highlight), xterm (bold)</li>
+  <li>互換性: vt100 (bold), ansi (bold/highlight), xterm (bold),
+    TeleVideo 970 (increase intensity)
+    Tektronix 4105 (red as bold),
+    Research,  Inc. Teleray Model 100 (bold),
+    Qume QVT-103 (bold),
+    Beehive ATL-008 (high intensity),
+    Ann Arbor Ambassador (Bold or increased intensity),
+    Wyse WY-60, WY-85 (bold),
+    C. Itoh, CIT-101 (Select bold characters),
+    PC-98xx (highlight (cyan)),
+    MS-DOS, ANSI.SYS (bold),
+    SGI IRIX xwsh (bold (font and color configurable)),
+    IBM AIX aixterm (bold),
+    CDE dtterm (bold),
+    SCO OpenServer screen(HW) (brighter color as bold)
+    SCO XENIX console(HW) (Sets bold. Color: sets intensity)
+    xterm (X Window System User’s Guide 1995) (Blink (appears as Bold))
+  </li>
   </ul>
 </li>
 <li>SGR 2 <dfn class="sgr">sgrFaint</dfn>: faint, second color, dim
@@ -5223,7 +5265,7 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
   また、機能自体も不明瞭な点が存在するし、情報自体が怪しかったり古かったりするので注意する。
   </p>
   <ul>
-  <li>SCOANSI (?) について幾つかの非標準の動作が記述されている。
+  <li>SCOANSI について幾つかの非標準の動作が記述されている。
     <kbd>CSI 2 ; <i>Ps</i> ; <i>Ps</i> m</kbd> で前景色・背景色を指定する。
     初めの <i class="kbd">Ps</i> が前景色で、二つ目の <i class="kbd">Ps</i> が背景色で、SCO color number で指定する。
     3 は後方互換モードで M6845 ビデオコントローラにおける 5 の意味を切り替える。
@@ -5728,6 +5770,105 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
   </p>
   <p>互換性: xterm</p>
 </li>
+</ul>
+
+<h3>DEC Text Locator Extension</h3>
+<p>ロケータ位置 (マウスポインタの位置に対応すると考えて良い) を報告する仕組み。
+  設定でピクセル単位での位置検出もできる。
+</p>
+<ul>
+<li><dfn class="cfunc">DECELR</dfn> <kbd>CSI <i>Ps</i> ; <i>Pu</i> ' z</kbd><!--'-->: ENABLE LOCATOR REPORTS
+  <p>[STD-070/p1019] ロケータ報告を有効にする。認識できない引数が指定された場合には何もしない。</p>
+  <table class="normal">
+  <tr><th><i class="kbd">Ps</i></th><th>説明</th></tr>
+  <tr><td>0,既定</td><td>無効</td></tr>
+  <tr><td>1</td><td>有効</td></tr>
+  <tr><td>2</td><td>1回だけ有効。その後無効化。</td></tr>
+  <tr><th><i class="kbd">Pu</i></th><th>説明</th></tr>
+  <tr><td>0,2,既定</td><td>座標を文字単位で報告</td></tr>
+  <tr><td>1</td><td>座標をピクセル単位で報告</td></tr>
+  </table>
+  <ul>
+  <li>xterm, RLogin</li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECLRP</dfn>
+  <kbd>CSI <i>Pe</i> ; <i>Pb</i> ; <i>Pr</i> ; <i>Pc</i> ; <i>Pp</i> &amp; w</kbd>:
+  LOCATOR REPORT (応答)
+  <p>[STD-070/p1021] ロケータ報告。
+    <i class="kbd">Pe</i> はロケータ報告を起こした出来事を指定する。
+    DECEFR の Notes を読む限り "ロケータ位置が未定義" というのは、
+    ロケータが座標系の外にある時、つまりターミナルの画面の上にない時に相当すると思われる。
+    DECEFR の Notes 2/para1 によると、ロケータが座標範囲外に出た時は
+    <i class="kbd">Pe</i> = 10 ではなくて、<i class="kbd">Pe</i> = 0 になる。
+  </p>
+  <table class="normal">
+  <tr><th><i class="kbd">Pe</i></th><th>説明</th></tr>
+  <tr><td>0</td><td>DECRQLP を受信したがロケータ位置が未定義または無効</td></tr>
+  <tr><td>1</td><td>DECRQLP を受信</td></tr>
+  <tr><td>2</td><td>左ボタンが押された</td></tr>
+  <tr><td>3</td><td>左ボタンが離された</td></tr>
+  <tr><td>4</td><td>中ボタンが押された</td></tr>
+  <tr><td>5</td><td>中ボタンが離された</td></tr>
+  <tr><td>6</td><td>右ボタンが押された</td></tr>
+  <tr><td>7</td><td>右ボタンが離された</td></tr>
+  <tr><td>8</td><td>第4ボタンが押された</td></tr>
+  <tr><td>9</td><td>第4ボタンが離された</td></tr>
+  <tr><td>10</td><td>ロケータが検出範囲の外側に出た</td></tr>
+  </table>
+  <p><i class="kbd">Pb</i> は現在押されているボタンの集合を表現する。以下の値の合計。既定値は 0</p>
+  <table class="normal">
+  <tr><th><i class="kbd">Pb</i></th><th>説明</th></tr>
+  <tr><td>1</td><td>左ボタン</td></tr>
+  <tr><td>2</td><td>中ボタン</td></tr>
+  <tr><td>4</td><td>右ボタン</td></tr>
+  <tr><td>8</td><td>第4ボタン</td></tr>
+  </table>
+  <p><i class="kbd">Pr</i>, <i class="kbd">Pc</i>, <i class="kbd">Pp</i> は座標 (行, 列, ページ)。</p>
+  <p>ロケータが無効の時は第2パラメータ以降は送信しない。
+    ロケータが検出範囲外の時は座標パラメータは省略される。
+  </p>
+</li>
+<li><dfn class="cfunc">DECRQLP</dfn> <kbd>CSI <i>Ps</i> ' |</kbd><!--'-->: REQUEST LOCATOR POSITION
+  <p>[STD-070/p1023] その場でロケータ位置報告 (DECLRP) を要求する。</p>
+  <table class="normal">
+  <tr><th><i class="kbd">Ps</i></th><th>説明</th></tr>
+  <tr><td>0,1,既定</td><td>DECLRP を1回要求</td></tr>
+  </table>
+  <p>STD-070 にはターミナルはいつでも DECLRP を送信できると書かれているが、
+    DECLRP を送信する為には定義されていなければならない。
+  </p>
+</li>
+<li><dfn class="cfunc">DECSLE</dfn> <kbd>CSI <i>Pm</i> ' {</kbd><!--'-->: SELECT LOCATOR EVENTS
+  <p>[STD-070/p1024] ロケータ報告を行うイベントの種類を指定する。
+    <i class="kbd">Pm</i> は以下のパラメータの組み合わせ。
+  </p>
+  <table class="normal">
+  <tr><th><i class="kbd">Ps</i></th><th>説明</th></tr>
+  <tr><td>0</td><td>DECRQLP にのみ応答。検出範囲は初期化</td></tr>
+  <tr><td>1</td><td>ボタンが押された時の報告を有効化</td></tr>
+  <tr><td>2</td><td>ボタンが押された時の報告を無効化</td></tr>
+  <tr><td>3</td><td>ボタンが離された時の報告を有効化</td></tr>
+  <tr><td>4</td><td>ボタンが離された時の報告を無効化</td></tr>
+  </table>
+</li>
+<li><dfn class="cfunc">DECEFR</dfn> <kbd>CSI <i>Pt</i> ;  <i>Pl</i> ;  <i>Pb</i> ;  <i>Pr</i> ' w</kbd><!--'-->: ENABLE FILTER RECTANGLE
+  <p>[STD-070/p1025] ロケータの検出範囲の矩形を設定する。
+    検出範囲は一回限りで DECLRP で報告が行われた後に解除される。
+    座標は左上が (1,1) で、省略したパラメータの既定値は現在のロケータの位置である。
+    但し、パラメータなしの場合には全領域を検出範囲とする。
+    矩形の境界は inclusive である。
+  </p>
+  <p>現在のロケータの位置が検出範囲外の時は、その場で DECLRP(10) を送信して、検出範囲を解除する。
+    現在のロケータが座標範囲外の場合、
+    座標パラメータが省略されている時はロケータが座標範囲に入った時に改めて検出範囲を設定し、
+    省略されていない時はその場で DECLRP(0) を送信する。
+    現在ロケータが無効の時には、その場で DECLRP(0) を送信する。
+  </p>
+</li>
+<li>DECLKD</li>
+<li>DSR ?55</li>
+<li>MC 6,7</li>
 </ul>
 
 <!--************************************************************************-->
