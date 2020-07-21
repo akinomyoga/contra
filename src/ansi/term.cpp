@@ -2120,9 +2120,16 @@ namespace ansi {
   }
 
   struct control_function_dictionary {
+    std::unordered_map<std::uint32_t, control_function_t*> data0;
     control_function_t* data1[63];
-    std::unordered_map<std::uint16_t, control_function_t*> data2;
+    control_function_t* data_0Ft[63];
+    control_function_t* data_nFp[15 * 15];
+    control_function_t* data_PFt[4 * 63];
 
+    control_function_t* get(byte F) const {
+      int const index = (int) F - ascii_at;
+      return 0 <= index && index < (int) std::size(data1) ? data1[index] : nullptr;
+    }
     void register_cfunc(control_function_t* fp, byte F) {
       int const index = (int) F - ascii_at;
       mwg_assert(0 <= index && index < (int) std::size(data1), "final byte out of range");
@@ -2130,12 +2137,55 @@ namespace ansi {
       data1[index] = fp;
     }
 
+    control_function_t* get(byte I, byte F) const {
+      auto const it = data0.find(compose_bytes(I, F));
+      return it != data0.end() ? it->second : nullptr;
+    }
+    control_function_t* get_IF(byte I, byte F) const {
+      if (I == ascii_sp) {
+        return data_0Ft[(int) F - ascii_at];
+      } else if (ascii_p <= F) {
+        int const zone = (int) I - ascii_exclamation;
+        int const point = (int) F - ascii_p;
+        return data_nFp[zone * 15 + point];
+      } else
+        return get(I, F);
+    }
+    control_function_t* get_PF(byte P, byte F) const {
+      int const zone = (int) P - ascii_less;
+      int const point = (int) F - ascii_at;
+      return data_PFt[zone * 63 + point];
+    }
     void register_cfunc(control_function_t* fp, byte I, byte F) {
-      data2[compose_bytes(I, F)] = fp;
+      if ((I & 0xF0) == ascii_sp) {
+        if (I == ascii_sp) {
+          data_0Ft[(int) F - ascii_at] = fp;
+        } else if (ascii_p <= F) {
+          int const zone = (int) I - ascii_exclamation;
+          int const point = (int) F - ascii_p;
+          data_nFp[zone * 15 + point] = fp;
+        } else
+          data0[compose_bytes(I, F)] = fp;
+      } else {
+        int const zone = (int) I - ascii_less;
+        int const point = (int) F - ascii_at;
+        data_PFt[zone * 63 + point] = fp;
+      }
+    }
+
+    control_function_t* get(byte I1, byte I2, byte F) const {
+      auto const it = data0.find(I1 << 16 | I2 << 8 | F);
+      return it != data0.end() ? it->second : nullptr;
+    }
+    void register_cfunc(control_function_t* fp, byte I1, byte I2, byte F) {
+      data0[I1 << 16 | I2 << 8 | F] = fp;
     }
 
     control_function_dictionary() {
       std::fill(std::begin(data1), std::end(data1), nullptr);
+      std::fill(std::begin(data_0Ft), std::end(data_0Ft), nullptr);
+      std::fill(std::begin(data_nFp), std::end(data_nFp), nullptr);
+      std::fill(std::begin(data_PFt), std::end(data_PFt), nullptr);
 
       register_cfunc(&do_simd, ascii_circumflex);
 
@@ -2189,18 +2239,18 @@ namespace ansi {
       register_cfunc(&do_decsca  , ascii_double_quote, ascii_q);
       register_cfunc(&do_decscpp , ascii_dollar, ascii_vertical_bar);
       register_cfunc(&do_decrqm_ansi, ascii_dollar, ascii_p);
+
+      // CSI P Ft
+      register_cfunc(&do_decset, ascii_question, ascii_h);
+      register_cfunc(&do_decrst, ascii_question, ascii_l);
+      register_cfunc(&do_da2              , ascii_greater, ascii_c);
+      register_cfunc(&do_XtermSetModFkeys , ascii_greater, ascii_m);
+      register_cfunc(&do_XtermSetModFkeys0, ascii_greater, ascii_n);
+
+      // CSI P I Ft
+      register_cfunc(&do_decrqm_dec, ascii_question, ascii_dollar, ascii_p);
     }
 
-    control_function_t* get(byte F) const {
-      int const index = (int) F - ascii_at;
-      return 0 <= index && index < (int) std::size(data1) ? data1[index] : nullptr;
-    }
-
-    control_function_t* get(byte I, byte F) const {
-      typedef std::unordered_map<std::uint16_t, control_function_t*>::const_iterator const_iterator;
-      const_iterator const it = data2.find(compose_bytes(I, F));
-      return it != data2.end() ? it->second : nullptr;
-    }
   };
 
   static control_function_dictionary cfunc_dict;
@@ -2256,56 +2306,50 @@ namespace ansi {
     }
 
     bool result = false;
+
     switch (params.private_prefix_count()) {
     case 0:
       switch (seq.intermediate_size()) {
-      case 0:
-        // CSI ... Ft の形式
+      case 0: // CSI Ft
         if (seq.final() == ascii_m)
           result = do_sgr(*this, params);
         else if (control_function_t* const f = cfunc_dict.get(seq.final()))
           result = f(*this, params);
         break;
 
-      case 1:
-        // CSI ... I Ft の形式
+      case 1: // CSI I Ft
         mwg_assert(seq.intermediate()[0] <= 0xFF);
-        if (control_function_t* const f = cfunc_dict.get((byte) seq.intermediate()[0], seq.final()))
+        if (control_function_t* const f = cfunc_dict.get_IF((byte) seq.intermediate()[0], seq.final()))
           result = f(*this, params);
+        break;
+
+      case 2: // CSI I I Ft
+        {
+          byte const I1 = seq.intermediate()[0];
+          byte const I2 = seq.intermediate()[1];
+          byte const F = seq.final();
+          if (control_function_t* const f = cfunc_dict.get(I1, I2, F))
+            result = f(*this, params);
+        }
         break;
       }
       break;
 
     case 1: // Private parameter byte
-      switch (seq.parameter()[0]) {
-      case '?':
-        switch (seq.intermediate_size()) {
-        case 0:
-          // CSI ? ... Ft の形式
-          switch (seq.final()) {
-          case ascii_h: result = do_decset(*this, params); break;
-          case ascii_l: result = do_decrst(*this, params); break;
-          }
-          break;
-
-        case 1:
-          // CSI ? ... I Ft の形式
-          if (seq.intermediate()[0] == ascii_dollar && seq.final() == ascii_p)
-            result = do_decrqm_dec(*this, params);
+      switch (seq.intermediate_size()) {
+      case 0:
+        if (control_function_t* const f = cfunc_dict.get_PF((byte) seq.parameter()[0], seq.final()))
+          result = f(*this, params);
+        break;
+      case 1:
+        {
+          byte const P = seq.parameter()[0];
+          byte const I = seq.intermediate()[0];
+          byte const F = seq.final();
+          if (control_function_t* const f = cfunc_dict.get(P, I, F))
+            result = f(*this, params);
           break;
         }
-        break;
-
-      case '>':
-        if (seq.intermediate_size() == 0) {
-          // CSI > ... Ft の形式
-          switch (seq.final()) {
-          case ascii_c: result = do_da2(*this, params); break;
-          case ascii_m: result = do_XtermSetModFkeys(*this, params); break;
-          case ascii_n: result = do_XtermSetModFkeys0(*this, params); break;
-          }
-        }
-        break;
       }
       break;
     }
