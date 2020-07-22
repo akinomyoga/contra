@@ -890,7 +890,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th colspan="2">Ft型: 私用制御機能</th></tr>
 <tr><th><i>Ft</i></th><th>略号</th></tr>
 <tr><th><kbd>p</kbd></th><td>DECSSL, SUNBOW, WYFDAT, _AIXKSI, _DGBAR, _DOSSKR, _ZDSPXMT, RLBFAT, _SNIMODEP<sup>*km</sup>, zSDP, BEESSKM, _RESDCWTB</td></tr>
-<tr><th><kbd>q</kbd></th><td>DECLL, SUNWOB, _AIXPFK, DGCA, _DOSEKR, _ZDSPX25, _SNIMODEQ<sup>*km</sup>, _RESPKI, _TVDPM</td></tr>
+<tr><th><kbd>q</kbd></th><td>DECLL (HPLF), SUNWOB, _AIXPFK, DGCA, _DOSEKR, _ZDSPX25, _SNIMODEQ<sup>*km</sup>, _RESPKI, _TVDPM</td></tr>
 <tr><th><kbd>r</kbd></th><td><b>DECSTBM</b>, DECPCTERM, _SCOCSR, SUNSCRL, _ZDSPMBR</td></tr>
 <tr><th><kbd>s</kbd></th><td><b>DECSLRM</b>, <b>SCOSC</b>, WYSC, _DGRRC, SUNRESET, _SNIMODES<sup>*km</sup>, zPSH, BEEAP, _TVCUP</td></tr>
 <tr><th><kbd>t</kbd></th><td><b>XTWINOPS</b> (_SUNWINM), DECSLPP, WYNNAT, DGROSC, _CITSTIME, _SNIMODET<sup>*km</sup>, zPOP, BEESAP, _RESTDPF, _TVCCR</td></tr>
@@ -1452,7 +1452,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th><kbd>s</kbd></th>
     <td>TTIMESV</td>
     <td>-</td>
-    <td>-</td>
+    <td>HPHD, HPHU</td>
     <td>XTSAVE (_AIXSM)</td>
 </tr>
 <tr><th><kbd>t</kbd></th>
@@ -1563,6 +1563,8 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <tr><th><kbd>CSI <i>Pn</i> ; <i>Pn</i> ? |</kbd></th>            <td>_RESSELTC</td></tr>
 <tr><th><kbd>CSI <i>Pn</i> ; <i>Pn</i> ? }</kbd></th>            <td>_RESSBAUD</td></tr>
 <tr><th><kbd>CSI <i>Pn</i> ; <i>Pn</i> ? ~</kbd></th>            <td>_RESSPRTY</td></tr>
+<tr><th><kbd>ESC &amp; k 1 &lt;</kbd></th><td>_HPANSI</td></tr>
+<tr><th><kbd>ESC &amp; k 0 \</kbd></th><td>_HPHP</td></tr>
 </table>
 
 <ul>
@@ -2057,7 +2059,7 @@ tmux=screen
 <tr><th>VEM            </th><td>7 </td><th>SATM</th>                    <td>17</td><th>-</th><td>27</td>
     <th>WYGATM         </th><td>37</td><th>-</th>                       <td>47</td></tr>
 <tr><th>BDSM           </th><td>8 </td><th>TSM</th>                     <td>18</td><th>-</th><td>28</td>
-    <th>WYTEXM         </th><td>38</td><th>-</th>                       <td>48</td></tr>
+    <th>WYTEXM, _HPTEKM</th><td>38</td><th>-</th>                       <td>48</td></tr>
 <tr><th>DCSM           </th><td>9 </td><th>EBM<sup>廃</sup></th>        <td>19</td><th>-</th><td>29</td>
     <th>-              </th><td>39</td><th>-</th>                       <td>49</td></tr>
 <tr><th>HEM            </th><td>10</td><th>LF/NL<sup>廃</sup> (LNM)</th><td>20</td><th>WYDSCM, QUMES2L</th><td>30</td>
@@ -2077,15 +2079,15 @@ tmux=screen
 <table class="normal">
 <caption>表: DECモード (1-50)</caption>
 <tr><th>Mode</th><th>略号</th></tr>
-<tr><th>?1</th> <td>DECCKM (TEKCKM)</td></tr>
-<tr><th>?2</th> <td>DECANM (TEKANM)<br/>_ZDSZMD</td></tr>
+<tr><th>?1</th> <td>DECCKM (TEKCKM, HPCKM)</td></tr>
+<tr><th>?2</th> <td>DECANM (TEKANM, HPANM)<br/>_ZDSZMD</td></tr>
 <tr><th>?3</th> <td>
-  DECCOLM (TEKCOLM)<br/>
+  DECCOLM (TEKCOLM, HPCM)<br/>
   _RESJSM<sup>[Manual typo?]</sup> - (Research) Jump Scroll</td></tr>
-<tr><th>?4</th> <td>DECSCLM</td></tr>
+<tr><th>?4</th> <td>DECSCLM (HPSCLM)</td></tr>
 <tr><th>?5</th> <td>DECSCNM (TEKSCNM)</td></tr>
-<tr><th>?6</th> <td>DECOM (TEKOM)</td></tr>
-<tr><th>?7</th> <td>DECAWM (TEKAWM)</td></tr>
+<tr><th>?6</th> <td>DECOM (TEKOM, HPOM)</td></tr>
+<tr><th>?7</th> <td>DECAWM (TEKAWM, HPAWM)</td></tr>
 <tr><th>?8</th> <td>
   DECARM (TEKARM)<br/>
   _TVCLSPM  - (TeleVideo) Recognize CLEAR SPACE</td></tr>
@@ -2454,8 +2456,12 @@ tmux=screen
 <tr><th>=114</th><td>_DOSG64C4JM</td></tr>
 <tr><th>=115</th><td>_DOST80C3JM</td></tr>
 <tr><th>Mode</th><th>Name</th></tr>
-<tr><th>&gt;1</th><td>_ZDSL25<br/>_CITDSSSM<br/>_SUNPGM</td></tr>
-<tr><th>&gt;2</th><td>_ZDSKCL<br/>_CITVTSSKM</td></tr>
+<tr><th>&gt;1</th><td>
+  HPMPM - (HP) Multipage mode<br/>
+  _ZDSL25<br/>_CITDSSSM<br/>_SUNPGM</td></tr>
+<tr><th>&gt;2</th><td>
+  HPMLM - (HP) Memory Lock mode<br/>
+  _ZDSKCL<br/>_CITVTSSKM</td></tr>
 <tr><th>&gt;3</th><td>_ZDSHSM<br/>_PC98L20<br/>_CITHKNM</td></tr>
 <tr><th>&gt;4</th><td>_ZDSCBL<br/>_CITFFCDM</td></tr>
 <tr><th>&gt;5</th><td>_ZDSCDE<br/>_CITCTRVM</td></tr>
@@ -2895,7 +2901,7 @@ tmux=screen
   <li>contra では SLH, SLL の引数を省略した時、または 0 を指定した時、既定値(行頭/行末)に戻す。</li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECSTBM</dfn> (<dfn class="cfunc">TEKSTBM</dfn>): Set Top and Bottom Margins
+<li><dfn class="cfunc">DECSTBM</dfn>: Set Top and Bottom Margins
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECSTBM">VT510/DECSTBM</a>]
     ページのスクロール範囲を設定する。
     第1引数に範囲の開始行の番号を指定し、第2引数に範囲の最終行の番号を指定する。
@@ -2913,6 +2919,7 @@ tmux=screen
     VPB, VPR は影響を受けない。暗黙移動の範囲、LF, FF, NEL, RI, IND 等は、
     DECSTBM の制限と SPH, SPL の制限の両方の影響を受ける。
   </li>
+  <li><dfn class="cfunc">TEKSTBM</dfn>, <dfn class="cfunc">HPSTBM</dfn></li>
   </ul>
 </li>
 <li><dfn class="cfunc">DECSLRM</dfn>: Set Left and Right Margins
@@ -3330,20 +3337,22 @@ SDS, SRS 文字列内部で領域定義の制御機能 DAQ, EPA, ESA, SPA, SSA �
   <li>all-escapes.txt によると SCO による略称は RCP</li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECSC</dfn> (<dfn class="cfunc">zSC</dfn>, <dfn class="cfunc">TEKSC</dfn>) <kbd>ESC 7</kbd>: SAVE CURSOR
+<li><dfn class="cfunc">DECSC</dfn> <kbd>ESC 7</kbd>: SAVE CURSOR
   <p>現在のカーソル状態を記録する。
     記録される物にはカーソル位置・描画属性・文字デコード状態・DECAWM・DECOM・DECSCA状態などを含む。
   </p>
   <ul>
   <li>互換性: vt510, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DECSC">DECSC</a></li>
+  <li><dfn class="cfunc">zSC</dfn>, <dfn class="cfunc">TEKSC</dfn>, <dfn class="cfunc">HPSC</dfn></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECRC</dfn> (<dfn class="cfunc">zRC</dfn>, <dfn class="cfunc">TEKRC</dfn>) <kbd>ESC 8</kbd>: RESTORE CURSOR
+<li><dfn class="cfunc">DECRC</dfn> <kbd>ESC 8</kbd>: RESTORE CURSOR
   <p>DECSC で記録したカーソル状態を復元する。</p>
   <ul>
   <li>互換性: vt510, xterm</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DECRC">DECRC</a></li>
+  <li><dfn class="cfunc">zRC</dfn>, <dfn class="cfunc">TEKRC</dfn>, <dfn class="cfunc">HPRC</dfn></li>
   </ul>
 </li>
 </ul>
@@ -4077,10 +4086,13 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <p>互換性: 通常、端末では以下の DA1 として実装されている。</p>
 </li>
 <li><dfn class="cfunc">DA1</dfn> <kbd>CSI <i>Ps</i> c</kbd>: Primary Device Attributes</li>
-<li><dfn class="cfunc">DECID</dfn> (<dfn class="cfunc">TEKID</dfn>) <kbd>ESC Z</kbd>: DEC Private Identification
+<li><dfn class="cfunc">DECID</dfn> <kbd>ESC Z</kbd>: DEC Private Identification
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DA1">VT510/DA1</a>, VT520/Page4-3] DA1R を要求する。
     DECID は古い形式なので新しいプログラムは DA1 の方を使うべき。
   </p>
+  <ul>
+  <li><dfn class="cfunc">TEKID</dfn>, <dfn class="cfunc">HPID</dfn></li>
+  </ul>
 </li>
 <li><dfn class="cfunc">DA1R</dfn><sup>†</sup> <kbd>CSI ? <i>Ps</i> ; <i>Pm</i> c</kbd>: Primary Device Attributes - Response (応答)
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DA1">VT510/DA1</a>]
@@ -4158,6 +4170,15 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <li>VT420 (DDD1, DDD2, DDD3 は Hebrew Keyboard で有効)</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DECRQTSR">VT510: DECRQTSR</a></li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DD1">VT510: DDD1, DDD2, DDD3</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DECREQTPARM</dfn> <kbd>CSI <i>Ps</i> x</kbd></li>
+<li><dfn class="cfunc">DECREPTPARM</dfn> <kbd>CSI <i>Ps</i> ; <i>Pp</i> ; <i>Pn</i> ; <i>Pr</i> ; <i>Pc</i> ; <i>Pf</i> x</kbd> (応答)
+  <p>[<a href="https://vt100.net/docs/vt100-ug/chapter3.html#DECREQTPARM">VT100/DECREQTPARM</a>,
+    <a href="https://vt100.net/docs/vt100-ug/chapter3.html#DECREPTPARM">VT100/DECREPTPARM</a>]</p>
+  <ul>
+  <li>VT100 だけにあった機能だろうか。VT101 では既に見つからない気がする。然し、様々な別のターミナルが実装している。</li>
+  <li><dfn class="cfunc">HPREQTPARM</dfn>, <dfn class="cfunc">HPREPTPARM</dfn></li>
   </ul>
 </li>
 </ul>
@@ -4528,7 +4549,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 
 <h3>行に対する属性</h3>
 <ul>
-<li><dfn class="cfunc">DECDHL</dfn> (<dfn class="cfunc">TEKDHL</dfn>) <kbd>ESC # 3</kbd>, <kbd>ESC # 4</kbd>: Double-Width, Double-Height Line
+<li><dfn class="cfunc">DECDHL</dfn> <kbd>ESC # 3</kbd>, <kbd>ESC # 4</kbd>: Double-Width, Double-Height Line
   <p>現在カーソルのある行について、文字の幅・高さを2倍にして表示する。
   実際には幅を2倍にして、上半分または下半分を表示する。
   <kbd>ESC # 3</kbd> で上半分を、<kbd>ESC # 4</kbd> で下半分を表示する。
@@ -4538,20 +4559,23 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </p>
   <ul>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DECDHL.html">VT510: DECDHL</a></li>
+  <li><dfn class="cfunc">TEKDHL</dfn>, <dfn class="cfunc">HPDHL</dfn></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECDWL</dfn> (<dfn class="cfunc">TEKDWL</dfn>) <kbd>ESC # 6</kbd>: Double-Width, Single-Height Line
+<li><dfn class="cfunc">DECDWL</dfn> <kbd>ESC # 6</kbd>: Double-Width, Single-Height Line
   <p>現在カーソルのある行について、文字の幅を2倍にして表示する。
   適用前に該当行の文字幅が通常だった場合、行に入り切らなくなった文字は失われる。
   </p>
   <ul>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DECDWL.html">VT510: DECDWL</a></li>
+  <li><dfn class="cfunc">TEKDWL</dfn>, <dfn class="cfunc">HPDWL</dfn></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECSWL</dfn> (<dfn class="cfunc">TEKSWL</dfn>) <kbd>ESC # 5</kbd>: Single-Width, Single-Height Line
+<li><dfn class="cfunc">DECSWL</dfn> <kbd>ESC # 5</kbd>: Single-Width, Single-Height Line
   <p>現在カーソルのある行について、DECDHL, DECDWL で設定された文字の幅・表示を元に戻す。</p>
   <ul>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DECSWL.html">VT510: DECSWL</a></li>
+  <li><dfn class="cfunc">TEKSWL</dfn>, <dfn class="cfunc">HPSSL</dfn></li>
   </ul>
 </li>
 </ul>
@@ -4678,6 +4702,7 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
     SCO OpenServer screen(HW) (brighter color as bold)
     SCO XENIX console(HW) (Sets bold. Color: sets intensity)
     xterm (X Window System User’s Guide 1995) (Blink (appears as Bold))
+    HP 2393A: Half-Bright
   </li>
   </ul>
 </li>
@@ -5415,15 +5440,21 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
     解除されている時、テンキーで通常の文字を送る (DECKPNM)。
   </p>
 </li>
-<li><dfn class="cfunc">DECKPAM</dfn> (<dfn class="cfunc">TEKKPAM</dfn>) <kbd>ESC =</kbd>: Keypad Application Mode
+<li><dfn class="cfunc">DECKPAM</dfn> <kbd>ESC =</kbd>: Keypad Application Mode
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECKPAM">VT510/DECKPAM</a>]
    テンキーでエスケープシーケンスを送る。
   </p>
+  <ul>
+  <li><dfn class="cfunc">TEKKPAM</dfn>, <dfn class="cfunc">HPKPAM</dfn></li>
+  </ul>
 </li>
-<li><dfn class="cfunc">DECKPNM</dfn> (<dfn class="cfunc">TEKKPNM</dfn>) <kbd>ESC &gt;</kbd>: Keypad Numeric Mode
+<li><dfn class="cfunc">DECKPNM</dfn> <kbd>ESC &gt;</kbd>: Keypad Numeric Mode
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECKPNM">VT510/DECKPNM</a>]
    テンキーで通常の文字を送る。
   </p>
+  <ul>
+  <li><dfn class="cfunc">TEKKPNM</dfn>, <dfn class="cfunc">HPKPNM</dfn></li>
+  </ul>
 </li>
 <li>Mode ?67 <dfn class="cmode">DECBKM</dfn>: Backarrow Keypad Mode [既定値 RM]
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DECBKM">VT510/DECBKM</a>]

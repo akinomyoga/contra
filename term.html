@@ -314,6 +314,37 @@
   <kbd>ESC S <i>B</i> <i>Ft</i></kbd> の形式でシーケンスを拡張しているという事である。
 </p>
 
+<h3>HP 2393A, 2397A</h3>
+<ul>
+<li><a href="https://manx-docs.org/details.php/7,18442">HP 2393A Graphics Terminal 2397A Color Graphics Terminal Reference Manual</a>
+  p514 (B-23) から ANSI Control sequences 一覧が在る。
+</li>
+<li>CBT CHA CNL CPL CPR CUB CUD CUF CUP CUU HTS HVP IND NEL RI TBC VPA VPR HPA HPR</li>
+<li><kbd>CSI &gt; 1 s</kbd> HPHD★ - Home Down</li>
+<li><kbd>CSI &gt; 0 s</kbd> HPHU★ - Home Up</li>
+<li><kbd>ESC 7</kbd> HPSC - DECSC に同じ</li>
+<li><kbd>ESC 8</kbd> HPRC - DECRC に同じ</li>
+<li>NP PP SD SU</li>
+<li>HPSTBM - DECSTBM に同じ</li>
+<li>DCH DL ED EL IL SCS(GnD4) SGR(0,1,4,5,7)</li>
+<li>HPDHL, HPDWL, HPSSL(=DECSWL; Single Size Line)</li>
+<li>DA, DSR, HPID(=DECID), HPREQTPARM(=DECREQTPARM), HPREPTPARM(=DECREPTPARM)
+  <p>HP のマニュアルでは HPREPTPARM が HP{REQ,RP}TPARM などの様に typo している。</p>
+</li>
+<li>MC RIS HPKPAM(=DECKPAM) HPKPNM(= DECKPNM)</li>
+<li><kbd>CSI <i>Pm</i> q</kbd> HPLF(=DECLL)</li>
+<li>Mode:
+  <ul>
+  <li>2,3,4,20</li>
+  <li>Mode 38: _HPTEKM★ - Tek mode</li>
+  <li>Mode ?1-4,?6,?7: これらは略号を DEC を HP に変えただけ</li>
+  <li>Mode &gt;1: HPMPM★ - Multipage mode</li>
+  </ul>
+</li>
+<li><kbd>ESC &amp; k 1 &lt;</kbd><sup class="violation">×</sup> _HPANSI★ - HP to ANSI mode</li>
+<li><kbd>ESC &amp; k 0 \</kbd><sup class="violation">×</sup> _HPHP★ - ANSI to HP mode</li>
+</ul>
+
 <h2 id="term.TEK">Tektronix</h2>
 <ul>
 <li><a href="https://vt100.net/manx/details/5,16297">4105 Computer Display Terminal Programmer's Reference – Manx</a>
