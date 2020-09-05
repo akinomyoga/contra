@@ -56,10 +56,10 @@ namespace ansi {
     mouse_report_move   = 0x10,
 
     mouse_report_XtermX10Mouse            = mouse_report_down,
-    mouse_report_UrxvtExtModeMouse        = mouse_report_down | mouse_report_up,
-    mouse_report_XtermVt200Mouse          = mouse_report_down | mouse_report_select,
-    mouse_report_XtermVt200HighlightMouse = mouse_report_UrxvtExtModeMouse | mouse_report_drag,
-    mouse_report_XtermBtnEventMouse       = mouse_report_UrxvtExtModeMouse | mouse_report_drag | mouse_report_move,
+    mouse_report_XtermVt200Mouse          = mouse_report_down | mouse_report_up,
+    mouse_report_XtermVt200HighlightMouse = mouse_report_down | mouse_report_select,
+    mouse_report_XtermBtnEventMouse       = mouse_report_XtermVt200Mouse | mouse_report_drag,
+    mouse_report_XtermAnyEventMouse       = mouse_report_XtermVt200Mouse | mouse_report_drag | mouse_report_move,
 
     mouse_sequence_mask  = 0xFF00,
     mouse_sequence_byte  = 0x0100,

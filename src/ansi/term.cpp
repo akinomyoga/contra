@@ -1990,23 +1990,23 @@ namespace ansi {
     auto& s = term.state();
     return (s.mouse_mode & mouse_sequence_mask) == spec ? 1 : 2;
   }
-  void do_sm_XtermX10Mouse           (term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_down : 0); }
-  void do_sm_UrxvtExtModeMouse       (term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_UrxvtExtModeMouse : 0); }
+  void do_sm_XtermX10Mouse           (term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_XtermX10Mouse : 0); }
   void do_sm_XtermVt200Mouse         (term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_XtermVt200Mouse : 0); }
   void do_sm_XtermVt200HighlightMouse(term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_XtermVt200HighlightMouse : 0); }
   void do_sm_XtermBtnEventMouse      (term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_XtermBtnEventMouse : 0); }
-  void do_sm_XtermFocusEventMouse    (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_utf8 : 0); }
-  void do_sm_XtermExtModeMouse       (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_sgr : 0); }
-  void do_sm_XtermSgrExtModeMouse    (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_urxvt : 0); }
+  void do_sm_XtermAnyEventMouse      (term_t& term, bool value) { do_set_mouse_report(term, value ? mouse_report_XtermAnyEventMouse : 0); }
+  void do_sm_XtermExtModeMouse       (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_utf8 : 0); }
+  void do_sm_XtermSgrExtModeMouse    (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_sgr : 0); }
+  void do_sm_UrxvtExtModeMouse       (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_urxvt : 0); }
 
-  int do_rqm_XtermX10Mouse           (term_t& term) { return do_rqm_mouse_report(term, mouse_report_down); }
-  int do_rqm_UrxvtExtModeMouse       (term_t& term) { return do_rqm_mouse_report(term, mouse_report_UrxvtExtModeMouse); }
+  int do_rqm_XtermX10Mouse           (term_t& term) { return do_rqm_mouse_report(term, mouse_report_XtermX10Mouse); }
   int do_rqm_XtermVt200Mouse         (term_t& term) { return do_rqm_mouse_report(term, mouse_report_XtermVt200Mouse); }
   int do_rqm_XtermVt200HighlightMouse(term_t& term) { return do_rqm_mouse_report(term, mouse_report_XtermVt200HighlightMouse); }
   int do_rqm_XtermBtnEventMouse      (term_t& term) { return do_rqm_mouse_report(term, mouse_report_XtermBtnEventMouse); }
-  int do_rqm_XtermFocusEventMouse    (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_utf8); }
-  int do_rqm_XtermExtModeMouse       (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_sgr); }
-  int do_rqm_XtermSgrExtModeMouse    (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_urxvt); }
+  int do_rqm_XtermAnyEventMouse      (term_t& term) { return do_rqm_mouse_report(term, mouse_report_XtermAnyEventMouse); }
+  int do_rqm_XtermExtModeMouse       (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_utf8); }
+  int do_rqm_XtermSgrExtModeMouse    (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_sgr); }
+  int do_rqm_UrxvtExtModeMouse       (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_urxvt); }
 
   //---------------------------------------------------------------------------
   // device attributes
@@ -2592,11 +2592,11 @@ namespace ansi {
       case key_begin : return send_app_modified(ascii_E);
 
       case key_focus :
-        if (s.get_mode(mode_XtermAnyEventMouse))
+        if (s.get_mode(mode_XtermFocusEventMouse))
           return send_ss3_modified(ascii_I);
         break;
       case key_blur  :
-        if (s.get_mode(mode_XtermAnyEventMouse))
+        if (s.get_mode(mode_XtermFocusEventMouse))
           return send_ss3_modified(ascii_O);
         break;
 

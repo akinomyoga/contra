@@ -92,14 +92,14 @@ a---  mode_ContraTildeFkeys         dec9950     -
 
 # Mouse report
 arw-  mode_XtermX10Mouse            dec9        -
-arw-  mode_UrxvtExtModeMouse        dec1000     -
-arw-  mode_XtermVt200Mouse          dec1001     -
-arw-  mode_XtermVt200HighlightMouse dec1002     -
-arw-  mode_XtermBtnEventMouse       dec1003     -
-arw-  mode_XtermFocusEventMouse     dec1005     -
-arw-  mode_XtermExtModeMouse        dec1006     -
-arw-  mode_XtermSgrExtModeMouse     dec1015     -
-frw-  mode_XtermAnyEventMouse       dec1004     false
+arw-  mode_XtermVt200Mouse          dec1000     -
+arw-  mode_XtermVt200HighlightMouse dec1001     -
+arw-  mode_XtermBtnEventMouse       dec1002     -
+arw-  mode_XtermAnyEventMouse       dec1003     -
+arw-  mode_XtermExtModeMouse        dec1005     -
+arw-  mode_XtermSgrExtModeMouse     dec1006     -
+arw-  mode_UrxvtExtModeMouse        dec1015     -
+frw-  mode_XtermFocusEventMouse     dec1004     false
 
 #------------------------------------------------------------------------------
 # Contra original modes (inaccessible)
