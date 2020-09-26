@@ -586,6 +586,7 @@ namespace ansi {
 
   public:
     void clear_sgr() {
+      m_fill_dirty = true;
       if (!(m_attr & attr_extended)) {
         m_attr = 0;
       } else {
