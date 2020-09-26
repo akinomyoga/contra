@@ -529,8 +529,9 @@ namespace ansi {
     attr_t fill_attr() const {
       if (m_fill_dirty) {
         m_fill_dirty = false;
-        int const space = m_attribute.bg_space();
-        color_t const bg = m_attribute.bg_color();
+        color_t bg;
+        int space;
+        this->get_bg(bg, space);
         switch (space) {
         case color_space_default: m_fill_attr = 0; break;
         case color_space_indexed: m_fill_attr = attr_bg_set | bg << attr_bg_shift; break;
@@ -609,6 +610,18 @@ namespace ansi {
       m_attribute.fg = fg;
       m_attribute.aflags.reset(aflags_fg_space_mask, space << aflags_fg_space_shift);
       m_attribute_dirty = true;
+    }
+    void get_bg(color_t& bg, int& space) const {
+      if (m_attr & attr_extended) {
+        space = m_attribute.bg_space();
+        bg = m_attribute.bg_color();
+      } else if (m_attr & attr_bg_set) {
+        space = color_space_indexed;
+        bg = std::uint32_t(m_attr & attr_bg_mask) >> attr_bg_shift;
+      } else {
+        space = color_space_default;
+        bg = 0;
+      }
     }
     void set_bg(color_t bg, int space) {
       m_fill_dirty = true;
