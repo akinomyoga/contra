@@ -91,7 +91,7 @@ namespace {
     UINT m_caret_interval = 400;
     UINT m_blinking_interval = 200;
 
-    bool m_disable_mouse_report_on_scrlock;
+    bool twin_disableMouseReportOnScrLock = true;
 
     int m_debug_print_window_messages = 0; // 0: none, 1: unprocessed, 2: all
     bool m_debug_print_unknown_key = false;
@@ -107,7 +107,7 @@ namespace {
 
     void configure(contra::app::context& actx) {
       window_settings_base::configure(actx);
-      actx.read("twin_disable_mouse_report_on_scrlock", m_disable_mouse_report_on_scrlock = true);
+      actx.read("twin_disable_mouse_report_on_scrlock", twin_disableMouseReportOnScrLock = true);
     }
   };
 
@@ -1089,7 +1089,7 @@ namespace {
 
     void process_mouse(key_t key, std::uint32_t modifiers, WORD x, WORD y) {
       key |= modifiers & _modifier_mask;
-      if (settings.m_disable_mouse_report_on_scrlock && (modifiers & toggle_scrolllock))
+      if (settings.twin_disableMouseReportOnScrLock && (modifiers & toggle_scrolllock))
         key |= modifier_application;
       curpos_t const x1 = (x - wstat.m_xframe) / wstat.m_xunit;
       curpos_t const y1 = (y - wstat.m_yframe) / wstat.m_yunit;

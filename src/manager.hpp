@@ -106,6 +106,8 @@ namespace term {
     curpos_t drag_start_x = 0;
     curpos_t drag_start_y = 0;
 
+    curpos_t prev_x = -1, prev_y = -1;
+
     int multiple_click_threshold = 500;
     int multiple_click_button = 0;
     int multiple_click_count = 0;
@@ -151,9 +153,13 @@ namespace term {
       this->multiple_click_processed = this->multiple_click_button &&
         events->on_multiple_click(key, x, y, ++this->multiple_click_count);
 
+      this->prev_x = x;
+      this->prev_y = y;
       return true;
     }
     bool process_mouse_drag(key_t key, curpos_t x, curpos_t y, int button_index) {
+      if (x == prev_x && y == prev_y) return true;
+
       if (this->drag_state) {
         if (this->drag_state == 1 && (x != drag_start_x || y != drag_start_y)) {
           if (events->on_drag_start(key, drag_start_x, drag_start_y))
@@ -174,6 +180,8 @@ namespace term {
         this->multiple_click_button = 0;
       }
 
+      this->prev_x = x;
+      this->prev_y = y;
       return true;
     }
     bool process_mouse_up(key_t key, curpos_t x, curpos_t y, int button_index) {
@@ -203,11 +211,19 @@ namespace term {
         }
       }
 
+      this->prev_x = x;
+      this->prev_y = y;
       return true;
     }
     bool process_mouse_move([[maybe_unused]] key_t key, [[maybe_unused]] curpos_t x, [[maybe_unused]] curpos_t y) {
+      // Note: X11 は動いていなくてもクリックするだけで MotionNotify を送ってくる。
+      //   ダブルクリック等を正しく処理する為に前回の場所から動いたかどうかを確認する。
+      if (x == prev_x && y == prev_y) return true;
+
       this->drag_state = 0;
       this->multiple_click_button = 0;
+      this->prev_x = x;
+      this->prev_y = y;
       return true;
     }
 
@@ -906,7 +922,7 @@ namespace term {
     }
 
   public:
-    bool input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t x, curpos_t y) {
+    bool input_mouse(key_t key, coord_t px, coord_t py, curpos_t x, curpos_t y) {
       if (!(key & modifier_application) &&
         app().input_mouse(key, px, py, x, y)) return true;
       key &= ~(modifier_application | modifier_autorepeat);

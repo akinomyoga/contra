@@ -697,8 +697,16 @@ namespace {
   };
 
   struct tx11_settings: public ansi::window_settings_base {
+    typedef ansi::window_settings_base base;
+
     const char* m_env_term = "xterm-256color";
     const char* m_env_shell = "/bin/bash";
+    bool tx11_disableMouseReportOnScrLock = false;
+
+    void configure(contra::app::context& actx) {
+      base::configure(actx);
+      actx.read("tx11_disable_mouse_report_on_scrlock", tx11_disableMouseReportOnScrLock = true);
+    }
   };
 
   class tx11_window_t: term::terminal_events {
@@ -724,7 +732,7 @@ namespace {
       // other settings
       settings.configure(actx);
 
-      std::fill(std::begin(m_kbflags), std::end(m_kbflags), 0);
+      kbflags_initialize();
     }
     ~tx11_window_t() {}
 
@@ -782,7 +790,11 @@ namespace {
         ::XSetWMName(display, this->main, &win_name);
 
         // Events
-        XSelectInput(display, this->main, ExposureMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask);
+        long event_mask = ExposureMask | StructureNotifyMask; // ウィンドウ関連
+        event_mask |= FocusChangeMask; // FocusIn, FocusOut
+        event_mask |= KeyPressMask | KeyReleaseMask; // キーボード関連
+        event_mask |= ButtonPressMask | ButtonReleaseMask | PointerMotionMask; // マウス関連
+        XSelectInput(display, this->main, event_mask);
       }
 
       // #D0162 何だかよく分からないが終了する時はこうするらしい。
@@ -817,6 +829,48 @@ namespace {
         manager.reset_size(new_col, new_row);
       }
     }
+    void adjust_window_size() {
+      ansi::coord_t const width = wstat.calculate_client_width();
+      ansi::coord_t const height = wstat.calculate_client_height();
+      ::XResizeWindow(display, main, width, height);
+    }
+
+  private:
+    // Implement terminal_events::request_change_size
+    virtual bool request_change_size(ansi::curpos_t col, ansi::curpos_t row, ansi::coord_t xunit, ansi::coord_t yunit) override {
+      auto& wm = wstat;
+      if (xunit >= 0) xunit = limit::term_xunit.clamp(xunit);
+      if (yunit >= 0) yunit = limit::term_yunit.clamp(yunit);
+
+      if (col < 0 && row < 0) {
+        // 文字サイズだけを変更→自動的に列・行を変えてウィンドウサイズを変えなくて済む様にする。
+        if (wm.m_xunit != xunit || wm.m_yunit != yunit) {
+          wm.m_xunit = xunit;
+          wm.m_yunit = yunit;
+          gbuffer.reset_size(wm);
+          process_window_resize();
+          return true;
+        }
+      }
+
+      bool changed = false;
+      if (xunit >= 0 && wm.m_xunit != xunit) { wm.m_xunit = xunit; changed = true; }
+      if (yunit >= 0 && wm.m_yunit != yunit) { wm.m_yunit = yunit; changed = true; }
+      if (col >= 0) {
+        col = limit::term_col.clamp(col);
+        if (col != wm.m_col) { wm.m_col = col; changed = true; }
+      }
+      if (row >= 0) {
+        row = limit::term_row.clamp(row);
+        if (row != wm.m_row) { wm.m_row = row; changed = true; }
+      }
+      if (changed) {
+        this->gbuffer.reset_size(wm);
+        this->adjust_window_size();
+        //this->manager.reset_size(wm.m_col, wm.m_row, wm.m_xunit, wm.m_yunit);
+      }
+      return true;
+    }
 
   private:
     friend class ansi::window_renderer_t<tx11_graphics_t>;
@@ -845,55 +899,112 @@ namespace {
     }
 
   private:
+    byte m_kbflags[256];
+    enum kbflag_flags {
+      kbflag_pressed = 1,
+      kbflag_locked = 2,
+    };
     enum extended_key_flags {
       toggle_capslock   = 0x100,
       toggle_numlock    = 0x200,
       toggle_scrolllock = 0x400,
     };
-    key_t get_modifiers() {
+    void kbflags_initialize() {
+      std::fill(std::begin(m_kbflags), std::end(m_kbflags), 0);
+    }
+    void kbflags_update_modifiers() {
       char table[32];
       ::XQueryKeymap(display, table);
 
-      auto const key_state = [&] (KeySym sym) -> bool {
+      auto const _update_kbflags = [this, &table] (KeySym sym) {
         KeyCode const keycode = XKeysymToKeycode(display, sym);
-        int mask = 1 << (keycode & 7);
-        return table[keycode >> 3] & mask;
+        if (keycode == 0) return;
+        int const bit = 1 << (keycode & 7);
+        if (table[keycode >> 3] & bit)
+          m_kbflags[keycode] |= kbflag_pressed;
+        else
+          m_kbflags[keycode] &= ~kbflag_pressed;
       };
-
-      key_t ret = 0;
-      if (key_state(XK_Shift_L)) ret |= settings.term_mod_lshift;
-      if (key_state(XK_Shift_R)) ret |= settings.term_mod_rshift;
-      if (key_state(XK_Control_L)) ret |= settings.term_mod_lcontrol;
-      if (key_state(XK_Control_R)) ret |= settings.term_mod_rcontrol;
-      if (key_state(XK_Alt_L)) ret |= settings.term_mod_lalter;
-      if (key_state(XK_Alt_R)) ret |= settings.term_mod_ralter;
-      if (key_state(XK_Meta_L)) ret |= settings.term_mod_lmeta;
-      if (key_state(XK_Meta_R)) ret |= settings.term_mod_rmeta;
-      if (key_state(XK_Super_L)) ret |= settings.term_mod_lsuper;
-      if (key_state(XK_Super_R)) ret |= settings.term_mod_rsuper;
-      if (key_state(XK_Hyper_L)) ret |= settings.term_mod_lhyper;
-      if (key_state(XK_Hyper_R)) ret |= settings.term_mod_rhyper;
-      if (key_state(XK_Menu)) ret |= settings.term_mod_menu;
+      _update_kbflags(XK_Shift_L  );
+      _update_kbflags(XK_Shift_R  );
+      _update_kbflags(XK_Control_L);
+      _update_kbflags(XK_Control_R);
+      _update_kbflags(XK_Alt_L    );
+      _update_kbflags(XK_Alt_R    );
+      _update_kbflags(XK_Meta_L   );
+      _update_kbflags(XK_Meta_R   );
+      _update_kbflags(XK_Super_L  );
+      _update_kbflags(XK_Super_R  );
+      _update_kbflags(XK_Hyper_L  );
+      _update_kbflags(XK_Hyper_R  );
+      _update_kbflags(XK_Menu     );
 
       unsigned indicators = 0;
       if (XkbGetIndicatorState(display, XkbUseCoreKbd, &indicators) == Success) {
-        if (indicators & 1) ret |= toggle_capslock;
-        if (indicators & 2) ret |= toggle_numlock;
-        if (indicators & 4) ret |= toggle_scrolllock; // 効かない様だ @ Cygwin
+        auto const _update_locked = [this] (KeySym sym, bool state) {
+          KeyCode const keycode = XKeysymToKeycode(display, sym);
+          if (keycode == 0) return;
+          if (state)
+            m_kbflags[keycode] |= kbflag_locked;
+          else
+            m_kbflags[keycode] &= ~kbflag_locked;
+        };
+        _update_locked(XK_Caps_Lock  , indicators & 1);
+        _update_locked(XK_Num_Lock   , indicators & 2);
+        _update_locked(XK_Scroll_Lock, indicators & 4); // 効かない様だ @ Cygwin,Linux
       }
-
+    }
+    bool kbflags_process_lockkey(KeySym sym) {
+      switch (sym) {
+      case XK_Caps_Lock  :
+      case XK_Num_Lock   :
+      case XK_Scroll_Lock:
+        kbflags_update_modifiers();
+        return true;
+      default:
+        // Japanese & Korean keyboards
+        if (0xFF20 <= sym && sym <= 0xFF3F) {
+          kbflags_update_modifiers();
+          return true;
+        }
+        return false;
+      }
+    }
+    key_t kbflags_get_modifiers() {
+      key_t ret = 0;
+      auto const _read_kbflags = [&ret, this] (KeySym sym, kbflag_flags flag, key_t mod) {
+        KeyCode const keycode = XKeysymToKeycode(display, sym);
+        if (keycode == 0) return;
+        if (m_kbflags[keycode] & flag) ret |= mod;
+      };
+      _read_kbflags(XK_Shift_L    , kbflag_pressed, settings.term_mod_lshift);
+      _read_kbflags(XK_Shift_R    , kbflag_pressed, settings.term_mod_rshift);
+      _read_kbflags(XK_Control_L  , kbflag_pressed, settings.term_mod_lcontrol);
+      _read_kbflags(XK_Control_R  , kbflag_pressed, settings.term_mod_rcontrol);
+      _read_kbflags(XK_Alt_L      , kbflag_pressed, settings.term_mod_lalter);
+      _read_kbflags(XK_Alt_R      , kbflag_pressed, settings.term_mod_ralter);
+      _read_kbflags(XK_Meta_L     , kbflag_pressed, settings.term_mod_lmeta);
+      _read_kbflags(XK_Meta_R     , kbflag_pressed, settings.term_mod_rmeta);
+      _read_kbflags(XK_Super_L    , kbflag_pressed, settings.term_mod_lsuper);
+      _read_kbflags(XK_Super_R    , kbflag_pressed, settings.term_mod_rsuper);
+      _read_kbflags(XK_Hyper_L    , kbflag_pressed, settings.term_mod_lhyper);
+      _read_kbflags(XK_Hyper_R    , kbflag_pressed, settings.term_mod_rhyper);
+      _read_kbflags(XK_Menu       , kbflag_pressed, settings.term_mod_menu);
+      _read_kbflags(XK_Caps_Lock  , kbflag_locked , toggle_capslock);
+      _read_kbflags(XK_Num_Lock   , kbflag_locked , toggle_numlock);
+      _read_kbflags(XK_Scroll_Lock, kbflag_locked , toggle_scrolllock);
       return ret;
     }
 
-
-    byte m_kbflags[256];
-    enum kbflag_flags {
-      kbflag_pressed = 1,
-    };
+  private:
     void process_keyup(KeyCode keycode) {
       m_kbflags[(byte) keycode] &= ~kbflag_pressed;
+      KeySym const sym = XkbKeycodeToKeysym(display, keycode, 0, 0);
+      kbflags_process_lockkey(sym);
     }
-    bool process_key(KeyCode keycode, key_t modifiers) {
+    bool process_key(KeyCode keycode) {
+      key_t modifiers = kbflags_get_modifiers();
+
       // Note #D0238: autorepeat 検出
       if (m_kbflags[(byte) keycode] & kbflag_pressed)
         modifiers |= modifier_autorepeat;
@@ -972,25 +1083,34 @@ namespace {
         case XK_KP_Subtract: code = key_kpsub; goto function_key;
         case XK_KP_Add     : code = key_kpadd; goto function_key;
         case XK_KP_Enter   : code = key_kpent; goto function_key;
+
         default:
-          // std::printf("ksym=%04x:XK_%s mods=%08x\n", code, XKeysymToString((KeySym) code), modifiers);
-          // std::fflush(stdout);
+          if (!kbflags_process_lockkey(code)) {
+            // std::printf("ksym=%04x:XK_%s mods=%08x\n", code, XKeysymToString((KeySym) code), modifiers);
+            // std::fflush(stdout);
+          }
           break;
         }
       }
       return false;
+    }
+    bool process_mouse(key_t mouse_event, int x, int y) {
+      key_t const modifiers = kbflags_get_modifiers();
+
+      key_t key = mouse_event | (modifiers & _modifier_mask);
+      if (settings.tx11_disableMouseReportOnScrLock && (modifiers & toggle_scrolllock))
+        key |= modifier_application;
+      ansi::curpos_t const x1 = (x - wstat.m_xframe) / wstat.m_xunit;
+      ansi::curpos_t const y1 = (y - wstat.m_yframe) / wstat.m_yunit;
+      manager.input_mouse(key, x, y, x1, y1);
+      if (manager.m_dirty) render_window();
+      return true;
     }
     void process_event(XEvent const& event) {
       switch (event.type) {
       case Expose:
         if (event.xexpose.count == 0)
           render_window();
-        break;
-      case KeyPress:
-        process_key(event.xkey.keycode, get_modifiers());
-        break;
-      case KeyRelease:
-        process_keyup(event.xkey.keycode);
         break;
 
       case ClientMessage: // #D0162
@@ -1008,8 +1128,69 @@ namespace {
         break;
 
       case MapNotify:
+      case UnmapNotify:
       case ReparentNotify:
         // 無視
+        break;
+
+      case KeyPress:
+        process_key(event.xkey.keycode);
+        break;
+      case KeyRelease:
+        process_keyup(event.xkey.keycode);
+        break;
+      case FocusIn:
+        kbflags_update_modifiers();
+        process_input(key_focus);
+        break;
+      case FocusOut:
+        process_input(key_blur);
+        break;
+
+      case ButtonPress: // mousedown, wheel
+        {
+          key_t key;
+          unsigned const button = event.xbutton.button;
+          // 1: left, 2: middle, 3: right, 4: wheel up, 5: wheel down
+          switch (button) {
+          case 1: key = key_mouse1_down; break;
+          case 2: key = key_mouse2_down; break;
+          case 3: key = key_mouse3_down; break;
+          case 4: key = key_wheel_up; break;
+          case 5: key = key_wheel_down; break;
+          default: return;
+          }
+          process_mouse(key, event.xbutton.x, event.xbutton.y);
+        }
+        break;
+      case ButtonRelease: // mouseup
+        {
+          key_t key;
+          unsigned const button = event.xbutton.button;
+          switch (button) {
+          case 1: key = key_mouse1_up; break;
+          case 2: key = key_mouse2_up; break;
+          case 3: key = key_mouse3_up; break;
+          default: return;
+          }
+          process_mouse(key, event.xbutton.x, event.xbutton.y);
+        }
+        break;
+      case MotionNotify: // mousemove
+        {
+          constexpr unsigned mouse_buttons = Button1Mask | Button2Mask | Button3Mask;
+          key_t key = key_mouse_move;
+          unsigned const kstate = event.xbutton.state;
+          if (kstate & mouse_buttons) {
+            if (kstate & Button1Mask)
+              key = key_mouse1_drag;
+            else if (kstate & Button2Mask)
+              key = key_mouse3_drag;
+            else if (kstate & Button3Mask)
+              key = key_mouse2_drag;
+          }
+          process_mouse(key, event.xbutton.x, event.xbutton.y);
+        }
         break;
 
       default:
@@ -1057,6 +1238,7 @@ namespace {
       // CheckIfEvent 用のダミーフィルター
       Bool (*event_filter_proc)(Display*, XEvent*, XPointer) = [] (auto...) -> Bool { return True; };
 
+      this->kbflags_update_modifiers();
       if (!this->add_terminal_session()) return false;
 
       XEvent event;
