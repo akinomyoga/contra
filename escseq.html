@@ -4161,12 +4161,26 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     <tr><th>354-358</th><td>`([012]|24|1[89]|32|41|6[145]);version;0`</td></tr>
     </table>
   </li>
+  <li>Windows Terminal は XTerm の慣行に従い <kbd>CSI &gt; 端末種別 ; ファームウェアバージョン ; 機器属性 c</kbd> を採用している
+  （<a href="https://github.com/microsoft/terminal/blob/master/src/terminal/adapter/adaptDispatch.cpp#L733">adaptDispatch.cpp</a>)。
+  端末種別はVT100 (<code>0</code>) に偽装している。
+  ファームウェアバージョンは<a href="https://github.com/microsoft/terminal/issues/5836#issuecomment-648204837">保守性？を理由として</a>
+  <code>10</code> (v 1.0) に<strong>固定されている</strong>。
+  機器属性 <code>1</code> はPCキーボードの接続を示す。
+  </li>
   </ul>
 </li>
 <li><dfn class="cfunc">DA3</dfn>: Tertiary Device Attributes
   <ul>
   <li>VT100</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DA3">VT510: DA3</a></li>
+  </ul>
+</li>
+<li><dfn class="cfunc">DA3R</dfn>:
+  <ul>
+  <li>Windows Terminal: <kbd>DSC ! | 00 00 00 00 ST</kbd>
+  (<a href="https://github.com/microsoft/terminal/blob/master/src/terminal/adapter/adaptDispatch.cpp#L747">adaptDispatch.cpp</a>)
+  </li>
   </ul>
 </li>
 <li><dfn class="cfunc">DECRQTSR</dfn>: Request Terminal State Report
