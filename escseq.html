@@ -1600,7 +1600,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 2020-02-28 mintty (termout.c), RLogin (TextRamProc.cpp), tmux (input.c), screen (ansi.c)
 2020-02-29 xterm#350
 2020-03-01 Poderosa4
-2020-10-06 Windows Terminal (<a href="https://github.com/microsoft/terminal/blob/e401edf9ef35f8ffea3420bfaea2c8e80d9c081f/src/terminal/parser/OutputStateMachineEngine.hpp#L93">src/terminal/parser/OutputStateMachineEngine.hpp</a>)
+2020-10-06 Windows Terminal (<a href="https://github.com/microsoft/terminal/blob/e401edf9/src/terminal/parser/OutputStateMachineEngine.hpp#L93">src/terminal/parser/OutputStateMachineEngine.hpp</a>)
 
 # Ft型 CSI シーケンス (ANSI/Private)
 
@@ -1857,6 +1857,7 @@ tmux=screen
   <tr><td>DECSTUI</td>  <td><kbd>DCS ! { ... ST</kbd></td></tr>
   <tr><td>DECRPTUI</td> <td><kbd>DCS ! | ... ST</kbd></td></tr>
   <tr><td>DECCKSR</td>  <td><kbd>DCS ! ~ ... ST</kbd></td></tr>
+  <tr><td>RLMML</td>    <td><kbd>DCS <i>Pn</i> # m ... ST</kbd></td></tr>
   <tr><td>DECPFK</td>   <td><kbd>DCS " x ... ST</kbd></td></tr><!--"-->
   <tr><td>DECPAC</td>   <td><kbd>DCS " y ... ST</kbd></td></tr><!--"-->
   <tr><td>DECCKD</td>   <td><kbd>DCS " z ... ST</kbd></td></tr><!--"-->
@@ -2575,7 +2576,9 @@ tmux=screen
   <a href="https://github.com/brunoduran/mlterm/blob/2cafed3f01960c75d3f10ddbe7b0c824edfbf6bd/doc/en/ControlSequences">ControlSequences</a>
 </li>
 <li>tmux は input.c (input_csi_dispatch_sm, input_csi_dispatch_sm_private) にある。
-wt (Windows Terminal) は <a href="https://github.com/microsoft/terminal/blob/e401edf9ef35f8ffea3420bfaea2c8e80d9c081f/src/terminal/adapter/DispatchTypes.hpp#L172">src/terminal/adapter/DispatchTypes.hpp</a> (PrivateModeParams) にある。
+  Windows Terminal (wt) は ANSI モードに対応していない。DEC モードは
+    <a href="https://github.com/microsoft/terminal/blob/e401edf9/src/terminal/adapter/DispatchTypes.hpp#L172">src/terminal/adapter/DispatchTypes.hpp</a>
+    (PrivateModeParams) にある。
   vt100 は <a href="https://www.vt100.net/docs/vt100-ug/chapter3.html#S3.3.4">ここ</a> にある。
   vt102 は <a href="https://www.vt100.net/docs/vt102-ug/table5-5.html">Table 5-5</a> と
     <a href="https://www.vt100.net/docs/vt102-ug/table5-6.html">Table 5-6</a> にある。
@@ -2585,6 +2588,7 @@ wt (Windows Terminal) は <a href="https://github.com/microsoft/terminal/blob/e4
   vt420 は <a href="https://www.vt100.net/docs/vt420-uu/chapter9.html#T9-2">Table 9-2, 3</a> より。
   vt510 は <a href="https://www.vt100.net/docs/vt510-rm/DECRQM.html#T5-8">Table 5-8</a> より。
 </li>
+<li>Kitty は kitty/modes.h にある。</li>
 </ul>
 <pre>
 # ANSI Modes
@@ -2648,8 +2652,8 @@ wt (Windows Terminal) は <a href="https://github.com/microsoft/terminal/blob/e4
 
 # Private Modes
 
-| Origin    |xterm   |rxvt  |xterm                      | |vte| |mintty       |T|RLogin                         |#1   |w| T=Tera Term, #1=drcsterm, w=wt (Windows Terminal)
-|-----------|--------|------|---------------------------|-|---|-|-------------|-|-------------------------------|-----| |
+| Origin    |xterm   |rxvt  |xterm                      | |vte| |mintty       |T|RLogin                         |#1   |w| T=Tera Term, #1=drcsterm
+|-----------|--------|------|---------------------------|-|---|-|-------------|-|-------------------------------|-----|-| w=Windows Terminal
 | Modes?    |        |  | | |                    |  | | | |   | |           77| |                               |     | |
 |           |11111111|11|1|1|1111 111111 11111111|11|1|2|2|122|1|7777777777777|8|8888888888888888888888888888888|88888|9|
 |           |00000000|00|0|0|0000 000000 00000000|00|0|0|0|255|3|7777777777700|2|4444444444444444444444444444444|88888|0|
@@ -4072,12 +4076,6 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 <h3>問い合わせ - 端末識別</h3>
 <table class="normal center">
 <tr><th>略号</th><th>用途</th><th>符号化表現</th></tr>
-<tr><th>DA</th> <td>制御</td><td><kbd>CSI 0 c</kbd><br/><kbd>CSI c</kbd></td></tr>
-<tr><th>DA2</th> <td>制御</td><td><kbd>CSI &gt; <i>Ps</i> c</kbd></td></tr>
-<tr><th>DA2R</th><td>応答</td><td><kbd>CSI &gt; 6 1 ; <i>Ps</i> ; <i>Ps</i> c</kbd></td></tr>
-<tr><th>DA3</th> <td>制御</td><td><kbd>CSI = <i>Ps</i> c</kbd></td></tr>
-<tr><th>DA3R</th><td>応答</td><td><kbd>DCS ! | <i>hh</i> <i>hh</i> <i>hh</i> <i>hh</i> ST</kbd></td></tr>
-<tr><th>DECRQTSR</th><td>制御</td><td><kbd>CSI <i>Ps</i> $ u</kbd></td></tr>
 <tr><th>DECTSR</th><td>応答</td><td><kbd>DCS 1 $ s <i>hh</i> <i>hh</i> <i>hh</i> <i>hh</i> ST</kbd></td></tr>
 <tr><th>DDD1</th><td>応答</td><td><kbd>ESC ) 1</kbd></td></tr>
 <tr><th>DDD2</th><td>応答</td><td><kbd>ESC ) B</kbd></td></tr>
@@ -4085,7 +4083,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
 </table>
 
 <ul>
-<li><dfn class="cfunc">DA</dfn>: Device Attributes
+<li><dfn class="cfunc">DA</dfn> <kbd>CSI <i>Ps</i> c</kbd>: Device Attributes
   <p>[ECMA-48/8.3.24] 0 以外の引数のシーケンスは端末の識別情報を応答するのに使う。
     具体的な引数の値と意味については今後設立される登録簿に従う (多分、未だ存在していない)。
     引数が 0 の時、端末が識別DAを送ることを要求する。
@@ -4093,7 +4091,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   </p>
   <p>互換性: 通常、端末では以下の DA1 として実装されている。</p>
 </li>
-<li><dfn class="cfunc">DA1</dfn> <kbd>CSI <i>Ps</i> c</kbd>: Primary Device Attributes</li>
+<li><dfn class="cfunc">DA1</dfn> <kbd>CSI 0 c</kbd> or <kbd>CSI c</kbd>: Primary Device Attributes</li>
 <li><dfn class="cfunc">DECID</dfn> <kbd>ESC Z</kbd>: DEC Private Identification
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DA1">VT510/DA1</a>, VT520/Page4-3] DA1R を要求する。
     DECID は古い形式なので新しいプログラムは DA1 の方を使うべき。
@@ -4132,7 +4130,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <li>互換性: VT100; xterm</li>
   </ul>
 </li>
-<li><dfn class="cfunc">DA2</dfn>: Secondary Device Attributes
+<li><dfn class="cfunc">DA2</dfn> <kbd>CSI &gt; <i>Ps</i> c</kbd>: Secondary Device Attributes
   <p>[<a href="http://www.vt100.net/docs/vt510-rm/DA2">VT510/DA2</a>]
     端末識別コード、ファームウェアバージョン、ハードウェア設定の応答 DA2R を要求する。
   </p>
@@ -4140,12 +4138,20 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <li>VT100; xterm</li>
   </ul>
 </li>
-<li><dfn class="cfunc">DA2R</dfn>:
-  <p>これに関しては <a href="https://qiita.com/kefir_/items/0bda5e55f43392420d66">DA2応答の見方 - Qiita</a> が詳しい。</p>
+<li><dfn class="cfunc">DA2R</dfn> <kbd>CSI &gt; <i>Pt</i> ; <i>Pf</i> ; <i>Ph</i> c</kbd>: (応答)
+  <p>[<a href="http://www.vt100.net/docs/vt510-rm/DA2">VT510/DA2</a>]
+    <i class="kbd">Pt</i> は端末識別コード、
+    <i class="kbd">Pf</i> はファームウェアバージョン、
+    <i class="kbd">Ph</i> ハードウェア設定の応答を返す。
+    vt510 は <i class="kbd">Pt</i> = 61 である。
+    <i class="kbd">Pf</i> は 10 または 20 であり、
+    それぞれファームウェアバージョン 1.0 及び 2.0 に対応する。
+    <i class="kbd">Ph</i> はキーボードの種類を指定し、0 が STD keyboard で 1 が PC keyboard である。
+  </p>
+  <p>様々な端末における実装は
+    <a href="https://qiita.com/kefir_/items/0bda5e55f43392420d66">DA2応答の見方 - Qiita</a> が詳しいが、
+    確認してみると情報が結構古い。</p>
   <ul>
-  <li>VT510 は <kbd>CSI &gt; 6 1 ; <i>Ps1</i> ; <i>Ps2</i> c </kbd> の形式で応答する。
-    Ps1 は 10 または 20 であり、それぞれファームウェアバージョン 1.0 及び 2.0 に対応する。
-    Ps2 はキーボードの種類を指定し、0 が STD keyboard で 1 が PC keyboard である。</li>
   <li>contra は<del>取り敢えず <kbd>CSI &gt; 6 7 ; 0 c</kbd> を返す事にする。</del>
     <kbd>CSI &gt; 9 9 ; 0 c</kbd> に変更した (99 = 'c')。
   </li>
@@ -4155,35 +4161,35 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
   <li>xterm は以下の通り。
     <table class="normal">
     <tr><th>Version</th><th>応答</th></tr>
-    <tr><th>40-94</th><td>`1;0;0`</td></tr>
-    <tr><th>95-279</th><td>`[01];version;0`</td></tr>
-    <tr><th>280-353</th><td>`([012]|24|1[89]|41|6[145]);version;0`</td></tr>
-    <tr><th>354-358</th><td>`([012]|24|1[89]|32|41|6[145]);version;0`</td></tr>
+    <tr><th>40-94</th><td><code>1;0;0</code></td></tr>
+    <tr><th>95-279</th><td><code>[01];version;0</code></td></tr>
+    <tr><th>280-353</th><td><code>([012]|24|1[89]|41|6[145]);version;0</code></td></tr>
+    <tr><th>354-358</th><td><code>([012]|24|1[89]|32|41|6[145]);version;0</code></td></tr>
     </table>
   </li>
-  <li>Windows Terminal は XTerm の慣行に従い <kbd>CSI &gt; 端末種別 ; ファームウェアバージョン ; 機器属性 c</kbd> を採用している
-  （<a href="https://github.com/microsoft/terminal/blob/e401edf9ef35f8ffea3420bfaea2c8e80d9c081f/src/terminal/adapter/adaptDispatch.cpp#L733">src/terminal/adapter/adaptDispatch.cpp</a>)。
-  端末種別はVT100 (<code>0</code>) に偽装している。
-  ファームウェアバージョンは<a href="https://github.com/microsoft/terminal/issues/5836#issuecomment-648204837">保守性？を理由として</a>
-  <code>10</code> (v 1.0) に<strong>固定されている</strong>。
-  機器属性 <code>1</code> はPCキーボードの接続を示す。
+  <li>Windows Terminal は DEC に倣った形式で、
+    <i class="kbd">Pt</i> = 0 (VT100),
+    <i class="kbd">Pf</i> = 10 (ファームウェアバージョン1.0),
+    <i class="kbd">Ph</i> = 1 である
+    (<a href="https://github.com/microsoft/terminal/blob/e401edf9/src/terminal/adapter/adaptDispatch.cpp#L733">src/terminal/adapter/adaptDispatch.cpp</a>)。
+    <a href="https://github.com/microsoft/terminal/issues/5836#issuecomment-648204837">保守性？</a>を理由として固定している。
   </li>
   </ul>
 </li>
-<li><dfn class="cfunc">DA3</dfn>: Tertiary Device Attributes
+<li><dfn class="cfunc">DA3</dfn> <kbd>CSI = <i>Ps</i> c</kbd>: Tertiary Device Attributes
   <ul>
   <li>VT100</li>
   <li><a href="http://www.vt100.net/docs/vt510-rm/DA3">VT510: DA3</a></li>
   </ul>
 </li>
-<li><dfn class="cfunc">DA3R</dfn>:
+<li><dfn class="cfunc">DA3R</dfn> <kbd>DCS ! | <i>hh</i> <i>hh</i> <i>hh</i> <i>hh</i> ST</kbd>: (応答)
   <ul>
   <li>Windows Terminal: <kbd>DCS ! | 00 00 00 00 ST</kbd>
-  (<a href="https://github.com/microsoft/terminal/blob/e401edf9ef35f8ffea3420bfaea2c8e80d9c081f/src/terminal/adapter/adaptDispatch.cpp#L747">src/terminal/adapter/adaptDispatch.cpp</a>)
+    (<a href="https://github.com/microsoft/terminal/blob/e401edf9/src/terminal/adapter/adaptDispatch.cpp#L747">src/terminal/adapter/adaptDispatch.cpp</a>)
   </li>
   </ul>
 </li>
-<li><dfn class="cfunc">DECRQTSR</dfn>: Request Terminal State Report
+<li><dfn class="cfunc">DECRQTSR</dfn> <kbd>CSI <i>Ps</i> $ u</kbd>: Request Terminal State Report
   <ul>
   <li><dfn class="cfunc">DECRQTSRR</dfn></li>
   <li><dfn class="cfunc">DDD1</dfn></li>
@@ -4677,7 +4683,7 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
 | tmux     |** ***kkkkkk* ** *            **** ***********  *  **********  *  **   * *---  k  kk          |   |********|********|
 | mintty   |**m***kkkkkk****m***************** ***********  *::**********  *::** X****---  k::kk          |mmm|********|********|
 | RLogin   |** ***      **** *****************************  *  **********  *  **X*****---       XXXXXX    |   |********|********|
-| wt       |** ***      * ** *            **** ***********     ;*********     ;*   * *                        |********|********|
+| wt       |** ***      * ** *            **** ***********  ;  ;*********  ;  ;*   * *                    |   |********|********|
 |----------|----------------------------------------------------------------------------------------------|---|--------|--------|
 | contra   |** ***kkkkkk**** *********************************************************---kkkkkkk**********|mmm|********|********|
 </pre>
@@ -4687,7 +4693,11 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
   urxvt は command.C (rxvt_term::process_sgr_mode) にある。
   iTerm2 は sources/VT100Terminal.m (executeSGR) にある。
   tmux は input.c (input_csi_dispatch_sgr, input_csi_dispatch_sgr_colon) にある。
-  wt (Windows Terminal) は <a href="https://github.com/microsoft/terminal/blob/e401edf9ef35f8ffea3420bfaea2c8e80d9c081f/src/renderer/vt/VtSequences.cpp">src/renderer/vt/VtSequences.cpp</a> にある。
+  Windows Terminal は
+    <a href="https://github.com/microsoft/terminal/blob/e401edf9/src/terminal/adapter/adaptDispatchGraphics.cpp#L103">src/terminal/adapter/adaptDispatchGraphics.cpp</a>
+    (AdaptDispatch::SetGraphicsRendition)
+    <a href="https://github.com/microsoft/terminal/blob/e401edf9/src/terminal/adapter/DispatchTypes.hpp#L104">DispatchTypes.hpp</a>
+    (GraphicsOptions) にある。
   vt100 は<a href="https://www.vt100.net/docs/vt100-ug/chapter3.html#SGR">ここ</a>にある。
   vt102 は<a href="https://www.vt100.net/docs/vt102-ug/chapter5.html#S5.5.2.17">5.5.2.17</a>。
   vt220 は<a href="https://www.vt100.net/docs/vt220-rm/chapter4.html#S4.9.1">4.9.1</a> にある。
