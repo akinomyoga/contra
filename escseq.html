@@ -4162,7 +4162,7 @@ DL を実行した場合も、分かりにくいが似たような問題が生�
     </table>
   </li>
   <li>Windows Terminal は XTerm の慣行に従い <kbd>CSI &gt; 端末種別 ; ファームウェアバージョン ; 機器属性 c</kbd> を採用している
-  （<a href="https://github.com/microsoft/terminal/blob/master/src/terminal/adapter/adaptDispatch.cpp#L733">adaptDispatch.cpp</a>)。
+  （<a href="https://github.com/microsoft/terminal/blob/e401edf9ef35f8ffea3420bfaea2c8e80d9c081f/src/terminal/adapter/adaptDispatch.cpp#L733">src/terminal/adapter/adaptDispatch.cpp</a>)。
   端末種別はVT100 (<code>0</code>) に偽装している。
   ファームウェアバージョンは<a href="https://github.com/microsoft/terminal/issues/5836#issuecomment-648204837">保守性？を理由として</a>
   <code>10</code> (v 1.0) に<strong>固定されている</strong>。
