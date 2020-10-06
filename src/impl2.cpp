@@ -10,6 +10,7 @@
 #include "ttty/screen.hpp"
 
 int main() {
+  contra::initialize_errdev();
   contra::ttty::ttty_screen screen(STDIN_FILENO, STDOUT_FILENO);
   contra::term::terminal_session_parameters params;
   {

@@ -55,6 +55,13 @@ namespace encoding {
   bool put_u8(char32_t c, std::ostream& file) {
     return put_u8_impl(c, [&file] (byte b) { file.put((char) b); });
   }
+  bool put_u8(char32_t c, idevice* dev) {
+    char buff[8];
+    int pos = 0;
+    if (!put_u8_impl(c, [&] (byte b) { buff[pos++] = (char) b; })) return false;
+    dev->dev_write(buff, (std::size_t) pos);
+    return true;
+  }
 
   void utf8_decode(char const*& ibeg, char const* iend, char32_t*& obeg, char32_t* oend, std::uint64_t& state, std::int32_t error_char) {
     // flush

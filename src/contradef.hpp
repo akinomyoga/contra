@@ -54,6 +54,12 @@ namespace contra {
     }
   };
 
+  idevice* errdev();
+  void initialize_errdev();
+  int xprint(idevice* dev, char c);
+  int xprint(idevice* dev, const char* str);
+  int xprintf(idevice* dev, const char* fmt, ...);
+
   //---------------------------------------------------------------------------
   // ASCII codes
 
@@ -332,7 +338,7 @@ namespace contra {
     key_wheel_up    = _key_base | _key_wheel_up,
   };
 
-  void print_key(key_t key, std::FILE* file);
+  void print_key(key_t key, idevice* dev);
   bool parse_modifier(key_t& value, const char* text);
 
   //---------------------------------------------------------------------------

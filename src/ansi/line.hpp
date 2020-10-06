@@ -684,61 +684,61 @@ namespace ansi {
     curpos_t extract_selection(std::u32string& data) const;
 
   public:
-    void debug_string_nest(curpos_t width, presentation_direction_t board_charpath) const {
+    void debug_string_nest(FILE* file, curpos_t width, presentation_direction_t board_charpath) const {
       bool const line_r2l = is_r2l(board_charpath);
       auto const& strings = this->update_strings(width, line_r2l);
 
       curpos_t x = 0;
       int parent = 0;
-      std::fprintf(stderr, "[");
+      std::fprintf(file, "[");
       for (std::size_t i = 1; i < strings.size(); i++) {
         auto const& range = strings[i];
 
         while (range.parent < parent) {
           int delta = strings[parent].end - x;
-          if (delta) std::fprintf(stderr, "%d", delta);
-          std::fprintf(stderr, "]"); // 抜ける
+          if (delta) std::fprintf(file, "%d", delta);
+          std::fprintf(file, "]"); // 抜ける
           x = strings[parent].end;
           parent = strings[parent].parent;
         }
 
         if (x < range.begin) {
-          std::fprintf(stderr, "%d", range.begin - x);
+          std::fprintf(file, "%d", range.begin - x);
           x = range.begin;
         }
-        std::fprintf(stderr, "[");
+        std::fprintf(file, "[");
         parent = i;
       }
       while (parent >= 0) {
         int delta = strings[parent].end - x;
-        if (delta) std::fprintf(stderr, "%d", delta);
-        std::fprintf(stderr, "]"); // 抜ける
+        if (delta) std::fprintf(file, "%d", delta);
+        std::fprintf(file, "]"); // 抜ける
         x = strings[parent].end;
         parent = strings[parent].parent;
       }
-      std::putc('\n', stderr);
+      std::putc('\n', file);
     }
 
   public:
-    void debug_dump() const {
+    void debug_dump(FILE* file) const {
       for (cell_t const& cell : m_cells) {
         std::uint32_t code = cell.character.value;
         if (cell.character.is_marker()) {
           switch (code) {
-          case marker_sds_l2r: std::fprintf(stderr, "\x1b[91mSDS(1)\x1b[m"); break;
-          case marker_sds_r2l: std::fprintf(stderr, "\x1b[91mSDS(2)\x1b[m"); break;
-          case marker_srs_beg: std::fprintf(stderr, "\x1b[91mSRS(1)\x1b[m"); break;
-          case marker_sds_end: std::fprintf(stderr, "\x1b[91mSDS(0)\x1b[m"); break;
-          case marker_srs_end: std::fprintf(stderr, "\x1b[91mSRS(1)\x1b[m"); break;
+          case marker_sds_l2r: std::fprintf(file, "\x1b[91mSDS(1)\x1b[m"); break;
+          case marker_sds_r2l: std::fprintf(file, "\x1b[91mSDS(2)\x1b[m"); break;
+          case marker_srs_beg: std::fprintf(file, "\x1b[91mSRS(1)\x1b[m"); break;
+          case marker_sds_end: std::fprintf(file, "\x1b[91mSDS(0)\x1b[m"); break;
+          case marker_srs_end: std::fprintf(file, "\x1b[91mSRS(1)\x1b[m"); break;
           default: break;
           }
         } else if (code == ascii_nul) {
-          std::fprintf(stderr, "\x1b[37m@\x1b[m");
+          std::fprintf(file, "\x1b[37m@\x1b[m");
         } else {
-          contra::encoding::put_u8(code, stderr);
+          contra::encoding::put_u8(code, file);
         }
       }
-      std::putc('\n', stderr);
+      std::putc('\n', file);
     }
   };
 

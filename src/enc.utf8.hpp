@@ -14,6 +14,7 @@ namespace encoding {
   bool put_u8(char32_t c, std::FILE* file);
   bool put_u8(char32_t c, std::ostream& file);
   bool put_u8(char32_t c, std::vector<byte>& buffer);
+  bool put_u8(char32_t c, idevice* dev);
 
   constexpr bool is_surrogate(char16_t code) { return 0xD800 <= code && code < 0xE000; }
   constexpr bool is_high_surrogate(char16_t code) { return 0xD800 <= code && code < 0xDC00; }

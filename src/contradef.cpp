@@ -3,9 +3,60 @@
 #include <cstring>
 #include <sstream>
 #include <cstdarg>
+#include <memory>
 #include "enc.utf8.hpp"
 
+#include <unistd.h>
+#include <fcntl.h>
+
 namespace contra {
+
+  class empty_device: public idevice {
+  public:
+    virtual void dev_write(char const* data, std::size_t size) override {
+      contra_unused(data);
+      contra_unused(size);
+    }
+  };
+  class file_device: public idevice {
+    FILE* file;
+  public:
+    file_device(FILE* file): file(file) {}
+    virtual void dev_write(char const* data, std::size_t size) override {
+      std::fwrite(data, 1, size, file);
+    }
+  };
+  static std::unique_ptr<idevice> errdev_instance;
+  idevice* errdev() { return errdev_instance.get(); }
+
+  void initialize_errdev() {
+    int const fd = fileno(stderr);
+    if (fd != -1 && fcntl(fd, F_GETFD) != -1) {
+      errdev_instance.reset(new file_device(stderr));
+      return;
+    }
+    errdev_instance.reset(new empty_device);
+  }
+
+  int xprint(idevice* dev, char c) {
+    dev->dev_write(&c, 1);
+    return 1;
+  }
+  int xprint(idevice* dev, const char* str) {
+    int const result = std::strlen(str);
+    if (result > 0) dev->dev_write(str, result);
+    return result;
+  }
+  int xprintf(idevice* dev, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    char buff[1024];
+    int const result = std::vsprintf(buff, fmt, args);
+    va_end(args);
+    if (result > 0) dev->dev_write(buff, result);
+    return result;
+  }
+
 
   const char* get_ascii_name(char32_t value) {
     static const char* c0names[32] = {
@@ -33,30 +84,30 @@ namespace contra {
       return nullptr;
   }
 
-  void print_key(key_t key, std::FILE* file) {
+  void print_key(key_t key, idevice* dev) {
     key_t const code = key & _character_mask;
 
     std::ostringstream str;
-    if (key & modifier_alter) str << "A-";
-    if (key & modifier_hyper) str << "H-";
-    if (key & modifier_super) str << "s-";
-    if (key & modifier_control) str << "C-";
-    if (key & modifier_meta) str << "M-";
-    if (key & modifier_shift) str << "S-";
-    std::fprintf(file, "key: %s", str.str().c_str());
+    xprint(dev, "key: ");
+    if (key & modifier_alter) xprint(dev, "A-");
+    if (key & modifier_hyper) xprint(dev, "H-");
+    if (key & modifier_super) xprint(dev, "s-");
+    if (key & modifier_control) xprint(dev, "C-");
+    if (key & modifier_meta) xprint(dev, "M-");
+    if (key & modifier_shift) xprint(dev, "S-");
 
     if (code < _key_base) {
       switch (code) {
-      case ascii_bs: std::fprintf(file, "BS"); break;
-      case ascii_ht: std::fprintf(file, "TAB"); break;
-      case ascii_cr: std::fprintf(file, "RET"); break;
-      case ascii_esc: std::fprintf(file, "ESC"); break;
-      case ascii_sp: std::fprintf(file, "SP"); break;
+      case ascii_bs:  xprint(dev, "BS" ); break;
+      case ascii_ht:  xprint(dev, "TAB"); break;
+      case ascii_cr:  xprint(dev, "RET"); break;
+      case ascii_esc: xprint(dev, "ESC"); break;
+      case ascii_sp:  xprint(dev, "SP" ); break;
       default:
-        contra::encoding::put_u8((char32_t) code, file);
+        contra::encoding::put_u8((char32_t) code, dev);
         break;
       }
-      std::putc('\n', file);
+      xprint(dev, '\n');
     } else {
       static const char* table[] = {
         NULL,
@@ -76,9 +127,10 @@ namespace contra {
       std::uint32_t const index = code - _key_base;
       const char* name = index <= std::size(table) ? table[index] : NULL;
       if (name) {
-        std::fprintf(file, "%s\n", name);
+        xprint(dev, name);
+        xprint(dev, '\n');
       } else {
-        std::fprintf(file, "unknown %08x\n", code);
+        xprintf(dev, "<unknown %08x>\n", code);
       }
     }
   }

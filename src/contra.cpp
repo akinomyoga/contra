@@ -18,6 +18,7 @@ namespace contra::ttty {
 }
 
 int main(int argc, char** argv) {
+  contra::initialize_errdev();
   contra::sys::initialize_path(argc, const_cast<const char**>(argv));
   contra::sys::setup_signal();
 
@@ -35,7 +36,7 @@ int main(int argc, char** argv) {
 #ifdef use_twin
     if (!contra::twin::run(actx)) return 1;
 #else
-    std::fprintf(stderr, "contra: twin not supported\n");
+    contra::xprint(contra::errdev(), "contra: twin not supported\n");
     return 1;
 #endif
   } else if (std::strcmp(argv[1], "x11") == 0) {
@@ -53,7 +54,9 @@ int main(int argc, char** argv) {
       << std::endl;
     return 0;
   } else {
-    std::fprintf(stderr, "contra: unknown subcommand \"%s\"\n", argv[1]);
+    contra::xprint(contra::errdev(), "contra: unknown subcommand \"");
+    contra::xprint(contra::errdev(), argv[1]);
+    contra::xprint(contra::errdev(), "\"\n");
     return 1;
   }
 

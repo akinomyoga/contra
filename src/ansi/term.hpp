@@ -651,7 +651,7 @@ namespace ansi {
     contra::idevice* m_send_target = nullptr;
 
     void report_error(const char* message) {
-      std::fprintf(stderr, "%s", message);
+      contra::xprint(errdev(), message);
     }
   public:
     void initialize_line(line_t& line) const {

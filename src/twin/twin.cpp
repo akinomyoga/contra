@@ -69,15 +69,16 @@ namespace {
   }
 
   static void report_error_message(const char* title, DWORD error_code) {
-    std::fprintf(stderr, "%s: (Error: %" PRIu16 ") ", title, (std::uint16_t) error_code);
+    xprint(errdev(), title);
+    xprintf(errdev(), ": (Error: %" PRIu16 ") ", (std::uint16_t) error_code);
     {
       auto message = get_error_message(error_code);
       std::vector<char32_t> buffer;
       std::uint64_t state = 0;
       contra::encoding::utf16_decode(&message[0], &message[message.size()], buffer, state);
-      for (char32_t u : buffer) contra::encoding::put_u8(u, stderr);
+      for (char32_t u : buffer) contra::encoding::put_u8(u, errdev());
     }
-    std::putc('\n', stderr);
+    xprint(errdev(), '\n');
   }
 
   using namespace contra::term;
@@ -947,7 +948,7 @@ namespace {
     };
 
     void process_input(std::uint32_t key) {
-      //contra::term::print_key(key, stderr);
+      //contra::print_key(key, errdev());
       manager.input_key(key);
     }
 
@@ -1072,7 +1073,7 @@ namespace {
               process_input((code & _character_mask) | (modifiers & _modifier_mask));
             } else {
               if (settings.m_debug_print_unknown_key)
-                std::fprintf(stderr, "key (unknown): wparam=%08" PRIx64 " flags=%x\n", (std::uint64_t) wParam, modifiers);
+                contra::xprintf(errdev(), "key (unknown): wparam=%08" PRIx64 " flags=%x\n", (std::uint64_t) wParam, modifiers);
               return false;
             }
           }
@@ -1146,10 +1147,12 @@ namespace {
 
     static void  debug_print_window_message(UINT msg) {
       const char* name = get_window_message_name(msg);
-      if (name)
-        std::fprintf(stderr, "message: %s\n", name);
-      else
-        std::fprintf(stderr, "message: %08x\n", msg);
+      if (name) {
+        xprint(errdev(), "message: ");
+        xprint(errdev(), name);
+      } else {
+        xprintf(errdev(), "message: %08x\n", msg);
+      }
     }
   public:
     LRESULT process_message(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {

@@ -12,6 +12,7 @@ LIBS = $(config_LIBS)
 CPPFLAGS = $(config_CPPFLAGS) $(default_CPPFLAGS)
 CXXFLAGS = $(config_CXXFLAGS)
 
+MKCMD := bash make_command.sh
 SHELL := /bin/bash
 ostype := $(shell echo -n $$OSTYPE)
 
@@ -32,7 +33,7 @@ $(objdir)/experimental/%.o: experimental/%.cpp | $(objdir)/experimental $(gendir
 	$(CXX) $(CXXFLAGS) -c -o $@ $(CPPFLAGS) $<
 
 $(gendir)/term.mode_def.hpp: make_command.sh ansi/term.mode.def
-	bash make_command.sh
+	$(MKCMD) generate-mode-defs
 
 #------------------------------------------------------------------------------
 # test

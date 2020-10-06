@@ -76,39 +76,49 @@ namespace contra {
     }
 
   private:
-    void print_char(std::FILE* file, char32_t ch) const {
+    void print_char(std::vector<byte>& buffer, char32_t ch) const {
       const char* name = get_ascii_name(ch);
       if (name)
-        std::fprintf(file, "%s", name);
+        buffer.insert(buffer.end(), name, name + std::strlen(name));
       else
-        contra::encoding::put_u8(ch, file);
+        contra::encoding::put_u8(ch, buffer);
     }
-
   public:
-    void print(std::FILE* file, int limit = -1) const {
+    void print(std::vector<byte>& buffer, int limit = -1) const {
       switch (m_type) {
       case ascii_csi:
       case ascii_esc:
-        print_char(file, m_type);
-        std::putc(' ', file);
+        print_char(buffer, m_type);
+        buffer.push_back(' ');
         for (char32_t ch: m_content) {
-          print_char(file, ch);
-          std::putc(' ', file);
+          print_char(buffer, ch);
+          buffer.push_back(' ');
           if (--limit == 0) break;
         }
-        print_char(file, m_final);
+        print_char(buffer, m_final);
         break;
       default: // command string & characater string
-        print_char(file, m_type);
-        std::putc(' ', file);
+        print_char(buffer, m_type);
+        buffer.push_back(' ');
         for (char32_t ch: m_content) {
-          print_char(file, ch);
-          std::putc(' ', file);
+          print_char(buffer, ch);
+          buffer.push_back(' ');
           if (--limit == 0) break;
         }
-        std::fprintf(file, "ST");
+        buffer.push_back('S');
+        buffer.push_back('T');
         break;
       }
+    }
+    void print(std::FILE* file, int limit = -1) const {
+      std::vector<byte> buffer;
+      print(buffer, limit);
+      std::fwrite(buffer.data(), 1, buffer.size(), file);
+    }
+    void print(idevice* dev, int limit = -1) const {
+      std::vector<byte> buffer;
+      print(buffer, limit);
+      dev->dev_write(reinterpret_cast<char const*>(buffer.data()), buffer.size());
     }
   };
 

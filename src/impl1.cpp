@@ -127,7 +127,7 @@ void test_strings() {
       }
     } catch(mwg::assertion_error&) {
       std::fprintf(stderr, "slice: ");
-      b.line().debug_dump();
+      b.line().debug_dump(stderr);
       std::fprintf(stderr, "x1=%d x2=%d\nresult: ", (int) x1, (int) x2);
       for (auto const& range : ranges2)
         std::fprintf(stderr, "%d-%d ", range.first, range.second);
@@ -491,6 +491,7 @@ void test_sgr() {
 }
 
 int main() {
+  contra::initialize_errdev();
   try {
     test_insert();
     test_strings();

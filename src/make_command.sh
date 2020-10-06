@@ -119,5 +119,29 @@ function sub:generate-mode-defs {
     }
   ' ansi/term.mode.def
 }
-sub:generate-mode-defs
 
+function sub:check-memo-numbering {
+  printf '%s\n' '----- BEGIN check-memo-numbering -----'
+  local nline_numbered=$(awk 'done && /^\* .*\[#D[0-9]+\]/ {print;} /^  Done/ {done=1}' ../memo.txt | wc -l)
+  echo "NumberOfLinesWithID: $nline_numbered"
+  printf '%s\n' '----- list of items without ID -----'
+  awk 'done && /^\* .*/ && !/\[#D[0-9]+\]/ {print;} /^  Done/ {done=1}' ../memo.txt
+  printf '%s\n' '----- list of duplicate IDs -----'
+  grep -o '\[#D[0-9]\{1,\}\]' ../memo.txt | sort | uniq -d
+  printf '%s\n' '----- list of ID references -----'
+  awk '/#D[0-9]+/ && !/\[#D[0-9]+\]$/ {print;}' ../memo.txt
+  grc '#D[0-9]+'
+  printf '%s\n' '----- END -----'
+}
+
+function is-function { declare -f "$1" &>/dev/null; }
+
+if (($#==0)); then
+  echo "usage: make_command.sh SUBCOMMAND ARGS..." >&2
+  exit 2
+elif is-function "sub:$1"; then
+  "sub:$@"
+else
+  echo "unrecognized subcommand '$1'" >&2
+  exit 2
+fi

@@ -44,7 +44,7 @@ namespace contra::ttty {
       // params.dbg_sequence_logfile = "ttty-allseq.txt";
     }
     if (!screen.initialize(params)) {
-      std::fprintf(stderr, "contra: failed to create the session");
+      contra::xprint(errdev(), "contra: failed to create the session");
       return false;
     }
 

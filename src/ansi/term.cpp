@@ -44,14 +44,14 @@ namespace ansi {
       if (it != data_ansi.end())
         s.sm_mode(it->second, value);
       else
-        std::fprintf(stderr, "unrecognized ANSI mode %u\n", (unsigned) param);
+        contra::xprintf(errdev(), "unrecognized ANSI mode %u\n", (unsigned) param);
     }
     void set_dec_mode(tstate_t& s, csi_param_t param, bool value) {
       auto const it = data_dec.find(param);
       if (it != data_dec.end())
         s.sm_mode(it->second, value);
       else
-        std::fprintf(stderr, "unrecognized DEC mode %u\n", (unsigned) param);
+        contra::xprintf(errdev(), "unrecognized DEC mode %u\n", (unsigned) param);
     }
     int rqm_ansi_mode(tstate_t& s, csi_param_t param) {
       auto const it = data_ansi.find(param);
@@ -1388,7 +1388,7 @@ namespace ansi {
       if (params.read_arg(color, true, 0))
         goto set_color;
       else
-        std::fprintf(stderr, "missing argument for SGR 38:5\n");
+        contra::xprint(errdev(), "missing argument for SGR 38:5\n");
       break;
 
     set_color:
@@ -1519,7 +1519,7 @@ namespace ansi {
     case 7759: case 59: b.cur.abuild.reset_dc(); break;
 
     default:
-      std::fprintf(stderr, "unrecognized SGR value %d\n", param);
+      contra::xprintf(errdev(), "unrecognized SGR value %d\n", param);
       break;
     }
   }
@@ -2277,9 +2277,11 @@ namespace ansi {
       break;
     }
 
-    std::fprintf(stderr, "unrecognized %s: ", name);
-    seq.print(stderr, 100);
-    std::fputc('\n', stderr);
+    contra::xprint(errdev(), "unrecognized ");
+    contra::xprint(errdev(), name);
+    contra::xprint(errdev(), ": ");
+    seq.print(errdev(), 100);
+    contra::xprint(errdev(), '\n');
   }
 
   void term_t::process_control_sequence(sequence const& seq) {
@@ -2295,10 +2297,10 @@ namespace ansi {
       switch (params.result_code()) {
       default:
       case csi_parameters::parse_invalid:
-        std::fprintf(stderr, "invalid value of CSI parameter values.\n");
+        contra::xprint(errdev(), "invalid value of CSI parameter values.\n");
         break;
       case csi_parameters::parse_overflow:
-        std::fprintf(stderr, "a CSI parameter value is too large.\n");
+        contra::xprint(errdev(), "a CSI parameter value is too large.\n");
         break;
       }
       print_unrecognized_sequence(seq);
