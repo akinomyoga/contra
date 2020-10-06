@@ -1600,6 +1600,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 2020-02-28 mintty (termout.c), RLogin (TextRamProc.cpp), tmux (input.c), screen (ansi.c)
 2020-02-29 xterm#350
 2020-03-01 Poderosa4
+2020-10-06 Windows Terminal (https://github.com/microsoft/terminal/blob/master/src/terminal/parser/OutputStateMachineEngine.hpp#L93)
 
 # Ft型 CSI シーケンス (ANSI/Private)
 
@@ -1616,6 +1617,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 | mintty   |**************  *  **   * *     **********  *** | *****  *      |
 | xterm    |**************  *  **   * *   E **********  *** | *****  *      |
 | Poderosa |**************  *  **X  * *     *  ** ***   *** |  *            |
+| wt       |**************  *  **   * *     ********     ** |  *!!*         | !=解析されるが未実装
 
 # 0Ft型 CSI シーケンス (ANSI/Private)
 
@@ -1631,6 +1633,7 @@ tmux=screen Poderosa=none
 | contra  |**                 * **              *   ***| *   |
 | mintty  |**                 *      *                *| *** |
 | xterm   |**                                          | *** |
+| wt      |                                            | *   |
 
 # nFt型私用 CSI シーケンス
 
@@ -1644,6 +1647,7 @@ screen=none tmux=none
 | mintty   |*       | *      |*** * *|* *   *** ***  |   | ******|  |     **  * |       |           |*  |
 | xterm    |*       |**      |** ****|* * * *** ***  |   | ******|  |     **  * |       |           |   |
 | Poderosa |*       |        |       |               |   |       |  |           |       |           |   |
+| wt       |*       |        |       |            *  |   |       |  |           |       |           |   |
 
 # 私用パラメータ CSI シーケンス
 
