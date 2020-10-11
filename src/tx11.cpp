@@ -1020,7 +1020,7 @@ namespace {
         if (ascii_A <= code && code <= ascii_Z) code += ascii_a - ascii_A;
 
         if (ascii_a <= code && code <= ascii_z) {
-          bool const modified = modifiers & ~modifier_shift & _modifier_mask;
+          bool const modified = modifiers & ~(modifier_shift | modifier_autorepeat) & _modifier_mask;
           if (!modified) {
             bool const capslock = modifiers & toggle_capslock;
             bool const shifted = modifiers & modifier_shift;

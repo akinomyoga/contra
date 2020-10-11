@@ -997,7 +997,7 @@ namespace {
       static BYTE kbstate[256];
 
       if (ascii_A <= wParam && wParam <= ascii_Z) {
-        if (modifiers & ~modifier_shift & _modifier_mask) {
+        if (modifiers & ~(modifier_shift | modifier_autorepeat) & _modifier_mask) {
           wParam += ascii_a - ascii_A;
         } else {
           bool const capslock = modifiers & toggle_capslock;
