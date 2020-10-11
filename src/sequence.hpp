@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cassert>
 #include <vector>
 #include <algorithm>
 #include <numeric>
@@ -556,7 +557,7 @@ namespace contra {
           if (!_next_char_raw()) return decode_default;
 
           if (uchar < 0x100 && 0x20 <= (uchar & 0x7F)) {
-            process_char_iso2022_graphic(*beg);
+            process_char_iso2022_graphic(uchar);
             goto decode_iso2022;
           }
 
