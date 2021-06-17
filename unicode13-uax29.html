@@ -1,0 +1,329 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>UAX #29: Unicode テキスト分割</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Language" content="ja-jp" />
+  <style type="text/css">
+  h1 { text-align: center; }
+  h1>span.subtitle { font-size: 1rem; display: block; }
+
+  table.normal,
+  table.normal th,
+  table.normal td { border-collapse: collapse; border: 1px solid gray; padding: 0.3em; }
+
+  dfn { font-style: normal; font-weight: bold; }
+  sup { font-weight: bold; color: brown; }
+  code {
+    font-family: monospace;
+    padding: 2px 4px; background-color: #eee; border-radius: 3px;
+  }
+  kbd {
+    font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", "Courier", monospace;
+    font-size: 80%; padding: 1px 5px; vertical-align: 1px;
+    border: 1px solid silver; border-bottom: 2px solid gray; border-radius: 3px;
+  }
+  kbd.bidi { border-color: #88f; }
+  </style>
+</head>
+<body>
+<h1><span class="subtitle">Unicode® Standard Annex #29</span>
+  Unicode Text Segmentation
+</h1>
+
+<ul>
+<li>Version: Unicode 13.0.0</li>
+<li>Editors: Mark Davis (markdavis@google.com), Christopher Chapman (cchapman@adobe.com)</li>
+<li>Date: 2020-02-19</li>
+<li>This Version: <a href="http://www.unicode.org/reports/tr29/tr29-37.html">http://www.unicode.org/reports/tr29/tr29-37.html</a></li>
+<li>Previous Version: <a href="http://www.unicode.org/reports/tr29/tr29-35.html">http://www.unicode.org/reports/tr29/tr29-35.html</a></li>
+<li>Latest Version: <a href="http://www.unicode.org/reports/tr29/">http://www.unicode.org/reports/tr29/</a></li>
+<li>Latest Proposed Update: <a href="http://www.unicode.org/reports/tr29/proposed.html">http://www.unicode.org/reports/tr29/proposed.html</a></li>
+<li>Revision: <a href="http://www.unicode.org/reports/tr29/#Modifications">37</a></li>
+</ul>
+
+<h2>概要</h2>
+<p>[注意: この文書は UAX #29 の要点をまとめた物であって完全な訳ではない。]</p>
+
+<p>UAX #29 は文章の要素の分割について既定の指針を与える。
+(ユーザー視点の文字たる) <b>書記素クラスタ</b>、<b>単語</b>、<b>文</b>を決定する。
+表示上の改行位置を定める方法については UAX #14 を参照の事。</p>
+
+<h2>1 導入</h2>
+
+<p>厳密な規則は言語・文書の種類に固有の正書法に依存しうる。
+また "." の様に様々な意味で使われる文字の為に、文・単語の境界は一意に定義できない。
+それでも多くの場合にユーザーの感覚に一致する様に規則を定める事は可能である。</p>
+
+<p>文章の要素を直接定義するよりはその境界を定義する方が効率的である。
+一般論は Unicode 2章で議論されている。
+この文書では効率的な境界決定手法を定義する。
+</p>
+
+<p>多くの Unicode 文字が文章要素の境界やその実装方法に影響を及ぼす。
+それらの文字を特性によって分類する必要がある。
+また、実装は nonspacing marks や conjoining jamos にも配慮する必要がある。
+既定の境界決定は Unicode 文字列に対して様々な特殊文字・機能を処理する事によって行われる。
+処理はデータ主導 (data driven) で定義され、
+追加の状態記憶なしに特定の正書法やユーザー設定に合わせて調整可能である。
+他の Unicode の仕様と同様に、この仕様ではアルゴリズムをステップ毎に記述するが、
+実際の処理系は同じ結果を得られればどのように実装しても良い。
+例えば遷移表を用いれば文字列長に比例した計算量で実装可能である。
+</p>
+
+<p>[1.1 ではこの文書で使う記法について明記されているが、
+  見るからに明らかなので特に説明しなくても良い様に思われる。
+  一点述べておく事があるとすれば、
+  リストで列挙されている規則は最初に当て嵌る物が適用される。
+  つまり otherwise (これまでの規則が当て嵌らなければ) が省略されている。]</p>
+
+<p>[1.2 では規則を設計する上で規則を単純に保つ為に設けた制限を説明している。
+  実際の実装者の観点からは特に気にせず与えられた規則を実装すれば良い。]</p>
+
+<h2>2 適合性</h2>
+<p>飽く迄この文書は "既定" の要素分割を定義するのであって、
+  状況に応じて実装は自身で要素分割を変更しても良いし寧ろ変更することが推奨される。
+  ロケール依存の境界決定は LDML [UTS35] で表現される。
+  規則の変更方法の例は CLDR にも収められている。
+  emoji ZWJ sequence による規則変更は [UTS51] である。
+  処理系は最新の CLDR にある拡張境界規則に従うことが推奨される。
+  曖昧さを無くすため規則は NFD (正準形) [UAX15] に対して定義されているが、
+  実はこの文書の既定規則は non-NFD に対しても同じ結果になる様になっている。
+  規則を変更する場合も normalization に依存しない様に配慮するべきである (6.1も参照)。</p>
+
+<h2>3 書記素クラスター境界</h2>
+
+<p>ユーザーにとっての "文字" は、一つの Unicode codepoint に対応するとは限らず、複数の codepoint からなる事もある。
+このような "文字" を<dfn>ユーザー視点の文字</dfn>と呼ぶ事にする。
+このユーザー視点の文字を明確な規則によってプログラム的で近似するのが<dfn>書記素クラスター</dfn>である。
+</p>
+
+<p>書記素クラスターは文字列比較・正規表現・ユーザーインターフェイス・縦書き配置・先頭文字の修飾・文字数カウントなどで重要である。
+また単語や文は書記素クラスターから構成され、単語・文の境界が諸規則ラスターの内部に来ることはない。
+ユーザーに取っての編集操作は書記素クラスター単位で起こり各書記素クラスターの内部表現に依存するべきではない。
+この文書は書記素クラスタの既定の仕様を定義する。特定の言語・操作・状況に応じて調整の余地がある。
+例えば、より詳細なフォント情報等が分かっている時、書記素クラスター内部の個々の要素を編集する状況が考えられる。
+codepoint に作用する操作と書記素クラスターに作用する操作の療法を用意する事も考えられる。
+キー入力に関しても、キーと書記素クラスターが一対一に対応する訳ではない。
+一つのキーが複数の書記素クラスターに対応する事もあれば、複数のキーで一つの書記素クラスターを構成することもある。
+書記素クラスターは対応するカーソル位置を厳密に規定する物ではなく参考程度の情報を与える。
+使用しているレンダリングエンジンやフォントに応じてカーソル位置を変えて良い。
+ユーザーに文字数を提示する時には書記素クラスターの数を提供するべきである。
+検索にも書記素クラスターが使われる。collation [UTS10] や正規表現 [UTS18] に詳細がある。
+</p>
+
+<p>Unicode標準は二つの既定の書記素クラスター境界を定義する。
+<dfn>拡張書記素クラスター</dfn> (extended grapheme clusters) が一般用途で推奨されるものである。
+<dfn>旧式書記素クラスター</dfn> (legacy grapheme clusters) はこの仕様の以前の版に対する後方互換性の為に残されている。
+これらの書記素クラスターを調整して、実際のロケール・用途に合わせて <dfn>誂製書記素クラスター</dfn> (tailored grapheme clusters) を定義することができる。
+表1aにこれらの書記素クラスターが例示されている。
+</p>
+
+<ul>
+<li>旧式書記素クラスターは台字とそれに続く0個以上の文字から成る。
+  台字は (1) 単一の文字
+  (2) または Unicode Standard D133 で定義されている Hangul Jamo の連続で表される Hangul Syllable
+  (3) または Regional_Indicator (RI) の組で表される文字である ([UTS51] 参照)。
+  続く文字は nonspacing marks, Join_Controls (ZWNJ, ZWJ) に加えて、
+  正準等価性を保つ為に spacing combining marks も含まれる。
+  Bangla, Khmer, Malayalam, Odiya では ZWNJ が子音と virama またはその他の結合文字の間に現れる事があるが、
+  この場合には ZWNJ は書記素クラスターの境界にはならない。
+  従って ZWNJ は Extended に分類される。
+  また任意の文字列が書記素クラスターの列に分解できる様に
+  制御文字や孤立した結合文字の様な普通でないものも許容する。
+</li>
+<li>拡張書記素クラスターは旧式書記素クラスターの拡張である。
+  続く文字として全ての spacing combining marks も含まれる。
+  これを考慮に入れる事によって Tamil や Devanagari 等のインド文字がより良い表示になる為である。
+  一方で Thai, Lao, や他の東南アジアの書法に於いては、
+  見た目の単位で編集する方が好ましいので旧式書記素クラスターの振る舞いを継承する。
+</li>
+</ul>
+
+<p>書記素クラスター境界の規則は 3.1 で説明する。
+  Hangul の構成についてのより詳細な情報は Unicode Chapter 3 Conformance を参照の事。
+  既定の Unicode 書記素クラスターの境界は単に隣り合う二つの文字の種類によって決まる。
+  文字の組による interaction については章7の chart を参照の事。
+</p>
+
+<p>既定の Unicode 書記素クラスターの特徴は Unicode の non-NFD に対しても不変である事。
+  これにより正準等価性を考慮した検索・正規表現一致に於いて書記素クラスターが基本単位となる。
+  もうひとつの特徴は書記素クラスターは単語や文の境界を決定する上での基本単位となる事。
+  また多くの場合、行境界の基本単位でもある。例外として改行位置の空白の特別な取り扱いがある。
+  [UAX14 9.2 Legacy Support for Space Character as Base for Combining Marks] も参照の事。
+</p>
+
+<p>更に細かい需要に応える為に書記素クラスターを調整することができる。
+その調整方法はこの文書の定めるところではない。
+例として様々なインド文字で用いられる正書法の音節である aksaras は、
+子音もしくは子音と暗黙的な母音の組を表す台字の横に母音を付加する。
+拡張書記素クラスターはこの場合に対応するが、aksaras は更に子音である virama (halant) 等を前置する事もある。
+これらは必ずしも単一の文字とは考えられないので既定の書記素クラスターの規則では考慮に入れていない。
+然し、表示方法によっては "子音結合" として字を纏めたり、横につなげて halant を書いたりする。
+更に ya/ra/la/wa の様な "medials" をどう aksaras と組み合わせるかは状況に大きく依存する。
+</p>
+
+<p>Note: 段落の最初の文字を大きくする時等に、フォントのリガチャ等の情報に基づいて "最初の文字" を決定する必要もあるかもしれない。</p>
+
+<p>特定の言語におけるユーザーの感覚により良く一致する様に書記素クラスターを調整できる。
+例えば "ch" はスロヴァキア語では一つの書記素クラスターとして (例えば文字列比較等において) 扱う。
+それでも既定の書記素クラスターは唯の codepoint を用いるよりは良い "文字" の境界を与える。
+</p>
+
+<p>Note: 既定の書記素クラスターは以前は "ロケール非依存書記素" と呼ばれていた。
+言語学で用いられる書記素とは異なる事を明確にする為に "クラスター" が追加された。
+"ロケール非依存" は [UTS10 Unicode Collation Algorithm] に合わせて既定・調整という名前に改められた。
+</p>
+
+<h3>書記素クラスターの表示</h3>
+<p>書記素クラスターはリガチャーとは異なる。例えば、スロヴァキア語の書記素クラスター "ch" はリガチャーではない。
+逆にリガチャー "fi" は書記素クラスターではない。既定書記素クラスターは必ずしも表示を反映する訳ではない。
+表示時に "fi" は一つの合字として表示されても、論理的には二つの文字として取り扱われる。
+</p>
+
+<p>正規表現に於ける書記素クラスターの一致については [UTS18 Unicode Regular Expressions] を参照の事。</p>
+
+<h3>退化ケース</h3>
+
+<p>既定書記素クラスターは実装の単純明快さに重きを置いているが、
+実際の文書で起こり得ない様な文字列 (例えば孤立した制御文字や結合文字) は考慮に入れていない。
+これらは [Unicode] で定義されている結合文字シーケンスとは異なる。
+更に、未収録や私用領域の codepoint のプロパティに対しては単に予想される値が割り当てられているに過ぎない。
+</p>
+
+<h3>結合文字シーケンスと書記素クラスター</h3>
+<p>表1bに結合文字シーケンスと書記素クラスターの関係を例示する。
+(X|Y) については最初に一致した物を採用する。小文字で始まる識別子は表1cで定義される変数である。
+大文字で始まる識別子は表2で定義される Grapheme_Cluster_Break プロパティである。
+</p>
+<table class="normal">
+<tr><td>結合文字シーケンス</td>    <td><code>:{ccs-base}?:{ccs-extend}+</code></td></tr>
+<tr><td>拡張結合文字シーケンス</td><td><code>:{extended_base}?:{ccs-extend}+</code></td></tr>
+<tr><td>旧式書記素クラスター</td>  <td><code>:{crlf}|:{Control}|:{legacy-core}:{legacy-postcore}* </code></td></tr>
+<tr><td>拡張書記素クラスター</td>  <td><code></code></td></tr>
+</table>
+
+<h3>3.1 既定書記素クラスター境界仕様</h3>
+<p>此処では一般的な規則について説明する。言語特有の規則については [CLDR] を適用する。
+Grapheme_Cluster_Break プロパティの値は [Props] の対応するデータファイルで指定される。
+表2にプロパティについて例示する。
+</p>
+<table class="normal">
+<tr><th>Grapheme_Cluster_Break</th><th>説明</th></tr>
+<tr><td>CR</td>                <td></td></tr>
+<tr><td>LF</td>                <td></td></tr>
+<tr><td>Control</td>           <td></td></tr>
+<tr><td>Extend</td>            <td></td></tr>
+<tr><td>ZWJ</td>               <td></td></tr>
+<tr><td>Regional Indicator</td><td></td></tr>
+<tr><td>Prepend</td>           <td></td></tr>
+<tr><td>SpacingMark</td>       <td></td></tr>
+<tr><td>L</td>                 <td></td></tr>
+<tr><td>V</td>                 <td></td></tr>
+<tr><td>T</td>                 <td></td></tr>
+<tr><td>LV</td>                <td></td></tr>
+<tr><td>LVT</td>               <td></td></tr>
+<tr><td>E_Base</td>            <td></td></tr>
+<tr><td>E_Modifier</td>        <td></td></tr>
+<tr><td>Glue_After_Zwj</td>    <td></td></tr>
+<tr><td>E_Base_GAZ</td>        <td></td></tr>
+<tr><td>Any</td>               <td></td></tr>
+</table>
+
+<h4>3.1.1 Grapheme Cluster Boundary Rules</h4>
+<p>規則 GB9a 及び GB9b 以外については二つの既定書記素クラスターについて同じ規則が適用される。
+  旧式書記素クラスターは GB9a, GB9b を含まない。
+  Unicode 諸規則ラスターを参照する時は旧式か拡張かを明記しなければならない。
+  次の規則が上から順に適用されて最初に一致した物になる。
+  / が境界である事を意味し、* が境界でない事を意味する。
+</p>
+<ul>
+<li>GB1: sot ÷ Any</li>
+<li>GB2: Any ÷ sot</li>
+<li>GB3: CR × LF</li>
+<li>GB4: (Control | CR | LF) ÷</li>
+<li>GB5: ÷ (Control | CR | LF)</li>
+<li>GB6: L × (L|V|LV|LVT)</li>
+<li>GB7: (LV|V) × (V|T)</li>
+<li>GB8: (LVT|T) × T</li>
+<li>GB9: × (Extend|ZWJ)</li>
+<li>GB9a: × SpacingMark</li>
+<li>GB9b: Prepend ×</li>
+<li>GB11: \p{Extended_Pictographic} Extend* ZWJ × \p{Extended_Pictographic}*</li>
+<li>GB12: sot (RI RI)* RI × RI</li>
+<li>GB13: [^RI] (RI RI)* RI × RI</li>
+<li>GB999: Any ÷ Any</li>
+</ul>
+<p>境界は単純正規表現により一致できる。6.3 を参照のこと。
+  Grapheme_Base プロパティ及び Grapheme_Extend プロパティは昔使われていた。
+  Grapheme_Extend=Yes は Grapheme_Cluster_Break=Extend を定義する為に参照されているが、
+  Grapheme_Base は今は使われていない。
+</p>
+
+<h2>4 単語境界</h2>
+<p>[現在の所使わないので省略]</p>
+
+<h2>5 文の境界</h2>
+<p>[現在の所使わないので省略]</p>
+
+<h2>6 実装に関する補記</h2>
+<h3>6.1 正規化</h3>
+<p>書記素クラスター・単語・文境界は NFD [UAX15] に対して定義されている。
+  実用上は正規化していなくても動作する様に定義されている。
+</p>
+
+<h3>6.2 無視規則の置き換え</h3>
+<p>単語・文の境界の決定を書記素クラスター単位で行う為に、
+  Extend 文字を無視する規則・Hangul jamo の区別をしない規則・CRLFの中に境界が来ない規則がある。
+  また、境界の決定に影響しない Format 文字も無視する。
+  これらの無視規則を適用する代わりに、他の規則を修正することでも同じ結果を得ることができる。
+</p>
+<p>[表が載せられているが省略]</p>
+<p>無視規則は誂製によって変更されてはならない。</p>
+
+<h3>6.3 状態機械</h3>
+<p>書記素クラスターの規則は正規表現で表現することもできる [表1b]。
+  但し、既知の境界から適用しなければならない。
+  単語・文の規則や行の規則については正規表現で表すのは困難であるが、
+  効率的な状態機械を作ることは可能である。ICU に実装例がある。
+  [UTS18 Unicode Regular Expressions] も参照のこと。
+</p>
+
+<h3>6.4 ランダムアクセス</h3>
+<p>境界とは限らない任意の位置から次の境界を見つけるのは前項で述べた状態機械では不十分である。
+  この為に逆方向に探索する状態機械を構成し曖昧さのない開始点を探す。
+  その開始点から改めて順方向に探索して指定位置以降にある最初の境界を求める。
+  変わりのより効率的な実装として、
+  文字列の各位置における状態をキャッシュしておくという手もある。
+  或いは位置を表すイテレータの内部状態として保持しておく。
+</p>
+
+<h3>6.5 誂製</h3>
+<p>規則に基づく実装は、コードに基づく実装やテーブルに基づく実装と組み合わせても良い。
+  典型的にはまず文字コードをテーブルによって境界プロパティ値に変換しそれを状態機械への入力とする。
+  このテーブルは trie 等のデータ構造を使って時間的・空間的に効率化できる。
+</p>
+<p>最も簡単な調整方法は変換後のプロパティ値を変更するものである。
+  特に言語によってプロパティが変わる文字に対しては新しい一時プロパティ値を割り当てて、
+  更にその一時的なプロパティ値から最終的なプロパティ値に変換する第二のテーブルを使う事にすれば、
+  この第二テーブルを差し替えるだけで様々な言語に対応できる。
+  この場合にはテーブルを差し替えるだけで様々な言語に対応できる。
+  第二のテーブルを引く小さなコストはある。
+</p>
+<p>コードに基づく実装の場合には言語に依存する状況に出くわした時に
+  動作を一時停止して呼び出し元に制御を戻すか指定された処理を実行する。
+  例えばタイ文字に特別なプロパティ値を割り当て、
+  状態機械がこれらに出くわした時にはタイ単語分割の特別実装を内部的に呼び出す。
+  この特別実装はタイ文字列に対して一挙に処理を行って結果を保存し、
+  後の再度の呼び出しに際しては既に計算した結果を返す様にしても良い。
+</p>
+
+<h2>7 テスト</h2>
+<p>[未訳]</p>
+
+<h2>8 ハングル音節境界決定</h2>
+<p>[未訳]</p>
+
+</body>
+</html>
