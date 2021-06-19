@@ -2098,6 +2098,100 @@ namespace ansi {
     return false;
   }
 
+  void do_mw(term_t& term) {
+    term.input_c1(ascii_csi);
+    term.input_byte(ascii_n);
+    term.input_flush();
+  }
+  bool do_dsr(term_t& term, csi_parameters& params) {
+    csi_param_t param;
+    params.read_param(param, 0);
+    switch (param) {
+    case 5:
+      term.input_c1(ascii_csi);
+      term.input_byte(ascii_n);
+      break;
+    case 6:
+      term.input_c1(ascii_csi);
+      term.input_unsigned(term.board().y() + 1);
+      term.input_byte(ascii_semicolon);
+      term.input_unsigned(term.board().x() + 1);
+      term.input_byte(ascii_R);
+      break;
+    }
+    term.input_flush();
+    return true;
+  }
+  bool do_decdsr(term_t& term, csi_parameters& params) {
+    csi_param_t param;
+    params.read_param(param, 0);
+    switch (param) {
+    case 5:
+      term.input_c1(ascii_csi);
+      term.input_byte(ascii_question);
+      term.input_byte(ascii_n);
+      break;
+    case 6: // DECXCPR
+      term.input_c1(ascii_csi);
+      term.input_byte(ascii_question);
+      term.input_unsigned(term.board().y() + 1);
+      term.input_byte(ascii_semicolon);
+      term.input_unsigned(term.board().x() + 1);
+      term.input_byte(ascii_semicolon);
+      term.input_unsigned(1); // ページ番号
+      term.input_byte(ascii_R);
+      break;
+    case 15: // DSR-PP
+      term.input_c1(ascii_csi);
+      term.input_byte(ascii_question);
+      term.input_unsigned(13);
+      term.input_byte(ascii_n);
+      break;
+    case 25: // DSR-UDK
+      term.input_c1(ascii_csi);
+      term.input_byte(ascii_question);
+      term.input_unsigned(21); // UDK Locked
+      term.input_byte(ascii_n);
+      break;
+    case 26: // DSR-KBD
+      term.input_c1(ascii_csi);
+      term.input_byte(ascii_question);
+      term.input_unsigned(27); // Fixed
+      term.input_byte(ascii_semicolon);
+      term.input_unsigned(0); // 0=Ready
+      term.input_byte(ascii_semicolon);
+      term.input_unsigned(5); // 4=LK450 5=PCXAL
+      term.input_byte(ascii_n);
+      break;
+    case 62: // DECMSR
+      term.input_c1(ascii_csi);
+      term.input_unsigned(0);
+      term.input_byte(ascii_asterisk);
+      term.input_byte(ascii_left_brace);
+      break;
+    case 63: // DECCKSR
+      params.read_param(param, 0);
+      term.input_c1(ascii_dcs);
+      term.input_unsigned(param);
+      term.input_byte(ascii_exclamation);
+      term.input_byte(ascii_tilde);
+      term.input_byte(ascii_0);
+      term.input_byte(ascii_0);
+      term.input_byte(ascii_0);
+      term.input_byte(ascii_0);
+      term.input_c1(ascii_st);
+      break;
+    case 75: // DSR-DIR
+      term.input_c1(ascii_csi);
+      term.input_byte(ascii_question);
+      term.input_unsigned(70);
+      term.input_byte(ascii_n);
+      break;
+    }
+    term.input_flush();
+    return true;
+  }
+
   //---------------------------------------------------------------------------
   // dispatch
 
@@ -2220,6 +2314,7 @@ namespace ansi {
       register_cfunc(&do_vpb , ascii_k);
       register_cfunc(&do_rm  , ascii_l);
       register_cfunc(&do_sgr , ascii_m);
+      register_cfunc(&do_dsr , ascii_n);
 
       register_cfunc(&do_sl  , ascii_sp, ascii_at);
       register_cfunc(&do_sr  , ascii_sp, ascii_A);
@@ -2243,6 +2338,7 @@ namespace ansi {
       // CSI P Ft
       register_cfunc(&do_decset, ascii_question, ascii_h);
       register_cfunc(&do_decrst, ascii_question, ascii_l);
+      register_cfunc(&do_decdsr, ascii_question, ascii_n);
       register_cfunc(&do_da2              , ascii_greater, ascii_c);
       register_cfunc(&do_XtermSetModFkeys , ascii_greater, ascii_m);
       register_cfunc(&do_XtermSetModFkeys0, ascii_greater, ascii_n);
@@ -2397,6 +2493,8 @@ namespace ansi {
       case ascii_epa: do_epa(*this); break;
       case ascii_ssa: do_ssa(*this); break;
       case ascii_esa: do_esa(*this); break;
+
+      case ascii_mw: do_mw(*this); break;
       }
     }
 
