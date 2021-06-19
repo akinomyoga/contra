@@ -22,6 +22,11 @@ int main(int argc, char** argv) {
   contra::sys::initialize_path(argc, const_cast<const char**>(argv));
   contra::sys::setup_signal();
 
+  if (!contra::term::fd_is_valid(1))
+    contra::term::fd_allocate_null(1);
+  if (!contra::term::fd_is_valid(2))
+    contra::term::fd_allocate_null(2);
+
   contra::app::context actx;
   std::string config_dir = contra::sys::get_config_directory();
   actx.load((config_dir + "/contra.conf").c_str());

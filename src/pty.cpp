@@ -73,6 +73,17 @@ namespace term {
     if (ws) ioctl(fd, TIOCSWINSZ, ws);
   }
 
+  bool fd_is_valid(int fd) {
+    return fcntl(fd, F_GETFD) != -1 && errno != EBADF;
+  }
+  void fd_allocate_null(int fd) {
+    int const fd1 = open("/dev/null", O_WRONLY);
+    if (fd1 != fd) {
+      dup2(fd1, fd);
+      close(fd1);
+    }
+  }
+
   void fd_device::write(char const* data, std::size_t size) const {
     const char* p = data;
     if (!size) return;
