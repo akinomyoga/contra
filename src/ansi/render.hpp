@@ -584,7 +584,7 @@ namespace ansi {
     font_t resolve_font(attr_t const& attr) {
       constexpr aflags_t aflags_mask = attr_weight_mask | attr_shape_mask | aflags_font_mask;
       constexpr xflags_t xflags_mask = xflags_subsup_mask | xflags_mintty_subsup_mask
-        | xflags_frame_mask | xflags_proportional_set | xflags_sco_shift | xflags_decdhl_mask;
+        | xflags_frame_mask | xflags_proportional_set | xflags_sco_mask | xflags_decdhl_mask;
       aflags_t const aflags = m_atable->aflags(attr) & aflags_mask;
       xflags_t const xflags = m_atable->xflags(attr) & xflags_mask;
       if (aflags == m_aflags && xflags == m_xflags) return m_font;
