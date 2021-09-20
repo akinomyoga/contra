@@ -147,6 +147,9 @@ twin_LIBS := -lgdi32 -limm32 $(LIBS)
 all: twin/test-win1.exe
 twin/test-win1.exe: $(objdir)/twin/test-win1.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(twin_LIBS)
+all: twin/test-win2.exe
+twin/test-win2.exe: $(objdir)/twin/test-win2.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(twin_LIBS)
 all: twin/test-fontfamily.exe
 twin/test-fontfamily.exe: $(objdir)/twin/test-fontfamily.o $(objdir)/enc.utf8.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(twin_LIBS)

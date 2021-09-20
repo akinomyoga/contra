@@ -354,6 +354,15 @@ namespace {
     void initialize_layer(layer_t& layer) {
       release_layer(layer);
       layer.hbmp = ::CreateCompatibleBitmap(m_hdc, m_width, m_height);
+      // byte* data;
+      // BITMAPINFO bmi = {};
+      // bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+      // bmi.bmiHeader.biWidth = m_width;
+      // bmi.bmiHeader.biHeight = m_height;
+      // bmi.bmiHeader.biPlanes = 1;
+      // bmi.bmiHeader.biBitCount = 24;
+      // bmi.bmiHeader.biCompression = BI_RGB;
+      // layer.hbmp = ::CreateDIBSection(NULL, &bmi, DIB_RGB_COLORS, (void**) &data, NULL, 0);
       layer.hctx = ::CreateCompatibleDC(m_hdc);
       ::SelectObject(layer.hctx, layer.hbmp);
       ::SetBkMode(layer.hctx, TRANSPARENT);

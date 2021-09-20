@@ -1,11 +1,14 @@
 #include <windows.h>
+#include <tchar.h>
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-char szClassNme[] = "ウィンドウクラス・ネーム";
+LPTSTR szClassNme = TEXT("ウィンドウクラス名");
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInst,
   LPSTR lpszCmdLine, int nCmdShow)
 {
+  (void) lpszCmdLine;
+
   HWND hWnd;
   MSG msg;
   WNDCLASS myProg;
@@ -24,7 +27,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInst,
       return FALSE;
   }
   hWnd = CreateWindow(szClassNme,
-    "猫でもわかるプログラミング",
+    TEXT("ウィンドウ作成サンプル"),
     WS_OVERLAPPEDWINDOW,
     CW_USEDEFAULT,
     CW_USEDEFAULT,

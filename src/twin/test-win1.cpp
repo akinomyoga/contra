@@ -1,3 +1,10 @@
+#define CONTRA_TWIN_SUPPORT_HIGHDPI
+#ifdef CONTRA_TWIN_SUPPORT_HIGHDPI
+# define _WIN32_WINNT_WIN6 0x0600
+# define WINVER        _WIN32_WINNT_WIN6
+# define _WIN32_WINNT  _WIN32_WINNT_WIN6
+#endif
+
 #include <string.h>
 #include <tchar.h>
 #include <wchar.h>
@@ -236,6 +243,10 @@ namespace twin {
 extern "C" int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPTSTR lpszCmdLine, int nCmdShow) {
   contra_unused(lpszCmdLine);
   contra_unused(hPreInst);
+
+#ifdef CONTRA_TWIN_SUPPORT_HIGHDPI
+  ::SetProcessDPIAware();
+#endif
 
   auto& win = contra::twin::main_window;
   HWND const hWnd = win.create_window(hInstance);
