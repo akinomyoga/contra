@@ -2693,11 +2693,11 @@ namespace ansi {
 
       case key_focus :
         if (s.get_mode(mode_XtermFocusEventMouse))
-          return send_ss3_modified(ascii_I);
+          return send_csi_modified(0, ascii_I);
         break;
       case key_blur  :
         if (s.get_mode(mode_XtermFocusEventMouse))
-          return send_ss3_modified(ascii_O);
+          return send_csi_modified(0, ascii_O);
         break;
 
       case key_kpmul: return send_ss3_modified(ascii_j);

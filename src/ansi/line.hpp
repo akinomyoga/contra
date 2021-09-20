@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <tuple>
+#include <limits>
 #include "../contradef.hpp"
 #include "../util.hpp"
 #include "attr.hpp"

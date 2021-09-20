@@ -1293,6 +1293,7 @@ namespace {
       params.xunit = wstat.m_xunit;
       params.yunit = wstat.m_yunit;
       params.exec_error_handler = &exec_error_handler;
+      //params.dbg_sequence_logfile = "twin-allseq.txt";
       actx.read("session_term", params.env["TERM"] = "xterm-256color");
       actx.read("session_shell", params.shell = "/bin/bash");
       std::unique_ptr<term::terminal_application> sess = contra::term::create_terminal_session(params);
