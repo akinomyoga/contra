@@ -7,6 +7,8 @@
 # define _WIN32_WINNT  _WIN32_WINNT_WIN6
 #endif
 
+#define contra_mouse_wheel_fast_threshold 100
+
 #include <string.h>
 #include <tchar.h>
 #include <wchar.h>
@@ -19,6 +21,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <cinttypes>
+
 #include <vector>
 #include <sstream>
 #include <iomanip>
@@ -28,6 +31,8 @@
 #include <numeric>
 #include <tuple>
 #include <limits>
+#include <chrono>
+
 #include <mwg/except.h>
 #include "../contradef.hpp"
 #include "../enc.utf8.hpp"
@@ -1100,6 +1105,23 @@ namespace {
       if (manager.m_dirty) render_window();
     }
 
+    int m_wheel_accumulated_delta = 0;
+    std::chrono::high_resolution_clock::time_point m_wheel_previous_time;
+    void process_mouse_wheel(int delta, std::uint32_t modifiers, WORD x, WORD y) {
+      auto const now = std::chrono::high_resolution_clock::now();
+      auto const msec = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_wheel_previous_time).count();
+      m_wheel_previous_time = now;
+      if ((std::abs(delta) >= WHEEL_DELTA && msec < contra_mouse_wheel_fast_threshold) || std::abs(delta) >= 2 * WHEEL_DELTA)
+        delta *= std::max(1, (wstat.m_row + 12) / 24);
+
+      m_wheel_accumulated_delta += delta;
+      if (int count = m_wheel_accumulated_delta / WHEEL_DELTA) {
+        m_wheel_accumulated_delta -= count * WHEEL_DELTA;
+        key_t const key = count < 0 ? count = -count, key_wheel_down : key_wheel_up;
+        while (count--) process_mouse(key, modifiers, x, y);
+      }
+    }
+
   private:
     bool m_ime_composition_active = false;
     void start_ime_composition() {
@@ -1238,11 +1260,11 @@ namespace {
           }
         }
         goto mouse_event;
-      case WM_MOUSEWHEEL:
-        key = GET_WHEEL_DELTA_WPARAM(wParam) > 0 ? key_wheel_up : key_wheel_down;
-        goto mouse_event;
       mouse_event:
         process_mouse(key, get_modifiers(), GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        return 0L;
+      case WM_MOUSEWHEEL:
+        process_mouse_wheel(GET_WHEEL_DELTA_WPARAM(wParam), get_modifiers(), GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         return 0L;
 
       case WM_IME_STARTCOMPOSITION:
