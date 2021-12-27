@@ -379,6 +379,54 @@
 * mintty は Mode ?7700 で文字幅報告 CSI 1 W, CSI 2 W を返すらしい。
   togetter MinEd のやばさのまとめに載っていた
 
+2020-10-13
+
+* スクリーン毎に dpi が異なる場合の調整は WM_DPICHANGED を捕まえる
+  https://www.slideshare.net/hiyohiyo/sapporocpp6win8win32
+
+* DirectWrite と従来の GDI 描画を混ぜて使うには IDWriteGdiInterop?
+  https://www.slideshare.net/hiyohiyo/win32directwrite?next_slideshow=1
+
+  ? 然し DirectWrite にすると文字単位の位置指定ができるか分からない。
+    もっと言うと combining characters や絵文字や bidi 等も考えると、
+    文字単位の位置指定が果たしてうまく行くのかも良く分からない。
+
+    一方で様々な環境で動かしたいという事を考えると DirectWrite の様な高級な機能に
+    依存して配置を決めるという事はできない。何れにしても内部で combining
+    characters や bidi 等の処理をしなければならないのではないか。そしてその場合に
+    は自前で全て処理しなければならない。
+
+    然しだからといって freetype 等を使用して自前でラスター化まですると、今度は
+    x11 環境での描画が遅くなってしまう。それは避けたい。結局一つ一つの文字の描画
+    に関しては OS 等の API に任せて、bidi 等の配置に関しては自前で処理するという
+    形に落ち着くのだろう。そしてそれは、現在の実装の形態に近い。
+
+  でも使い方がよく分からない。メンバを見ると少ししか無い。
+
+  Font と LOGFONT の変換関数が存在するが、説明を読む限りは "compatible
+  property" を使って対応する設定で新しくフォントを作るのであって、DirectWrite
+  のフォントレンダリングが GDI で直接使える様になったり或いは逆をしたりという事
+  ができる訳ではない様に見える。
+
+  唯一気になるメンバ関数が IDWriteGdiInterop::CreateBitmapRenderTarget である。
+  検索してみると https://twitter.com/egtra/status/804974586693435393 にある様に、
+  GDI の HDC に直接文字を書き込む事が出来るようになるという事?
+  https://stackoverrun.com/ja/q/11485152
+
+  この関数は IDWriteBitmapRenderTarget を返す。そしてこのインターフェイスは、
+  DrawGlyphRun というメンバ関数を持つ。その他のメンバ関数は何れも座標指定に見え
+  る。(SetCurrentTransform でアフィン変換を指定できる。つまりフォントサイズや回
+  転はこれで良いのでは?)
+
+  * COM なので実は CoInitialize/CoUniniitialize を呼び出す必要がある?
+    https://github.com/vim-jp/issues/issues/262
+    一方で DWrite は COM の様なインターフェイスだが実際は COM ではないという話もある。
+    https://social.msdn.microsoft.com/Forums/vstudio/en-US/edad7bd5-4577-4782-b850-40b141e43198/
+
+  * subrange に対する着色も指定できる?
+    https://stackoverrun.com/ja/q/324606
+    然し render target に依存していそうな気もする。
+
 2020-06-28
 
 * input_decoder: SS3 ... の形式のキーシーケンスにも対応する。
