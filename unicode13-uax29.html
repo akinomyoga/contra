@@ -44,7 +44,9 @@
 </ul>
 
 <h2>概要</h2>
-<p>[注意: この文書は UAX #29 の要点をまとめた物であって完全な訳ではない。]</p>
+<p>[訳註: この文書は UAX #29 の要点をまとめた物であって完全な訳ではない。
+  特に書記素クラスターに関連する部分のみを訳出した。
+  書記素クラスターの規則に関しては 3.1 を参照すれば十分である。]</p>
 
 <p>UAX #29 は文章の要素の分割について既定の指針を与える。
 (ユーザー視点の文字たる) <b>書記素クラスタ</b>、<b>単語</b>、<b>文</b>を決定する。
@@ -224,10 +226,10 @@ Grapheme_Cluster_Break プロパティの値は [Props] の対応するデータ
 <tr><td>T</td>                 <td></td></tr>
 <tr><td>LV</td>                <td></td></tr>
 <tr><td>LVT</td>               <td></td></tr>
-<tr><td>E_Base</td>            <td></td></tr>
-<tr><td>E_Modifier</td>        <td></td></tr>
-<tr><td>Glue_After_Zwj</td>    <td></td></tr>
-<tr><td>E_Base_GAZ</td>        <td></td></tr>
+<tr><td>E_Base</td>            <td>(unused)</td></tr>
+<tr><td>E_Modifier</td>        <td>(unused)</td></tr>
+<tr><td>Glue_After_Zwj</td>    <td>(unused)</td></tr>
+<tr><td>E_Base_GAZ</td>        <td>(unused)</td></tr>
 <tr><td>Any</td>               <td></td></tr>
 </table>
 
@@ -236,7 +238,7 @@ Grapheme_Cluster_Break プロパティの値は [Props] の対応するデータ
   旧式書記素クラスターは GB9a, GB9b を含まない。
   Unicode 諸規則ラスターを参照する時は旧式か拡張かを明記しなければならない。
   次の規則が上から順に適用されて最初に一致した物になる。
-  / が境界である事を意味し、* が境界でない事を意味する。
+  ÷ が境界である事を意味し、× が境界でない事を意味する。
 </p>
 <ul>
 <li>GB1: sot ÷ Any</li>
