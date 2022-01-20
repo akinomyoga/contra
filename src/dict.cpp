@@ -202,7 +202,7 @@ void tty_writer::update_sgrcolor(
       }
 
       for (int icomp = 0; icomp < numberOfComponents; icomp++) {
-        unsigned const comp = colorNew << icomp * 8 & 0xFF;
+        unsigned const comp = colorNew >> icomp * 8 & 0xFF;
         put(sgrcolor.iso8613.separater);
         put_unsigned(comp);
       }
