@@ -5695,6 +5695,20 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
     5 (modifyStringKeys) は数字とアルファベットに作用する。記号類は影響を受けない。設定で変更可能。
   </li>
   </ul>
+
+  <p><i class="kbd">F</i> は基本的には 1 + (ビットフラグ) で計算される整数であるが、
+    それぞれのビットフラグに割り当てる修飾キーは実装により違いが見られる。
+    また、実際にはキーボード上の Alt が概念上の Meta として取り扱われつつも、
+    やはり Alt として送信されたり等、Alt と Meta の間に混乱が見られる。
+  </p>
+  <ul>
+  <li>xterm: 1 = <kbd>S</kbd>, 2 = <kbd>A</kbd>, 4 = <kbd>C</kbd>, 8 = <kbd>M</kbd></li>
+  <li>vte: 1 = <kbd>S</kbd>, 2 = <kbd>M</kbd>, 4 = <kbd>C</kbd></li>
+  <li>mintty: 1 = <kbd>S</kbd>, 2 = <kbd>A</kbd>, 4 = <kbd>C</kbd>, 8 = <kbd>Win</kbd>, 16 = <kbd>s</kbd>, 32 = <kbd>H</kbd></li>
+  <li>kitty: 1 = <kbd>S</kbd>, 2 = <kbd>A</kbd>, 4 = <kbd>C</kbd>, 8 = <kbd>s</kbd>, 16 = <kbd>H</kbd>, 32 = <kbd>M</kbd>, 64 = <kbd>CapsLock</kbd>, 128 = <kbd>NumLock</kbd></li>
+  <li>contra: 1 = <kbd>S</kbd>, 2 = <kbd>M</kbd>, 4 = <kbd>C</kbd>, 8 = <kbd>s</kbd>, 16 = <kbd>H</kbd>, 32 = <kbd>A</kbd> (これは暫定的な実装である)</li>
+  </ul>
+
   <p>実際の実装で様々なキーの組み合わせに対してどのようなコードを送るかはまちまちである。</p>
   <ul>
   <li>xterm: 既定で <kbd>CSI 2 7 ~</kbd> 形式を使う。
@@ -5726,6 +5740,8 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
   </li>
   <li>gnome-terminal: そもそも対応していない。</li>
   </ul>
+
+  <p>以下に各実装において実際のキーボード入力をどの様なキーの組み合わせとして表現・送信するかをまとめる。</p>
   <table class="normal contra-cell-center">
   <tr><th>入力            </th><th>xterm                            </th><th>RLogin                       </th><th>contra                   </th></tr>
   <tr><td><kbd>a</kbd>    </td><td><kbd>a</kbd>/<kbd>A</kbd>        </td><td><kbd>a</kbd>/<kbd>A</kbd>    </td><td><kbd>a</kbd>/<kbd>A</kbd></td></tr>
