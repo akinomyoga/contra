@@ -2364,7 +2364,7 @@ screen=none tmux=none
 <tr><th>XTERM_ALT_SENDS_ESC          </th><td>?1039</td><th>XTERM_PASTE_IN_BRACKET       </th><td>?2004</td></tr>
 <tr><th>XTERM_KEEP_SELECTION         </th><td>?1040</td><th>XTERM_PASTE_QUOTE            </th><td>?2005</td></tr>
 <tr><th>XTERM_SELECT_TO_CLIPBOARD    </th><td>?1041</td><th>XTERM_PASTE_LITERAL_NL       </th><td>?2006</td></tr>
-<tr><th>XTERM_BELL_IS_URGENT         </th><td>?1042</td><th>-</th><td>-</td></tr>
+<tr><th>XTERM_BELL_IS_URGENT         </th><td>?1042</td><th>XTERM_PIXEL_POSITION_MOUSE</th><td>?1016</td></tr>
 <tr><th>XTERM_POP_ON_BELL            </th><td>?1043</td><th>URXVT_intensityStyles</th><td>?1021</td></tr>
 </table>
 
@@ -5790,6 +5790,8 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
     ボタンが解放された時には他のモードとは異なるシーケンス (選択イベント) を通知する。
     XTERM_BTN_EVENT_MOUSE はマウスボタンを押下している間のマウス移動も通知する。
     XTERM_ANY_EVENT_MOUSE は更にマウスボタンが離れている時の移動も通知する。
+    マウス移動に関しては通常はセル移動の瞬間に発火するが、
+    XTERM_PIXEL_POSITION_MOUSE を用いている場合はピクセル移動毎に発火する。
     マウスイベントは以下のシーケンスを用いて送信される。
     全て解除されているとマウスイベントは通知されない。
   </p>
@@ -5805,7 +5807,8 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
 </li>
 <li>Mode ?1005 <dfn class="cmode">XTERM_EXT_MODE_MOUSE</dfn>: Enable Extended Mouse Mode [xterm, 既定値 RM]</li>
 <li>Mode ?1006 <dfn class="cmode">XTERM_SGR_EXT_MODE_MOUSE</dfn>: [xterm, 既定値 RM]</li>
-<li>Mode ?1015 <dfn class="cmode">URXVT_EXT_MODE_MOUSE</dfn>: [urxvt, 既定値 RM]
+<li>Mode ?1015 <dfn class="cmode">URXVT_EXT_MODE_MOUSE</dfn>: [urxvt, 既定値 RM]</li>
+<li>Mode ?1016 <dfn class="cmode">XTERM_PIXEL_POSITION_MOUSE</dfn>: [xterm, 既定値 RM]
   <p>[xterm] これらのモードはマウスイベントの通知に使われるシーケンスの形式を変更するのに使う。
     上記3つのモードはは排他的であり、
     何れかを設定すると他は解除されるし、何れかを解除しようとすると全て解除される。
@@ -5851,8 +5854,11 @@ Poderosa: 5,0=それぞれ5,0と同じ効果
     <tr><th>Motion</th><td>32</td><td>マウス移動</td></tr>
     </table>
   </li>
-  <li>2つ目の引数 <var>X</var> はマウスポインタの横位置を表す列番号である。端末の最も左の列が 1 に対応する。</li>
-  <li>3つ目の引数 <var>Y</var> はマウスポインタの縦位置を表す行番号である。端末の一番上の行が 1 に対応する。</li>
+  <li>2つ目と3つ目の引数はそれぞれ <var>X</var> と <var>Y</var> で、マウスポインタの横位置を表す列番号と縦位置を表す行番号である。
+    端末の最も左の列が <var>X</var> = 1 に対応し、一番上の行が <var>Y</var> = 1 に対応する。
+    但し、XTERM_PIXEL_POSITION_MOUSE の時には列番号・行番号の代わりにピクセル位置 x/y を返す。
+    xterm で確認した所、一番左上の点に対して返される (<var>X</var>, <var>Y</var>) の値は (0,0) である。
+  </li>
   <li><i class="kbd">C</i> は引数の整数値に 0x20 を加算した値をバイト値とする文字である。引数の値は最大 223 (= 0xFF-0x20) に制限される。</li>
   <li><i class="kbd">C8</i> は引数の整数値に 0x20 を加算した値を文字コードと見て UTF-8 形式で符号化したバイト列である。</li>
   <li><i class="kbd">Ps</i> は引数の整数値を整数リテラルで表現した /[0-9]+/ の形式の文字列である。</li>
