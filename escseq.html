@@ -1603,11 +1603,14 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 <pre>
 # 各端末の対応制御機能
 
-2020-02-28 mintty (termout.c), RLogin (TextRamProc.cpp), tmux (input.c), screen (ansi.c)
-2020-02-29 xterm#350
 2020-03-01 Poderosa4
-2020-10-06 Windows Terminal (<a href="https://github.com/microsoft/terminal/blob/e401edf9/src/terminal/parser/OutputStateMachineEngine.hpp#L93">src/terminal/parser/OutputStateMachineEngine.hpp</a>)
-2021-07-13 dnlk/foot csi.c
+2022-12-11 Windows Terminal (<a href="https://github.com/microsoft/terminal/blob/2668273616650109d96802592f9204a32a877115/src/terminal/parser/OutputStateMachineEngine.hpp#L100">src/terminal/parser/OutputStateMachineEngine.hpp</a>)
+2022-12-11 mintty (<a href="https://github.com/mintty/mintty/blob/889d0044cd95dd1cd751e98757624ebd3b202e32/src/termout.c#L2801">src/termout.c</a>
+2022-12-11 RLogin (<a href="https://github.com/kmiya-culti/RLogin/blob/c91515b0b5d954a1010ce5ada861cf6ec3749748/RLogin/TextRamProc.cpp#L251">RLogin/TextRamProc.cpp</a>)
+2022-12-11 xterm#377 71281439 (VTPrsTbl.c <code>csi_table</code>, etc.)
+2022-12-11 dnkl/foot ccfb953b (csi.c <code>csi_distach</code>)
+2022-12-11 tmux (<a href="https://github.com/tmux/tmux/blob/70ff8cfe1e06987501a55a32df31d1f69acd2f99/input.c#L269">input.c</a> <code>input_csi_table</code>)
+2022-12-11 screen4+1ec8838 (ansi.c), screen 4.99+c3e84d2 (ansi.c)
 
 # Ft型 CSI シーケンス (ANSI/Private)
 
@@ -1624,7 +1627,7 @@ ISO 2022 の図形文字に相当するバイト値を構成要素として含�
 | mintty   |**************  *  **   * *     **********  *** | *****  *      |
 | xterm    |**************  *  **   * *   E **********  *** | *****  *      |
 | Poderosa |**************  *  **X  * *     *  ** ***   *** |  *            |
-| wt       |**************  *  **   * *     ********     ** |  *!!*         | !=解析されるが未実装
+| wt       |**************  *  **   * *     ********     ** |  *!!*  *      | !=解析されるが未実装
 | foot     |**************  *  **   * *     *********   *** |  ****         |
 
 # 0Ft型 CSI シーケンス (ANSI/Private)
@@ -1644,36 +1647,48 @@ tmux=screen Poderosa=none
 | wt      |                                            | *   |
 | foot    |                                            | *   |
 
+# nFt型標準 CSI シーケンス (標準違反)
+
+Note: # で始まるものは xterm, + で始まるものはkitty による導入
+
+|          |###|+|
+|          |PQR|T|
+|----------|---|-|
+| xterm    |***| |
+| RLogin   |***| |
+| mintty   |***|*|
+
+
 # nFt型私用 CSI シーケンス
 
 screen=none tmux=none
 
-|          |!!!!!!!!|""""""""|#######|$$$$$$$$$$$$$$$|&&&|'''''''|))|***********|+++++++|,,,,,,,,,,,|---| <!--"'-->
-|          |psvwxy|}|pqstuvwz|pqty{|}|pqrstuvwxyz{|}~|qux|qwz{|}~|p{|pqrsuxyz{|}|pqrvwxz|pqvwxyz{|}~|pqr|
-|----------|--------|--------|-------|---------------|---|-------|--|-----------|-------|-----------|---|
-| RLogin   |*       |**   *  |       |* * ***** *****| * | ******| *|     ***   |*    * | *      ***|   |
-| contra   |        |**      |       |*           *  |   |       |  |           |       |           |   |
-| mintty   |*       | *      |*** * *|* *   *** ***  |   | ******|  |     **  * |       |           |*  |
-| xterm    |*       |**      |** ****|* * * *** ***  |   | ******|  |     **  * |       |           |   |
-| Poderosa |*       |        |       |               |   |       |  |           |       |           |   |
-| wt       |*       |        |       |            *  |   |       |  |           |       |           |   |
-| foot     |*       |        |       |            *  |   |       |  |           |       |           |   |
+|          |!!!!!!!!|""""""""|#######|$$$$$$$$$$$$$$$|%|&&&|'''''''|))|***********|+++++++|,,,,,,,,,,,|---| <!--"'-->
+|          |psvwxy|}|pqstuvwz|pqty{|}|pqrstuvwxyz{|}~|q|qux|qwz{|}~|p{|pqrsuxyz{|}|pqrvwxz|pqvwxyz{|}~|pqr|
+|----------|--------|--------|-------|---------------|-|---|-------|--|-----------|-------|-----------|---|
+| RLogin   |*       |**   *  |**  ***|* * ***** *****| | * | ******| *|     ***   |*    * | *      ***|   |
+| contra   |        |**      |       |*           *  | |   |       |  |           |       |           |   |
+| mintty   |*       |**      |*** * *|* *   *** *****|*|*  | ******|  |     **  * |       |          *|*  |
+| xterm    |*       |**      |** ****|* * * *** *****| |   | ******|  |     **  * |       |           |   |
+| Poderosa |*       |        |       |               | |   |       |  |           |       |           |   |
+| wt       |*       |**      |    * *|* **  * * ***  | |   |       |  |     * *   |       |        * *|   |
+| foot     |*       |        |       |            *  | |   |       |  |           |       |           |   |
 
 # 私用パラメータ CSI シーケンス
 
-tmux=screen
-
-|          |<<<<<|=========|>>>>>>>>|????????????|
-|          |   !!|         |        |           $|
-|          |rstiq|ABCFGHISc|STcmnpqt|JKSWchilnrsp|
-|----------|-----|---------|--------|------------|
-| RLogin   |*****|   **  **| ***** *|**** *******|
-| screen   |     |         |  *     |     * *    |
-| contra   |     |         |  ***   |     * *   *|
-| mintty   |***  |         |  ***** |**  ******* |
-| xterm    |     |        *| ***** *|**   *******|
-| Poderosa |     |         |  *     |     * * ** |
-| foot     |     |        *|  **  * |  *  * * ***|
+|          |<<<<<<|==========|>>>>>>>>>>|??????????????|
+|          |    !!|          |          |             $|
+|          |rstuiq|ABCFGHIScu|STcmnpqstu|JKSWchilmnrsup|
+|----------|------|----------|----------|--------------|
+| RLogin   |*** **|   **  ** | ****** * |**** *** *** *|
+| screen   |      |          |  *       |     * *      |
+| tmux     |      |          |  *** *   |     * *      |
+| contra   |      |          |  ***     |     * *     *|
+| mintty   |***   |          | ******   |**  ********  |
+| xterm    |      |        * | ******** |**   *** *** *|
+| Poderosa |      |          |  *       |     * *  **  |
+| foot     |   *  |        **|  *** *  *|  *  * *  ****|
+| wt       |      |        * |  *       |**   * * *   *|
 </pre>
 
 <h3>制御列 (control string)</h3>
