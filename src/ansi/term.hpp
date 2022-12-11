@@ -66,6 +66,7 @@ namespace ansi {
     mouse_sequence_utf8  = 0x0200,
     mouse_sequence_sgr   = 0x0400,
     mouse_sequence_urxvt = 0x0800,
+    mouse_sequence_pixel = 0x1000,
   };
 
   enum funckey_mode_flags {

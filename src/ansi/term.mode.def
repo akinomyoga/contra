@@ -99,6 +99,7 @@ arw-  mode_XtermAnyEventMouse       dec1003     -
 arw-  mode_XtermExtModeMouse        dec1005     -
 arw-  mode_XtermSgrExtModeMouse     dec1006     -
 arw-  mode_UrxvtExtModeMouse        dec1015     -
+arw-  mode_XtermPixelPositionMouse  dec1016     -
 frw-  mode_XtermFocusEventMouse     dec1004     false
 
 #------------------------------------------------------------------------------

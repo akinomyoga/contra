@@ -1092,9 +1092,11 @@ namespace {
       key |= modifiers & _modifier_mask;
       if (settings.twin_disableMouseReportOnScrLock && (modifiers & toggle_scrolllock))
         key |= modifier_application;
-      curpos_t const x1 = (x - wstat.m_xframe) / wstat.m_xunit;
-      curpos_t const y1 = (y - wstat.m_yframe) / wstat.m_yunit;
-      manager.input_mouse(key, x, y, x1, y1);
+      coord_t const px = (coord_t) x - wstat.m_xframe;
+      coord_t const py = (coord_t) y - wstat.m_yframe;
+      curpos_t const x1 = px / wstat.m_xunit;
+      curpos_t const y1 = py / wstat.m_yunit;
+      manager.input_mouse(key, px, py, x1, y1);
       if (manager.m_dirty) render_window();
     }
 

@@ -1998,6 +1998,7 @@ namespace ansi {
   void do_sm_XtermExtModeMouse       (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_utf8 : 0); }
   void do_sm_XtermSgrExtModeMouse    (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_sgr : 0); }
   void do_sm_UrxvtExtModeMouse       (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_urxvt : 0); }
+  void do_sm_XtermPixelPositionMouse (term_t& term, bool value) { do_set_mouse_sequence(term, value ? mouse_sequence_pixel : 0); }
 
   int do_rqm_XtermX10Mouse           (term_t& term) { return do_rqm_mouse_report(term, mouse_report_XtermX10Mouse); }
   int do_rqm_XtermVt200Mouse         (term_t& term) { return do_rqm_mouse_report(term, mouse_report_XtermVt200Mouse); }
@@ -2007,6 +2008,7 @@ namespace ansi {
   int do_rqm_XtermExtModeMouse       (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_utf8); }
   int do_rqm_XtermSgrExtModeMouse    (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_sgr); }
   int do_rqm_UrxvtExtModeMouse       (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_urxvt); }
+  int do_rqm_XtermPixelPositionMouse (term_t& term) { return do_rqm_mouse_sequence(term, mouse_sequence_pixel); }
 
   //---------------------------------------------------------------------------
   // device attributes
@@ -2967,7 +2969,7 @@ namespace ansi {
     return term_input_key_impl(*this).process(key);
   }
 
-  bool term_t::input_mouse(key_t key, [[maybe_unused]] coord_t px, [[maybe_unused]] coord_t py, curpos_t const x, curpos_t const y) {
+  bool term_t::input_mouse(key_t key, coord_t px, coord_t py, curpos_t const x, curpos_t const y) {
     tstate_t const& s = this->state();
     if (!(s.mouse_mode & mouse_report_mask)) return false;
 
@@ -2985,6 +2987,16 @@ namespace ansi {
     }
 
     char final_character = ascii_M;
+
+    std::uint32_t const seqtype = s.mouse_mode & mouse_sequence_mask;
+    curpos_t xsend, ysend;
+    if (seqtype == mouse_sequence_pixel) {
+      xsend = std::max(0, px);
+      ysend = std::max(0, py);
+    } else {
+      xsend = x + 1;
+      ysend = y + 1;
+    }
 
     switch (key & _key_mouse_event_mask) {
     case _key_mouse_event_down:
@@ -3005,7 +3017,7 @@ namespace ansi {
       break;
     case _key_mouse_event_move:
       // 前回と同じ升目に居る時は送らなくて良い。
-      if (x == m_mouse_prev_x && y == m_mouse_prev_y) return true;
+      if (xsend == m_mouse_prev_x && ysend == m_mouse_prev_y) return true;
       if (key & _key_mouse_button_mask) {
         if (s.mouse_mode & mouse_report_drag) {
           button |= 32;
@@ -3027,35 +3039,36 @@ namespace ansi {
         input_byte(final_character);
         if (final_character != ascii_t)
           input_byte(std::min(button + 32, 255u));
-        input_byte(std::clamp(x + 33, 0, 255));
-        input_byte(std::clamp(y + 33, 0, 255));
+        input_byte(std::clamp(xsend + 32, 0, 255));
+        input_byte(std::clamp(ysend + 32, 0, 255));
         break;
       case mouse_sequence_utf8:
         input_c1(ascii_csi);
         input_byte(final_character);
         if (final_character != ascii_t)
           input_uchar(std::min(button + 32, (std::uint32_t) _unicode_max));
-        input_uchar(std::clamp<curpos_t>(x + 33, 0, _unicode_max));
-        input_uchar(std::clamp<curpos_t>(y + 33, 0, _unicode_max));
+        input_uchar(std::clamp<curpos_t>(xsend + 32, 0, _unicode_max));
+        input_uchar(std::clamp<curpos_t>(ysend + 32, 0, _unicode_max));
         break;
       case mouse_sequence_urxvt:
       case mouse_sequence_sgr:
+      case mouse_sequence_pixel:
         input_c1(ascii_csi);
-        if (seqtype == mouse_sequence_sgr)
+        if (seqtype != mouse_sequence_urxvt)
           input_byte(ascii_less);
         if (final_character != ascii_t) {
           input_unsigned(button);
           input_byte(ascii_semicolon);
         }
-        input_unsigned(x + 1);
+        input_unsigned(xsend);
         input_byte(ascii_semicolon);
-        input_unsigned(y + 1);
+        input_unsigned(ysend);
         input_byte(final_character);
         break;
       }
       input_flush();
-      m_mouse_prev_x = x;
-      m_mouse_prev_y = y;
+      m_mouse_prev_x = xsend;
+      m_mouse_prev_y = ysend;
       return true;
     }
 
