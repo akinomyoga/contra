@@ -25,9 +25,8 @@ namespace util {
   };
 
   template<typename T, typename Container, typename Index>
-  class indexer_iterator: std::iterator<std::random_access_iterator_tag, T, Index> {
+  class indexer_iterator {
     typedef indexer_iterator self;
-    typedef std::iterator<std::random_access_iterator_tag, T> base;
 
   private:
     Container* container;
@@ -37,11 +36,15 @@ namespace util {
 
   public:
     // LegacyIterator requirements
-    typedef typename base::iterator_category iterator_category;
-    typedef typename base::value_type value_type;
-    typedef typename base::difference_type difference_type;
-    typedef typename base::reference reference;
-    typedef typename base::pointer pointer;
+    //   Note: These members were defined through
+    //   std::iterator<std::random_access_iterator_tag, T, Index>).  Now we
+    //   need to explicitly define all of them here as std::iterator has been
+    //   deprecated in C+++17).
+    typedef std::random_access_iterator_tag iterator_category;
+    typedef T value_type;
+    typedef Index difference_type;
+    typedef T* pointer;
+    typedef T& reference;
     reference operator*() const { return (*container)[index]; }
     self& operator++() { this->index++; return *this; }
 
