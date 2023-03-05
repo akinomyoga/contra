@@ -728,6 +728,7 @@ namespace {
       // size and dimension
       wstat.configure_metric(actx);
       manager.reset_size(wstat.m_col, wstat.m_row, wstat.m_xunit, wstat.m_yunit);
+      gbuffer.reset_size(wstat);
 
       // other settings
       settings.configure(actx);
