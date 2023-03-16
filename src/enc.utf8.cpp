@@ -178,7 +178,7 @@ namespace encoding {
       if (high) {
         if (is_low_surrogate(u)) {
           std::uint32_t const offset = (high & 0x3FF) << 10 | (u & 0x3FF);
-          proc(char32_t(0x1000 + offset));
+          proc(char32_t(0x10000 + offset));
           high = 0;
           continue;
         } else {
