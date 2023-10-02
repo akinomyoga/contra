@@ -12,9 +12,10 @@
   table.normal,
   table.normal th,
   table.normal td { border-collapse: collapse; border: 1px solid gray; padding: 0.3em; }
+  table.normal { margin-left: auto; margin-right: auto; }
+  table.normal th { background-color: #ddd; }
 
   dfn { font-style: normal; font-weight: bold; }
-  sup { font-weight: bold; color: brown; }
   code {
     font-family: monospace;
     padding: 2px 4px; background-color: #eee; border-radius: 3px;
@@ -26,6 +27,12 @@
   }
   kbd.bidi { border-color: #88f; }
   p.contra-translator, span.contra-translator { color: #080; }
+  span.contra-translate-add { background-color: #EFE; }
+  span.contra-translate-add + sup { font-weight: bold; color: #080; }
+  del.contra-translate-del { background-color: #FEE; text-decoration-color: #A00; }
+  del.contra-translate-del + sup { font-weight: bold; color: #A00; }
+  ul.contra-translate-add { background-color: #EFE; padding-top: 0.5em; padding-bottom: 0.5em; position: relative; }
+  ul.contra-translate-add:after { content: attr(data-version) '追加'; font-weight: bold; color: #080; font-size: 80%; position: absolute; top: 1em; right: 1em; }
   </style>
 </head>
 <body>
@@ -34,14 +41,14 @@
 </h1>
 
 <ul>
-<li>Version: Unicode 13.0.0</li>
-<li>Editors: Mark Davis (markdavis@google.com), Christopher Chapman (cchapman@adobe.com)</li>
-<li>Date: 2020-02-19</li>
-<li>This Version: <a href="http://www.unicode.org/reports/tr29/tr29-37.html">http://www.unicode.org/reports/tr29/tr29-37.html</a></li>
-<li>Previous Version: <a href="http://www.unicode.org/reports/tr29/tr29-35.html">http://www.unicode.org/reports/tr29/tr29-35.html</a></li>
+<li>Version: Unicode 15.1.0</li>
+<li>Editors: Josh Hadley (johadley@adobe.com)</li>
+<li>Date: 2023-08-16</li>
+<li>This Version: <a href="http://www.unicode.org/reports/tr29/tr29-43.html">http://www.unicode.org/reports/tr29/tr29-43.html</a></li>
+<li>Previous Version: <a href="http://www.unicode.org/reports/tr29/tr29-41.html">http://www.unicode.org/reports/tr29/tr29-41.html</a></li>
 <li>Latest Version: <a href="http://www.unicode.org/reports/tr29/">http://www.unicode.org/reports/tr29/</a></li>
 <li>Latest Proposed Update: <a href="http://www.unicode.org/reports/tr29/proposed.html">http://www.unicode.org/reports/tr29/proposed.html</a></li>
-<li>Revision: <a href="http://www.unicode.org/reports/tr29/#Modifications">37</a></li>
+<li>Revision: <a href="http://www.unicode.org/reports/tr29/#Modifications">43</a></li>
 </ul>
 
 <h2>概要</h2>
@@ -49,6 +56,8 @@
   特に書記素クラスターに関連する部分のみを訳出した。
   訳してから分かったが書記素クラスターの規則に関しては節3.1を参照すれば十分である。
   それ以前の部分(節1から節3の前文まで)は完全なる御託であって読む必要はない。]</p>
+
+<p class="contra-translator">[訳註: この文書は Unicode 13.0.0 に対して最初にまとめたものであり、それ以降の修正を追跡している。]</p>
 
 <p>UAX #29 は文章の要素の分割について既定の指針を与える。
 (ユーザー視点の文字たる) <b>書記素クラスター</b>、<b>単語</b>、<b>文</b>を決定する。
@@ -86,15 +95,48 @@
   実際の実装者の観点からは特に気にせず与えられた規則を実装すれば良い。]</p>
 
 <h2>2 適合性</h2>
+<p>文字・単語・文を分割する方法は色々あり Unicode 標準は処理系が具体的にこれらをどう扱うかは規定しない。
+  <span class="contra-translate-add">処理系がその実装詳細を述べる際に参照できるように以下の名称を定義する。</span><sup>15.1.0追加</sup>
+</p>
+<ul class="contra-translate-add" data-version="15.1.0">
+<li><dfn>UAX29-C1</dfn> 拡張書記素クラスター境界: 処理系は以下の二つの内の何れかを選択する。
+  <ul>
+  <li><dfn>UAX29-C1-1</dfn>: 3.1 に記述された規則を用いて定義される既定の境界。拡張書記素クラスター</li>
+  <li><dfn>UAX29-C1-2</dfn>: UAX29-C1-1 を元に修正したもの。旧式書記素クラスターは一例。</li>
+  </ul>
+</li>
+<li><dfn>UAX29-C2</dfn> 単語境界: 処理系は以下の二つの内の何れかを選択する。
+  <ul>
+  <li><dfn>UAX29-C2-1</dfn>: 4.1 に記述された規則を用いて定義される既定の境界。既定単語境界</li>
+  <li><dfn>UAX29-C2-2</dfn>: UAX29-C2-1 を元に修正したもの。</li>
+  </ul>
+</li>
+<li><dfn>UAX29-C3</dfn> 文境界: 処理系は以下の二つの内の何れかを選択する。
+  <ul>
+  <li><dfn>UAX29-C3-1</dfn>: 5.1 に記述された規則を用いて定義される既定の境界。既定文境界</li>
+  <li><dfn>UAX29-C3-2</dfn>: UAX29-C3-1 を元に修正したもの。</li>
+  </ul>
+</li>
+</ul>
+
 <p>飽く迄この文書は "既定" の要素分割を定義するのであって、
   状況に応じて実装は自身で要素分割を変更しても良いし寧ろ変更することが推奨される。
-  ロケール依存の境界決定は LDML [UTS35] で表現される。
+  <span class="contra-translate-add">処理系が適合するためには変更された要素分割を文書で定める必要がある。</span><sup>15.1.0追加</sup>
+  例えば、タイ語・ラオ語・中国語・日本語などの単語境界決定には、英語におけるハイフネーションと同様に、辞書<span class="contra-translate-add">または別の手法</span><sup>15.1.0追加</sup>が必要だろう。
+  処理系は境界規則の追加・削除によって既定の要素分割アルゴリズムを変更することができる。
+</p>
+<ul>
+<li>ロケール依存の境界決定は LDML [UTS35] で表現される。
   規則の変更方法の例は CLDR にも収められている。
-  emoji ZWJ sequence による規則変更は [UTS51] である。
+</li>
+<li>emoji ZWJ sequence による規則変更は [UTS51] である。
   処理系は最新の CLDR にある拡張境界規則に従うことが推奨される。
-  曖昧さを無くすため規則は NFD (正準形) [UAX15] に対して定義されているが、
+</li>
+</ul>
+<p>曖昧さを無くすため規則は NFD (正準形) [UAX15] に対して定義されているが、
   実はこの文書の既定規則は non-NFD に対しても同じ結果になる様になっている。
-  規則を変更する場合も normalization に依存しない様に配慮するべきである (6.1も参照)。</p>
+  <del class="contra-translate-del">規則を変更する場合も normalization に依存しない様に配慮するべきである</del><sup>15.1.0削除</sup> (6.1も参照)。
+</p>
 
 <h2>3 書記素クラスター境界</h2>
 
@@ -117,8 +159,8 @@
 検索にも書記素クラスターが使われる。collation [UTS10] や正規表現 [UTS18] に詳細がある。
 </p>
 
-<p>Unicode標準は二つの既定の書記素クラスター境界を定義する。
-<dfn>拡張書記素クラスター</dfn> (extended grapheme clusters) が一般用途で推奨されるものである。
+<p>Unicode標準は<del class="contra-translate-del">二つ</del><span class="contra-translate-add">一つ</span><sup>15.1.0変更</sup>の既定の書記素クラスター境界を定義する。
+<dfn>拡張書記素クラスター</dfn> (extended grapheme clusters) <del class="contra-translate-del">が一般用途で推奨されるものである</del><span class="contra-translate-add">と呼ばれる</span><sup>15.1.0変更</sup>。
 <dfn>旧式書記素クラスター</dfn> (legacy grapheme clusters) はこの仕様の以前の版に対する後方互換性の為に残されている。
 これらの書記素クラスターを調整して、実際のロケール・用途に合わせて <dfn>誂製書記素クラスター</dfn> (tailored grapheme clusters) <span class="contra-translator">[訳註: 誂整は独自訳]</span> を定義することができる。
 表1aにこれらの書記素クラスターが例示されている。
@@ -151,6 +193,10 @@
   文字の組による interaction については章7の chart を参照の事。
 </p>
 
+<p><del class="contra-translate-del">Note:
+  既定の書記素クラスター境界は2つの連続する文字だけから決定できる。文字の組の相互作用を示した図表については Sec. 7 を参照。</del><sup>15.1.0削除</sup>
+</p>
+
 <p>既定の Unicode 書記素クラスターの特徴は Unicode の non-NFD に対しても不変である事。
   これにより正準等価性を考慮した検索・正規表現一致に於いて書記素クラスターが基本単位となる。
   もうひとつの特徴は書記素クラスターは単語や文の境界を決定する上での基本単位となる事。
@@ -163,7 +209,7 @@
 例として様々なインド文字で用いられる正書法の音節である aksaras は、
 子音もしくは子音と暗黙的な母音の組を表す台字の横に母音を付加する。
 拡張書記素クラスターはこの場合に対応するが、aksaras は更に子音である virama (halant) 等を前置する事もある。
-これらは必ずしも単一の文字とは考えられないので既定の書記素クラスターの規則では考慮に入れていない。
+これらは必ずしも単一の文字とは考えられないので <span class="contra-translate-add">(また新しい情報が分かり次第規則が追加されるので)</span><sup>15.1.0追加</sup> 既定の書記素クラスターの規則では考慮に入れていない。
 然し、表示方法によっては "子音結合" として字を纏めたり、横につなげて halant を書いたりする。
 更に ya/ra/la/wa の様な "medials" をどう aksaras と組み合わせるかは状況に大きく依存する。
 </p>
@@ -175,9 +221,9 @@
 それでも既定の書記素クラスターは唯の符号点を用いるよりは良い "文字" の境界を与える。
 </p>
 
-<p>Note: 既定の書記素クラスターは以前は "ロケール非依存書記素" と呼ばれていた。
-言語学で用いられる書記素とは異なる事を明確にする為に "クラスター" が追加された。
-"ロケール非依存" は [UTS10 Unicode Collation Algorithm] に合わせて既定・調整という名前に改められた。
+<p>Note: <del class="contra-translate-del">既定の書記素クラスターは以前は "ロケール非依存書記素" と呼ばれていた。</del><sup>15.1.0削除</sup>
+書記素クラスターという名称には、言語学で用いられる書記素とは異なる事を明確にする為に "クラスター" が含められた。
+<del class="contra-translate-del">"ロケール非依存" は [UTS10 Unicode Collation Algorithm] に合わせて既定・調整という名前に改められた。</del><sup>15.1.0削除</sup>
 </p>
 
 <h3>書記素クラスターの表示</h3>
@@ -202,10 +248,28 @@
 大文字で始まる識別子は表2で定義される Grapheme_Cluster_Break プロパティである。
 </p>
 <table class="normal">
+<caption>Table 1b: 結合文字シーケンスと書記素クラスター</caption>
+<tr><th>名称</th><th>正規表現</th></tr>
 <tr><td>結合文字シーケンス</td>    <td><code>:{ccs-base}?:{ccs-extend}+</code></td></tr>
-<tr><td>拡張結合文字シーケンス</td><td><code>:{extended_base}?:{ccs-extend}+</code></td></tr>
-<tr><td>旧式書記素クラスター</td>  <td><code>:{crlf}|:{Control}|:{legacy-core}:{legacy-postcore}* </code></td></tr>
-<tr><td>拡張書記素クラスター</td>  <td><code></code></td></tr>
+<tr><td>拡張結合文字シーケンス</td><td><code>%{extended_base}?:{ccs-extend}+</code></td></tr>
+<tr><td>旧式書記素クラスター</td>  <td><code>%{crlf}|:{Control}|%{legacy-core}:{legacy-postcore}*</code></td></tr>
+<tr><td>拡張書記素クラスター</td>  <td><code>%{crlf}|:{Control}|:{precore}*%{core}:{legacy-postcore}*</code></td></tr>
+</table>
+<table class="normal">
+<caption>Table 1c: 正規表現定義</caption>
+<tr><td><code>:{ccs-base}</code></td><td><code>[\p{L}\p{N}\p{P}\p{S}\p{Zs}]</code></td></tr>
+<tr><td><code>:{ccs-extend}</code></td><td><code>[\p{M}\p{Join_Control}]</code></td></tr>
+<tr><td><code>%{extended_base}</code></td><td><code>:{ccs-base}|%{hangul-syllable}</code></td></tr>
+<tr><td><code>%{crlf}</code></td><td><code>:{CR}:{LF}<span class="contra-translate-add">|:{CR}|:{LF}</span><sup>15.1.0追加</sup></code></td></tr>
+<tr><td><code>%{legacy-core}</code></td><td><code>%{hangul-syllable}|%{RI-Sequence}|%{xpicto-sequence}|[^:{Control}:{CR}:{LF}]</code></td></tr>
+<tr><td><code>:{legacy-postcore}</code></td><td><code>[:{Extend}:{ZWJ}]</code></td></tr>
+<tr><td><code>%{core}</code></td><td><code>%{hangul-syllable}|%{RI-Sequence}|%{xpicto-sequence}<span class="contra-translate-add">|%{conjunctCluster}</span><sup>15.1.0追加</sup>|[^:{Control}:{CR}:{LF}]</code></td></tr>
+<tr><td><code>:{postcore}</code></td><td><code>[:{Extend}:{ZWJ}:{SpacingMark}]</code></td></tr>
+<tr><td><code>:{precore}</code></td><td><code>:{Prepend}</code></td></tr>
+<tr><td><code>%{RI-Sequence}</code></td><td><code>:{RI}:{RI}</code></td></tr>
+<tr><td><code>%{hangul-syllable}</code></td><td><code>:{L}*(:{V}+|:{LV}:{V}*|:{LVT}):{T}*|:{L}+|:{T}+</code></td></tr>
+<tr><td><code>%{xpicto-sequence}</code></td><td><code>\p{Extended_Pictographic}(:{Extend}*:{ZWJ}\p{Extended_Pictographic})*</code></td></tr>
+<tr><td><span class="contra-translate-add"><code>%{conjunctCluster}</code></span><sup>15.1.0追加</sup></td><td><code>\p{InCB=Consonant}([\p{InCB=Extend}\p{InCB=Linker}]*\p{InCB=Linker}[\p{InCB=Extend} \p{InCB=Linker}]*\p{InCB=Consonant})+</code></td></tr>
 </table>
 
 <h3>3.1 既定書記素クラスター境界仕様</h3>
@@ -236,8 +300,8 @@ Grapheme_Cluster_Break プロパティの値は [Props] の対応するデータ
 </table>
 
 <h4>3.1.1 Grapheme Cluster Boundary Rules</h4>
-<p>規則 GB9a 及び GB9b 以外については二つの既定書記素クラスターについて同じ規則が適用される。
-  旧式書記素クラスターは GB9a, GB9b を含まない。
+<p>規則 GB9a, GB9b, GB9c 以外については拡張書記素クラスターと旧式書記素クラスターについて同じ規則が適用される。
+  旧式書記素クラスターは GB9a, GB9b, GB9c を含まない。
   Unicode 書記素クラスターを参照する時は旧式か拡張かを明記しなければならない。
   次の規則が上から順に適用されて最初に一致した物になる。
   ÷ が境界である事を意味し、× が境界でない事を意味する。
@@ -254,6 +318,7 @@ Grapheme_Cluster_Break プロパティの値は [Props] の対応するデータ
 <li>GB9: × (Extend|ZWJ)</li>
 <li>GB9a: × SpacingMark</li>
 <li>GB9b: Prepend ×</li>
+<li><span class="contra-translate-add">GB9c: \p{InCB=Consonant} [ \p{InCB=Extend} \p{InCB=Linker} ]* \p{InCB=Linker} [ \p{InCB=Extend} \p{InCB=Linker} ]* × \p{InCB=Consonant}</span><sup>15.1.0追加</sup></li>
 <li>GB11: \p{Extended_Pictographic} Extend* ZWJ × \p{Extended_Pictographic}*</li>
 <li>GB12: sot (RI RI)* RI × RI</li>
 <li>GB13: [^RI] (RI RI)* RI × RI</li>
@@ -264,6 +329,14 @@ Grapheme_Cluster_Break プロパティの値は [Props] の対応するデータ
   Grapheme_Extend=Yes は Grapheme_Cluster_Break=Extend を定義する為に参照されているが、
   Grapheme_Base は今は使われていない。
 </p>
+<p><span class="contra-translate-add">InCB は Indic_Conjunct_Break 参考特性を指す。</span><sup>15.1.0追加</sup></p>
+
+<p class="contra-translator"><span class="contra-translate-add">[訳註:
+  GB9c 規則だけでは <code>\p{InCB=Extend}</code> 及び <code>\p{InCB=Linker}</code> の直前に境界が来ないという事が保証されていない様に見えるが、
+  現時点 (15.1.0) で全ての <code>\p{InCB=Extend}</code> 及び <code>\p{InCB=Linker}</code> が Extend または ZWJ なので、
+  直前に境界が来ない事が保証されている。]</span><sup>15.1.0追加</sup>
+</p>
+
 
 <h2>4 単語境界</h2>
 <p class="contra-translator">[現在の所使わないので省略]</p>
@@ -279,7 +352,7 @@ Grapheme_Cluster_Break プロパティの値は [Props] の対応するデータ
 
 <h3>6.2 無視規則の置き換え</h3>
 <p>単語・文の境界の決定を書記素クラスター単位で行う為に、
-  Extend 文字を無視する規則・Hangul jamo の区別をしない規則・CRLFの中に境界が来ない規則がある。
+  Extend 文字を無視する規則・Hangul jamo の区別をしない規則<del class="contra-translate-del">・CRLFの中に境界が来ない規則がある。</del><sup>14.0.0削除</sup>
   また、境界の決定に影響しない Format 文字も無視する。
   これらの無視規則を適用する代わりに、他の規則を修正することでも同じ結果を得ることができる。
 </p>
