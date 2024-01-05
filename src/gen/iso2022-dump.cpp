@@ -186,7 +186,7 @@ private:
     }
     if (starts_with(charset->reg, "ISO-IR-")) {
       const char* ir_number = charset->reg.c_str() + 7;
-      std::string url = "https://www.itscj.ipsj.or.jp/iso-ir/";
+      std::string url = "https://itscj.ipsj.or.jp/ir/";
       for (int i = strspn(ir_number, "0123456789"); i < 3; i++)
         url += '0';
       url = url + ir_number + ".pdf";
