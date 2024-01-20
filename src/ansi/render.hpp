@@ -261,6 +261,7 @@ namespace ansi {
       m_cur_xenl = view.xenl();
       m_cur_r2l = view.cur_r2l();
       m_cur_shape = view.cursor_shape();
+      m_cur_blinking = view.is_cursor_blinking();
     }
   };
 
